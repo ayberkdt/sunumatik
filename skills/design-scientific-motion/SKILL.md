@@ -26,30 +26,34 @@ Show the classification and limitations near the interaction or in notes. Never 
 
 ## Choose a preset
 
-Use /presets/motion_core/core-motion.css and /presets/motion_core/core-motion.js for reveals, staged/staggered reveals (`revealStage`), scroll-triggered reveals in reading view (`observeReveal`), path tracing, comparison wipes, focus shifts, and deterministic export settling. Pages using core-motion.css must set `document.documentElement.classList.add('js')` in an inline head script: initial hidden states are gated on `html.js`, so content stays visible when JavaScript cannot run (file://, failed import, strict CSP).
+Use assets/presets/core-motion.css and assets/presets/core-motion.js for reveals, staged/staggered reveals (`revealStage`), scroll-triggered reveals in reading view (`observeReveal`), path tracing, comparison wipes, focus shifts, and deterministic export settling. Pages using core-motion.css must set `document.documentElement.classList.add('js')` in an inline head script: initial hidden states are gated on `html.js`, so content stays visible when JavaScript cannot run (file://, failed import, strict CSP).
 
-Read `references/interaction-presets.md` and use `/presets/motion_core/interaction-motion.css` plus `/presets/motion_core/interaction-motion.js` for hover and focus micro-interactions: lift, underline trace, sibling dimming groups, on-demand annotations, and legend-to-chart linked highlighting. Hover is commentary, never content.
+Read `references/interaction-presets.md` and use `assets/presets/interaction-motion.css` plus `assets/presets/interaction-motion.js` for hover and focus micro-interactions: lift, underline trace, sibling dimming groups, on-demand annotations, and legend-to-chart linked highlighting. Hover is commentary, never content.
 
-Read `references/morph-presets.md` and use `/presets/motion_core/morph-transition.css` plus `/presets/motion_core/morph-transition.js` when an element must visibly become its next state: FLIP morphs via `morphState` for scoped figures and `viewMorph` for full slide-state changes. Morph only between states of the same thing.
+Read `references/morph-presets.md` and use `assets/presets/morph-transition.css` plus `assets/presets/morph-transition.js` when an element must visibly become its next state: FLIP morphs via `morphState` for scoped figures and `viewMorph` for full slide-state changes. Morph only between states of the same thing.
 
-For neural-network method slides, read `references/neural_network.md` and use `/presets/neural_network/` for an illustrative feed-forward diagram with seeded weights, layer-by-layer forward-pass animation, and sign-safe cell encoding.
+For neural-network method slides, read `references/neural-network-preset.md` and use `assets/neural-network-preset/` for an illustrative feed-forward diagram with seeded weights, layer-by-layer forward-pass animation, and sign-safe cell encoding.
 
-For chronological material, read `references/timeline_tree.md` and use `/presets/timeline_tree/` for an interactive horizontal or vertical chronology with focus gliding, branch tracks, era bands, and keyboard/wheel navigation.
+For chronological material, read `references/timeline-preset.md` and use `assets/timeline-preset/` for an interactive horizontal or vertical chronology with focus gliding, branch tracks, era bands, and keyboard/wheel navigation.
 
-For equation reveals, read `references/equation_pen.md` and use `/presets/equation_pen/` to write typeset equations token by token with a pen nib and optional true stroke drawing; the settled equation always stands alone.
+For equation reveals, read `references/equation-writing-preset.md` and use `assets/equation-writing-preset/` to write typeset equations token by token with a pen nib and optional true stroke drawing; the settled equation always stands alone.
 
-For between-slide motion, read `references/slide-transition-presets.md` and use `/presets/motion_core/slide-transitions.css` plus `/presets/motion_core/slide-transitions.js`: fade-through by default, meaning-consistent push, sparing wipe-mask section breaks, and morph continuity. One transition grammar per deck.
+For explaining an EXISTING equation term by term, read `references/equation-steps-preset.md` and use `/presets/equation_steps/`: the equation stays fully typeset while each step focuses a set of terms (accent underline, rest ghosted) with an assertion caption — the derivation-walkthrough complement of the pen preset.
 
-For Earth material, read `references/terra-globe-preset.md` and use `/presets/earth_advanced/`: a realistic WebGL globe (NASA-derived day/night/cloud textures, shader-masked night lights, fresnel scattering atmosphere, visible sun glow, illustrative satellite) with a guided real-coordinate city tour.
+For guided attention on a figure or image, read `references/figure-callout-preset.md` and use `/presets/figure_callouts/`: percent-coordinate boxes/circles/arrows that trace in step by step, an optional spotlight scrim, a magnifier lens, and assertion captions with keyboard navigation.
 
-For solar material, read `references/sol-preset.md` and use `/presets/sun_advanced/`: a fully procedural Sun with animated granulation, physically-correct limb darkening (u = 0.56), chromosphere rim, and streamer corona.
+For between-slide motion, read `references/slide-transition-presets.md` and use `assets/presets/slide-transitions.css` plus `assets/presets/slide-transitions.js`: fade-through by default, meaning-consistent push, sparing wipe-mask section breaks, and morph continuity. One transition grammar per deck.
 
-For the other planets, read `references/planetae-preset.md` and use `/presets/planets_advanced/`: Mercury through Neptune in one switchable scene with CC BY photographic textures, real axial tilts (retrograde Venus/Uranus emerge from them), Saturn/Uranus rings, per-planet atmospheres, and a NASA fact-sheet data panel. Sizes are not comparable between planets.
+For Earth material, read `references/terra-globe-preset.md` and use `assets/terra-vanilla-preset/`: a realistic WebGL globe (NASA-derived day/night/cloud textures, shader-masked night lights, fresnel scattering atmosphere, visible sun glow, illustrative satellite) with a guided real-coordinate city tour.
+
+For solar material, read `references/sol-preset.md` and use `assets/sol-vanilla-preset/`: a fully procedural Sun with animated granulation, physically-correct limb darkening (u = 0.56), chromosphere rim, and streamer corona.
+
+For the other planets, read `references/planetae-preset.md` and use `assets/planetae-vanilla-preset/`: Mercury through Neptune in one switchable scene with CC BY photographic textures, real axial tilts (retrograde Venus/Uranus emerge from them), Saturn/Uranus rings, per-planet atmospheres, and a NASA fact-sheet data panel. Sizes are not comparable between planets.
 
 For lunar orbit material, choose between two deliberately different presets:
 
-- Read `references/lunar_orbit.md` and use `/presets/lunar_orbit/` for a lightweight analytic two-body explanation.
-- Read `references/moon_react_source.md` and use `/presets/moon_react_source/` for the full cinematic React Three Fiber experience with original Lunaris textures, displacement, camera interaction, prediction trail, spacecraft attitude, and burn visuals. For decks without React, `/presets/moon_advanced/` is the feature-parity plain Three.js port of the same scene (vendored dependencies, import-map based).
+- Read `references/lunar-orbit-preset.md` and use `assets/lunar-orbit-preset/` for a lightweight analytic two-body explanation.
+- Read `references/lunaris-interactive-preset.md` and use `assets/lunaris-interactive-preset/` for the full cinematic React Three Fiber experience with original Lunaris textures, displacement, camera interaction, prediction trail, spacecraft attitude, and burn visuals. For decks without React, `assets/lunaris-vanilla-preset/` is the feature-parity plain Three.js port of the same scene (vendored dependencies, import-map based).
 
 Never substitute the illustrative Lunaris playback for a mission ephemeris or numerical propagator.
 

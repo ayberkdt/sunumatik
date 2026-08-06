@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "chart-reveal",
+      "type": "reveal",
+      "truthLevel": "illustrative",
+      "purpose": "Draw-in of chart elements when the chart enters view: lines trace, bars grow from the baseline, markers pop, bands and labels fade in with a short stagger.",
+      "model": "Solid observed lines animate stroke-dashoffset over their measured length; dashed epistemic styles fade instead (dash pattern must not be corrupted); bars scaleY from the y=0 baseline; stagger is capped at 900 ms.",
+      "limitations": "Purely presentational; encodes no data meaning. Order of appearance follows document order, not value order.",
+      "reducedMotion": "All elements render in their final state immediately.",
+      "exportState": "Final state (finish()); no transitions.",
+      "accessibility": "The SVG carries role=img with an aria-label from the chart title; data is also available as text in captions per the chart rules.",
+      "loop": false,
+      "pauseControl": false
+    }
+  ]
+}

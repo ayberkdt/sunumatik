@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "equation-steps",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Term-by-term derivation walkthrough: the focused terms of a typeset equation get an accent underline sweep and full opacity while the rest ghost to 28%, and the caption states each step's claim.",
+      "model": "The equation stays fully rendered at all times (no reflow); focus is pure opacity/filter plus a scaleX underline on data-term spans.",
+      "limitations": "Terms are authored spans, not parsed math; the walkthrough adds narration order, not mathematical validation.",
+      "reducedMotion": "Transitions removed; steps still switch instantly under keyboard control.",
+      "exportState": "The declared exportStep (default: last step, typically the all-terms view) with its caption.",
+      "accessibility": "Arrow keys navigate steps (data-owns-arrows); the caption is aria-live; dots are labelled buttons; the full equation remains readable in every step.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

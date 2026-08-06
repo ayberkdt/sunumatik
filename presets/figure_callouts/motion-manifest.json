@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "figure-callout-steps",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Step-by-step guided attention on a scientific figure: boxes/circles/arrows trace in, a spotlight scrim dims everything outside the region, an optional magnifier lens enlarges the detail, and the caption states the step's claim.",
+      "model": "Percent-coordinate SVG overlay on the figure; marks trace via stroke-dashoffset; the spotlight is an even-odd path with a hole; the lens is a scaled background-image crop of the same source.",
+      "limitations": "Marks are authored coordinates, not detected features; the lens magnifies pixels and adds no information.",
+      "reducedMotion": "No trace or scale animation; steps switch instantly and remain keyboard-driven.",
+      "exportState": "The declared exportStep (default: last step) rendered fully, caption included.",
+      "accessibility": "Arrow keys navigate steps (data-owns-arrows); the caption is aria-live; dots are labelled buttons; the figure carries the alt text.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

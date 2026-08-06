@@ -39,10 +39,12 @@ Bir sayfaya gömme tarifi (çalışan örnek: [`demo/sol-tek-basina.html`](demo/
 |---|---|
 | [`motion_core/`](presets/motion_core) | Açılma/reveal, hover etkileşimleri, FLIP morph, premium slayt geçişleri (zoom-into dahil) + önizleme sayfaları. |
 | [`timeline_tree/`](presets/timeline_tree) | Yatay/dikey kronoloji ağacı (dal rayları, dönem bantları). |
+| [`figure_callouts/`](presets/figure_callouts) | Figür üzerinde adım adım anlatım: kutu/daire/ok işaretleri, spot ışığı, büyüteç merceği, iddia satırları. |
+| [`equation_steps/`](presets/equation_steps) | Denklem adımlayıcı: dizili denklemi terim terim vurgulayarak anlatır. |
 | [`equation_pen/`](presets/equation_pen) | Elle yazılan denklem (kalem ucu + gerçek çizgi takibi). |
 | [`neural_network/`](presets/neural_network) | Sinir ağı hücreleri, ileri geçiş animasyonu. |
 | [`color_themes/`](presets/color_themes) | 9 palet (CSS değişkenleri, `[data-palette]`), tablo presetleri, 10 uzay motifi SVG kiti. |
-| [`charts_icons/`](presets/charts_icons) | Grafik teması (eksen/grid/6 seri/belirsizlik bandı) + 23 bilim ikonu sprite. |
+| [`charts_icons/`](presets/charts_icons) | Grafik teması + **bildirimsel grafik motoru** (`chart-preset/chart.mjs`: spec ver, animasyonlu SVG al) + 23 bilim ikonu sprite. |
 | [`equation_theme/`](presets/equation_theme) | Denklem dizgi teması. |
 
 ## demo/ — örnek deste

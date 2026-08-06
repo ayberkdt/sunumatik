@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Chart Preset — bildirimsel grafik motoru</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../../color_themes/palette-library.css">
+  <link rel="stylesheet" href="../chart-theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--color-canvas); color: var(--color-ink);
+      font-family: ui-sans-serif, system-ui, sans-serif; padding: 40px; }
+    main { max-width: 1060px; margin: 0 auto; display: grid; gap: 48px; }
+    h1 { font-size: 30px; margin: 0; }
+    h2 { font-size: 21px; margin: 0 0 10px; color: var(--color-muted); font-weight: 600; }
+    .panel { background: var(--color-surface); border: 1px solid var(--color-rule);
+      border-radius: 10px; padding: 26px; }
+    .sci-chart-caption { font-size: 15px; color: var(--color-muted); margin-top: 10px; }
+  </style>
+</head>
+<body data-palette="graphite-ember">
+  <main>
+    <h1>Chart preset — spec ver, grafik al</h1>
+    <section class="panel"><h2>Çizgi + belirsizlik bandı + eşik + açıklama</h2><div id="c1"></div>
+      <p class="sci-chart-caption">Gözlem düz, projeksiyon kesikli ve etiketli; eşik her zaman adlandırılır.</p></section>
+    <section class="panel"><h2>Gruplu sütun</h2><div id="c2"></div></section>
+    <section class="panel"><h2>Saçılım + fit doğrusu</h2><div id="c3"></div></section>
+  </main>
+  <script type="module">
+    import { mountChart } from './chart.mjs';
+
+    mountChart(document.querySelector('#c1'), {
+      type: 'line',
+      x: { label: 'Harmonik derecesi', ticks: 6 },
+      y: { label: 'Yörünge sapması', unit: 'm', ticks: 5 },
+      series: [
+        { name: 'Gözlem', slot: 1, markers: true,
+          data: [[10,2.1],[20,2.4],[30,3.2],[40,4.4],[50,6.8],[60,10.2],[70,15.5]],
+          band: [[10,1.7,2.5],[20,1.9,2.9],[30,2.6,3.8],[40,3.6,5.2],[50,5.6,8.0],[60,8.4,12.0],[70,12.6,18.4]] },
+        { name: 'Projeksiyon', slot: 2, style: 'projected',
+          data: [[50,6.8],[60,11.5],[70,19.0],[80,30.5]] },
+      ],
+      refLines: [{ y: 12, label: 'görev sınırı' }],
+      annotations: [{ x: 60, y: 10.2, text: 'kayıp başlangıcı', dx: -150, dy: -34 }],
+    });
+
+    mountChart(document.querySelector('#c2'), {
+      type: 'bar',
+      x: { label: 'Test kümesi', ticks: 3 },
+      y: { label: 'Hata', unit: 'px', ticks: 4 },
+      series: [
+        { name: 'Önceki', slot: 2, data: [[1,0.42],[2,0.39],[3,0.47]] },
+        { name: 'Kalibre', slot: 1, data: [[1,0.21],[2,0.20],[3,0.24]] },
+      ],
+    });
+
+    mountChart(document.querySelector('#c3'), {
+      type: 'scatter',
+      x: { label: 'Yükseklik', unit: 'km', ticks: 5 },
+      y: { label: 'Sinyal gecikmesi', unit: 'ms', ticks: 5 },
+      series: [
+        { name: 'Ölçümler', slot: 1,
+          data: [[100,1.9],[140,2.6],[180,3.1],[220,4.2],[260,4.6],[300,5.8],[340,6.1],[380,7.4],[420,7.9],[460,9.2]] },
+        { name: 'Doğrusal fit', slot: 3, style: 'fitted',
+          data: [[100,1.8],[460,9.0]] },
+      ],
+    });
+    window.__charts = true;
+  </script>
+</body>
+</html>

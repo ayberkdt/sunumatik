@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Equation Steps Preset — terim terim türetme</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../color_themes/palette-library.css">
+  <link rel="stylesheet" href="../equation_theme/equation-theme.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--color-canvas); color: var(--color-ink);
+      font-family: ui-sans-serif, system-ui, sans-serif; padding: 40px; }
+    main { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 28px; }
+    p.hint { color: var(--color-muted); font-size: 16px; }
+    .eqbox { background: var(--color-surface); border: 1px solid var(--color-rule);
+      border-radius: 10px; padding: 34px 30px; font-size: 34px; text-align: center;
+      font-family: "STIX Two Math", "Cambria Math", Georgia, serif; }
+  </style>
+</head>
+<body data-palette="graphite-ember">
+  <main>
+    <h1>Denklem adımlayıcı — ← → ile terim terim</h1>
+    <p class="hint">Her adım denklemin bir bölgesini vurgular; iddia satırı altta değişir.</p>
+    <div id="eq"></div>
+  </main>
+  <script type="module">
+    import { mountEquationSteps } from './equation-steps.mjs';
+
+    const eq = mountEquationSteps(document.querySelector('#eq'), {
+      equation: `<div class="eqbox">
+        <span data-term="lhs">∂P̄ₙₘ / ∂φ</span>
+        <span data-term="eq">=</span>
+        <span data-term="a">aₙₘ</span>
+        <span data-term="p1">P̄ₙ,ₘ₊₁</span>
+        <span data-term="minus">−</span>
+        <span data-term="b">m·tanφ</span>
+        <span data-term="p0">P̄ₙₘ</span>
+      </div>`,
+      steps: [
+        { focus: ['lhs'],
+          caption: 'Hedef: enlem türevi — ayrı bir faktöriyel tablosu gerektirmeden.' },
+        { focus: ['a', 'p1'],
+          caption: 'Birinci terim: bir üst mertebeden komşu — katsayı aₙₘ zaten tabloda.' },
+        { focus: ['b', 'p0'],
+          caption: 'İkinci terim: tanφ çarpanı kutuplara doğru büyür — kararlılık sınırı buradan gelir.' },
+        { focus: ['lhs', 'a', 'p1', 'b', 'p0'],
+          caption: 'Tamamı: türev, iki komşu Legendre değerinin farkı olarak hesaplanır.' },
+      ],
+    });
+    eq.root.focus();
+    window.__eq = eq;
+  </script>
+</body>
+</html>
