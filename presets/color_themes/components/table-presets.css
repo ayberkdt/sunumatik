@@ -1,0 +1,162 @@
+/* Table presets for the 1920x1080 fixed stage.
+   Consumes palette tokens from palette-library.css:
+   --color-canvas, --color-surface, --color-ink, --color-muted,
+   --color-accent, --color-accent-ink, --color-data-1, --color-data-2, --color-rule.
+
+   Variants:
+   .sci-table            base editorial table (rules, no vertical borders)
+   .sci-table--data      numeric results: mono digits, right-aligned, units row
+   .sci-table--comparison side-by-side options with an emphasized column
+   .sci-table--matrix    compact symbol/check matrix, centered cells
+   .sci-table--spec      two-column key/value specification sheet */
+
+.sci-table {
+  --table-font-size: 26px;
+  --table-pad-y: 16px;
+  --table-pad-x: 22px;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--table-font-size);
+  line-height: 1.3;
+  color: var(--color-ink, #2d2624);
+  background: transparent;
+}
+
+.sci-table caption {
+  caption-side: top;
+  text-align: left;
+  font-size: calc(var(--table-font-size) * .78);
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--color-muted, #70615c);
+  padding-bottom: 14px;
+}
+
+.sci-table th,
+.sci-table td {
+  padding: var(--table-pad-y) var(--table-pad-x);
+  text-align: left;
+  vertical-align: baseline;
+  border: 0;
+}
+
+/* Editorial rules: heavy under the header, hairlines between rows,
+   heavy again to close the table. Never vertical borders. */
+.sci-table thead th {
+  font-weight: 700;
+  font-size: calc(var(--table-font-size) * .85);
+  letter-spacing: .04em;
+  border-bottom: 3px solid var(--color-ink, #2d2624);
+}
+.sci-table tbody td,
+.sci-table tbody th {
+  border-bottom: 1.5px solid var(--color-rule, #d4cba2);
+}
+.sci-table tbody tr:last-child td,
+.sci-table tbody tr:last-child th {
+  border-bottom: 3px solid var(--color-ink, #2d2624);
+}
+
+/* Units live in their own light row under the header, never inside data cells */
+.sci-table .row-units th,
+.sci-table .row-units td {
+  font-size: calc(var(--table-font-size) * .7);
+  font-weight: 500;
+  color: var(--color-muted, #70615c);
+  border-bottom: 1.5px solid var(--color-rule, #d4cba2);
+  padding-top: 6px;
+  padding-bottom: 10px;
+}
+
+/* Numeric cells: tabular digits so magnitudes align */
+.sci-table .num {
+  text-align: right;
+  font-family: ui-monospace, "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: calc(var(--table-font-size) * .92);
+}
+
+/* Emphasis: one row or one column may carry the takeaway — never several */
+.sci-table tbody tr.is-key th,
+.sci-table tbody tr.is-key td {
+  background: color-mix(in srgb, var(--color-accent, #a34f38) 12%, transparent);
+  border-bottom-color: var(--color-accent, #a34f38);
+  font-weight: 700;
+}
+.sci-table .col-key {
+  background: color-mix(in srgb, var(--color-accent, #a34f38) 10%, transparent);
+}
+
+/* Row hover pairs with interaction-motion.css conventions; harmless without it */
+@media (hover: hover) {
+  .sci-table--interactive tbody tr {
+    transition: background-color 200ms cubic-bezier(.3, .7, .3, 1);
+  }
+  .sci-table--interactive tbody tr:hover {
+    background: color-mix(in srgb, var(--color-ink, #2d2624) 7%, transparent);
+  }
+}
+
+/* Footnotes and provenance close the table in muted small type */
+.sci-table tfoot td {
+  font-size: calc(var(--table-font-size) * .65);
+  color: var(--color-muted, #70615c);
+  border: 0;
+  padding-top: 12px;
+}
+
+/* -- data variant -- */
+.sci-table--data td:not(:first-child),
+.sci-table--data thead th:not(:first-child) {
+  text-align: right;
+}
+
+/* -- comparison variant -- */
+.sci-table--comparison thead th {
+  font-size: calc(var(--table-font-size) * .95);
+}
+.sci-table--comparison td .verdict {
+  display: inline-block;
+  font-size: calc(var(--table-font-size) * .68);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: var(--color-accent, #a34f38);
+  color: var(--color-accent-ink, #fff8e8);
+}
+
+/* -- matrix variant -- */
+.sci-table--matrix th,
+.sci-table--matrix td {
+  text-align: center;
+  padding: 12px 14px;
+}
+.sci-table--matrix tbody th { text-align: left; }
+.sci-table--matrix .yes { color: var(--color-data-1, #617552); font-weight: 700; }
+.sci-table--matrix .no  { color: var(--color-muted, #70615c); }
+.sci-table--matrix .warn { color: var(--color-data-2, #4f7488); font-weight: 700; }
+
+/* -- spec variant -- */
+.sci-table--spec tbody th {
+  width: 38%;
+  font-weight: 600;
+  color: var(--color-muted, #70615c);
+  font-size: calc(var(--table-font-size) * .85);
+  letter-spacing: .03em;
+}
+
+/* Dense mode when a table must carry more rows than the default allows */
+.sci-table--dense {
+  --table-font-size: 22px;
+  --table-pad-y: 10px;
+  --table-pad-x: 16px;
+}
+
+/* Export: freeze hover styling for deterministic capture */
+html[data-export="true"] .sci-table--interactive tbody tr {
+  transition: none !important;
+  background: transparent !important;
+}

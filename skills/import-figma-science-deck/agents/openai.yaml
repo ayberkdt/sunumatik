@@ -1,0 +1,4 @@
+interface:
+  display_name: "Figma Bilim Sunumu Aktarımı"
+  short_description: "Figma frame ve tokenlarını deck koduna eşler"
+  default_prompt: "Use $import-figma-science-deck to map these Figma slides and variables into the science deck system."

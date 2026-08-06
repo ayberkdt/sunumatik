@@ -1,0 +1,6 @@
+* { box-sizing: border-box; }
+html, body { width: 100%; min-height: 100%; margin: 0; background: #020306; }
+body { overflow: hidden; }
+button, input { font: inherit; }
+.demo-stage { width: 100vw; height: 100vh; min-height: 640px; padding: 20px; }
+@media print { .demo-stage { width: 16in; height: 9in; padding: 0; } }

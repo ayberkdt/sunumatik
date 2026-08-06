@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "defaults": {
+    "surfaceTreatment": "matte",
+    "gradientPolicy": "none-unless-data-or-light-phenomenon",
+    "glassPolicy": "avoid",
+    "contrastTarget": 4.5
+  },
+  "palettes": [
+    {
+      "id": "berry-orchid",
+      "name": "Berry Wine / Orchid Mist",
+      "origin": "user-reference-1",
+      "pair": { "primary": "#5A2132", "secondary": "#EFE9E9" },
+      "character": ["editorial", "warm", "pastel", "premium"],
+      "tokens": {
+        "canvas": "#EFE9E9",
+        "surface": "#F8F3F2",
+        "ink": "#5A2132",
+        "muted": "#76545F",
+        "accent": "#A84D6A",
+        "accentInk": "#FFF8F5",
+        "data1": "#C98B9E",
+        "data2": "#7C7054",
+        "rule": "#D8C7CC"
+      },
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "sage-buttercream",
+      "name": "Sage Leaf / Buttercream",
+      "origin": "user-reference-2",
+      "pair": { "primary": "#202B23", "secondary": "#FFD85F" },
+      "character": ["botanical", "vibrant", "optimistic", "technical"],
+      "tokens": {
+        "canvas": "#FFF8DD",
+        "surface": "#FFD85F",
+        "ink": "#202B23",
+        "muted": "#59655C",
+        "accent": "#FFD85F",
+        "accentInk": "#202B23",
+        "data1": "#6F8C75",
+        "data2": "#B44F37",
+        "rule": "#D9D3B4"
+      },
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "arctic-mulberry",
+      "name": "Arctic Sky / Mulberry Wine",
+      "origin": "user-reference-3",
+      "pair": { "primary": "#BCD3E7", "secondary": "#391D30" },
+      "character": ["cool", "pastel", "observational", "refined"],
+      "tokens": {
+        "canvas": "#BCD3E7",
+        "surface": "#E8EFF4",
+        "ink": "#391D30",
+        "muted": "#644A5D",
+        "accent": "#783A62",
+        "accentInk": "#F8F2F6",
+        "data1": "#477C9D",
+        "data2": "#A9513A",
+        "rule": "#91B1CB"
+      },
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "midnight-tangerine",
+      "name": "Midnight Navy / Burnt Tangerine",
+      "origin": "user-reference-4",
+      "pair": { "primary": "#1E223D", "secondary": "#F54F1F" },
+      "character": ["vibrant", "editorial", "high-energy", "mission"],
+      "tokens": {
+        "canvas": "#1E223D",
+        "surface": "#2B3154",
+        "ink": "#F7F0E3",
+        "muted": "#C3C7D6",
+        "accent": "#F54F1F",
+        "accentInk": "#15182B",
+        "data1": "#FFD166",
+        "data2": "#78C4B4",
+        "rule": "#454D76"
+      },
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "oat-cocoa",
+      "name": "Oat Milk / Cocoa Bean",
+      "origin": "user-reference-5",
+      "pair": { "primary": "#F3EEC8", "secondary": "#473835" },
+      "character": ["cream", "earthy", "matte", "scholarly"],
+      "tokens": {
+        "canvas": "#F3EEC8",
+        "surface": "#FBF7DF",
+        "ink": "#473835",
+        "muted": "#70615C",
+        "accent": "#A34F38",
+        "accentInk": "#FFF8E8",
+        "data1": "#617552",
+        "data2": "#4F7488",
+        "rule": "#D4CBA2"
+      },
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "graphite-ember",
+      "name": "Graphite / Ember Copper",
+      "origin": "premium-app-study-2026",
+      "pair": { "primary": "#141519", "secondary": "#E8804A" },
+      "character": ["dark-first", "layered-neutral", "product-grade", "premium"],
+      "tokens": {
+        "canvas": "#141519",
+        "surface": "#1E2026",
+        "ink": "#F1F0EB",
+        "muted": "#A6A9B1",
+        "accent": "#E8804A",
+        "accentInk": "#1A120B",
+        "data1": "#2FA98C",
+        "data2": "#B58224",
+        "rule": "#303339"
+      },
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "porcelain-ink",
+      "name": "Porcelain / Measured Indigo",
+      "origin": "premium-app-study-2026",
+      "pair": { "primary": "#44599C", "secondary": "#F6F4EF" },
+      "character": ["light", "editorial", "documentation-grade", "restrained"],
+      "tokens": {
+        "canvas": "#F6F4EF",
+        "surface": "#FFFFFF",
+        "ink": "#23262B",
+        "muted": "#656A73",
+        "accent": "#44599C",
+        "accentInk": "#F4F6FC",
+        "data1": "#178F6E",
+        "data2": "#B0642F",
+        "rule": "#DCD8CF"
+      },
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "obsidian-champagne",
+      "name": "Obsidian / Champagne Gold",
+      "origin": "premium-app-study-2026",
+      "pair": { "primary": "#0F1013", "secondary": "#D3B26A" },
+      "character": ["luxury", "keynote", "warm-metallic", "celebratory"],
+      "tokens": {
+        "canvas": "#0F1013",
+        "surface": "#1A1C21",
+        "ink": "#F4EEE1",
+        "muted": "#A9A296",
+        "accent": "#D3B26A",
+        "accentInk": "#191307",
+        "data1": "#5590C9",
+        "data2": "#C86A40",
+        "rule": "#2E3037"
+      },
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "verdigris-slate",
+      "name": "Slate Pine / Verdigris",
+      "origin": "premium-app-study-2026",
+      "pair": { "primary": "#152020", "secondary": "#5FBFAE" },
+      "character": ["dark", "cool-organic", "confident", "instrument-grade"],
+      "tokens": {
+        "canvas": "#152020",
+        "surface": "#1F2E2C",
+        "ink": "#ECF3EF",
+        "muted": "#9FB3AC",
+        "accent": "#5FBFAE",
+        "accentInk": "#0C1B18",
+        "data1": "#BA8A2A",
+        "data2": "#5B95E8",
+        "rule": "#31423E"
+      },
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    }
+  ]
+}

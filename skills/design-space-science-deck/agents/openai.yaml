@@ -1,0 +1,4 @@
+interface:
+  display_name: "Uzay ve Bilim Sunum Tasarımı"
+  short_description: "Mat, pastel ve canlı bilimsel temalar tasarlar"
+  default_prompt: "Use $design-space-science-deck to create three distinctive matte, pastel, or vibrant non-glass visual directions for this science presentation."

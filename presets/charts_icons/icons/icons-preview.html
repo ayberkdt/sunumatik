@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Science Icon Library</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <style>
+    :root { color-scheme: light; --canvas:#f3eec8; --surface:#fbf7df; --ink:#473835; --muted:#70615c; --rule:#d4cba2; }
+    body.dark { --canvas:#1e223d; --surface:#2b3154; --ink:#f7f0e3; --muted:#c3c7d6; --rule:#454d76; }
+    * { box-sizing: border-box; }
+    body { margin:0; padding:5vw; background:var(--canvas); color:var(--ink);
+           font:600 18px/1.3 ui-sans-serif, system-ui, sans-serif; }
+    h1 { font-size:40px; margin:0 0 8px; }
+    p { color:var(--muted); margin:0 0 28px; font-weight:500; }
+    button { margin:0 0 28px; border:1.5px solid var(--ink); border-radius:999px; background:transparent;
+             color:var(--ink); padding:10px 20px; font:inherit; cursor:pointer; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:14px; }
+    figure { margin:0; padding:20px 14px; background:var(--surface); border:1.5px solid var(--rule);
+             border-radius:12px; text-align:center; }
+    figure svg { width:36px; height:36px; color:var(--ink); }
+    figcaption { margin-top:10px; font:600 12.5px/1 ui-monospace, monospace; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <h1>Science icon library</h1>
+  <p>24px grid · 1.8px stroke · currentColor</p>
+  <button id="mode">Toggle dark palette</button>
+  <div class="grid" id="grid"></div>
+  <script>
+    const ids = ['i-telescope','i-satellite','i-rocket','i-orbit','i-planet','i-moon','i-star',
+                 'i-spectrum','i-wave','i-atom','i-molecule','i-microscope','i-flask',
+                 'i-chart-bars','i-chart-scatter','i-database','i-chip','i-neural-net',
+                 'i-gauge','i-milestone','i-warning','i-info','i-citation'];
+    fetch('science-icons.svg').then(r => r.text()).then(text => {
+      document.body.insertAdjacentHTML('beforeend', text);
+      document.querySelector('#grid').innerHTML = ids.map(id =>
+        `<figure><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#${id}"/></svg><figcaption>${id}</figcaption></figure>`).join('');
+    });
+    document.querySelector('#mode').addEventListener('click', () => document.body.classList.toggle('dark'));
+  </script>
+</body>
+</html>

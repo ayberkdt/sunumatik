@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Scientific Motion Presets</title>
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="core-motion.css">
+  <style>
+    :root{color-scheme:light;--ink:#2d2624;--paper:#f3eec8;--wine:#5a2132;--blue:#bcd3e7}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:#e9e3d8;color:var(--ink);font:600 22px/1.25 system-ui;padding:5vw}
+    main{max-width:1100px;margin:auto;background:var(--paper);border:2px solid #2d262433;border-radius:28px;padding:64px;box-shadow:0 28px 80px #4b413620}
+    h1{font-size:64px;line-height:.98;margin:0 0 40px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}.card{min-height:190px;padding:28px;border-radius:22px;background:#fffaf0;border:2px solid #2d262426}.wine{background:var(--wine);color:#fff8f1}.blue{background:var(--blue)}
+    button{margin-top:30px;border:0;border-radius:999px;background:var(--ink);color:white;padding:14px 22px;font:inherit;cursor:pointer}
+  </style>
+</head>
+<body>
+  <main>
+    <h1 data-motion="reveal">Motion should explain.</h1>
+    <div class="grid">
+      <section class="card wine" data-motion="rise" data-delay="110">Reveal a conclusion after its evidence.</section>
+      <section class="card blue" data-motion="comparison-wipe" data-delay="220">Wipe only when a before/after boundary matters.</section>
+      <section class="card" data-motion="focus" data-delay="330">Focus directs attention without hiding context.</section>
+      <section class="card" data-motion="rise" data-delay="440"><strong id="count">0</strong><br>measured samples</section>
+    </div>
+    <button id="replay">Replay</button>
+  </main>
+  <script type="module">
+    import { animatePreset, animateCount } from './core-motion.js';
+    const play = () => {
+      document.querySelectorAll('[data-motion]').forEach(element => {
+        element.classList.remove('is-settled');
+        animatePreset(element);
+      });
+      animateCount(document.querySelector('#count'), 0, 1280);
+    };
+    document.querySelector('#replay').addEventListener('click', play);
+    play();
+  </script>
+</body>
+</html>

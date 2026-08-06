@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "timeline-navigate",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Move attention along a chronology one event at a time; the gliding track preserves temporal order and neighborhood while the focused card opens.",
+      "model": "Ordinal slot layout by default; optional proportional 'time' scale positions events by numeric timestamp.",
+      "limitations": "Ordinal spacing does not encode elapsed time; event dates and claims are content and must be verified by the evidence workflow, not by this preset.",
+      "reducedMotion": "Track repositions instantly with no glide; focused detail opens without animation; nothing is hidden.",
+      "exportState": "Freeze at exportIndex (default 0) with the focused card open and all sibling events at full opacity.",
+      "accessibility": "Events are native buttons with date-and-title labels; arrow keys, Home and End navigate; a live status region announces position, era, and title.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

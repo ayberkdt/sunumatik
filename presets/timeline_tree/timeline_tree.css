@@ -1,0 +1,179 @@
+/* Chronology timeline preset. Inherits deck palette tokens.
+   Structure:
+   .tl > .tl-viewport > .tl-track > .tl-axis + .tl-era* + .tl-event*
+   Events are <button>s: dot on the axis, connector, and a card on a
+   branch track (data-track: 1 above/right, -1 below/left, 2 farther out).
+   The focused card opens; siblings stay readable but recede. */
+
+.tl {
+  --tl-duration: 520ms;
+  --tl-ease: cubic-bezier(.3, .75, .2, 1);
+  --tl-axis-thickness: 3px;
+  --tl-recede: .55;
+  display: grid;
+  gap: 14px;
+}
+
+.tl-viewport {
+  position: relative;
+  overflow: hidden;
+  min-height: 420px;
+}
+.tl--vertical .tl-viewport { min-height: 560px; }
+
+.tl-track {
+  position: absolute;
+  inset: 0 auto auto 0;
+  height: 100%;
+  transition: transform var(--tl-duration) var(--tl-ease);
+  will-change: transform;
+}
+.tl--vertical .tl-track { width: 100%; height: auto; }
+
+.tl-axis {
+  position: absolute;
+  background: var(--color-ink, #2d2624);
+}
+.tl--horizontal .tl-axis { left: -6vw; right: -6vw; top: 50%; height: var(--tl-axis-thickness); }
+.tl--vertical .tl-axis { top: -6vh; bottom: -6vh; left: 50%; width: var(--tl-axis-thickness); }
+
+.tl-era {
+  position: absolute;
+  background: color-mix(in srgb, var(--color-accent, #a34f38) 9%, transparent);
+  border-radius: 10px;
+}
+.tl--horizontal .tl-era { top: calc(50% - 44px); height: 88px; }
+.tl--vertical .tl-era { left: calc(50% - 44px); width: 88px; }
+.tl-era-label {
+  position: absolute;
+  font: 700 14px/1 ui-monospace, monospace;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--color-accent, #a34f38);
+  white-space: nowrap;
+}
+.tl--horizontal .tl-era-label { left: 12px; bottom: calc(100% + 8px); }
+.tl--vertical .tl-era-label { top: 8px; left: calc(100% + 10px); }
+
+/* Event node */
+.tl-event {
+  position: absolute;
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: opacity var(--tl-duration) var(--tl-ease);
+}
+.tl--horizontal .tl-event { top: 50%; }
+.tl--vertical .tl-event { left: 50%; }
+
+.tl-dot {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-canvas, #f3eec8);
+  border: 3px solid var(--color-ink, #2d2624);
+  transform: translate(-50%, -50%);
+  transition: background var(--tl-duration) var(--tl-ease), border-color var(--tl-duration) var(--tl-ease);
+}
+
+.tl-connector { position: absolute; background: var(--color-rule, #d4cba2); }
+.tl--horizontal .tl-connector { left: -1px; width: 2px; }
+.tl--vertical .tl-connector { top: -1px; height: 2px; }
+.tl--horizontal [data-track="1"] .tl-connector,
+.tl--horizontal [data-track="2"] .tl-connector { bottom: 10px; }
+.tl--horizontal [data-track="-1"] .tl-connector,
+.tl--horizontal [data-track="-2"] .tl-connector { top: 10px; }
+.tl--vertical [data-track="1"] .tl-connector,
+.tl--vertical [data-track="2"] .tl-connector { left: 10px; }
+.tl--vertical [data-track="-1"] .tl-connector,
+.tl--vertical [data-track="-2"] .tl-connector { right: 10px; }
+
+/* Card: date always visible, title strong, detail opens on focus */
+.tl-card {
+  position: absolute;
+  display: block;
+  width: 230px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--color-rule, #d4cba2);
+  border-radius: 12px;
+  background: var(--color-surface, #fbf7df);
+  transition: border-color var(--tl-duration) var(--tl-ease),
+              box-shadow var(--tl-duration) var(--tl-ease);
+}
+.tl--horizontal [data-track="1"] .tl-card { bottom: 44px; left: -14px; }
+.tl--horizontal [data-track="2"] .tl-card { bottom: 168px; left: -14px; }
+.tl--horizontal [data-track="-1"] .tl-card { top: 44px; left: -14px; }
+.tl--horizontal [data-track="-2"] .tl-card { top: 168px; left: -14px; }
+.tl--horizontal [data-track="1"] .tl-connector { height: 34px; }
+.tl--horizontal [data-track="2"] .tl-connector { height: 158px; }
+.tl--horizontal [data-track="-1"] .tl-connector { height: 34px; }
+.tl--horizontal [data-track="-2"] .tl-connector { height: 158px; }
+.tl--vertical [data-track="1"] .tl-card { left: 48px; top: -14px; }
+.tl--vertical [data-track="-1"] .tl-card { right: 48px; top: -14px; }
+.tl--vertical [data-track="1"] .tl-connector { width: 38px; }
+.tl--vertical [data-track="-1"] .tl-connector { width: 38px; }
+
+.tl-date {
+  display: block;
+  font: 700 14px/1 ui-monospace, monospace;
+  letter-spacing: .08em;
+  color: var(--color-accent, #a34f38);
+  margin-bottom: 6px;
+}
+.tl-title { display: block; font-weight: 700; font-size: 18px; line-height: 1.2; }
+.tl-detail {
+  display: block;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--color-muted, #70615c);
+  transition: max-height var(--tl-duration) var(--tl-ease),
+              opacity var(--tl-duration) var(--tl-ease),
+              margin-top var(--tl-duration) var(--tl-ease);
+}
+
+/* Focus states: focused event opens, others recede but stay legible */
+.tl-event:not(.is-focused) { opacity: var(--tl-recede); }
+.tl-event.is-focused { opacity: 1; z-index: 2; }
+.tl-event.is-focused .tl-dot {
+  background: var(--color-accent, #a34f38);
+  border-color: var(--color-accent, #a34f38);
+}
+.tl-event.is-focused .tl-card {
+  border-color: var(--color-ink, #2d2624);
+  box-shadow: 0 16px 38px color-mix(in srgb, var(--color-ink, #2d2624) 16%, transparent);
+}
+.tl-event.is-focused .tl-detail { max-height: 130px; opacity: 1; margin-top: 8px; }
+.tl-event.is-passed .tl-dot { background: var(--color-ink, #2d2624); }
+.tl-event:focus-visible { outline: none; }
+.tl-event:focus-visible .tl-card {
+  outline: 3px solid var(--color-accent, #a34f38);
+  outline-offset: 3px;
+}
+
+.tl-status {
+  margin: 0;
+  font: 600 15px/1 ui-monospace, monospace;
+  letter-spacing: .06em;
+  color: var(--color-muted, #70615c);
+}
+
+/* Deterministic modes: no glide, everything legible, focused card open */
+.tl--settled .tl-track,
+.tl--settled .tl-event,
+.tl--settled .tl-card,
+.tl--settled .tl-detail,
+.tl--settled .tl-dot {
+  transition: none !important;
+}
+html[data-export="true"] .tl-event:not(.is-focused) { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .tl-track, .tl-event, .tl-card, .tl-detail, .tl-dot { transition: none !important; }
+}

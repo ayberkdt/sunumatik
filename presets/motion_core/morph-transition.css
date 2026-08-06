@@ -1,0 +1,63 @@
+/* Morph transition presets: an element visibly *becomes* its next state
+   instead of being replaced. Use when identity continuity carries meaning —
+   a bar re-sorting, a diagram node expanding into a detail panel, a compact
+   equation growing into its annotated form. Never morph between unrelated
+   content: that implies a false equivalence. */
+
+:root {
+  --morph-duration: 460ms;
+  --morph-ease: cubic-bezier(.24, .8, .22, 1);
+}
+
+/* Elements tracked by morphState() in morph-transition.js.
+   The same data-morph-key before and after the mutation is the identity. */
+[data-morph-key] {
+  will-change: transform, opacity;
+}
+
+/* Entering / leaving elements during a FLIP morph */
+.morph-enter {
+  animation: morph-enter var(--morph-duration) var(--morph-ease) both;
+}
+.morph-leave {
+  animation: morph-leave calc(var(--morph-duration) * .6) var(--morph-ease) both;
+}
+@keyframes morph-enter {
+  from { opacity: 0; transform: translateY(10px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes morph-leave {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* View Transitions API path (viewMorph). Elements opt in with
+   view-transition-name via the data attribute hook below. */
+@supports (view-transition-name: none) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--morph-duration);
+    animation-timing-function: var(--morph-ease);
+  }
+}
+
+/* Deterministic export: no morph runs, final state only. */
+html[data-export="true"] [data-morph-key],
+html[data-export="true"] .morph-enter,
+html[data-export="true"] .morph-leave {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+html[data-export="true"] .morph-leave { display: none !important; }
+
+/* Reduced motion: state changes apply instantly, nothing is lost. */
+@media (prefers-reduced-motion: reduce) {
+  [data-morph-key],
+  .morph-enter,
+  .morph-leave {
+    animation: none !important;
+    transition: none !important;
+  }
+}

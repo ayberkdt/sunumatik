@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "lunar-analytic-orbit",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Show how altitude, eccentricity, and inclination change a Moon-centered Keplerian orbit.",
+      "model": "Two-body Keplerian orbit about the Moon using JPL mean radius and gravitational parameter.",
+      "limitations": "Omits mascons, high-degree gravity, third-body perturbations, maneuvers, attitude, and terrain collision.",
+      "reducedMotion": "Render a fixed phase at 18% of the orbit and retain all metrics.",
+      "exportState": "Freeze at progress 0.18 and hide controls.",
+      "accessibility": "The figure has a concise model summary; controls use labels and keyboard-operable native elements.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

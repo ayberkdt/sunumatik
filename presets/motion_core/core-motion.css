@@ -1,0 +1,51 @@
+:root {
+  --motion-duration: 420ms;
+  --motion-ease: cubic-bezier(.22, .8, .24, 1);
+}
+
+[data-motion] {
+  will-change: opacity, transform, clip-path;
+}
+
+/* Initial hidden states apply only when the runtime has announced itself
+   (html.js, set by a tiny inline script). If JavaScript never runs — file://
+   module blocking, a failed import, a strict CSP — content stays visible
+   instead of leaving a blank slide. */
+html.js [data-motion="reveal"],
+html.js [data-motion="rise"] {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+html.js [data-motion="comparison-wipe"] {
+  clip-path: inset(0 100% 0 0);
+}
+
+html.js [data-motion="focus"] {
+  opacity: .35;
+  transform: scale(.985);
+}
+
+[data-motion].is-settled {
+  opacity: 1;
+  transform: none;
+  clip-path: inset(0 0 0 0);
+}
+
+html[data-export="true"] [data-motion] {
+  animation: none !important;
+  transition: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  clip-path: inset(0 0 0 0) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-motion] {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: inset(0 0 0 0) !important;
+  }
+}

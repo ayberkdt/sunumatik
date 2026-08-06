@@ -1,0 +1,4 @@
+interface:
+  display_name: "HTML Bilim Sunumu Üretimi"
+  short_description: "Statik veya React tabanlı bilim deckleri üretir"
+  default_prompt: "Use $build-html-science-deck to build an offline-ready HTML presentation from this approved outline and theme."

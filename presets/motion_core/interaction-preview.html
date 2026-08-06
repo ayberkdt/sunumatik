@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Interaction + Morph Presets</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="core-motion.css">
+  <link rel="stylesheet" href="interaction-motion.css">
+  <link rel="stylesheet" href="morph-transition.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --color-canvas: #f3eec8; --color-surface: #fbf7df; --color-ink: #473835;
+      --color-muted: #70615c; --color-accent: #a34f38; --color-accent-ink: #fff8e8;
+      --color-data-1: #617552; --color-data-2: #4f7488; --color-rule: #d4cba2;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 5vw; background: var(--color-canvas); color: var(--color-ink);
+           font: 500 19px/1.4 ui-sans-serif, system-ui, sans-serif; }
+    main { max-width: 1000px; margin: auto; display: grid; gap: 44px; }
+    h1 { font-size: 46px; line-height: 1; margin: 0; letter-spacing: -.02em; }
+    h2 { font-size: 15px; letter-spacing: .14em; text-transform: uppercase; color: var(--color-muted); margin: 0 0 14px; }
+    section { border-top: 2px solid var(--color-ink); padding-top: 20px; }
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { padding: 22px; border: 1.5px solid var(--color-rule); border-radius: 14px; background: var(--color-surface); }
+    .hover-note { display: block; margin-top: 10px; font-size: 15px; color: var(--color-muted); }
+    ol.legend { list-style: none; display: flex; gap: 22px; margin: 0 0 14px; padding: 0; font-weight: 700; }
+    ol.legend .swatch { display: inline-block; width: 20px; height: 8px; border-radius: 2px; margin-right: 7px; }
+    .bars { display: grid; gap: 10px; }
+    .bar { height: 40px; border-radius: 6px; display: flex; align-items: center; padding: 0 14px;
+           color: #fff8f1; font-weight: 700; font-size: 16px; }
+    button { border: 1.5px solid var(--color-ink); border-radius: 999px; background: var(--color-ink);
+             color: var(--color-surface); padding: 10px 20px; font: 600 16px/1 inherit; cursor: pointer; }
+    button + button { margin-left: 10px; background: transparent; color: var(--color-ink); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 data-motion="reveal">Interaction is commentary.</h1>
+
+    <section>
+      <h2>Hover presets — lift · underline · annotate</h2>
+      <div class="cards">
+        <div class="card" data-hover="lift" tabindex="0">Lift acknowledges a pointer on an interactive panel.</div>
+        <div class="card">An <span data-hover="underline" tabindex="0">underlined term</span> traces its rule on hover or focus.</div>
+        <div class="card" data-hover="annotate" tabindex="0">Annotate deepens on demand.
+          <span class="hover-note">Provenance: illustrative sample, n = 128, 2026-08.</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Linked highlight — legend dims sibling series</h2>
+      <ol class="legend" data-hover-group id="legend">
+        <li data-hover-member data-series="obs"><span class="swatch" style="background:var(--color-data-1)"></span>Observed</li>
+        <li data-hover-member data-series="model"><span class="swatch" style="background:var(--color-data-2)"></span>Model</li>
+        <li data-hover-member data-series="proj"><span class="swatch" style="background:var(--color-accent)"></span>Projected</li>
+      </ol>
+      <div class="bars" data-hover-group data-hover-link="#legend">
+        <div class="bar" data-hover-member data-series="obs" style="width:82%;background:var(--color-data-1)">Observed 0.82</div>
+        <div class="bar" data-hover-member data-series="model" style="width:74%;background:var(--color-data-2)">Model 0.74</div>
+        <div class="bar" data-hover-member data-series="proj" style="width:58%;background:var(--color-accent)">Projected 0.58</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Morph — the same bars, re-sorted (FLIP)</h2>
+      <div class="bars" id="morph-target">
+        <div class="bar" data-morph-key="c" style="width:46%;background:var(--color-data-2)">Candidate C — 0.46</div>
+        <div class="bar" data-morph-key="a" style="width:88%;background:var(--color-data-1)">Candidate A — 0.88</div>
+        <div class="bar" data-morph-key="b" style="width:63%;background:var(--color-accent)">Candidate B — 0.63</div>
+      </div>
+      <p><button id="sort">Sort by value</button><button id="shuffle">Original order</button></p>
+    </section>
+
+    <section>
+      <h2>Staged reveal — revealStage() with 110 ms stagger</h2>
+      <div class="cards" id="stage" data-stagger="110">
+        <div class="card" data-motion="reveal">Claim</div>
+        <div class="card" data-motion="reveal">Evidence</div>
+        <div class="card" data-motion="reveal">Implication</div>
+      </div>
+      <p><button id="replay">Replay stage</button></p>
+    </section>
+  </main>
+  <script type="module">
+    import { revealStage } from './core-motion.js';
+    import { initInteractions } from './interaction-motion.js';
+    import { morphState } from './morph-transition.js';
+
+    initInteractions();
+
+    const target = document.querySelector('#morph-target');
+    const orderBars = keys => morphState(target, () => {
+      keys.forEach(key => target.appendChild(target.querySelector(`[data-morph-key="${key}"]`)));
+    });
+    document.querySelector('#sort').addEventListener('click', () => orderBars(['a', 'b', 'c']));
+    document.querySelector('#shuffle').addEventListener('click', () => orderBars(['c', 'a', 'b']));
+
+    const stage = document.querySelector('#stage');
+    document.querySelector('#replay').addEventListener('click', () => revealStage(stage));
+    revealStage(stage);
+  </script>
+</body>
+</html>

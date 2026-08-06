@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "lunaris-illustrative-flight",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "Provide an explorable cinematic Moon scene with trajectory playback, prediction path, attitude slew, and visible burn windows.",
+      "limitations": "The imported 1200-sample path and burn windows are a visual prototype, not a mission ephemeris, NRHO solution, navigation product, or high-fidelity lunar propagation.",
+      "reducedMotion": "Freeze the trajectory at progress 0.18, stop Moon and camera rotation, and keep every control and truth label readable.",
+      "exportState": "Freeze at progress 0.18, remove stars and controls, and retain the truth label.",
+      "accessibility": "Native controls have labels, the figure is keyboard focusable, and visible text states the model status and limitations.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

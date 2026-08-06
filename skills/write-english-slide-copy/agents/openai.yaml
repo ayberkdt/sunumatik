@@ -1,0 +1,4 @@
+interface:
+  display_name: "İngilizce Sunum Metni Uzmanı"
+  short_description: "Kısa ve doğru İngilizce slayt metni yazar"
+  default_prompt: "Use $write-english-slide-copy to rewrite this presentation in concise and precise English."

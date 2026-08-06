@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bilim Sunumu Dönüşümü"
+  short_description: "PPTX, PDF ve eski deckleri HTML sistemine taşır"
+  default_prompt: "Use $convert-science-presentation to convert this academic PPTX into the science HTML deck schema."

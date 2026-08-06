@@ -1,0 +1,130 @@
+/* Neural network preset styles. Inherits deck theme tokens:
+   --color-canvas, --color-ink, --color-muted, --color-accent,
+   --color-data-1 (positive), --color-data-2 (negative), --color-rule.
+   No glow, no neon: sign and magnitude are encoded with color, width,
+   and fill-opacity, all readable on a projector. */
+
+.nn-preset {
+  display: grid;
+  gap: 20px;
+}
+
+.nn-preset svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Links: width = |weight| (set inline), color = sign */
+.nn-link {
+  stroke: var(--color-rule, #b9b2a4);
+  opacity: .55;
+  transition: opacity .2s ease;
+}
+.nn-link.is-positive { stroke: var(--color-data-1, #617552); }
+.nn-link.is-negative { stroke: var(--color-data-2, #4f7488); stroke-dasharray: 7 4; }
+
+/* One dash pulse per forward step; direction reads source → target */
+.nn-links.is-firing .nn-link {
+  opacity: 1;
+  stroke-dasharray: 14 10;
+  animation: nn-pulse .6s linear;
+}
+@keyframes nn-pulse {
+  from { stroke-dashoffset: 48; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* Cells */
+.nn-cell-ring {
+  fill: var(--color-canvas, #fff);
+  stroke: var(--color-ink, #2d2624);
+  stroke-width: 2;
+}
+.nn-cell-core {
+  fill: var(--color-data-1, #617552);
+  fill-opacity: 0;
+  transition: fill-opacity .38s ease;
+}
+.nn-cell.is-negative .nn-cell-core { fill: var(--color-data-2, #4f7488); }
+.nn-cell.is-idle .nn-cell-ring { stroke: var(--color-muted, #70615c); stroke-dasharray: 4 4; }
+.nn-cell.is-firing .nn-cell-ring { stroke: var(--color-accent, #a34f38); stroke-width: 3; }
+.nn-cell.is-settled .nn-cell-ring { stroke: var(--color-ink, #2d2624); stroke-dasharray: none; }
+
+.nn-cell-value {
+  font: 600 13px/1 ui-monospace, "IBM Plex Mono", monospace;
+  fill: var(--color-ink, #2d2624);
+  paint-order: stroke;
+  stroke: var(--color-canvas, #fff);
+  stroke-width: 3px;
+}
+
+.nn-layer-label {
+  font: 600 17px/1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  fill: var(--color-muted, #70615c);
+}
+
+/* Controls: opaque, matte, keyboard friendly, outside the data region */
+.nn-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1.5px solid var(--color-rule, #b9b2a4);
+  border-radius: 12px;
+  background: var(--color-surface, #fbf7df);
+}
+.nn-controls button {
+  border: 1.5px solid var(--color-ink, #2d2624);
+  border-radius: 999px;
+  background: var(--color-ink, #2d2624);
+  color: var(--color-surface, #fbf7df);
+  padding: 8px 18px;
+  font: 600 15px/1 inherit;
+  cursor: pointer;
+}
+.nn-controls button[data-secondary] {
+  background: transparent;
+  color: var(--color-ink, #2d2624);
+}
+.nn-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 15px/1 inherit;
+  color: var(--color-ink, #2d2624);
+}
+.nn-controls :focus-visible {
+  outline: 3px solid var(--color-accent, #a34f38);
+  outline-offset: 2px;
+}
+
+/* Truth-level badge: always visible near the figure */
+.nn-truth {
+  justify-self: start;
+  font: 600 13px/1 ui-monospace, monospace;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--color-muted, #70615c);
+  border: 1px solid var(--color-rule, #b9b2a4);
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+
+/* Deterministic modes */
+@media (prefers-reduced-motion: reduce) {
+  .nn-link, .nn-cell-core, .nn-links.is-firing .nn-link {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+html[data-export="true"] .nn-link,
+html[data-export="true"] .nn-cell-core,
+html[data-export="true"] .nn-links.is-firing .nn-link {
+  animation: none !important;
+  transition: none !important;
+}
+html[data-export="true"] .nn-controls { display: none; }

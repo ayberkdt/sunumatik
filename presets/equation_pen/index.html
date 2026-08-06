@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Equation Writing Preset</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <link rel="stylesheet" href="equation-writing.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --color-canvas: #f3eec8; --color-surface: #fbf7df; --color-ink: #473835;
+      --color-muted: #70615c; --color-accent: #a34f38; --color-rule: #d4cba2;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 5vw; background: var(--color-canvas); color: var(--color-ink);
+           font: 500 19px/1.4 ui-sans-serif, system-ui, sans-serif; }
+    main { max-width: 900px; margin: auto; display: grid; gap: 36px; }
+    h1 { font-size: 44px; line-height: 1; margin: 0; letter-spacing: -.02em; }
+    p.lede { margin: 0; color: var(--color-muted); max-width: 62ch; }
+    .board { padding: 44px 48px; background: var(--color-surface); border: 1.5px solid var(--color-rule);
+             border-radius: 16px; display: grid; gap: 26px; }
+    .eq-write { font: 500 40px/1.35 "STIX Two Math", "Cambria Math", Cambria, serif; }
+    .eq-write sup { font-size: .62em; }
+    .eq-note { font-size: 17px; color: var(--color-muted); }
+    .toolbar button { border: 1.5px solid var(--color-ink); border-radius: 999px; background: var(--color-ink);
+             color: var(--color-surface); padding: 10px 20px; font: 600 16px/1 ui-sans-serif, system-ui; cursor: pointer; }
+    .toolbar button + button { margin-left: 10px; background: transparent; color: var(--color-ink); }
+    svg.annot { display: block; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Written, not pasted</h1>
+    <p class="lede">Each token appears in reading order behind a gliding pen. In export and
+       reduced-motion modes the full equation simply stands there — the flourish is never load-bearing.</p>
+
+    <div class="board">
+      <div class="eq-write" id="kepler" aria-label="Kepler's third law: T squared equals four pi squared a cubed over G M">
+        <span data-ink>T<sup>2</sup></span>
+        <span data-ink>=</span>
+        <span data-ink>4π<sup>2</sup></span>
+        <span data-ink>a<sup>3</sup></span>
+        <span data-ink>/</span>
+        <span data-ink>GM</span>
+      </div>
+      <div class="eq-write" id="steps2" aria-label="v squared equals G M times two over r minus one over a">
+        <span data-ink>v<sup>2</sup></span>
+        <span data-ink>=</span>
+        <span data-ink>GM</span>
+        <span data-ink>(</span>
+        <span data-ink>2/r</span>
+        <span data-ink>−</span>
+        <span data-ink>1/a</span>
+        <span data-ink>)</span>
+      </div>
+      <div class="eq-write" id="stroked" aria-label="hand-drawn integral sign with annotation arrow">
+        <svg class="annot" viewBox="0 0 320 90" width="320" height="90">
+          <path data-ink data-stroke d="M46 78 C30 84 24 70 34 64 C44 58 50 66 44 72 M44 72 C52 40 60 24 74 12 C84 4 94 10 88 18 C82 26 72 20 76 12" stroke-width="3"/>
+          <text data-ink x="104" y="52" font-size="34" font-family="STIX Two Math, Cambria Math, serif">f(x) dx</text>
+          <path data-ink data-stroke d="M226 40 C252 24 280 26 300 44" stroke-width="2.4"/>
+          <path data-ink data-stroke d="M292 34 L302 45 L288 48" stroke-width="2.4"/>
+        </svg>
+        <span class="eq-note">Stroked units (<code>data-stroke</code>) draw like real pen strokes.</span>
+      </div>
+      <div class="toolbar">
+        <button id="replay">Write sequence</button>
+        <button id="settle">Settle instantly</button>
+      </div>
+    </div>
+  </main>
+  <script type="module">
+    import { writeSequence } from './equation-writing.mjs';
+    const roots = ['#kepler', '#steps2', '#stroked'].map(s => document.querySelector(s));
+    let run = writeSequence(roots);
+    document.querySelector('#replay').addEventListener('click', () => { run.cancel(); run = writeSequence(roots); });
+    document.querySelector('#settle').addEventListener('click', () => run.settle());
+    addEventListener('keydown', e => { if (e.key === 'Escape') run.settle(); });
+  </script>
+</body>
+</html>

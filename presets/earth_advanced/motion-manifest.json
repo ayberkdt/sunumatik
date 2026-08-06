@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "terra-city-tour",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Guide attention across eight real cities: the globe rotates each city to face the camera, draws the great-circle route, and shows name, country, and exact coordinates.",
+      "model": "City positions use real WGS84 coordinates mapped onto the textured sphere; routes are geometric great circles; flight timing and camera choreography are presentational.",
+      "limitations": "Tour pacing, camera moves, and route lift are presentation choices; the terminator position follows the scene's fixed sun, not the current date and time.",
+      "reducedMotion": "İstanbul faces the camera immediately; no flights, no auto-advance; coordinates remain readable.",
+      "exportState": "Freeze with city index 0 facing the camera, satellite at a fixed phase, stars hidden per export policy, controls hidden.",
+      "accessibility": "Native buttons drive the tour; N advances, Escape ends the tour, Space pauses rotation; the caption reports city name, country, and coordinates as text.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "terra-satellite-orbit",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "Add scale and motion context: a small spacecraft circles on a 51.6-degree-inclined orbit with a fading trail.",
+      "model": "Circular inclined orbit computed analytically for display; radius and period chosen for legibility, not physics.",
+      "limitations": "Not a real ephemeris: altitude, period, and ground track are illustrative; no perturbations or attitude dynamics.",
+      "reducedMotion": "Satellite renders at a fixed orbital phase with its trail visible.",
+      "exportState": "Satellite frozen at phase 1.2 rad with deterministic trail.",
+      "accessibility": "The satellite is decorative context; all information it suggests is restated as text in the caption.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sol — tek başına kullanım örneği</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <!-- Sol'u HERHANGİ bir sayfaya koymanın tam tarifi bu üç bağlantıdır:
+       1) import map: "three" vendor dosyasını göstersin (yanında
+          three.core.min.js da durur — ikisi birlikte gerekir),
+       2) lunaris preset CSS'i,
+       3) sol-sun.mjs'ten mountSol import'u.
+       Yollar bu sayfanın konumuna göredir; sayfayı başka klasöre
+       taşırsan sadece bu üç yolu güncelle. HTTP üzerinden sun
+       (file:// ES modülleri yükleyemez — sunumu-baslat.cmd yeterli). -->
+  <script type="importmap">{ "imports": { "three": "../presets/moon_advanced/vendor/three.module.min.js" } }</script>
+  <link rel="stylesheet" href="../presets/moon_react_source/components/moon_react_source.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #020308; }
+    main { width: 100%; height: 100%; padding: 24px; }
+    main > div { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <main><div id="host"></div></main>
+  <script type="module">
+    import { mountSol } from '../presets/sun_advanced/sol-sun.mjs';
+    const sol = await mountSol(document.querySelector('#host'));
+    window.__sol = sol;
+    sol.figure.focus();
+  </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Bilimsel Sunum Orkestrasyonu"
+  short_description: "Bilimsel sunum üretim akışını yönlendirir"
+  default_prompt: "Use $orchestrate-science-presentation to plan an academic space-science presentation from brief to verified delivery."
+policy:
+  allow_implicit_invocation: true

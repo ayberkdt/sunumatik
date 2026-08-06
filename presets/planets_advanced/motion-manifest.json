@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "planetae-switch",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Move attention between seven planets with a scale-and-fade crossfade while the fact panel updates to the selected planet's real values.",
+      "model": "Axial tilts and fact-panel values come from NASA planetary fact sheets; textures are Solar System Scope CC BY 4.0 photographic maps; the transition choreography is presentational.",
+      "limitations": "Planets render at unit radius, so sizes are not comparable; lighting is shared and illustrative; moon counts are approximate and change with discoveries.",
+      "reducedMotion": "The selected planet appears instantly with no crossfade; facts remain readable.",
+      "exportState": "Freeze on Mars with atmosphere and rings visible, stars hidden, controls hidden.",
+      "accessibility": "Planet buttons are native buttons; arrow keys switch planets inside the focused figure; all facts are text in the panel and caption.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "planetae-gas-giant-dynamics",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "Give the gas giants living atmospheres: counter-rotating zonal bands with shear turbulence, Jupiter's Great Red Spot anticyclone, Saturn's north-polar hexagon and ring shadows, Neptune's transient dark spot and racing cirrus, and Galilean/Titan moons whose shadows transit the disc.",
+      "model": "Band structure alternates direction with latitude (real zonal-jet organization); GRS is a fixed-longitude vortex warp; the hexagon follows a six-fold polar boundary; moon periods use the real 1:2:4:9.4 Galilean ratios; moon and ring shadows are exact ray projections along the scene sun direction.",
+      "limitations": "Wind speeds, vortex strength, storm timing, and moon sizes/distances are display-scaled; cloud detail is texture warping, not fluid simulation.",
+      "reducedMotion": "Atmospheres and moons freeze at noise time 31.7 with shadows rendered at that instant.",
+      "exportState": "Same frozen tableau at time 31.7; deterministic seeded moon phases.",
+      "accessibility": "All dynamic phenomena are named in the caption as text; the moons toggle disables satellites and their shadows entirely.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "planetae-spin",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "Give each planet a visible rotation whose relative rate follows its real day length — Jupiter visibly outpaces Venus.",
+      "model": "Visual spin rate is proportional to 24 hours divided by the planet's real rotation period, clamped for legibility; retrograde spin for Venus and Uranus emerges from their real axial tilts (177.4 and 97.8 degrees).",
+      "limitations": "Absolute speeds are sped up enormously for display; only the ordering and retrograde character are faithful.",
+      "reducedMotion": "Planets render as a fixed frame with no spin.",
+      "exportState": "Spin frozen at the mounted orientation.",
+      "accessibility": "Space pauses, Escape stops; the spin carries no information that the fact panel does not state as text.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

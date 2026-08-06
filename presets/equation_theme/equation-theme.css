@@ -1,0 +1,28 @@
+:root {
+  --eq-text: var(--text-primary, #f4f1e8);
+  --eq-muted: var(--text-secondary, #aeb7c6);
+  --eq-accent: var(--accent, #62cbd0);
+  --eq-surface: color-mix(in srgb, var(--surface, #101827) 88%, transparent);
+  --eq-rule: color-mix(in srgb, var(--eq-text) 18%, transparent);
+  --eq-display-size: 64px;
+  --eq-support-size: 42px;
+}
+
+.equation-block {
+  color: var(--eq-text);
+  font-size: var(--eq-display-size);
+  line-height: 1.35;
+  padding: 32px 40px;
+  background: var(--eq-surface);
+  border-inline-start: 4px solid var(--eq-accent);
+  overflow: visible;
+}
+
+.equation-block[data-size="support"] { font-size: var(--eq-support-size); }
+.equation-number { color: var(--eq-muted); font-variant-numeric: tabular-nums; }
+.equation-explanation { color: var(--eq-muted); font-size: 30px; line-height: 1.45; }
+
+@media (prefers-reduced-motion: reduce) {
+  .equation-block * { animation: none !important; transition: none !important; }
+}
+

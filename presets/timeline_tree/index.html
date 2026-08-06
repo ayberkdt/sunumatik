@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Chronology Timeline Preset</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <link rel="stylesheet" href="timeline_tree.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --color-canvas: #f3eec8; --color-surface: #fbf7df; --color-ink: #473835;
+      --color-muted: #70615c; --color-accent: #a34f38;
+      --color-data-1: #617552; --color-data-2: #4f7488; --color-rule: #d4cba2;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 4vw; background: var(--color-canvas); color: var(--color-ink);
+           font: 500 18px/1.4 ui-sans-serif, system-ui, sans-serif; }
+    main { max-width: 1200px; margin: auto; display: grid; gap: 20px; }
+    h1 { font-size: 44px; line-height: 1; margin: 0; letter-spacing: -.02em; }
+    p.lede { margin: 0; color: var(--color-muted); max-width: 66ch; }
+    .toolbar { display: flex; gap: 10px; }
+    .toolbar button { border: 1.5px solid var(--color-ink); border-radius: 999px; background: transparent;
+                      color: var(--color-ink); padding: 9px 18px; font: 600 15px/1 inherit; cursor: pointer; }
+    .toolbar button[aria-pressed="true"] { background: var(--color-ink); color: var(--color-surface); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Lunar exploration, one focus at a time</h1>
+    <p class="lede">Click an event, use ← → (or ↑ ↓ vertically), or scroll: the track glides so the
+       focused event stays centered. Missions ride above the axis, science results below.</p>
+    <div class="toolbar">
+      <button id="h" aria-pressed="true">Horizontal</button>
+      <button id="v" aria-pressed="false">Vertical</button>
+    </div>
+    <div id="timeline" tabindex="0"></div>
+  </main>
+  <script type="module">
+    import { mountTimeline } from './timeline_tree.mjs';
+
+    const events = [
+      { id: 'luna2', date: '1959', title: 'Luna 2 impacts the Moon', detail: 'First human-made object to reach another body.', track: 1 },
+      { id: 'apollo8', date: '1968', title: 'Apollo 8 orbits the Moon', detail: 'First crewed lunar orbit; Earthrise photograph.', track: 1 },
+      { id: 'apollo11', date: '1969', title: 'Apollo 11 lands', detail: 'First crewed landing; 21.6 kg of samples returned.', track: 1 },
+      { id: 'samples', date: '1970s', title: 'Sample analyses reshape lunar origin models', detail: 'Anorthosite crust and magma-ocean hypothesis emerge.', track: -1 },
+      { id: 'luna24', date: '1976', title: 'Luna 24 returns samples', detail: 'Last mission of the first exploration era.', track: 1 },
+      { id: 'clementine', date: '1994', title: 'Clementine maps the Moon', detail: 'Global multispectral mapping; polar hydrogen hints.', track: 1 },
+      { id: 'water', date: '2009', title: 'LCROSS confirms polar water ice', detail: 'Impact plume shows water in permanently shadowed craters.', track: -1 },
+      { id: 'change4', date: '2019', title: "Chang'e 4 lands on the far side", detail: 'First soft landing on the lunar far side.', track: 1 },
+      { id: 'artemis1', date: '2022', title: 'Artemis I flies', detail: 'Uncrewed Orion loops the Moon; new program era.', track: 1 },
+    ];
+    const eras = [
+      { from: 0, to: 4, label: 'First era' },
+      { from: 5, to: 8, label: 'Return era' },
+    ];
+
+    let api;
+    const mount = orientation => {
+      const host = document.querySelector('#timeline');
+      host.replaceChildren();
+      host.className = '';
+      api = mountTimeline(host, { events, eras, orientation, ariaLabel: 'Lunar exploration chronology' });
+    };
+    mount('horizontal');
+    document.querySelector('#h').addEventListener('click', e => { mount('horizontal'); toggle(e.target); });
+    document.querySelector('#v').addEventListener('click', e => { mount('vertical'); toggle(e.target); });
+    const toggle = active => document.querySelectorAll('.toolbar button')
+      .forEach(b => b.setAttribute('aria-pressed', String(b === active)));
+  </script>
+</body>
+</html>

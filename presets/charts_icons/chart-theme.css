@@ -1,0 +1,199 @@
+/* Chart theme for SVG charts on the 1920x1080 fixed stage.
+   Library-agnostic: apply the classes to hand-built SVG, D3 output, or any
+   renderer that lets you set class names. Consumes the deck palette tokens
+   and extends them with a six-slot series scale.
+
+   Series slots 1–2 come from the active palette; 3–6 are fixed
+   color-blind-considered fallbacks tuned for light canvases. Override
+   per-theme when the deck defines more data colors. */
+
+:root {
+  --chart-series-1: var(--color-data-1, #617552);
+  --chart-series-2: var(--color-data-2, #4f7488);
+  --chart-series-3: #b0791f;
+  --chart-series-4: #7d5185;
+  --chart-series-5: #4a8577;
+  --chart-series-6: #9a5b44;
+
+  --chart-font: ui-sans-serif, system-ui, sans-serif;
+  --chart-mono: ui-monospace, "IBM Plex Mono", monospace;
+  --chart-label-size: 22px;
+  --chart-tick-size: 20px;
+  --chart-annotation-size: 21px;
+}
+
+.sci-chart { font-family: var(--chart-font); }
+
+/* Axes: visible but quiet — data carries the ink */
+.sci-chart .axis path,
+.sci-chart .axis line {
+  stroke: color-mix(in srgb, var(--color-ink, #2d2624) 62%, var(--color-canvas, #fff));
+  stroke-width: 1.5;
+  fill: none;
+}
+.sci-chart .axis text,
+.sci-chart .tick text {
+  fill: var(--color-ink, #2d2624);
+  font-size: var(--chart-tick-size);
+  font-variant-numeric: tabular-nums;
+}
+.sci-chart .axis-title {
+  fill: var(--color-ink, #2d2624);
+  font-size: var(--chart-label-size);
+  font-weight: 600;
+}
+.sci-chart .axis-unit {
+  fill: var(--color-muted, #70615c);
+  font-size: calc(var(--chart-tick-size) * .9);
+}
+
+/* Gridlines: hairline, rule color, horizontal preferred */
+.sci-chart .grid line {
+  stroke: var(--color-rule, #d4cba2);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.sci-chart .grid path { display: none; }
+
+/* Series color slots */
+.sci-chart [data-series-slot="1"] { --series-color: var(--chart-series-1); }
+.sci-chart [data-series-slot="2"] { --series-color: var(--chart-series-2); }
+.sci-chart [data-series-slot="3"] { --series-color: var(--chart-series-3); }
+.sci-chart [data-series-slot="4"] { --series-color: var(--chart-series-4); }
+.sci-chart [data-series-slot="5"] { --series-color: var(--chart-series-5); }
+.sci-chart [data-series-slot="6"] { --series-color: var(--chart-series-6); }
+
+.sci-chart .series-line {
+  stroke: var(--series-color, var(--chart-series-1));
+  stroke-width: 3.5;
+  fill: none;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.sci-chart .series-marker {
+  fill: var(--series-color, var(--chart-series-1));
+  stroke: var(--color-canvas, #fff);
+  stroke-width: 1.5;
+}
+.sci-chart .series-bar {
+  fill: var(--series-color, var(--chart-series-1));
+}
+
+/* Epistemic line styles: observed solid, fitted dashed, projected dotted.
+   Marker shape should also vary — style is redundant with, not instead of, labels. */
+.sci-chart .series-line.is-fitted    { stroke-dasharray: 10 7; }
+.sci-chart .series-line.is-projected { stroke-dasharray: 2 7; }
+.sci-chart .series-line.is-simulated { stroke-dasharray: 16 6 3 6; }
+
+/* Uncertainty: filled band for intervals, whiskers for point errors */
+.sci-chart .uncertainty-band {
+  fill: var(--series-color, var(--chart-series-1));
+  fill-opacity: .16;
+  stroke: none;
+}
+.sci-chart .error-bar {
+  stroke: var(--series-color, var(--chart-series-1));
+  stroke-width: 2;
+}
+
+/* Reference lines and thresholds: accent, labelled, never unexplained */
+.sci-chart .ref-line {
+  stroke: var(--color-accent, #a34f38);
+  stroke-width: 2;
+  stroke-dasharray: 7 6;
+}
+.sci-chart .ref-label {
+  fill: var(--color-accent, #a34f38);
+  font-size: var(--chart-annotation-size);
+  font-weight: 600;
+}
+
+/* Direct labels beat legends when there is room */
+.sci-chart .direct-label {
+  fill: var(--series-color, var(--color-ink, #2d2624));
+  font-size: var(--chart-annotation-size);
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--color-canvas, #fff);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+.sci-chart .annotation {
+  fill: var(--color-muted, #70615c);
+  font-size: var(--chart-annotation-size);
+}
+.sci-chart .annotation-arrow {
+  stroke: var(--color-muted, #70615c);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+/* Legend (HTML, outside the plot region) */
+.sci-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  font: 600 var(--chart-annotation-size) / 1.2 var(--chart-font);
+  color: var(--color-ink, #2d2624);
+}
+.sci-chart-legend .swatch {
+  display: inline-block;
+  width: 22px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 8px;
+  vertical-align: middle;
+  background: var(--series-color, var(--chart-series-1));
+}
+
+/* Hover dimming: pairs with interaction presets — a hovered series keeps
+   full ink while siblings drop back. Also driven by data-dimmed from
+   linkHoverHighlight for legend↔chart coupling. */
+@media (hover: hover) {
+  .sci-chart[data-hover-dim] [data-series]:not(:hover),
+  .sci-chart [data-series][data-dimmed="true"] {
+    transition: opacity 200ms cubic-bezier(.3, .7, .3, 1);
+  }
+  .sci-chart[data-hover-dim]:hover [data-series]:not(:hover),
+  .sci-chart [data-series][data-dimmed="true"] {
+    opacity: .3;
+  }
+}
+
+/* Tooltip: opaque matte panel, never glass */
+.sci-chart-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--color-surface, #fbf7df);
+  color: var(--color-ink, #2d2624);
+  border: 1.5px solid var(--color-ink, #2d2624);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font: 600 20px/1.35 var(--chart-mono);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--color-ink, #2d2624) 20%, transparent);
+}
+.sci-chart-tooltip .tooltip-unit { color: var(--color-muted, #70615c); }
+
+/* Caption block under the figure: takeaway + provenance */
+.sci-chart-caption {
+  font: 600 var(--chart-label-size) / 1.35 var(--chart-font);
+  color: var(--color-ink, #2d2624);
+}
+.sci-chart-caption .provenance {
+  display: block;
+  font-size: calc(var(--chart-label-size) * .68);
+  font-weight: 500;
+  color: var(--color-muted, #70615c);
+  margin-top: 6px;
+}
+
+/* Deterministic modes */
+html[data-export="true"] .sci-chart [data-series],
+html[data-export="true"] .sci-chart-tooltip {
+  transition: none !important;
+  opacity: 1 !important;
+}
+html[data-export="true"] .sci-chart-tooltip { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .sci-chart [data-series] { transition: none !important; }
+}

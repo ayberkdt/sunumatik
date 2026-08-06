@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "equation-handwrite",
+      "type": "reveal",
+      "truthLevel": "illustrative",
+      "purpose": "Reveal an equation token by token in reading order, pacing the audience through the mathematics the way a lecturer writes it on a board.",
+      "model": "Reveal order equals reading order of the typeset equation; no mathematical content is generated or altered by the animation.",
+      "limitations": "Purely presentational pacing; the pen and stroke effects carry no mathematical meaning and are removed in export and reduced-motion modes.",
+      "reducedMotion": "The complete equation renders immediately with no pen and no partial ink.",
+      "exportState": "All ink units visible, pen removed, stroke paths fully drawn.",
+      "accessibility": "The equation root carries a spoken-language aria-label independent of animation state; Escape settles the sequence instantly.",
+      "loop": false,
+      "pauseControl": true,
+      "durationMs": 3200
+    }
+  ]
+}

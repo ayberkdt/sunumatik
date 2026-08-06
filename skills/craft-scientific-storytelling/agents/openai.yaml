@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bilimsel Sunum Hikâyeleştirme"
+  short_description: "Disiplinli ve canlı bir sunum anlatısı kurar"
+  default_prompt: "Use $craft-scientific-storytelling to shape this material into an engaging evidence-led presentation story."

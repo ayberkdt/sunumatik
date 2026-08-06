@@ -1,0 +1,25 @@
+{
+  "textures": {
+    "source": "Solar System Scope texture library (fetched 2026-08-05)",
+    "sourceUrl": "https://www.solarsystemscope.com/textures/",
+    "license": "CC BY 4.0 — attribution required and given in the preset caption",
+    "attribution": "Dokular: Solar System Scope (CC BY 4.0), NASA görüntülerinden türetilmiştir",
+    "files": [
+      "textures/2k_mercury.jpg",
+      "textures/2k_venus_atmosphere.jpg — cloud-top appearance, not the surface",
+      "textures/2k_mars.jpg",
+      "textures/2k_jupiter.jpg",
+      "textures/2k_saturn.jpg",
+      "textures/2k_saturn_ring_alpha.png — radial ring strip with alpha",
+      "textures/2k_uranus.jpg",
+      "textures/2k_neptune.jpg"
+    ]
+  },
+  "facts": {
+    "source": "NASA planetary fact sheets (nssdc.gsfc.nasa.gov/planetary/factsheet), rounded",
+    "note": "Axial tilts, radii, rotation and orbital periods, distances; known-moon counts are as of ~2025 and change with discoveries. Verify before using any value as slide evidence."
+  },
+  "vendorCode": {
+    "note": "Runtime dependencies (three 0.184 + addons) are shared from ../moon_advanced/vendor/."
+  }
+}

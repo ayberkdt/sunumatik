@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bilimsel İçgörü Damıtma"
+  short_description: "Sunum için belirleyici fikirleri seçer"
+  default_prompt: "Use $distill-scientific-insights to identify and rank the ideas this presentation must preserve."

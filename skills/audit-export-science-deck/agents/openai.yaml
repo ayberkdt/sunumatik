@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bilim Sunumu Audit ve Export"
+  short_description: "Sunumu denetler ve güvenilir çıktılar üretir"
+  default_prompt: "Use $audit-export-science-deck to inspect this deck and export verified PDF, PNG, and offline deliverables."

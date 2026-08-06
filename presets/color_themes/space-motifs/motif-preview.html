@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Space Motif Kit</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <style>
+    :root {
+      color-scheme: light;
+      --color-canvas: #f3eec8; --color-surface: #fbf7df; --color-ink: #473835;
+      --color-muted: #70615c; --color-accent: #a34f38;
+      --color-data-1: #617552; --color-data-2: #4f7488; --color-rule: #d4cba2;
+    }
+    body.dark {
+      --color-canvas: #1e223d; --color-surface: #2b3154; --color-ink: #f7f0e3;
+      --color-muted: #c3c7d6; --color-accent: #f54f1f;
+      --color-data-1: #ffd166; --color-data-2: #78c4b4; --color-rule: #454d76;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 5vw; background: var(--color-canvas); color: var(--color-ink);
+           font: 600 18px/1.3 ui-sans-serif, system-ui, sans-serif; transition: background .2s; }
+    h1 { font-size: 40px; margin: 0 0 8px; }
+    p { color: var(--color-muted); margin: 0 0 32px; font-weight: 500; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+    figure { margin: 0; padding: 24px; background: var(--color-surface);
+             border: 1.5px solid var(--color-rule); border-radius: 14px; }
+    figure svg { width: 100%; height: auto; color: var(--color-ink); }
+    figcaption { margin-top: 10px; font: 600 14px/1 ui-monospace, monospace; color: var(--color-muted); }
+    button { margin: 0 0 28px; border: 1.5px solid var(--color-ink); border-radius: 999px;
+             background: transparent; color: var(--color-ink); padding: 10px 20px; font: inherit; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Space motif kit</h1>
+  <p>Line motifs inherit ink via currentColor; accents pick up palette tokens.</p>
+  <button id="mode">Toggle dark palette</button>
+  <div class="grid" id="grid"></div>
+  <script>
+    const ids = ['orbit-arc','orbit-system','planet-ring','moon-terminator','graticule',
+                 'starfield-sparse','reticle','trajectory','spectral-band','ground-station'];
+    fetch('space-motifs.svg').then(r => r.text()).then(text => {
+      document.body.insertAdjacentHTML('beforeend', text);
+      document.querySelector('#grid').innerHTML = ids.map(id =>
+        `<figure><svg viewBox="0 0 240 240" aria-hidden="true"><use href="#${id}"/></svg><figcaption>#${id}</figcaption></figure>`).join('');
+    });
+    document.querySelector('#mode').addEventListener('click', () => document.body.classList.toggle('dark'));
+  </script>
+</body>
+</html>

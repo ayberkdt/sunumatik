@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bilimsel Kanıt ve Kaynak"
+  short_description: "İddiaları, verileri ve kaynakları doğrular"
+  default_prompt: "Use $verify-scientific-evidence to audit the claims, citations, and figure provenance in this deck."

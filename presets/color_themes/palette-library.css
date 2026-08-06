@@ -1,0 +1,108 @@
+:root,
+[data-palette="oat-cocoa"] {
+  --color-canvas: #F3EEC8;
+  --color-surface: #FBF7DF;
+  --color-ink: #473835;
+  --color-muted: #70615C;
+  --color-accent: #A34F38;
+  --color-accent-ink: #FFF8E8;
+  --color-data-1: #617552;
+  --color-data-2: #4F7488;
+  --color-rule: #D4CBA2;
+}
+
+[data-palette="berry-orchid"] {
+  --color-canvas: #EFE9E9;
+  --color-surface: #F8F3F2;
+  --color-ink: #5A2132;
+  --color-muted: #76545F;
+  --color-accent: #A84D6A;
+  --color-accent-ink: #FFF8F5;
+  --color-data-1: #C98B9E;
+  --color-data-2: #7C7054;
+  --color-rule: #D8C7CC;
+}
+
+[data-palette="sage-buttercream"] {
+  --color-canvas: #FFF8DD;
+  --color-surface: #FFD85F;
+  --color-ink: #202B23;
+  --color-muted: #59655C;
+  --color-accent: #FFD85F;
+  --color-accent-ink: #202B23;
+  --color-data-1: #6F8C75;
+  --color-data-2: #B44F37;
+  --color-rule: #D9D3B4;
+}
+
+[data-palette="arctic-mulberry"] {
+  --color-canvas: #BCD3E7;
+  --color-surface: #E8EFF4;
+  --color-ink: #391D30;
+  --color-muted: #644A5D;
+  --color-accent: #783A62;
+  --color-accent-ink: #F8F2F6;
+  --color-data-1: #477C9D;
+  --color-data-2: #A9513A;
+  --color-rule: #91B1CB;
+}
+
+[data-palette="midnight-tangerine"] {
+  --color-canvas: #1E223D;
+  --color-surface: #2B3154;
+  --color-ink: #F7F0E3;
+  --color-muted: #C3C7D6;
+  --color-accent: #F54F1F;
+  --color-accent-ink: #15182B;
+  --color-data-1: #FFD166;
+  --color-data-2: #78C4B4;
+  --color-rule: #454D76;
+}
+
+[data-palette="graphite-ember"] {
+  --color-canvas: #141519;
+  --color-surface: #1E2026;
+  --color-ink: #F1F0EB;
+  --color-muted: #A6A9B1;
+  --color-accent: #E8804A;
+  --color-accent-ink: #1A120B;
+  --color-data-1: #2FA98C;
+  --color-data-2: #B58224;
+  --color-rule: #303339;
+}
+
+[data-palette="porcelain-ink"] {
+  --color-canvas: #F6F4EF;
+  --color-surface: #FFFFFF;
+  --color-ink: #23262B;
+  --color-muted: #656A73;
+  --color-accent: #44599C;
+  --color-accent-ink: #F4F6FC;
+  --color-data-1: #178F6E;
+  --color-data-2: #B0642F;
+  --color-rule: #DCD8CF;
+}
+
+[data-palette="obsidian-champagne"] {
+  --color-canvas: #0F1013;
+  --color-surface: #1A1C21;
+  --color-ink: #F4EEE1;
+  --color-muted: #A9A296;
+  --color-accent: #D3B26A;
+  --color-accent-ink: #191307;
+  --color-data-1: #5590C9;
+  --color-data-2: #C86A40;
+  --color-rule: #2E3037;
+}
+
+[data-palette="verdigris-slate"] {
+  --color-canvas: #152020;
+  --color-surface: #1F2E2C;
+  --color-ink: #ECF3EF;
+  --color-muted: #9FB3AC;
+  --color-accent: #5FBFAE;
+  --color-accent-ink: #0C1B18;
+  --color-data-1: #BA8A2A;
+  --color-data-2: #5B95E8;
+  --color-rule: #31423E;
+}

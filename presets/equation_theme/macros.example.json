@@ -1,0 +1,6 @@
+{
+  "\\vect": "\\boldsymbol{#1}",
+  "\\mat": "\\mathbf{#1}",
+  "\\dd": "\\mathrm{d}",
+  "\\unit": "\\,\\mathrm{#1}"
+}

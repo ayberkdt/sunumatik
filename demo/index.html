@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Preset Kütüphanesi — Test Sunumu</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="importmap">{ "imports": { "three": "../presets/moon_advanced/vendor/three.module.min.js" } }</script>
+  <link rel="stylesheet" href="../presets/moon_react_source/components/moon_react_source.css">
+  <link rel="stylesheet" href="../presets/color_themes/palette-library.css">
+  <link rel="stylesheet" href="../presets/color_themes/components/table-presets.css">
+  <link rel="stylesheet" href="../presets/charts_icons/chart-theme.css">
+  <link rel="stylesheet" href="../presets/motion_core/core-motion.css">
+  <link rel="stylesheet" href="../presets/motion_core/interaction-motion.css">
+  <link rel="stylesheet" href="../presets/motion_core/morph-transition.css">
+  <link rel="stylesheet" href="../presets/motion_core/slide-transitions.css">
+  <link rel="stylesheet" href="../presets/timeline_tree/timeline_tree.css">
+  <link rel="stylesheet" href="../presets/equation_pen/equation-writing.css">
+  <link rel="stylesheet" href="../presets/neural_network/neural_network.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden;
+                 background: #08090b; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    .viewport { position: relative; width: 100%; height: 100%; overflow: hidden; }
+    .deck-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px;
+                  transform-origin: 0 0; overflow: hidden;
+                  background: var(--color-canvas); color: var(--color-ink); }
+    .slide { position: absolute; inset: 0; visibility: hidden; opacity: 0; pointer-events: none;
+             padding: 96px 128px 84px; display: grid; grid-template-rows: auto 1fr auto; gap: 40px;
+             background: var(--color-canvas); }
+    .slide.is-active { visibility: visible; opacity: 1; pointer-events: auto; }
+
+    .kicker { display: flex; align-items: center; gap: 18px; color: var(--color-muted);
+              font-size: 23px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+    .kicker::before { content: ""; width: 64px; height: 6px; background: var(--color-accent); }
+    h1 { max-width: 1360px; margin: 14px 0 0; font-family: "Source Serif 4", Georgia, serif;
+         font-size: 96px; line-height: .99; letter-spacing: -.04em; font-weight: 650; }
+    h2 { max-width: 1360px; margin: 12px 0 0; font-family: "Source Serif 4", Georgia, serif;
+         font-size: 66px; line-height: 1.02; letter-spacing: -.03em; font-weight: 650; }
+    .lede { max-width: 1080px; margin: 0; color: var(--color-muted); font-size: 33px; line-height: 1.4; }
+    .slide-footer { display: flex; justify-content: space-between; align-items: end;
+                    padding-top: 24px; border-top: 2px solid var(--color-rule);
+                    color: var(--color-muted); font-size: 21px; }
+    .panel { padding: 40px 46px; background: var(--color-surface);
+             border: 1.5px solid var(--color-rule); border-radius: 14px; }
+    .motif { color: var(--color-muted); }
+    .icon { width: 40px; height: 40px; flex: none; }
+    .hint { font: 600 20px/1.3 ui-monospace, monospace; color: var(--color-muted); letter-spacing: .04em; }
+
+    /* Title */
+    .title-grid { display: grid; grid-template-columns: 1.2fr .6fr; align-items: center; gap: 60px; }
+    .title-grid .motif svg { width: 100%; height: auto; opacity: .8; }
+
+    /* Agenda */
+    .agenda { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 28px; align-content: center; }
+    .agenda-row { display: flex; align-items: center; gap: 16px; padding: 20px 22px;
+                  background: var(--color-surface); border: 1.5px solid var(--color-rule);
+                  border-radius: 12px; font-size: 24px; font-weight: 650; }
+    .agenda-row .icon { color: var(--color-accent); }
+    .agenda-row small { margin-left: auto; font: 700 18px/1 ui-monospace, monospace; color: var(--color-muted); }
+
+    /* Interaction slide */
+    .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-content: center; }
+    .demo-cards { display: grid; gap: 18px; }
+    .demo-cards .panel { font-size: 27px; line-height: 1.35; }
+    .hover-note { display: block; margin-top: 10px; font-size: 21px; color: var(--color-muted); }
+    .legend-list { list-style: none; display: flex; gap: 30px; margin: 0 0 20px; padding: 0;
+                   font-size: 25px; font-weight: 700; }
+    .legend-list .swatch { display: inline-block; width: 26px; height: 10px; border-radius: 2px; margin-right: 9px; }
+    .demo-bars { display: grid; gap: 14px; }
+    .demo-bar { height: 52px; border-radius: 8px; display: flex; align-items: center; padding: 0 18px;
+                color: var(--color-canvas); font-weight: 750; font-size: 23px; }
+
+    /* Chart slide */
+    .chart-wrap { display: grid; grid-template-rows: auto 1fr auto; gap: 16px; min-height: 0; }
+    .chart-wrap svg { width: 100%; height: 100%; min-height: 0; }
+
+    /* Morph slide */
+    .morph-wrap { align-content: center; display: grid; gap: 18px; max-width: 1280px; }
+    .morph-wrap .demo-bar { height: 64px; font-size: 26px; }
+    .btn-row { display: flex; gap: 14px; margin-top: 10px; }
+    .btn-row button, .eq-buttons button, .nn-controls button {
+      border: 1.5px solid var(--color-ink); border-radius: 999px; background: var(--color-ink);
+      color: var(--color-canvas); padding: 12px 26px; font: 650 21px/1 inherit; cursor: pointer; }
+    .btn-row button[data-secondary], .eq-buttons button[data-secondary] {
+      background: transparent; color: var(--color-ink); }
+
+    /* Section break */
+    .break-grid { display: grid; grid-template-columns: 1fr .45fr; align-items: center; gap: 60px; }
+    .break-grid .motif svg { width: 100%; height: auto; opacity: .85; }
+
+    /* Timeline slide */
+    .tl-host { outline: none; }
+
+    /* Lunaris slide: the figure owns the whole content region */
+    .lunaris-slide { grid-template-rows: auto 1fr auto; }
+    #lunarisHost { min-height: 0; }
+    #lunarisHost .lunaris-preset { min-height: 0; height: 100%; }
+
+    /* Equation slide */
+    .eq-board { align-self: center; display: grid; gap: 34px; padding: 54px 64px; }
+    .eq-write { font: 500 58px/1.3 "STIX Two Math", "Cambria Math", Cambria, serif; }
+    .eq-write sup { font-size: .6em; }
+    .eq-caption { font-size: 24px; color: var(--color-muted); }
+    .eq-buttons { display: flex; gap: 14px; }
+
+    /* NN slide */
+    .nn-grid { display: grid; grid-template-columns: 1.25fr .55fr; gap: 56px; align-items: center; min-height: 0; }
+    .nn-side { display: grid; gap: 22px; align-content: center; }
+    .nn-side p { margin: 0; font-size: 26px; line-height: 1.45; color: var(--color-muted); }
+
+    .progress { position: absolute; left: 0; bottom: 0; height: 6px;
+                background: var(--color-accent); transition: width .25s ease; z-index: 50; }
+
+    /* Screen-sized control bar, outside the scaled stage */
+    .controls { position: fixed; right: 16px; bottom: 14px; z-index: 90; display: flex; gap: 8px;
+                align-items: center; font: 600 13px/1 ui-monospace, monospace; }
+    .controls button, .controls span { border: 1px solid #4a4d55; border-radius: 999px;
+                background: #17181c; color: #d8dae0; padding: 8px 14px; }
+    .controls button { cursor: pointer; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body data-palette="graphite-ember">
+  <main class="viewport" aria-label="Preset kütüphanesi test sunumu">
+    <div class="deck-stage" id="stage">
+
+      <!-- 1 · Başlık -->
+      <section class="slide is-active" aria-labelledby="s1t">
+        <header>
+          <div class="kicker" data-motion="reveal">Sunum kütüphanesi · canlı test</div>
+          <h1 id="s1t" data-motion="reveal">Bir tasarım sistemi, dokuz palet, on iki preset</h1>
+        </header>
+        <div class="title-grid">
+          <p class="lede" data-motion="reveal">Bu deste, kütüphanedeki her preset'i gerçek bir slayt akışında
+             gösterir: geçişler, hover, morph, grafik, tablo, kronoloji, denklem yazımı ve sinir ağı.</p>
+          <div class="motif" data-motion="rise" aria-hidden="true">
+            <svg viewBox="0 0 240 240"><use href="#orbit-system"/></svg>
+          </div>
+        </div>
+        <footer class="slide-footer"><span>Sunumlar kütüphanesi</span><span>Ağustos 2026</span></footer>
+      </section>
+
+      <!-- 2 · Ajanda -->
+      <section class="slide" aria-labelledby="s2t">
+        <header>
+          <div class="kicker">Ajanda</div>
+          <h2 id="s2t">Sekiz durak, tek akış</h2>
+        </header>
+        <div class="agenda" data-hover-group>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-gauge"/></svg>Hover ve bağlantılı vurgu<small>03</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chart-bars"/></svg>Grafik teması<small>04</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-database"/></svg>Tablo preset'leri<small>05</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-wave"/></svg>Morph geçişi<small>06</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-orbit"/></svg>WebGL sahneler: Ay · Dünya · Güneş · Gezegenler<small>08–11</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-milestone"/></svg>Kronoloji ağacı<small>12</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-atom"/></svg>Elle yazılan denklem<small>13</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-neural-net"/></svg>Sinir ağı hücreleri<small>14</small></div>
+        </div>
+        <footer class="slide-footer"><span>İkonlar: science-icons.svg</span><span>2</span></footer>
+      </section>
+
+      <!-- 3 · Etkileşim -->
+      <section class="slide" aria-labelledby="s3t">
+        <header>
+          <div class="kicker">Etkileşim preset'leri</div>
+          <h2 id="s3t">Hover yorumdur, içerik değil</h2>
+        </header>
+        <div class="duo">
+          <div class="demo-cards">
+            <div class="panel" data-motion="reveal" data-hover="lift" tabindex="0">Kalkış (lift): panelin
+              etkileşimli olduğunu söyler.</div>
+            <div class="panel" data-motion="reveal">Bir <span data-hover="underline" tabindex="0">terimin altı</span>
+              hover veya klavye odağında çizilir.</div>
+            <div class="panel" data-motion="reveal" data-hover="annotate" tabindex="0">Açıklama isteğe bağlı derinleştirir.
+              <span class="hover-note">Kaynak: temsilî örnek, n = 128 · Ağustos 2026</span></div>
+          </div>
+          <div data-motion="reveal">
+            <ol class="legend-list" data-hover-group id="legend3">
+              <li data-hover-member data-series="obs" tabindex="0"><span class="swatch" style="background:var(--color-data-1)"></span>Gözlem</li>
+              <li data-hover-member data-series="model" tabindex="0"><span class="swatch" style="background:var(--color-data-2)"></span>Model</li>
+              <li data-hover-member data-series="proj" tabindex="0"><span class="swatch" style="background:var(--color-accent)"></span>Projeksiyon</li>
+            </ol>
+            <div class="demo-bars" data-hover-group data-hover-link="#legend3">
+              <div class="demo-bar" data-hover-member data-series="obs" style="width:84%;background:var(--color-data-1)">Gözlem 0.84</div>
+              <div class="demo-bar" data-hover-member data-series="model" style="width:76%;background:var(--color-data-2)">Model 0.76</div>
+              <div class="demo-bar" data-hover-member data-series="proj" style="width:58%;background:var(--color-accent)">Projeksiyon 0.58</div>
+            </div>
+          </div>
+        </div>
+        <footer class="slide-footer"><span>Lejantın üzerine gelin: diğer seriler geriler</span><span>3</span></footer>
+      </section>
+
+      <!-- 4 · Grafik -->
+      <section class="slide" aria-labelledby="s4t">
+        <header>
+          <div class="kicker">Grafik teması · temsilî veri</div>
+          <h2 id="s4t">Bulut örtüsü su izini sığlaştırıyor</h2>
+        </header>
+        <div class="chart-wrap">
+          <ol class="legend-list sci-chart-legend" data-hover-group id="legend4">
+            <li data-hover-member data-series="obs" tabindex="0"><span class="swatch" style="background:var(--color-data-1)"></span>Gözlem</li>
+            <li data-hover-member data-series="fit" tabindex="0"><span class="swatch" style="background:var(--color-data-2)"></span>Model (fit)</li>
+          </ol>
+          <svg class="sci-chart" viewBox="0 0 1240 620" data-hover-group data-hover-link="#legend4"
+               role="img" aria-label="Geçiş derinliği ve dalga boyu: gözlem noktaları ve kesikli model eğrisi; 1.4 mikron su bandında derinlik artışı">
+            <g class="grid">
+              <line x1="140" y1="60"  x2="1180" y2="60"/>
+              <line x1="140" y1="175" x2="1180" y2="175"/>
+              <line x1="140" y1="290" x2="1180" y2="290"/>
+              <line x1="140" y1="405" x2="1180" y2="405"/>
+            </g>
+            <g class="axis">
+              <path d="M140 60 L140 520 L1180 520"/>
+              <g class="tick">
+                <text x="126" y="68"  text-anchor="end">1.50</text>
+                <text x="126" y="183" text-anchor="end">1.40</text>
+                <text x="126" y="298" text-anchor="end">1.30</text>
+                <text x="126" y="413" text-anchor="end">1.20</text>
+                <text x="126" y="528" text-anchor="end">1.10</text>
+                <text x="140"  y="562" text-anchor="middle">0.6</text>
+                <text x="348"  y="562" text-anchor="middle">1.0</text>
+                <text x="556"  y="562" text-anchor="middle">1.4</text>
+                <text x="764"  y="562" text-anchor="middle">1.8</text>
+                <text x="972"  y="562" text-anchor="middle">2.2</text>
+                <text x="1180" y="562" text-anchor="middle">2.6</text>
+              </g>
+              <text class="axis-title" x="660" y="606" text-anchor="middle">Dalga boyu <tspan class="axis-unit">(µm)</tspan></text>
+              <text class="axis-title" x="46" y="290" text-anchor="middle" transform="rotate(-90 46 290)">Geçiş derinliği <tspan class="axis-unit">(%)</tspan></text>
+            </g>
+            <g data-series-slot="2" data-series="fit" data-hover-member>
+              <path class="uncertainty-band" d="M140 376 C300 318 440 346 570 283 C700 240 840 298 1180 378 L1180 422 C840 342 700 284 570 327 C440 390 300 362 140 420 Z"/>
+              <path class="series-line is-fitted" d="M140 398 C300 340 440 368 570 305 C700 262 840 320 1180 400"/>
+              <text class="direct-label" x="1010" y="452">Model</text>
+            </g>
+            <g data-series-slot="1" data-series="obs" data-hover-member>
+              <path class="series-line" d="M140 390 L244 370 L348 352 L452 378 L556 300 L660 285 L764 308 L868 350 L972 362 L1076 382 L1180 395"/>
+              <g class="series-marker">
+                <circle cx="140" cy="390" r="7"/><circle cx="244" cy="370" r="7"/><circle cx="348" cy="352" r="7"/>
+                <circle cx="452" cy="378" r="7"/><circle cx="556" cy="300" r="7"/><circle cx="660" cy="285" r="7"/>
+                <circle cx="764" cy="308" r="7"/><circle cx="868" cy="350" r="7"/><circle cx="972" cy="362" r="7"/>
+                <circle cx="1076" cy="382" r="7"/><circle cx="1180" cy="395" r="7"/>
+              </g>
+              <text class="direct-label" x="620" y="252">Gözlem</text>
+            </g>
+            <g>
+              <line class="ref-line" x1="140" y1="290" x2="1180" y2="290"/>
+              <text class="ref-label" x="1174" y="278" text-anchor="end">tespit eşiği · %1.30</text>
+            </g>
+          </svg>
+          <p class="sci-chart-caption">1.4 µm su bandındaki derinlik artışı üç geçişte tutarlı.
+            <span class="provenance">Temsilî veri — preset testi; belirsizlik bandı modele aittir.</span></p>
+        </div>
+        <footer class="slide-footer"><span>chart-theme.css · tracePath açılışı</span><span>4</span></footer>
+      </section>
+
+      <!-- 5 · Tablo -->
+      <section class="slide" aria-labelledby="s5t">
+        <header>
+          <div class="kicker">Tablo preset'leri</div>
+          <h2 id="s5t">Yörünge adayları bir bakışta</h2>
+        </header>
+        <div class="panel" style="align-self:center" data-motion="reveal">
+          <table class="sci-table sci-table--data sci-table--interactive">
+            <caption>Aday yörünge parametreleri</caption>
+            <thead>
+              <tr><th scope="col">Yörünge</th><th scope="col">Yükseklik</th><th scope="col">Periyot</th><th scope="col">Δv bütçesi</th><th scope="col">Kutup kapsaması</th></tr>
+            </thead>
+            <tbody>
+              <tr class="row-units"><th scope="row">—</th><td>km</td><td>saat</td><td>m/s · yıl</td><td>%</td></tr>
+              <tr><th scope="row">Alçak dairesel</th><td class="num">100</td><td class="num">1.96</td><td class="num">400</td><td class="num">82</td></tr>
+              <tr class="is-key"><th scope="row">Donmuş eliptik</th><td class="num">100 × 8 000</td><td class="num">11.8</td><td class="num">120</td><td class="num">96</td></tr>
+              <tr><th scope="row">NRHO</th><td class="num">3 200 × 68 000</td><td class="num">154</td><td class="num">40</td><td class="num">61</td></tr>
+            </tbody>
+            <tfoot><tr><td colspan="5">Temsilî değerler — preset testi. Vurgulu satır tek çıkarımı taşır.</td></tr></tfoot>
+          </table>
+        </div>
+        <footer class="slide-footer"><span>table-presets.css · data varyantı + satır hover</span><span>5</span></footer>
+      </section>
+
+      <!-- 6 · Morph -->
+      <section class="slide" aria-labelledby="s6t">
+        <header>
+          <div class="kicker">Morph geçişi</div>
+          <h2 id="s6t">Aynı çubuklar, yeni düzen</h2>
+        </header>
+        <div class="morph-wrap">
+          <div class="demo-bars" id="morph-bars">
+            <div class="demo-bar" data-morph-key="c" style="width:46%;background:var(--color-data-2)">Aday C — 0.46</div>
+            <div class="demo-bar" data-morph-key="a" style="width:88%;background:var(--color-data-1)">Aday A — 0.88</div>
+            <div class="demo-bar" data-morph-key="b" style="width:63%;background:var(--color-accent)">Aday B — 0.63</div>
+          </div>
+          <div class="btn-row">
+            <button id="sortBtn">Değere göre sırala</button>
+            <button id="shuffleBtn" data-secondary>İlk düzen</button>
+          </div>
+        </div>
+        <footer class="slide-footer"><span>morphState · FLIP, kimlik data-morph-key ile korunur</span><span>6</span></footer>
+      </section>
+
+      <!-- 7 · Bölüm kırılması -->
+      <section class="slide" aria-labelledby="s7t" data-enter="wipe-mask">
+        <header>
+          <div class="kicker">Bölüm</div>
+          <h1 id="s7t" style="font-size:110px">Aya yakınlaşıyoruz</h1>
+        </header>
+        <div class="break-grid">
+          <p class="lede">Bu slayta wipe-mask ile girdiniz. Bir sonrakine kamera Ay'a dalarak
+             geçecek ve arkasında bir işaret bırakacak — işaret, vardığınız slayta yerleşir.</p>
+          <div class="motif" id="moonAnchor" aria-hidden="true"><svg viewBox="0 0 240 240"><use href="#moon-terminator"/></svg></div>
+        </div>
+        <footer class="slide-footer"><span>slide-transitions · wipe-mask → zoom-into</span><span>7</span></footer>
+      </section>
+
+      <!-- 8 · Lunaris WebGL -->
+      <section class="slide lunaris-slide" aria-labelledby="s8t" data-enter="zoom-into" data-anchor="#moonAnchor">
+        <header>
+          <div class="kicker"><span data-marker-dock style="display:inline-block;width:46px;height:46px" aria-hidden="true"></span>Lunaris · WebGL</div>
+          <h2 id="s8t">Ay, dokusu ve uydusuyla sahnede</h2>
+        </header>
+        <div id="lunarisHost"></div>
+        <footer class="slide-footer"><span class="hint">Sürükle: kamera · Boşluk: oynat/durdur · R: baştan · PageDown: sonraki slayt</span><span>8</span></footer>
+      </section>
+
+      <!-- 9 · Terra: Dünya şehir turu -->
+      <section class="slide lunaris-slide" aria-labelledby="s9te">
+        <header>
+          <div class="kicker">Terra · WebGL</div>
+          <h2 id="s9te">Dünya: gerçek gece ışıkları, gerçek koordinatlar</h2>
+        </header>
+        <div id="terraHost"></div>
+        <footer class="slide-footer"><span class="hint">Turu başlat · N: sonraki şehir · Boşluk: durdur · PageDown: sonraki slayt</span><span>9</span></footer>
+      </section>
+
+      <!-- 10 · Sol: Güneş -->
+      <section class="slide lunaris-slide" aria-labelledby="s10sol">
+        <header>
+          <div class="kicker">Sol · WebGL</div>
+          <h2 id="s10sol">Güneş: kaynayan yüzey, gerçek kenar kararması</h2>
+        </header>
+        <div id="solHost"></div>
+        <footer class="slide-footer"><span class="hint">Aktivite ve dönüş sürgüleri · Boşluk: durdur · PageDown: sonraki slayt</span><span>10</span></footer>
+      </section>
+
+      <!-- 11 · Planetae: gezegenler -->
+      <section class="slide lunaris-slide" aria-labelledby="s11pl">
+        <header>
+          <div class="kicker">Planetae · WebGL</div>
+          <h2 id="s11pl">Yedi gezegen: gerçek dokular, gerçek eğiklikler</h2>
+        </header>
+        <div id="planetaeHost"></div>
+        <footer class="slide-footer"><span class="hint">← → gezegen değiştirir · Boşluk: durdur · PageDown: sonraki slayt</span><span>11</span></footer>
+      </section>
+
+      <!-- 12 · Kronoloji -->
+      <section class="slide" aria-labelledby="s9tl" data-enter="push">
+        <header>
+          <div class="kicker">Kronoloji ağacı</div>
+          <h2 id="s9tl">Ay keşfi: görevler üstte, bilim altta</h2>
+        </header>
+        <div class="tl-host" id="tl" data-owns-arrows tabindex="0"></div>
+        <footer class="slide-footer"><span class="hint">← → olaylar arasında gezinir · Boşluk sonraki slayt</span><span>9</span></footer>
+      </section>
+
+      <!-- 9 · Denklem -->
+      <section class="slide" aria-labelledby="s9t">
+        <header>
+          <div class="kicker">Elle yazılan denklem</div>
+          <h2 id="s9t">Tahtada yazar gibi</h2>
+        </header>
+        <div class="panel eq-board">
+          <div>
+            <div class="eq-write" id="eq1" aria-label="Kepler'in üçüncü yasası: T kare eşittir dört pi kare a küp bölü G M">
+              <span data-ink>T<sup>2</sup></span> <span data-ink>=</span> <span data-ink>4π<sup>2</sup></span><span data-ink>a<sup>3</sup></span><span data-ink>/</span><span data-ink>GM</span>
+            </div>
+            <p class="eq-caption">Kepler'in üçüncü yasası — periyot, yarı-büyük eksenle büyür.</p>
+          </div>
+          <div>
+            <div class="eq-write" id="eq2" aria-label="vis-viva: v kare eşittir G M çarpı iki bölü r eksi bir bölü a">
+              <span data-ink>v<sup>2</sup></span> <span data-ink>=</span> <span data-ink>GM</span><span data-ink>(</span><span data-ink>2/r</span> <span data-ink>−</span> <span data-ink>1/a</span><span data-ink>)</span>
+            </div>
+            <p class="eq-caption">Vis-viva — hız, konum ve yörünge enerjisinin dengesi.</p>
+          </div>
+          <div class="eq-buttons">
+            <button id="eqReplay">Yeniden yaz</button>
+            <button id="eqSettle" data-secondary>Anında tamamla</button>
+          </div>
+        </div>
+        <footer class="slide-footer"><span>equation-writing · data-ink konuşma düzeyinde</span><span>10</span></footer>
+      </section>
+
+      <!-- 10 · Sinir ağı -->
+      <section class="slide" aria-labelledby="s10t">
+        <header>
+          <div class="kicker">Sinir ağı preset'i</div>
+          <h2 id="s10t">İleri geçiş, katman katman</h2>
+        </header>
+        <div class="nn-grid">
+          <div id="nnfig"></div>
+          <div class="nn-side">
+            <p>Hücre dolgusu aktivasyon büyüklüğü; yeşil pozitif, mavi negatif.
+               Bağlantı kalınlığı ağırlık, kesikli çizgi negatif işaret.</p>
+            <div class="nn-controls" role="group" aria-label="Animasyon kontrolleri">
+              <button id="nnPlay">Oynat</button>
+              <button id="nnStep" data-secondary>Adımla</button>
+              <button id="nnReset" data-secondary>Sıfırla</button>
+            </div>
+            <span class="nn-truth">Temsilî · tohumlu ağırlıklar, eğitilmiş model değil</span>
+          </div>
+        </div>
+        <footer class="slide-footer"><span>neural_network · deterministik tohum</span><span>11</span></footer>
+      </section>
+
+      <!-- 11 · Kapanış -->
+      <section class="slide" aria-labelledby="s11t" data-enter="wipe-mask">
+        <header>
+          <div class="kicker">Kapanış</div>
+          <h1 id="s11t">Her parça aynı token dilini konuşuyor</h1>
+        </header>
+        <div class="break-grid">
+          <p class="lede">Sağ alttaki palet düğmesi (veya P tuşu) dokuz paleti dolaşır:
+             grafik, tablo, motif, denklem ve sinir ağı aynı anda yeni temaya geçer.</p>
+          <div class="motif" aria-hidden="true"><svg viewBox="0 0 240 240"><use href="#trajectory"/></svg></div>
+        </div>
+        <footer class="slide-footer"><span>Sunumlar kütüphanesi · preset testi</span><span>12</span></footer>
+      </section>
+
+      <div class="progress" aria-hidden="true"></div>
+    </div>
+  </main>
+
+  <div class="controls">
+    <button id="paletteBtn" title="Paleti değiştir (P)">graphite-ember</button>
+    <span id="counter">1 / 11</span>
+  </div>
+
+  <script>
+    /* file:// altında tarayıcılar ES modüllerini ve fetch'i engeller; deste
+       yalnızca bir yerel sunucudan çalışır. Kullanıcıyı karanlıkta bırakma. */
+    if (location.protocol === 'file:') {
+      document.documentElement.classList.remove('js');
+      const note = document.createElement('div');
+      note.style.cssText = 'position:fixed;inset:auto 16px 16px 16px;z-index:99;padding:18px 22px;' +
+        'background:#fff8e8;color:#3a2c16;border:2px solid #b58224;border-radius:12px;' +
+        'font:600 15px/1.5 ui-sans-serif,system-ui;';
+      note.innerHTML = 'Bu deste doğrudan dosyadan açılamaz (tarayıcı file:// altında modülleri engeller).<br>' +
+        'En kolayı: <b>preset-test\\sunumu-baslat.cmd</b> dosyasına çift tıklayın — sunucuyu başlatıp desteyi açar.<br>' +
+        'Ya da bir terminalde Sunumlar klasöründe <code>python -m http.server 8781</code> çalıştırıp ' +
+        '<code>http://localhost:8781/preset-test/index.html</code> adresini açın.';
+      document.body.appendChild(note);
+    }
+  </script>
+  <script type="module">
+    import { revealStage, settleAll, tracePath } from '../presets/motion_core/core-motion.js';
+    import { initInteractions } from '../presets/motion_core/interaction-motion.js';
+    import { morphState } from '../presets/motion_core/morph-transition.js';
+    import { transitionSlides } from '../presets/motion_core/slide-transitions.js';
+    import { mountTimeline } from '../presets/timeline_tree/timeline_tree.mjs';
+    import { writeSequence } from '../presets/equation_pen/equation-writing.mjs';
+    import { mountNeuralNetwork } from '../presets/neural_network/neural_network.mjs';
+    import { mountLunaris } from '../presets/moon_advanced/lunaris-moon.mjs';
+    import { mountTerra } from '../presets/earth_advanced/terra-globe.mjs';
+    import { mountSol } from '../presets/sun_advanced/sol-sun.mjs';
+    import { mountPlanetae } from '../presets/planets_advanced/planetae.mjs';
+
+    /* Sprites (motifs + icons) */
+    const sprites = [
+      '../presets/color_themes/space-motifs/space-motifs.svg',
+      '../presets/charts_icons/icons/science-icons.svg',
+    ];
+    await Promise.all(sprites.map(url => fetch(url).then(r => r.text())
+      .then(text => document.body.insertAdjacentHTML('beforeend', text))
+      .catch(() => {})));  // eksik sprite ikonları boş bırakır, desteyi öldürmez
+
+    const stage = document.querySelector('#stage');
+    const slides = [...stage.querySelectorAll('.slide')];
+    let current = 0;
+    let navigating = false;
+
+    /* Slayt numaraları içerikten değil sıradan gelir — araya slayt eklemek
+       numaralandırmayı bozamaz. */
+    slides.forEach((slide, index) => {
+      const chip = slide.querySelector('.slide-footer span:last-child');
+      if (chip) chip.textContent = String(index + 1);
+    });
+
+    /* Fixed-stage scaling per contract */
+    const scaleStage = () => {
+      const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+      stage.style.transform = `translate(${(innerWidth - 1920 * s) / 2}px, ${(innerHeight - 1080 * s) / 2}px) scale(${s})`;
+    };
+    addEventListener('resize', scaleStage);
+    scaleStage();
+
+    /* Slide-specific mounts */
+    const tl = mountTimeline(document.querySelector('#tl'), {
+      orientation: 'horizontal',
+      ariaLabel: 'Ay keşfi kronolojisi',
+      events: [
+        { id: 'luna2', date: '1959', title: 'Luna 2 Ay’a ulaşır', detail: 'Başka bir gök cismine ulaşan ilk insan yapımı araç.', track: 1 },
+        { id: 'apollo11', date: '1969', title: 'Apollo 11 iniş yapar', detail: '21.6 kg örnek Dünya’ya döner.', track: 1 },
+        { id: 'magma', date: '1970’ler', title: 'Magma okyanusu hipotezi', detail: 'Örnek analizleri Ay’ın kökenini yeniden yazar.', track: -1 },
+        { id: 'clementine', date: '1994', title: 'Clementine haritalar', detail: 'Küresel çok bantlı haritalama; kutup hidrojeni ipuçları.', track: 1 },
+        { id: 'water', date: '2009', title: 'Kutup buzu doğrulanır', detail: 'LCROSS çarpma bulutunda su tespit edilir.', track: -1 },
+        { id: 'artemis', date: '2022', title: 'Artemis I uçar', detail: 'Yeni program dönemi başlar.', track: 1 },
+      ],
+      eras: [ { from: 0, to: 2, label: 'İlk dönem' }, { from: 3, to: 5, label: 'Dönüş dönemi' } ],
+    });
+
+    const nn = mountNeuralNetwork(document.querySelector('#nnfig'), {
+      layers: [
+        { size: 3, label: 'girdi' },
+        { size: 6, label: 'gizli 1', activation: 'tanh' },
+        { size: 4, label: 'gizli 2', activation: 'tanh' },
+        { size: 2, label: 'çıktı', activation: 'tanh' },
+      ],
+      seed: 7,
+      showValues: true,
+    });
+    document.querySelector('#nnPlay').addEventListener('click', () => nn.play());
+    document.querySelector('#nnStep').addEventListener('click', () => nn.step());
+    document.querySelector('#nnReset').addEventListener('click', () => nn.reset());
+
+    let eqRun = null;
+    const runEquations = () => {
+      eqRun?.cancel();
+      eqRun = writeSequence([document.querySelector('#eq1'), document.querySelector('#eq2')], { stepGap: 520 });
+    };
+    document.querySelector('#eqReplay').addEventListener('click', runEquations);
+    document.querySelector('#eqSettle').addEventListener('click', () => eqRun?.settle());
+
+    const morphBars = document.querySelector('#morph-bars');
+    const orderBars = keys => morphState(morphBars, () => {
+      keys.forEach(key => morphBars.appendChild(morphBars.querySelector(`[data-morph-key="${key}"]`)));
+    });
+    document.querySelector('#sortBtn').addEventListener('click', () => orderBars(['a', 'b', 'c']));
+    document.querySelector('#shuffleBtn').addEventListener('click', () => orderBars(['c', 'a', 'b']));
+
+    initInteractions();
+
+    /* Lunaris mounts lazily on first visit (orbit data ~5 MB + textures) */
+    let lunaris = null, lunarisLoading = false;
+    const enterLunaris = async () => {
+      if (lunarisLoading) return;
+      if (!lunaris) {
+        lunarisLoading = true;
+        try {
+          lunaris = await mountLunaris(document.querySelector('#lunarisHost'), {
+            assetBaseUrl: '../presets/moon_react_source/public/lunaris',
+            title: 'Bir uydu, tek bir kütleçekim alanını izlemez',
+          });
+        } finally { lunarisLoading = false; }
+      }
+      lunaris?.setActive(true);
+      lunaris?.figure.focus({ preventScroll: true });
+    };
+
+    /* Terra da tembel yüklenir (dokular ~2 MB) */
+    let terra = null, terraLoading = false;
+    const enterTerra = async () => {
+      if (terraLoading) return;
+      if (!terra) {
+        terraLoading = true;
+        try {
+          terra = await mountTerra(document.querySelector('#terraHost'), {
+            assetBaseUrl: '../presets/earth_advanced',
+            title: 'Şehirler gerçek yerlerinde, ışıklar gerçek gecede',
+          });
+        } finally { terraLoading = false; }
+      }
+      terra?.setActive(true);
+      terra?.figure.focus({ preventScroll: true });
+    };
+
+    /* Sol da tembel yüklenir (tamamen prosedürel — doku yok) */
+    let sol = null, solLoading = false;
+    const enterSol = async () => {
+      if (solLoading) return;
+      if (!sol) {
+        solLoading = true;
+        try { sol = await mountSol(document.querySelector('#solHost')); }
+        finally { solLoading = false; }
+      }
+      sol?.setActive(true);
+      sol?.figure.focus({ preventScroll: true });
+    };
+
+    /* Planetae de tembel yüklenir (8 doku ~2.9 MB) */
+    let planetae = null, planetaeLoading = false;
+    const enterPlanetae = async () => {
+      if (planetaeLoading) return;
+      if (!planetae) {
+        planetaeLoading = true;
+        try {
+          planetae = await mountPlanetae(document.querySelector('#planetaeHost'), {
+            assetBaseUrl: '../presets/planets_advanced',
+          });
+        } finally { planetaeLoading = false; }
+      }
+      planetae?.setActive(true);
+      planetae?.figure.focus({ preventScroll: true });
+    };
+
+    /* Per-slide entry behavior */
+    const onEnter = slide => {
+      revealStage(slide);
+      if (slide.contains(document.querySelector('#tl'))) document.querySelector('#tl').focus({ preventScroll: true });
+      if (slide.contains(document.querySelector('#eq1'))) runEquations();
+      if (slide.contains(document.querySelector('#nnfig'))) nn.play();
+      if (slide.contains(document.querySelector('#lunarisHost'))) enterLunaris();
+      if (slide.contains(document.querySelector('#terraHost'))) enterTerra();
+      if (slide.contains(document.querySelector('#solHost'))) enterSol();
+      if (slide.contains(document.querySelector('#planetaeHost'))) enterPlanetae();
+      slide.querySelectorAll('.sci-chart .series-line').forEach(path => tracePath(path, { duration: 1100 }));
+    };
+    const onLeave = slide => {
+      if (slide.contains(document.querySelector('#lunarisHost'))) lunaris?.setActive(false);
+      if (slide.contains(document.querySelector('#terraHost'))) terra?.setActive(false);
+      if (slide.contains(document.querySelector('#solHost'))) sol?.setActive(false);
+      if (slide.contains(document.querySelector('#planetaeHost'))) planetae?.setActive(false);
+    };
+
+    const counter = document.querySelector('#counter');
+    const progressBar = document.querySelector('.progress');
+    const updateChrome = () => {
+      counter.textContent = `${current + 1} / ${slides.length}`;
+      progressBar.style.width = `${((current + 1) / slides.length) * 100}%`;
+      history.replaceState(null, '', `#${current + 1}`);
+    };
+
+    let pendingDelta = 0;
+    async function go(delta) {
+      if (navigating) { pendingDelta = delta; return; }  // queue the last press instead of dropping it
+      navigating = true;
+      const next = (current + delta + slides.length) % slides.length;
+      const to = slides[next];
+      const kind = delta > 0 ? (to.dataset.enter || 'fade-through') : 'fade-through';
+      const from = slides[current];
+      await transitionSlides(from, to, { kind, direction: delta, stage, anchor: to.dataset.anchor });
+      onLeave(from);
+      current = next;
+      updateChrome();
+      onEnter(to);
+      navigating = false;
+      if (pendingDelta) { const queued = pendingDelta; pendingDelta = 0; go(queued); }
+    }
+
+    /* Palette cycling — the whole token system switches at once */
+    const palettes = ['graphite-ember', 'porcelain-ink', 'obsidian-champagne', 'verdigris-slate',
+                      'oat-cocoa', 'berry-orchid', 'sage-buttercream', 'arctic-mulberry', 'midnight-tangerine'];
+    const paletteBtn = document.querySelector('#paletteBtn');
+    const cyclePalette = () => {
+      const next = palettes[(palettes.indexOf(document.body.dataset.palette) + 1) % palettes.length];
+      document.body.dataset.palette = next;
+      paletteBtn.textContent = next;
+    };
+    paletteBtn.addEventListener('click', cyclePalette);
+
+    addEventListener('keydown', event => {
+      if (event.key === 'p' || event.key === 'P') { cyclePalette(); return; }
+      if (event.key === 'Escape') { eqRun?.settle(); nn.stop(); return; }
+      const arrows = ['ArrowRight', 'ArrowLeft'];
+      const targetEl = event.target instanceof Element ? event.target : null;
+      if (arrows.includes(event.key) && targetEl?.closest('[data-owns-arrows]')) return;
+      if (event.key === ' ' && targetEl?.closest('[data-owns-keys]')) return;  // Lunaris sahnesi Boşluk'u kendine ayırır
+      if (['ArrowRight', 'PageDown', ' '].includes(event.key)) { event.preventDefault(); go(1); }
+      if (['ArrowLeft', 'PageUp'].includes(event.key)) { event.preventDefault(); go(-1); }
+    });
+
+    document.fonts.ready.then(() => {
+      const start = Math.max(0, Math.min(slides.length - 1, Number(location.hash.slice(1) || 1) - 1));
+      if (start !== 0) { slides[0].classList.remove('is-active'); slides[start].classList.add('is-active'); current = start; }
+      updateChrome();
+      onEnter(slides[current]);
+    });
+  </script>
+</body>
+</html>

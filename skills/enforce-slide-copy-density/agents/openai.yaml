@@ -1,0 +1,4 @@
+interface:
+  display_name: "Slayt Metni Yoğunluk Editörü"
+  short_description: "Metni kısa ve projektörde okunur tutar"
+  default_prompt: "Use $enforce-slide-copy-density to reduce this deck to readable headlines, key phrases, and large typography."

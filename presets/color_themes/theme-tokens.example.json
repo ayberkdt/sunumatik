@@ -1,0 +1,24 @@
+{
+  "theme": "cream-observatory",
+  "stage": { "width": 1920, "height": 1080, "safeArea": 72 },
+  "color": {
+    "background": "#F3EEC8",
+    "surface": "#FBF7DF",
+    "text": "#473835",
+    "muted": "#70615C",
+    "accent": "#A34F38",
+    "data1": "#617552",
+    "data2": "#4F7488",
+    "rule": "#D4CBA2",
+    "warning": "#8A3A2A"
+  },
+  "type": {
+    "display": "Inter, ui-sans-serif, system-ui, sans-serif",
+    "body": "Inter, ui-sans-serif, system-ui, sans-serif",
+    "math": "STIX Two Math, Cambria Math, serif"
+  },
+  "space": { "xs": 8, "sm": 16, "md": 32, "lg": 56, "xl": 88 },
+  "radius": { "panel": 10, "pill": 999 },
+  "surfaceTreatment": "matte",
+  "gradientPolicy": "none-unless-meaningful"
+}

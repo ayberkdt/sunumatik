@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Analytic Lunar Orbit Preset</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <link rel="stylesheet" href="lunar-orbit.css">
+</head>
+<body>
+  <main class="lunar-preset" role="figure" aria-labelledby="lunar-title" aria-describedby="lunar-summary">
+    <canvas id="orbitCanvas" width="1920" height="1080" aria-hidden="true"></canvas>
+    <header class="lunar-copy">
+      <p class="eyebrow">Lunar dynamics · presentation preset</p>
+      <h1 id="lunar-title">An orbit is a negotiated fall.</h1>
+      <p class="deck" id="lunar-summary">A Moon-centered analytic two-body model. Adjust the mean altitude, eccentricity, and inclination to compare orbital geometry.</p>
+    </header>
+
+    <aside class="model-note"><strong>Analytic two-body model</strong><br>Uses lunar radius 1737.4 km and GM 4902.800 km³/s². It excludes mascons, third-body perturbations, burns, and terrain collision.</aside>
+
+    <section class="metrics" aria-label="Orbit metrics">
+      <div class="metric"><span>Mean altitude</span><strong id="altMetric">100 km</strong></div>
+      <div class="metric"><span>Eccentricity</span><strong id="eccMetric">0.05</strong></div>
+      <div class="metric"><span>Inclination</span><strong id="incMetric">90°</strong></div>
+      <div class="metric"><span>Period</span><strong id="periodMetric">—</strong></div>
+    </section>
+
+    <form class="controls" data-export-hide aria-label="Lunar orbit controls">
+      <label>Mean altitude <output id="altOutput">100 km</output><input id="altitude" type="range" min="50" max="2000" step="10" value="100"></label>
+      <label>Eccentricity <output id="eccOutput">0.05</output><input id="eccentricity" type="range" min="0" max="0.7" step="0.01" value="0.05"></label>
+      <label>Inclination <output id="incOutput">90°</output><input id="inclination" type="range" min="0" max="180" step="1" value="90"></label>
+      <div class="buttons">
+        <button type="button" data-play id="playPause" aria-pressed="false">Pause</button>
+        <button type="button" class="secondary" id="restart">Restart</button>
+      </div>
+    </form>
+  </main>
+
+  <script type="module">
+    import { LUNAR_RADIUS_KM, makeOrbitPoints, positionAtMeanAnomaly, orbitPeriodSeconds, formatPeriod } from './lunar-orbit-model.mjs';
+
+    const canvas = document.querySelector('#orbitCanvas');
+    const context = canvas.getContext('2d');
+    const controls = {
+      altitude: document.querySelector('#altitude'),
+      eccentricity: document.querySelector('#eccentricity'),
+      inclination: document.querySelector('#inclination'),
+    };
+    const fixedExport = new URLSearchParams(location.search).get('export') === '1';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (fixedExport) document.documentElement.dataset.export = 'true';
+    let paused = reduced || fixedExport;
+    let progress = fixedExport || reduced ? .18 : 0;
+    let lastTime = performance.now();
+    let frameId = 0;
+    const simulatedSecondsPerRealSecond = 540;
+
+    const seeded = seed => {
+      let value = seed >>> 0;
+      return () => {
+        let mixed = value += 0x6d2b79f5;
+        mixed = Math.imul(mixed ^ mixed >>> 15, mixed | 1);
+        mixed ^= mixed + Math.imul(mixed ^ mixed >>> 7, mixed | 61);
+        return ((mixed ^ mixed >>> 14) >>> 0) / 4294967296;
+      };
+    };
+    const random = seeded(173740);
+    const craters = Array.from({ length: 72 }, () => ({
+      x: random() * 2 - 1,
+      y: random() * 2 - 1,
+      r: .010 + random() * .052,
+      a: .12 + random() * .20,
+    })).filter(crater => crater.x ** 2 + crater.y ** 2 < .82);
+
+    const options = () => ({
+      meanAltitudeKm: Number(controls.altitude.value),
+      eccentricity: Number(controls.eccentricity.value),
+      inclinationDeg: Number(controls.inclination.value),
+      ascendingNodeDeg: -18,
+    });
+
+    function resize() {
+      const ratio = Math.min(devicePixelRatio || 1, 1.5);
+      const box = canvas.getBoundingClientRect();
+      canvas.width = Math.round(box.width * ratio);
+      canvas.height = Math.round(box.height * ratio);
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function project(point, centerX, centerY, scale) {
+      const depthScale = 1 + point.z / 14000;
+      return { x: centerX + point.x * scale, y: centerY - point.z * scale - point.y * scale * .22, depth: point.y, size: depthScale };
+    }
+
+    function drawMoon(centerX, centerY, radius) {
+      context.save();
+      context.beginPath();
+      context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      context.clip();
+      const gradient = context.createRadialGradient(centerX - radius * .35, centerY - radius * .38, radius * .08, centerX, centerY, radius * 1.12);
+      gradient.addColorStop(0, '#fff8dc');
+      gradient.addColorStop(.34, '#cfc8b4');
+      gradient.addColorStop(.76, '#7e776d');
+      gradient.addColorStop(1, '#3c3836');
+      context.fillStyle = gradient;
+      context.fillRect(centerX - radius, centerY - radius, radius * 2, radius * 2);
+      for (const crater of craters) {
+        const x = centerX + crater.x * radius;
+        const y = centerY + crater.y * radius;
+        const r = crater.r * radius;
+        const shade = context.createRadialGradient(x - r * .20, y - r * .20, 0, x, y, r);
+        shade.addColorStop(0, `rgba(48,44,42,${crater.a})`);
+        shade.addColorStop(.62, `rgba(48,44,42,${crater.a * .55})`);
+        shade.addColorStop(.86, `rgba(255,248,220,${crater.a * .48})`);
+        shade.addColorStop(1, 'rgba(255,248,220,0)');
+        context.fillStyle = shade;
+        context.beginPath(); context.arc(x, y, r, 0, Math.PI * 2); context.fill();
+      }
+      context.restore();
+      context.strokeStyle = '#fff8dc66';
+      context.lineWidth = 2;
+      context.beginPath(); context.arc(centerX, centerY, radius, 0, Math.PI * 2); context.stroke();
+    }
+
+    function drawOrbit(config, centerX, centerY, scale) {
+      const points = makeOrbitPoints(config, 300).map(point => ({ ...project(point, centerX, centerY, scale), raw: point }));
+      context.beginPath(); context.moveTo(points[0].x, points[0].y);
+      for (const point of points.slice(1)) context.lineTo(point.x, point.y);
+      context.strokeStyle = '#5a213255'; context.lineWidth = 3; context.stroke();
+      context.strokeStyle = '#f54f1f'; context.lineWidth = 4;
+      let drawing = false;
+      for (const point of points) {
+        if (point.depth >= 0) {
+          if (!drawing) { context.beginPath(); context.moveTo(point.x, point.y); drawing = true; }
+          else context.lineTo(point.x, point.y);
+        } else if (drawing) {
+          context.stroke(); drawing = false;
+        }
+      }
+      if (drawing) context.stroke();
+    }
+
+    function drawSpacecraft(point) {
+      context.save();
+      context.translate(point.x, point.y);
+      context.rotate(-.35);
+      context.shadowColor = '#f54f1f'; context.shadowBlur = 16;
+      context.fillStyle = '#f54f1f';
+      context.beginPath(); context.moveTo(17, 0); context.lineTo(-12, -8); context.lineTo(-7, 0); context.lineTo(-12, 8); context.closePath(); context.fill();
+      context.shadowBlur = 0; context.fillStyle = '#312c2a';
+      context.beginPath(); context.arc(0, 0, 4, 0, Math.PI * 2); context.fill();
+      context.restore();
+    }
+
+    function updateText(config) {
+      const period = orbitPeriodSeconds(config.meanAltitudeKm);
+      const values = {
+        altOutput: `${config.meanAltitudeKm} km`, altMetric: `${config.meanAltitudeKm} km`,
+        eccOutput: config.eccentricity.toFixed(2), eccMetric: config.eccentricity.toFixed(2),
+        incOutput: `${config.inclinationDeg}°`, incMetric: `${config.inclinationDeg}°`,
+        periodMetric: formatPeriod(period),
+      };
+      for (const [id, value] of Object.entries(values)) document.querySelector(`#${id}`).textContent = value;
+    }
+
+    function render(now) {
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      const config = options();
+      const period = orbitPeriodSeconds(config.meanAltitudeKm);
+      if (!paused && !document.hidden) progress = (progress + ((now - lastTime) / 1000) * simulatedSecondsPerRealSecond / period) % 1;
+      lastTime = now;
+      context.clearRect(0, 0, width, height);
+      const centerX = width * .68;
+      const centerY = height * .48;
+      const semimajor = LUNAR_RADIUS_KM + config.meanAltitudeKm;
+      const maxRadius = semimajor * (1 + config.eccentricity);
+      const scale = Math.min(width * .29, height * .42) / Math.max(maxRadius, LUNAR_RADIUS_KM * 1.15);
+      drawOrbit(config, centerX, centerY, scale);
+      drawMoon(centerX, centerY, LUNAR_RADIUS_KM * scale);
+      const spacecraft = positionAtMeanAnomaly({ ...config, meanAnomaly: progress * Math.PI * 2 });
+      drawSpacecraft(project(spacecraft, centerX, centerY, scale));
+      updateText(config);
+      if (!paused && !document.hidden && !fixedExport && !reduced) frameId = requestAnimationFrame(render);
+    }
+
+    const queueRender = () => {
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(render);
+    };
+    for (const input of Object.values(controls)) input.addEventListener('input', queueRender);
+    document.querySelector('#playPause').addEventListener('click', event => {
+      paused = !paused;
+      event.currentTarget.textContent = paused ? 'Play' : 'Pause';
+      event.currentTarget.setAttribute('aria-pressed', String(paused));
+      lastTime = performance.now();
+      if (!paused) queueRender();
+    });
+    document.querySelector('#restart').addEventListener('click', () => { progress = 0; queueRender(); });
+    addEventListener('resize', () => { resize(); queueRender(); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && !paused) queueRender(); });
+    addEventListener('keydown', event => {
+      if (event.key === 'Escape') { paused = true; document.querySelector('#playPause').textContent = 'Play'; }
+      if (event.code === 'Space' && event.target === document.body) { event.preventDefault(); document.querySelector('#playPause').click(); }
+    });
+    resize(); updateText(options()); queueRender();
+  </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+/* Interaction (hover + focus) presets for scientific decks.
+   Micro-feedback stays inside 160–260 ms per motion-principles.md.
+   Every hover state has a keyboard (:focus-visible / :focus-within) twin,
+   a touch fallback, and a deterministic export state. */
+
+:root {
+  --interaction-duration: 200ms;
+  --interaction-ease: cubic-bezier(.3, .7, .3, 1);
+  --interaction-dim: .35;
+  --interaction-lift: -6px;
+}
+
+/* -- lift: a card or panel rises slightly to acknowledge the pointer -- */
+[data-hover="lift"] {
+  transition: transform var(--interaction-duration) var(--interaction-ease),
+              box-shadow var(--interaction-duration) var(--interaction-ease);
+}
+[data-hover="lift"]:hover,
+[data-hover="lift"]:focus-visible {
+  transform: translateY(var(--interaction-lift));
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--color-ink, #1c1a17) 18%, transparent);
+}
+
+/* -- underline: an accent rule traces under a term or link -- */
+[data-hover="underline"] {
+  background-image: linear-gradient(var(--color-accent, currentColor), var(--color-accent, currentColor));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 3px;
+  transition: background-size var(--interaction-duration) var(--interaction-ease);
+}
+[data-hover="underline"]:hover,
+[data-hover="underline"]:focus-visible {
+  background-size: 100% 3px;
+}
+
+/* -- group focus: hovering one member dims its siblings, never the whole slide.
+      Works for legend entries, table rows, timeline events, diagram nodes. -- */
+[data-hover-group] [data-hover-member] {
+  transition: opacity var(--interaction-duration) var(--interaction-ease);
+}
+[data-hover-group]:hover [data-hover-member]:not(:hover),
+[data-hover-group]:focus-within [data-hover-member]:not(:focus-visible):not(:hover) {
+  opacity: var(--interaction-dim);
+}
+/* JS-linked highlight (interaction-motion.js) mirrors the same rule */
+[data-hover-group] [data-hover-member][data-dimmed="true"] {
+  opacity: var(--interaction-dim);
+}
+
+/* -- annotate: a caption, unit note, or provenance line appears on demand.
+      The note must repeat nothing essential: it may only deepen. -- */
+[data-hover="annotate"] { position: relative; }
+[data-hover="annotate"] .hover-note {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity var(--interaction-duration) var(--interaction-ease),
+              transform var(--interaction-duration) var(--interaction-ease);
+  pointer-events: none;
+}
+[data-hover="annotate"]:hover .hover-note,
+[data-hover="annotate"]:focus-visible .hover-note,
+[data-hover="annotate"]:focus-within .hover-note {
+  opacity: 1;
+  transform: none;
+}
+
+/* Keyboard users always see where they are */
+[data-hover]:focus-visible,
+[data-hover-group] [data-hover-member]:focus-visible {
+  outline: 3px solid var(--color-accent, currentColor);
+  outline-offset: 3px;
+}
+
+/* Touch surfaces: no pointer hover exists, so annotations stay visible
+   and sibling dimming is disabled rather than trapped half-open. */
+@media (hover: none) {
+  [data-hover="annotate"] .hover-note { opacity: 1; transform: none; }
+  [data-hover-group]:hover [data-hover-member]:not(:hover) { opacity: 1; }
+}
+
+/* Export renders must be deterministic: annotations visible, nothing dimmed,
+   nothing mid-transition. */
+html[data-export="true"] [data-hover],
+html[data-export="true"] [data-hover-group] [data-hover-member] {
+  transition: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  box-shadow: none !important;
+}
+html[data-export="true"] [data-hover="annotate"] .hover-note {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Reduced motion keeps every state change, but makes it instant. */
+@media (prefers-reduced-motion: reduce) {
+  [data-hover],
+  [data-hover] .hover-note,
+  [data-hover-group] [data-hover-member] {
+    transition: none !important;
+  }
+  [data-hover="lift"]:hover,
+  [data-hover="lift"]:focus-visible {
+    transform: none;
+  }
+}

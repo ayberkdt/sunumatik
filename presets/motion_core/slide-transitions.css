@@ -1,0 +1,143 @@
+/* Slide transition presets for fixed-stage decks. Premium means calm:
+   longer curves, small distances, opaque surfaces — never blur, zoom
+   bounce, or 3D flips. Pair with slide-transitions.js, which toggles
+   the classes and honors the fixed-stage contract (visibility, opacity,
+   pointer-events).
+
+   Kinds:
+   fade-through  default; outgoing settles down, incoming rises in
+   push          directional glide; use when order means something
+                 (next section, later in time) and keep the direction
+                 consistent with that meaning
+   wipe-mask     an opaque accent panel sweeps the stage across the cut;
+                 reserve for major section breaks, a few per deck
+   morph         shared-element continuation via the View Transitions
+                 API (slide-transitions.js falls back to fade-through) */
+
+:root {
+  --slide-duration: 560ms;
+  --slide-ease: cubic-bezier(.32, .72, .16, 1);
+}
+
+.st-leaving,
+.st-entering {
+  visibility: visible !important;
+  pointer-events: none;
+}
+
+/* -- fade-through -- */
+.st-fade-out { animation: st-fade-out calc(var(--slide-duration) * .45) var(--slide-ease) both; }
+.st-fade-in  { animation: st-fade-in  calc(var(--slide-duration) * .62) var(--slide-ease) both; }
+@keyframes st-fade-out {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateY(10px) scale(.992); }
+}
+@keyframes st-fade-in {
+  from { opacity: 0; transform: translateY(-14px) scale(.996); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* -- push (direction set by --st-direction: 1 forward, -1 back) -- */
+.st-push-out { animation: st-push-out var(--slide-duration) var(--slide-ease) both; }
+.st-push-in  { animation: st-push-in  var(--slide-duration) var(--slide-ease) both; }
+@keyframes st-push-out {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateX(calc(var(--st-direction, 1) * -6%)); }
+}
+@keyframes st-push-in {
+  from { opacity: 0; transform: translateX(calc(var(--st-direction, 1) * 6%)); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* -- zoom-into: the camera dives toward an anchor in the outgoing slide
+      (transform-origin set by slide-transitions.js), optionally planting a
+      marker that survives the cut and docks on the incoming slide.
+      A camera move needs explanatory value: use it only when the next
+      slide examines a detail of the current one. -- */
+.st-zoom-out { animation: st-zoom-out calc(var(--slide-duration) * 1.15) var(--slide-ease) both; }
+.st-zoom-in  { animation: st-zoom-in  calc(var(--slide-duration) * .9)  var(--slide-ease) both;
+               animation-delay: calc(var(--slide-duration) * .35); }
+@keyframes st-zoom-out {
+  from { opacity: 1; transform: scale(1); }
+  60%  { opacity: 1; }
+  to   { opacity: 0; transform: scale(2.35); }
+}
+@keyframes st-zoom-in {
+  from { opacity: 0; transform: scale(.94); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Marker left behind by zoom-into: opaque ring + core, accent-colored.
+   Lives on the stage above slides; slide-transitions.js moves and
+   retires it. One pulse on planting, then it holds still. */
+.st-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 46px;
+  height: 46px;
+  z-index: 45;
+  pointer-events: none;
+  color: var(--color-accent, #a34f38);
+}
+.st-marker::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 3px solid currentColor;
+  border-radius: 50%;
+}
+.st-marker::after {
+  content: "";
+  position: absolute;
+  inset: 17px;
+  background: currentColor;
+  border-radius: 50%;
+}
+.st-marker.is-planted::before {
+  animation: st-marker-pulse .7s cubic-bezier(.3,.7,.3,1) 1;
+}
+@keyframes st-marker-pulse {
+  from { transform: scale(1.9); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* -- wipe-mask: opaque panel owned by slide-transitions.js -- */
+.st-wipe-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: var(--color-accent, #a34f38);
+  transform: translateX(-101%);
+  pointer-events: none;
+}
+.st-wipe-panel.is-sweeping {
+  animation: st-wipe-sweep calc(var(--slide-duration) * 1.5) var(--slide-ease) both;
+}
+@keyframes st-wipe-sweep {
+  from { transform: translateX(-101%); }
+  50%  { transform: translateX(0); }
+  to   { transform: translateX(101%); }
+}
+
+/* Deterministic modes: transitions collapse to an instant swap */
+html[data-export="true"] .st-fade-out,
+html[data-export="true"] .st-fade-in,
+html[data-export="true"] .st-push-out,
+html[data-export="true"] .st-push-in,
+html[data-export="true"] .st-zoom-out,
+html[data-export="true"] .st-zoom-in {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+html[data-export="true"] .st-wipe-panel { display: none !important; }
+html[data-export="true"] .st-marker.is-planted::before { animation: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .st-fade-out, .st-fade-in, .st-push-out, .st-push-in, .st-zoom-out, .st-zoom-in {
+    animation: none !important;
+  }
+  .st-wipe-panel { display: none !important; }
+  .st-marker.is-planted::before { animation: none !important; }
+}

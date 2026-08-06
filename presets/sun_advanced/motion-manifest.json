@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "sol-photosphere",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "A living solar surface: animated granulation, umbra-plus-penumbra sunspot groups, faculae, and real limb darkening.",
+      "model": "Limb darkening applies I(mu) = I0 * (1 - 0.56*(1 - mu)); sunspots are seeded bipolar pairs confined to the real +/-8-32 degree activity belts, each with a dark umbra, filamentary penumbra, and a limb-brightened facular ring; granulation is simplex-FBM noise.",
+      "limitations": "Granule and spot scales, colors, and all timing are illustrative; spot layout is seeded random within the physical latitude belts, not an observed magnetogram.",
+      "reducedMotion": "Frozen frame at noise time 26.4 with spots, loops, and corona visible.",
+      "exportState": "Freeze at noise time 26.4, hide controls and stars, keep the truth caption.",
+      "accessibility": "The caption states the limb-darkening law and the real/illustrative split as text; controls are native inputs.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "sol-flare-cycle",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "Show that flares are magnetic events OF active regions: coronal loops connect each spot pair, brighten with the flare, and the flash sits on the region, never at random.",
+      "model": "Loops are arcs between the opposite polarities of each seeded spot pair; flare brightness follows the real impulsive profile - fast rise (0.5 s) then exponential decay (tau 2.4 s); a seeded deterministic schedule paces events, scaled by the activity slider.",
+      "limitations": "Timing is ~1000x faster than reality; loop geometry is a smooth arc, not an extrapolated magnetogram field; flare energies are arbitrary display units.",
+      "reducedMotion": "A single flare rendered mid-decay on region 1; no ongoing schedule.",
+      "exportState": "Flare at intensity 0.8 on region 1, loops brightened accordingly.",
+      "accessibility": "The telemetry line announces each flare and its region as text; F or the button triggers one manually.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "sol-cme",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "After major flares, an eruption of plasma blobs: the slow fraction arcs over and rains back onto the surface (failed eruption / coronal rain) while the fast fraction escapes as the ejecta, and the corona sector above the region surges.",
+      "model": "Ballistic particles under 1/r^2 gravity with the surface escape speed normalized to 1; launch speeds straddle it, so fallback versus escape emerges from the dynamics rather than being scripted; a decaying brightness surge is added to the corona wedge around the launch direction.",
+      "limitations": "Speeds, particle counts, and frequency are illustrative; no magnetic flux-rope structure; gravity is Newtonian point-mass only.",
+      "reducedMotion": "Splash frozen mid-flight (1.4 s of deterministic integration) with the corona surge at 0.9.",
+      "exportState": "Same frozen tableau: seeded splash advanced 1.4 s, corona surge 0.9.",
+      "accessibility": "Eruptions are announced in the telemetry line as text; the CME toggle disables particles entirely.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

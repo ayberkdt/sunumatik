@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Slide Transition Presets</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <link rel="stylesheet" href="slide-transitions.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --color-canvas: #f3eec8; --color-surface: #fbf7df; --color-ink: #473835;
+      --color-muted: #70615c; --color-accent: #a34f38; --color-rule: #d4cba2;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 4vw; background: #e9e3d8; color: var(--color-ink);
+           font: 500 18px/1.4 ui-sans-serif, system-ui, sans-serif; }
+    main { max-width: 1040px; margin: auto; display: grid; gap: 18px; }
+    h1 { font-size: 40px; margin: 0; letter-spacing: -.02em; }
+    .stage { position: relative; aspect-ratio: 16/9; overflow: hidden; border-radius: 18px;
+             background: var(--color-canvas); border: 2px solid var(--color-rule); }
+    .slide { position: absolute; inset: 0; visibility: hidden; opacity: 0; pointer-events: none;
+             display: grid; place-content: center; gap: 12px; text-align: center; padding: 6%; }
+    .slide.is-active { visibility: visible; opacity: 1; pointer-events: auto; }
+    .slide .eyebrow { font: 700 15px/1 ui-monospace, monospace; letter-spacing: .16em;
+                      text-transform: uppercase; color: var(--color-accent); }
+    .slide h2 { font-size: 52px; line-height: 1; margin: 0; letter-spacing: -.025em; }
+    .slide p { margin: 0; color: var(--color-muted); font-size: 21px; }
+    .slide:nth-child(2) { background: var(--color-surface); }
+    .slide:nth-child(3) { background: var(--color-ink); color: var(--color-surface); }
+    .slide:nth-child(3) p { color: color-mix(in srgb, var(--color-surface) 72%, var(--color-ink)); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .toolbar button { border: 1.5px solid var(--color-ink); border-radius: 999px; background: transparent;
+                      color: var(--color-ink); padding: 9px 18px; font: 600 15px/1 inherit; cursor: pointer; }
+    .toolbar button[aria-pressed="true"] { background: var(--color-ink); color: var(--color-surface); }
+    .toolbar .nav { margin-left: auto; background: var(--color-ink); color: var(--color-surface); }
+    .zoom-dot { position: absolute; right: 9%; bottom: 14%; width: 18px; height: 18px;
+                border-radius: 50%; background: var(--color-accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Slide transitions, kept calm</h1>
+    <div class="toolbar" id="kinds">
+      <button data-kind="fade-through" aria-pressed="true">fade-through</button>
+      <button data-kind="push" aria-pressed="false">push</button>
+      <button data-kind="wipe-mask" aria-pressed="false">wipe-mask</button>
+      <button data-kind="zoom-into" aria-pressed="false">zoom-into</button>
+      <button data-kind="morph" aria-pressed="false">morph</button>
+      <button class="nav" id="prev">←</button>
+      <button class="nav" id="next">→</button>
+    </div>
+    <div class="stage" id="stage">
+      <section class="slide is-active">
+        <div class="eyebrow">Claim</div><h2>Order carries meaning</h2>
+        <p>fade-through is the calm default between unrelated slides.</p>
+        <span class="zoom-dot" aria-hidden="true"></span>
+      </section>
+      <section class="slide">
+        <div class="eyebrow">Evidence</div><h2>Direction should agree with time</h2>
+        <p>push forward for the next phase, push back when revisiting.</p>
+        <span class="zoom-dot" aria-hidden="true"></span>
+      </section>
+      <section class="slide">
+        <div class="eyebrow">Break</div><h2>Section three</h2>
+        <p>wipe-mask sweeps a panel; zoom-into dives at the dot and plants a marker.</p>
+        <span class="zoom-dot" aria-hidden="true"></span>
+      </section>
+    </div>
+  </main>
+  <script type="module">
+    import { transitionSlides } from './slide-transitions.js';
+    const stage = document.querySelector('#stage');
+    const slides = [...stage.querySelectorAll('.slide')];
+    let current = 0, kind = 'fade-through';
+    const go = async direction => {
+      const nextIndex = (current + direction + slides.length) % slides.length;
+      await transitionSlides(slides[current], slides[nextIndex], { kind, direction, stage, anchor: '.zoom-dot' });
+      current = nextIndex;
+    };
+    document.querySelector('#next').addEventListener('click', () => go(1));
+    document.querySelector('#prev').addEventListener('click', () => go(-1));
+    document.querySelectorAll('#kinds [data-kind]').forEach(button =>
+      button.addEventListener('click', () => {
+        kind = button.dataset.kind;
+        document.querySelectorAll('#kinds [data-kind]').forEach(b =>
+          b.setAttribute('aria-pressed', String(b === button)));
+      }));
+    addEventListener('keydown', e => {
+      if (['ArrowRight', 'PageDown', ' '].includes(e.key)) go(1);
+      if (['ArrowLeft', 'PageUp'].includes(e.key)) go(-1);
+    });
+  </script>
+</body>
+</html>

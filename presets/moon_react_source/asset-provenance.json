@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "sourceProject": "C:/Users/ayber/Desktop/WebSite/lunaris-web",
+  "reuseContext": "Copied from the user's local Lunaris project for the user's reusable presentation skill set.",
+  "assets": [
+    {
+      "path": "public/lunaris/orbit-data.json",
+      "source": "public/orbit-data.json",
+      "bytes": 4933063,
+      "sha256": "d5c1d8cf8d9f048a7355d2bda27f62d31fe96191adadf8a7f52c90f58937f61e"
+    },
+    {
+      "path": "public/lunaris/textures/aesthetic_moon_real.webp",
+      "source": "public/textures/aesthetic_moon_real.webp",
+      "bytes": 3020090,
+      "sha256": "ec815adc7a32ace52b2cf9dca60b65f999faf093e4f7a75e7ea72264a2a87908"
+    },
+    {
+      "path": "public/lunaris/textures/gravity_moon_real.webp",
+      "source": "public/textures/gravity_moon_real.webp",
+      "bytes": 4184454,
+      "sha256": "a6d4e2354995c519d1ba4720083fff9882e99994ee5bbdad3b3548fc98450a54"
+    },
+    {
+      "path": "public/lunaris/textures/moon_disp_real.webp",
+      "source": "public/textures/moon_disp_real.webp",
+      "bytes": 2726160,
+      "sha256": "38ebd9edeaf340cd6acc5d76f26af39bca3c1c35ea6e8c534cbae3f43702c8d3"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Türkçe Sunum Metni Uzmanı"
+  short_description: "Doğal ve kısa Türkçe slayt metni yazar"
+  default_prompt: "Use $write-turkish-slide-copy to rewrite this presentation in concise and natural Turkish."

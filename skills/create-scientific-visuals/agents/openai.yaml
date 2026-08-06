@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bilimsel Görsel Üretimi"
+  short_description: "Grafik, yörünge ve bilimsel diyagramlar üretir"
+  default_prompt: "Use $create-scientific-visuals to turn this dataset and mission concept into accurate presentation visuals."

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "nn-forward-pass",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Show the order of computation in a feed-forward network: activations settle layer by layer, driven by weighted links.",
+      "model": "Real matrix arithmetic (weights x activations + bias through tanh) over seeded pseudo-random weights; the structure is honest, the weights are not trained.",
+      "limitations": "Weights are illustrative, not learned; no training dynamics, no backpropagation, no claim about any specific model's behavior.",
+      "reducedMotion": "Render the fully settled forward pass immediately; all activation values and link weights remain readable.",
+      "exportState": "Settle every layer, hide controls, keep the illustrative truth badge visible.",
+      "accessibility": "SVG has a summary aria-label; controls are native buttons and a labelled slider; Escape stops the sequence; sign is encoded by color and dash style redundantly.",
+      "loop": false,
+      "pauseControl": true,
+      "durationMs": 2600
+    },
+    {
+      "id": "nn-input-sweep",
+      "type": "parameter-sweep",
+      "truthLevel": "illustrative",
+      "purpose": "Let the presenter scale the input vector and watch activations respond, demonstrating sensitivity rather than a trained mapping.",
+      "model": "Same seeded feed-forward arithmetic; the slider multiplies a fixed input vector.",
+      "limitations": "Sensitivity shown is that of random weights; do not read scientific meaning into specific output values.",
+      "reducedMotion": "Values update instantly with no pulse animation.",
+      "exportState": "Freeze at slider value 0.8 with all layers settled.",
+      "accessibility": "Slider is a native labelled range input; activation values are rendered as text when showValues is enabled.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

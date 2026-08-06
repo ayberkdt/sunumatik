@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bilimsel Hareket ve Simülasyon"
+  short_description: "Bilimsel animasyon ve simülasyon presetleri tasarlar"
+  default_prompt: "Use $design-scientific-motion to add meaningful, accessible animation or simulation presets to this science presentation."

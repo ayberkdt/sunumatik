@@ -1,0 +1,63 @@
+/* Equation writing preset styles. Pair with equation-writing.mjs.
+   The root of every written equation gets position:relative so the pen
+   can glide inside it. Ink colors inherit the equation's own text color;
+   the pen uses the accent token. */
+
+.eq-write {
+  position: relative;
+}
+
+.eq-write [data-ink] {
+  transition: none; /* WAAPI drives the reveal; CSS stays out of the way */
+}
+.eq-write [data-ink].ink-pending {
+  opacity: 0;
+}
+.eq-write svg [data-ink].ink-pending {
+  opacity: 0;
+}
+.eq-write [data-stroke] {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Pen nib: small, matte, accent-colored; purely decorative.
+   The negative margins park the nib TIP (bottom-left of the glyph) on the
+   coordinate the writer computes, and transform-origin keeps tilt wobble
+   rotating around that tip like a real pen on paper. */
+.ink-pen {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  margin-left: -4px;
+  margin-top: -22px;
+  color: var(--color-accent, #a34f38);
+  pointer-events: none;
+  z-index: 3;
+  transform: translate(-40px, -40px);
+  transform-origin: 17% 83%;
+  will-change: transform;
+}
+.ink-pen svg { width: 100%; height: 100%; display: block; }
+
+/* Deterministic modes: full equation, no pen, no partial ink */
+html[data-export="true"] .eq-write [data-ink] {
+  opacity: 1 !important;
+  clip-path: none !important;
+  stroke-dashoffset: 0 !important;
+}
+html[data-export="true"] .ink-pen { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .eq-write [data-ink] {
+    opacity: 1 !important;
+    clip-path: none !important;
+    stroke-dashoffset: 0 !important;
+    animation: none !important;
+  }
+  .ink-pen { display: none !important; }
+}

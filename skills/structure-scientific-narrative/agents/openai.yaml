@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bilimsel Anlatı Tasarımı"
+  short_description: "Araştırmayı güçlü bir sunum anlatısına çevirir"
+  default_prompt: "Use $structure-scientific-narrative to turn my research material into a rigorous slide-by-slide story."

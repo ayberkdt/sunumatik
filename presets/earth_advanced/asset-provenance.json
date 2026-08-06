@@ -1,0 +1,22 @@
+{
+  "textures": {
+    "source": "three.js repository examples/textures/planets (master, fetched 2026-08-05)",
+    "sourceUrl": "https://github.com/mrdoob/three.js/tree/master/examples/textures/planets",
+    "license": "three.js is MIT licensed; the Earth imagery derives from NASA Visible Earth (Blue Marble day imagery, Black Marble night lights), which NASA publishes without copyright restriction with attribution",
+    "attribution": "Imagery: NASA Visible Earth / three.js examples",
+    "files": [
+      "textures/earth_atmos_2048.jpg  — day color (Blue Marble derived)",
+      "textures/earth_normal_2048.jpg — terrain normal map",
+      "textures/earth_specular_2048.jpg — ocean specular mask",
+      "textures/earth_clouds_1024.png — cloud layer with alpha",
+      "textures/earth_lights_2048.png — night city lights (Black Marble derived)"
+    ]
+  },
+  "cityCoordinates": {
+    "source": "Common WGS84 city reference coordinates, rounded to two decimals",
+    "note": "Coordinates are real geographic data and are displayed to the audience; verify against an authoritative gazetteer before using them as evidence."
+  },
+  "vendorCode": {
+    "note": "Runtime dependencies (three 0.184 + addons) are shared from ../moon_advanced/vendor/."
+  }
+}

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Neural Network Preset</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <link rel="stylesheet" href="neural_network.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --color-canvas: #f3eec8;
+      --color-surface: #fbf7df;
+      --color-ink: #473835;
+      --color-muted: #70615c;
+      --color-accent: #a34f38;
+      --color-data-1: #617552;
+      --color-data-2: #4f7488;
+      --color-rule: #d4cba2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 5vw;
+      background: var(--color-canvas); color: var(--color-ink);
+      font: 500 18px/1.4 ui-sans-serif, system-ui, sans-serif;
+    }
+    main { max-width: 1080px; margin: auto; display: grid; gap: 28px; }
+    h1 { font-size: 44px; line-height: 1; margin: 0; letter-spacing: -.02em; }
+    p { margin: 0; color: var(--color-muted); max-width: 62ch; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Forward pass, one layer at a time</h1>
+    <p>Cell fill shows activation magnitude, green for positive and blue for negative.
+       Link thickness shows weight magnitude; dashed links carry negative weights.</p>
+    <div id="figure"></div>
+    <div class="nn-controls" role="group" aria-label="Animation controls">
+      <button id="play">Play forward pass</button>
+      <button id="step" data-secondary>Step</button>
+      <button id="reset" data-secondary>Reset</button>
+      <label for="drive">Input scale
+        <input id="drive" type="range" min="-100" max="100" value="80">
+      </label>
+    </div>
+    <span class="nn-truth">Illustrative · seeded weights, not a trained model</span>
+  </main>
+  <script type="module">
+    import { mountNeuralNetwork } from './neural_network.mjs';
+    const figure = document.querySelector('#figure');
+    const nn = mountNeuralNetwork(figure, {
+      layers: [
+        { size: 4, label: 'input' },
+        { size: 7, label: 'hidden 1', activation: 'tanh' },
+        { size: 5, label: 'hidden 2', activation: 'tanh' },
+        { size: 3, label: 'output', activation: 'tanh' },
+      ],
+      seed: 42,
+      showValues: true,
+    });
+    document.querySelector('#play').addEventListener('click', () => nn.play());
+    document.querySelector('#step').addEventListener('click', () => nn.step());
+    document.querySelector('#reset').addEventListener('click', () => nn.reset());
+    document.querySelector('#drive').addEventListener('input', event => {
+      const scale = Number(event.target.value) / 100;
+      nn.setInput([0.9, -0.4, 0.6, -0.8].map(v => v * scale));
+      nn.settle();
+    });
+    addEventListener('keydown', event => { if (event.key === 'Escape') nn.stop(); });
+    nn.play();
+  </script>
+</body>
+</html>

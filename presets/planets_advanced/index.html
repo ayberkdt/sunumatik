@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Planetae Vanilla Preset</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <link rel="stylesheet" href="../moon_react_source/components/moon_react_source.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #020409; }
+    main { width: 100%; height: 100%; padding: 24px; }
+    main > div { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <main><div id="host"></div></main>
+  <script type="module">
+    import { mountPlanetae } from './planetae.mjs';
+    const planetae = await mountPlanetae(document.querySelector('#host'));
+    window.__planetae = planetae;   // deterministik test/export sürüşü
+    planetae.figure.focus();
+  </script>
+</body>
+</html>
