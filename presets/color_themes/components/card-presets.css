@@ -30,6 +30,13 @@
   --card-accent: var(--color-accent, #E8804A);
   --card-radius: 12px;
   --card-pad: 24px 26px;
+  /* PUNTO TABANLARI (enforce-slide-copy-density, 1920×1080 sahne):
+     kart gövdesi teknik taban 28 px'in ALTINA inemez; sığmıyorsa kartta
+     fazla metin vardır — küçültme değil, kısaltma/bölme gerekir. */
+  --card-kicker-size: 20px;
+  --card-title-size: 32px;
+  --card-body-size: 28px;
+  --card-kws-size: 26px;
   position: relative;
   background: linear-gradient(180deg,
     color-mix(in srgb, var(--color-surface, #241f1d) 96%, var(--color-ink, #fff) 4%),
@@ -58,7 +65,7 @@
 .sci-card--accent { padding-left: calc(26px + 10px); }
 
 .sci-card__kicker {
-  font-size: 18px;
+  font-size: var(--card-kicker-size);
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
@@ -66,12 +73,12 @@
   margin: 0 0 10px;
 }
 .sci-card__title {
-  font-size: 27px;
+  font-size: var(--card-title-size);
   font-weight: 650;
   line-height: 1.25;
   margin: 0 0 10px;
 }
-.sci-card__body { font-size: 22px; line-height: 1.45; color: var(--color-ink); margin: 0; }
+.sci-card__body { font-size: var(--card-body-size); line-height: 1.45; color: var(--color-ink); margin: 0; }
 
 /* stat: the value asserts only WITH its base — keep the delta line */
 .sci-card--stat .sci-card__value {
@@ -83,15 +90,15 @@
   color: var(--card-accent);
   margin: 0;
 }
-.sci-card--stat .sci-card__unit { font-size: 26px; color: var(--color-muted); margin-left: 6px; }
+.sci-card--stat .sci-card__unit { font-size: 28px; color: var(--color-muted); margin-left: 6px; }
 .sci-card--stat .sci-card__delta {
-  font-size: 20px;
+  font-size: 24px;               /* etiket tabanı 24 px */
   color: var(--color-muted);
   margin: 8px 0 0;
 }
 
 .sci-card--definition .sci-card__term {
-  font-size: 24px; font-weight: 700; margin: 0 0 6px;
+  font-size: 28px; font-weight: 700; margin: 0 0 6px;
   color: var(--card-accent);
 }
 
@@ -114,7 +121,7 @@
 }
 
 /* keyword lines: short · separated clauses. EVERY line keeps a predicate. */
-.kws { list-style: none; margin: 0; padding: 0; font-size: 21px; line-height: 1.5; }
+.kws { list-style: none; margin: 0; padding: 0; font-size: var(--card-kws-size, 26px); line-height: 1.5; }
 .kws li { padding: 5px 0; color: var(--color-ink); }
 .kws li + li { border-top: 1px solid color-mix(in srgb, var(--color-rule) 45%, transparent); }
 .kws b { color: var(--card-accent, var(--color-accent)); font-weight: 650; }

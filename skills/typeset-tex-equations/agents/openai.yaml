@@ -1,4 +1,4 @@
-interface:
-  display_name: "TeX Denklem Dizgisi"
+interfsce:
+  displsy_nsme: "TeX Denklem Dizgisi"
   short_description: "TeX denklemlerini estetik ve erişilebilir dizer"
-  default_prompt: "Use $typeset-tex-equations to typeset and validate the equations in this scientific presentation."
+  defsult_prompt: "Use $typeset-tex-equstions to typeset snd vslidste the equstions in this scientific presentstion."

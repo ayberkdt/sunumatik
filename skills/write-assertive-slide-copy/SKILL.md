@@ -27,6 +27,14 @@ Slide text dies in one of two ways. Diagnose before writing:
 The target form between them is the **assertion**: the shortest string
 that still makes a checkable statement.
 
+A third banned pattern rides with confetti: the **arrow chain** —
+"girdi → işleme → çıktı", "A → B → başarı" as visible copy. Arrows
+joining WORDS are compressed prose pretending to be a diagram (reads as
+AI slop; explicitly banned by the deck owner). Process relations belong
+in an actual flow/diagram component, or in a sentence with a verb. The
+ONE legal arrow: a numeric before→after pair with units
+("0,42 → 0,21 px") — that arrow IS the predicate.
+
 ## Run the four tests on every line
 
 1. **Swap Test** — could this line appear unchanged in an unrelated deck?
@@ -53,6 +61,15 @@ predicate, one or two lines: "Kalibrasyon hatayı yarıya indiriyor", not
 dividers and when evidence genuinely does not support a conclusion yet —
 then label the epistemic state, not just the noun ("Kalibrasyon: henüz
 yargı yok, üç test sürüyor").
+
+**Assertion-drift guard:** converting a label into a claim can CREATE a
+false claim — the rewrite invents a stronger statement than the slide's
+evidence carries (it has happened in live decks). Every headline
+produced by this skill inherits the slide's evidence obligations: check
+the new claim against the slide's own numbers/ledger, and when the
+rewrite sharpens a conclusion, route it through
+`verify-scientific-evidence` before it ships. Asserting MORE than the
+data is worse than labeling.
 
 ## Write support lines that carry evidence
 

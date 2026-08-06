@@ -46,6 +46,7 @@ Bir sayfaya gömme tarifi (çalışan örnek: [`demo/sol-tek-basina.html`](demo/
 | [`color_themes/`](presets/color_themes) | 9 palet (CSS değişkenleri, `[data-palette]`), tablo presetleri, 10 uzay motifi SVG kiti. |
 | [`charts_icons/`](presets/charts_icons) | Grafik teması + **bildirimsel grafik motoru** (`chart-preset/chart.mjs`: spec ver, animasyonlu SVG al) + 23 bilim ikonu sprite. |
 | [`equation_theme/`](presets/equation_theme) | Denklem dizgi teması. |
+| [`deck_starter/`](presets/deck_starter) | Minimum deste iskeleti (sabit sahne + klavye + export kancaları) — yeni desteler için başlangıç şablonu. |
 
 ## demo/ — örnek deste
 

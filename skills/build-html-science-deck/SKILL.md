@@ -36,12 +36,12 @@ Use outputs from `$typeset-tex-equations`, `$create-scientific-visuals`, and `$d
 
 ## Implement interaction conservatively
 
-For between-slide motion, integrate `design-scientific-motion/assets/presets/slide-transitions.js` in place of a bare active-class toggle and keep one transition grammar per deck.
+For between-slide motion, integrate `presets/motion_core/slide-transitions.js` in place of a bare active-class toggle and keep one transition grammar per deck.
 
 Support keyboard navigation, touch, progress, fullscreen, notes, deep links, and reduced motion. Use animation only to explain sequence, causality, scale, orbit, propagation, or transformation. Require pause/replay controls for loops and deterministic progress for export. Disable or settle animations in export mode.
 
 ## Package safely
 
-Prefer relative asset paths. Self-host required fonts for offline delivery. Do not expose secrets in frontend code. Run `scripts/validate-deck-manifest.mjs` for structured manifests and use `assets/static-starter/index.html` as the minimal runtime reference.
+Prefer relative asset paths. Self-host required fonts for offline delivery. Do not expose secrets in frontend code. Run `scripts/validate-deck-manifest.mjs` for structured manifests and use `/presets/deck_starter/index.html` as the minimal runtime reference.
 
 Hand the rendered deck to `$audit-export-science-deck` before final delivery.

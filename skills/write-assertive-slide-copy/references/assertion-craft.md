@@ -39,6 +39,18 @@ banned words — they are signals that the line has no specific claim:
 Repair move: attach the missing predicate and specifics — WHAT became more
 efficient, BY HOW MUCH, COMPARED TO WHAT, UNDER WHICH CONDITION.
 
+## Arrow chains (banned pattern)
+
+| Before | After |
+|---|---|
+| "Veri → temizleme → model → tahmin" | Flow bileşeni (gerçek diyagram) YA DA: "Model, temizlenmiş ham veriden doğrudan tahmin üretir" |
+| "Optimizasyon → %30 hızlanma" | "Önbellekleme çözümü %30 hızlandırdı" |
+| "0,42 → 0,21 px" | MEŞRU — sayısal önce→sonra çifti yüklem taşır |
+
+Arrows joining words compress prose into pseudo-diagram fragments; the
+reader must reconstruct the verbs. Use a real flow component (with its
+labeled arrows) or write the sentence.
+
 ## Numbers
 
 A number asserts nothing alone. Every visible number carries: its unit,

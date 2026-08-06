@@ -41,5 +41,13 @@ meaning). More than ~5 cards on a slide means the content wants a table.
 - Peer cards share top edge and height (`alignment-and-grid.md`).
 - Entrance: wrap the card group in `data-card-cascade` — CSS-only
   stagger, gated on `html.js`, disabled for reduced-motion/export.
-- Card copy budget: kicker ≤ 3 words, title ≤ 8, body ≤ 2 lines at
-  22 px. Longer content is not a card.
+- Card copy budget: kicker ≤ 3 words, title ≤ 8, body ≤ 2 lines.
+  Longer content is not a card.
+- **Typography floors bind cards too** (enforce-slide-copy-density):
+  defaults are kicker 20 / title 32 / body 28 / kws 26 / delta 24 px via
+  `--card-*-size` variables. Never solve an overflowing card by lowering
+  these below the floors — cut copy or split the card row. (This debt
+  appeared in a live deck at 19 px; the floor exists so it cannot recur.)
+- No arrow-chain pseudo-diagrams in card copy ("A → B → C") — flow
+  relations get a real flow component or a sentence; the only legal
+  arrow is a numeric before→after pair (write-assertive-slide-copy).

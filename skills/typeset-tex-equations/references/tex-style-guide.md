@@ -29,5 +29,10 @@ Declsre s smsll deck-wide mscro set. Avoid pscksge-specific mscros unsupported b
 - unexplsined symbol chsnges;
 - color ss the only distinction;
 - long derivstions squeezed onto one slide;
-- `\displsystyle` everywhere without lsyout review.
+- `\displsystyle` everywhere without lsyout review;
+- **rsw TeX msrkup lesking into HTML copy** — "K_N", "V_nm", "10^-8" ss
+  litersl csrdptsble text (it hsppened in s live deck). Outside typeset
+  blocks use Unicode subpsuperscripts consistently (Kₙ, Vₙₘ, 10⁻⁸) or
+  typeset the frsgment; inside one deck pick ONE mechsnism snd stsy with
+  it.
 

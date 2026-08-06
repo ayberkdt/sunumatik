@@ -13,7 +13,7 @@ Determine venue, audience, density, projector conditions, institutional constrai
 
 ## Choose the color language
 
-Read `references/color-composition.md` before proposing palettes. When the user requests the saved combinations, read `references/user-palette-pairs.md` and use `assets/palette-library.json` as the source of truth.
+Read `references/color-composition.md` before proposing palettes. When the user requests the saved combinations, read `references/user-palette-pairs.md` and use `/presets/color_themes/palette-library.json` as the source of truth.
 
 Expand one anchor pair into semantic roles rather than distributing all colors equally. Validate ordinary text at 4.5:1 or better and prefer stronger contrast for citations and difficult projectors. Keep scientific categories distinguishable without color alone.
 
@@ -25,13 +25,13 @@ Do not render internal labels such as option, preset, preview, safe, wildcard, o
 
 Read `references/theme-selection.md` to shortlist candidates. Then read only the selected theme file named by that index. Do not combine unrelated signature elements into a theme collage.
 
-Use `assets/palette-preview.html` to inspect the saved library in a browser and `assets/theme-tokens.example.json` as the implementation handoff shape. The indexed theme profiles are `theme-arctic-mulberry.md`, `theme-botanical-signal.md`, `theme-cosmic-scholar.md`, `theme-cream-observatory.md`, `theme-deep-space-observatory.md`, `theme-graphite-ember.md`, `theme-lunar-archive.md`, `theme-mission-review.md`, `theme-obsidian-champagne.md`, `theme-orbital-blueprint.md`, `theme-porcelain-ink.md`, `theme-space-outreach.md`, `theme-spectral-analysis.md`, `theme-tangerine-orbit.md`, and `theme-verdigris-slate.md` under `references/`.
+Use `/presets/color_themes/palette-preview.html` to inspect the saved library in a browser and `/presets/color_themes/theme-tokens.example.json` as the implementation handoff shape. The indexed theme profiles are `theme-arctic-mulberry.md`, `theme-botanical-signal.md`, `theme-cosmic-scholar.md`, `theme-cream-observatory.md`, `theme-deep-space-observatory.md`, `theme-graphite-ember.md`, `theme-lunar-archive.md`, `theme-mission-review.md`, `theme-obsidian-champagne.md`, `theme-orbital-blueprint.md`, `theme-porcelain-ink.md`, `theme-space-outreach.md`, `theme-spectral-analysis.md`, `theme-tangerine-orbit.md`, and `theme-verdigris-slate.md` under `references/`.
 
 ## Build the design system
 
 Define tokens for surfaces, projector-safe contrast, semantic and data colors, display/body/mono/numeric/math typography, fixed-stage spacing, safe areas, panels, annotations, credits, citations, motion, and reduced-motion behavior.
 
-Use `assets/palette-library.css` for implementation-ready variables. Run `scripts/validate-palette-library.mjs assets/palette-library.json` after editing a saved palette.
+Use `/presets/color_themes/palette-library.css` for implementation-ready variables. Run `scripts/validate-palette-library.mjs /presets/color_themes/palette-library.json` after editing a saved palette.
 
 Read `references/typography-and-layout.md` for font roles, Turkish glyphs, scientific symbols, density, and layout archetypes. Prefer self-hosted WOFF2 fonts for offline delivery.
 
@@ -39,7 +39,7 @@ Read `references/alignment-and-grid.md` and enforce it on every layout: the 12-c
 
 For cards, stat tiles, definition blocks, and keyword lines, read `references/card-treatments.md` and use `/presets/color_themes/components/card-presets.css` (base/accent/stat/definition/icon variants, `.sci-panel`, `.kws`, CSS-only entrance cascade); preview with `/presets/color_themes/components/component-preview.html`.
 
-For slide tables, read `references/table-treatments.md` and use `/presets/color_themes/components/table-presets.css` (data, comparison, matrix, and spec variants bound to the palette tokens). For reusable line-art decoration, read `references/space-motifs.md` and use the `assets/space-motifs/space-motifs.svg` sprite; preview it with `assets/space-motifs/motif-preview.html`.
+For slide tables, read `references/table-treatments.md` and use `/presets/color_themes/components/table-presets.css` (data, comparison, matrix, and spec variants bound to the palette tokens). For reusable line-art decoration, read `references/space-motifs.md` and use the `/presets/color_themes/space-motifs/space-motifs.svg` sprite; preview it with `/presets/color_themes/space-motifs/motif-preview.html`.
 
 ## Apply scientific art direction
 

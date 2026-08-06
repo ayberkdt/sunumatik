@@ -70,7 +70,7 @@ does not cover; it must still follow the class contract below.
   `interaction-motion.js`) dims siblings to 30%, never hides them; export mode
   disables dimming and hides tooltips.
 - **Count-up numbers** on stat callouts use `animateCount` from
-  `design-scientific-motion/assets/presets/core-motion.js`; do not reimplement.
+  `design-scientific-motion//presets/charts_icons/presets/core-motion.js`; do not reimplement.
 - **Typography floors**: ticks 20px, labels 22px at stage scale — below that,
   simplify the chart instead of shrinking type.
 - Axis color is mixed toward canvas so data ink dominates; grid uses the rule

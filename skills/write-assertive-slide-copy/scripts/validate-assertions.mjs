@@ -60,6 +60,16 @@ const hasPredicate = text => {
   return false;
 };
 
+/* ok zinciri: kelimeleri birleştiren ≥1 ok (sayısal önce→sonra çifti hariç) */
+const isArrowChain = text => {
+  const s = String(text);
+  const arrows = (s.match(/→|->|=>/g) || []).length;
+  if (!arrows) return false;
+  /* meşru istisna: iki tarafı da sayı+birim olan TEK ok ("0,42 → 0,21 px") */
+  if (arrows === 1 && /[\d.,]+\s*(?:px|ms|sn|s|km|m|%|hz|db|mb|gb)?\s*(?:→|->|=>)\s*[\d.,]+/iu.test(s)) return false;
+  return /\p{L}{2,}\s*(?:→|->|=>)|(?:→|->|=>)\s*\p{L}{2,}/u.test(s);
+};
+
 const warnings = [];
 const warn = (slide, kind, text) =>
   warnings.push(`[${slide}] ${kind}: "${String(text).slice(0, 70)}"`);
@@ -77,12 +87,15 @@ for (const slide of manifest.slides || []) {
     const w = words(b);
     if (w.length <= 3 && !hasPredicate(b)) warn(id, 'madde konfeti olabilir (kısa + yüklemsiz)', b);
     if (hasFiller(b)) warn(id, 'maddede dolgu sözcüğü', b);
+    if (isArrowChain(b)) warn(id, 'ok zinciri (sözde-diyagram — akış bileşeni ya da cümle kullan)', b);
     const s = String(b);
     if (s === s.toLocaleUpperCase('tr') && /\p{Lu}{6,}/u.test(s)) warn(id, 'tamamı büyük harf', b);
   }
   for (const p of slide.body || []) {
     if (hasFiller(p) && !hasPredicate(p)) warn(id, 'gövde satırı iddiasız dolgu', p);
+    if (isArrowChain(p)) warn(id, 'ok zinciri (sözde-diyagram)', p);
   }
+  if (isArrowChain(headline)) warn(id, 'başlıkta ok zinciri', headline);
 }
 
 const slides = (manifest.slides || []).length;
