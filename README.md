@@ -52,7 +52,7 @@ tek başına gömme şablonu (`sol-tek-basina.html`).
 
 ## skills/ — üretim talimatları
 
-Bu preset'leri üreten/kullanan 16 yapay zekâ becerisi (SKILL.md +
+Bu preset'leri üreten/kullanan 17 yapay zekâ becerisi (SKILL.md +
 references + scripts). Bir yapay zekâ ajanına (ör. Claude Code)
 `.agents/skills/` altına kopyalanarak verilir; ajan yeni desteler kurarken
 bu kuralları uygular. Beceri dokümanlarındaki `/presets/...` yolları bu
