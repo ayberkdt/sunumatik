@@ -20,17 +20,18 @@ Use the smallest necessary set of specialist skills:
 1. Use `$distill-scientific-insights` to decide which ideas are essential, supporting, appendix-bound, or removable.
 2. Use `$structure-scientific-narrative` for slide roles, argument order, pacing, and notes.
 3. Use `$craft-scientific-storytelling` for evidence-led tension, transitions, rhythm, and closing synthesis.
-4. Use `$write-turkish-slide-copy` or `$write-english-slide-copy` for language-specific visible copy and notes.
-5. Use `$enforce-slide-copy-density` to protect one-glance reading and large typography.
-6. Use `$verify-scientific-evidence` for claims, sources, provenance, and uncertainty.
-7. Use `$design-space-science-deck` for art direction, typography, layouts, and previews.
-8. Use `$import-figma-science-deck` only when a Figma source is in scope.
-9. Use `$typeset-tex-equations` for TeX, notation, math typography, and equation QA.
-10. Use `$create-scientific-visuals` for charts, mission diagrams, or data graphics.
-11. Use `$design-scientific-motion` for explanatory animation, simulations, and reusable motion presets.
-12. Use `$build-html-science-deck` for implementation.
-13. Use `$convert-science-presentation` for PPTX, PDF, or existing-deck preservation.
-14. Use `$audit-export-science-deck` for rendered QA and deliverables.
+4. Use `$write-assertive-slide-copy` to turn each slide's job into claim-bearing text — this step is NOT optional when any visible copy is written: it is the guard against both text walls and decorative keyword piles.
+5. Use `$write-turkish-slide-copy` or `$write-english-slide-copy` for language-specific visible copy and notes.
+6. Use `$enforce-slide-copy-density` to protect one-glance reading and large typography.
+7. Use `$verify-scientific-evidence` for claims, sources, provenance, and uncertainty.
+8. Use `$design-space-science-deck` for art direction, typography, layouts, and previews.
+9. Use `$import-figma-science-deck` only when a Figma source is in scope.
+10. Use `$typeset-tex-equations` for TeX, notation, math typography, and equation QA.
+11. Use `$create-scientific-visuals` for charts, mission diagrams, or data graphics.
+12. Use `$design-scientific-motion` for explanatory animation, simulations, and reusable motion presets.
+13. Use `$build-html-science-deck` for implementation.
+14. Use `$convert-science-presentation` for PPTX, PDF, or existing-deck preservation.
+15. Use `$audit-export-science-deck` for rendered QA and deliverables.
 
 Do not prescribe React, Reveal, Next.js, or a static runtime before classifying interaction and delivery needs.
 
@@ -53,4 +54,4 @@ Treat these as mandatory gates:
 
 ## Define completion
 
-Do not mark the deck complete until every slide has one primary job; visible copy can be understood at a glance; type stays above the agreed floors; notes carry detail that does not belong on screen; epistemic status is clear; citations and credits resolve; equations and units are consistent; screenshots show no clipping or overlap; keyboard and reduced-motion behavior work; and all requested deliverables are verified.
+Do not mark the deck complete until every slide has one primary job; every visible text element asserts something specific (no transplanted prose walls, no predicate-less keyword piles — the write-assertive-slide-copy tests pass); visible copy can be understood at a glance; type stays above the agreed floors; notes carry detail that does not belong on screen; epistemic status is clear; citations and credits resolve; equations and units are consistent; screenshots show no clipping or overlap; keyboard and reduced-motion behavior work; and all requested deliverables are verified.

@@ -21,7 +21,7 @@ Use active verbs when they clarify agency. Remove bureaucratic padding such as g
 
 ## Write visible copy
 
-Prefer keywords, short clauses, compact explanations, labels, and annotated numbers. Do not paste note sentences onto the slide. Do not turn every phrase into a bullet.
+Prefer short clauses, compact explanations, labels, and annotated numbers that KEEP THEIR PREDICATE — a line must state something, not merely name a topic. Bare noun piles ("Verimlilik · Optimizasyon") are forbidden even when space is tight; apply the assertion tests from `write-assertive-slide-copy` before polishing the Turkish surface. Do not paste note sentences onto the slide. Do not turn every phrase into a bullet.
 
 Introduce an unfamiliar abbreviation once. Keep Turkish suffixes, apostrophes, decimal conventions, symbols, and SI units consistent with the chosen editorial standard.
 

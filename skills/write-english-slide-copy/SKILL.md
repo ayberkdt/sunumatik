@@ -21,7 +21,7 @@ Use active voice when agency matters, but do not force it. Remove paper-like sca
 
 ## Write visible copy
 
-Use short clauses, key phrases, labels, and annotated values. Put reasoning, caveats, and transitions in speaker notes. Avoid noun stacks, unexplained abbreviations, and bullets that are complete paragraphs.
+Use short clauses, labels, and annotated values that KEEP THEIR PREDICATE — every line must state something checkable, not merely name a topic. Bare noun stacks ("Efficiency · Scalability") are forbidden even under budget pressure; apply the assertion tests from `write-assertive-slide-copy` before polishing the English surface. Put reasoning, caveats, and transitions in speaker notes. Avoid unexplained abbreviations and bullets that are complete paragraphs.
 
 ## Preserve scientific calibration
 

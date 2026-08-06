@@ -28,7 +28,7 @@ Use visibility, opacity, and pointer-events for slide switching. Do not let late
 
 Prefer components such as `EvidenceSlide`, `EquationSlide`, `ChartSlide`, `MissionTimeline`, `OrbitDiagram`, `ComparisonSlide`, `MethodSlide`, and `AppendixSlide`. Keep theme values in tokens. Keep content, animation, and export behavior separable.
 
-Keep visible copy separate from speaker notes. Enforce the typography floors supplied by `$enforce-slide-copy-density`. When content overflows, report the conflict and shorten, restructure, or split the slide; do not apply an automatic smaller-font fallback.
+Keep visible copy separate from speaker notes. Enforce the typography floors supplied by `$enforce-slide-copy-density`. When content overflows, report the conflict and shorten, restructure, or split the slide; do not apply an automatic smaller-font fallback. Refuse to implement copy that fails the `write-assertive-slide-copy` tests — transplanted prose walls and predicate-less keyword piles are build blockers, not style preferences; send them back to the copy pipeline instead of rendering them.
 
 ## Integrate equations and visuals
 

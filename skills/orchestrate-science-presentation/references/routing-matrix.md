@@ -5,6 +5,7 @@
 | Importance and selection | `distill-scientific-insights` | Source material is broad, dense, or poorly prioritized |
 | Story and pacing | `structure-scientific-narrative` | Source material must become slides |
 | Rhetorical movement | `craft-scientific-storytelling` | The sequence is accurate but flat, fragmented, or sensational |
+| Copy substance | `write-assertive-slide-copy` | ANY visible copy is written; mandatory guard against prose walls and keyword confetti |
 | Turkish copy | `write-turkish-slide-copy` | Visible copy or notes are written in Turkish |
 | English copy | `write-english-slide-copy` | Visible copy or notes are written in English |
 | Copy density | `enforce-slide-copy-density` | Text competes with visuals or requires small type |

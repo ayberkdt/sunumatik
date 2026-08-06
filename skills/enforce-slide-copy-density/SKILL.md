@@ -25,6 +25,8 @@ State the single thing the audience should notice or understand. Remove content 
 
 Do not remove uncertainty, conditions, units, negation, comparison bases, or evidence qualifications merely to save space.
 
+Never compress past the predicate: a slide reduced to bare noun phrases ("keyword confetti") fails this skill's contract even when it fits the budget. If the assertion cannot survive the budget, split the slide or move material to notes — see `write-assertive-slide-copy` for what must survive compression.
+
 ## Protect typography
 
 At a 1920x1080 authored stage, normally keep headlines at least 48 px, body copy at least 30 px, labels at least 24 px, and citations at least 20 px. A technical appendix may use 28 px body text only when tested from presentation distance.

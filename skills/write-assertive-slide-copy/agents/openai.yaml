@@ -1,0 +1,4 @@
+interface:
+  display_name: "İddialı Slayt Metni"
+  short_description: "Her satır bir şey söyler: duvar metin de kelime konfetisi de yasak"
+  default_prompt: "Use $write-assertive-slide-copy to turn this deck's text into claim-bearing headlines and evidence-bearing support lines."
