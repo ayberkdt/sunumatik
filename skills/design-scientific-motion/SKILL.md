@@ -30,6 +30,8 @@ Use assets/presets/core-motion.css and assets/presets/core-motion.js for reveals
 
 Read `references/interaction-presets.md` and use `assets/presets/interaction-motion.css` plus `assets/presets/interaction-motion.js` for hover and focus micro-interactions: lift, underline trace, sibling dimming groups, on-demand annotations, and legend-to-chart linked highlighting. Hover is commentary, never content.
 
+For table motion, read `references/table-motion-presets.md` and use `/presets/motion_core/table-motion.css` plus `/presets/motion_core/table-motion.js`: scroll-triggered row cascades (`data-table-reveal` + observeTableReveal), presenter-driven one-shot row flashes (flashRow), and header-hover column emphasis — styling stays in design-space-science-deck's table-presets.
+
 Read `references/morph-presets.md` and use `assets/presets/morph-transition.css` plus `assets/presets/morph-transition.js` when an element must visibly become its next state: FLIP morphs via `morphState` for scoped figures and `viewMorph` for full slide-state changes. Morph only between states of the same thing.
 
 For neural-network method slides, read `references/neural-network-preset.md` and use `assets/neural-network-preset/` for an illustrative feed-forward diagram with seeded weights, layer-by-layer forward-pass animation, and sign-safe cell encoding.
@@ -38,9 +40,9 @@ For chronological material, read `references/timeline-preset.md` and use `assets
 
 For equation reveals, read `references/equation-writing-preset.md` and use `assets/equation-writing-preset/` to write typeset equations token by token with a pen nib and optional true stroke drawing; the settled equation always stands alone.
 
-For explaining an EXISTING equation term by term, read `references/equation-steps-preset.md` and use `/presets/equation_steps/`: the equation stays fully typeset while each step focuses a set of terms (accent underline, rest ghosted) with an assertion caption — the derivation-walkthrough complement of the pen preset.
+For explaining an EXISTING equation term by term, read `references/equation-steps-preset.md` and use `assets/equation-steps-preset/`: the equation stays fully typeset while each step focuses a set of terms (accent underline, rest ghosted) with an assertion caption — the derivation-walkthrough complement of the pen preset.
 
-For guided attention on a figure or image, read `references/figure-callout-preset.md` and use `/presets/figure_callouts/`: percent-coordinate boxes/circles/arrows that trace in step by step, an optional spotlight scrim, a magnifier lens, and assertion captions with keyboard navigation.
+For guided attention on a figure or image, read `references/figure-callout-preset.md` and use `assets/figure-callout-preset/`: percent-coordinate boxes/circles/arrows that trace in step by step, an optional spotlight scrim, a magnifier lens, and assertion captions with keyboard navigation.
 
 For between-slide motion, read `references/slide-transition-presets.md` and use `assets/presets/slide-transitions.css` plus `assets/presets/slide-transitions.js`: fade-through by default, meaning-consistent push, sparing wipe-mask section breaks, and morph continuity. One transition grammar per deck.
 

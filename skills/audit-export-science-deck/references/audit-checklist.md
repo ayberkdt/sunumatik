@@ -20,6 +20,15 @@
 - [ ] Headlines, body text, labels, captions, and citations respect the agreed typography floors.
 - [ ] Paragraph-like explanation lives in notes unless the reading-first profile explicitly requires it.
 
+## Alignment (see design-space-science-deck/references/alignment-and-grid.md)
+
+- [ ] Text blocks, cards, plot areas, and table rules share the slide's grid left edge (y-tick labels hang outside it).
+- [ ] Gaps come from the 8/16/24/40/64 spacing scale; near-equal-but-different gaps do not appear.
+- [ ] Peer cards share top edge and height; side-by-side panels share their top edge.
+- [ ] Numeric columns right-align on tabular figures with consistent unit placement.
+- [ ] Stacked display equations align their equals signs; icons sit on optical center.
+- [ ] Every visible text element passes the assertion tests (no prose walls, no predicate-less keyword piles).
+
 ## Interaction and accessibility
 
 - [ ] Keyboard navigation, Home/End, and focus visibility work.

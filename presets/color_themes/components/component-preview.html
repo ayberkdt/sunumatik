@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kart ve Tablo Bileşenleri — önizleme</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../palette-library.css">
+  <link rel="stylesheet" href="table-presets.css">
+  <link rel="stylesheet" href="card-presets.css">
+  <link rel="stylesheet" href="../../motion_core/table-motion.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--color-canvas); color: var(--color-ink);
+      font-family: ui-sans-serif, system-ui, sans-serif; padding: 48px; }
+    main { max-width: 1100px; margin: 0 auto; display: grid; gap: 56px; }
+    h1 { font-size: 30px; margin: 0; }
+    h2 { font-size: 20px; color: var(--color-muted); margin: 0 0 18px; font-weight: 600; }
+    .card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: stretch; }
+    .hint { color: var(--color-muted); font-size: 15px; }
+  </style>
+</head>
+<body data-palette="graphite-ember">
+  <main>
+    <h1>Kart ve tablo bileşenleri</h1>
+
+    <section>
+      <h2>Stat + tanım + ikon kartları (giriş kaskadıyla)</h2>
+      <div class="card-row" data-card-cascade>
+        <article class="sci-card sci-card--accent sci-card--stat">
+          <p class="sci-card__kicker">Medyan hata</p>
+          <p class="sci-card__value">0,21<span class="sci-card__unit">px</span></p>
+          <p class="sci-card__delta">önceki yöntemin yarısı (0,42 px, n=1200)</p>
+        </article>
+        <article class="sci-card sci-card--accent sci-card--definition" style="--card-accent: var(--color-data-1)">
+          <p class="sci-card__term">Wilson çukuru</p>
+          <p class="sci-card__body">Güneş lekesinin umbrası, çevresindeki fotosferden ~500 km derindedir.</p>
+        </article>
+        <article class="sci-card sci-card--accent" style="--card-accent: var(--color-data-2)">
+          <p class="sci-card__kicker">Sınır koşulu</p>
+          <p class="sci-card__title">tanφ çarpanı kutuplarda büyür</p>
+          <p class="sci-card__body">Kararlılık sınırı 171. derecede bu terimden doğar.</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Anahtar satırlar (.kws — her satır yüklemli)</h2>
+      <div class="sci-panel" style="max-width: 640px">
+        <ul class="kws">
+          <li><b>2,1×</b> iş çıkarıyor <span class="sep">·</span> aynı donanımda</li>
+          <li><b>40 düğüme</b> kadar doğrusal ölçekleniyor</li>
+          <li>MONTE hattına <b>ek kod gerektirmeden</b> bağlanıyor</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Tablo: satır kaskadı + başlıkta sütun vurgusu + satır flaşı</h2>
+      <p class="hint">Başlıklara gelin (sütun vurgusu); satıra tıklayın (flaş).</p>
+      <table class="sci-table sci-table--comparison" data-table-reveal id="cmp">
+        <caption>Yörünge çözücü karşılaştırması</caption>
+        <thead><tr><th>Ölçüt</th><th>GEODYN II</th><th>MONTE</th></tr></thead>
+        <tbody>
+          <tr><td>Harmonik sınırı</td><td>120. derecede kayıp başlıyor</td><td>171'e kadar kararlı</td></tr>
+          <tr><td>Çözüm süresi</td><td>14,2 sn</td><td>6,8 sn — yarıdan az</td></tr>
+          <tr><td>Bellek</td><td>2,1 GB</td><td>1,4 GB</td></tr>
+          <tr><td>Hata birikimi</td><td>10⁻⁶ /gün</td><td>10⁻⁸ /gün — iki mertebe düşük</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+  <script type="module">
+    import { observeTableReveal, flashRow, enableColumnEmphasis }
+      from '../../motion_core/table-motion.js';
+    observeTableReveal();
+    const table = document.querySelector('#cmp');
+    enableColumnEmphasis(table);
+    table.addEventListener('click', e => {
+      const tr = e.target.closest('tbody tr');
+      if (tr) flashRow(tr);
+    });
+    window.__components = { flashRow, table };
+  </script>
+</body>
+</html>

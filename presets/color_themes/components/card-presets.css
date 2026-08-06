@@ -1,0 +1,141 @@
+/* Card & container presets for the 1920x1080 fixed stage.
+   Consumes palette tokens from palette-library.css:
+   --color-canvas/-surface/-ink/-muted/-accent/-accent-ink/-data-1/-data-2/-rule.
+
+   Variants:
+   .sci-card               base container (surface, hairline, radius 12)
+   .sci-card--accent       left accent signature bar (set --card-accent)
+   .sci-card--stat         big mono value + label + delta line
+   .sci-card--definition   term + definition pair
+   .sci-card--icon         icon slot + content (.sci-card__icon)
+   .sci-panel              quiet grouping container (no card chrome)
+   .kws                    keyword-line list (· separated short lines)
+
+   Entrance cascade: wrap cards in [data-card-cascade]; JS-free — the
+   cascade runs on html.js pages via animation, is disabled under
+   prefers-reduced-motion and data-export (final state).
+
+   DESIGN RULES (learned across decks — do not regress):
+   - FLAT vertical surface gradient only; radial color-mix washes toward
+     the accent read as mud on projectors.
+   - The accent lives in ONE place per card: the side bar (plus hover
+     border). Accent-tinted backgrounds and accent borders together are
+     noise.
+   - Hover is commentary: border + shadow lift, never scale on text
+     containers (reflow shimmer).
+   - Card copy follows write-assertive-slide-copy: a .kws line is a SHORT
+     CLAUSE WITH ITS PREDICATE, not a bare noun. */
+
+.sci-card {
+  --card-accent: var(--color-accent, #E8804A);
+  --card-radius: 12px;
+  --card-pad: 24px 26px;
+  position: relative;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--color-surface, #241f1d) 96%, var(--color-ink, #fff) 4%),
+    var(--color-surface, #241f1d));
+  border: 1px solid var(--color-rule, #4a423e);
+  border-radius: var(--card-radius);
+  padding: var(--card-pad);
+  color: var(--color-ink, #efe9e4);
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.sci-card:hover {
+  border-color: color-mix(in srgb, var(--card-accent) 55%, var(--color-rule, #4a423e));
+  box-shadow: 0 10px 30px rgb(0 0 0 / .18);
+}
+
+/* accent signature: gradient side bar, top-strong */
+.sci-card--accent::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 14px; bottom: 14px;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--card-accent),
+    color-mix(in srgb, var(--card-accent) 25%, transparent));
+}
+.sci-card--accent { padding-left: calc(26px + 10px); }
+
+.sci-card__kicker {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--color-muted, #a89d94);
+  margin: 0 0 10px;
+}
+.sci-card__title {
+  font-size: 27px;
+  font-weight: 650;
+  line-height: 1.25;
+  margin: 0 0 10px;
+}
+.sci-card__body { font-size: 22px; line-height: 1.45; color: var(--color-ink); margin: 0; }
+
+/* stat: the value asserts only WITH its base — keep the delta line */
+.sci-card--stat .sci-card__value {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 58px;
+  font-weight: 600;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--card-accent);
+  margin: 0;
+}
+.sci-card--stat .sci-card__unit { font-size: 26px; color: var(--color-muted); margin-left: 6px; }
+.sci-card--stat .sci-card__delta {
+  font-size: 20px;
+  color: var(--color-muted);
+  margin: 8px 0 0;
+}
+
+.sci-card--definition .sci-card__term {
+  font-size: 24px; font-weight: 700; margin: 0 0 6px;
+  color: var(--card-accent);
+}
+
+.sci-card--icon { display: grid; grid-template-columns: 56px 1fr; gap: 18px; align-items: start; }
+.sci-card__icon {
+  width: 56px; height: 56px;
+  display: grid; place-items: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--card-accent) 14%, var(--color-surface));
+  color: var(--card-accent);
+}
+.sci-card__icon svg { width: 30px; height: 30px; }
+
+/* quiet grouping container — structure without card chrome */
+.sci-panel {
+  background: color-mix(in srgb, var(--color-surface, #241f1d) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-rule, #4a423e) 60%, transparent);
+  border-radius: 10px;
+  padding: 20px 22px;
+}
+
+/* keyword lines: short · separated clauses. EVERY line keeps a predicate. */
+.kws { list-style: none; margin: 0; padding: 0; font-size: 21px; line-height: 1.5; }
+.kws li { padding: 5px 0; color: var(--color-ink); }
+.kws li + li { border-top: 1px solid color-mix(in srgb, var(--color-rule) 45%, transparent); }
+.kws b { color: var(--card-accent, var(--color-accent)); font-weight: 650; }
+.kws .sep { color: var(--color-muted); padding: 0 8px; }
+
+/* entrance cascade — pure CSS, gated on html.js; export/reduced final */
+html.js [data-card-cascade] > * {
+  animation: sciCardIn .55s cubic-bezier(.22, .8, .3, 1) both;
+}
+html.js [data-card-cascade] > :nth-child(1) { animation-delay: .05s; }
+html.js [data-card-cascade] > :nth-child(2) { animation-delay: .14s; }
+html.js [data-card-cascade] > :nth-child(3) { animation-delay: .23s; }
+html.js [data-card-cascade] > :nth-child(4) { animation-delay: .32s; }
+html.js [data-card-cascade] > :nth-child(5) { animation-delay: .41s; }
+html.js [data-card-cascade] > :nth-child(n+6) { animation-delay: .5s; }
+@keyframes sciCardIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.js [data-card-cascade] > * { animation: none; }
+  .sci-card { transition: none; }
+}
+html[data-export="true"] [data-card-cascade] > * { animation: none; }
