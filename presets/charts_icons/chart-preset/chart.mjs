@@ -55,7 +55,7 @@ const fmt = v => Math.abs(v) >= 1000 ? v.toLocaleString('tr-TR')
 export function mountChart(container, spec) {
   if (!container) throw new Error('mountChart requires a container');
   const [W, H] = spec.viewBox || [960, 540];
-  const M = { top: 28, right: 150, bottom: 78, left: 92, ...(spec.margin || {}) };
+  const M = { top: spec.title ? 64 : 28, right: 150, bottom: 78, left: 92, ...(spec.margin || {}) };
   const type = spec.type || 'line';
   const series = spec.series || [];
 
@@ -105,6 +105,10 @@ export function mountChart(container, spec) {
     const tick = el('g', { class: 'tick' }, axisX);
     el('line', { x1: sx(t), x2: sx(t), y1: M.top + plotH, y2: M.top + plotH + 7 }, tick);
     el('text', { x: sx(t), y: M.top + plotH + 30, 'text-anchor': 'middle' }, tick).textContent = fmt(t);
+  }
+  /* başlık: grafiğin İDDİASI (assertion) — konu etiketi değil */
+  if (spec.title) {
+    el('text', { class: 'sci-chart-title', x: M.left, y: 30 }, svg).textContent = spec.title;
   }
   if (spec.y?.label) {
     const t = el('text', { class: 'axis-title', x: M.left, y: M.top - 8 }, svg);

@@ -8,8 +8,10 @@
 
 | | | |
 |:---:|:---:|:---:|
-| ![Satürn — canlı atmosfer ve halka gölgeleri](docs/media/saturn.jpg) | ![Dünya — gece ışıkları ve fresnel atmosfer](docs/media/earth.jpg) | ![Grafik motoru — belirsizlik bandı, eşik ve projeksiyon](docs/media/chart.jpg) |
-| **Planetae** — Merkür→Neptün | **Terra** — şehir turlu Dünya | **Chart** — spec ver, grafik al |
+| ![Satürn — halka gölgeleri ve canlı atmosfer](docs/media/saturn.jpg) | ![Jüpiter — kuşak rüzgârları ve Galile uyduları](docs/media/jupiter.jpg) | ![Dünya — gece ışıkları ve fresnel atmosfer](docs/media/earth.jpg) |
+| **Satürn** — halka gölgeleriyle | **Jüpiter** — canlı kuşaklar, uydu geçişleri | **Terra** — şehir turlu Dünya |
+| ![Ay — yörünge izli uydu uçuşu](docs/media/moon.jpg) | ![Grafik motoru — palet uyumlu seri renkleri, belirsizlik bandı, eşik](docs/media/chart.jpg) | ![23 bilim ikonu](docs/media/icons.jpg) |
+| **Lunaris** — yörüngede uydu | **Chart** — spec ver, grafik al | **İkonlar** — 23 bilim ikonu |
 
 ## Hızlı başlangıç
 

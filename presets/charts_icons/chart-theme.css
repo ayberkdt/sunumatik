@@ -7,7 +7,11 @@
    color-blind-considered fallbacks tuned for light canvases. Override
    per-theme when the deck defines more data colors. */
 
-:root {
+/* KRİTİK: seri değişkenleri .sci-chart ÜZERİNDE tanımlanır, :root'ta değil.
+   var() içeren bir özel değişken TANIMLANDIĞI elemanda çözülür; :root,
+   body[data-palette] token'larını göremez ve grafikler sessizce yedek
+   renklere (zeytin/çelik) düşer — "çamur grafik" hatasının kökü buydu. */
+:root, .sci-chart, .sci-chart-legend {
   --chart-series-1: var(--color-data-1, #617552);
   --chart-series-2: var(--color-data-2, #4f7488);
   --chart-series-3: #b0791f;
@@ -23,6 +27,13 @@
 }
 
 .sci-chart { font-family: var(--chart-font); }
+
+/* Başlık: grafiğin iddiası — kalın, mürekkep renginde, sol üstte */
+.sci-chart .sci-chart-title {
+  fill: var(--color-ink, #2d2624);
+  font-size: 26px;
+  font-weight: 700;
+}
 
 /* Axes: visible but quiet — data carries the ink */
 .sci-chart .axis path,
