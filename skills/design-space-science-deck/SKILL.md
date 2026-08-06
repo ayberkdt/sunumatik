@@ -41,6 +41,8 @@ For cards, stat tiles, definition blocks, and keyword lines, read `references/ca
 
 For slide tables, read `references/table-treatments.md` and use `/presets/color_themes/components/table-presets.css` (data, comparison, matrix, and spec variants bound to the palette tokens). For reusable line-art decoration, read `references/space-motifs.md` and use the `/presets/color_themes/space-motifs/space-motifs.svg` sprite; preview it with `/presets/color_themes/space-motifs/motif-preview.html`.
 
+For background scene decoration (ambient WebGL composites, motif fields, canvas skies), read `references/decor-layering.md`: decor yields to content (alpha and footprint budgets, hides during content-critical scenes, scrim between decor and text), uses the real scene presets through their decor modules instead of hand-drawn imitations, and gets distance from scale/position — never blur filters.
+
 ## Apply scientific art direction
 
 Use grid lines, orbital arcs, spectral accents, instrument marks, catalog labels, archival paper, or mission chrome only when they fit the subject. Keep decorative stars sparse. Prefer opaque color planes, editorial grids, large typography, hard-edged image crops, thin rules, duotone imagery, and restrained paper texture.

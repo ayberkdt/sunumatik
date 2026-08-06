@@ -6,6 +6,33 @@ Every motion must answer a question: What changes, in which order, at what rate,
 
 Choose one of these semantic roles: reveal, trace, comparison, focus, count, parameter sweep, state transition, or simulation. State that role in the motion manifest.
 
+## Cinematic weight (the premium bar)
+
+Flat single-property effects (a bare opacity fade, a lone translateX)
+read as template motion and get rejected in review. Motion earns
+"premium" through WEIGHT and INTENT, not through more effects:
+
+- Envelopes: every event has an eased attack and a longer decay —
+  nothing snaps to full strength or vanishes at full strength.
+- Composed movement: the pen preset moves like a HAND (nib, pressure,
+  path), not like a progress bar; a zoom transition dives INTO the
+  target and leaves a marker behind, not a crossfade.
+- Cascades: groups arrive as a stagger (60–120 ms steps, capped total),
+  not simultaneously and not one property at a time.
+- Camera/viewport moves are anchored: they start from and land on
+  meaningful content positions, never drift decoratively.
+- ONE primary event at a time. Two simultaneous "big moments" halve
+  each other; schedule calm between peaks (a scene breathing quietly
+  outperforms four concurrent eruptions).
+
+## Continuity laws
+
+Nothing the eye tracks may step between frames: entrances ramp from
+zero, exits fade with their parent, thresholds have fade bands, events
+are decaying energy fields rather than swapped objects. For WebGL
+scenes the full constitution is `webgl-scene-contract.md` — read it
+before creating or editing any scene preset.
+
 ## Use restrained timing
 
 - Micro feedback: 160–260 ms.

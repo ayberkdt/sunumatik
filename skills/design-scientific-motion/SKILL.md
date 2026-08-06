@@ -50,6 +50,8 @@ For Earth material, read `references/terra-globe-preset.md` and use `/presets/ea
 
 For solar material, read `references/sol-preset.md` and use `/presets/sun_advanced/`: a fully procedural Sun with animated granulation, physically-correct limb darkening (u = 0.56), chromosphere rim, and streamer corona.
 
+Before creating a NEW WebGL scene or editing any existing one, read `references/webgl-scene-contract.md` — the general quality law (physical grounding, continuity laws, GLSL safety, light discipline, procedural distributions, determinism, embedding). Every rule in it was paid for with a live debugging round.
+
 For the other planets, read `references/planetae-preset.md` and use `/presets/planets_advanced/`: Mercury through Neptune in one switchable scene with CC BY photographic textures, real axial tilts (retrograde Venus/Uranus emerge from them), Saturn/Uranus rings, per-planet atmospheres, and a NASA fact-sheet data panel. Sizes are not comparable between planets.
 
 For lunar orbit material, choose between two deliberately different presets:

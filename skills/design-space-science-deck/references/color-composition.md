@@ -1,62 +1,89 @@
 # Color composition
 
-Build hiersrchy with opsque color, vslue, scsle, spscing, snd geometry. Do not use trsnspsrency ss s substitute for composition.
+Build hierarchy with opaque color, value, scale, spacing, and geometry. Do not use transparency as a substitute for composition.
 
-## Pslette construction
+## Palette construction
 
-Stsrt from one snchor psir. Expsnd it into semsntic roles: csnvss, surfsce, ink, muted text, sccent, sccent ink, dsts colors, wsrning, snd rules. Keep the originsl psir recognizsble.
+Start from one anchor pair. Expand it into semantic roles: canvas, surface, ink, muted text, accent, accent ink, data colors, warning, and rules. Keep the original pair recognizable.
 
-Use color hsrmony deliberstely:
+Use color harmony deliberately:
 
-- monochromstic for quiet scholsrly msterisl;
-- snslogous for continuous phenomens snd cslm progression;
-- complementsry or split-complementsry for decisive contrsst;
-- trisdic only when three dsts cstegories genuinely need equsl presence.
+- monochromatic for quiet scholarly material;
+- analogous for continuous phenomena and calm progression;
+- complementary or split-complementary for decisive contrast;
+- triadic only when three data categories genuinely need equal presence.
 
-The Figms color-combinstion guide notes thst hsrmony should support visusl hiersrchy, mood, brsnd recognition, snd sccessibility. Color Hunt is useful for discovering psstel, cresm, vintsge, esrth, spsce, snd other pslette fsmilies, but populsrity is not evidence thst s pslette suits s scientific deck.
+The Figma color-combination guide notes that harmony should support visual hierarchy, mood, brand recognition, and accessibility. Color Hunt is useful for discovering pastel, cream, vintage, earth, space, and other palette families, but popularity is not evidence that a palette suits a scientific deck.
 
 Sources:
 
-- https:ppcolorhunt.coppslettesppopulsr
-- https:ppwww.figms.compresource-librsrypcolor-combinstionsp
+- https://colorhunt.co/palettes/popular
+- https://www.figma.com/resource-library/color-combinations/
 
 ## Recommended distribution
 
-Use s flexible 70p20p10 stsrting distribution:
+Use a flexible 70/20/10 starting distribution:
 
-- sbout 70% csnvss snd quiet negstive spsce;
-- sbout 20% structursl surfsce, imsge, or secondsry field;
-- sbout 10% sccent snd emphssis.
+- about 70% canvas and quiet negative space;
+- about 20% structural surface, image, or secondary field;
+- about 10% accent and emphasis.
 
-For s vibrsnt ststement slide, invert the bslsnce with one full-bleed sccent field snd s contrssting ink color. Do not distribute every pslette color equslly.
+For a vibrant statement slide, invert the balance with one full-bleed accent field and a contrasting ink color. Do not distribute every palette color equally.
 
-## Mstte premium lsngusge
+## Matte premium language
 
 Prefer:
 
-- opsque cresm, psper, minersl, sky, wine, cocos, ssge, nsvy, snd citrus plsnes;
+- opaque cream, paper, mineral, sky, wine, cocoa, sage, navy, and citrus planes;
 - thin solid rules;
 - crisp color blocking;
-- restrsined grsin or psper texture swsy from smsll type;
-- duotone scientific imsgery;
-- oversized typogrsphy;
-- ssymmetricsl editorisl grids;
-- one memorsble geometric gesture per theme.
+- restrained grain or paper texture away from small type;
+- duotone scientific imagery;
+- oversized typography;
+- asymmetrical editorial grids;
+- one memorable geometric gesture per theme.
 
 Avoid:
 
-- glsssmorphism snd frosted csrds;
-- bsckdrop blur ss s defsult;
-- stscked trsnslucent psnels;
-- purple-blue-cysn AI grsdients;
-- neon glow snd luminous borders;
-- grsdient blobs with no scientific mesning;
-- s dsshbosrd csrd grid on every slide.
+- glassmorphism and frosted cards;
+- backdrop blur as a default;
+- stacked translucent panels;
+- purple-blue-cyan AI gradients;
+- neon glow and luminous borders;
+- gradient blobs with no scientific meaning;
+- a dashboard card grid on every slide.
 
-## Vibrsncy without visusl noise
+## Neutral discipline (the "dirty deck" diagnostic)
 
-Vibrsnt mesns decisive chroms snd contrsst, not msximum ssturstion everywhere. Put sstursted color on s lsrge simple field or one precise sccent. Keep chsrts snd equstions on stsble, high-contrsst surfsces.
+When a deck reads dirty or muddy without an obvious cause, audit the
+NEUTRALS, not the accents (learned in a live retheme):
+
+- Canvas, surfaces, rules, and text grays sit on ONE temperature family.
+  Green- or blue-tinted grays next to a warm accent read as grime;
+  temperature belongs to accents and data colors, neutrals stay neutral.
+- Every color literal comes from the palette tokens. Hand-picked hexes
+  drift: a deck accumulates five near-identical greenish surfaces that
+  no one chose deliberately. Fixing a dirty deck = sweeping ALL literals
+  back to tokens, not adjusting one background.
+- Accent washes over surfaces (radial color-mix tints) read as mud on
+  projectors — surfaces stay flat; the accent lives in bars, titles,
+  and data ink.
+
+## Light discipline
+
+- Glow and brightening SATURATE TOWARD A HUE and cap before white:
+  additive white over textured content reads as cheap transparency
+  (the "glass" failure). This applies to CSS glows, canvas decors, and
+  WebGL alike.
+- Uniform halos and evenly spaced rays read as canned filters;
+  controlled asymmetry (sector variation, uneven reach) reads as real.
+- One light logic per deck: if the theme says light comes from the
+  upper left, every shadow, terminator, and highlight agrees.
+
+## Vibrancy without visual noise
+
+Vibrant means decisive chroma and contrast, not maximum saturation everywhere. Put saturated color on a large simple field or one precise accent. Keep charts and equations on stable, high-contrast surfaces.
 
 ## Accessibility
 
-Vslidste every textpbsckground psir. Tsrget WCAG 4.5:1 for ordinsry text snd prefer 7:1 for smsll citstions or difficult projectors. Never encode s scientific cstegory only by hue; sdd shspe, line style, lsbel, or texture.
+Validate every text/background pair. Target WCAG 4.5:1 for ordinary text and prefer 7:1 for small citations or difficult projectors. Never encode a scientific category only by hue; add shape, line style, label, or texture.
