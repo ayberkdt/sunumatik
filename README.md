@@ -1,28 +1,28 @@
-# Sunumatik — Bilim Sunumu Preset Kütüphanesi
+# Sunumatik
 
-Bilimsel sunumlar için tasarlanmış, kendi kendine yeten HTML/CSS/JS preset
-koleksiyonu: WebGL gök cismi sahneleri, hareket/geçiş presetleri, renk
-temaları, grafik-ikon kiti ve bunları üreten yapay zekâ becerileri (skills).
+**Bilim sunumları için preset kütüphanesi** — gerçek fizikten türetilmiş WebGL gök cismi sahneleri, bildirimsel grafik motoru, hareket/geçiş presetleri, renk temaları ve bunları üreten 17 yapay zekâ becerisi. Tamamı bağımsız HTML/CSS/JS: derleme adımı yok, internet bağımlılığı yok, `file://` dışında her yerel sunucuda çalışır.
 
-Hızlı başlangıç: `demo\sunumu-baslat.cmd` çift tıkla — yerel sunucu açılır
-ve tüm preset'leri kullanan örnek deste yüklenir
+<p align="center">
+  <img src="docs/media/sun.jpg" alt="Sol — prosedürel aktif Güneş: korona ışın demetleri, patlama kurdeleleri ve akışkan püskürmeler" width="820">
+</p>
+
+| | | |
+|:---:|:---:|:---:|
+| ![Satürn — canlı atmosfer ve halka gölgeleri](docs/media/saturn.jpg) | ![Dünya — gece ışıkları ve fresnel atmosfer](docs/media/earth.jpg) | ![Grafik motoru — belirsizlik bandı, eşik ve projeksiyon](docs/media/chart.jpg) |
+| **Planetae** — Merkür→Neptün | **Terra** — şehir turlu Dünya | **Chart** — spec ver, grafik al |
+
+## Hızlı başlangıç
+
+```
+demo\sunumu-baslat.cmd
+```
+
+Yerel sunucu açılır ve tüm preset'leri kullanan örnek deste yüklenir
 (`http://localhost:8781/demo/index.html`). Tarayıcılar `file://` altında ES
-modüllerini engellediği için yerel sunucu şarttır.
+modüllerini engellediği için yerel sunucu şarttır — herhangi bir statik
+sunucu (`python -m http.server`) yeterlidir.
 
-## presets/ — kullanılabilir varlıklar
-
-### WebGL sahneleri (three.js gömülü — internet gerekmez)
-
-| Klasör | İçerik |
-|---|---|
-| [`sun_advanced/`](presets/sun_advanced) | Prosedürel aktif Güneş: diferansiyel dönme (flow-map'li), Joy yasalı benek çiftleri, patlama kurdeleleri, kademeli manyetik ilmek takımı, 240k parçacıklı akışkan püskürmeler, tutulma-anatomili korona. `sol-decor.mjs` ile herhangi bir 2B tuvale küçük "uzak Güneş" olarak da basılır. |
-| [`moon_advanced/`](presets/moon_advanced) | Gerçek dokulu Ay + yörünge uçuşu (vanilla port). `vendor/` klasörü three.js'i barındırır — diğer sahneler de buradan import eder, **kardeş klasör yapısını bozmayın**. |
-| [`earth_advanced/`](presets/earth_advanced) | Gerçekçi Dünya: gece ışıkları, fresnel atmosfer, 8 şehirlik tur. |
-| [`planets_advanced/`](presets/planets_advanced) | Merkür→Neptün: gaz devlerinde canlı atmosferler (zıt kuşak rüzgârları, Büyük Kırmızı Leke, Satürn altıgeni + halka gölgeleri), Galile uyduları ve geçiş gölgeleri, NASA veri paneli. |
-| [`moon_react_source/`](presets/moon_react_source) | Lunaris'in React/Next.js orijinali + doku ve yörünge verileri + ortak CSS (`components/moon_react_source.css`) — vanilla sahneler bu klasörün verilerini kullanır. |
-| [`lunar_orbit/`](presets/lunar_orbit) | Ay yörünge modeli (mjs + React sarmalayıcı). |
-
-Bir sayfaya gömme tarifi (çalışan örnek: [`demo/sol-tek-basina.html`](demo/sol-tek-basina.html)):
+Bir sayfaya gömme (çalışan şablon: [`demo/sol-tek-basina.html`](demo/sol-tek-basina.html)):
 
 ```html
 <script type="importmap">{ "imports": { "three": "presets/moon_advanced/vendor/three.module.min.js" } }</script>
@@ -30,41 +30,81 @@ Bir sayfaya gömme tarifi (çalışan örnek: [`demo/sol-tek-basina.html`](demo/
 <script type="module">
   import { mountSol } from './presets/sun_advanced/sol-sun.mjs';
   const sol = await mountSol(document.querySelector('#host'));
+  // sol.triggerFlare() · sol.advance(sn) · 2B tuvale gömmek için: sol-decor.mjs
 </script>
 ```
 
-### Hareket ve bileşen presetleri
+## Ne var?
+
+### WebGL sahneleri — `presets/`
+
+Hepsi gerçek fizikten türetilmiş, "efekt yığını değil" ilkesiyle: her görsel
+öğe adlandırılmış bir fenomene karşılık gelir ve altyazı gerçek/temsilî
+ayrımını açık tutar.
 
 | Klasör | İçerik |
 |---|---|
-| [`motion_core/`](presets/motion_core) | Açılma/reveal, hover etkileşimleri, FLIP morph, premium slayt geçişleri (zoom-into dahil) + önizleme sayfaları. |
-| [`timeline_tree/`](presets/timeline_tree) | Yatay/dikey kronoloji ağacı (dal rayları, dönem bantları). |
+| [`sun_advanced/`](presets/sun_advanced) | Prosedürel aktif Güneş: diferansiyel dönme, Joy yasalı benek çiftleri, patlama kurdeleleri, kademeli manyetik ilmek takımı, 240k parçacıklı akışkan püskürmeler, tutulma-anatomili korona. `sol-decor.mjs` ile herhangi bir 2B tuvale "uzak Güneş" olarak kompozitlenir. |
+| [`moon_advanced/`](presets/moon_advanced) | Gerçek dokulu Ay + yörünge uçuşu. `vendor/` klasörü three.js'i barındırır — diğer sahneler buradan import eder, **kardeş klasör yapısını bozmayın**. |
+| [`earth_advanced/`](presets/earth_advanced) | Dünya: gece ışıkları (terminatör maskeli), fresnel atmosfer, 8 gerçek şehirlik rehberli tur. |
+| [`planets_advanced/`](presets/planets_advanced) | Merkür→Neptün: gaz devlerinde canlı atmosferler (zıt kuşak rüzgârları, Büyük Kırmızı Leke, Satürn altıgeni + halka gölgeleri), Galile uyduları ve geçiş gölgeleri, NASA veri paneli. |
+| [`moon_react_source/`](presets/moon_react_source) | Lunaris'in React/Next.js orijinali + doku ve yörünge verileri + ortak CSS. |
+| [`lunar_orbit/`](presets/lunar_orbit) | Hafif analitik iki-cisim Ay yörünge modeli. |
+
+### Bileşenler ve hareket
+
+| Klasör | İçerik |
+|---|---|
+| [`charts_icons/chart-preset/`](presets/charts_icons/chart-preset) | **Bildirimsel grafik motoru**: spec ver → animasyonlu SVG al. Çizgi/sütun/saçılım, belirsizlik bantları, etiketli eşikler, epistemik çizgi stilleri (gözlem düz; fit/projeksiyon kesikli — saçılımda bile), görünüme girince çizilme. |
+| [`motion_core/`](presets/motion_core) | Açılma/reveal, hover etkileşimleri, FLIP morph, premium slayt geçişleri (işaret bırakan zoom dahil), tablo hareketi (satır kaskadı, satır flaşı, sütun vurgusu). |
+| [`color_themes/`](presets/color_themes) | 9 palet (CSS token'ları), kart preset'leri (stat/tanım/ikon, aksan çubuğu sistemi, giriş kaskadı), tablo preset'leri, 10 uzay motifi SVG kiti. |
 | [`figure_callouts/`](presets/figure_callouts) | Figür üzerinde adım adım anlatım: kutu/daire/ok işaretleri, spot ışığı, büyüteç merceği, iddia satırları. |
-| [`equation_steps/`](presets/equation_steps) | Denklem adımlayıcı: dizili denklemi terim terim vurgulayarak anlatır. |
-| [`equation_pen/`](presets/equation_pen) | Elle yazılan denklem (kalem ucu + gerçek çizgi takibi). |
-| [`neural_network/`](presets/neural_network) | Sinir ağı hücreleri, ileri geçiş animasyonu. |
-| [`color_themes/`](presets/color_themes) | 9 palet (CSS değişkenleri, `[data-palette]`), tablo presetleri, 10 uzay motifi SVG kiti. |
-| [`charts_icons/`](presets/charts_icons) | Grafik teması + **bildirimsel grafik motoru** (`chart-preset/chart.mjs`: spec ver, animasyonlu SVG al) + 23 bilim ikonu sprite. |
-| [`equation_theme/`](presets/equation_theme) | Denklem dizgi teması. |
-| [`deck_starter/`](presets/deck_starter) | Minimum deste iskeleti (sabit sahne + klavye + export kancaları) — yeni desteler için başlangıç şablonu. |
+| [`equation_steps/`](presets/equation_steps) · [`equation_pen/`](presets/equation_pen) · [`equation_theme/`](presets/equation_theme) | Denklemi terim terim anlatan adımlayıcı · kalemle yazma efekti · dizgi teması. |
+| [`timeline_tree/`](presets/timeline_tree) · [`neural_network/`](presets/neural_network) | Kronoloji ağacı · sinir ağı ileri-geçiş animasyonu. |
+| [`charts_icons/icons/`](presets/charts_icons/icons) | 23 bilim ikonu (SVG sprite). |
+| [`deck_starter/`](presets/deck_starter) | Yeni desteler için minimum iskelet (sabit sahne + klavye + export kancaları). |
 
-## demo/ — örnek deste
+### `skills/` — üretim talimatları
 
-Tüm preset'leri bir arada kullanan slayt destesi (`index.html`) ve Güneş'i
-tek başına gömme şablonu (`sol-tek-basina.html`).
-
-## skills/ — üretim talimatları
-
-Bu preset'leri üreten/kullanan 17 yapay zekâ becerisi (SKILL.md +
+Bu kütüphaneyi üreten ve kullanan 17 yapay zekâ becerisi (SKILL.md +
 references + scripts). Bir yapay zekâ ajanına (ör. Claude Code)
-`.agents/skills/` altına kopyalanarak verilir; ajan yeni desteler kurarken
-bu kuralları uygular. Beceri dokümanlarındaki `/presets/...` yolları bu
-deponun köküne göredir (varlıklar beceri klasörlerinden çıkarılıp
-`presets/` altında toplandı).
+`.agents/skills/` altına kopyalanarak verilir; ajan deste kurarken bu
+kuralları uygular. Öne çıkanlar:
 
-## Lisans ve atıf notları
+- **Metin hattı** — dört katman: öz seçimi → *iddia zanaatı*
+  (`write-assertive-slide-copy`: her görünür satır bir şey söyler; duvar
+  metin, kelime konfetisi ve ok-zinciri yasak) → TR/EN dil yüzeyi →
+  yoğunluk/punto tabanları. Türkçe-farkında doğrulayıcılarla.
+- **Tasarım yasaları** — WebGL sahne sözleşmesi (süreklilik anayasası,
+  GLSL güvenliği, ışık disiplini, prosedürel dağılımlar), hizalama/grid
+  disiplini, nötr renk disiplini, dekor katmanlama.
+- **Uçtan uca akış** — orkestratör + anlatı + kanıt doğrulama + tema +
+  denklem + görselleştirme + kurulum + denetim/export becerileri.
 
+Beceri dokümanlarındaki `/presets/...` yolları bu deponun köküne göredir.
+
+## demo/
+
+[`demo/index.html`](demo/index.html) — tüm preset'leri bir arada kullanan
+15 slaytlık örnek deste. [`demo/sol-tek-basina.html`](demo/sol-tek-basina.html)
+— tek sahneyi gömmenin asgari şablonu.
+
+## Teknik notlar
+
+- **Bağımlılık yok:** three.js `presets/moon_advanced/vendor/` altında
+  gömülüdür; hiçbir CDN/font/ağ isteği yoktur, çevrimdışı çalışır.
+- **Erişilebilirlik ve export:** tüm hareketli preset'ler
+  `prefers-reduced-motion` altında son kareyi gösterir;
+  `html[data-export="true"]` deterministik export karesi üretir; klavye
+  gezinimi (`data-owns-arrows`/`data-owns-keys`) deste çalıştırıcılarıyla
+  uyumludur. Her hareketli preset bir `motion-manifest.json` taşır
+  (model, sınırlar, reduced-motion ve export durumu).
+- **Determinizm:** sahneler tohumludur ve `advance(saniye)` API'siyle
+  kare kare sürülebilir (test ve export için).
+
+## Lisans ve atıf
+
+- Kod ve tasarım: © Ayberk — tüm hakları saklıdır (izin için iletişime geçin).
 - `presets/moon_advanced/vendor/` — [three.js](https://threejs.org) (MIT).
-- `presets/planets_advanced/textures/` — [Solar System Scope](https://www.solarsystemscope.com/textures/) (CC BY 4.0): gezegen dokuları kullanılırken atıf zorunludur; ayrıntı `asset-provenance.json` içinde.
-- `presets/earth_advanced/` ve `presets/moon_react_source/public/` dokuları — NASA görüntüleri (three.js örnek deposu üzerinden; kamu malı/serbest kullanım).
-- Kalan tüm kod ve tasarım: bu deponun sahibine aittir.
+- `presets/planets_advanced/textures/` — [Solar System Scope](https://www.solarsystemscope.com/textures/) (CC BY 4.0; kullanımda atıf zorunludur, ayrıntı `asset-provenance.json` içinde).
+- Dünya/Ay dokuları — NASA görüntüleri (three.js örnek deposu üzerinden).
