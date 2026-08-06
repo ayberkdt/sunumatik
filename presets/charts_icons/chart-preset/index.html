@@ -34,10 +34,12 @@
     mountChart(document.querySelector('#c1'), {
       type: 'line',
       title: 'Katsayı kaybı 60. derecede görev sınırını aşıyor',
+      subtitle: '%90 güven bandı; 50. dereceden sonrası kesikli projeksiyon',
+      source: 'Kaynak: MONTE koşuları, n=1200 · temsili veri',
       x: { label: 'Harmonik derecesi', ticks: 6 },
       y: { label: 'Yörünge sapması', unit: 'm', ticks: 5 },
       series: [
-        { name: 'Gözlem', slot: 1, markers: true,
+        { name: 'Gözlem', slot: 1, markers: true, area: true,
           data: [[10,2.1],[20,2.4],[30,3.2],[40,4.4],[50,6.8],[60,10.2],[70,15.5]],
           band: [[10,1.7,2.5],[20,1.9,2.9],[30,2.6,3.8],[40,3.6,5.2],[50,5.6,8.0],[60,8.4,12.0],[70,12.6,18.4]] },
         { name: 'Projeksiyon', slot: 2, style: 'projected',

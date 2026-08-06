@@ -34,6 +34,17 @@
   font-size: 26px;
   font-weight: 700;
 }
+.sci-chart .sci-chart-subtitle {
+  fill: var(--color-muted, #70615c);
+  font-size: 19px;
+  font-weight: 500;
+}
+.sci-chart .sci-chart-source {
+  fill: var(--color-muted, #70615c);
+  font-size: 15px;
+  opacity: .85;
+}
+.sci-chart .series-area { stroke: none; }
 
 /* Axes: visible but quiet — data carries the ink */
 .sci-chart .axis path,
@@ -62,6 +73,7 @@
 .sci-chart .grid line {
   stroke: var(--color-rule, #d4cba2);
   stroke-width: 1;
+  stroke-opacity: .6;
   shape-rendering: crispEdges;
 }
 .sci-chart .grid path { display: none; }
@@ -83,8 +95,8 @@
 }
 .sci-chart .series-marker {
   fill: var(--series-color, var(--chart-series-1));
-  stroke: var(--color-canvas, #fff);
-  stroke-width: 1.5;
+  stroke: var(--color-surface, var(--color-canvas, #fff));
+  stroke-width: 2;
 }
 .sci-chart .series-bar {
   fill: var(--series-color, var(--chart-series-1));

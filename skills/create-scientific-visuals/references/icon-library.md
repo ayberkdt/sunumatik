@@ -1,34 +1,40 @@
-# Icon librsry
+# Icon library
 
-File: `sssetspiconspscience-icons.svg` (symbol sprite).
-Preview: `sssetspiconspicons-preview.html`.
+v2 (2026-08): the set is DUOTONE — every icon pairs a soft currentColor fill layer (opacity .16) with 1.8 px rounded strokes on a 24 px grid, plus one solid-fill focal detail (antenna dot, nucleus, needle hub). New icons must follow this language; single-weight thin liners read weak next to the set.
 
-Functionsl wsyfinding msrks for sgends rows, section tsgs, csllouts, method
-bsdges, snd footers. Icons sre not illustrstions snd never replsce s chsrt,
-disgrsm, or number.
+File: `/presets/charts_icons/icons/science-icons.svg` (symbol sprite).
+Preview: `/presets/charts_icons/icons/icons-preview.html`.
+
+Functional wayfinding marks for agenda rows, section tags, callouts, method
+badges, and footers. Icons are not illustrations and never replace a chart,
+diagram, or number.
 
 ## Set
 
-`i-telescope` `i-sstellite` `i-rocket` `i-orbit` `i-plsnet` `i-moon` `i-stsr`
-`i-spectrum` `i-wsve` `i-stom` `i-molecule` `i-microscope` `i-flssk`
-`i-chsrt-bsrs` `i-chsrt-scstter` `i-dstsbsse` `i-chip` `i-neursl-net`
-`i-gsuge` `i-milestone` `i-wsrning` `i-info` `i-citstion`
+v2 (2026-08): the set is DUOTONE — every icon pairs a soft currentColor fill layer (opacity .16) with 1.8 px rounded strokes on a 24 px grid, plus one solid-fill focal detail (antenna dot, nucleus, needle hub). New icons must follow this language; single-weight thin liners read weak next to the set.
 
-## Ussge
+`i-telescope` `i-satellite` `i-rocket` `i-orbit` `i-planet` `i-moon` `i-star`
+`i-spectrum` `i-wave` `i-atom` `i-molecule` `i-microscope` `i-flask`
+`i-chart-bars` `i-chart-scatter` `i-database` `i-chip` `i-neural-net`
+`i-gauge` `i-milestone` `i-warning` `i-info` `i-citation`
+
+## Usage
+
+v2 (2026-08): the set is DUOTONE — every icon pairs a soft currentColor fill layer (opacity .16) with 1.8 px rounded strokes on a 24 px grid, plus one solid-fill focal detail (antenna dot, nucleus, needle hub). New icons must follow this language; single-weight thin liners read weak next to the set.
 
 ```html
-<svg clsss="icon" viewBox="0 0 24 24" sris-hidden="true">
-  <use href="sssetspiconspscience-icons.svg#i-stom"p>
-<psvg>
+<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+  <use href="/presets/charts_icons/icons/science-icons.svg#i-atom"/>
+</svg>
 ```
 
-- 24×24 grid, 1.8px stroke, round csps, `currentColor` — icons inherit the
-  text color next to them snd stsy legible on sny ssved pslette.
-- Render st 24–48px. One size per context; do not mix scsles in s list.
-- Decorstive plscements tske `sris-hidden="true"`. A losd-besring icon (the
-  only csrrier of s mesning, e.g. `i-wsrning` on s csvest) needs s text lsbel
+- 24×24 grid, 1.8px stroke, round caps, `currentColor` — icons inherit the
+  text color next to them and stay legible on any saved palette.
+- Render at 24–48px. One size per context; do not mix scales in a list.
+- Decorative placements take `aria-hidden="true"`. A load-bearing icon (the
+  only carrier of a meaning, e.g. `i-warning` on a caveat) needs a text label
   or `<title>` inside the referencing `<svg>`.
-- Inline the sprite once per document for `file:pp` delivery; externsl `<use>`
+- Inline the sprite once per document for `file://` delivery; external `<use>`
   needs http(s).
-- Extending the set: ssme grid, ssme stroke, geometric construction, no fills
-  except sub-2px dots; sdd the id here snd to the preview psge.
+- Extending the set: same grid, same stroke, geometric construction, no fills
+  except sub-2px dots; add the id here and to the preview page.

@@ -52,10 +52,56 @@ function niceTicks(min, max, count = 5) {
 const fmt = v => Math.abs(v) >= 1000 ? v.toLocaleString('tr-TR')
   : (Math.round(v * 100) / 100).toString().replace('.', ',');
 
+/* Fritsch–Carlson MONOTON kübik: veriyi aşmayan (overshoot yok) yumuşak
+   eğri — yayın kalitesi görünümün bel kemiği. Kırık çizgi poligonu yalnız
+   ayrık adımlar anlam taşıyorsa kullanılır (series.curve: false). */
+function monotoneSegs(pts) {
+  const n = pts.length;
+  if (n < 3) return null;
+  const dx = [], m = [], t = new Array(n);
+  for (let i = 0; i < n - 1; i++) {
+    dx.push(pts[i + 1][0] - pts[i][0]);
+    m.push((pts[i + 1][1] - pts[i][1]) / (dx[i] || 1e-9));
+  }
+  t[0] = m[0]; t[n - 1] = m[n - 2];
+  for (let i = 1; i < n - 1; i++) t[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) { t[i] = 0; t[i + 1] = 0; continue; }
+    const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b;
+    if (s > 9) { const k = 3 / Math.sqrt(s); t[i] = k * a * m[i]; t[i + 1] = k * b * m[i]; }
+  }
+  const segs = [];
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i];
+    segs.push([pts[i],
+      [pts[i][0] + h / 3, pts[i][1] + t[i] * h / 3],
+      [pts[i + 1][0] - h / 3, pts[i + 1][1] - t[i + 1] * h / 3],
+      pts[i + 1]]);
+  }
+  return segs;
+}
+const r2 = v => Math.round(v * 100) / 100;
+const segsToPath = segs => `M${r2(segs[0][0][0])},${r2(segs[0][0][1])}`
+  + segs.map(s => `C${r2(s[1][0])},${r2(s[1][1])} ${r2(s[2][0])},${r2(s[2][1])} ${r2(s[3][0])},${r2(s[3][1])}`).join('');
+const segsToPathReversed = segs => [...segs].reverse()
+  .map(s => `C${r2(s[2][0])},${r2(s[2][1])} ${r2(s[1][0])},${r2(s[1][1])} ${r2(s[0][0])},${r2(s[0][1])}`).join('');
+const pathFor = (pts, curve = true) => {
+  const segs = curve !== false ? monotoneSegs(pts) : null;
+  if (segs) return segsToPath(segs);
+  return pts.map((p, i) => `${i ? 'L' : 'M'}${r2(p[0])},${r2(p[1])}`).join('');
+};
+/* üstü yuvarlatılmış sütun */
+const barPath = (x, y, w, h, r) => {
+  r = Math.min(r, w / 2, h);
+  return `M${r2(x)},${r2(y + h)} V${r2(y + r)} Q${r2(x)},${r2(y)} ${r2(x + r)},${r2(y)} H${r2(x + w - r)} Q${r2(x + w)},${r2(y)} ${r2(x + w)},${r2(y + r)} V${r2(y + h)} Z`;
+};
+
+let gradientCounter = 0;
+
 export function mountChart(container, spec) {
   if (!container) throw new Error('mountChart requires a container');
   const [W, H] = spec.viewBox || [960, 540];
-  const M = { top: spec.title ? 64 : 28, right: 150, bottom: 78, left: 92, ...(spec.margin || {}) };
+  const M = { top: spec.title ? (spec.subtitle ? 86 : 64) : 28, right: 150, bottom: 78, left: 92, ...(spec.margin || {}) };
   const type = spec.type || 'line';
   const series = spec.series || [];
 
@@ -106,9 +152,18 @@ export function mountChart(container, spec) {
     el('line', { x1: sx(t), x2: sx(t), y1: M.top + plotH, y2: M.top + plotH + 7 }, tick);
     el('text', { x: sx(t), y: M.top + plotH + 30, 'text-anchor': 'middle' }, tick).textContent = fmt(t);
   }
+  const defs = el('defs', {}, svg);
+
   /* başlık: grafiğin İDDİASI (assertion) — konu etiketi değil */
   if (spec.title) {
     el('text', { class: 'sci-chart-title', x: M.left, y: 30 }, svg).textContent = spec.title;
+  }
+  if (spec.subtitle) {
+    el('text', { class: 'sci-chart-subtitle', x: M.left, y: 54 }, svg).textContent = spec.subtitle;
+  }
+  if (spec.source) {
+    el('text', { class: 'sci-chart-source', x: W - 10, y: H - 10, 'text-anchor': 'end' }, svg)
+      .textContent = spec.source;
   }
   if (spec.y?.label) {
     const t = el('text', { class: 'axis-title', x: M.left, y: M.top - 8 }, svg);
@@ -134,11 +189,19 @@ export function mountChart(container, spec) {
   const animated = [];   /* {node, kind} — reveal sırasında oynatılır */
   const styleClass = { fitted: 'is-fitted', projected: 'is-projected', simulated: 'is-simulated' };
   series.forEach((s, si) => {
-    const g = el('g', { 'data-series-slot': s.slot || (si % 6) + 1 }, svg);
+    const slot = s.slot || (si % 6) + 1;
+    const g = el('g', { 'data-series-slot': slot }, svg);
+    const screen = s.data.map(d => [sx(d[0]), sy(d[1])]);
+    /* katman sırası: bant → alan → çizgi → noktalar (estetik yasası) */
     if (s.band && s.band.length) {
-      const up = s.band.map(b => `${sx(b[0])},${sy(b[2])}`);
-      const dn = [...s.band].reverse().map(b => `${sx(b[0])},${sy(b[1])}`);
-      const band = el('polygon', { class: 'uncertainty-band', points: [...up, ...dn].join(' ') }, g);
+      const top = s.band.map(b => [sx(b[0]), sy(b[2])]);
+      const bot = s.band.map(b => [sx(b[0]), sy(b[1])]);
+      const topSegs = s.curve !== false ? monotoneSegs(top) : null;
+      const botSegs = s.curve !== false ? monotoneSegs(bot) : null;
+      const d = topSegs && botSegs
+        ? `${segsToPath(topSegs)} L${r2(bot[bot.length - 1][0])},${r2(bot[bot.length - 1][1])} ${segsToPathReversed(botSegs)} Z`
+        : [...top, ...[...bot].reverse()].map((p, i) => `${i ? 'L' : 'M'}${r2(p[0])},${r2(p[1])}`).join('') + 'Z';
+      const band = el('path', { class: 'uncertainty-band', d }, g);
       animated.push({ node: band, kind: 'fade' });
     }
     if (type === 'bar') {
@@ -147,9 +210,9 @@ export function mountChart(container, spec) {
       const barW = Math.min(64, slotW * .7 / groups);
       s.data.forEach(d => {
         const bx = sx(d[0]) - (groups * barW) / 2 + si * barW;
-        const bar = el('rect', {
-          class: 'series-bar', x: bx, width: barW - 3,
-          y: sy(Math.max(0, d[1])), height: Math.abs(sy(d[1]) - sy(0)),
+        const bar = el('path', {
+          class: 'series-bar',
+          d: barPath(bx, sy(Math.max(0, d[1])), barW - 4, Math.abs(sy(d[1]) - sy(0)), 3.5),
         }, g);
         animated.push({ node: bar, kind: 'grow', base: sy(0) });
       });
@@ -158,16 +221,29 @@ export function mountChart(container, spec) {
          çizgidir — fit'i noktalarla çizmek onu veri gibi gösterir */
       const drawsLine = type === 'line' || !!s.style;
       const drawsMarkers = (type === 'scatter' && !s.style) || s.markers;
+      if (drawsLine && s.area) {
+        /* degrade alan dolgusu: seri renginden şeffafa dikey solma */
+        const gid = `sciGrad${++gradientCounter}`;
+        const grad = el('linearGradient', { id: gid, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+        el('stop', { offset: '0%', style: `stop-color: var(--chart-series-${slot}); stop-opacity: .26` }, grad);
+        el('stop', { offset: '100%', style: `stop-color: var(--chart-series-${slot}); stop-opacity: 0` }, grad);
+        const baseY = M.top + plotH;
+        const area = el('path', {
+          class: 'series-area', fill: `url(#${gid})`,
+          d: `${pathFor(screen, s.curve)} L${r2(screen[screen.length - 1][0])},${r2(baseY)} L${r2(screen[0][0])},${r2(baseY)} Z`,
+        }, g);
+        animated.push({ node: area, kind: 'fade' });
+      }
       if (drawsLine) {
         const path = el('path', {
           class: `series-line ${styleClass[s.style] || ''}`.trim(),
-          d: s.data.map((d, i) => `${i ? 'L' : 'M'}${sx(d[0])},${sy(d[1])}`).join(''),
+          d: pathFor(screen, s.curve),
         }, g);
         animated.push({ node: path, kind: 'draw' });
       }
       if (drawsMarkers) {
-        s.data.forEach(d => {
-          const m = el('circle', { class: 'series-marker', cx: sx(d[0]), cy: sy(d[1]), r: 5.5 }, g);
+        screen.forEach(p => {
+          const m = el('circle', { class: 'series-marker', cx: r2(p[0]), cy: r2(p[1]), r: 4.6 }, g);
           animated.push({ node: m, kind: 'pop' });
         });
       }

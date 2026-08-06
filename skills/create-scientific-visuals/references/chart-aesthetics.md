@@ -26,6 +26,22 @@ output, hand-built SVG, and any future chart form.
   fill-opacity, no stroke. A band in its own color reads as a third
   series (the "olive blob" failure).
 
+## Curves and areas (publication-grade line work)
+
+- Continuous phenomena draw as SMOOTH curves: the engine uses monotone
+  cubic interpolation (Fritsch–Carlson — no overshoot past data points).
+  Straight polylines are a deliberate choice reserved for discrete steps
+  (`curve: false`), never the default look.
+- The primary observed series may carry a GRADIENT AREA (`area: true`):
+  series hue fading from ≤ .26 at the line to 0 at the plot floor. One
+  area per chart — two stacked gradients turn into mud.
+- Uncertainty bands use the same smoothing as their parent line; a
+  polygon band under a curved line reads as a rendering error.
+- Title/subtitle/source hierarchy: assertion title (bold ink), one-line
+  subtitle in muted type stating what the marks are ("%90 güven bandı;
+  50. dereceden sonrası projeksiyon"), source line bottom-right small
+  muted. The subtitle must not repeat the axis titles.
+
 ## Marks
 
 - The observed line is always visible ON TOP of its band: band renders
