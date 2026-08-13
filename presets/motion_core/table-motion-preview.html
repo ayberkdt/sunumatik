@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Table Motion — Cell Fill Presets</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="table-motion.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --color-canvas: #16181d; --color-surface: #1f222a; --color-ink: #f0e9dd;
+      --color-muted: #a99f90; --color-accent: #E8804A; --color-accent-ink: #1E2026;
+      --color-data-1: #8ba86f; --color-data-2: #5f9bb5; --color-rule: #3a3f4a;
+      /* genişletilmiş palet: 5 duraklı sıralı rampa (heatFill bunu okur) */
+      --ramp-seq-1: #1E2026; --ramp-seq-2: #4E3A2E; --ramp-seq-3: #855434;
+      --ramp-seq-4: #B96A3E; --ramp-seq-5: #E8804A;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 5vw; background: var(--color-canvas); color: var(--color-ink);
+           font: 500 19px/1.4 ui-sans-serif, system-ui, sans-serif; }
+    main { max-width: 1000px; margin: auto; display: grid; gap: 28px; }
+    h1 { font-size: 42px; line-height: 1; margin: 0; letter-spacing: -.02em; }
+    h2 { font-size: 15px; letter-spacing: .14em; text-transform: uppercase; color: var(--color-muted); margin: 0 0 14px; }
+    section { border-top: 2px solid var(--color-ink); padding-top: 20px; }
+    .sci-table { width: 100%; border-collapse: collapse; background: var(--color-surface);
+                 border: 1.5px solid var(--color-rule); border-radius: 12px; overflow: hidden; }
+    .sci-table th, .sci-table td { padding: 12px 16px; text-align: left; }
+    .sci-table th { font-size: 14px; letter-spacing: .1em; text-transform: uppercase;
+                    color: var(--color-muted); border-bottom: 2px solid var(--color-rule); }
+    .sci-table tbody td { border-bottom: 1px solid var(--color-rule); }
+    .sci-table tfoot td { font-weight: 700; }
+    .sci-table td:nth-child(n+2), .sci-table th:nth-child(n+2) { text-align: right; }
+    .note { font-size: 15px; color: var(--color-muted); margin: 12px 0 0; }
+    button { border: 1.5px solid var(--color-ink); border-radius: 999px; background: var(--color-ink);
+             color: var(--color-canvas); padding: 10px 20px; font: 600 16px/1 inherit; cursor: pointer; }
+    button + button { margin-left: 10px; background: transparent; color: var(--color-ink); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Hücre dolgusu dört dilde konuşur.</h1>
+
+    <section>
+      <h2>Sütun kaskadı + sayaç + veri çubuğu + ısı dolgusu</h2>
+      <table class="sci-table" id="demo" data-table-reveal="columns">
+        <thead>
+          <tr>
+            <th>Kampanya</th>
+            <th>Gözlem sayısı</th>
+            <th>Başarı payı</th>
+            <th>Sinyal yoğunluğu</th>
+            <th>Ort. poz süresi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Perseidler 2024</td>
+            <td data-count>1.248</td>
+            <td data-bar="0.62" data-bar-slot="2">%62</td>
+            <td data-heat="0.35">0,35</td>
+            <td data-count>42,5 ms</td>
+          </tr>
+          <tr>
+            <td>Leonidler 2024</td>
+            <td data-count>986</td>
+            <td data-bar="0.48" data-bar-slot="2">%48</td>
+            <td data-heat="0.72">0,72</td>
+            <td data-count>37,8 ms</td>
+          </tr>
+          <tr>
+            <td>Geminidler 2024</td>
+            <td data-count>1.534</td>
+            <td data-bar="0.81" data-bar-slot="2">%81</td>
+            <td data-heat="0.91">0,91</td>
+            <td data-count>55,2 ms</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr id="total">
+            <td>Toplam / kapsama</td>
+            <td data-count>3.768</td>
+            <td data-count>%96,4</td>
+            <td data-heat="0.66">0,66</td>
+            <td data-count>45,2 ms</td>
+          </tr>
+        </tfoot>
+      </table>
+      <p class="note">Isı ölçeği: 0–1 normalleştirilmiş sinyal yoğunluğu (koyu → açık rampa).
+        0,55 üstü hücrelerde mürekkep, okunurluk için kanvas rengine döner.
+        Çubuklar yalnızca "Başarı payı" sütununun payını kodlar.</p>
+      <p>
+        <button id="recount">Sayaçları yeniden çalıştır</button>
+        <button id="flash">Toplam satırını vurgula</button>
+      </p>
+    </section>
+  </main>
+  <script type="module">
+    import { observeTableReveal, flashRow, countCells, cellBars, heatFill }
+      from './table-motion.js';
+
+    const table = document.querySelector('#demo');
+
+    /* kurulum sırası: önce dolgular hazırlanır, sonra gözlemci açılır */
+    cellBars(table);
+    heatFill(table);
+    observeTableReveal();          /* data-table-reveal="columns" algılanır */
+    countCells(table);
+
+    document.querySelector('#recount').addEventListener('click', () => countCells(table));
+    document.querySelector('#flash').addEventListener('click', () =>
+      flashRow(document.querySelector('#total')));
+  </script>
+</body>
+</html>

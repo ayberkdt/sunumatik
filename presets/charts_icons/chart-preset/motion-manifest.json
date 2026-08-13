@@ -13,6 +13,48 @@
       "accessibility": "The SVG carries role=img with an aria-label from the chart title; data is also available as text in captions per the chart rules.",
       "loop": false,
       "pauseControl": false
+    },
+    {
+      "id": "violin-grow",
+      "type": "reveal",
+      "truthLevel": "analytic",
+      "purpose": "Violin (distribution) plots grow horizontally from their centerline on reveal (scaleX 0-1, ~90 ms stagger per violin), then quartile box, 5-95 whiskers and the median dot fade/pop in.",
+      "model": "Shape is a Gaussian-kernel KDE with Silverman bandwidth h = 0.9 * min(sigma, IQR/1.34) * n^(-1/5), evaluated at 48 evenly spaced points over [min-h, max+h]; quartiles/percentiles use linear interpolation (R-7). Fully deterministic, no randomness.",
+      "limitations": "Widths are normalized per violin (each scaled to its own max density): widths are NOT comparable across violins, only shapes and positions are. The KDE smooths h beyond the observed range, so tails extend slightly past the data. The grow animation itself is presentational; only the final shape is the analytic claim.",
+      "reducedMotion": "Final state immediately (no growth, no stagger).",
+      "exportState": "Final state (finish()); no transitions.",
+      "accessibility": "SVG carries role=img with an aria-label; category names render as axis text; summary statistics (median, quartiles) are visible as static marks.",
+      "loop": false,
+      "pauseControl": false
+    },
+    {
+      "id": "scatter-morph",
+      "type": "state-transition",
+      "truthLevel": "data-driven",
+      "sourceIds": ["spec.series[].data (caller-supplied datasets)"],
+      "purpose": "chart.morphTo(patch) glides existing scatter points (matched by index) to their new positions, fades removed points out and pops added points in; bars glide via height scaling; lines crossfade over 300 ms because a path 'd' cannot tween.",
+      "model": "Pure playback of two caller-supplied datasets; no interpolation model beyond the visual easing between start and end positions.",
+      "limitations": "Axes do NOT rescale during a morph - fix the domain via x/y min/max or accept points moving off-plot. Index-based matching asserts identity: if point i in the old and new datasets is not the same entity, the glide fabricates a continuity that is not in the data. Intermediate positions during the glide carry no data meaning.",
+      "reducedMotion": "New data applied instantly; the returned promise resolves immediately.",
+      "exportState": "New data applied instantly, no transitions.",
+      "accessibility": "End states are complete static charts; the transition adds no information, so nothing is lost by skipping it.",
+      "loop": false,
+      "pauseControl": false,
+      "durationMs": 650
+    },
+    {
+      "id": "chart-sheen",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Presenter-triggered ONE-SHOT attention sweep (chart.sheen(i)): a short bright segment travels once along a line path and fades (~900 ms WAAPI); scatter points emit one expanding ring each (20 ms stagger); violins get a single outline brightness pulse. The overlay node is removed when the animation ends.",
+      "model": "None - decorative-adjacent focus cue that encodes no data. It is legitimate only because it is presenter-driven, single-shot and self-removing; use at most once per claim.",
+      "limitations": "Honest caveat: this is the closest the system comes to decoration. It must never loop, never persist a glow/drop-shadow, and must not substitute for an annotation or reference line when the emphasis IS the claim.",
+      "reducedMotion": "No-op: the call returns without rendering anything.",
+      "exportState": "No-op: nothing is rendered in export mode.",
+      "accessibility": "Carries no information, so its absence (reduced motion, export) loses nothing; the presenter's spoken claim plus static labels remain the record.",
+      "loop": false,
+      "pauseControl": false,
+      "durationMs": 900
     }
   ]
 }

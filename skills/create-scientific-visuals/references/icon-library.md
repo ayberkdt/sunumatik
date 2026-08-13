@@ -5,11 +5,11 @@ Two tiers, two jobs — do not mix their visual languages in one list:
 1. **Duotone science set** (`/presets/charts_icons/icons/science-icons.svg`, 23 icons): the
    hand-drawn hero tier for section tags, agenda rows, and title-adjacent
    marks. Rules below.
-2. **Domain set** (`/presets/charts_icons/domain-icons/`, 172 icons, added 2026-08): the
+2. **Domain set** (`/presets/charts_icons/domain-icons/`, 224 icons, added 2026-08): the
    SUBJECT tier, drawn in the same duotone hand as tier 1, covering the topics
    these decks actually argue about — mathematics (28), signals & control (30),
    physics (24), astrodynamics (30), rockets & satellites (30), machine
-   learning (18), astronomical objects (12). Sprite `domain-icons.svg`
+   learning (18), astronomical objects (12), GNC (26), propulsion (26). Sprite `domain-icons.svg`
    (`<use href="...#i-hohmann-transfer">`), searchable TR+EN `manifest.json`
    with a `family` per icon, and `preview.html` with family chips + live filter.
    These icons make SCIENTIFIC CLAIMS: an elliptical orbit puts the primary at

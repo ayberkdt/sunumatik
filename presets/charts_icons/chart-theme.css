@@ -119,6 +119,56 @@
   stroke-width: 2;
 }
 
+/* Violin (dağılım): dolgu bant yasasına uyar (ana renk ≤ .18 opaklık),
+   kontur 1.5px seri renginde. Kutu/bıyık/medyan aynı yuva değişkenini
+   tüketir — asla ayrı renk almazlar. */
+.sci-chart .violin-shape {
+  fill: var(--series-color, var(--chart-series-1));
+  fill-opacity: .16;
+  stroke: var(--series-color, var(--chart-series-1));
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.sci-chart .violin-box {
+  fill: var(--series-color, var(--chart-series-1));
+  fill-opacity: .45;
+  stroke: none;
+}
+.sci-chart .violin-whisker {
+  stroke: var(--series-color, var(--chart-series-1));
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+/* medyan noktası .series-marker'ı devralır; burada sadece boyut ayrımı */
+.sci-chart .violin-median { stroke-width: 2.5; }
+
+/* morphTo ile eklenen noktalar: tek seferlik pop-in geçişi (~%6 taşma) */
+.sci-chart .pt {
+  transition: transform .42s cubic-bezier(.34, 1.3, .5, 1), opacity .3s ease;
+}
+
+/* Sheen: sunucu tetikli TEK SEFERLİK dikkat süpürmesi — motor WAAPI ile
+   bir kez oynatıp düğümü KALDIRIR; kalıcı parlama/gölge yasak (aesthetics).
+   stroke değeri motor tarafından seri renginin %60 beyaz karışımına ayarlanır. */
+.sci-chart .sheen-overlay {
+  fill: none;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.sci-chart .sheen-outline {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.sci-chart .sheen-ripple {
+  fill: none;
+  stroke-width: 2.5;
+  pointer-events: none;
+}
+
 /* Reference lines and thresholds: accent, labelled, never unexplained */
 .sci-chart .ref-line {
   stroke: var(--color-accent, #a34f38);

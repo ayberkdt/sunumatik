@@ -9,7 +9,7 @@ the chosen form is dressed and generated.
 
 ## The engine — do not hand-build SVG charts anymore
 
-`mountChart(container, spec)` renders line/bar/scatter charts with nice-number
+`mountChart(container, spec)` renders line/bar/scatter/violin charts with nice-number
 ticks, horizontal grid, uncertainty bands, labelled reference lines, epistemic
 dash styles, direct labels, annotations with arrows, and a staggered draw-in
 reveal (lines trace, bars grow from baseline, markers pop) that fires when the
@@ -38,6 +38,70 @@ data. Dashed lines fade in rather than trace (tracing corrupts the dash
 pattern). Hand-built SVG remains legitimate only for chart forms the engine
 does not cover; it must still follow the class contract below.
 
+### Violin (distribution) charts
+
+```js
+mountChart(el, {
+  type: 'violin',
+  y: { label: 'Kalıntı', unit: 'mm' },
+  series: [
+    { name: 'Model A', slot: 1, values: [/* ham sayılar */] },
+    { name: 'Model B', slot: 2, values: [...] },
+  ],
+});
+```
+
+One violin per series entry; the series `name` becomes the category label on
+x, all violins share the y scale. The shape is a **Gaussian KDE** with
+Silverman bandwidth `h = 0.9 · min(σ, IQR/1.34) · n^(-1/5)`, evaluated at 48
+even y-points over `[min−h, max+h]` — deterministic, no randomness. Inside:
+quartile box (Q1–Q3), whisker to the 5/95 percentiles, median as the solid
+dot; percentiles use linear interpolation (R-7). Fill obeys the band law
+(series hue ≤ .18 opacity), outline 1.5 px in the slot color.
+
+**Honesty note — width normalization**: every violin is scaled to its own
+maximum density, sharing only the cap (0.72 × slot width). Widths are NOT
+comparable across violins; only shape and vertical position are. Say so in
+the subtitle or caption when the comparison could be misread. Reveal: each
+violin grows horizontally from its centerline (~90 ms stagger), then
+box/whisker/median fade in; export/reduced-motion jump to the final frame.
+
+### Scatter animations and `morphTo`
+
+Scatter pop-in is data-order: each point appears ~14 ms after the previous
+one (the step shrinks so the total stays ≤ 1.2 s), scaling 0→1 with a small
+(~6%) overshoot.
+
+```js
+const chart = mountChart(el, { type: 'scatter', x: { min: 0, max: 13 },
+  y: { min: 0, max: 11 }, series: [{ name: 'Koşu', slot: 1, data: A }] });
+await chart.morphTo([{ data: B }], { duration: 650 });  // Promise
+```
+
+`morphTo(patch, {duration=650})` updates series data in place: `patch[si]`
+(`{data}` or a plain array) applies to series `si`; omitted indices are left
+alone. Existing points matched **by index** glide (cx/cy transition), removed
+points fade out, added points pop in (`.pt` class). Bars glide via a height
+scale; a line series redraws with a 300 ms opacity crossfade (a path `d`
+cannot tween). Violin morph is not supported. **Axes never rescale during a
+morph** — pin the domain with `x/y min/max`, or accept points sliding
+off-plot. Index matching asserts identity: if old point *i* and new point *i*
+are not the same entity, the glide fabricates continuity. Reduced-motion and
+export apply the new data instantly.
+
+### `sheen(seriesIndex)` — the legal "ışıltı"
+
+Presenter-triggered ONE-SHOT attention sweep: on a line, a short bright
+segment (`color-mix` of the slot color with 60% white) travels the path once
+over ~900 ms and fades; on scatter, one expanding ring per point (20 ms
+stagger); on a violin, a single outline brightness pulse. The overlay node is
+removed when the animation ends. Discipline: **at most once per claim**,
+always presenter-triggered (a click/keystroke, never a timer or loop); it is
+a pointer, not evidence — if the emphasis IS the claim, use an annotation or
+reference line instead. No-op under reduced motion and in export mode. This
+parallels the table `flashRow` grammar; the no-continuous-glow law
+(chart-aesthetics.md) still stands.
+
 ## Class contract
 
 | Region | Classes |
@@ -48,6 +112,8 @@ does not cover; it must still follow the class contract below.
 | series | `[data-series-slot="1..6"]` wrapper; `.series-line`, `.series-marker`, `.series-bar` |
 | epistemic style | `.is-fitted` (dashed), `.is-projected` (dotted), `.is-simulated` (dash-dot) on the line |
 | uncertainty | `.uncertainty-band`, `.error-bar` |
+| violin | `.violin-shape` (band-law fill + 1.5px outline), `.violin-box`, `.violin-whisker`, `.violin-median` (on `.series-marker`) |
+| morph/sheen | `.pt` (pop-in transition for added points), `.sheen-overlay`, `.sheen-outline`, `.sheen-ripple` (engine-created, self-removing) |
 | reference | `.ref-line` + `.ref-label` (a threshold is always labelled) |
 | labels | `.direct-label` (preferred), `.annotation`, `.annotation-arrow` |
 | legend | `.sci-chart-legend` + `.swatch` (HTML, outside the plot) |
@@ -70,7 +136,7 @@ does not cover; it must still follow the class contract below.
   `interaction-motion.js`) dims siblings to 30%, never hides them; export mode
   disables dimming and hides tooltips.
 - **Count-up numbers** on stat callouts use `animateCount` from
-  `design-scientific-motion//presets/charts_icons/presets/core-motion.js`; do not reimplement.
+  `design-scientific-motion/presets/motion_core/core-motion.js`; do not reimplement.
 - **Typography floors**: ticks 20px, labels 22px at stage scale — below that,
   simplify the chart instead of shrinking type.
 - Axis color is mixed toward canvas so data ink dominates; grid uses the rule

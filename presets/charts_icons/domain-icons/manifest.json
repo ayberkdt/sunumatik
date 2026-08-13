@@ -1,6 +1,6 @@
 {
   "generated": "2026-08-13",
-  "count": 172,
+  "count": 224,
   "language": "duotone-v2",
   "icons": [
     {
@@ -1665,6 +1665,791 @@
         "transfer window",
         "launch window",
         "alignment"
+      ]
+    },
+    {
+      "name": "quaternion",
+      "family": "gnc",
+      "label_tr": "Kuaterniyon",
+      "label_en": "Quaternion",
+      "tags": [
+        "kuaterniyon",
+        "dönme",
+        "eksen-açı",
+        "yönelim",
+        "quaternion",
+        "rotation",
+        "axis-angle",
+        "attitude"
+      ]
+    },
+    {
+      "name": "euler-gimbal",
+      "family": "gnc",
+      "label_tr": "Euler açıları (gimbal)",
+      "label_en": "Euler angles / gimbal",
+      "tags": [
+        "euler",
+        "gimbal",
+        "açı",
+        "halka",
+        "yönelim",
+        "angles",
+        "rings",
+        "attitude"
+      ]
+    },
+    {
+      "name": "attitude-error",
+      "family": "gnc",
+      "label_tr": "Yönelim hatası",
+      "label_en": "Attitude error",
+      "tags": [
+        "yönelim",
+        "hata",
+        "açı",
+        "kontrol",
+        "attitude",
+        "error",
+        "angle"
+      ]
+    },
+    {
+      "name": "gyroscope",
+      "family": "gnc",
+      "label_tr": "Jiroskop",
+      "label_en": "Gyroscope",
+      "tags": [
+        "jiroskop",
+        "dönü",
+        "rotor",
+        "sensör",
+        "gyroscope",
+        "spin",
+        "rate sensor"
+      ]
+    },
+    {
+      "name": "imu",
+      "family": "gnc",
+      "label_tr": "Ataletsel ölçüm birimi (IMU)",
+      "label_en": "Inertial measurement unit",
+      "tags": [
+        "imu",
+        "ataletsel",
+        "ivme",
+        "dönüölçer",
+        "inertial",
+        "measurement",
+        "sensor"
+      ]
+    },
+    {
+      "name": "accelerometer",
+      "family": "gnc",
+      "label_tr": "İvmeölçer",
+      "label_en": "Accelerometer",
+      "tags": [
+        "ivmeölçer",
+        "ivme",
+        "yay",
+        "kütle",
+        "accelerometer",
+        "proof mass",
+        "sensor"
+      ]
+    },
+    {
+      "name": "star-catalog",
+      "family": "gnc",
+      "label_tr": "Yıldız kataloğu",
+      "label_en": "Star catalog",
+      "tags": [
+        "yıldız",
+        "katalog",
+        "desen",
+        "eşleme",
+        "star",
+        "catalog",
+        "pattern matching"
+      ]
+    },
+    {
+      "name": "horizon-sensor",
+      "family": "gnc",
+      "label_tr": "Ufuk sensörü",
+      "label_en": "Horizon sensor",
+      "tags": [
+        "ufuk",
+        "sensör",
+        "gezegen",
+        "tarama",
+        "horizon",
+        "sensor",
+        "limb"
+      ]
+    },
+    {
+      "name": "nadir-pointing",
+      "family": "gnc",
+      "label_tr": "Nadir yönelimi",
+      "label_en": "Nadir pointing",
+      "tags": [
+        "nadir",
+        "yönelim",
+        "dünya",
+        "gezegen",
+        "pointing",
+        "earth",
+        "boresight"
+      ]
+    },
+    {
+      "name": "sun-pointing",
+      "family": "gnc",
+      "label_tr": "Güneşe yönelim",
+      "label_en": "Sun pointing",
+      "tags": [
+        "güneş",
+        "yönelim",
+        "panel",
+        "ışın",
+        "sun",
+        "pointing",
+        "solar"
+      ]
+    },
+    {
+      "name": "target-tracking",
+      "family": "gnc",
+      "label_tr": "Hedef takibi",
+      "label_en": "Target tracking",
+      "tags": [
+        "hedef",
+        "takip",
+        "izleme",
+        "sensör",
+        "target",
+        "tracking",
+        "boresight"
+      ]
+    },
+    {
+      "name": "slew-maneuver",
+      "family": "gnc",
+      "label_tr": "Slew manevrası",
+      "label_en": "Slew maneuver",
+      "tags": [
+        "dönüş",
+        "manevra",
+        "yönelim",
+        "slew",
+        "maneuver",
+        "rotation",
+        "reorientation"
+      ]
+    },
+    {
+      "name": "detumble",
+      "family": "gnc",
+      "label_tr": "Takla giderme (detumble)",
+      "label_en": "Detumble",
+      "tags": [
+        "takla",
+        "sönümleme",
+        "b-dot",
+        "stabilizasyon",
+        "detumble",
+        "tumbling",
+        "spin"
+      ]
+    },
+    {
+      "name": "momentum-dump",
+      "family": "gnc",
+      "label_tr": "Momentum boşaltma",
+      "label_en": "Momentum dump",
+      "tags": [
+        "momentum",
+        "boşaltma",
+        "tekerlek",
+        "itici",
+        "desaturation",
+        "wheel",
+        "thruster"
+      ]
+    },
+    {
+      "name": "control-moment-gyro",
+      "family": "gnc",
+      "label_tr": "Kontrol moment jiroskobu",
+      "label_en": "Control moment gyro",
+      "tags": [
+        "cmg",
+        "jiroskop",
+        "tork",
+        "gimbal",
+        "control moment gyro",
+        "torque",
+        "actuator"
+      ]
+    },
+    {
+      "name": "sensor-fusion",
+      "family": "gnc",
+      "label_tr": "Sensör füzyonu",
+      "label_en": "Sensor fusion",
+      "tags": [
+        "sensör",
+        "füzyon",
+        "birleştirme",
+        "kestirim",
+        "sensor",
+        "fusion",
+        "estimate"
+      ]
+    },
+    {
+      "name": "trajectory-estimate",
+      "family": "gnc",
+      "label_tr": "Yörünge kestirimi",
+      "label_en": "Trajectory estimate",
+      "tags": [
+        "yörünge",
+        "kestirim",
+        "belirsizlik",
+        "filtre",
+        "trajectory",
+        "estimate",
+        "uncertainty"
+      ]
+    },
+    {
+      "name": "reference-frame",
+      "family": "gnc",
+      "label_tr": "Referans çerçevesi",
+      "label_en": "Reference frame",
+      "tags": [
+        "referans",
+        "çerçeve",
+        "eksen",
+        "dönüşüm",
+        "reference",
+        "frame",
+        "axes"
+      ]
+    },
+    {
+      "name": "body-frame",
+      "family": "gnc",
+      "label_tr": "Gövde çerçevesi",
+      "label_en": "Body frame",
+      "tags": [
+        "gövde",
+        "çerçeve",
+        "eksen",
+        "yalpa",
+        "body",
+        "frame",
+        "roll pitch yaw"
+      ]
+    },
+    {
+      "name": "angular-velocity",
+      "family": "gnc",
+      "label_tr": "Açısal hız",
+      "label_en": "Angular velocity",
+      "tags": [
+        "açısal",
+        "hız",
+        "omega",
+        "dönme",
+        "angular",
+        "velocity",
+        "rate"
+      ]
+    },
+    {
+      "name": "pointing-cone",
+      "family": "gnc",
+      "label_tr": "Yönelim konisi",
+      "label_en": "Pointing cone",
+      "tags": [
+        "yönelim",
+        "koni",
+        "tolerans",
+        "hata bütçesi",
+        "pointing",
+        "cone",
+        "error"
+      ]
+    },
+    {
+      "name": "guidance-law",
+      "family": "gnc",
+      "label_tr": "Güdüm yasası",
+      "label_en": "Guidance law",
+      "tags": [
+        "güdüm",
+        "yasa",
+        "rota",
+        "komut",
+        "guidance",
+        "law",
+        "steering"
+      ]
+    },
+    {
+      "name": "waypoint-guidance",
+      "family": "gnc",
+      "label_tr": "Ara nokta güdümü",
+      "label_en": "Waypoint guidance",
+      "tags": [
+        "ara nokta",
+        "güdüm",
+        "rota",
+        "geçiş",
+        "waypoint",
+        "guidance",
+        "path"
+      ]
+    },
+    {
+      "name": "proportional-navigation",
+      "family": "gnc",
+      "label_tr": "Oransal seyrüsefer",
+      "label_en": "Proportional navigation",
+      "tags": [
+        "oransal",
+        "seyrüsefer",
+        "güdüm",
+        "önleme",
+        "proportional",
+        "navigation",
+        "intercept"
+      ]
+    },
+    {
+      "name": "deadband",
+      "family": "gnc",
+      "label_tr": "Ölü bant",
+      "label_en": "Deadband",
+      "tags": [
+        "ölü bant",
+        "tolerans",
+        "limit çevrimi",
+        "kontrol",
+        "deadband",
+        "tolerance",
+        "limit cycle"
+      ]
+    },
+    {
+      "name": "actuator-saturation",
+      "family": "gnc",
+      "label_tr": "Eyleyici doyması",
+      "label_en": "Actuator saturation",
+      "tags": [
+        "eyleyici",
+        "doyma",
+        "sınır",
+        "kırpma",
+        "actuator",
+        "saturation",
+        "clipping"
+      ]
+    },
+    {
+      "name": "specific-impulse",
+      "family": "propulsion",
+      "label_tr": "Özgül itki",
+      "label_en": "Specific impulse",
+      "tags": [
+        "özgül itki",
+        "itki",
+        "yakıt verimi",
+        "isp",
+        "specific impulse",
+        "thrust",
+        "efficiency"
+      ]
+    },
+    {
+      "name": "thrust-curve",
+      "family": "propulsion",
+      "label_tr": "İtki eğrisi",
+      "label_en": "Thrust curve",
+      "tags": [
+        "itki",
+        "eğri",
+        "yanma süresi",
+        "thrust",
+        "curve",
+        "burn time",
+        "burnout"
+      ]
+    },
+    {
+      "name": "mixture-ratio",
+      "family": "propulsion",
+      "label_tr": "Karışım oranı",
+      "label_en": "Mixture ratio",
+      "tags": [
+        "karışım oranı",
+        "oksitleyici",
+        "yakıt",
+        "mixture ratio",
+        "oxidizer",
+        "fuel",
+        "o/f"
+      ]
+    },
+    {
+      "name": "combustion-chamber",
+      "family": "propulsion",
+      "label_tr": "Yanma odası",
+      "label_en": "Combustion chamber",
+      "tags": [
+        "yanma odası",
+        "alev",
+        "boğaz",
+        "combustion",
+        "chamber",
+        "flame",
+        "throat"
+      ]
+    },
+    {
+      "name": "injector",
+      "family": "propulsion",
+      "label_tr": "Enjektör",
+      "label_en": "Injector",
+      "tags": [
+        "enjektör",
+        "püskürtme",
+        "sprey",
+        "injector",
+        "spray",
+        "impinging",
+        "atomization"
+      ]
+    },
+    {
+      "name": "igniter",
+      "family": "propulsion",
+      "label_tr": "Ateşleyici",
+      "label_en": "Igniter",
+      "tags": [
+        "ateşleyici",
+        "kıvılcım",
+        "tutuşma",
+        "igniter",
+        "spark",
+        "ignition",
+        "flame kernel"
+      ]
+    },
+    {
+      "name": "regenerative-cooling",
+      "family": "propulsion",
+      "label_tr": "Rejeneratif soğutma",
+      "label_en": "Regenerative cooling",
+      "tags": [
+        "rejeneratif",
+        "soğutma",
+        "soğutucu kanal",
+        "regenerative",
+        "cooling",
+        "coolant",
+        "nozzle wall"
+      ]
+    },
+    {
+      "name": "film-cooling",
+      "family": "propulsion",
+      "label_tr": "Film soğutma",
+      "label_en": "Film cooling",
+      "tags": [
+        "film soğutma",
+        "duvar",
+        "soğutucu tabaka",
+        "film cooling",
+        "wall",
+        "boundary layer",
+        "coolant"
+      ]
+    },
+    {
+      "name": "gas-generator-cycle",
+      "family": "propulsion",
+      "label_tr": "Gaz jeneratörü çevrimi",
+      "label_en": "Gas-generator cycle",
+      "tags": [
+        "gaz jeneratörü",
+        "çevrim",
+        "türbin",
+        "açık çevrim",
+        "gas generator",
+        "cycle",
+        "turbine",
+        "open cycle"
+      ]
+    },
+    {
+      "name": "staged-combustion",
+      "family": "propulsion",
+      "label_tr": "Kademeli yanma",
+      "label_en": "Staged combustion",
+      "tags": [
+        "kademeli yanma",
+        "ön yakıcı",
+        "kapalı çevrim",
+        "staged combustion",
+        "preburner",
+        "closed cycle",
+        "turbine"
+      ]
+    },
+    {
+      "name": "expander-cycle",
+      "family": "propulsion",
+      "label_tr": "Genleştirici çevrim",
+      "label_en": "Expander cycle",
+      "tags": [
+        "genleştirici",
+        "çevrim",
+        "soğutucu",
+        "ısı",
+        "expander",
+        "cycle",
+        "coolant",
+        "heat"
+      ]
+    },
+    {
+      "name": "pressure-fed",
+      "family": "propulsion",
+      "label_tr": "Basınç beslemeli",
+      "label_en": "Pressure-fed",
+      "tags": [
+        "basınç beslemeli",
+        "basınçlandırıcı",
+        "pompasız",
+        "pressure fed",
+        "pressurant",
+        "tank",
+        "no pump"
+      ]
+    },
+    {
+      "name": "throttling",
+      "family": "propulsion",
+      "label_tr": "İtki kısma",
+      "label_en": "Throttling",
+      "tags": [
+        "kısma",
+        "itki ayarı",
+        "vana",
+        "throttle",
+        "throttling",
+        "valve",
+        "deep throttle"
+      ]
+    },
+    {
+      "name": "nozzle-expansion",
+      "family": "propulsion",
+      "label_tr": "Lüle genişleme oranı",
+      "label_en": "Nozzle expansion ratio",
+      "tags": [
+        "lüle",
+        "genişleme oranı",
+        "çıkış çapı",
+        "nozzle",
+        "expansion ratio",
+        "exit",
+        "area ratio"
+      ]
+    },
+    {
+      "name": "shock-diamonds",
+      "family": "propulsion",
+      "label_tr": "Şok elmasları",
+      "label_en": "Shock diamonds",
+      "tags": [
+        "şok elması",
+        "egzoz",
+        "süpersonik",
+        "shock diamond",
+        "mach disk",
+        "plume",
+        "supersonic"
+      ]
+    },
+    {
+      "name": "cavitation",
+      "family": "propulsion",
+      "label_tr": "Kavitasyon",
+      "label_en": "Cavitation",
+      "tags": [
+        "kavitasyon",
+        "kabarcık",
+        "pompa girişi",
+        "cavitation",
+        "bubble",
+        "pump inlet",
+        "npsh"
+      ]
+    },
+    {
+      "name": "propellant-slosh",
+      "family": "propulsion",
+      "label_tr": "Yakıt çalkantısı",
+      "label_en": "Propellant slosh",
+      "tags": [
+        "çalkantı",
+        "tank",
+        "perde",
+        "slosh",
+        "baffle",
+        "liquid",
+        "surface wave"
+      ]
+    },
+    {
+      "name": "ullage-settling",
+      "family": "propulsion",
+      "label_tr": "Ullage oturtma",
+      "label_en": "Ullage settling",
+      "tags": [
+        "ullage",
+        "oturtma",
+        "gaz boşluğu",
+        "settling",
+        "ullage burn",
+        "tank",
+        "gas gap"
+      ]
+    },
+    {
+      "name": "boiloff-vent",
+      "family": "propulsion",
+      "label_tr": "Buharlaşma tahliyesi",
+      "label_en": "Boil-off vent",
+      "tags": [
+        "buharlaşma",
+        "tahliye",
+        "kriyojenik",
+        "boiloff",
+        "vent",
+        "cryogenic",
+        "vapor"
+      ]
+    },
+    {
+      "name": "propellant-valve",
+      "family": "propulsion",
+      "label_tr": "Yakıt vanası",
+      "label_en": "Propellant valve",
+      "tags": [
+        "vana",
+        "yakıt hattı",
+        "aktüatör",
+        "valve",
+        "propellant",
+        "actuator",
+        "feed line"
+      ]
+    },
+    {
+      "name": "feed-system",
+      "family": "propulsion",
+      "label_tr": "Besleme sistemi",
+      "label_en": "Feed system",
+      "tags": [
+        "besleme",
+        "tank",
+        "pompa",
+        "hat",
+        "feed system",
+        "pump",
+        "plumbing",
+        "flow"
+      ]
+    },
+    {
+      "name": "nozzle-throat",
+      "family": "propulsion",
+      "label_tr": "Lüle boğazı",
+      "label_en": "Nozzle throat",
+      "tags": [
+        "boğaz",
+        "lüle",
+        "sonik hat",
+        "throat",
+        "nozzle",
+        "sonic line",
+        "mach 1"
+      ]
+    },
+    {
+      "name": "hot-fire-test",
+      "family": "propulsion",
+      "label_tr": "Sıcak ateşleme testi",
+      "label_en": "Hot-fire test",
+      "tags": [
+        "sıcak ateşleme",
+        "test standı",
+        "alev kovası",
+        "hot fire",
+        "test stand",
+        "flame bucket",
+        "static fire"
+      ]
+    },
+    {
+      "name": "hall-thruster",
+      "family": "propulsion",
+      "label_tr": "Hall itici",
+      "label_en": "Hall thruster",
+      "tags": [
+        "hall itici",
+        "elektrikli itki",
+        "halka kanal",
+        "hall thruster",
+        "electric propulsion",
+        "annular",
+        "plasma"
+      ]
+    },
+    {
+      "name": "cold-gas-thruster",
+      "family": "propulsion",
+      "label_tr": "Soğuk gaz itici",
+      "label_en": "Cold-gas thruster",
+      "tags": [
+        "soğuk gaz",
+        "itici",
+        "basınçlı gaz",
+        "cold gas",
+        "thruster",
+        "nitrogen",
+        "attitude control"
+      ]
+    },
+    {
+      "name": "propellant-budget",
+      "family": "propulsion",
+      "label_tr": "Yakıt bütçesi",
+      "label_en": "Propellant budget",
+      "tags": [
+        "yakıt bütçesi",
+        "rezerv",
+        "marj",
+        "propellant budget",
+        "reserves",
+        "margin",
+        "allocation"
       ]
     },
     {

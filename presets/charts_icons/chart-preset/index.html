@@ -6,7 +6,7 @@
   <title>Chart Preset — bildirimsel grafik motoru</title>
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script>document.documentElement.classList.add('js');</script>
-  <link rel="stylesheet" href="../../color_themes/palette-library.css">
+  <link rel="stylesheet" href="../../../design-space-science-deck/presets/color_themes/palette-library.css">
   <link rel="stylesheet" href="../chart-theme.css">
   <style>
     * { box-sizing: border-box; }
@@ -18,6 +18,11 @@
     .panel { background: var(--color-surface); border: 1px solid var(--color-rule);
       border-radius: 10px; padding: 26px; }
     .sci-chart-caption { font-size: 15px; color: var(--color-muted); margin-top: 10px; }
+    .controls { display: flex; gap: 10px; margin-top: 12px; }
+    .controls button { font: 600 15px/1 inherit; color: var(--color-ink);
+      background: var(--color-canvas); border: 1.5px solid var(--color-ink);
+      border-radius: 8px; padding: 9px 16px; cursor: pointer; }
+    .controls button:hover { background: var(--color-rule); }
   </style>
 </head>
 <body data-palette="graphite-ember">
@@ -27,6 +32,16 @@
       <p class="sci-chart-caption">Gözlem düz, projeksiyon kesikli ve etiketli; eşik her zaman adlandırılır.</p></section>
     <section class="panel"><h2>Gruplu sütun</h2><div id="c2"></div></section>
     <section class="panel"><h2>Saçılım + fit doğrusu</h2><div id="c3"></div></section>
+    <section class="panel"><h2>Keman (violin) — üç kalıntı dağılımı</h2><div id="c4"></div>
+      <p class="sci-chart-caption">Gauss KDE, Silverman bant genişliği. Genişlikler keman içinde normalize —
+        kemanlar arasında karşılaştırılamaz. Kutu Q1–Q3, bıyık 5–95, nokta medyan.</p></section>
+    <section class="panel"><h2>Saçılım animasyonları — pop-in, morph, sheen</h2><div id="c5"></div>
+      <div class="controls">
+        <button id="btnMorph" type="button">Morph</button>
+        <button id="btnSheen" type="button">Sheen</button>
+      </div>
+      <p class="sci-chart-caption">Noktalar veri sırasıyla belirir; Morph iki veri kümesi arasında kaydırır
+        (eksenler sabit); Sheen tek seferlik dikkat süpürmesidir.</p></section>
   </main>
   <script type="module">
     import { mountChart } from './chart.mjs';
@@ -70,6 +85,45 @@
           data: [[100,1.8],[460,9.0]] },
       ],
     });
+    /* Keman: üç modelin kalıntı dağılımları — DETERMİNİSTİK literal diziler */
+    mountChart(document.querySelector('#c4'), {
+      type: 'violin',
+      title: 'Model C kalıntıları hem kayık hem geniş',
+      subtitle: 'Gauss KDE; kutu Q1–Q3, bıyık 5–95, nokta medyan',
+      y: { label: 'Kalıntı', unit: 'mm', ticks: 5 },
+      margin: { right: 60 },
+      series: [
+        { name: 'Model A', slot: 1, values: [
+          -1.8,-1.4,-1.1,-0.9,-0.8,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.0,
+          0.1,0.1,0.2,0.3,0.4,0.5,0.6,0.8,0.9,1.1,1.3,1.7] },
+        { name: 'Model B', slot: 2, values: [
+          -3.6,-3.1,-2.6,-2.2,-1.9,-1.5,-1.2,-0.8,-0.5,-0.2,0.1,0.4,
+          0.7,1.0,1.3,1.6,2.0,2.3,2.7,3.1,3.4,3.8,4.3,4.9] },
+        { name: 'Model C', slot: 4, values: [
+          -2.4,-2.1,-1.9,-1.7,-1.6,-1.4,-1.3,-1.2,-1.1,-0.9,-0.3,0.4,
+          1.1,1.6,2.0,2.3,2.6,2.8,3.0,3.2,3.4,3.6,3.9,4.4] },
+      ],
+    });
+
+    /* Saçılım animasyonları: pop-in + morph + sheen.
+       Eksen domain'i SABİTLENDİ (x/y min-max) — morph sırasında yeniden
+       ölçekleme olmadığı için iki küme de aynı çerçevede kalır. */
+    const dataA = [[1,2.2],[2,2.8],[3,3.6],[4,3.1],[5,4.4],[6,5.2],[7,4.9],[8,6.1],[9,6.6],[10,7.4]];
+    const dataB = [[1,3.0],[2,2.4],[3,4.2],[4,4.8],[5,3.9],[6,6.0],[7,6.7],[8,5.8],[9,7.8],[10,8.3],[11,8.9],[12,9.4]];
+    const c5 = mountChart(document.querySelector('#c5'), {
+      type: 'scatter',
+      x: { label: 'Deneme', min: 0, max: 13, ticks: 6 },
+      y: { label: 'Skor', min: 0, max: 11, ticks: 5 },
+      series: [{ name: 'Koşu', slot: 1, data: dataA.map(d => [...d]) }],
+    });
+    let showingA = true;
+    document.querySelector('#btnMorph').addEventListener('click', () => {
+      showingA = !showingA;
+      const next = (showingA ? dataA : dataB).map(d => [...d]);
+      c5.morphTo([{ data: next }], { duration: 650 });
+    });
+    document.querySelector('#btnSheen').addEventListener('click', () => c5.sheen(0));
+    window.__c5 = c5;
     window.__charts = true;
   </script>
 </body>
