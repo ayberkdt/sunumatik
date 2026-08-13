@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="../presets/charts_icons/chart-theme.css">
   <link rel="stylesheet" href="../presets/motion_core/core-motion.css">
   <link rel="stylesheet" href="../presets/motion_core/primitives-motion.css">
+  <link rel="stylesheet" href="../presets/motion_core/table-motion.css">
   <link rel="stylesheet" href="../presets/motion_core/interaction-motion.css">
   <link rel="stylesheet" href="../presets/motion_core/morph-transition.css">
   <link rel="stylesheet" href="../presets/motion_core/slide-transitions.css">
@@ -95,6 +96,17 @@
     .tl-host { outline: none; }
 
     /* Lunaris slide: the figure owns the whole content region */
+    /* Veri animasyonları slaydı */
+    .danim { display: grid; grid-template-columns: 1.02fr .98fr; gap: 44px; min-height: 0; }
+    .danim-col { display: grid; grid-template-rows: 1fr auto; gap: 14px; min-height: 0; }
+    .danim-col .sci-chart { min-height: 0; }
+    .danim-col svg { width: 100%; height: 100%; min-height: 0; }
+    .danim-btns { display: flex; gap: 12px; }
+    .danim-btns button { background: var(--color-surface); border: 1.5px solid var(--color-rule);
+      color: var(--color-ink); padding: 10px 18px; border-radius: 9px; cursor: pointer;
+      font: 650 20px/1 ui-sans-serif, system-ui; }
+    .danim-btns button:hover { border-color: var(--color-accent); }
+
     /* İkon vitrini — aileler satır satır, ad altında */
     .icon-wall { display: grid; gap: 26px; align-content: center; }
     .icon-fam { display: grid; grid-template-columns: 210px 1fr; gap: 26px; align-items: center; }
@@ -182,20 +194,21 @@
       <section class="slide" aria-labelledby="s2t">
         <header>
           <div class="kicker">Ajanda</div>
-          <h2 id="s2t">On bir durak, tek akış</h2>
+          <h2 id="s2t">On iki durak, tek akış</h2>
         </header>
         <div class="agenda" data-hover-group>
           <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-gauge"/></svg>Hover ve bağlantılı vurgu<small>03</small></div>
           <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chart-bars"/></svg>Grafik teması<small>04</small></div>
           <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-database"/></svg>Tablo preset'leri<small>05</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-orbit-elliptical"/></svg>Alan ikonları: 224 duotone<small>06</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-wave"/></svg>Morph geçişi<small>06</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-orbit"/></svg>WebGL sahneler: Ay · Dünya · Güneş · Gezegenler · Kozmos<small>08–12</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-telescope"/></svg>JWST Explorer: gerçek Webb görüntüleri<small>13</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-milestone"/></svg>Kronoloji ağacı<small>14</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-atom"/></svg>Elle yazılan denklem<small>15</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-neural-net"/></svg>Sinir ağı hücreleri<small>16</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-spectrum"/></svg>Primitives mikro-hareket<small>17</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chart-scatter"/></svg>Veri animasyonları: keman · morph · ışıltı<small>06</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-orbit-elliptical"/></svg>Alan ikonları: 224 duotone<small>07</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-wave"/></svg>Morph geçişi<small>08</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-orbit"/></svg>WebGL sahneler: Ay · Dünya · Güneş · Gezegenler · Kozmos<small>10–14</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-telescope"/></svg>JWST Explorer: gerçek Webb görüntüleri<small>15</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-milestone"/></svg>Kronoloji ağacı<small>16</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-atom"/></svg>Elle yazılan denklem<small>17</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-neural-net"/></svg>Sinir ağı hücreleri<small>18</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-spectrum"/></svg>Primitives mikro-hareket<small>19</small></div>
         </div>
         <footer class="slide-footer"><span>İkonlar: science-icons.svg</span><span>2</span></footer>
       </section>
@@ -301,24 +314,46 @@
           <h2 id="s5t">Yörünge adayları bir bakışta</h2>
         </header>
         <div class="panel" style="align-self:center" data-motion="reveal">
-          <table class="sci-table sci-table--data sci-table--interactive">
+          <table class="sci-table sci-table--data sci-table--interactive" data-table-reveal>
             <caption>Aday yörünge parametreleri</caption>
             <thead>
               <tr><th scope="col">Yörünge</th><th scope="col">Yükseklik</th><th scope="col">Periyot</th><th scope="col">Δv bütçesi</th><th scope="col">Kutup kapsaması</th></tr>
             </thead>
             <tbody>
               <tr class="row-units"><th scope="row">—</th><td>km</td><td>saat</td><td>m/s · yıl</td><td>%</td></tr>
-              <tr><th scope="row">Alçak dairesel</th><td class="num">100</td><td class="num">1.96</td><td class="num">400</td><td class="num">82</td></tr>
-              <tr class="is-key"><th scope="row">Donmuş eliptik</th><td class="num">100 × 8 000</td><td class="num">11.8</td><td class="num">120</td><td class="num">96</td></tr>
-              <tr><th scope="row">NRHO</th><td class="num">3 200 × 68 000</td><td class="num">154</td><td class="num">40</td><td class="num">61</td></tr>
+              <tr><th scope="row">Alçak dairesel</th><td class="num">100</td><td class="num">1.96</td><td class="num" data-count>400</td><td class="num" data-bar="0.82">82</td></tr>
+              <tr class="is-key"><th scope="row">Donmuş eliptik</th><td class="num">100 × 8 000</td><td class="num">11.8</td><td class="num" data-count>120</td><td class="num" data-bar="0.96">96</td></tr>
+              <tr><th scope="row">NRHO</th><td class="num">3 200 × 68 000</td><td class="num">154</td><td class="num" data-count>40</td><td class="num" data-bar="0.61">61</td></tr>
             </tbody>
             <tfoot><tr><td colspan="5">Temsilî değerler — preset testi. Vurgulu satır tek çıkarımı taşır.</td></tr></tfoot>
           </table>
         </div>
-        <footer class="slide-footer"><span>table-presets.css · data varyantı + satır hover</span><span>5</span></footer>
+        <footer class="slide-footer"><span>table-presets.css + table-motion: satır kaskadı · Δv sayaçları · kapsam çubukları</span><span>5</span></footer>
       </section>
 
-      <!-- 6 · Alan ikonları -->
+      <!-- 6 · Veri animasyonları -->
+      <section class="slide" aria-labelledby="s6da">
+        <header>
+          <div class="kicker">Veri animasyonları · chart-preset</div>
+          <h2 id="s6da">Dağılım büyür, veri süzülür, ışıltı tek atımlık</h2>
+        </header>
+        <div class="danim">
+          <div class="danim-col">
+            <div id="violinChart"></div>
+            <span class="hint">Keman: Gauss KDE · kutu Q1–Q3 · nokta medyan — merkez çizgisinden doğar</span>
+          </div>
+          <div class="danim-col">
+            <div id="scatterChart"></div>
+            <div class="danim-btns">
+              <button id="daMorph">Veriyi değiştir (morph)</button>
+              <button id="daSheen" data-secondary>Işıltı süpürmesi</button>
+            </div>
+          </div>
+        </div>
+        <footer class="slide-footer"><span>chart.mjs · violin + morphTo + sheen — süpürme sunucu tetiklemeli, asla döngüsel değil</span><span>6</span></footer>
+      </section>
+
+      <!-- 7 · Alan ikonları -->
       <section class="slide" aria-labelledby="s6ic">
         <header>
           <div class="kicker">Alan ikonları · duotone</div>
@@ -538,7 +573,7 @@
       <section class="slide" aria-labelledby="s11t" data-enter="wipe-mask">
         <header>
           <div class="kicker">Kapanış</div>
-          <h1 id="s11t">Her parça aynı token dilini konuşuyor</h1>
+          <h1 id="s11t"><span class="px-shimmer">Her parça aynı token dilini konuşuyor</span></h1>
         </header>
         <div class="break-grid">
           <p class="lede">Sağ alttaki palet düğmesi (veya P tuşu) <b>on yedi paleti</b> dolaşır:
@@ -589,6 +624,8 @@
     import { mountPlanetae } from '../presets/planets_advanced/planetae.mjs';
     import { mountCosmos } from '../presets/cosmos_advanced/cosmos-sky.mjs';
     import { mountJwstExplorer } from '../presets/jwst_explorer/jwst-explorer.mjs';
+    import { mountChart } from '../presets/charts_icons/chart-preset/chart.mjs';
+    import { observeTableReveal, countCells, cellBars } from '../presets/motion_core/table-motion.js';
 
     /* Sprites (motifs + icons) */
     const sprites = [
@@ -769,6 +806,39 @@
       window.__deck = Object.assign(window.__deck || {}, { jwst });
     };
 
+    /* Tablo dolguları: çubuklar bir kez kurulur, kaskad gözlemcisi devreye girer */
+    cellBars(document);
+    observeTableReveal(document);
+
+    /* Veri animasyonları: keman + saçılım (manuel reveal — slayt girişinde) */
+    const violin = mountChart(document.querySelector('#violinChart'), {
+      type: 'violin', reveal: 'manual',
+      title: 'Kalıntı dağılımı üç modelde ayrışıyor',
+      y: { label: 'Kalıntı', unit: 'm', ticks: 5 },
+      series: [
+        { name: 'Model A', slot: 1, values: [-0.6,-0.4,-0.3,-0.2,-0.15,-0.1,0,0.05,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.6,0.7,-0.5,-0.35,0.45] },
+        { name: 'Model B', slot: 2, values: [-2.4,-1.8,-1.2,-0.8,-0.4,-0.1,0.2,0.5,0.9,1.3,1.7,2.1,2.6,-2.1,-1.5,1.9,2.4,-0.6,0.7,1.1] },
+        { name: 'Model C', slot: 4, values: [-1.8,-1.6,-1.5,-1.3,-1.2,-1.1,-1.0,-0.9,1.0,1.1,1.2,1.3,1.5,1.6,1.8,2.0,-1.4,1.4,0.9,-0.8] },
+      ],
+    });
+    const scatterA = [[1,4.1],[2,4.8],[3,5.6],[4,5.1],[5,6.4],[6,7.0],[7,6.6],[8,7.8],[9,8.3],[10,8.0],[11,9.1],[12,9.6]];
+    const scatterB = [[1,5.0],[2,5.4],[3,5.2],[4,6.3],[5,6.1],[6,6.9],[7,7.7],[8,7.4],[9,8.9],[10,9.4],[11,9.0],[12,9.9]];
+    const scatter = mountChart(document.querySelector('#scatterChart'), {
+      type: 'scatter', reveal: 'manual',
+      title: 'Kalibrasyon turu skorları noktaları taşıyor',
+      x: { label: 'Deneme', ticks: 6 },
+      y: { label: 'Skor', ticks: 5, min: 3, max: 11 },
+      series: [{ name: 'Skor', slot: 1, data: scatterA, markers: true }],
+    });
+    let daState = false;
+    document.querySelector('#daMorph').addEventListener('click', async () => {
+      daState = !daState;
+      await scatter.morphTo([{ data: daState ? scatterB : scatterA }]);
+    });
+    document.querySelector('#daSheen').addEventListener('click', () => {
+      scatter.sheen(0); violin.sheen(2);
+    });
+
     /* Primitives bir kez kurulur; her girişte yeniden doğar */
     Primitives.init();
     const pxNumberEl = document.querySelector('#pxNumber');
@@ -793,6 +863,8 @@
       if (slide.contains(document.querySelector('#cosmosHost'))) enterCosmos();
       if (slide.contains(document.querySelector('#jwstHost'))) enterJwst();
       if (slide.contains(document.querySelector('#pxNumber'))) enterPrimitives(slide);
+      if (slide.contains(document.querySelector('#violinChart'))) { violin.reveal(); scatter.reveal(); }
+      if (slide.querySelector('[data-count]')) countCells(slide);
       slide.querySelectorAll('.sci-chart .series-line').forEach(path => tracePath(path, { duration: 1100 }));
     };
     const onLeave = slide => {

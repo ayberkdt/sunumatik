@@ -20,7 +20,7 @@ tıkla (port 8781) — örnek deste dahil her şey oradan açılır.
 
 | Ne | Yol |
 |---|---|
-| Tüm preset'leri kullanan **19 slaytlık** örnek deste (Kozmos · JWST Explorer · alan ikonları · Primitives dahil) | [preset-test/index.html](preset-test/index.html) → `http://localhost:8781/preset-test/index.html` |
+| Tüm preset'leri kullanan **20 slaytlık** örnek deste (Kozmos · JWST Explorer · alan ikonları · veri animasyonları · Primitives dahil) | [preset-test/index.html](preset-test/index.html) → `http://localhost:8781/preset-test/index.html` |
 | Sol'u kendi sayfana koymanın hazır şablonu (3 bağlantı: import map + CSS + mountSol) | [preset-test/sol-tek-basina.html](preset-test/sol-tek-basina.html) → `http://localhost:8781/preset-test/sol-tek-basina.html` |
 
 ## Renk temaları — `design-space-science-deck`
