@@ -7,7 +7,7 @@
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script>document.documentElement.classList.add('js');</script>
   <script type="importmap">{ "imports": { "three": "../presets/moon_advanced/vendor/three.module.min.js" } }</script>
-  <link rel="stylesheet" href="../presets/moon_react_source/components/lunaris-interactive-preset.css">
+  <link rel="stylesheet" href="../presets/moon_react_source/components/moon_react_source.css">
   <link rel="stylesheet" href="../presets/color_themes/palette-library.css">
   <link rel="stylesheet" href="../presets/color_themes/components/table-presets.css">
   <link rel="stylesheet" href="../presets/charts_icons/chart-theme.css">
@@ -17,9 +17,9 @@
   <link rel="stylesheet" href="../presets/motion_core/interaction-motion.css">
   <link rel="stylesheet" href="../presets/motion_core/morph-transition.css">
   <link rel="stylesheet" href="../presets/motion_core/slide-transitions.css">
-  <link rel="stylesheet" href="../presets/timeline_tree/timeline-preset.css">
+  <link rel="stylesheet" href="../presets/timeline_tree/timeline_tree.css">
   <link rel="stylesheet" href="../presets/equation_pen/equation-writing.css">
-  <link rel="stylesheet" href="../presets/neural_network/neural-network-preset.css">
+  <link rel="stylesheet" href="../presets/neural_network/neural_network.css">
   <style>
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden;
@@ -615,9 +615,9 @@
     import { initInteractions } from '../presets/motion_core/interaction-motion.js';
     import { morphState } from '../presets/motion_core/morph-transition.js';
     import { transitionSlides } from '../presets/motion_core/slide-transitions.js';
-    import { mountTimeline } from '../presets/timeline_tree/timeline-preset.mjs';
+    import { mountTimeline } from '../presets/timeline_tree/timeline_tree.mjs';
     import { writeSequence } from '../presets/equation_pen/equation-writing.mjs';
-    import { mountNeuralNetwork } from '../presets/neural_network/neural-network-preset.mjs';
+    import { mountNeuralNetwork } from '../presets/neural_network/neural_network.mjs';
     import { mountLunaris } from '../presets/moon_advanced/lunaris-moon.mjs';
     import { mountTerra } from '../presets/earth_advanced/terra-globe.mjs';
     import { mountSol } from '../presets/sun_advanced/sol-sun.mjs';
@@ -728,7 +728,7 @@
         terraLoading = true;
         try {
           terra = await mountTerra(document.querySelector('#terraHost'), {
-            assetBaseUrl: '../presets/terra-vanilla-preset',
+            assetBaseUrl: '../presets/earth_advanced',
             title: 'Şehirler gerçek yerlerinde, ışıklar gerçek gecede',
           });
         } finally { terraLoading = false; }
@@ -758,7 +758,7 @@
         planetaeLoading = true;
         try {
           planetae = await mountPlanetae(document.querySelector('#planetaeHost'), {
-            assetBaseUrl: '../presets/planetae-vanilla-preset',
+            assetBaseUrl: '../presets/planets_advanced',
           });
         } finally { planetaeLoading = false; }
       }
