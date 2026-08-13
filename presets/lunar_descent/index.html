@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ay'a Motorlu İniş — Lunar Descent Preseti</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <link rel="stylesheet" href="lunar-descent.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05060a; color: #ece7dc;
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    main { display: grid; grid-template-rows: 1fr auto; width: 100%; height: 100%; }
+    #host { position: relative; min-height: 0; }
+    .cubuk { display: flex; align-items: center; gap: 14px; padding: 12px 20px;
+      border-top: 1px solid #ffffff14; background: #0a0c12; flex-wrap: wrap; }
+    .cubuk button { border: 1px solid #ffffff22; border-radius: 999px; padding: 8px 16px;
+      background: #161923; color: #ece7dc; font: 640 14px/1 Inter, sans-serif; cursor: pointer; }
+    .cubuk button[aria-pressed="true"] { background: #cfb07a; border-color: #cfb07a; color: #14110c; }
+    .cubuk .grup { display: flex; gap: 6px; align-items: center; }
+    .cubuk .grup > span { font-size: 12px; letter-spacing: .07em; text-transform: uppercase;
+      color: #9a948a; font-weight: 700; margin-right: 2px; }
+    #kaydirici { flex: 1; min-width: 160px; accent-color: #cfb07a; }
+    #fazGosterge { font-size: 13px; color: #9a948a; font-variant-numeric: tabular-nums; min-width: 120px; }
+    html[data-export="true"] .cubuk { display: none; }
+    @media (prefers-reduced-motion: reduce) { .cubuk [data-oynat] { display: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div id="host"></div>
+    <div class="cubuk" data-export-hide aria-label="İniş oynatma kontrolleri">
+      <div class="grup">
+        <button id="oynat" data-oynat aria-pressed="true">Duraklat</button>
+        <button id="bastan">Baştan</button>
+      </div>
+      <input id="kaydirici" type="range" min="0" max="1000" value="0" step="1"
+        aria-label="İniş zaman çizelgesi">
+      <span id="fazGosterge">—</span>
+      <div class="grup" role="group" aria-label="Kamera seçimi">
+        <span>Kamera</span>
+        <button data-kam="chase">Takip</button>
+        <button data-kam="side">Yan</button>
+        <button data-kam="surface">Yüzey</button>
+      </div>
+      <div class="grup" role="group" aria-label="Faz seçimi">
+        <span>Faz</span>
+        <button data-faz="1">1 Frenleme</button>
+        <button data-faz="2">2 Yaklaşma</button>
+        <button data-faz="3">3 Son iniş</button>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { mountLunarDescent } from './lunar-descent.mjs';
+
+    const arama = new URLSearchParams(location.search);
+    if (arama.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const fParam = arama.get('f');
+    const kamParam = arama.get('cam');
+
+    const iniş = await mountLunarDescent(document.querySelector('#host'), {
+      seed: Number(arama.get('seed')) || undefined,
+      autoplay: fParam == null,
+    });
+    window.__lunarDescent = iniş; // hata avı/deneme kancası
+
+    /* ?f=0..1 — deterministik kare yakalama (başsız ekran görüntüleri) */
+    if (fParam != null) {
+      iniş.pause();
+      iniş.scrub(Math.min(1, Math.max(0, Number(fParam))));
+    }
+    if (kamParam) iniş.camera.transitionTo(kamParam);
+
+    const oynatBtn = document.querySelector('#oynat');
+    const kaydirici = document.querySelector('#kaydirici');
+    const fazGosterge = document.querySelector('#fazGosterge');
+    let oynuyor = fParam == null;
+
+    const oynatGuncelle = () => {
+      oynatBtn.textContent = oynuyor ? 'Duraklat' : 'Oynat';
+      oynatBtn.setAttribute('aria-pressed', String(oynuyor));
+    };
+    oynatGuncelle();
+
+    oynatBtn.addEventListener('click', () => {
+      oynuyor = !oynuyor;
+      oynuyor ? iniş.play() : iniş.pause();
+      oynatGuncelle();
+    });
+    document.querySelector('#bastan').addEventListener('click', () => {
+      oynuyor = true; iniş.restart(); oynatGuncelle();
+    });
+    kaydirici.addEventListener('input', () => {
+      oynuyor = false; iniş.pause(); oynatGuncelle();
+      iniş.scrub(kaydirici.valueAsNumber / 1000);
+    });
+    for (const b of document.querySelectorAll('[data-kam]'))
+      b.addEventListener('click', () => iniş.camera.transitionTo(b.dataset.kam));
+    for (const b of document.querySelectorAll('[data-faz]'))
+      b.addEventListener('click', () => { oynuyor = true; iniş.setPhase(Number(b.dataset.faz)); iniş.play(); oynatGuncelle(); });
+
+    /* Kaydırıcı ve göstergeler oynatmayı izler */
+    const fazAd = { 1: '1 · Frenleme', 2: '2 · Yaklaşma', 3: '3 · Son iniş', temas: 'Yüzeyde' };
+    const izle = () => {
+      kaydirici.valueAsNumber = Math.round(iniş.oynatZamani / iniş.toplamOynat * 1000);
+      fazGosterge.textContent = `${fazAd[iniş.faz] || '—'} · ${iniş.oynatZamani.toFixed(1)} s`;
+      if (oynuyor && !iniş.oynuyor) { oynuyor = false; oynatGuncelle(); } // iniş bitti
+      const seciliKam = iniş.camera.mode;
+      for (const b of document.querySelectorAll('[data-kam]'))
+        b.setAttribute('aria-pressed', String(b.dataset.kam === seciliKam));
+      requestAnimationFrame(izle);
+    };
+    requestAnimationFrame(izle);
+  </script>
+</body>
+</html>

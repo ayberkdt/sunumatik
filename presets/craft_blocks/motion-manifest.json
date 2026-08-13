@@ -1,0 +1,18 @@
+{
+  "preset": "craft_blocks",
+  "motions": [
+    {
+      "id": "craft-turntable",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Araç geometrisini ve malzeme dilini her açıdan incelemek için yavaş dönme sehpası; dekoratif değil, inceleme amaçlı.",
+      "loop": true,
+      "durationMs": 28560,
+      "pauseControl": "Başlıktaki Duraklat/Devam düğmesi; sekme gizlendiğinde rAF otomatik durur.",
+      "reducedMotion": "prefers-reduced-motion: reduce altında dönüş hiç başlamaz; her araç bildirilen başlangıç fazında (FAZLAR sabitleri) tek kare çizilir.",
+      "exportState": "t=0 tablosu: beş araç kendi başlangıç faz açısında, kamera genel bakışta (0, 2.3, 6.6); ?focus=<id> ile araç yakın çekimi.",
+      "accessibility": "Hareket tamamen duraklatılabilir; durduğunda hiçbir bilgi kaybolmaz. Kumandalar klavyeyle erişilebilir yerel form öğeleridir.",
+      "notes": "Dönme hızı 0.22 rad/s (tam tur ~28.6 s). Deterministik: duvar saati yerine sabit 1/60 s adım; Math.random kullanılmaz."
+    }
+  ]
+}

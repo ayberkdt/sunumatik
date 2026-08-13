@@ -1,0 +1,138 @@
+/* ml_attention_flow stilleri. Deste paleti jetonlarını devralır:
+   --color-canvas, --color-surface, --color-ink, --color-muted,
+   --color-accent, --color-data-1, --color-rule.
+   Yaylar data-1 (veri), sorgu vurgusu accent — anlamsız renk yok;
+   parıltı yok, neon yok: ağırlık kalınlık + opaklıkla kodlanır. */
+
+.afp {
+  display: grid;
+  gap: 14px;
+}
+
+.afp svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Durum satırı: canlı bölge — sorgu değişince özet cümle okunur */
+.afp-status {
+  margin: 0;
+  min-height: 1.4em;
+  font: 600 15px/1.4 ui-monospace, "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted, #70615c);
+}
+
+/* --- jeton çipleri --- */
+.afp-chip { cursor: pointer; }
+.afp-chip-box {
+  fill: var(--color-surface, #fbf7df);
+  stroke: var(--color-rule, #d4cba2);
+  stroke-width: 1.5;
+  transition: stroke .24s ease;
+}
+.afp-chip.is-query .afp-chip-box { stroke: var(--color-ink, #473835); }
+.afp-chip-text {
+  font: 600 17px/1 ui-sans-serif, system-ui, sans-serif;
+  fill: var(--color-ink, #473835);
+  pointer-events: none;
+}
+
+/* Sorgu halkası: vurgu rengiyle içeriden büyüyerek oturur (zarf: atak + sönüş) */
+.afp-chip-ring {
+  fill: none;
+  stroke: var(--color-accent, #a34f38);
+  stroke-width: 2.5;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(.9);
+  transition: opacity .34s var(--motion-ease, cubic-bezier(.22, .8, .24, 1)),
+              transform .38s var(--motion-ease, cubic-bezier(.22, .8, .24, 1));
+}
+.afp-chip.is-query .afp-chip-ring { opacity: 1; transform: scale(1); }
+
+/* Katman geçişi: karışım parıltısı — katman 1 çıktısının çipe "dolması".
+   Soldan sağa 45 ms kademe; opaklık zarfı hiç sıçramaz. */
+.afp-chip-mix {
+  fill: var(--color-accent, #a34f38);
+  opacity: 0;
+  pointer-events: none;
+}
+.afp-chip.is-mixing .afp-chip-mix {
+  animation: afp-mix 640ms var(--motion-ease, cubic-bezier(.22, .8, .24, 1)) both;
+  animation-delay: calc(var(--chip-i, 0) * 45ms);
+}
+@keyframes afp-mix {
+  0%   { opacity: 0; }
+  35%  { opacity: .34; }
+  100% { opacity: 0; }
+}
+
+/* --- dikkat yayları ---
+   Kalınlık ve opaklık JS'te ağırlıktan gelir (satır içi stil);
+   iz-çizimi pathLength=1 + dashoffset 1→0 geçişiyle. */
+.afp-arc {
+  stroke: var(--color-data-1, #617552);
+  stroke-linecap: round;
+  pointer-events: none;
+  transition: stroke-dashoffset .65s var(--motion-ease, cubic-bezier(.22, .8, .24, 1)),
+              opacity .4s ease;
+}
+.afp.is-retracting .afp-arc {
+  transition-duration: .24s, .2s; /* geri sarma hızlı — ters iz */
+}
+
+/* --- ağırlık okumaları: anahtar çipin üstünde 2 ondalık --- */
+.afp-weight {
+  font: 600 12.5px/1 ui-monospace, "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  fill: var(--color-ink, #473835);
+  paint-order: stroke;
+  stroke: var(--color-canvas, #f3eec8);
+  stroke-width: 3.5px;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .36s ease, transform .36s var(--motion-ease, cubic-bezier(.22, .8, .24, 1));
+}
+.afp-weight.is-on { opacity: 1; transform: translateY(0); }
+.afp.is-retracting .afp-weight { transition-duration: .18s, .18s; }
+
+/* --- top-1 gezici nokta: tek atımlık, JS zarfıyla sürülür --- */
+.afp-dot {
+  fill: var(--color-accent, #a34f38);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Klavye odağı görünür olmalı */
+.afp-chip:focus-visible { outline: none; }
+.afp-chip:focus-visible .afp-chip-box {
+  stroke: var(--color-accent, #a34f38);
+  stroke-width: 3;
+}
+
+/* Anlık basım (renderFinal): tek karelik geçiş iptali */
+.afp.is-instant .afp-arc,
+.afp.is-instant .afp-weight,
+.afp.is-instant .afp-chip-ring {
+  transition: none !important;
+}
+
+/* --- deterministik kipler: son durum, atım yok --- */
+@media (prefers-reduced-motion: reduce) {
+  .afp-arc, .afp-weight, .afp-chip-ring, .afp-chip-mix {
+    animation: none !important;
+    transition: none !important;
+  }
+  .afp-dot { display: none; }
+}
+html[data-export="true"] .afp-arc,
+html[data-export="true"] .afp-weight,
+html[data-export="true"] .afp-chip-ring,
+html[data-export="true"] .afp-chip-mix {
+  animation: none !important;
+  transition: none !important;
+}
+html[data-export="true"] .afp-dot { display: none; }

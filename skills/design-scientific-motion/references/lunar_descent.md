@@ -1,0 +1,132 @@
+# Lunar Descent Preset — Ay'a motorlu iniş sahnesi
+
+`/presets/lunar_descent/` — sinematik, fiziksel olarak dürüst üç fazlı
+motorlu iniş. ORBITAL blok ailesindendir (`scene-blocks.md`), craft-blocks'un
+dondurulmuş araç API'siyle birleşir ve `webgl-scene-contract.md`'ye bağlıdır.
+
+Dosyalar: `descent-model.mjs` (saf fizik, three'siz — Node ile test edilebilir),
+`lunar-descent.mjs` (sahne), `lunar-descent.css` (HUD), `index.html` (Türkçe
+demo), `motion-manifest.json`.
+
+## Kullanım
+
+```html
+<script type="importmap">
+  { "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }
+</script>
+<script type="module">
+  import { mountLunarDescent } from './lunar-descent.mjs';
+  const inis = await mountLunarDescent(host, { active: true, seed: 20260813 });
+  // inis.advance(dt) · play() · pause() · restart() · scrub(f 0..1) · setPhase(1|2|3)
+  // inis.camera.mode → 'chase'|'side'|'surface'; inis.camera.transitionTo(mod)
+  // inis.hud(bool) · setActive(bool) · dispose()
+  // inis.oynatZamani / toplamOynat / faz / aracKaynak ('craft-blocks'|'yedek')
+</script>
+```
+
+- Araç `../craft_blocks/craft-blocks.mjs` → `buildLander`'dan gelir;
+  içe aktarım başarısız olursa otomatik olarak basit 4 bacaklı yedek araca düşer
+  (blok asla bloğa sert bağımlı olmaz). Ayak tabanı craft-blocks'ta −0.46,
+  yedekte −0.50 birimdir; modül bunu kendisi seçer.
+- Ay dokusu `../moon_react_source/public/lunaris/textures/`'tan
+  yeniden kullanılır (aesthetic_moon_real.webp + moon_disp_real.webp);
+  yüklenemezse en-iyi-aday yerleşimli prosedürel krater dokusuna düşer.
+- Demo: `?f=0..1` deterministik kare (duraklatılmış scrub), `?cam=`,
+  `?export=1`, `?kapat=arac,iz,toz,zemin,yakin,plum` katman anahtarları
+  (sözleşme §6 hata avı).
+
+## Fizik — analitik gerçeklik düzeyi (ENTEGRE, keyframe değil)
+
+Düşey düzlemde 2B durum (x menzil, y irtifa), yarı-örtük Euler, dt = 1/60 s
+sim-zamanı; tüm iniş mount'ta bir kez entegre edilir (~40k adım, ~150 ms),
+oynatma/scrub bu örnek dizisinden okunur — scrub her karede aynı pikseli verir.
+
+Sabitler (`SABITLER`, descent-model.mjs):
+
+| Sabit | Değer | Not |
+|---|---|---|
+| g_ay | 1,62 m/s² | sabit |
+| v0 | 1673 m/s | 15 km'de dairesel yörünge hızı √(μ/r), μ = 4902,8 km³/s² |
+| başlangıç | 15 km irtifa, −450 km menzil | |
+| A_FREN | 3,48 m/s² (≈ 2,15 g_ay) | sabit büyüklük; 450 km'de vx→0 kapanışına göre ayarlandı |
+| v_e | 3050 m/s (Isp ≈ 311 s) | yakıt Tsiolkovsky ile entegre, gösterge |
+| dt | 1/60 s | yarı-örtük Euler |
+
+1. **Frenleme** — itki retrograd + düşey-hız-referanslı destek
+   (vyRef −21,6→−29 m/s, u = vx/v0 üzerinden); itki vektörü komutu 2,5 s'lik
+   birinci dereceden gecikmeyle izler (C0 süreklilik + sinematik yunuslama).
+   Ölçülen son: irtifa 1753 m, menzil −465 m, vy −28,8 m/s.
+2. **Yaklaşma** — itki dikeye döner; vyRef −28→−12 m/s (1900→150 m),
+   yatay PD sahaya süzülür (kx 9e-4, kvx .18, ±1,2 m/s²).
+3. **Son iniş** — dikey; vyRef −12→−0,85 m/s (150→0 m); 30 m altında konum
+   kovalama bırakılır, yalnız vx söndürülür (Apollo P66 mantığı). Temasta
+   motor kesilir; %2 bacak oturması 1,4 s'de, sekmesiz (süreklilik yasası).
+
+**Doğrulanan bütünlük** (mount'ta konsola yazılır): temas hızı **0,90 m/s**
+(≤ 1), toplam ΔV **2083 m/s** (hedef 1,9–2,1 km/s), kalan yakıt **%14,7**,
+656 s sim → **33,5 s** oynatma. Araç sahaya −260 m'de konar; sahne temas
+noktasını orijine kaydırır (yüzey kamerası ve saha yaması oraya bakar).
+
+Zaman büküm faz başına hedeflenir (frenleme ×33, yaklaşma ×11, son iniş ×4,2,
+<40 m'de ×2 yavaş çekim, oturma ×1,25) ve OYNATMA-zamanı alanında yumuşatılır;
+anlık çarpan HUD'da görünür.
+
+## Görsel dil
+
+- 1 birim = 100 m; ufuk eğriliği GERÇEK yarıçapla (R = 17374 birim) çizilir;
+  düz-zemin fiziği `sagitta(x) = −x²/2R` ile eğri zemine oturtulur (araç, iz,
+  gölge hedefi). 5000 birim ötesi ek yuvarlanmayla ufkun altına bastırılır
+  (kare düzlem köşe artefaktı bırakmaz).
+- **Ölçek abartısı bildirilir:** araç frenlemede ≈ ×65 (600 m görünür), 150 m
+  altında sürekli rampayla gerçek boyuta (~9 m) iner; küçülme yaklaşma fazında
+  kamera mesafesiyle örtülür (ekranda sabit görünür).
+- Zemin: uzak yama lunaris albedosu (9× tekrar, bump = gerçek yükseklik
+  haritası); saha çevresinde iki detay yaması — tabanları AYNI albedo
+  dokusundan kırpılır (ton sürekliliği), üstüne en-iyi-aday yerleşimli, alçak
+  güneşle tutarlı gölgeli/rimli kraterler ve regolit greni çizilir. Saha
+  çevresine 110 seeded kaya (düşük-çarpık boylar) uzun gölgeleriyle serpilir.
+- Işık: ~11° elevasyonlu sıcak anahtar güneş (uzun gölgeler; gölge
+  yarı-gölgeli, intensity .62), zayıf dünya-ışığı dolgusu. Plum: gaz koluyla
+  ölçeklenen iki iç içe koni + nokta ışık — doygun sıcak ton, beyaz patlama
+  yok (ışık disiplini).
+- Toz: yalnız ~25 m altında, plum çarpma şiddetiyle büyüyen radyal, YATIK
+  süpürme çizgileri; tamamen seed + sim-zamanı fonksiyonu (scrub güvenli);
+  kesmede yeni parça doğmaz, kalanlar balistik çöker (vakumda süspansiyon
+  yok — bulut çizilmez).
+- İz: kat edilen yörünge yayı, araçtan 160 birimden geride penceresiz kesilir
+  (sagitta ile ufkun altına dalan kuyruk "gökten inen çizgi" olarak okunuyordu)
+  ve 600→90 m arasında söner.
+- Gökyüzü: seeded statik yıldızlar + ufka alçak, küçük mavi Dünya (süsleme).
+
+## Kameralar
+
+| Mod | Kadraj | Otomatik öneri |
+|---|---|---|
+| `side` | dik açıdan, yörünge yayını gösterir | frenleme |
+| `chase` | arkadan-üstten, aracı + ilerideki zemini | yaklaşma |
+| `surface` | sahada sabit, yukarı bakan klasik iniş karesi (fov 32) | son iniş |
+
+Geçişler 1,7 s yumuşatılır; kullanıcı seçimi otomatik öneriyi kalıcı olarak
+ezer (restart sıfırlar). Duraklatılmışken geçiş ANINDA uygulanır (kare akmaz —
+tween asla bitmezdi; deterministik yakalama için de şart).
+
+## HUD ve erişilebilirlik
+
+Deste tipografisi (Inter) + palet belirteçleri (`--color-ink/-muted/-accent/
+-canvas/-rule`, koyu yedekli): İrtifa, Dikey hız, Yatay hız, Yakıt (% + çubuk),
+Faz adı, zaman çarpanı. Faz geçişleri `aria-live=polite` ile duyurulur.
+Gerçeklik altyazısı kalıcıdır: "Analitik rehberli iniş profili — görev
+telemetrisi değil; ölçek ve süre sıkıştırılmış."
+
+## İndirgenmiş hareket / dışa aktarım
+
+`prefers-reduced-motion`, `?export=1` veya `html[data-export="true"]` →
+son iniş fazında 30 m irtifadaki karede donar (yüzey kamerası, toz karesi
+deterministik), kontroller gizlenir, HUD ve altyazı kalır.
+
+## Sınırlar (manifest'te de)
+
+2B düşey düzlem; sabit g (merkezkaç rahatlaması yok); düz arazi (eğim/engel
+yok); dinamikte sabit kütle; araç ölçeği ve süre sıkıştırılmış. Gerçek görev
+telemetrisi, rehberlik doğrulaması veya iniş güvenliği analizi için KULLANMA —
+o iş sayısal/veri-güdümlü ayrı bir preset ister.

@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Araç Blokları — craft_blocks</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+    #stage { position: absolute; inset: 0; }
+    header {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 22px; pointer-events: none;
+    }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.14em;
+      text-transform: uppercase; color: #c9a35c; }
+    header h1 small { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: 0.06em;
+      text-transform: none; color: #8a90a0; margin-top: 3px; }
+    .controls { display: flex; gap: 10px; align-items: center; pointer-events: auto; }
+    select, button, label.chk {
+      background: rgba(16, 19, 27, 0.85); color: #dfe3ea; border: 1px solid #2b303d;
+      border-radius: 8px; padding: 7px 12px; font-size: 12.5px; cursor: pointer;
+    }
+    select:hover, button:hover, label.chk:hover { border-color: #c9a35c; }
+    label.chk { display: flex; gap: 7px; align-items: center; user-select: none; }
+    footer {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 5;
+      display: flex; gap: 8px; justify-content: center; padding: 16px; pointer-events: none;
+    }
+    footer a {
+      pointer-events: auto; text-decoration: none; color: #b9bfcc; font-size: 12px;
+      background: rgba(16, 19, 27, 0.85); border: 1px solid #2b303d; border-radius: 999px;
+      padding: 6px 14px;
+    }
+    footer a:hover, footer a.on { color: #0c0e14; background: #c9a35c; border-color: #c9a35c; }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <header>
+    <h1>Araç Blokları<small>craft_blocks · parametrik uzay aracı kütüphanesi</small></h1>
+    <div class="controls">
+      <select id="palet" title="Palet">
+        <option value="obsidyen" selected>Obsidyen · Şampanya</option>
+        <option value="gece">Gece · Bakır</option>
+        <option value="grafit">Grafit · Gümüş</option>
+        <option value="fildisi">Fildişi · Petrol</option>
+      </select>
+      <label class="chk"><input type="checkbox" id="tel"> Tel kafes</label>
+      <button id="durdur">Duraklat</button>
+    </div>
+  </header>
+  <footer id="odaklar"></footer>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import {
+      buildOrbiter, buildLander, buildRocket, buildCubesat, buildCapsule, CRAFT_PALETTE,
+    } from './craft-blocks.mjs';
+
+    /* ---------- paletler (deterministik) ---------- */
+    const PALETLER = {
+      obsidyen: CRAFT_PALETTE,
+      gece:    { body: 0x1b2330, panel: 0x0d151f, accent: 0xc47a4a, metal: 0x93a1b3 },
+      grafit:  { body: 0x2a2c31, panel: 0x121317, accent: 0xd7dde6, metal: 0xaab1bb },
+      fildisi: { body: 0xd9d4c8, panel: 0x1a2b33, accent: 0x2e6f7e, metal: 0xb9b4a6 },
+    };
+
+    /* ---------- araç tanımları: sıra, ad, kurucu, sergi yönelimi ---------- */
+    // 'z-up': araç +Z'si dünya yukarısına (kanatlar yatay);
+    // 'x-up': araç +X'i yukarı (roket/kapsül dik, iniş aracı bacakları yerde).
+    const TANIMLAR = [
+      { id: 'cubesat', ad: 'CubeSat 3U', yap: (p) => buildCubesat({ units: 3, palette: p }), yon: 'z-up' },
+      { id: 'orbiter', ad: 'Yörünge Aracı', yap: (p) => buildOrbiter({ palette: p }), yon: 'z-up' },
+      { id: 'rocket',  ad: 'Roket (2 kademe)', yap: (p) => buildRocket({ stages: 2, palette: p }), yon: 'x-up' },
+      { id: 'lander',  ad: 'İniş Aracı', yap: (p) => buildLander({ palette: p }), yon: 'x-up' },
+      { id: 'capsule', ad: 'Kapsül + SM', yap: (p) => buildCapsule({ palette: p }), yon: 'x-up' },
+    ];
+    const ARALIK = 1.55;
+    const FAZLAR = [0.9, 5.7, 0.4, 2.3, 4.1];   // başlangıç açıları (deterministik)
+    const HIZ = 0.22;                            // rad/s — yavaş dönme sehpası
+
+    /* ---------- sahne ---------- */
+    const host = document.querySelector('#stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));   // DPR sınırı (sözleşme)
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.42;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    host.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x05070b);
+    scene.fog = new THREE.FogExp2(0x05070b, 0.05);   // zemin uzakta sahne rengine erisin
+
+    // Zemin + araç başına ince kaide (galeri duruşu).
+    const zemin = new THREE.Mesh(
+      new THREE.CircleGeometry(60, 64),
+      new THREE.MeshStandardMaterial({ color: 0x030408, roughness: 1.0, metalness: 0.0 }),
+    );
+    zemin.rotation.x = -Math.PI / 2;
+    zemin.receiveShadow = true;
+    scene.add(zemin);
+    for (let i = 0; i < TANIMLAR.length; i++) {
+      const kaide = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.52, 0.58, 0.05, 48),
+        new THREE.MeshStandardMaterial({ color: 0x0e1015, roughness: 0.6, metalness: 0.35 }),
+      );
+      kaide.position.set((i - 2) * ARALIK, 0.025, 0);
+      kaide.receiveShadow = true;
+      kaide.castShadow = true;
+      scene.add(kaide);
+    }
+
+    // Üç noktalı ışık düzeni (sözleşmenin ışık disiplini):
+    // tek anahtar ışık + yumuşak dolgu + arka jant ışığı.
+    const anahtar = new THREE.DirectionalLight(0xfff1de, 3.1);      // anahtar (sıcak)
+    anahtar.position.set(4.5, 7, 5.5);
+    anahtar.castShadow = true;
+    anahtar.shadow.mapSize.set(2048, 2048);
+    anahtar.shadow.camera.left = -6; anahtar.shadow.camera.right = 6;
+    anahtar.shadow.camera.top = 5; anahtar.shadow.camera.bottom = -3;
+    anahtar.shadow.camera.near = 2; anahtar.shadow.camera.far = 20;
+    anahtar.shadow.bias = -0.0004;
+    scene.add(anahtar);
+    const dolgu = new THREE.HemisphereLight(0xa7b6d4, 0x0e1014, 1.0); // yumuşak dolgu
+    scene.add(dolgu);
+    const jant = new THREE.DirectionalLight(0xd9c08a, 1.7);         // şampanya jant ışığı
+    jant.position.set(-5, 3.2, -6);
+    scene.add(jant);
+
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 60);
+
+    /* ---------- araçların kurulumu ---------- */
+    const pivotlar = [];   // dönme sehpaları
+    let araclar = [];      // canlı kök gruplar
+
+    function yonele(kok, yon) {
+      // Sergi yönelimi: sözleşme eksenlerinden (X ileri, Z yukarı) dünya-yukarı (+Y) düzenine.
+      if (yon === 'z-up') kok.rotation.x = -Math.PI / 2;   // araç +Z → dünya +Y
+      else kok.rotation.z = Math.PI / 2;                    // araç +X → dünya +Y
+    }
+
+    function kur(paletAdi) {
+      // Eski araçları söküp kaynakları bırak (görünür yeniden-kurma değil; kullanıcı eylemi).
+      for (const a of araclar) {
+        a.parent.remove(a);
+        a.traverse((o) => {
+          if (o.isMesh) { o.geometry.dispose(); if (o.material.dispose) o.material.dispose(); }
+        });
+      }
+      araclar = [];
+      const p = PALETLER[paletAdi];
+      TANIMLAR.forEach((t, i) => {
+        let pivot = pivotlar[i];
+        if (!pivot) {
+          pivot = new THREE.Group();
+          pivot.position.set((i - 2) * ARALIK, 0, 0);
+          scene.add(pivot);
+          pivotlar[i] = pivot;
+        }
+        const kok = t.yap(p);
+        yonele(kok, t.yon);
+        kok.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+        pivot.add(kok);
+        // Yere oturt: yönelimden sonra en alt nokta kaidenin 0.10 üstünde dursun.
+        const bb = new THREE.Box3().setFromObject(kok);
+        pivot.position.y = 0.15 - bb.min.y;
+        araclar.push(kok);
+        telUygula();
+      });
+    }
+
+    /* ---------- kamera: genel bakış / araç odağı (?focus=lander) ---------- */
+    const sorgu = new URLSearchParams(location.search);
+    const odak = sorgu.get('focus');
+    const baslangicPalet = PALETLER[sorgu.get('palet')] ? sorgu.get('palet') : 'obsidyen';
+    function kamerayiKur() {
+      const i = TANIMLAR.findIndex((t) => t.id === odak);
+      if (i >= 0) {
+        const merkez = new THREE.Vector3((i - 2) * ARALIK, pivotlar[i].position.y + 0.05, 0);
+        camera.position.set(merkez.x + 1.0, merkez.y + 0.55, 1.6);
+        camera.lookAt(merkez);
+      } else {
+        camera.position.set(0, 2.0, 6.3);
+        camera.lookAt(0, 0.66, 0);
+      }
+    }
+
+    /* ---------- boyutlandırma (bağlanmadan ÖNCE boyut, sözleşme) ---------- */
+    function boyutla() {
+      const w = host.clientWidth, h = host.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+
+    /* ---------- kumandalar ---------- */
+    const telKutu = document.querySelector('#tel');
+    function telUygula() {
+      const acik = telKutu.checked;
+      for (const a of araclar) a.traverse((o) => { if (o.isMesh) o.material.wireframe = acik; });
+    }
+    telKutu.addEventListener('change', () => { telUygula(); ciz(); });
+
+    document.querySelector('#palet').addEventListener('change', (e) => {
+      kur(e.target.value); kamerayiKur(); ciz();
+    });
+
+    let calisiyor = true;
+    const durButon = document.querySelector('#durdur');
+    durButon.addEventListener('click', () => {
+      calisiyor = !calisiyor;
+      durButon.textContent = calisiyor ? 'Duraklat' : 'Devam';
+    });
+
+    // Odak çipleri.
+    const odaklar = document.querySelector('#odaklar');
+    const genel = document.createElement('a');
+    genel.href = '?'; genel.textContent = 'Genel bakış';
+    if (!odak) genel.className = 'on';
+    odaklar.appendChild(genel);
+    for (const t of TANIMLAR) {
+      const a = document.createElement('a');
+      a.href = `?focus=${t.id}`; a.textContent = t.ad;
+      if (odak === t.id) a.className = 'on';
+      odaklar.appendChild(a);
+    }
+
+    /* ---------- deterministik döngü ---------- */
+    // Sanal zaman altında da deterministik olsun diye duvar saati yerine sabit adım.
+    let t = 0;
+    const DT = 1 / 60;
+    const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function ciz() {
+      pivotlar.forEach((pv, i) => { pv.rotation.y = FAZLAR[i] + HIZ * t; });
+      renderer.render(scene, camera);
+    }
+
+    function dongu() {
+      requestAnimationFrame(dongu);
+      if (document.hidden || !calisiyor || azaltilmis) return;  // gizliyken/duraklıyken durur
+      t += DT;
+      ciz();
+    }
+
+    /* ---------- başlat ---------- */
+    boyutla();
+    document.querySelector('#palet').value = baslangicPalet;
+    kur(baslangicPalet);
+    kamerayiKur();
+    ciz();               // bildirilen tablo: t=0, fazlar başlangıç açılarında
+    if (!azaltilmis) dongu();
+    window.addEventListener('resize', () => { boyutla(); ciz(); });
+
+    // Deterministik test/dışa aktarma kancası.
+    window.__craft = {
+      scene, camera, renderer, araclar, pivotlar,
+      advance(saniye) { t += saniye; ciz(); },
+      setPalette(ad) { kur(ad); ciz(); },
+    };
+  </script>
+</body>
+</html>

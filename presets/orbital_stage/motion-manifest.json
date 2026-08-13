@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "orbital-trajectory-playback",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Play a spacecraft trajectory around a central body on one master clock: the craft rides the path (+X along velocity), the flown arc is revealed progressively, and a fading bright-head trail marks recent motion.",
+      "model": "Three spec forms share one two-body frame (km, s; mu_earth=398600.4418, mu_moon=4902.800066 km^3/s^2). kepler: conics evaluated ANALYTICALLY from orbital elements via Kepler's equation (elliptic Newton solve; hyperbolic branch for e>1). propagate: NUMERICAL RK4 integration of two-body gravity with impulsive dv applied exactly at the stated burn times. states: DATA-DRIVEN playback of external [t,x,y,z] samples with Catmull-Rom (finite-difference Hermite) interpolation — real mission ephemerides must use this form.",
+      "solver": "Fixed-step RK4 (base step <= min(45 s, tMax/8000)), substeps scaled to the local circular period (T_loc/480); integration runs once at track creation, playback interpolates position+velocity with cubic Hermite.",
+      "limitations": "Two-body gravity only: no J2/perturbations, no drag, no third bodies, no attitude dynamics; burns are impulsive (instant velocity change); the display timewarp (declared in the HUD, default 300x) compresses time for watchability and craft size is exaggerated for visibility — physics is always computed in real seconds and real km.",
+      "reducedMotion": "No autoplay; the timeline holds a declared tableau (mid-burn moment with ghosts visible) and remains fully scrubbable via the range control.",
+      "exportState": "Deterministic freeze via ?tab=&t=&cam= query: the timeline scrubs to the exact simulation second, every visual is a pure function of t, and the seeded starfield is static.",
+      "accessibility": "Native buttons and a range slider drive the timeline (Space play/pause, arrow keys scrub, 1/2/3 camera); the HUD reports t, altitude, speed, and total dV as text; captions restate every physics number in prose.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "orbital-burn-event",
+      "type": "state-transition",
+      "truthLevel": "analytic",
+      "purpose": "Make an impulsive maneuver legible: at the burn time a plume fires from -X, a dV arrow with magnitude label appears, and the PRE-burn orbit ghost fades while the POST-burn orbit ghost draws itself in — the orbit change is seen as a change of conic.",
+      "model": "Pre/post ghost conics are the osculating two-body orbits computed from the exact state just before the burn and from that state plus the impulsive dv vector; apsis markers (enberi/enote) are placed from the post-burn elements with true altitudes.",
+      "limitations": "Impulsive approximation: real finite burns arc over time and shift the achieved orbit slightly; ghost fade/draw timing (ghostSimDur, default 900 sim s) is a presentation envelope, not physics; plume size and flicker are illustrative.",
+      "reducedMotion": "Ghost opacities and draw fractions are pure functions of simulation time, so the frozen tableau shows the burn state faithfully without ongoing animation.",
+      "exportState": "At a scrubbed t shortly after the burn the post-burn conic is partially drawn and the pre-burn conic is mid-fade — deterministic for any repeated capture.",
+      "accessibility": "Burn labels state the dV magnitude in km/s and m/s as text; the HUD accumulates total applied dV; captions give the full maneuver arithmetic.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "orbital-camera-director",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Direct attention with four purposeful camera modes: chase (behind the craft looking along velocity), orbit (slow cinematic tour of the whole scene), body (fixed vantage over the central body), free (user OrbitControls); transitions ease smoothly between modes.",
+      "model": "Camera choreography only — it never alters physical state; chase framing derives from the true velocity and radial vectors of the focused track.",
+      "limitations": "Framing, distances, damping, and the orbit-mode tour rate are presentation choices with no physical meaning.",
+      "reducedMotion": "No autonomous camera motion beyond the user's explicit mode changes; scrubbing snaps the camera directly to its target pose (no easing chase).",
+      "exportState": "Mode is settable via ?cam= and the pose is a deterministic function of mode and simulation time (orbit azimuth derives from t, not wall clock).",
+      "accessibility": "Camera modes are native buttons mirrored by keys 1/2/3/4; no information is conveyed by camera motion alone — HUD and captions carry all data as text.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

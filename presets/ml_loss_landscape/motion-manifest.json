@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "optimizer-descent",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Üç optimizasyon algoritmasının aynı kayıp yüzeyinde gerçek gradyanla nasıl farklı davrandığını göstermek: SGD sığ tuzak kuyusuna takılır, Momentum salınarak, Adam normalize adımlarla dar vadiden küresel minimuma iner.",
+      "model": "Yüzey analitik: f(x,y) = 0.058(x²+y²) + 0.42·x·y·exp(−(x²+y²)/3.4) − 0.85·G(−1.9,1.7,0.55) − 0.75·G(−1.6,−1.8,0.52) − 0.65·G(2.2,1.8,0.50) − 1.10·G(1.85,−0.59,0.45) − 0.20·G(−0.35,−1.516,0.20) − 0.78·exp(−v²/(2·0.20²))·exp(−(x−0.8)²/(2·1.55²)), v = y − (0.28x²−1.55), G(cx,cy,σ) = exp(−((x−cx)²+(y−cy)²)/(2σ²)). Gradyan kapalı formda kodlanmıştır. Güncelleme kuralları adım başına canlı entegre edilir: SGD x←x−η∇f (η=0.045); Momentum v←0.9v−0.012∇f, x←x+v; Adam m,u bias-düzeltmeli standart form (η=0.09, β₁=0.9, β₂=0.999, ε=1e-8). Ortak başlangıç (−1.05, −1.30); 12 adım/sn; deterministik — restart birebir aynı yolları oynatır.",
+      "limitations": "2 parametreli oyuncak yüzey — gerçek bir modelin milyonlarca boyutlu kayıp yüzeyi değildir; öğrenme oranları gösterim için seçildi; adım sayısı sıkıştırılmıştır; stokastik gürültü yoktur (tam gradyan iniş).",
+      "reducedMotion": "İzler yakınsamaya kadar tam çizili (solma kapalı), toplar son konumlarında, kayıp değerleri son değerlerde, kamera sabit.",
+      "exportState": "seek(360) donuk karesi: üç iz tam çizili, SGD (−0.24,−1.52) tuzağında, Momentum ve Adam (1.78,−0.66) küresel minimumunda; kontroller gizli, kamera sabit.",
+      "accessibility": "Optimizatör chip'leri gerçek düğmelerdir (aria-pressed); kayıp değerleri metin olarak canlı okunur (3 ondalık, tabular-nums); Boşluk duraklatır, R yeniden başlatır; dürüstlük şeridi her modda görünür.",
+      "loop": false,
+      "pauseControl": true,
+      "durationMs": 30000
+    },
+    {
+      "id": "camera-orbit",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Dar vadinin derinliği ve kuyuların göreli konumu tek bakış açısından okunmaz; yavaş tur (100 sn/devir) yüzeyin 3B biçimini ve Adam'ın izlediği vadiyi açığa çıkarır — amaçsız hareket değil, biçim okutma.",
+      "reducedMotion": "Kamera sabit; kullanıcı isterse sürükleyerek bakış açısını değiştirir.",
+      "exportState": "Kamera mount açısında sabit; tur kapalı.",
+      "accessibility": "Tur bir düğmeyle (aria-pressed) ve O kısayoluyla kapatılabilir; sürükleme her an turu geçersiz kılar; sahnedeki hiçbir bilgi yalnızca kamera hareketiyle verilmez.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

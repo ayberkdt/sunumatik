@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Yörünge Sahnesi — orbital_stage</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    /* palet: obsidian-champagne ailesi — preset HUD'u bu token'ları tüketir */
+    :root {
+      --color-canvas: #0b0c10;
+      --color-surface: #15161a;
+      --color-ink: #e9e4d8;
+      --color-muted: #9a938a;
+      --color-accent: #d9b877;
+      --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd;
+      --color-data-2: #d78f6c;
+      --color-rule: #3a3c42;
+      --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body {
+      background: var(--color-canvas); color: var(--color-ink);
+      font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden;
+    }
+    header {
+      display: flex; align-items: center; gap: 20px; padding: 14px 24px 12px;
+      border-bottom: 1px solid var(--color-rule); flex: 0 0 auto;
+    }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 8px; margin-left: auto; }
+    .tabs button {
+      appearance: none; border: 1px solid var(--color-rule); background: transparent;
+      color: var(--color-muted); font: 600 13px/1 var(--font-body); letter-spacing: .04em;
+      padding: 9px 16px; border-radius: 8px; cursor: pointer;
+    }
+    .tabs button[aria-selected="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    .stage-panel { position: absolute; inset: 0; }
+    .stage-panel[data-hidden] { visibility: hidden; }
+    footer {
+      flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px;
+      padding: 12px 24px 16px; border-top: 1px solid var(--color-rule); background: var(--color-surface);
+    }
+    .scrub-row { display: flex; align-items: center; gap: 14px; }
+    .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); }
+    .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    .control-row button, .control-row label.toggle {
+      appearance: none; border: 1px solid var(--color-rule); background: transparent;
+      color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px;
+      border-radius: 7px; cursor: pointer; user-select: none;
+    }
+    .control-row button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .control-row label.toggle { display: inline-flex; gap: 6px; align-items: center; }
+    .control-row label.toggle input { accent-color: var(--color-accent); margin: 0; }
+    .caption { font-size: 13.5px; color: var(--color-muted); }
+    .caption strong { color: var(--color-ink); font-weight: 600; }
+    .caption .nums { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--color-ink); }
+    .kbd-help { margin-left: auto; font-size: 11.5px; color: var(--color-muted); letter-spacing: .03em; }
+    kbd { border: 1px solid var(--color-rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font: 11px var(--font-mono); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Yörünge Sahnesi<small>orbital_stage · iki-cisim fiziği, impulsif manevralar</small></h1>
+    <div class="tabs" role="tablist" aria-label="Sahneler">
+      <button role="tab" id="tabBtn1" aria-selected="true" data-tab="1">Hohmann: LEO → GEO</button>
+      <button role="tab" id="tabBtn2" aria-selected="false" data-tab="2">Ay'a varış</button>
+    </div>
+  </header>
+
+  <div class="stage-area">
+    <div class="stage-panel" id="panel1" role="tabpanel" aria-labelledby="tabBtn1"></div>
+    <div class="stage-panel" id="panel2" role="tabpanel" aria-labelledby="tabBtn2" data-hidden></div>
+  </div>
+
+  <footer>
+    <div class="scrub-row">
+      <button id="playBtn" aria-pressed="false" title="Boşluk">Oynat</button>
+      <input id="scrub" type="range" min="0" max="100000" step="10" value="0" aria-label="Zaman çizelgesi">
+      <span class="time" id="timeOut">—</span>
+    </div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Kamera">
+        <span>Kamera</span>
+        <button data-cam="chase" title="1">Takip</button>
+        <button data-cam="orbit" aria-pressed="true" title="2">Tur</button>
+        <button data-cam="body" title="3">Gövde</button>
+        <button data-cam="free" title="4">Serbest</button>
+      </div>
+      <div class="group" role="group" aria-label="Zaman sıkıştırma">
+        <span>Warp</span>
+        <button data-warp="60">60×</button>
+        <button data-warp="300" aria-pressed="true">300×</button>
+        <button data-warp="1200">1200×</button>
+      </div>
+      <div class="group">
+        <label class="toggle"><input type="checkbox" id="gridChk" checked> Izgara</label>
+        <label class="toggle"><input type="checkbox" id="hudChk" checked> HUD</label>
+      </div>
+      <span class="kbd-help"><kbd>Boşluk</kbd> oynat/duraklat · <kbd>←</kbd><kbd>→</kbd> sar (±10 dk, Shift ±1 sa) · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> kamera · <kbd>G</kbd> ızgara</span>
+    </div>
+    <p class="caption" id="caption1"></p>
+    <p class="caption" id="caption2" hidden></p>
+  </footer>
+
+  <script type="module">
+    import { mountOrbitalStage, orbitMath } from './orbital-stage.mjs';
+
+    const params = new URLSearchParams(location.search);
+    const qTab = params.get('tab') === '2' ? 2 : 1;
+    const qT = params.has('t') ? Number(params.get('t')) : null;
+    const qCam = params.get('cam');
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const exportMode = params.get('export') === '1' || document.documentElement.dataset.export === 'true';
+    const deterministic = qT != null || reduced || exportMode;
+    const nf = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 });
+    const nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    /* ---------------- Sahne 1: Hohmann LEO → GEO (Dünya, propagate + 2 impuls) */
+    const muE = orbitMath.MU_EARTH, RE = orbitMath.R_EARTH;
+    const r1 = RE + 300;                                    /* 300 km LEO */
+    const T_SIDEREAL = 86164.0905;                          /* yıldızıl gün, s */
+    const rGeo = Math.cbrt(muE * (T_SIDEREAL / (2 * Math.PI)) ** 2);   /* ≈ 42 164 km */
+    const vLeo = orbitMath.circularSpeed(muE, r1);
+    const vGeo = orbitMath.circularSpeed(muE, rGeo);
+    const aT = (r1 + rGeo) / 2;
+    const vPeriT = Math.sqrt(muE * (2 / r1 - 1 / aT));
+    const vApoT = Math.sqrt(muE * (2 / rGeo - 1 / aT));
+    const dv1 = vPeriT - vLeo;                              /* ≈ 2.43 km/s */
+    const dv2 = vGeo - vApoT;                               /* ≈ 1.47 km/s */
+    const tLeo = orbitMath.periodOf(muE, r1);               /* ≈ 90.5 dk */
+    const tTransfer = Math.PI * Math.sqrt(aT ** 3 / muE);   /* ≈ 5.27 sa */
+    const tb1 = tLeo;                                       /* bir tam LEO turundan sonra yak */
+    const tb2 = tb1 + tTransfer;
+    const tMax1 = tb2 + T_SIDEREAL;                         /* GEO'da bir tam tur */
+
+    const stage1 = await mountOrbitalStage(document.querySelector('#panel1'), {
+      central: 'earth', seed: 11, warp: 300, active: qTab === 1, autoplay: !deterministic,
+    });
+    /* hedef yörünge: analitik Kepler halkası (biçim a, eliptik) */
+    stage1.addTrajectory({
+      kepler: { a: rGeo, e: 0, i: 0, raan: 0, argp: 0, nu0: 0, mu: muE },
+      span: 'full', color: getComputedStyle(document.body).getPropertyValue('--color-muted').trim(),
+    });
+    /* görev izi: RK4 + iki impuls (biçim c) — büyüklükler formülden, elle değil */
+    const mission = stage1.addTrajectory({
+      color: getComputedStyle(document.body).getPropertyValue('--color-data-1').trim(),
+      propagate: {
+        r0: [r1, 0, 0], v0: [0, vLeo, 0], mu: muE, tMax: tMax1,
+        burns: [
+          { t: tb1, dv: [0, dv1, 0] },        /* enberide prograd */
+          { t: tb2, dv: [0, -dv2, 0] },       /* enötede prograd (hız −Y yönünde) */
+        ],
+      },
+    });
+    stage1.addBurnMarker(mission, { t: tb1, dv: [0, dv1, 0], label: `ΔV₁ ${nf2.format(dv1)} km/s` });
+    stage1.addBurnMarker(mission, { t: tb2, dv: [0, -dv2, 0], label: `ΔV₂ ${nf2.format(dv2)} km/s` });
+    await stage1.setCraft(mission, 'orbiter');
+    mission.focus();
+    stage1.hud(true);
+
+    document.querySelector('#caption1').innerHTML =
+      `<strong>Hohmann transferi iki impulstur:</strong> enberide <span class="nums">ΔV₁ ${nf2.format(dv1)} km/s</span> `
+      + `(LEO ${nf2.format(vLeo)} → ${nf2.format(vPeriT)} km/s), enötede <span class="nums">ΔV₂ ${nf2.format(dv2)} km/s</span> `
+      + `(${nf2.format(vApoT)} → GEO ${nf2.format(vGeo)} km/s). Transfer <span class="nums">${(tTransfer / 3600).toFixed(1)} saat</span> sürer; `
+      + `hedef irtifa <span class="nums">${nf.format(rGeo - RE)} km</span>. İki-cisim modeli, impulsif yanmalar; gösterim hızlandırılmıştır.`;
+
+    /* ---------------- Sahne 2: Ay'a varış (hiperbolik yaklaşma → tutulma yanması) */
+    const muM = orbitMath.MU_MOON, RM = orbitMath.R_MOON;
+    const rpM = RM + 100;                                   /* enberi: 100 km */
+    const vInf = 0.8;                                       /* km/s */
+    const aH = -muM / (vInf * vInf);
+    const eH = 1 + rpM * vInf * vInf / muM;                 /* ≈ 1.24 → hiperbol */
+    const elH = { a: aH, e: eH, i: .44, raan: .7, argp: 5.5, mu: muM };
+    const nu0H = -2.1;                                      /* asimptot ~±2.51 rad — içinde */
+    const s0 = orbitMath.stateFromKepler(elH, nu0H);
+    const tArr = -orbitMath.timeFromPeriapsis(aH, eH, muM, nu0H);   /* enberiye süre */
+    const sPeri = orbitMath.stateFromKepler(elH, 0);
+    const vPeriHyp = Math.hypot(...sPeri.v);
+    const raCap = 8000;                                     /* tutulma enötesi (yarıçap, km) */
+    const aCap = (rpM + raCap) / 2;
+    const vPeriCap = Math.sqrt(muM * (2 / rpM - 1 / aCap));
+    const dvCap = vPeriHyp - vPeriCap;                      /* ≈ 0.36 km/s retrograd */
+    const vHat = sPeri.v.map(x => x / vPeriHyp);
+    const dvVec = vHat.map(x => -x * dvCap);
+    const tCap = orbitMath.periodOf(muM, aCap);
+    const tMax2 = tArr + 1.25 * tCap;
+
+    const stage2 = await mountOrbitalStage(document.querySelector('#panel2'), {
+      central: 'moon', seed: 12, warp: 300, active: qTab === 2, autoplay: !deterministic,
+    });
+    /* yaklaşma hiperbolü: analitik Kepler (biçim a, e>1, açık yay) — RK4 iziyle üst üste
+       düşmesi iki yolun tutarlılığının görünür sağlamasıdır */
+    stage2.addTrajectory({
+      kepler: { ...elH, nu0: nu0H }, span: 4.7,
+      color: getComputedStyle(document.body).getPropertyValue('--color-muted').trim(),
+    });
+    const capsuleTrack = stage2.addTrajectory({
+      color: getComputedStyle(document.body).getPropertyValue('--color-data-1').trim(),
+      propagate: {
+        r0: s0.r, v0: s0.v, mu: muM, tMax: tMax2,
+        burns: [{ t: tArr, dv: dvVec }],
+      },
+    });
+    stage2.addBurnMarker(capsuleTrack, { t: tArr, dv: dvVec, label: `Tutulma ΔV ${nf2.format(dvCap)} km/s` });
+    await stage2.setCraft(capsuleTrack, 'capsule');
+    /* röle uydusu: VERİ GÜDÜMLÜ iz (biçim b) — noktalar [t,x,y,z], Catmull-Rom oynatma */
+    const relayStates = [];
+    const rRelay = RM + 500, TRelay = orbitMath.periodOf(muM, rRelay), iRelay = 1.13;
+    for (let k = 0; k <= 240; k++) {
+      const t = (k / 240) * tMax2;
+      const th = 2 * Math.PI * (t / TRelay) + .8;
+      relayStates.push([t,
+        rRelay * Math.cos(th),
+        rRelay * Math.sin(th) * Math.sin(iRelay),
+        rRelay * Math.sin(th) * Math.cos(iRelay)]);
+    }
+    const relayTrack = stage2.addTrajectory({
+      states: relayStates, mu: muM,
+      color: getComputedStyle(document.body).getPropertyValue('--color-data-2').trim(),
+    });
+    await stage2.setCraft(relayTrack, 'cubesat');
+    capsuleTrack.focus();
+    stage2.hud(true);
+
+    document.querySelector('#caption2').innerHTML =
+      `<strong>Hiperbolik varış (e = ${nf2.format(eH)}, v<sub>∞</sub> ${nf2.format(vInf)} km/s):</strong> enberide `
+      + `<span class="nums">${nf2.format(vPeriHyp)} km/s</span> ile geçen kapsül, tek retrograd impulsla `
+      + `<span class="nums">ΔV ${nf2.format(dvCap)} km/s</span> vererek <span class="nums">${nf.format(rpM - RM)} × ${nf.format(raCap - RM)} km</span> `
+      + `tutulma yörüngesine bağlanır. Gri iz analitik hiperbol, renkli iz RK4 yayılımıdır — üst üste düşmeleri modelin sağlamasıdır. `
+      + `Röle uydusu veri güdümlü izdir ([t,x,y,z] noktaları).`;
+
+    /* ---------------- sekmeler, kontroller, klavye */
+    const stages = { 1: stage1, 2: stage2 };
+    let active = 1;
+    const panels = { 1: document.querySelector('#panel1'), 2: document.querySelector('#panel2') };
+    const captions = { 1: document.querySelector('#caption1'), 2: document.querySelector('#caption2') };
+    const scrub = document.querySelector('#scrub');
+    const timeOut = document.querySelector('#timeOut');
+    const playBtn = document.querySelector('#playBtn');
+
+    function activeStage() { return stages[active]; }
+    function selectTab(n) {
+      active = n;
+      for (const k of [1, 2]) {
+        const on = Number(k) === n;
+        panels[k].toggleAttribute('data-hidden', !on);
+        captions[k].hidden = !on;
+        document.querySelector(`#tabBtn${k}`).setAttribute('aria-selected', String(on));
+        stages[k].setActive(on);
+      }
+      scrub.max = String(Math.round(activeStage().timeline.duration));
+      syncUi();
+    }
+    document.querySelectorAll('.tabs button').forEach(b =>
+      b.addEventListener('click', () => selectTab(Number(b.dataset.tab))));
+
+    function fmtClock(t) {
+      if (t < 3600) return `${Math.floor(t / 60)} dk ${String(Math.floor(t % 60)).padStart(2, '0')} sn`;
+      if (t < 172800) return `${Math.floor(t / 3600)} sa ${String(Math.floor((t % 3600) / 60)).padStart(2, '0')} dk`;
+      return `${Math.floor(t / 86400)} g ${Math.floor((t % 86400) / 3600)} sa`;
+    }
+    function syncUi() {
+      const s = activeStage();
+      playBtn.textContent = s.timeline.playing ? 'Duraklat' : 'Oynat';
+      playBtn.setAttribute('aria-pressed', String(s.timeline.playing));
+      if (document.activeElement !== scrub) scrub.value = String(Math.round(s.timeline.t));
+      timeOut.textContent = fmtClock(s.timeline.t);
+      document.querySelectorAll('[data-cam]').forEach(b =>
+        b.setAttribute('aria-pressed', String(b.dataset.cam === s.camera.current)));
+      document.querySelectorAll('[data-warp]').forEach(b =>
+        b.setAttribute('aria-pressed', String(Number(b.dataset.warp) === s.timeline.warp)));
+    }
+    setInterval(syncUi, 200);
+
+    playBtn.addEventListener('click', () => {
+      const tl = activeStage().timeline;
+      tl.playing ? tl.pause() : tl.play();
+      syncUi();
+    });
+    scrub.addEventListener('input', () => { activeStage().timeline.scrub(Number(scrub.value)); syncUi(); });
+    document.querySelectorAll('[data-cam]').forEach(b =>
+      b.addEventListener('click', () => { activeStage().camera.transitionTo(b.dataset.cam, { duration: 1200 }); syncUi(); }));
+    document.querySelectorAll('[data-warp]').forEach(b =>
+      b.addEventListener('click', () => { activeStage().timeline.setWarp(Number(b.dataset.warp)); syncUi(); }));
+    document.querySelector('#gridChk').addEventListener('change', e => activeStage().setGrid(e.target.checked));
+    document.querySelector('#hudChk').addEventListener('change', e => activeStage().hud(e.target.checked));
+
+    document.addEventListener('keydown', event => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLButtonElement) return;
+      const s = activeStage();
+      if (event.code === 'Space') { event.preventDefault(); s.timeline.playing ? s.timeline.pause() : s.timeline.play(); }
+      else if (event.key === 'ArrowLeft') s.timeline.scrub(s.timeline.t - (event.shiftKey ? 3600 : 600));
+      else if (event.key === 'ArrowRight') s.timeline.scrub(s.timeline.t + (event.shiftKey ? 3600 : 600));
+      else if (event.key === '1') s.camera.transitionTo('chase', { duration: 1000 });
+      else if (event.key === '2') s.camera.transitionTo('orbit', { duration: 1000 });
+      else if (event.key === '3') s.camera.transitionTo('body', { duration: 1000 });
+      else if (event.key === '4') s.camera.transitionTo('free');
+      else if (event.key.toLowerCase() === 'g') { const c = document.querySelector('#gridChk'); c.checked = !c.checked; s.setGrid(c.checked); }
+      else if (event.key.toLowerCase() === 'h') { const c = document.querySelector('#hudChk'); c.checked = !c.checked; s.hud(c.checked); }
+      syncUi();
+    });
+
+    /* ---------------- deterministik kurulum: ?tab=&t=&cam= (başsız yakalama) + tablolar */
+    selectTab(qTab);
+    if (deterministic) {
+      for (const k of [1, 2]) stages[k].timeline.pause();
+      const tableau = { 1: tb1 + 400, 2: tArr + 400 };   /* yanma ânının ortası — hayaletler görünür */
+      const s = activeStage();
+      if (qCam) { s.camera.transitionTo(qCam, { duration: 0 }); }
+      s.timeline.scrub(qT != null ? qT : tableau[active]);
+      s.advance(0);
+      s.advance(0);        /* kamera geçişi süre 0 → ikinci karede tam yerinde */
+      /* başsız yakalama: rAF'ı durdur — kare preserveDrawingBuffer'da kalır,
+         virtual-time bütçesi kare kare SwiftShader'da erimez */
+      for (const k of [1, 2]) stages[k].setActive(false);
+      document.title += ' · hazır';
+      if (params.has('perf')) {
+        /* advance() maliyet ölçümü: 180 kare, EMA sonucu DOM'a yazılır */
+        const s = activeStage();
+        for (let i = 0; i < 180; i++) s.advance(1 / 60);
+        const el = document.createElement('div');
+        el.id = 'perfOut';
+        el.textContent = `advanceMs=${s.stats.advanceMs.toFixed(2)}`;
+        document.body.appendChild(el);
+      }
+    }
+    /* hata ayıklama kancası (sözleşme) + performans notu */
+    window.__orbitalStage = { stage1, stage2, numbers: { dv1, dv2, tTransfer, rGeo, tb1, tb2, dvCap, tArr, eH } };
+    setTimeout(() => console.info(
+      `orbital-stage advance(): sahne1 ${stage1.stats.advanceMs.toFixed(2)} ms · sahne2 ${stage2.stats.advanceMs.toFixed(2)} ms`), 6000);
+  </script>
+</body>
+</html>

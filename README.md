@@ -55,6 +55,18 @@ ayrımını açık tutar.
 | [`cosmos_advanced/`](presets/cosmos_advanced) | Derin uzay fonu: tohumlu yıldız alanı (gerçekçi kadir dağılımı, kara-cisim renkleri, sintilasyon), **gerçek ESO GigaGalaxy Samanyolu panoraması** (prosedürel yedekli), opsiyonel bulutsu, deterministik meteorlar; dikdörtgen dekor modülüyle gömülür. |
 | [`jwst_explorer/`](presets/jwst_explorer) | 10 resmi James Webb / Hubble görüntüsü üstünde etkileşimli keşif: yaylı pan/zoom, yayın metinlerinden ilgi noktaları, Webb↔Hubble / NIRCam↔MIRI tek-kameralı karşılaştırma perdesi. Krediler gömülü. |
 
+### Sahne blokları — birleştirilebilir 3B sistem (1. dalga)
+
+Manim ayarında, blok blok kurulabilir sahneler; program ve donmuş API `skills/design-scientific-motion/references/scene-blocks.md` içinde.
+
+| Klasör | İçerik |
+|---|---|
+| [`orbital_stage/`](presets/orbital_stage) | **Yörünge ver → animasyon al**: Kepler elemanları, durum vektörü dizisi (gerçek görev verisi) ya da RK4 + impulsif yakışlar; yakış hayaletleri, kamera yönetmeni, telemetri HUD. Demo: LEO→GEO Hohmann (ΔV 2,43+1,47 km/s) + Ay'a hiperbolik varış ve yakalama. |
+| [`craft_blocks/`](presets/craft_blocks) | Estetik parametrik araç kütüphanesi: orbiter, iniş aracı, 2 kademeli roket, CubeSat, kapsül — donmuş eksen/palet sözleşmesiyle tüm bloklar bununla birleşir. |
+| [`lunar_descent/`](presets/lunar_descent) | Gerçek entegre üç fazlı Ay inişi (temas 0,90 m/s, ΔV 2,08 km/s), gaz kelebeği plums, toz, klasik yüzey kamerası. |
+| [`ml_loss_landscape/`](presets/ml_loss_landscape) | Analitik kayıp yüzeyinde gerçek gradyanla SGD / momentum / Adam yarışı — SGD sığ tuzağa takılır, farkı canlı okursunuz. |
+| [`ml_attention_flow/`](presets/ml_attention_flow) | Gerçek softmax(QKᵀ/√d) dikkat yayları, Türkçe cümle, katman/kafa/sorgu değiştirme. |
+
 ### Bileşenler ve hareket
 
 | Klasör | İçerik |

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "descent-simulation",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Ay yüzeyine motorlu inişin üç fazını (frenleme, yaklaşma, son iniş) fiziksel olarak tutarlı bir profil üzerinden anlatmak.",
+      "model": "Düşey düzlemde 2B analitik rehberli iniş, yarı-örtük Euler ile entegre (dt = 1/60 s sim-zamanı). Sabitler: g_ay = 1,62 m/s²; başlangıç 15 km irtifa, sahaya −450 km menzil, yatay hız 1673 m/s (≈ 15 km dairesel yörünge hızı, μ = 4902,8 km³/s²). Faz 1: sabit büyüklükte itki 3,48 m/s² (≈ 2,15 g_ay), yön retrograd + düşey-hız-referanslı destek; yatay hız ≈ 0 olurken irtifa ≈ 1,75 km. Faz 2: itki dikeye döner, düşey hız −28 → −12 m/s rampası, hedef 150 m. Faz 3: dikey, düşey hız irtifayla −12 → −0,85 m/s'e iner; 30 m altında konum kovalama bırakılır (P66 mantığı). Entegre temas hızı 0,90 m/s; toplam ΔV 2083 m/s. Yakıt Tsiolkovsky ile entegre edilir (v_e = 3050 m/s, Isp ≈ 311 s); temasta ≈ %15 kalır. Ufuk eğriliği gerçek ay yarıçapıyla (1737,4 km) çizilir.",
+      "limitations": "2B düşey düzlem; sabit g (merkezkaç rahatlaması ve yükseklikle değişim yok); düz arazi, eğim ve engel yok; dinamikte sabit kütle (yakıt yalnız gösterge); araç ölçeği sinematik olarak abartılır (frenlemede ≈ ×65, son inişte gerçek boyut) ve süre ≈ ×20 sıkıştırılır (656 s sim → ≈ 34 s oynatma; anlık çarpan HUD'da). Görev telemetrisi değildir.",
+      "reducedMotion": "Son iniş fazında 30 m irtifada donmuş tablo; HUD ve altyazı korunur.",
+      "exportState": "Aynı tablo: oynatma, son iniş 30 m anına sabitlenir; kontroller gizlenir (data-export-hide).",
+      "accessibility": "Faz geçişleri aria-live=polite ile duyurulur; HUD metin tabanlıdır (İrtifa, Dikey hız, Yatay hız, Yakıt, Faz, zaman çarpanı); kontroller etiketli yerli öğelerdir; altyazı gerçeklik düzeyini bildirir.",
+      "loop": false,
+      "pauseControl": true,
+      "durationMs": 34000
+    },
+    {
+      "id": "touchdown-dust",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Plum çarpmasının ~25 m altında yüzey tozunu radyal, yatık süpürmeler halinde kaldırdığını; motor kesilince tozun balistik olarak çöktüğünü göstermek.",
+      "reducedMotion": "Donmuş tabloda tozun tek karesi görünür; animasyon oynamaz.",
+      "exportState": "Tablodaki deterministik toz karesi aynen çizilir (seed + sim-zamanı fonksiyonu).",
+      "accessibility": "Dekoratif katman; ekran okuyucuya aktarılmaz, HUD'daki sayısal telemetri bilgiyi taşır.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "camera-direction",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Faz başına anlatım kamerası: frenlemede yan (yörünge yayı), yaklaşmada takip (zemin yaklaşımı), son inişte sabit yüzey kamerası (klasik iniş filmi karesi); yumuşak geçişlerle.",
+      "reducedMotion": "Kamera sabittir; geçiş animasyonu oynamaz.",
+      "exportState": "Yüzey kamerası sabit karede kalır.",
+      "accessibility": "Kamera seçimi etiketli düğmelerle yapılabilir; otomatik öneri kullanıcı seçimini asla ezmez.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

@@ -37,6 +37,20 @@ tıkla (port 8781) — örnek deste dahil her şey oradan açılır.
 | **Hizalama disiplini** — 12 kolon grid, boşluk ölçeği, optik düzeltmeler, sık hata tablosu | [alignment-and-grid.md](.agents/skills/design-space-science-deck/references/alignment-and-grid.md) |
 | Uzay motifleri SVG kiti (10 motif) + önizleme | [space-motifs/](.agents/skills/design-space-science-deck/presets/color_themes/space-motifs/motif-preview.html) |
 
+## Sahne blokları — birleştirilebilir 3B sunum sistemi (`design-scientific-motion`)
+
+> Manim ayarında, blok blok kurulabilir sahneler. Program ve donmuş API: [scene-blocks.md](.agents/skills/design-scientific-motion/references/scene-blocks.md)
+
+| Kategori · Blok | Ne yapar |
+|---|---|
+| **ORBITAL** · [orbital-stage](.agents/skills/design-scientific-motion/presets/orbital_stage/index.html) | Yörünge ver → animasyon al: Kepler elemanları, durum vektörü dizisi (gerçek görev verisi) ya da RK4 + impulsif yakışlar; yakış hayaletleri, kamera yönetmeni, telemetri HUD. Demo: LEO→GEO Hohmann + Ay'a hiperbolik varış |
+| **ORBITAL** · [craft-blocks](.agents/skills/design-scientific-motion/presets/craft_blocks/index.html) | Estetik parametrik araç kütüphanesi: orbiter, iniş aracı, 2 kademeli roket, CubeSat, kapsül — tüm bloklar bununla birleşir |
+| **ORBITAL** · [lunar-descent](.agents/skills/design-scientific-motion/presets/lunar_descent/index.html) | Gerçek entegre üç fazlı Ay inişi: temas 0,90 m/s, ΔV 2,08 km/s; gaz kelebeği plums, toz, yüzey kamerası |
+| **ML** · [ml-loss-landscape](.agents/skills/design-scientific-motion/presets/ml_loss_landscape/index.html) | Analitik kayıp yüzeyinde gerçek gradyanla SGD / momentum / Adam yarışı — SGD sığ tuzağa takılır |
+| **ML** · [ml-attention-flow](.agents/skills/design-scientific-motion/presets/ml_attention_flow/index.html) | Gerçek softmax(QKᵀ/√d) dikkat yayları, Türkçe cümle, katman/kafa/sorgu değiştirme |
+
+2\. dalga yol haritada: fırlatma-tırmanış, randevu-kenetlenme, yer izi 3B, porkchop, takımyıldız kapsama · embedding projektörü, konvolüsyon, çizge mesajlaşma.
+
 ## Hareket ve etkileşim — `design-scientific-motion`
 
 | Varlık | Yol |

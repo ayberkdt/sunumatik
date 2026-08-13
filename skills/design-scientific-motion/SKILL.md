@@ -56,6 +56,14 @@ For REAL James Webb Space Telescope imagery, read `references/jwst_explorer.md` 
 
 For a deep-space backdrop behind title or closing slides, read `references/cosmos-preset.md` and use `/presets/cosmos_advanced/`: a seeded procedural starfield (realistic magnitude distribution, black-body star colors, scintillation on the brightest ~2%), a tilted Milky Way band with dust lane, optional nebula patches, deterministic meteors, and slow camera drift — embeddable through its rectangular decor module like the Sol preset.
 
+For COMPOSABLE 3D scene blocks — the manim-grade program — read `references/scene-blocks.md` first (categories, roadmap, the frozen craft API), then the block you need:
+
+- `references/orbital_stage.md` + `/presets/orbital_stage/`: THE trajectory stage — feed Kepler elements, a state-vector array (real mission data), or RK4 propagation with impulsive burns; burn ghosts, camera director, telemetry HUD. Never present two-body arcs as mission ephemerides; real missions go through the states form.
+- `references/craft_blocks.md` + `/presets/craft_blocks/`: parametric premium spacecraft library (orbiter, lander, rocket, cubesat, capsule) — pure builders every block composes with.
+- `references/lunar_descent.md` + `/presets/lunar_descent/`: integrated three-phase powered lunar descent with throttle plume, dust, and the classic surface camera.
+- `references/ml_loss_landscape.md` + `/presets/ml_loss_landscape/`: real optimizer integration (SGD/momentum/Adam) on an analytic loss surface.
+- `references/ml_attention_flow.md` + `/presets/ml_attention_flow/`: real softmax attention arcs over a Turkish token strip with layer/head/query switching.
+
 Before creating a NEW WebGL scene or editing any existing one, read `references/webgl-scene-contract.md` — the general quality law (physical grounding, continuity laws, GLSL safety, light discipline, procedural distributions, determinism, embedding). Every rule in it was paid for with a live debugging round.
 
 For the other planets, read `references/planetae-preset.md` and use `assets/planets_advanced/`: Mercury through Neptune in one switchable scene with CC BY photographic textures, real axial tilts (retrograde Venus/Uranus emerge from them), Saturn/Uranus rings, per-planet atmospheres, and a NASA fact-sheet data panel. Sizes are not comparable between planets.

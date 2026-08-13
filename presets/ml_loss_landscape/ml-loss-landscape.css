@@ -1,0 +1,164 @@
+/* ML Loss Landscape preset stilleri. Deck palet tokenlarını devralır:
+   --color-canvas/-surface/-ink/-muted/-accent/-rule/-data-1/-data-2/-data-3.
+   Cam/neon/glow yok: chip'ler mat yüzey, okunur kontrast. */
+
+.lls-preset {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--color-canvas, #101318);
+  color: var(--color-ink, #e8e4da);
+  font: 500 15px/1.4 ui-sans-serif, system-ui, sans-serif;
+  outline: none;
+}
+.lls-preset:focus-visible { box-shadow: 0 0 0 3px var(--color-accent, #c86a40); }
+
+.lls-canvas, .lls-canvas canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.lls-heading {
+  position: absolute;
+  top: 22px;
+  left: 26px;
+  max-width: 46%;
+  pointer-events: none;
+}
+.lls-heading span {
+  font: 600 11px/1 ui-monospace, monospace;
+  letter-spacing: .16em;
+  color: var(--color-muted, #9a917f);
+}
+.lls-heading h1 {
+  margin: 8px 0 0;
+  font-size: 24px;
+  line-height: 1.15;
+  letter-spacing: -.01em;
+  color: var(--color-ink, #e8e4da);
+}
+
+/* Optimizatör chip'leri: renk noktası + ad + canlı kayıp değeri */
+.lls-legend {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  display: grid;
+  gap: 8px;
+}
+.lls-chip {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 216px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-rule, #3a3f48);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-surface, #181c23) 88%, transparent);
+  color: var(--color-ink, #e8e4da);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: opacity .25s ease, border-color .25s ease;
+}
+.lls-chip:hover { border-color: var(--color-muted, #9a917f); }
+.lls-chip:focus-visible { outline: 2px solid var(--color-accent, #c86a40); outline-offset: 2px; }
+.lls-chip i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.lls-chip__name { display: grid; line-height: 1.15; font-weight: 600; }
+.lls-chip__name small {
+  font: 500 11px/1.2 ui-monospace, monospace;
+  color: var(--color-muted, #9a917f);
+}
+.lls-chip output {
+  font: 600 15px/1 ui-monospace, "IBM Plex Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink, #e8e4da);
+}
+.lls-chip.is-off { opacity: .38; }
+.lls-chip.is-off output { text-decoration: line-through; }
+
+/* Oynatma kontrolleri */
+.lls-transport {
+  position: absolute;
+  left: 26px;
+  bottom: 92px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.lls-transport button {
+  border: 1.5px solid var(--color-ink, #e8e4da);
+  border-radius: 999px;
+  background: var(--color-ink, #e8e4da);
+  color: var(--color-canvas, #101318);
+  padding: 7px 16px;
+  font: 600 13px/1 inherit;
+  cursor: pointer;
+}
+.lls-transport button[data-secondary] {
+  background: transparent;
+  color: var(--color-ink, #e8e4da);
+  border-color: var(--color-rule, #3a3f48);
+}
+.lls-transport button[data-secondary][aria-pressed="true"] {
+  border-color: var(--color-accent, #c86a40);
+  color: var(--color-accent, #c86a40);
+}
+.lls-transport :focus-visible { outline: 2px solid var(--color-accent, #c86a40); outline-offset: 2px; }
+.lls-step {
+  font: 600 12px/1 ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted, #9a917f);
+  padding-left: 4px;
+}
+
+/* Dürüstlük şeridi: her zaman görünür */
+.lls-truth {
+  position: absolute;
+  left: 26px;
+  right: 26px;
+  bottom: 40px;
+  margin: 0;
+  display: grid;
+  gap: 2px;
+}
+.lls-truth strong {
+  font: 600 11px/1 ui-monospace, monospace;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--color-accent, #c86a40);
+}
+.lls-truth small {
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--color-muted, #9a917f);
+  max-width: 72ch;
+}
+
+.lls-help {
+  position: absolute;
+  left: 26px;
+  bottom: 12px;
+  margin: 0;
+  font: 500 11.5px/1 ui-monospace, monospace;
+  color: color-mix(in srgb, var(--color-muted, #9a917f) 75%, transparent);
+}
+
+/* Deterministik modlar: kontroller gizlenir, sahne donuk son karede
+   (mjs tarafı seek(MAX_STEPS) + kamera sabit ile tamamlar). */
+.lls-preset[data-export="true"] [data-export-hide] { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .lls-chip { transition: none; }
+}

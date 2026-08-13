@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ML Loss Landscape Preset</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <link rel="stylesheet" href="ml-loss-landscape.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      /* obsidian-champagne ailesi (koyu sahne için) */
+      --color-canvas: #101318;
+      --color-surface: #181c23;
+      --color-ink: #e8e4da;
+      --color-muted: #a08a6a;
+      --color-accent: #c86a40;
+      --color-rule: #333945;
+      --color-data-1: #5590c9;
+      --color-data-2: #c86a40;
+      --color-data-3: #58a27e;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #0a0c10; }
+    main { width: 100%; height: 100%; padding: 24px; }
+    main > div { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <main><div id="host"></div></main>
+  <script type="module">
+    import { mountLossLandscape } from './ml-loss-landscape.mjs';
+    const params = new URLSearchParams(location.search);
+    const stepParam = params.get('step');
+    const lls = mountLossLandscape(document.querySelector('#host'), {
+      /* ?step=N: deterministik sıçrama — sim duraklatılır, kamera açısı
+         aynı sim zamanına oturtulur (başsız ekran görüntüsü denetimi). */
+      autoplay: stepParam === null,
+    });
+    if (stepParam !== null) { lls.pause(); lls.setOrbit(false); lls.seek(Number(stepParam)); }
+    if (params.get('view') === 'top') lls.topView();
+    window.__lossLandscape = lls; // denetim kancası
+  </script>
+</body>
+</html>

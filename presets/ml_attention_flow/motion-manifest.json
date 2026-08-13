@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "attention-computation",
+      "type": "reveal",
+      "truthLevel": "analytic",
+      "purpose": "Bir sorgu jetonunun anahtar jetonlara dagittigi dikkat agirliklarini buyukluk sirasiyla gostermek: yaylar guclu anahtardan zayifa iz-cizimiyle acilir, kalinlik ve opaklik agirligi birlikte kodlar, top-1 yayda tek atimlik gezici nokta en guclu bagi isaretler.",
+      "model": "Gercek softmax(QK^T/sqrt(d)) formulu calisma zamaninda hesaplanir: Q = X.Wq, K = X.Wk; X (8 jeton x 16 boyut gomme) ve Wq/Wk (16x8) matrisleri attention-data.mjs icinde tohumlu PRNG (mulberry32, seed 20260813) ile bir kez uretilmis sabit literallerdir. Katman 2 girdisi = katman 1'in iki kafasinin dikkat-agirlikli karisim ortalamasi + artik baglanti, satir RMS'i sabitlenerek. Her softmax satirinin 1'e toplandigi console.assert ile dogrulanir.",
+      "limitations": "2 katman x 2 kafa, 16 boyutlu gomme, 8 jetonluk tek ornek cumle; agirliklar egitilmemis rastgele sabitlerdir — belirli bir dil modelinin davranisi degildir. Deger (V) projeksiyonu ve FFN katmani yoktur; katman 2 girdisi basitlestirilmis bir karisimdir (kafa birlestirme W_O yerine ortalama).",
+      "reducedMotion": "Varsayilan sorgunun yaylari tam cizili ve agirlik okumalari gorunur olarak aninda basilir; gezici nokta atimi hic gosterilmez.",
+      "exportState": "html[data-export=true]: ayni son durum — secili sorgunun tum yaylari dashoffset 0, agirliklar gorunur, nokta gizli, denetimler gizli; matrisler sabit oldugu icin her disari aktarim ayni kareyi verir.",
+      "accessibility": "SVG ozet aria-label tasir; cipler role=button + tabindex=0, Enter/Space ile sorgu secer; kapta ok tuslari sorguyu gezdirir (data-owns-arrows); aria-live durum satiri her secimde Turkce ozet okur; Escape otomatik akisi durdurur; odak gorunur (accent kontur).",
+      "loop": false,
+      "pauseControl": true,
+      "durationMs": 1900
+    },
+    {
+      "id": "query-switch",
+      "type": "state-transition",
+      "truthLevel": "analytic",
+      "purpose": "Sorgu jetonu degisince eski yay demetinin hizli ters izle geri sarilip yeni sorgunun gercek agirliklariyla yeniden acilmasi; katman gecisinde ciplerin karisim parilti gecisi katman 1 ciktisinin yeni gomme oldugunu gosterir.",
+      "model": "Ayni analitik hesap: yeni sorgu/katman/kafa icin softmax(QK^T/sqrt(d)) sabit literal matrislerden yeniden hesaplanir; gecis yalnizca gorsel siralamadir, sayilar formulun ciktisidir.",
+      "limitations": "attention-computation ile ayni: egitilmemis sabit agirliklar, 2x2x16 kucuk ornek; karisim parilti animasyonu hesabin kendisini degil, girdinin degistigi ani isaretler.",
+      "reducedMotion": "Gecis animasyonsuz: yeni sorgunun son durumu aninda basilir; siralama ve degerler kaybolmaz.",
+      "exportState": "Gecis ara kareleri hic uretilmez; secili sorgu/katman/kafanin son durumu basilir.",
+      "accessibility": "Secim klavyeyle de yapilir (ok tuslari, Enter/Space); her geciste aria-live ozet guncellenir; hizli ardisik secimler kuyruklanmaz, son secim kazanir.",
+      "loop": false,
+      "pauseControl": true,
+      "durationMs": 2300
+    }
+  ]
+}
