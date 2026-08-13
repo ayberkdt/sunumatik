@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Primitives Motion — önizleme</title>
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="primitives-motion.css">
+<style>
+  :root{ --color-canvas:#0F1013; --color-surface:#1A1C21; --color-ink:#F4EEE1;
+    --color-muted:#A9A296; --color-accent:#D3B26A; --color-data-1:#5590C9;
+    --color-data-2:#C86A40; --color-rule:#2E3037; }
+  *{box-sizing:border-box} body{margin:0;background:var(--color-canvas);
+    color:var(--color-ink);font:16px/1.5 Bahnschrift,'Segoe UI',sans-serif;padding:48px}
+  h1{font-size:28px;margin:0 0 8px} .sub{color:var(--color-muted);margin:0 0 36px}
+  section{margin:0 0 44px} h2{font-size:15px;letter-spacing:.08em;color:var(--color-accent);
+    text-transform:uppercase;margin:0 0 14px}
+  .card{background:var(--color-surface);border:1px solid var(--color-rule);
+    border-radius:16px;padding:28px;max-width:420px}
+  .row{display:flex;gap:24px;flex-wrap:wrap;align-items:center}
+  .big{font-size:34px;font-weight:600}
+  button{background:var(--color-surface);border:1px solid var(--color-rule);
+    color:var(--color-ink);padding:8px 16px;border-radius:8px;cursor:pointer}
+  button:hover{border-color:var(--color-accent)}
+  .chip{background:var(--color-surface);border:1px solid var(--color-rule);
+    border-radius:10px;padding:10px 18px;white-space:nowrap}
+  .spotbox{height:180px;border:1px solid var(--color-rule);border-radius:16px;
+    display:grid;place-items:center;color:var(--color-muted)}
+</style>
+</head>
+<body>
+<h1>Primitives Motion</h1>
+<p class="sub">motion-primitives'ten uyarlanan mikro-hareket seti — MIT, © ibelick. Tüm sabitler kaynak koddan.</p>
+
+<section><h2>Işıltı süpürmesi</h2>
+  <div class="big"><span class="px-shimmer">Yerçekimi alanı konuşuyor</span></div>
+</section>
+
+<section><h2>Kademeli metin — fade-in-blur</h2>
+  <div class="big px-text" data-preset="fade-in-blur">Katsayılar bir üçgende yaşar</div>
+  <p><button onclick="replay(this.closest('section'))">Tekrar oynat</button></p>
+</section>
+
+<section><h2>Telemetri çözülmesi</h2>
+  <div class="big px-scramble" data-scramble>GRAIL · KBRR 0,03 µm/s</div>
+  <p><button onclick="Primitives.scramble(this.closest('section').querySelector('[data-scramble]'))">Tekrar çöz</button></p>
+</section>
+
+<section><h2>Başlık morfu</h2>
+  <div class="big" id="morph">Serbest hava anomalisi</div>
+  <p><button onclick="morphNext()">Değiştir</button></p>
+</section>
+
+<section><h2>Yaylı sayı + kilometre sayacı</h2>
+  <div class="row">
+    <span class="big px-number" id="anum">0</span>
+    <span class="big" id="odo"></span>
+    <button onclick="bump()">Yeni değer</button>
+  </div>
+</section>
+
+<section><h2>Sahne spotu</h2>
+  <div class="spotbox" data-spotlight>imleci alanda gezdir</div>
+</section>
+
+<section><h2>Eğim + mıknatıs + kenar kuyruğu + parıltı</h2>
+  <div class="row">
+    <div class="card" data-tilt data-border-trail>
+      <b>Eğim kartı</b><p style="color:var(--color-muted)">±15°, perspective 1000px; kenarda dolaşan kuyruk.</p>
+    </div>
+    <div class="px-glow-host" style="border-radius:16px">
+      <div class="px-glow"></div>
+      <div class="card"><b>Parıltı katmanı</b><p style="color:var(--color-muted)">Konik döner degrade, palet renkleri.</p></div>
+    </div>
+    <button data-magnetic>mıknatıslı düğme</button>
+  </div>
+</section>
+
+<section><h2>Sonsuz şerit</h2>
+  <div class="px-marquee"><div class="px-marquee-track">
+    <span class="chip">SELENE 2007</span><span class="chip">GRAIL 2011</span>
+    <span class="chip">GL0660B</span><span class="chip">GRGM1200A</span>
+    <span class="chip">GL1800F</span><span class="chip">SGM150J</span>
+  </div></div>
+</section>
+
+<script src="primitives-motion.js"></script>
+<script>
+  Primitives.init();
+  Primitives.reveal(document.body);
+  function replay(scope){ Primitives.reveal(scope); }
+  const morphs=["Serbest hava anomalisi","Bouguer anomalisi","Kabuk kalınlığı"];
+  let mi=0; const morphEl=document.getElementById("morph");
+  function morphNext(){ mi=(mi+1)%morphs.length; Primitives.textMorph(morphEl,morphs[mi]); }
+  const an=Primitives.animatedNumber(document.getElementById("anum"));
+  const od=Primitives.slidingNumber(document.getElementById("odo"),1800);
+  function bump(){ const v=Math.round(Math.random()*9000)+100;
+    an.set(v); od.set(Math.min(9999,v)); }
+  bump();
+</script>
+</body>
+</html>

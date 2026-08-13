@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "cosmos-starfield",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "A deep-space star backdrop whose brightness statistics and colors feel right: many faint stars, few bright ones, colors ordered by temperature.",
+      "model": "Magnitudes are inverse-CDF sampled from N(m) proportional to 10^(0.35m), truncated to m in [-1.2, 6.8]; colors come from a black-body ramp (about 2600 K red M-class through 15000 K blue-white A/B-class, Tanner Helland approximation); positions are seeded uniform on the sphere; a density option gates stars through a smooth threshold band so the count changes without popping.",
+      "limitations": "Star POSITIONS are seeded random, not a catalog - no real constellations exist in this sky; the magnitude-temperature correlation is a mild stylistic bias, not an HR diagram; displayed intensity compresses the true flux range so faint stars stay visible.",
+      "reducedMotion": "Static frame at t=12: no drift, no twinkle, no meteors.",
+      "exportState": "Frozen sky at t=12 with controls hidden; the truth caption stays.",
+      "accessibility": "The caption states the distribution law and the real/illustrative split as text; controls are native inputs.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "cosmos-scintillation",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "Subtle twinkle on only the brightest stars - the night-sky language audiences expect, without the whole field shimmering.",
+      "model": "Only the brightest ~2% of stars carry a twinkle amplitude; brightness is modulated by two incommensurate sinusoids per star (seeded phase), scaled by the activity option.",
+      "limitations": "Scintillation is an ATMOSPHERIC effect - a camera in space would see none; it is kept because viewers read a perfectly static sky as a frozen image. Amplitude and rates are stylized, not Kolmogorov turbulence.",
+      "reducedMotion": "Twinkle amplitude forced to zero (static frame).",
+      "exportState": "Twinkle frozen at the t=12 phase.",
+      "accessibility": "Twinkle is decorative only; no information is carried by the flicker. A toggle disables it.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "cosmos-milkyway",
+      "type": "simulation",
+      "truthLevel": "data-driven",
+      "purpose": "A Milky Way band as the anchor of the composition: by default a real all-sky photograph on the celestial dome; a procedural tilted great-circle glow with a dark dust lane (plus faint point 'star dust') stands in when the photograph cannot load.",
+      "model": "ESO GigaGalaxy Zoom 360-degree panorama (ESO/S. Brunier, CC BY 4.0) mapped on a celestial dome; procedural fBm fallback is illustrative. The equirectangular photograph (image id eso0932a, 4000x2000) is wrapped on an inward-facing sphere using the sphere's own UVs, oriented so the galactic plane follows milkyWayTilt and the image center (galactic core) sits at the preset's core longitude; milkyWayIntensity multiplies brightness through a shader uniform with a soft Reinhard shoulder. The fallback builds the band from a Gaussian latitude envelope, layered static fBm density, a negative-density dust lane (Great Rift analogue), and a seeded accept-reject point layer.",
+      "limitations": "The data-driven level holds only WHILE the photograph loads: with galaxyTexture false, a missing file, or file:// CORS the preset silently falls back to the illustrative procedural fBm band (single console.info). Orientation and tilt are presentational (milkyWayTilt is a compositional choice), NOT equatorial-coordinate-accurate - do not read sky positions off this dome. Brightness scaling and the tone shoulder are display choices, not photometry. Any deck showing the photographic band MUST display the credit 'ESO/S. Brunier' (CC BY 4.0).",
+      "reducedMotion": "Visible but static (the band never animates anyway; only camera drift stops).",
+      "exportState": "Rendered as-is; intensity from the milkyWayIntensity option; the credit requirement applies to exports too.",
+      "accessibility": "Purely decorative backdrop; intensity slider and toggle are native inputs; the caption names the photograph and its credit.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "cosmos-nebulae",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "Two to three faint nebula patches for decks that want extra depth - off by default so the backdrop stays quiet.",
+      "model": "Shader billboards facing the origin with fBm-shaped alpha inside a radial falloff; palette restricted to an H-alpha rose and an O-III teal, echoing real emission-line colors.",
+      "limitations": "Free composition: positions, sizes, and shapes correspond to no real object; only the two-line palette is physically motivated. Disabled unless options.nebulae is true.",
+      "reducedMotion": "Static (nebulae never animate).",
+      "exportState": "Rendered only if the option was enabled.",
+      "accessibility": "Decorative; a toggle controls visibility.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "cosmos-meteor",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "An occasional meteor streak (~0.7 s) so the sky reads as alive during long title slides; also manually triggerable for a beat in the narration.",
+      "model": "A seeded deterministic schedule paces meteors (interval scaled by the activity option); each streak is a single stretched quad on the sky sphere whose shader slides a warm-white head with an exponential green-blue trail along it; the brightness envelope is sin(pi*t) so it grows from and returns to exactly zero; a pool of 3 quads is repositioned only while invisible.",
+      "limitations": "Timing, brightness, and trail length are stylized; no radiant point or shower geometry; the green-blue trail tint gestures at magnesium emission without being spectroscopy.",
+      "reducedMotion": "No meteors at all.",
+      "exportState": "One meteor frozen at 45% progress (declared tableau, matching the Sol preset convention).",
+      "accessibility": "Meteors are decorative; M or the button triggers one; the telemetry line announces it as text.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

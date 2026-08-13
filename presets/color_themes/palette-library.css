@@ -1,3 +1,9 @@
+/* Palette library — implementation-ready custom properties.
+   Source of truth: palette-library.json (run scripts/validate-palette-library.mjs
+   after edits). Extended palettes expose data-3..6 plus sequential (--ramp-seq-*)
+   and diverging (--ramp-div-*) chart scales; palettes without them are
+   two-series only — promote before use in chart-heavy decks. */
+
 :root,
 [data-palette="oat-cocoa"] {
   --color-canvas: #F3EEC8;
@@ -56,7 +62,15 @@
   --color-accent-ink: #15182B;
   --color-data-1: #FFD166;
   --color-data-2: #78C4B4;
+  --color-data-3: #E88AB0;
+  --color-data-4: #8FA8E8;
+  --color-data-5: #E8975A;
+  --color-data-6: #9BC97A;
   --color-rule: #454D76;
+  --ramp-seq-1: #2B3154; --ramp-seq-2: #5E4A4E; --ramp-seq-3: #9A5A3E;
+  --ramp-seq-4: #CE5530; --ramp-seq-5: #F54F1F;
+  --ramp-div-1: #78C4B4; --ramp-div-2: #A9BFAF; --ramp-div-3: #C3C7D6;
+  --ramp-div-4: #DE9C7A; --ramp-div-5: #F54F1F;
 }
 
 [data-palette="graphite-ember"] {
@@ -68,7 +82,15 @@
   --color-accent-ink: #1A120B;
   --color-data-1: #2FA98C;
   --color-data-2: #B58224;
+  --color-data-3: #6A9BD9;
+  --color-data-4: #C96A5A;
+  --color-data-5: #9A8FD9;
+  --color-data-6: #86B14A;
   --color-rule: #303339;
+  --ramp-seq-1: #1E2026; --ramp-seq-2: #4E3A2E; --ramp-seq-3: #855434;
+  --ramp-seq-4: #B96A3E; --ramp-seq-5: #E8804A;
+  --ramp-div-1: #2FA98C; --ramp-div-2: #6FA995; --ramp-div-3: #A6A9B1;
+  --ramp-div-4: #C9946E; --ramp-div-5: #E8804A;
 }
 
 [data-palette="porcelain-ink"] {
@@ -92,7 +114,15 @@
   --color-accent-ink: #191307;
   --color-data-1: #5590C9;
   --color-data-2: #C86A40;
+  --color-data-3: #6FBF9A;
+  --color-data-4: #A88BD9;
+  --color-data-5: #D9C36A;
+  --color-data-6: #C95F6A;
   --color-rule: #2E3037;
+  --ramp-seq-1: #1A1C21; --ramp-seq-2: #4A4030; --ramp-seq-3: #7D6A42;
+  --ramp-seq-4: #A88E54; --ramp-seq-5: #D3B26A;
+  --ramp-div-1: #5590C9; --ramp-div-2: #8A9BAD; --ramp-div-3: #A9A296;
+  --ramp-div-4: #BE8A68; --ramp-div-5: #C86A40;
 }
 
 [data-palette="verdigris-slate"] {
@@ -104,5 +134,175 @@
   --color-accent-ink: #0C1B18;
   --color-data-1: #BA8A2A;
   --color-data-2: #5B95E8;
+  --color-data-3: #C96A8A;
+  --color-data-4: #7ABF6A;
+  --color-data-5: #A88BD9;
+  --color-data-6: #D9B84A;
   --color-rule: #31423E;
+  --ramp-seq-1: #1F2E2C; --ramp-seq-2: #2B534C; --ramp-seq-3: #3A7A6E;
+  --ramp-seq-4: #4C9C8E; --ramp-seq-5: #5FBFAE;
+  --ramp-div-1: #5B95E8; --ramp-div-2: #84A4C9; --ramp-div-3: #9FB3AC;
+  --ramp-div-4: #AD9F6A; --ramp-div-5: #BA8A2A;
+}
+
+/* ── Color-theory expansion, 2026 — each palette names its harmony ── */
+
+[data-palette="ultraviolet-chartreuse"] { /* complementary: violet ↔ yellow-green */
+  --color-canvas: #14101E;
+  --color-surface: #1E1830;
+  --color-ink: #F2EFE6;
+  --color-muted: #A79FB8;
+  --color-accent: #C9DE4C;
+  --color-accent-ink: #1A2005;
+  --color-data-1: #C9DE4C;
+  --color-data-2: #9B7EDE;
+  --color-data-3: #4FC1B0;
+  --color-data-4: #E8756A;
+  --color-data-5: #D9B24A;
+  --color-data-6: #6E8FD9;
+  --color-rule: #2E2843;
+  --ramp-seq-1: #1E1830; --ramp-seq-2: #4A4A33; --ramp-seq-3: #767C3B;
+  --ramp-seq-4: #9FAD43; --ramp-seq-5: #C9DE4C;
+  --ramp-div-1: #9B7EDE; --ramp-div-2: #A497C9; --ramp-div-3: #A79FB8;
+  --ramp-div-4: #B8BF85; --ramp-div-5: #C9DE4C;
+}
+
+[data-palette="cerulean-vermilion"] { /* complementary: blue ↔ red-orange, light */
+  --color-canvas: #F4F1EA;
+  --color-surface: #FFFFFF;
+  --color-ink: #14304A;
+  --color-muted: #5A6B78;
+  --color-accent: #C4401F;
+  --color-accent-ink: #FFF7F2;
+  --color-data-1: #2E75A8;
+  --color-data-2: #C4401F;
+  --color-data-3: #7A7A2E;
+  --color-data-4: #7A4A78;
+  --color-data-5: #2E8A7A;
+  --color-data-6: #B87F1F;
+  --color-rule: #DAD4C8;
+  --ramp-seq-1: #F4F1EA; --ramp-seq-2: #E5C3AE; --ramp-seq-3: #DC9573;
+  --ramp-seq-4: #D16A45; --ramp-seq-5: #C4401F;
+  --ramp-div-1: #2E75A8; --ramp-div-2: #7E9BB0; --ramp-div-3: #C9C4B8;
+  --ramp-div-4: #D08A6A; --ramp-div-5: #C4401F;
+}
+
+[data-palette="prussian-amber"] { /* split-complementary: blue base, amber + rose */
+  --color-canvas: #0E1B26;
+  --color-surface: #16273A;
+  --color-ink: #EAF1F5;
+  --color-muted: #93A7B5;
+  --color-accent: #E8A33D;
+  --color-accent-ink: #201502;
+  --color-data-1: #E8A33D;
+  --color-data-2: #5FA8DF;
+  --color-data-3: #D96A6A;
+  --color-data-4: #58BF9B;
+  --color-data-5: #A08FD9;
+  --color-data-6: #C9B08A;
+  --color-rule: #263B4E;
+  --ramp-seq-1: #16273A; --ramp-seq-2: #54473A; --ramp-seq-3: #8A683A;
+  --ramp-seq-4: #B9853B; --ramp-seq-5: #E8A33D;
+  --ramp-div-1: #5FA8DF; --ramp-div-2: #84A6BE; --ramp-div-3: #93A7B5;
+  --ramp-div-4: #BEA579; --ramp-div-5: #E8A33D;
+}
+
+[data-palette="magma-basalt"] { /* analogous-warm: red → orange → gold */
+  --color-canvas: #131013;
+  --color-surface: #1E181A;
+  --color-ink: #F5EDE6;
+  --color-muted: #AC9C94;
+  --color-accent: #E85D3A;
+  --color-accent-ink: #230C05;
+  --color-data-1: #E85D3A;
+  --color-data-2: #F2A03F;
+  --color-data-3: #C93A55;
+  --color-data-4: #8A6FD1;
+  --color-data-5: #57A88C;
+  --color-data-6: #D9C36A;
+  --color-rule: #332A2C;
+  --ramp-seq-1: #1E181A; --ramp-seq-2: #5A2A22; --ramp-seq-3: #93402A;
+  --ramp-seq-4: #BE4E32; --ramp-seq-5: #E85D3A;
+  --ramp-div-1: #57A88C; --ramp-div-2: #83A48F; --ramp-div-3: #AC9C94;
+  --ramp-div-4: #CB7E68; --ramp-div-5: #E85D3A;
+}
+
+[data-palette="aurora-polar"] { /* analogous-cool: green → teal → violet */
+  --color-canvas: #0C1418;
+  --color-surface: #14222A;
+  --color-ink: #ECF4F1;
+  --color-muted: #9AB1AC;
+  --color-accent: #55E0A8;
+  --color-accent-ink: #062015;
+  --color-data-1: #55E0A8;
+  --color-data-2: #4FB8D9;
+  --color-data-3: #9C86E8;
+  --color-data-4: #E86A9B;
+  --color-data-5: #D9C36A;
+  --color-data-6: #7A99A8;
+  --color-rule: #233640;
+  --ramp-seq-1: #14222A; --ramp-seq-2: #1F5246; --ramp-seq-3: #2F8362;
+  --ramp-seq-4: #41B184; --ramp-seq-5: #55E0A8;
+  --ramp-div-1: #9C86E8; --ramp-div-2: #9AA0CE; --ramp-div-3: #9AB1AC;
+  --ramp-div-4: #77C9AA; --ramp-div-5: #55E0A8;
+}
+
+[data-palette="heliograph"] { /* triadic: gold / teal / coral at 120° */
+  --color-canvas: #17181C;
+  --color-surface: #222329;
+  --color-ink: #F2EFE8;
+  --color-muted: #A6A49B;
+  --color-accent: #E8B84A;
+  --color-accent-ink: #211703;
+  --color-data-1: #E8B84A;
+  --color-data-2: #3FB8A8;
+  --color-data-3: #E8705A;
+  --color-data-4: #7A8FD9;
+  --color-data-5: #B8D96A;
+  --color-data-6: #C98AC9;
+  --color-rule: #33343B;
+  --ramp-seq-1: #222329; --ramp-seq-2: #55482F; --ramp-seq-3: #886D38;
+  --ramp-seq-4: #BA9241; --ramp-seq-5: #E8B84A;
+  --ramp-div-1: #3FB8A8; --ramp-div-2: #77B0A1; --ramp-div-3: #A6A49B;
+  --ramp-div-4: #C9A472; --ramp-div-5: #E8B84A;
+}
+
+[data-palette="royal-saffron"] { /* complementary: indigo ↔ saffron, light */
+  --color-canvas: #F5F1E8;
+  --color-surface: #FFFFFF;
+  --color-ink: #2A2454;
+  --color-muted: #625E7A;
+  --color-accent: #D98A1F;
+  --color-accent-ink: #231603;
+  --color-data-1: #4A3FA8;
+  --color-data-2: #D98A1F;
+  --color-data-3: #2E8A6A;
+  --color-data-4: #B84A3A;
+  --color-data-5: #5A7A99;
+  --color-data-6: #8A4A78;
+  --color-rule: #DDD6C6;
+  --ramp-seq-1: #F5F1E8; --ramp-seq-2: #EDD3AC; --ramp-seq-3: #E7B975;
+  --ramp-seq-4: #E0A146; --ramp-seq-5: #D98A1F;
+  --ramp-div-1: #4A3FA8; --ramp-div-2: #8479B0; --ramp-div-3: #C0BBB0;
+  --ramp-div-4: #D3A96A; --ramp-div-5: #D98A1F;
+}
+
+[data-palette="ionosphere"] { /* monochromatic-cool: electric cyan, value-stepped */
+  --color-canvas: #0A1418;
+  --color-surface: #122028;
+  --color-ink: #E8F2F5;
+  --color-muted: #8FA8B0;
+  --color-accent: #3FC6E8;
+  --color-accent-ink: #04191F;
+  --color-data-1: #3FC6E8;
+  --color-data-2: #E8975A;
+  --color-data-3: #6ADF9B;
+  --color-data-4: #B08FD9;
+  --color-data-5: #D9CE6A;
+  --color-data-6: #5A7A99;
+  --color-rule: #20343C;
+  --ramp-seq-1: #122028; --ramp-seq-2: #194754; --ramp-seq-3: #237185;
+  --ramp-seq-4: #2F9BB6; --ramp-seq-5: #3FC6E8;
+  --ramp-div-1: #E8975A; --ramp-div-2: #C29C7E; --ramp-div-3: #8FA8B0;
+  --ramp-div-4: #68B7CC; --ramp-div-5: #3FC6E8;
 }

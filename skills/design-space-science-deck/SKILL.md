@@ -31,7 +31,7 @@ Use `/presets/color_themes/palette-preview.html` to inspect the saved library in
 
 Define tokens for surfaces, projector-safe contrast, semantic and data colors, display/body/mono/numeric/math typography, fixed-stage spacing, safe areas, panels, annotations, credits, citations, motion, and reduced-motion behavior.
 
-Use `/presets/color_themes/palette-library.css` for implementation-ready variables. Run `scripts/validate-palette-library.mjs /presets/color_themes/palette-library.json` after editing a saved palette.
+Use `/presets/color_themes/palette-library.css` for implementation-ready variables. Run `scripts/validate-palette-library.mjs /presets/color_themes/palette-library.json` after editing a saved palette. The library holds 17 palettes; each declares its color-theory `harmony` (complementary, split-complementary, analogous, triadic, monochromatic), and the extended ones carry 6 data colors plus sequential/diverging ramps with CVD notes — see the harmony recipes section of `references/color-composition.md` before inventing a new combination.
 
 Read `references/typography-and-layout.md` for font roles, Turkish glyphs, scientific symbols, density, and layout archetypes. Prefer self-hosted WOFF2 fonts for offline delivery.
 

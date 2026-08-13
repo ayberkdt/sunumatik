@@ -13,6 +13,8 @@ Determine audience expertise, formality, discipline, and whether the deck is spe
 
 Read references/turkish-slide-style.md for terminology, punctuation, capitalization, numbers, units, abbreviations, and common translation problems.
 
+For the report-vs-presentation register shift (edilgen → etken, nominalization → verb, hedging chains → calibrated single verbs, spoken transitions, opening and closing moves), read `../craft-scientific-storytelling/references/presentation-language.md` — its banned-phrase list (gerçekleştirilmiştir, sağlanmaktadır, söz konusu, kapsamında…) is a hard gate for visible copy.
+
 ## Write slide headlines
 
 Use sentence case. Prefer a concrete claim, comparison, question, or implication that can be understood in one glance. Keep topic labels neutral when evidence does not support a conclusion.

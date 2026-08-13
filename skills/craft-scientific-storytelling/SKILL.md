@@ -19,6 +19,8 @@ Avoid shock language, clickbait questions, artificial secrecy, absolute superlat
 
 Read references/rhetorical-patterns.md for disciplined patterns and prohibited shortcuts.
 
+Read references/presentation-language.md before writing ANY visible line: a deck is a spoken medium, and report register (passive voice, nominalizations, hedging chains, agenda ceremony) is banned on slides. It defines the register shift with Turkish examples, opening moves, the spoken-beat contract, callbacks, closings, and the anti-pattern blocklist.
+
 ## Design the change in understanding
 
 For each section define:

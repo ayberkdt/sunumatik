@@ -52,18 +52,21 @@ ayrımını açık tutar.
 | [`planets_advanced/`](presets/planets_advanced) | Merkür→Neptün: gaz devlerinde canlı atmosferler (zıt kuşak rüzgârları, Büyük Kırmızı Leke, Satürn altıgeni + halka gölgeleri), Galile uyduları ve geçiş gölgeleri, NASA veri paneli. |
 | [`moon_react_source/`](presets/moon_react_source) | Lunaris'in React/Next.js orijinali + doku ve yörünge verileri + ortak CSS. |
 | [`lunar_orbit/`](presets/lunar_orbit) | Hafif analitik iki-cisim Ay yörünge modeli. |
+| [`cosmos_advanced/`](presets/cosmos_advanced) | Derin uzay fonu: tohumlu yıldız alanı (gerçekçi kadir dağılımı, kara-cisim renkleri, sintilasyon), **gerçek ESO GigaGalaxy Samanyolu panoraması** (prosedürel yedekli), opsiyonel bulutsu, deterministik meteorlar; dikdörtgen dekor modülüyle gömülür. |
+| [`jwst_explorer/`](presets/jwst_explorer) | 10 resmi James Webb / Hubble görüntüsü üstünde etkileşimli keşif: yaylı pan/zoom, yayın metinlerinden ilgi noktaları, Webb↔Hubble / NIRCam↔MIRI tek-kameralı karşılaştırma perdesi. Krediler gömülü. |
 
 ### Bileşenler ve hareket
 
 | Klasör | İçerik |
 |---|---|
 | [`charts_icons/chart-preset/`](presets/charts_icons/chart-preset) | **Bildirimsel grafik motoru**: spec ver → animasyonlu SVG al. Çizgi/sütun/saçılım, belirsizlik bantları, etiketli eşikler, epistemik çizgi stilleri (gözlem düz; fit/projeksiyon kesikli — saçılımda bile), görünüme girince çizilme. |
-| [`motion_core/`](presets/motion_core) | Açılma/reveal, hover etkileşimleri, FLIP morph, premium slayt geçişleri (işaret bırakan zoom dahil), tablo hareketi (satır kaskadı, satır flaşı, sütun vurgusu). |
-| [`color_themes/`](presets/color_themes) | 9 palet (CSS token'ları), kart preset'leri (stat/tanım/ikon, aksan çubuğu sistemi, giriş kaskadı), tablo preset'leri, 10 uzay motifi SVG kiti. |
+| [`motion_core/`](presets/motion_core) | Açılma/reveal, hover etkileşimleri, FLIP morph, premium slayt geçişleri (işaret bırakan zoom dahil), tablo hareketi (satır kaskadı, satır flaşı, sütun vurgusu), **primitives mikro-hareket seti** (ışıltı süpürmesi, kademeli fade-in-blur metin, telemetri çözülmesi, başlık morfu, yaylı sayaç + odometre, spot/eğim/mıknatıs, kenar kuyruğu, parıltı, sonsuz şerit). |
+| [`color_themes/`](presets/color_themes) | **17 palet** (CSS token'ları; her biri renk-teorisi harmonisini bildirir, genişletilmişlerde 6 veri rengi + sıralı/ıraksak rampalar + renk körlüğü notları), kart preset'leri (stat/tanım/ikon, aksan çubuğu sistemi, giriş kaskadı), tablo preset'leri, 10 uzay motifi SVG kiti. |
 | [`figure_callouts/`](presets/figure_callouts) | Figür üzerinde adım adım anlatım: kutu/daire/ok işaretleri, spot ışığı, büyüteç merceği, iddia satırları. |
 | [`equation_steps/`](presets/equation_steps) · [`equation_pen/`](presets/equation_pen) · [`equation_theme/`](presets/equation_theme) | Denklemi terim terim anlatan adımlayıcı · kalemle yazma efekti · dizgi teması. |
 | [`timeline_tree/`](presets/timeline_tree) · [`neural_network/`](presets/neural_network) | Kronoloji ağacı · sinir ağı ileri-geçiş animasyonu. |
-| [`charts_icons/icons/`](presets/charts_icons/icons) | 23 bilim ikonu (SVG sprite). |
+| [`charts_icons/icons/`](presets/charts_icons/icons) | 23 duotone bilim ikonu (SVG sprite, kahraman katman). |
+| [`charts_icons/icon-library/`](presets/charts_icons/icon-library) | 168 ikonluk yardımcı kütüphane (Lucide/Tabler/Phosphor): TR+EN aranabilir manifest, sprite, canlı filtreli önizleme, lisans metinleri. |
 | [`deck_starter/`](presets/deck_starter) | Yeni desteler için minimum iskelet (sabit sahne + klavye + export kancaları). |
 
 ### `skills/` — üretim talimatları
@@ -110,3 +113,7 @@ Beceri dokümanlarındaki `/presets/...` yolları bu deponun köküne göredir.
 - `presets/moon_advanced/vendor/` — [three.js](https://threejs.org) (MIT).
 - `presets/planets_advanced/textures/` — [Solar System Scope](https://www.solarsystemscope.com/textures/) (CC BY 4.0; kullanımda atıf zorunludur, ayrıntı `asset-provenance.json` içinde).
 - Dünya/Ay dokuları — NASA görüntüleri (three.js örnek deposu üzerinden).
+- `presets/jwst_explorer/images/` — resmi James Webb / Hubble yayın görüntüleri, [esawebb.org](https://esawebb.org) ve [esahubble.org](https://esahubble.org) (CC BY 4.0; her görüntünün zorunlu kredi satırı `images/manifest.json` ve `images/LICENSE-NOTES.md` içinde — preset krediyi görüntü üstünde kalıcı gösterir, kaldırmayın).
+- `presets/cosmos_advanced/textures/milkyway-eso0932a.jpg` — ESO GigaGalaxy Zoom 360° Samanyolu panoraması, **ESO/S. Brunier** (CC BY 4.0; fotoğrafik bandı kullanan her destede bu kredi görünür olmalıdır, ayrıntı `textures/CREDITS.md`).
+- `presets/charts_icons/icon-library/` — [Lucide](https://lucide.dev) (ISC), [Tabler Icons](https://tabler.io/icons) (MIT), [Phosphor](https://phosphoricons.com) (MIT); lisans metinleri `icon-library/licenses/` altında.
+- `presets/motion_core/primitives-motion.*` — [motion-primitives](https://github.com/ibelick/motion-primitives)'ten uyarlanmıştır (MIT, © ibelick).

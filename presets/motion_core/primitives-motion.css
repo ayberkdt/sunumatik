@@ -1,0 +1,162 @@
+/* Primitives Motion — premium mikro-hareket preseti
+   motion-primitives'ten uyarlanmıştır (MIT, © ibelick — github.com/ibelick/motion-primitives).
+   Tüm süre/easing/yay değerleri kaynak koddan birebir alınmıştır; React/Framer
+   bağımlılığı yoktur. JS eşleri: primitives-motion.js.
+
+   SÖZLEŞME (core-motion ile aynı):
+   - Başlangıçta gizli duran her şey html.js'e kilitlidir — JS çalışmazsa
+     içerik görünür kalır.
+   - Sonsuz döngüler (shimmer, border-trail, glow, marquee) yalnız
+     prefers-reduced-motion: no-preference altında döner; aksi hâlde son
+     kare durur. Export modunda (html[data-export="true"]) hepsi donar.
+   - Hover yorumdur, içerik değildir: hiçbir bilgi yalnız hover'da yaşamaz. */
+
+/* ── 1 · Işıltı süpürmesi (TextShimmer) ──
+   background-clip:text üstünde kayan dar bir ışık bandı. Bant genişliği
+   metin uzunluğuna uyar: JS `--spread`i karakter × 2px yapar (kaynak değer). */
+.px-shimmer {
+  --px-base: var(--color-muted, #71717a);
+  --px-highlight: var(--color-ink, #ffffff);
+  --spread: 40px;
+  display: inline-block;
+  color: transparent;
+  -webkit-background-clip: text; background-clip: text;
+  background-repeat: no-repeat, padding-box;
+  background-size: 250% 100%, auto;
+  background-image:
+    linear-gradient(90deg, #0000 calc(50% - var(--spread)), var(--px-highlight), #0000 calc(50% + var(--spread))),
+    linear-gradient(var(--px-base), var(--px-base));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .px-shimmer { animation: px-shimmer 2s linear infinite; } /* kaynak: 2 s linear */
+}
+@keyframes px-shimmer {
+  from { background-position: 100% center, 0 0; }
+  to   { background-position: 0% center, 0 0; }
+}
+
+/* ── 2 · Kademeli metin doğuşu (TextEffect) ──
+   primitives-motion.js `splitText` metni parça parça sarar; sahneye giriş
+   `.is-visible` ile tetiklenir (slayt-enter ya da IntersectionObserver).
+   Kaynak sabitleri: parça süresi .3 s; kademelenme char .03 / word .05 /
+   line .1 s; imza preset "fade-in-blur" = opacity + y 20px + blur 12px. */
+html.js .px-text [data-seg] {
+  display: inline-block; white-space: pre;
+  opacity: 0;
+  transition: opacity .3s ease, transform .3s ease, filter .3s ease;
+  transition-delay: calc(var(--i) * var(--stagger, .05s) + var(--delay, 0s));
+}
+html.js .px-text[data-preset="fade-in-blur"] [data-seg] { transform: translateY(20px); filter: blur(12px); }
+html.js .px-text[data-preset="blur"]         [data-seg] { filter: blur(12px); }
+html.js .px-text[data-preset="slide"]        [data-seg] { transform: translateY(20px); }
+html.js .px-text[data-preset="scale"]        [data-seg] { transform: scale(0); }
+html.js .px-text.is-visible [data-seg] { opacity: 1; transform: none; filter: blur(0); }
+
+/* ── 3 · Görünüme giriş (InView) — tek elemanlık sinematik doğuş ── */
+html.js .px-inview {
+  opacity: 0; transform: translateY(40px); filter: blur(4px);
+  transition: opacity .6s cubic-bezier(.22,1,.36,1),
+              transform .6s cubic-bezier(.22,1,.36,1),
+              filter .6s cubic-bezier(.22,1,.36,1);
+}
+html.js .px-inview.is-visible { opacity: 1; transform: none; filter: blur(0); }
+
+/* ── 4 · Kenar kuyruğu (BorderTrail) ──
+   Yalnız kenar halkasını gösteren çift maske + offset-path üstünde koşan
+   parlak yolcu. Kaynak: 60px yolcu, 5 s linear sonsuz. */
+.px-trail-host { position: relative; }
+.px-trail {
+  position: absolute; inset: 0; border-radius: inherit;
+  border: 1px solid transparent; pointer-events: none;
+  -webkit-mask-image: linear-gradient(transparent, transparent), linear-gradient(#000, #000);
+          mask-image: linear-gradient(transparent, transparent), linear-gradient(#000, #000);
+  -webkit-mask-clip: padding-box, border-box;
+          mask-clip: padding-box, border-box;
+  -webkit-mask-composite: source-in;
+          mask-composite: intersect;
+}
+.px-trail::after {
+  content: ""; position: absolute; aspect-ratio: 1; width: 60px;
+  background: radial-gradient(circle, var(--color-accent, #D3B26A), transparent 70%);
+  offset-path: rect(0 auto auto 0 round 60px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .px-trail::after { animation: px-trail 5s linear infinite; }
+}
+@keyframes px-trail { to { offset-distance: 100%; } }
+
+/* ── 5 · Parıltı katmanı (GlowEffect · rotate + breathe) ──
+   İçeriğin ARKASINA konur; içerik position:relative ile üstte kalır.
+   Renkler palet token'larından gelir — AI-degrade yasağına takılmamak için
+   parıltıyı yalnız veri/ışık anlamı taşıyan kahraman öğelerde kullan. */
+@property --px-glow-angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+.px-glow-host { position: relative; }
+.px-glow-host > * { position: relative; z-index: 1; }
+.px-glow {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  border-radius: inherit; filter: blur(12px);            /* kaynak 'medium' */
+  transform: scale(1.1) translateZ(0);
+  background: conic-gradient(from var(--px-glow-angle) at 50% 50%,
+    var(--color-data-1, #5590C9), var(--color-accent, #D3B26A),
+    var(--color-data-2, #C86A40), var(--color-data-1, #5590C9));
+  opacity: .55;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .px-glow { animation: px-glow-rotate 5s linear infinite; }        /* kaynak: 5 s */
+  .px-glow--breathe { animation: px-glow-rotate 5s linear infinite,
+                                 px-glow-breathe 5s ease-in-out infinite alternate; }
+}
+@keyframes px-glow-rotate { to { --px-glow-angle: 360deg; } }
+@keyframes px-glow-breathe { from { transform: scale(1) translateZ(0); }
+                             to   { transform: scale(1.05) translateZ(0); } }
+
+/* ── 6 · Sahne spotu (Spotlight) — JS attachSpotlight ile ── */
+.px-spot-host { position: relative; overflow: hidden; }
+.px-spot {
+  position: absolute; width: 200px; height: 200px; border-radius: 50%;
+  pointer-events: none; filter: blur(24px); opacity: 0;
+  transition: opacity .2s;
+  mix-blend-mode: plus-lighter;   /* koyu sahnede gri disk değil IŞIK okunur */
+  background: radial-gradient(circle at center,
+    rgba(250,250,250,.9), rgba(228,228,231,.6) 50%, transparent 80%);
+}
+.px-spot-host:hover .px-spot { opacity: 1; }
+
+/* ── 7 · Sonsuz şerit (InfiniteSlider) — JS infiniteSlider ile ── */
+.px-marquee { overflow: hidden; }
+.px-marquee-track { display: flex; width: max-content; gap: 16px; will-change: transform; }
+
+/* ── 8 · Kayan basamak (SlidingNumber) — JS slidingNumber ile ── */
+.px-digit {
+  position: relative; display: inline-block; width: 1ch;
+  overflow-y: clip; line-height: 1; font-variant-numeric: tabular-nums;
+}
+.px-digit > .px-size { visibility: hidden; }
+.px-digit > .px-n {
+  position: absolute; inset: 0; display: flex;
+  align-items: center; justify-content: center; will-change: transform;
+}
+.px-number, .px-scramble { font-variant-numeric: tabular-nums; }
+
+/* ── 9 · Eğim kartı (Tilt) — JS attachTilt transformu yönetir ── */
+.px-tilt { will-change: transform; }
+
+/* ── Export ve azaltılmış hareket ──
+   Donmuş hâl açıklamayı korur: shimmer tam renkte durur, trail ve glow
+   sabit kalır, kademeli metin yerleşik durumda görünür. */
+html[data-export="true"] .px-shimmer,
+html[data-export="true"] .px-trail::after,
+html[data-export="true"] .px-glow,
+html[data-export="true"] .px-glow--breathe { animation: none !important; }
+html[data-export="true"] .px-text [data-seg],
+html[data-export="true"] .px-inview {
+  opacity: 1 !important; transform: none !important; filter: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .px-shimmer { color: var(--px-base); background: none; -webkit-background-clip: initial; background-clip: initial; }
+  html.js .px-text [data-seg], html.js .px-inview {
+    opacity: 1; transform: none; filter: none; transition: none;
+  }
+  .px-spot { display: none; }
+}

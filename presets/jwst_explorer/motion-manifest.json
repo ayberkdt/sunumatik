@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "jwst-explore-camera",
+      "type": "focus",
+      "truthLevel": "data-driven",
+      "sourceIds": ["images/manifest.json — per-image releaseId + sourceUrl (esawebb.org/STScI official releases)"],
+      "purpose": "Guide attention across a real James Webb Space Telescope image: smooth pan/zoom to numbered points of interest, each with an assertion caption sourced from the official release text.",
+      "model": "Critically damped spring camera (k=120, c=22) over the published JPEG; zoom springs in log space so a doubling feels equal at every level; points of interest are percent coordinates taken from official release captions.",
+      "limitations": "Display JPEGs, not calibrated FITS data; colors are the official representative-color compositions; point-of-interest notes quote release captions and are not independent measurements.",
+      "reducedMotion": "Camera jumps directly to targets; no springs, no inertia.",
+      "exportState": "Overview frame with all point-of-interest markers visible and the title caption; HUD hidden.",
+      "accessibility": "figure has role=application with keyboard control (arrows, 0, Escape); captions are aria-live; the required image credit is permanently visible.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "jwst-compare-curtain",
+      "type": "comparison",
+      "truthLevel": "data-driven",
+      "sourceIds": ["images/manifest.json — pair entries with releaseId + sourceUrl (esawebb.org / esahubble.org official releases)"],
+      "purpose": "Show what Webb adds over Hubble (or MIRI over NIRCam) on the same target with a draggable curtain: both real images share one camera, so every structure stays spatially locked while the observer wipes between them.",
+      "model": "Second published image of the same target drawn under a clipped region; curtain position is pointer-driven; entrance animates the curtain from the right edge with a critically damped spring (k=170, c=26).",
+      "limitations": "Images are aligned by frame, not astrometrically registered; small field-of-view and rotation differences between missions remain visible.",
+      "reducedMotion": "Curtain appears at 50% with no entrance animation.",
+      "exportState": "Curtain fixed at 50% with both instrument labels visible.",
+      "accessibility": "Curtain handle is large (22px hit area); both panes carry permanent text labels; comparison also operable from the demo toggle button.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

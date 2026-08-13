@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "defaults": {
     "surfaceTreatment": "matte",
     "gradientPolicy": "none-unless-data-or-light-phenomenon",
@@ -11,6 +11,8 @@
       "id": "berry-orchid",
       "name": "Berry Wine / Orchid Mist",
       "origin": "user-reference-1",
+      "harmony": "monochromatic-warm",
+      "wheel": "single rose-wine hue, value-stepped; olive counterweight in data",
       "pair": { "primary": "#5A2132", "secondary": "#EFE9E9" },
       "character": ["editorial", "warm", "pastel", "premium"],
       "tokens": {
@@ -33,6 +35,8 @@
       "id": "sage-buttercream",
       "name": "Sage Leaf / Buttercream",
       "origin": "user-reference-2",
+      "harmony": "analogous-warm",
+      "wheel": "yellow → yellow-green neighbours; brick red as the single far accent",
       "pair": { "primary": "#202B23", "secondary": "#FFD85F" },
       "character": ["botanical", "vibrant", "optimistic", "technical"],
       "tokens": {
@@ -55,6 +59,8 @@
       "id": "arctic-mulberry",
       "name": "Arctic Sky / Mulberry Wine",
       "origin": "user-reference-3",
+      "harmony": "complementary-muted",
+      "wheel": "ice blue ↔ mulberry red-violet, both desaturated toward pastel",
       "pair": { "primary": "#BCD3E7", "secondary": "#391D30" },
       "character": ["cool", "pastel", "observational", "refined"],
       "tokens": {
@@ -77,6 +83,8 @@
       "id": "midnight-tangerine",
       "name": "Midnight Navy / Burnt Tangerine",
       "origin": "user-reference-4",
+      "harmony": "complementary",
+      "wheel": "navy blue ↔ orange — the classic warm/cool axis at full commitment",
       "pair": { "primary": "#1E223D", "secondary": "#F54F1F" },
       "character": ["vibrant", "editorial", "high-energy", "mission"],
       "tokens": {
@@ -88,8 +96,17 @@
         "accentInk": "#15182B",
         "data1": "#FFD166",
         "data2": "#78C4B4",
+        "data3": "#E88AB0",
+        "data4": "#8FA8E8",
+        "data5": "#E8975A",
+        "data6": "#9BC97A",
         "rule": "#454D76"
       },
+      "ramps": {
+        "sequential": ["#2B3154", "#5E4A4E", "#9A5A3E", "#CE5530", "#F54F1F"],
+        "diverging": ["#78C4B4", "#A9BFAF", "#C3C7D6", "#DE9C7A", "#F54F1F"]
+      },
+      "cvd": "Blue/orange axis is the safest complementary pair for deuteranopia and protanopia; keep data4 (periwinkle) and data6 (leaf) apart in adjacent series.",
       "textPairs": [
         { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
         { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
@@ -99,6 +116,8 @@
       "id": "oat-cocoa",
       "name": "Oat Milk / Cocoa Bean",
       "origin": "user-reference-5",
+      "harmony": "analogous-earth",
+      "wheel": "yellow-cream → brown neighbours; sage and steel as measured counterpoints",
       "pair": { "primary": "#F3EEC8", "secondary": "#473835" },
       "character": ["cream", "earthy", "matte", "scholarly"],
       "tokens": {
@@ -121,6 +140,8 @@
       "id": "graphite-ember",
       "name": "Graphite / Ember Copper",
       "origin": "premium-app-study-2026",
+      "harmony": "complementary-muted",
+      "wheel": "cool graphite blue-grey ↔ ember copper-orange",
       "pair": { "primary": "#141519", "secondary": "#E8804A" },
       "character": ["dark-first", "layered-neutral", "product-grade", "premium"],
       "tokens": {
@@ -132,8 +153,17 @@
         "accentInk": "#1A120B",
         "data1": "#2FA98C",
         "data2": "#B58224",
+        "data3": "#6A9BD9",
+        "data4": "#C96A5A",
+        "data5": "#9A8FD9",
+        "data6": "#86B14A",
         "rule": "#303339"
       },
+      "ramps": {
+        "sequential": ["#1E2026", "#4E3A2E", "#855434", "#B96A3E", "#E8804A"],
+        "diverging": ["#2FA98C", "#6FA995", "#A6A9B1", "#C9946E", "#E8804A"]
+      },
+      "cvd": "Teal/copper diverging axis survives deuteranopia via lightness spread; avoid pairing data4 (coral) with data6 (olive) in adjacent series.",
       "textPairs": [
         { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
         { "foreground": "ink", "background": "surface", "minimum": 4.5 },
@@ -144,6 +174,8 @@
       "id": "porcelain-ink",
       "name": "Porcelain / Measured Indigo",
       "origin": "premium-app-study-2026",
+      "harmony": "monochromatic-cool",
+      "wheel": "single indigo hue on warm porcelain neutrals; earth counter in data",
       "pair": { "primary": "#44599C", "secondary": "#F6F4EF" },
       "character": ["light", "editorial", "documentation-grade", "restrained"],
       "tokens": {
@@ -167,6 +199,8 @@
       "id": "obsidian-champagne",
       "name": "Obsidian / Champagne Gold",
       "origin": "premium-app-study-2026",
+      "harmony": "complementary-muted",
+      "wheel": "warm champagne gold ↔ cool steel blue, both restrained on obsidian",
       "pair": { "primary": "#0F1013", "secondary": "#D3B26A" },
       "character": ["luxury", "keynote", "warm-metallic", "celebratory"],
       "tokens": {
@@ -178,8 +212,17 @@
         "accentInk": "#191307",
         "data1": "#5590C9",
         "data2": "#C86A40",
+        "data3": "#6FBF9A",
+        "data4": "#A88BD9",
+        "data5": "#D9C36A",
+        "data6": "#C95F6A",
         "rule": "#2E3037"
       },
+      "ramps": {
+        "sequential": ["#1A1C21", "#4A4030", "#7D6A42", "#A88E54", "#D3B26A"],
+        "diverging": ["#5590C9", "#8A9BAD", "#A9A296", "#BE8A68", "#C86A40"]
+      },
+      "cvd": "Gold/blue is deuteranopia-safe. data3 (mint) and data5 (pale gold) sit close in lightness — separate them with markers or dashing, not hue alone.",
       "textPairs": [
         { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
         { "foreground": "ink", "background": "surface", "minimum": 4.5 },
@@ -190,6 +233,8 @@
       "id": "verdigris-slate",
       "name": "Slate Pine / Verdigris",
       "origin": "premium-app-study-2026",
+      "harmony": "analogous-cool",
+      "wheel": "green → teal neighbours; ochre and cobalt as far data counterweights",
       "pair": { "primary": "#152020", "secondary": "#5FBFAE" },
       "character": ["dark", "cool-organic", "confident", "instrument-grade"],
       "tokens": {
@@ -201,8 +246,289 @@
         "accentInk": "#0C1B18",
         "data1": "#BA8A2A",
         "data2": "#5B95E8",
+        "data3": "#C96A8A",
+        "data4": "#7ABF6A",
+        "data5": "#A88BD9",
+        "data6": "#D9B84A",
         "rule": "#31423E"
       },
+      "ramps": {
+        "sequential": ["#1F2E2C", "#2B534C", "#3A7A6E", "#4C9C8E", "#5FBFAE"],
+        "diverging": ["#5B95E8", "#84A4C9", "#9FB3AC", "#AD9F6A", "#BA8A2A"]
+      },
+      "cvd": "Accent verdigris vs data4 leaf-green are close for deuteranopia — never adjacent series; ochre/cobalt diverging axis is safe.",
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "ultraviolet-chartreuse",
+      "name": "Ultraviolet / Chartreuse Signal",
+      "origin": "color-theory-expansion-2026",
+      "harmony": "complementary",
+      "wheel": "deep violet ↔ yellow-green; maximum hue distance, chroma held on one side",
+      "pair": { "primary": "#14101E", "secondary": "#C9DE4C" },
+      "character": ["bold", "futuristic", "high-energy", "signal"],
+      "tokens": {
+        "canvas": "#14101E",
+        "surface": "#1E1830",
+        "ink": "#F2EFE6",
+        "muted": "#A79FB8",
+        "accent": "#C9DE4C",
+        "accentInk": "#1A2005",
+        "data1": "#C9DE4C",
+        "data2": "#9B7EDE",
+        "data3": "#4FC1B0",
+        "data4": "#E8756A",
+        "data5": "#D9B24A",
+        "data6": "#6E8FD9",
+        "rule": "#2E2843"
+      },
+      "ramps": {
+        "sequential": ["#1E1830", "#4A4A33", "#767C3B", "#9FAD43", "#C9DE4C"],
+        "diverging": ["#9B7EDE", "#A497C9", "#A79FB8", "#B8BF85", "#C9DE4C"]
+      },
+      "cvd": "Violet/chartreuse reads as blue/yellow for both deuteranopia and protanopia — a safe axis. Keep chartreuse the ONLY high-chroma element per slide.",
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "cerulean-vermilion",
+      "name": "Cerulean / Vermilion Field",
+      "origin": "color-theory-expansion-2026",
+      "harmony": "complementary",
+      "wheel": "cerulean blue ↔ vermilion red-orange on warm paper — editorial daylight",
+      "pair": { "primary": "#14304A", "secondary": "#C4401F" },
+      "character": ["light", "editorial", "confident", "print-grade"],
+      "tokens": {
+        "canvas": "#F4F1EA",
+        "surface": "#FFFFFF",
+        "ink": "#14304A",
+        "muted": "#5A6B78",
+        "accent": "#C4401F",
+        "accentInk": "#FFF7F2",
+        "data1": "#2E75A8",
+        "data2": "#C4401F",
+        "data3": "#7A7A2E",
+        "data4": "#7A4A78",
+        "data5": "#2E8A7A",
+        "data6": "#B87F1F",
+        "rule": "#DAD4C8"
+      },
+      "ramps": {
+        "sequential": ["#F4F1EA", "#E5C3AE", "#DC9573", "#D16A45", "#C4401F"],
+        "diverging": ["#2E75A8", "#7E9BB0", "#C9C4B8", "#D08A6A", "#C4401F"]
+      },
+      "cvd": "Blue/vermilion diverging axis is CVD-safe; olive (data3) and ochre (data6) collide under deuteranopia — never adjacent.",
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "prussian-amber",
+      "name": "Prussian Depth / Amber Beacon",
+      "origin": "color-theory-expansion-2026",
+      "harmony": "split-complementary",
+      "wheel": "prussian blue base; amber and rose flank its complement instead of hitting it",
+      "pair": { "primary": "#0E1B26", "secondary": "#E8A33D" },
+      "character": ["dark", "maritime", "archival", "warm-signal"],
+      "tokens": {
+        "canvas": "#0E1B26",
+        "surface": "#16273A",
+        "ink": "#EAF1F5",
+        "muted": "#93A7B5",
+        "accent": "#E8A33D",
+        "accentInk": "#201502",
+        "data1": "#E8A33D",
+        "data2": "#5FA8DF",
+        "data3": "#D96A6A",
+        "data4": "#58BF9B",
+        "data5": "#A08FD9",
+        "data6": "#C9B08A",
+        "rule": "#263B4E"
+      },
+      "ramps": {
+        "sequential": ["#16273A", "#54473A", "#8A683A", "#B9853B", "#E8A33D"],
+        "diverging": ["#5FA8DF", "#84A6BE", "#93A7B5", "#BEA579", "#E8A33D"]
+      },
+      "cvd": "Amber/sky axis is safe. Rose (data3) vs mint (data4) is a red/green pair — separate by lightness and never encode a critical distinction with only these two.",
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "magma-basalt",
+      "name": "Magma / Basalt Field",
+      "origin": "color-theory-expansion-2026",
+      "harmony": "analogous-warm",
+      "wheel": "red → orange → gold neighbours on volcanic near-black; one cool outlier for charts",
+      "pair": { "primary": "#131013", "secondary": "#E85D3A" },
+      "character": ["dark", "geophysical", "intense", "thermal"],
+      "tokens": {
+        "canvas": "#131013",
+        "surface": "#1E181A",
+        "ink": "#F5EDE6",
+        "muted": "#AC9C94",
+        "accent": "#E85D3A",
+        "accentInk": "#230C05",
+        "data1": "#E85D3A",
+        "data2": "#F2A03F",
+        "data3": "#C93A55",
+        "data4": "#8A6FD1",
+        "data5": "#57A88C",
+        "data6": "#D9C36A",
+        "rule": "#332A2C"
+      },
+      "ramps": {
+        "sequential": ["#1E181A", "#5A2A22", "#93402A", "#BE4E32", "#E85D3A"],
+        "diverging": ["#57A88C", "#83A48F", "#AC9C94", "#CB7E68", "#E85D3A"]
+      },
+      "cvd": "An analogous warm ramp reads as ONE hue family under deuteranopia — lightness steps carry the order, which is exactly why the sequential ramp works. Use data4 (violet) or data5 (jade) whenever two warm series must be told apart.",
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "aurora-polar",
+      "name": "Polar Night / Aurora Green",
+      "origin": "color-theory-expansion-2026",
+      "harmony": "analogous-cool",
+      "wheel": "green → teal → violet neighbours, the actual aurora emission sequence",
+      "pair": { "primary": "#0C1418", "secondary": "#55E0A8" },
+      "character": ["dark", "atmospheric", "luminous", "polar"],
+      "tokens": {
+        "canvas": "#0C1418",
+        "surface": "#14222A",
+        "ink": "#ECF4F1",
+        "muted": "#9AB1AC",
+        "accent": "#55E0A8",
+        "accentInk": "#062015",
+        "data1": "#55E0A8",
+        "data2": "#4FB8D9",
+        "data3": "#9C86E8",
+        "data4": "#E86A9B",
+        "data5": "#D9C36A",
+        "data6": "#7A99A8",
+        "rule": "#233640"
+      },
+      "ramps": {
+        "sequential": ["#14222A", "#1F5246", "#2F8362", "#41B184", "#55E0A8"],
+        "diverging": ["#9C86E8", "#9AA0CE", "#9AB1AC", "#77C9AA", "#55E0A8"]
+      },
+      "cvd": "Green accent vs teal data2 merge under deuteranopia — the lightness gap (L* ≈ 20) carries them; verify in grayscale. Violet/green diverging axis is safer than red/green.",
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "heliograph",
+      "name": "Heliograph Charcoal / Triad",
+      "origin": "color-theory-expansion-2026",
+      "harmony": "triadic",
+      "wheel": "gold / teal / coral at 120° spacing — three genuinely equal categories",
+      "pair": { "primary": "#17181C", "secondary": "#E8B84A" },
+      "character": ["dark", "instrument", "three-part", "balanced"],
+      "tokens": {
+        "canvas": "#17181C",
+        "surface": "#222329",
+        "ink": "#F2EFE8",
+        "muted": "#A6A49B",
+        "accent": "#E8B84A",
+        "accentInk": "#211703",
+        "data1": "#E8B84A",
+        "data2": "#3FB8A8",
+        "data3": "#E8705A",
+        "data4": "#7A8FD9",
+        "data5": "#B8D96A",
+        "data6": "#C98AC9",
+        "rule": "#33343B"
+      },
+      "ramps": {
+        "sequential": ["#222329", "#55482F", "#886D38", "#BA9241", "#E8B84A"],
+        "diverging": ["#3FB8A8", "#77B0A1", "#A6A49B", "#C9A472", "#E8B84A"]
+      },
+      "cvd": "Reserve the triad for exactly three categories: gold, teal, coral separate cleanly under deuteranopia because each sits at a different lightness. Do not add a fourth equal category — demote it to data4.",
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "royal-saffron",
+      "name": "Royal Indigo / Saffron",
+      "origin": "color-theory-expansion-2026",
+      "harmony": "complementary",
+      "wheel": "indigo ↔ saffron yellow-orange on warm ceremonial paper",
+      "pair": { "primary": "#2A2454", "secondary": "#D98A1F" },
+      "character": ["light", "ceremonial", "distinguished", "warm"],
+      "tokens": {
+        "canvas": "#F5F1E8",
+        "surface": "#FFFFFF",
+        "ink": "#2A2454",
+        "muted": "#625E7A",
+        "accent": "#D98A1F",
+        "accentInk": "#231603",
+        "data1": "#4A3FA8",
+        "data2": "#D98A1F",
+        "data3": "#2E8A6A",
+        "data4": "#B84A3A",
+        "data5": "#5A7A99",
+        "data6": "#8A4A78",
+        "rule": "#DDD6C6"
+      },
+      "ramps": {
+        "sequential": ["#F5F1E8", "#EDD3AC", "#E7B975", "#E0A146", "#D98A1F"],
+        "diverging": ["#4A3FA8", "#8479B0", "#C0BBB0", "#D3A96A", "#D98A1F"]
+      },
+      "cvd": "Indigo/saffron is a blue/yellow axis — safe for all common CVD types. Jade (data3) and brick (data4) must never be the only distinction between two series.",
+      "textPairs": [
+        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
+        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
+        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+      ]
+    },
+    {
+      "id": "ionosphere",
+      "name": "Ionosphere Cyan / Deep Field",
+      "origin": "color-theory-expansion-2026",
+      "harmony": "monochromatic-cool",
+      "wheel": "single electric cyan, value-stepped on abyssal blue-black; apricot counter in data",
+      "pair": { "primary": "#0A1418", "secondary": "#3FC6E8" },
+      "character": ["dark", "plasma", "technical", "cold-luminous"],
+      "tokens": {
+        "canvas": "#0A1418",
+        "surface": "#122028",
+        "ink": "#E8F2F5",
+        "muted": "#8FA8B0",
+        "accent": "#3FC6E8",
+        "accentInk": "#04191F",
+        "data1": "#3FC6E8",
+        "data2": "#E8975A",
+        "data3": "#6ADF9B",
+        "data4": "#B08FD9",
+        "data5": "#D9CE6A",
+        "data6": "#5A7A99",
+        "rule": "#20343C"
+      },
+      "ramps": {
+        "sequential": ["#122028", "#194754", "#237185", "#2F9BB6", "#3FC6E8"],
+        "diverging": ["#E8975A", "#C29C7E", "#8FA8B0", "#68B7CC", "#3FC6E8"]
+      },
+      "cvd": "Cyan/apricot diverging axis is CVD-safe. In a monochromatic scheme the sequential ramp is the palette's native language — prefer it over multi-hue category colors.",
       "textPairs": [
         { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
         { "foreground": "ink", "background": "surface", "minimum": 4.5 },

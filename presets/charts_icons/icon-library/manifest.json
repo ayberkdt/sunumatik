@@ -1,0 +1,2122 @@
+[
+ {
+  "name": "rocket",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "roket",
+   "fırlatma",
+   "uzay",
+   "başlangıç",
+   "rocket",
+   "launch",
+   "space",
+   "start"
+  ]
+ },
+ {
+  "name": "satellite",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "uydu",
+   "uzay aracı",
+   "satellite",
+   "spacecraft"
+  ]
+ },
+ {
+  "name": "satellite-dish",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "çanak anten",
+   "yer istasyonu",
+   "satellite dish",
+   "ground station"
+  ]
+ },
+ {
+  "name": "antenna",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "anten",
+   "sinyal",
+   "verici",
+   "antenna",
+   "signal",
+   "transmitter"
+  ]
+ },
+ {
+  "name": "orbit",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "yörünge",
+   "dolanım",
+   "gezegen",
+   "orbit",
+   "revolution"
+  ]
+ },
+ {
+  "name": "planet",
+  "set": "tabler",
+  "style": "outline",
+  "tags": [
+   "gezegen",
+   "satürn",
+   "halka",
+   "planet",
+   "saturn",
+   "ring"
+  ]
+ },
+ {
+  "name": "moon",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "ay",
+   "gece",
+   "hilal",
+   "moon",
+   "night",
+   "crescent"
+  ]
+ },
+ {
+  "name": "sun",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "güneş",
+   "yıldız",
+   "gündüz",
+   "ışık",
+   "sun",
+   "day",
+   "light"
+  ]
+ },
+ {
+  "name": "star",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "yıldız",
+   "favori",
+   "star",
+   "favorite"
+  ]
+ },
+ {
+  "name": "stars",
+  "set": "tabler",
+  "style": "outline",
+  "tags": [
+   "yıldızlar",
+   "gökyüzü",
+   "stars",
+   "sky",
+   "night"
+  ]
+ },
+ {
+  "name": "sparkles",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "parıltı",
+   "ışıltı",
+   "yeni",
+   "sparkles",
+   "shine",
+   "magic",
+   "new"
+  ]
+ },
+ {
+  "name": "telescope",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "teleskop",
+   "gözlem",
+   "astronomi",
+   "telescope",
+   "observation",
+   "astronomy"
+  ]
+ },
+ {
+  "name": "radar",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "radar",
+   "tarama",
+   "algılama",
+   "radar",
+   "scan",
+   "detection"
+  ]
+ },
+ {
+  "name": "globe",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "küre",
+   "dünya",
+   "internet",
+   "globe",
+   "world",
+   "earth"
+  ]
+ },
+ {
+  "name": "earth",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "dünya",
+   "yerküre",
+   "gezegen",
+   "earth",
+   "world",
+   "planet"
+  ]
+ },
+ {
+  "name": "meteor",
+  "set": "tabler",
+  "style": "outline",
+  "tags": [
+   "meteor",
+   "göktaşı",
+   "düşüş",
+   "meteor",
+   "asteroid",
+   "falling"
+  ]
+ },
+ {
+  "name": "comet",
+  "set": "tabler",
+  "style": "outline",
+  "tags": [
+   "kuyruklu yıldız",
+   "comet",
+   "shooting star"
+  ]
+ },
+ {
+  "name": "ufo",
+  "set": "tabler",
+  "style": "outline",
+  "tags": [
+   "ufo",
+   "uzay aracı",
+   "uçan daire",
+   "ufo",
+   "spacecraft",
+   "flying saucer"
+  ]
+ },
+ {
+  "name": "shooting-star",
+  "set": "phosphor",
+  "style": "filled",
+  "tags": [
+   "kayan yıldız",
+   "dilek",
+   "shooting star",
+   "wish"
+  ]
+ },
+ {
+  "name": "alien",
+  "set": "tabler",
+  "style": "outline",
+  "tags": [
+   "uzaylı",
+   "yaşam",
+   "alien",
+   "extraterrestrial",
+   "life"
+  ]
+ },
+ {
+  "name": "atom",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "atom",
+   "fizik",
+   "çekirdek",
+   "bilim",
+   "atom",
+   "physics",
+   "nucleus",
+   "science"
+  ]
+ },
+ {
+  "name": "function",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "fonksiyon",
+   "formül",
+   "matematik",
+   "function",
+   "formula",
+   "math"
+  ]
+ },
+ {
+  "name": "sigma",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sigma",
+   "toplam",
+   "seri",
+   "sigma",
+   "sum",
+   "series",
+   "math"
+  ]
+ },
+ {
+  "name": "pi",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "pi sayısı",
+   "matematik",
+   "sabit",
+   "pi",
+   "math",
+   "constant"
+  ]
+ },
+ {
+  "name": "radical",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kök",
+   "karekök",
+   "radical",
+   "square root",
+   "math"
+  ]
+ },
+ {
+  "name": "variable",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "değişken",
+   "cebir",
+   "variable",
+   "algebra",
+   "x"
+  ]
+ },
+ {
+  "name": "infinity",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sonsuz",
+   "limit",
+   "infinity",
+   "endless",
+   "limit"
+  ]
+ },
+ {
+  "name": "omega",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "omega",
+   "frekans",
+   "omega",
+   "frequency",
+   "greek"
+  ]
+ },
+ {
+  "name": "calculator",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "hesap makinesi",
+   "hesaplama",
+   "calculator",
+   "compute"
+  ]
+ },
+ {
+  "name": "ruler",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "cetvel",
+   "ölçüm",
+   "ruler",
+   "measure",
+   "length"
+  ]
+ },
+ {
+  "name": "drafting-compass",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "pergel",
+   "geometri",
+   "çizim",
+   "drafting compass",
+   "geometry"
+  ]
+ },
+ {
+  "name": "flask",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "deney şişesi",
+   "kimya",
+   "deney",
+   "flask",
+   "chemistry",
+   "experiment",
+   "lab"
+  ]
+ },
+ {
+  "name": "flask-round",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "balon joje",
+   "kimya",
+   "laboratuvar",
+   "round flask",
+   "chemistry",
+   "lab"
+  ]
+ },
+ {
+  "name": "test-tube",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "test tüpü",
+   "deney",
+   "laboratuvar",
+   "test tube",
+   "experiment",
+   "lab"
+  ]
+ },
+ {
+  "name": "microscope",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "mikroskop",
+   "inceleme",
+   "biyoloji",
+   "microscope",
+   "biology",
+   "analysis"
+  ]
+ },
+ {
+  "name": "dna",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "dna",
+   "genetik",
+   "sarmal",
+   "dna",
+   "genetics",
+   "helix"
+  ]
+ },
+ {
+  "name": "magnet",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "mıknatıs",
+   "manyetik",
+   "çekim",
+   "magnet",
+   "magnetic",
+   "attraction"
+  ]
+ },
+ {
+  "name": "activity",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "aktivite",
+   "nabız",
+   "dalga formu",
+   "sinyal",
+   "activity",
+   "pulse",
+   "waveform",
+   "signal"
+  ]
+ },
+ {
+  "name": "audio-waveform",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "ses dalgası",
+   "dalga formu",
+   "spektrum",
+   "audio",
+   "waveform",
+   "spectrum"
+  ]
+ },
+ {
+  "name": "wave-sine",
+  "set": "tabler",
+  "style": "outline",
+  "tags": [
+   "sinüs dalgası",
+   "harmonik",
+   "salınım",
+   "sine wave",
+   "harmonic",
+   "oscillation"
+  ]
+ },
+ {
+  "name": "wave-square",
+  "set": "tabler",
+  "style": "outline",
+  "tags": [
+   "kare dalga",
+   "sinyal",
+   "square wave",
+   "signal",
+   "digital"
+  ]
+ },
+ {
+  "name": "waves",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "dalgalar",
+   "su",
+   "frekans",
+   "waves",
+   "water",
+   "frequency"
+  ]
+ },
+ {
+  "name": "gauge",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "gösterge",
+   "ölçüm",
+   "hız",
+   "gauge",
+   "meter",
+   "speed",
+   "dashboard"
+  ]
+ },
+ {
+  "name": "thermometer",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "termometre",
+   "sıcaklık",
+   "ısı",
+   "thermometer",
+   "temperature",
+   "heat"
+  ]
+ },
+ {
+  "name": "brain",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "beyin",
+   "zeka",
+   "düşünce",
+   "yapay zeka",
+   "brain",
+   "intelligence",
+   "mind",
+   "ai"
+  ]
+ },
+ {
+  "name": "scale",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "terazi",
+   "denge",
+   "karşılaştırma",
+   "scale",
+   "balance",
+   "compare",
+   "justice"
+  ]
+ },
+ {
+  "name": "microchip",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "mikroçip",
+   "işlemci",
+   "elektronik",
+   "microchip",
+   "processor",
+   "electronics"
+  ]
+ },
+ {
+  "name": "chart-line",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "çizgi grafik",
+   "eğilim",
+   "chart",
+   "line chart",
+   "trend",
+   "graph"
+  ]
+ },
+ {
+  "name": "chart-spline",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "eğri grafik",
+   "yumuşak çizgi",
+   "spline chart",
+   "curve",
+   "graph"
+  ]
+ },
+ {
+  "name": "chart-bar",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sütun grafik",
+   "çubuk grafik",
+   "bar chart",
+   "column chart",
+   "graph"
+  ]
+ },
+ {
+  "name": "chart-bar-horizontal",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "yatay çubuk grafik",
+   "horizontal bar chart",
+   "graph"
+  ]
+ },
+ {
+  "name": "chart-area",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "alan grafik",
+   "area chart",
+   "graph"
+  ]
+ },
+ {
+  "name": "chart-scatter",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "serpme grafik",
+   "dağılım",
+   "scatter chart",
+   "scatter plot",
+   "points"
+  ]
+ },
+ {
+  "name": "chart-pie",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "pasta grafik",
+   "dilim",
+   "pie chart",
+   "share",
+   "percentage"
+  ]
+ },
+ {
+  "name": "trending-up",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "yükseliş",
+   "artış",
+   "büyüme",
+   "trending up",
+   "increase",
+   "growth"
+  ]
+ },
+ {
+  "name": "trending-down",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "düşüş",
+   "azalış",
+   "trending down",
+   "decrease",
+   "decline"
+  ]
+ },
+ {
+  "name": "database",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "veritabanı",
+   "veri",
+   "depolama",
+   "database",
+   "data",
+   "storage"
+  ]
+ },
+ {
+  "name": "table",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "tablo",
+   "veri",
+   "satır sütun",
+   "table",
+   "data",
+   "rows",
+   "columns"
+  ]
+ },
+ {
+  "name": "grid",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "ızgara",
+   "matris",
+   "düzen",
+   "grid",
+   "matrix",
+   "layout"
+  ]
+ },
+ {
+  "name": "layers",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "katmanlar",
+   "seviye",
+   "yığın",
+   "layers",
+   "levels",
+   "stack"
+  ]
+ },
+ {
+  "name": "filter",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "filtre",
+   "süzgeç",
+   "ayıklama",
+   "filter",
+   "funnel",
+   "sort"
+  ]
+ },
+ {
+  "name": "binary",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "ikili",
+   "bit",
+   "dijital",
+   "binary",
+   "bits",
+   "digital",
+   "code"
+  ]
+ },
+ {
+  "name": "cpu",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "işlemci",
+   "çip",
+   "hesaplama",
+   "cpu",
+   "chip",
+   "processor",
+   "computing"
+  ]
+ },
+ {
+  "name": "server",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sunucu",
+   "altyapı",
+   "server",
+   "infrastructure",
+   "host"
+  ]
+ },
+ {
+  "name": "git-branch",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "dal",
+   "dallanma",
+   "versiyon",
+   "branch",
+   "git",
+   "fork",
+   "version"
+  ]
+ },
+ {
+  "name": "network",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "ağ",
+   "bağlantı",
+   "topoloji",
+   "network",
+   "connection",
+   "topology",
+   "nodes"
+  ]
+ },
+ {
+  "name": "workflow",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "iş akışı",
+   "süreç",
+   "akış",
+   "workflow",
+   "process",
+   "flow",
+   "pipeline"
+  ]
+ },
+ {
+  "name": "nodes",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "düğümler",
+   "ağ",
+   "paylaşım",
+   "ilişki",
+   "nodes",
+   "network",
+   "share",
+   "relation"
+  ]
+ },
+ {
+  "name": "boxes",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kutular",
+   "modüller",
+   "paketler",
+   "boxes",
+   "modules",
+   "packages"
+  ]
+ },
+ {
+  "name": "arrow-right",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sağ ok",
+   "ileri",
+   "sonraki",
+   "arrow right",
+   "next",
+   "forward"
+  ]
+ },
+ {
+  "name": "arrow-left",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sol ok",
+   "geri",
+   "önceki",
+   "arrow left",
+   "back",
+   "previous"
+  ]
+ },
+ {
+  "name": "arrow-up",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "yukarı ok",
+   "artış",
+   "arrow up",
+   "increase"
+  ]
+ },
+ {
+  "name": "arrow-down",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "aşağı ok",
+   "azalış",
+   "arrow down",
+   "decrease"
+  ]
+ },
+ {
+  "name": "arrow-up-right",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sağ üst ok",
+   "büyüme",
+   "dış bağlantı",
+   "arrow up right",
+   "growth"
+  ]
+ },
+ {
+  "name": "arrow-down-right",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sağ alt ok",
+   "düşüş",
+   "arrow down right",
+   "decline"
+  ]
+ },
+ {
+  "name": "arrow-up-left",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sol üst ok",
+   "arrow up left"
+  ]
+ },
+ {
+  "name": "arrow-down-left",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sol alt ok",
+   "arrow down left"
+  ]
+ },
+ {
+  "name": "corner-down-right",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "köşe ok",
+   "yönlendirme",
+   "corner arrow",
+   "redirect",
+   "indent"
+  ]
+ },
+ {
+  "name": "corner-up-right",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "köşe ok",
+   "yukarı sağ",
+   "corner arrow",
+   "redirect"
+  ]
+ },
+ {
+  "name": "move-right",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sağa taşı",
+   "akış",
+   "move right",
+   "flow",
+   "transition"
+  ]
+ },
+ {
+  "name": "chevron-right",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sağ köşeli ok",
+   "ileri",
+   "chevron right",
+   "next"
+  ]
+ },
+ {
+  "name": "chevron-left",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sol köşeli ok",
+   "geri",
+   "chevron left",
+   "back"
+  ]
+ },
+ {
+  "name": "chevron-up",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "yukarı köşeli ok",
+   "chevron up",
+   "expand"
+  ]
+ },
+ {
+  "name": "chevron-down",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "aşağı köşeli ok",
+   "chevron down",
+   "collapse"
+  ]
+ },
+ {
+  "name": "chevrons-right",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "çift köşeli ok",
+   "hızlı ileri",
+   "chevrons right",
+   "fast forward"
+  ]
+ },
+ {
+  "name": "chevrons-left",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "çift köşeli ok",
+   "hızlı geri",
+   "chevrons left",
+   "rewind"
+  ]
+ },
+ {
+  "name": "check",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "onay",
+   "tamam",
+   "doğru",
+   "check",
+   "done",
+   "correct",
+   "yes"
+  ]
+ },
+ {
+  "name": "check-check",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "çift onay",
+   "tamamlandı",
+   "double check",
+   "complete"
+  ]
+ },
+ {
+  "name": "circle-check",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "onay dairesi",
+   "başarılı",
+   "check circle",
+   "success"
+  ]
+ },
+ {
+  "name": "x",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "çarpı",
+   "kapat",
+   "hayır",
+   "yanlış",
+   "x",
+   "close",
+   "no",
+   "wrong"
+  ]
+ },
+ {
+  "name": "circle-x",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "çarpı dairesi",
+   "hata",
+   "iptal",
+   "x circle",
+   "error",
+   "cancel"
+  ]
+ },
+ {
+  "name": "alert-triangle",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "uyarı üçgeni",
+   "dikkat",
+   "tehlike",
+   "alert triangle",
+   "warning",
+   "danger"
+  ]
+ },
+ {
+  "name": "alert-circle",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "uyarı dairesi",
+   "dikkat",
+   "alert circle",
+   "warning",
+   "attention"
+  ]
+ },
+ {
+  "name": "info",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "bilgi",
+   "açıklama",
+   "info",
+   "information",
+   "about"
+  ]
+ },
+ {
+  "name": "help-circle",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "soru işareti",
+   "yardım",
+   "help",
+   "question",
+   "faq"
+  ]
+ },
+ {
+  "name": "quote",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "alıntı",
+   "tırnak",
+   "söz",
+   "quote",
+   "citation",
+   "blockquote"
+  ]
+ },
+ {
+  "name": "bookmark",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "yer imi",
+   "işaret",
+   "kaydet",
+   "bookmark",
+   "save",
+   "marker"
+  ]
+ },
+ {
+  "name": "flag",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "bayrak",
+   "hedef",
+   "kilometre taşı",
+   "flag",
+   "milestone",
+   "goal"
+  ]
+ },
+ {
+  "name": "target",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "hedef",
+   "amaç",
+   "odak",
+   "target",
+   "goal",
+   "aim",
+   "focus"
+  ]
+ },
+ {
+  "name": "crosshair",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "nişangah",
+   "hassas",
+   "odak",
+   "crosshair",
+   "precision",
+   "focus"
+  ]
+ },
+ {
+  "name": "eye",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "göz",
+   "görünüm",
+   "gözlem",
+   "izleme",
+   "eye",
+   "view",
+   "observe",
+   "watch"
+  ]
+ },
+ {
+  "name": "eye-off",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "gizli",
+   "görünmez",
+   "kapalı göz",
+   "eye off",
+   "hidden",
+   "invisible"
+  ]
+ },
+ {
+  "name": "lock",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kilit",
+   "güvenlik",
+   "kapalı",
+   "lock",
+   "security",
+   "closed",
+   "private"
+  ]
+ },
+ {
+  "name": "lock-open",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "açık kilit",
+   "erişim",
+   "unlock",
+   "open",
+   "access"
+  ]
+ },
+ {
+  "name": "key",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "anahtar",
+   "şifre",
+   "çözüm",
+   "key",
+   "password",
+   "solution"
+  ]
+ },
+ {
+  "name": "lightbulb",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "ampul",
+   "fikir",
+   "buluş",
+   "lightbulb",
+   "idea",
+   "innovation",
+   "insight"
+  ]
+ },
+ {
+  "name": "zap",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "şimşek",
+   "enerji",
+   "hızlı",
+   "güç",
+   "zap",
+   "bolt",
+   "energy",
+   "fast",
+   "power"
+  ]
+ },
+ {
+  "name": "flame",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "alev",
+   "ateş",
+   "popüler",
+   "sıcak",
+   "flame",
+   "fire",
+   "hot",
+   "trending"
+  ]
+ },
+ {
+  "name": "milestone",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kilometre taşı",
+   "aşama",
+   "yol işareti",
+   "milestone",
+   "stage",
+   "signpost"
+  ]
+ },
+ {
+  "name": "route",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "rota",
+   "yol",
+   "güzergah",
+   "route",
+   "path",
+   "journey"
+  ]
+ },
+ {
+  "name": "puzzle",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "yapboz",
+   "parça",
+   "entegrasyon",
+   "puzzle",
+   "piece",
+   "integration"
+  ]
+ },
+ {
+  "name": "shield-check",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kalkan",
+   "güvenli",
+   "doğrulanmış",
+   "shield",
+   "secure",
+   "verified"
+  ]
+ },
+ {
+  "name": "award",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "ödül",
+   "madalya",
+   "başarı",
+   "award",
+   "medal",
+   "achievement"
+  ]
+ },
+ {
+  "name": "gem",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "mücevher",
+   "değerli",
+   "kalite",
+   "gem",
+   "diamond",
+   "valuable",
+   "premium"
+  ]
+ },
+ {
+  "name": "clock",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "saat",
+   "zaman",
+   "süre",
+   "clock",
+   "time",
+   "duration"
+  ]
+ },
+ {
+  "name": "timer",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kronometre",
+   "zamanlayıcı",
+   "süre",
+   "timer",
+   "stopwatch",
+   "countdown"
+  ]
+ },
+ {
+  "name": "hourglass",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kum saati",
+   "bekleme",
+   "süre",
+   "hourglass",
+   "waiting",
+   "time"
+  ]
+ },
+ {
+  "name": "calendar",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "takvim",
+   "tarih",
+   "plan",
+   "calendar",
+   "date",
+   "schedule"
+  ]
+ },
+ {
+  "name": "alarm-clock",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "alarm",
+   "çalar saat",
+   "hatırlatma",
+   "alarm clock",
+   "reminder"
+  ]
+ },
+ {
+  "name": "history",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "geçmiş",
+   "tarihçe",
+   "geri al",
+   "history",
+   "past",
+   "undo"
+  ]
+ },
+ {
+  "name": "map-pin",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "konum",
+   "iğne",
+   "yer",
+   "map pin",
+   "location",
+   "place"
+  ]
+ },
+ {
+  "name": "map",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "harita",
+   "plan",
+   "keşif",
+   "map",
+   "plan",
+   "exploration"
+  ]
+ },
+ {
+  "name": "compass",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "pusula",
+   "yön",
+   "navigasyon",
+   "compass",
+   "direction",
+   "navigation"
+  ]
+ },
+ {
+  "name": "navigation",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "navigasyon",
+   "yön",
+   "imleç",
+   "navigation",
+   "direction",
+   "cursor"
+  ]
+ },
+ {
+  "name": "search",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "arama",
+   "büyüteç",
+   "bul",
+   "search",
+   "magnifier",
+   "find"
+  ]
+ },
+ {
+  "name": "zoom-in",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "yakınlaştır",
+   "büyüt",
+   "zoom in",
+   "magnify",
+   "enlarge"
+  ]
+ },
+ {
+  "name": "zoom-out",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "uzaklaştır",
+   "küçült",
+   "zoom out",
+   "shrink"
+  ]
+ },
+ {
+  "name": "scan-search",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "tarama",
+   "inceleme",
+   "scan",
+   "search",
+   "inspect"
+  ]
+ },
+ {
+  "name": "link",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "bağlantı",
+   "zincir",
+   "ilişki",
+   "link",
+   "chain",
+   "connection"
+  ]
+ },
+ {
+  "name": "external-link",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "dış bağlantı",
+   "yeni pencere",
+   "external link",
+   "open in new"
+  ]
+ },
+ {
+  "name": "download",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "indir",
+   "kaydet",
+   "download",
+   "save"
+  ]
+ },
+ {
+  "name": "upload",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "yükle",
+   "gönder",
+   "upload",
+   "send"
+  ]
+ },
+ {
+  "name": "play",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "oynat",
+   "başlat",
+   "play",
+   "start",
+   "video"
+  ]
+ },
+ {
+  "name": "pause",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "duraklat",
+   "bekle",
+   "pause",
+   "hold"
+  ]
+ },
+ {
+  "name": "refresh",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "yenile",
+   "döngü",
+   "tekrar",
+   "refresh",
+   "reload",
+   "cycle"
+  ]
+ },
+ {
+  "name": "rotate",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "döndür",
+   "geri al",
+   "sıfırla",
+   "rotate",
+   "undo",
+   "reset"
+  ]
+ },
+ {
+  "name": "repeat",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "tekrarla",
+   "döngü",
+   "repeat",
+   "loop",
+   "iterate"
+  ]
+ },
+ {
+  "name": "shuffle",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "karıştır",
+   "rastgele",
+   "shuffle",
+   "random"
+  ]
+ },
+ {
+  "name": "settings",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "ayarlar",
+   "dişli",
+   "yapılandırma",
+   "settings",
+   "gear",
+   "configuration"
+  ]
+ },
+ {
+  "name": "sliders",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kaydırıcılar",
+   "ayar",
+   "parametre",
+   "sliders",
+   "controls",
+   "parameters"
+  ]
+ },
+ {
+  "name": "wrench",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "anahtar",
+   "tamir",
+   "araç",
+   "wrench",
+   "tool",
+   "fix"
+  ]
+ },
+ {
+  "name": "plus",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "artı",
+   "ekle",
+   "toplama",
+   "plus",
+   "add",
+   "addition"
+  ]
+ },
+ {
+  "name": "minus",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "eksi",
+   "çıkar",
+   "çıkarma",
+   "minus",
+   "subtract",
+   "remove"
+  ]
+ },
+ {
+  "name": "equal",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "eşittir",
+   "denklem",
+   "equal",
+   "equation",
+   "equals"
+  ]
+ },
+ {
+  "name": "percent",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "yüzde",
+   "oran",
+   "percent",
+   "percentage",
+   "ratio"
+  ]
+ },
+ {
+  "name": "hash",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kare",
+   "numara",
+   "etiket",
+   "hash",
+   "number",
+   "tag"
+  ]
+ },
+ {
+  "name": "asterisk",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "yıldız işareti",
+   "çarpma",
+   "dipnot",
+   "asterisk",
+   "multiply",
+   "footnote"
+  ]
+ },
+ {
+  "name": "divide",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "bölme",
+   "bölü",
+   "divide",
+   "division"
+  ]
+ },
+ {
+  "name": "file-text",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "belge",
+   "dosya",
+   "metin",
+   "rapor",
+   "file",
+   "document",
+   "text",
+   "report"
+  ]
+ },
+ {
+  "name": "book-open",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "açık kitap",
+   "okuma",
+   "kaynak",
+   "book",
+   "reading",
+   "reference"
+  ]
+ },
+ {
+  "name": "graduation-cap",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "mezuniyet",
+   "eğitim",
+   "akademik",
+   "graduation",
+   "education",
+   "academic"
+  ]
+ },
+ {
+  "name": "presentation",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sunum",
+   "tahta",
+   "ders",
+   "presentation",
+   "board",
+   "lecture"
+  ]
+ },
+ {
+  "name": "monitor",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "ekran",
+   "monitör",
+   "bilgisayar",
+   "monitor",
+   "screen",
+   "display"
+  ]
+ },
+ {
+  "name": "pencil",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kalem",
+   "düzenle",
+   "yazma",
+   "pencil",
+   "edit",
+   "write"
+  ]
+ },
+ {
+  "name": "pen-tool",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kalem ucu",
+   "tasarım",
+   "vektör",
+   "pen tool",
+   "design",
+   "vector"
+  ]
+ },
+ {
+  "name": "users",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kullanıcılar",
+   "ekip",
+   "topluluk",
+   "users",
+   "team",
+   "community",
+   "people"
+  ]
+ },
+ {
+  "name": "user",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kullanıcı",
+   "kişi",
+   "profil",
+   "user",
+   "person",
+   "profile"
+  ]
+ },
+ {
+  "name": "message-circle",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "mesaj",
+   "konuşma",
+   "yorum",
+   "message",
+   "chat",
+   "comment"
+  ]
+ },
+ {
+  "name": "list-checks",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kontrol listesi",
+   "görevler",
+   "checklist",
+   "tasks",
+   "todo"
+  ]
+ },
+ {
+  "name": "copy",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kopyala",
+   "çoğalt",
+   "copy",
+   "duplicate"
+  ]
+ },
+ {
+  "name": "box",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "kutu",
+   "paket",
+   "3boyut",
+   "box",
+   "package",
+   "3d",
+   "cube"
+  ]
+ },
+ {
+  "name": "component",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "bileşen",
+   "modül",
+   "parça",
+   "component",
+   "module",
+   "part"
+  ]
+ },
+ {
+  "name": "blocks",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "bloklar",
+   "yapı taşları",
+   "blocks",
+   "building blocks",
+   "lego"
+  ]
+ },
+ {
+  "name": "focus",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "odak",
+   "çerçeve",
+   "focus",
+   "frame",
+   "center"
+  ]
+ },
+ {
+  "name": "maximize",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "büyüt",
+   "tam ekran",
+   "maximize",
+   "fullscreen",
+   "expand"
+  ]
+ },
+ {
+  "name": "minimize",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "küçült",
+   "daralt",
+   "minimize",
+   "shrink",
+   "collapse"
+  ]
+ },
+ {
+  "name": "wand",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "sihirli değnek",
+   "otomatik",
+   "efekt",
+   "magic wand",
+   "auto",
+   "effect"
+  ]
+ },
+ {
+  "name": "badge-check",
+  "set": "lucide",
+  "style": "outline",
+  "tags": [
+   "rozet",
+   "onaylı",
+   "doğrulanmış",
+   "badge",
+   "verified",
+   "certified"
+  ]
+ }
+]

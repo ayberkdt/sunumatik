@@ -1,0 +1,357 @@
+{
+  "generated": "2026-08-13",
+  "license": "CC BY 4.0 (esawebb.org / esahubble.org) — see LICENSE-NOTES.md; credit lines must be shown unaltered",
+  "note_on_coords": "poi x/y are percent coordinates (0-100, from top-left), hand-estimated positions for caption-verified features; fine-tune in the preset editor",
+  "images": [
+    {
+      "file": "carina-cosmic-cliffs.jpg",
+      "title_tr": "Kozmik Uçurumlar — Carina Bulutsusu (NIRCam)",
+      "target": "NGC 3324, Carina Nebula",
+      "instrument": "NIRCam",
+      "releaseId": "weic2205a",
+      "sourceUrl": "https://esawebb.org/images/weic2205a/",
+      "credit": "NASA, ESA, CSA, and STScI",
+      "width": 4000,
+      "height": 2317,
+      "poi": [
+        {
+          "x": 55, "y": 42,
+          "label_tr": "Yükselen 'buhar'",
+          "note_tr": "Tepelerin üzerinden yükseliyor gibi görünen buhar aslında yoğun ultraviyole ışınımla bulutsudan dışarı akan sıcak, iyonlaşmış gazdır.",
+          "src": "Caption: \"The 'steam' that appears to rise from the celestial 'mountains' is actually hot, ionised gas\" streaming due to ultraviolet radiation."
+        },
+        {
+          "x": 30, "y": 55,
+          "label_tr": "Önyıldız fıskiyeleri",
+          "note_tr": "Altın renginde görünen jetler, toz içine gömülü, henüz doğmakta olan yıldızlardan fışkırıyor.",
+          "src": "Caption: \"Protostellar jets and outflows, which appear in gold, shoot from dust-enshrouded, nascent stars.\""
+        },
+        {
+          "x": 47, "y": 47,
+          "label_tr": "Sırtın tepesindeki patlama ('blow-out')",
+          "note_tr": "Sırtın üst-orta kısmında alışılmadık bir patlama (blow-out) yapısı görülüyor.",
+          "src": "Caption: An unusual \"blow-out\" erupts at the ridge's top-center."
+        },
+        {
+          "x": 72, "y": 65,
+          "label_tr": "Kabarcıklar ve oyuklar",
+          "note_tr": "Yeni doğan yıldızların şiddetli ışınımı ve yıldız rüzgarları bulutta kabarcıklar ve oyuklar açıyor.",
+          "src": "Caption: \"Bubbles and cavities are being blown by the intense radiation and stellar winds of newborn stars.\""
+        }
+      ]
+    },
+    {
+      "file": "pillars-nircam.jpg",
+      "title_tr": "Yaratılış Sütunları (Webb NIRCam)",
+      "target": "Pillars of Creation, Eagle Nebula (M16)",
+      "instrument": "NIRCam",
+      "releaseId": "weic2216b",
+      "sourceUrl": "https://esawebb.org/images/weic2216b/",
+      "credit": "NASA, ESA, CSA, STScI; J. DePasquale, A. Koekemoer, A. Pagan (STScI)",
+      "width": 2309,
+      "height": 4000,
+      "pairs": [
+        { "file": "pillars-hubble-2014.jpg", "pair_kind": "hubble-vs-webb" },
+        { "file": "pillars-miri.jpg", "pair_kind": "nircam-vs-miri" }
+      ],
+      "poi": [
+        {
+          "x": 58, "y": 45,
+          "label_tr": "Kırmızı önyıldızlar",
+          "note_tr": "Sahnenin yıldızları: bazen sekiz kırınım ışınıyla görünen parlak kırmızı küreler, henüz oluşmakta olan yıldızlardır.",
+          "src": "Caption: \"Protostars are the scene-stealers in this Near-Infrared Camera (NIRCam) image. These are the bright red orbs that sometimes appear with eight diffraction spikes.\""
+        },
+        {
+          "x": 40, "y": 72,
+          "label_tr": "Lav gibi dalgalı çizgiler",
+          "note_tr": "Sütunların kenarlarındaki lav benzeri dalgalı çizgiler, hâlâ oluşmakta olan yıldızların dışarı attığı maddedir.",
+          "src": "Caption: \"Along the edges of the pillars are wavy lines that look like lava. These are ejections from stars that are still forming.\""
+        },
+        {
+          "x": 35, "y": 20,
+          "label_tr": "Yarı saydam gaz ve toz",
+          "note_tr": "Sütunlar çölden yükselen kemerler gibi görünse de yarı saydam gaz ve tozla dolu, sürekli değişen yapılardır.",
+          "src": "Caption: \"The pillars look like arches and spires rising out of a desert landscape, but are filled with semi-transparent gas and dust, and ever changing.\""
+        }
+      ]
+    },
+    {
+      "file": "pillars-miri.jpg",
+      "title_tr": "Yaratılış Sütunları (Webb MIRI)",
+      "target": "Pillars of Creation, Eagle Nebula (M16)",
+      "instrument": "MIRI",
+      "releaseId": "weic2218a",
+      "sourceUrl": "https://esawebb.org/images/weic2218a/",
+      "credit": "NASA, ESA, CSA, STScI, J. DePasquale (STScI), A. Pagan (STScI)",
+      "width": 1987,
+      "height": 1817,
+      "pairs": [
+        { "file": "pillars-nircam.jpg", "pair_kind": "nircam-vs-miri" }
+      ],
+      "poi": [
+        {
+          "x": 50, "y": 14,
+          "label_tr": "V biçimli soğuk toz bölgesi",
+          "note_tr": "Üstte narin bir V şekli çizen kırmızı bölgede toz hem seyrek hem de daha soğuk.",
+          "src": "Caption: The \"red region toward the top, which forms a delicate V shape, is where the dust is both diffuse and cooler.\""
+        },
+        {
+          "x": 45, "y": 55,
+          "label_tr": "Mavi-gri yoğun sütunlar",
+          "note_tr": "Orta kızılötesinde binlerce yıldız görünmez olur; yoğun mavi-gri sütunlarda ise çok sayıda yıldız aktif olarak oluşuyor.",
+          "src": "Caption: \"thousands of stars that exist in this region disappear from view\" ... \"many stars actively forming in these dense blue-grey pillars.\""
+        },
+        {
+          "x": 70, "y": 40,
+          "label_tr": "Kaybolan yıldızlar",
+          "note_tr": "Yıldızlar orta kızılötesi ışıkta genellikle çok az ışıma yaptığından bu görüntüde neredeyse yoklar; sahne tümüyle gaz ve toz katmanlarına kalıyor.",
+          "src": "Caption: \"stars typically do not emit much mid-infrared light\"; \"seemingly endless layers of gas and dust become the centrepiece.\""
+        }
+      ]
+    },
+    {
+      "file": "pillars-hubble-2014.jpg",
+      "title_tr": "Yaratılış Sütunları (Hubble, görünür ışık, 2014)",
+      "target": "Pillars of Creation, Eagle Nebula (M16)",
+      "instrument": "Hubble WFC3 (visible light)",
+      "releaseId": "heic1501a",
+      "sourceUrl": "https://esahubble.org/images/heic1501a/",
+      "credit": "NASA, ESA/Hubble and the Hubble Heritage Team",
+      "width": 3835,
+      "height": 4000,
+      "pairs": [
+        { "file": "pillars-nircam.jpg", "pair_kind": "hubble-vs-webb" }
+      ],
+      "poi": [
+        {
+          "x": 38, "y": 45,
+          "label_tr": "Pas rengi 'fil hortumları'",
+          "note_tr": "Bulutsunun ünlü sütunları: pas rengi 'fil hortumları' biçimindeki yoğun gaz ve toz kuleleri.",
+          "src": "Caption: \"the rust-coloured elephants' trunks of the nebula's famous pillars.\""
+        },
+        {
+          "x": 33, "y": 20,
+          "label_tr": "Aşınan sütun tepeleri",
+          "note_tr": "Şiddetli yıldız ışınımı ve rüzgarlar toz ve gaz yapılarını zamanla aşındırıyor; iyileşen kontrast bu değişimin izlenmesini sağlıyor.",
+          "src": "Caption: intense stellar radiation and winds gradually erode the dust and gas formations; improved contrast lets astronomers track structural changes."
+        },
+        {
+          "x": 62, "y": 68,
+          "label_tr": "Karanlık kozmik toz lifleri",
+          "note_tr": "Renkli gaz bulutlarının parıltısı arasında ince, karanlık kozmik toz lifleri uzanıyor.",
+          "src": "Caption: \"the multi-coloured glow of gas clouds, wispy tendrils of dark cosmic dust.\""
+        }
+      ]
+    },
+    {
+      "file": "deep-field-smacs-0723.jpg",
+      "title_tr": "Webb'in İlk Derin Alanı — SMACS 0723",
+      "target": "Galaxy cluster SMACS J0723.3-7327",
+      "instrument": "NIRCam",
+      "releaseId": "weic2209a",
+      "sourceUrl": "https://esawebb.org/images/weic2209a/",
+      "credit": "NASA, ESA, CSA, and STScI",
+      "width": 3920,
+      "height": 4000,
+      "poi": [
+        {
+          "x": 50, "y": 50,
+          "label_tr": "Kütleçekimsel mercek: galaksi kümesi",
+          "note_tr": "SMACS 0723 kümesinin galaksileri, kütleçekimleriyle arkalarındaki çok daha uzak galaksilerin ışığını bükerek doğal bir mercek oluşturuyor. Küme 4,6 milyar yıl önceki haliyle görülüyor.",
+          "src": "Caption: \"Bound together by gravity in a galaxy cluster, they are bending the light from galaxies that appear in the vast distances behind them.\""
+        },
+        {
+          "x": 62, "y": 55,
+          "label_tr": "Turuncu mercek yayları",
+          "note_tr": "En parlak küme galaksisinin sağındaki turuncu yaylar, arka plan galaksilerinin gerilmiş ve aynalanmış görüntüleridir.",
+          "src": "Caption: \"Clear examples of mirroring are found in the prominent orange arcs to the left and right of the brightest cluster galaxy.\""
+        },
+        {
+          "x": 38, "y": 47,
+          "label_tr": "Aynalanmış galaksi görüntüleri",
+          "note_tr": "Solda da aynı arka plan galaksilerinin mercekle çoğaltılmış kopyaları görülüyor; binlerce galaksi tek karede.",
+          "src": "Caption: \"Thousands of galaxies flood this near-infrared image of galaxy cluster SMACS 0723\"; mirrored arcs \"to the left and right of the brightest cluster galaxy.\""
+        }
+      ]
+    },
+    {
+      "file": "southern-ring-nircam.jpg",
+      "title_tr": "Güney Halka Bulutsusu (NIRCam)",
+      "target": "Southern Ring Nebula (NGC 3132)",
+      "instrument": "NIRCam",
+      "releaseId": "weic2207b",
+      "sourceUrl": "https://esawebb.org/images/weic2207b/",
+      "credit": "NASA, ESA, CSA, STScI, and the Webb ERO Production Team",
+      "width": 4000,
+      "height": 3725,
+      "poi": [
+        {
+          "x": 48, "y": 53,
+          "label_tr": "Gizli ikinci yıldız",
+          "note_tr": "Parlak yıldızın kırınım ışınlarından biri boyunca, sol altta zar zor seçilen ikinci yıldız bulutsunun asıl kaynağıdır; binlerce yıldır katman katman madde fırlatıyor.",
+          "src": "Caption: \"A second star, barely visible at lower left along one of the bright star's diffraction spikes, is the nebula's source.\""
+        },
+        {
+          "x": 25, "y": 30,
+          "label_tr": "Bulutsudan sızan 'projektör' ışınları",
+          "note_tr": "Yüzlerce dümdüz, parlak çizgi gaz ve toz halkalarını deliyor; ışık, bulutsudaki deliklerden bulut arasından sızan güneş ışığı gibi geçiyor.",
+          "src": "Caption: \"Hundreds of straight, brightly-lit lines pierce through the rings of gas and dust... like sunlight through gaps in a cloud.\""
+        },
+        {
+          "x": 50, "y": 45,
+          "label_tr": "Camgöbeği yoğun merkez",
+          "note_tr": "Merkezdeki koyu camgöbeği bölgeler gaz ve tozun en yoğun olduğu, ışığın kaçamadığı yerlerdir.",
+          "src": "Caption: \"Areas that are a deeper teal indicate that the gas and dust are denser — and light is unable to break free.\""
+        },
+        {
+          "x": 12, "y": 40,
+          "label_tr": "Yandan görünen uzak galaksi",
+          "note_tr": "Bulutsunun saydam bölgelerinde uzak galaksiler, aralarında yandan (edge-on) görülen bir galaksi bile seçilebiliyor.",
+          "src": "Caption: the image reveals \"distant galaxies\", including \"a faraway galaxy seen edge-on\"."
+        }
+      ]
+    },
+    {
+      "file": "stephans-quintet.jpg",
+      "title_tr": "Stephan Beşlisi (NIRCam + MIRI)",
+      "target": "Stephan's Quintet (Hickson Compact Group 92)",
+      "instrument": "NIRCam + MIRI",
+      "releaseId": "weic2208a",
+      "sourceUrl": "https://esawebb.org/images/weic2208a/",
+      "credit": "NASA, ESA, CSA, and STScI",
+      "width": 4000,
+      "height": 3835,
+      "poi": [
+        {
+          "x": 50, "y": 45,
+          "label_tr": "NGC 7318B'nin şok dalgası",
+          "note_tr": "Galaksilerden biri, NGC 7318B, kümenin içinden geçerken MIRI'nin görüntülediği dev şok dalgaları yaratıyor.",
+          "src": "Caption: \"Webb's MIRI instrument captures huge shock waves as one of the galaxies, NGC 7318B, smashes through the cluster.\""
+        },
+        {
+          "x": 20, "y": 55,
+          "label_tr": "Ön plandaki NGC 7320",
+          "note_tr": "NGC 7320 aslında beşlinin üyesi değil: 40 milyon ışık yılı uzaklıkta bir ön plan galaksisi; diğer dördü yaklaşık 290 milyon ışık yılı uzakta.",
+          "src": "Caption: NGC 7320 \"resides 40 million light-years from Earth, while the other four galaxies are about 290 million light-years away.\""
+        },
+        {
+          "x": 65, "y": 30,
+          "label_tr": "Kütleçekimle sökülen gaz kuyrukları",
+          "note_tr": "Kütleçekim etkileşimleri birkaç galaksiden gaz, toz ve yıldızlardan oluşan uzun kuyruklar koparıyor.",
+          "src": "Caption: \"sweeping tails of gas, dust and stars are being pulled from several of the galaxies due to gravitational interactions.\""
+        },
+        {
+          "x": 55, "y": 60,
+          "label_tr": "Genç yıldız kümeleri",
+          "note_tr": "Mozaikte milyonlarca genç yıldızdan oluşan ışıltılı kümeler ve taze yıldız doğumunun yaşandığı starburst bölgeleri parlıyor.",
+          "src": "Caption: \"sparkling clusters of millions of young stars and starburst regions of fresh star birth.\""
+        }
+      ]
+    },
+    {
+      "file": "cartwheel-galaxy.jpg",
+      "title_tr": "Tekerlek Galaksisi (NIRCam + MIRI)",
+      "target": "Cartwheel Galaxy (ESO 350-40)",
+      "instrument": "NIRCam + MIRI",
+      "releaseId": "weic2211a",
+      "sourceUrl": "https://esawebb.org/images/weic2211a/",
+      "credit": "NASA, ESA, CSA, STScI",
+      "width": 4000,
+      "height": 3682,
+      "poi": [
+        {
+          "x": 60, "y": 50,
+          "label_tr": "İç halka: çarpışmanın merkezi",
+          "note_tr": "Tekerlek, yaklaşık 400 milyon yıl önceki yüksek hızlı bir çarpışmanın merkezinden şok dalgaları gibi dışa doğru genişleyen iki halkadan oluşuyor; bu parlak iç halkadır.",
+          "src": "Caption: \"The Cartwheel is composed of two rings, a bright inner ring and a colourful outer ring. Both rings expand outward from the centre of the collision like shockwaves.\""
+        },
+        {
+          "x": 78, "y": 62,
+          "label_tr": "Renkli dış halka",
+          "note_tr": "Dışa doğru genişleyen renkli dış halka; çarpışmanın şok dalgasının ulaştığı sınır.",
+          "src": "Caption: same sentence — \"a bright inner ring and a colourful outer ring... expand outward... like shockwaves.\""
+        },
+        {
+          "x": 63, "y": 42,
+          "label_tr": "Kırmızı 'jant telleri'",
+          "note_tr": "İç ve dış halka arasındaki parlak kırmızı çizgiler, eski çarpışmadan kalan hidrokarbon açısından zengin, ışıldayan tozdur.",
+          "src": "Caption: \"the bright red streaks seen between the inner and outer rings\"; \"brilliant red hues... are caused by glowing, hydrocarbon-rich dust.\""
+        },
+        {
+          "x": 18, "y": 20,
+          "label_tr": "Eşlikçi sarmal galaksi",
+          "note_tr": "Sol üstteki eşlikçi sarmal galakside de aynı hidrokarbonca zengin toz kaynaklı kırmızı tonlar görülüyor.",
+          "src": "Caption: red hues located \"not only throughout the Cartwheel, but also the companion spiral galaxy at the top left.\""
+        }
+      ]
+    },
+    {
+      "file": "rho-ophiuchi.jpg",
+      "title_tr": "Rho Ophiuchi Bulut Kompleksi (Webb'in 1. yılı)",
+      "target": "Rho Ophiuchi cloud complex",
+      "instrument": "NIRCam",
+      "releaseId": "weic2316a",
+      "sourceUrl": "https://esawebb.org/images/weic2316a/",
+      "credit": "NASA, ESA, CSA, STScI, K. Pontoppidan (STScI), A. Pagan (STScI)",
+      "width": 4000,
+      "height": 3746,
+      "poi": [
+        {
+          "x": 30, "y": 25,
+          "label_tr": "Genç yıldız jetleri (kırmızı)",
+          "note_tr": "Genç yıldızlardan fışkıran jetler görüntüyü çaprazlama kesiyor; çevredeki yıldızlararası gaza çarparak moleküler hidrojeni kırmızı renkte parlatıyor.",
+          "src": "Caption: \"Jets bursting from young stars crisscross the image, impacting the surrounding interstellar gas and lighting up molecular hydrogen, shown in red.\""
+        },
+        {
+          "x": 42, "y": 68,
+          "label_tr": "S1 yıldızının oyduğu mağara",
+          "note_tr": "Görüntünün alt yarısında S1 yıldızı, yıldız rüzgarlarıyla kendi oyduğu ışıltılı bir mağaranın ortasında duruyor; çevresi parlak polisiklik aromatik hidrokarbonlarla sarılı.",
+          "src": "Caption: \"the star S1... appears amid a glowing cave it is carving out with its stellar winds in the lower half of the image.\""
+        },
+        {
+          "x": 55, "y": 45,
+          "label_tr": "Yıldız çevresi disk gölgeleri",
+          "note_tr": "Bazı yıldızlarda gelecekteki gezegen sistemlerinin habercisi olan yıldız çevresi diskin karakteristik gölgesi görülüyor.",
+          "src": "Caption: \"stars [that] display the telltale shadow of a circumstellar disc, the makings of future planetary systems.\""
+        }
+      ]
+    },
+    {
+      "file": "uranus-rings-nircam.jpg",
+      "title_tr": "Uranüs ve Halkaları (NIRCam geniş alan)",
+      "target": "Uranus",
+      "instrument": "NIRCam",
+      "releaseId": "weic2332b",
+      "sourceUrl": "https://esawebb.org/images/weic2332b/",
+      "credit": "NASA, ESA, CSA, STScI",
+      "width": 3771,
+      "height": 3189,
+      "poi": [
+        {
+          "x": 50, "y": 48,
+          "label_tr": "Zeta halkası dahil halka sistemi",
+          "note_tr": "Webb'in duyarlılığı, gezegene en yakın, son derece soluk ve dağınık Zeta halkası dahil iç ve dış halkaları ortaya çıkarıyor.",
+          "src": "Caption: reveals the \"Zeta ring — the extremely faint and diffuse ring closest to the planet.\""
+        },
+        {
+          "x": 53, "y": 43,
+          "label_tr": "Mevsimsel kuzey kutup başlığı",
+          "note_tr": "Gezegenin mevsimsel kuzey kutup başlığı parlak beyaz parlıyor ve Uranüs'ün mavi tonuyla çarpıcı bir kontrast oluşturuyor.",
+          "src": "Caption: \"the planet's seasonal north polar cap gleams in a bright white.\""
+        },
+        {
+          "x": 62, "y": 32,
+          "label_tr": "Uydular",
+          "note_tr": "Karede Uranüs'ün 27 uydusundan 14'ü seçilebiliyor.",
+          "src": "Caption: the image identifies 14 of the planet's 27 moons."
+        },
+        {
+          "x": 78, "y": 48,
+          "label_tr": "Arka plan galaksileri",
+          "note_tr": "Alanın çoğuna turuncu lekeler halinde arka plan galaksileri dağılmış; gezegenin sağında iki büyükçe, bulanık beyaz galaksi var.",
+          "src": "Caption: most background galaxies appear \"as orange smudges, and there are two larger, fuzzy white galaxies to the right of the planet.\""
+        }
+      ]
+    }
+  ]
+}

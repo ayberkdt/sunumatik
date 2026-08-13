@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cosmos Vanilla Preset</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <link rel="stylesheet" href="../moon_react_source/components/moon_react_source.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #01020a; }
+    main { width: 100%; height: 100%; padding: 24px; }
+    main > div { width: 100%; height: 100%; }
+    /* demo-katmanı denetimi + CC BY kredi satırı (doku açıkken görünür) */
+    #photoRow { position: fixed; left: 36px; bottom: 34px; z-index: 5;
+      color: #b8c4dd; font: 12px/1.4 system-ui, sans-serif;
+      background: rgba(4, 8, 20, .55); padding: 6px 10px; border-radius: 8px;
+      display: flex; align-items: center; gap: 6px; }
+    #esoCredit { position: fixed; right: 36px; bottom: 34px; z-index: 5;
+      color: #8fa0c0; font: 11px/1.4 system-ui, sans-serif;
+      background: rgba(4, 8, 20, .55); padding: 4px 8px; border-radius: 8px; }
+    #esoCredit[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <main><div id="host"></div></main>
+  <label id="photoRow"><input type="checkbox" id="photoToggle"> Fotoğrafik Samanyolu (ESO)</label>
+  <div id="esoCredit" hidden>Samanyolu: ESO/S. Brunier (CC BY 4.0)</div>
+  <script type="module">
+    import { mountCosmos } from './cosmos-sky.mjs';
+    const cosmos = await mountCosmos(document.querySelector('#host'));
+    window.__cosmos = cosmos;   // deterministik test/export sürüşü için
+    cosmos.figure.focus();
+
+    // fotoğrafik bant anahtarı: yüklü dokuyu açar/kapar; doku hiç
+    // yüklenemediyse anahtar devre dışı kalır (fallback prosedürel)
+    const toggle = document.querySelector('#photoToggle');
+    const credit = document.querySelector('#esoCredit');
+    const syncCredit = () => { credit.hidden = !cosmos.galaxyPhotoActive(); };
+    toggle.checked = cosmos.galaxyPhotoActive();
+    toggle.disabled = !cosmos.galaxyPhotoActive() && cosmos._state.galaxyTexture !== false;
+    toggle.addEventListener('change', () => {
+      cosmos.setOptions({ galaxyTexture: toggle.checked ? 'auto' : false });
+      syncCredit();
+    });
+    syncCredit();
+  </script>
+</body>
+</html>

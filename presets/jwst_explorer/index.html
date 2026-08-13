@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JWST Explorer Preset</title>
+<link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+<style>
+  :root{ --color-canvas:#0F1013; --color-surface:#1A1C21; --color-ink:#F4EEE1;
+    --color-muted:#A9A296; --color-accent:#D3B26A; --color-rule:#2E3037; }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--color-canvas);color:var(--color-ink);
+    font:15px/1.5 Bahnschrift,'Segoe UI',sans-serif}
+  main{display:grid;grid-template-rows:auto 1fr auto;gap:14px;height:100%;padding:20px}
+  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  h1{font-size:20px;margin:0}
+  .hint{color:var(--color-muted);font-size:13px}
+  #stage{min-height:0}
+  #strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+  .thumb{flex:0 0 auto;width:132px;cursor:pointer;border:1px solid var(--color-rule);
+    border-radius:10px;overflow:hidden;background:var(--color-surface);padding:0}
+  .thumb img{width:100%;height:76px;object-fit:cover;display:block}
+  .thumb span{display:block;font-size:11px;padding:6px 8px;color:var(--color-ink);text-align:left}
+  .thumb.on{border-color:var(--color-accent)}
+  .thumb:focus-visible{outline:2px solid var(--color-accent)}
+  #cmpBtn{margin-left:auto;background:var(--color-surface);color:var(--color-ink);
+    border:1px solid var(--color-rule);border-radius:8px;padding:7px 14px;cursor:pointer}
+  #cmpBtn[disabled]{opacity:.4;cursor:default}
+  #cmpBtn.on{border-color:var(--color-accent);color:var(--color-accent)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>JWST Explorer</h1>
+    <span class="hint">sürükle = kaydır · tekerlek = yakınlaş · ←/→ = ilgi noktaları · 0 = genel bakış</span>
+    <button id="cmpBtn" disabled>Karşılaştır</button>
+  </header>
+  <div id="stage"></div>
+  <nav id="strip" aria-label="Görüntü seç"></nav>
+</main>
+<script type="module">
+  import { mountJwstExplorer } from './jwst-explorer.mjs';
+  const res = await fetch('./images/manifest.json');
+  const manifest = await res.json();
+  const entries = manifest.images || manifest;      /* {images:[...]} ya da düz dizi */
+  const byFile = Object.fromEntries(entries.map(e => [e.file, e]));
+  const stage = document.getElementById('stage');
+  const strip = document.getElementById('strip');
+  const cmpBtn = document.getElementById('cmpBtn');
+  let ex = null, current = null, comparing = false;
+
+  function pairOf(e){
+    const p = e.pairs || e.pair;
+    if (!p) return null;
+    const file = typeof p === 'string' ? p : (Array.isArray(p) ? (p[0]&&(p[0].file||p[0])) : p.file);
+    return file ? (byFile[file] || { file, title_tr: 'Karşılaştırma', credit: e.credit }) : null;
+  }
+  /* karşılaştırma karşılıkları şeride ayrıca konmaz — ana kayda perde olarak bağlıdırlar */
+  const paired = new Set(entries.map(pairOf).filter(Boolean).map(p => p.file));
+
+  async function show(e){
+    current = e; comparing = false;
+    if (ex) ex.dispose();
+    ex = await mountJwstExplorer(stage, { entry: e });
+    const p = pairOf(e);
+    cmpBtn.disabled = !p;
+    cmpBtn.classList.remove('on');
+    cmpBtn.textContent = p ? 'Karşılaştır: ' + (p.instrument || 'çift') : 'Karşılaştır';
+    [...strip.children].forEach(t => t.classList.toggle('on', t.dataset.file === e.file));
+  }
+  cmpBtn.addEventListener('click', async () => {
+    comparing = !comparing;
+    cmpBtn.classList.toggle('on', comparing);
+    await ex.compare(comparing ? pairOf(current) : null);
+  });
+  for (const e of entries) {
+    if (paired.has(e.file)) continue;
+    const b = document.createElement('button');
+    b.className = 'thumb'; b.dataset.file = e.file;
+    b.innerHTML = '<img loading="lazy" src="images/' + e.file + '" alt=""><span>' +
+      (e.title_tr || e.target) + '</span>';
+    b.addEventListener('click', () => show(e));
+    strip.appendChild(b);
+  }
+  window.__jwst = { show, get ex(){ return ex; }, entries };
+  await show(entries[0]);
+</script>
+</body>
+</html>

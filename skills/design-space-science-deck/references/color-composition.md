@@ -87,3 +87,47 @@ Vibrant means decisive chroma and contrast, not maximum saturation everywhere. P
 ## Accessibility
 
 Validate every text/background pair. Target WCAG 4.5:1 for ordinary text and prefer 7:1 for small citations or difficult projectors. Never encode a scientific category only by hue; add shape, line style, label, or texture.
+
+
+## Harmony recipes (2026 expansion)
+
+Every saved palette now declares its `harmony` and `wheel` in
+`/presets/color_themes/palette-library.json`; extended palettes add `data3..data6`,
+a 5-step `sequential` ramp, a 5-step `diverging` ramp, and a `cvd` note.
+The CSS mirror exposes them as `--color-data-3..6`, `--ramp-seq-1..5`,
+`--ramp-div-1..5`. Build NEW combinations with these recipes:
+
+- **Complementary** (opposite hues): commit the chroma to ONE side; the other
+  side works matte and slightly desaturated, or the pair vibrates. Saved:
+  midnight-tangerine, ultraviolet-chartreuse, cerulean-vermilion,
+  royal-saffron. Blue/orange and violet/yellow axes are also the safest
+  under color-vision deficiency.
+- **Split-complementary** (base + the two neighbours of its complement):
+  decisive like complementary but with a built-in second accent — the rescue
+  when one accent must rank above another. Saved: prussian-amber.
+- **Analogous** (3 neighbouring hues): continuous phenomena, calm ramps; the
+  sequential ramp is native here. ALWAYS add one far-hue data counterweight
+  or two-series charts become unreadable. Saved: magma-basalt (warm),
+  aurora-polar (cool), verdigris-slate, sage-buttercream, oat-cocoa.
+- **Triadic** (3 hues at 120°): only when exactly three categories deserve
+  equal rank; a fourth category demotes to a muted slot. Saved: heliograph.
+- **Monochromatic** (one hue, value-stepped): scholarly quiet; the palette's
+  language is its sequential ramp. Give charts one warm counter-hue for
+  "the other thing". Saved: ionosphere, porcelain-ink, berry-orchid.
+
+Discipline that makes any recipe premium:
+
+1. **Value plan before hue plan.** Decide the grayscale composition first
+   (canvas ~N2 or ~N9, surface one step off, ink opposite); a palette that
+   fails in grayscale fails in color.
+2. **One chroma peak per slide.** The accent is the loudest color on stage;
+   data colors sit one chroma step below it, neutrals carry the rest
+   (70/20/10 still applies).
+3. **Simultaneous contrast check.** A mid-value accent on a mid-value canvas
+   hums; keep at least 3 value steps between accent and its ground.
+4. **Categorical charts:** max 6 series from `data1..6`, adjacent series
+   never hue-neighbours, and the palette's `cvd` note names the pair that
+   must not carry a distinction alone. Sequential data uses `--ramp-seq-*`,
+   signed differences use `--ramp-div-*` — never rainbow.
+5. **Text still wins:** every new combination must pass
+   `scripts/validate-palette-library.mjs` (4.5:1 floors) before use.
