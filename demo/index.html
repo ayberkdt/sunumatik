@@ -1,935 +1,772 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Preset Kütüphanesi — Test Sunumu</title>
-  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
-  <script>document.documentElement.classList.add('js');</script>
-  <script type="importmap">{ "imports": { "three": "../presets/moon_advanced/vendor/three.module.min.js" } }</script>
-  <link rel="stylesheet" href="../presets/moon_react_source/components/moon_react_source.css">
-  <link rel="stylesheet" href="../presets/color_themes/palette-library.css">
-  <link rel="stylesheet" href="../presets/color_themes/components/table-presets.css">
-  <link rel="stylesheet" href="../presets/charts_icons/chart-theme.css">
-  <link rel="stylesheet" href="../presets/motion_core/core-motion.css">
-  <link rel="stylesheet" href="../presets/motion_core/primitives-motion.css">
-  <link rel="stylesheet" href="../presets/motion_core/table-motion.css">
-  <link rel="stylesheet" href="../presets/motion_core/interaction-motion.css">
-  <link rel="stylesheet" href="../presets/motion_core/morph-transition.css">
-  <link rel="stylesheet" href="../presets/motion_core/slide-transitions.css">
-  <link rel="stylesheet" href="../presets/timeline_tree/timeline_tree.css">
-  <link rel="stylesheet" href="../presets/equation_pen/equation-writing.css">
-  <link rel="stylesheet" href="../presets/neural_network/neural_network.css">
-  <style>
-    * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden;
-                 background: #08090b; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
-    .viewport { position: relative; width: 100%; height: 100%; overflow: hidden; }
-    .deck-stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px;
-                  transform-origin: 0 0; overflow: hidden;
-                  background: var(--color-canvas); color: var(--color-ink); }
-    .slide { position: absolute; inset: 0; visibility: hidden; opacity: 0; pointer-events: none;
-             padding: 96px 128px 84px; display: grid; grid-template-rows: auto 1fr auto; gap: 40px;
-             background: var(--color-canvas); }
-    .slide.is-active { visibility: visible; opacity: 1; pointer-events: auto; }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunumatik — Canlı Katalog</title>
+<style>
+:root {
+  --bg:#0F1013; --sf:#1A1C21; --sf2:#22242B; --ink:#F4EEE1; --mut:#A9A296;
+  --acc:#D3B26A; --acc-ink:#191307; --rule:#2E3037; --ok:#8FBF8F;
+  --font: Bahnschrift, 'Segoe UI Semibold', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'Cascadia Mono', Consolas, monospace;
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--ink);
+  font-family: var(--font); overflow: hidden; }
+#viewport { position: fixed; inset: 0; }
+#stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px;
+  transform-origin: center center; }
 
-    .kicker { display: flex; align-items: center; gap: 18px; color: var(--color-muted);
-              font-size: 23px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
-    .kicker::before { content: ""; width: 64px; height: 6px; background: var(--color-accent); }
-    h1 { max-width: 1360px; margin: 14px 0 0; font-family: "Source Serif 4", Georgia, serif;
-         font-size: 96px; line-height: .99; letter-spacing: -.04em; font-weight: 650; }
-    h2 { max-width: 1360px; margin: 12px 0 0; font-family: "Source Serif 4", Georgia, serif;
-         font-size: 66px; line-height: 1.02; letter-spacing: -.03em; font-weight: 650; }
-    .lede { max-width: 1080px; margin: 0; color: var(--color-muted); font-size: 33px; line-height: 1.4; }
-    .slide-footer { display: flex; justify-content: space-between; align-items: end;
-                    padding-top: 24px; border-top: 2px solid var(--color-rule);
-                    color: var(--color-muted); font-size: 21px; }
-    .panel { padding: 40px 46px; background: var(--color-surface);
-             border: 1.5px solid var(--color-rule); border-radius: 14px; }
-    .motif { color: var(--color-muted); }
-    .icon { width: 40px; height: 40px; flex: none; }
-    .hint { font: 600 20px/1.3 ui-monospace, monospace; color: var(--color-muted); letter-spacing: .04em; }
+.slide { position: absolute; inset: 0; padding: 72px 96px; visibility: hidden;
+  opacity: 0; transition: opacity .45s ease; }
+.slide.gecerli { visibility: visible; opacity: 1; }
 
-    /* Title */
-    .title-grid { display: grid; grid-template-columns: 1.2fr .6fr; align-items: center; gap: 60px; }
-    .title-grid .motif svg { width: 100%; height: auto; opacity: .8; }
+/* ── kapak / kapanış ── */
+.cover, .closing { display: flex; flex-direction: column; justify-content: center;
+  align-items: flex-start; padding-left: 160px;
+  background: radial-gradient(1200px 700px at 70% 20%, #171a24 0%, var(--bg) 60%); }
+.stars { position: absolute; inset: 0; pointer-events: none; opacity: .8;
+  background-image:
+    radial-gradient(1.4px 1.4px at 12% 22%, #cfd6e4 50%, transparent 51%),
+    radial-gradient(1px 1px at 28% 68%, #8d94a5 50%, transparent 51%),
+    radial-gradient(1.8px 1.8px at 44% 14%, #e8e2d2 50%, transparent 51%),
+    radial-gradient(1px 1px at 57% 44%, #aab1c2 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 66% 78%, #cfd6e4 50%, transparent 51%),
+    radial-gradient(1px 1px at 74% 26%, #8d94a5 50%, transparent 51%),
+    radial-gradient(2px 2px at 83% 58%, #efe9da 50%, transparent 51%),
+    radial-gradient(1px 1px at 91% 12%, #aab1c2 50%, transparent 51%),
+    radial-gradient(1.2px 1.2px at 8% 84%, #cfd6e4 50%, transparent 51%),
+    radial-gradient(1px 1px at 38% 90%, #8d94a5 50%, transparent 51%);
+}
+.eyebrow { font-size: 22px; letter-spacing: .42em; color: var(--acc);
+  text-transform: uppercase; }
+.cover h1 { font-size: 148px; line-height: 1.02; margin: 18px 0 26px;
+  letter-spacing: -.01em; }
+.cover .sub, .closing .sub { font-size: 34px; color: var(--mut); }
+.cover .not { margin-top: 34px; font-size: 26px; max-width: 900px; line-height: 1.5;
+  color: var(--ink); }
+.cover .not b { color: var(--acc); }
+.hint { margin-top: 56px; font-size: 22px; color: var(--mut); }
+kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 2px 9px; font-size: 19px; }
+.tarih { position: absolute; right: 96px; bottom: 64px; color: var(--mut);
+  font-size: 20px; font-family: var(--mono); }
 
-    /* Agenda */
-    .agenda { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 28px; align-content: center; }
-    .agenda-row { display: flex; align-items: center; gap: 16px; padding: 20px 22px;
-                  background: var(--color-surface); border: 1.5px solid var(--color-rule);
-                  border-radius: 12px; font-size: 24px; font-weight: 650; }
-    .agenda-row .icon { color: var(--color-accent); }
-    .agenda-row small { margin-left: auto; font: 700 18px/1 ui-monospace, monospace; color: var(--color-muted); }
+/* ── bölüm ayracı ── */
+.divider { display: flex; flex-direction: column; justify-content: center;
+  padding-left: 160px; }
+.divider .num { font-family: var(--mono); font-size: 30px; color: var(--acc);
+  letter-spacing: .3em; }
+.divider h2 { font-size: 110px; margin: 12px 0 24px; letter-spacing: -.01em; }
+.divider .sub { font-size: 32px; color: var(--mut); max-width: 1100px; line-height: 1.5; }
+.divider .uyeler { margin-top: 54px; font-size: 24px; color: var(--acc);
+  max-width: 1300px; line-height: 1.7; }
 
-    /* Interaction slide */
-    .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-content: center; }
-    .demo-cards { display: grid; gap: 18px; }
-    .demo-cards .panel { font-size: 27px; line-height: 1.35; }
-    .hover-note { display: block; margin-top: 10px; font-size: 21px; color: var(--color-muted); }
-    .legend-list { list-style: none; display: flex; gap: 30px; margin: 0 0 20px; padding: 0;
-                   font-size: 25px; font-weight: 700; }
-    .legend-list .swatch { display: inline-block; width: 26px; height: 10px; border-radius: 2px; margin-right: 9px; }
-    .demo-bars { display: grid; gap: 14px; }
-    .demo-bar { height: 52px; border-radius: 8px; display: flex; align-items: center; padding: 0 18px;
-                color: var(--color-canvas); font-weight: 750; font-size: 23px; }
+/* ── preset kartı ── */
+.card { display: grid; grid-template-columns: 460px 1210px; gap: 48px;
+  align-items: center; justify-content: center; }
+.bilgi .eyebrow { display: flex; align-items: center; gap: 16px; font-size: 18px; }
+.badge { font-size: 15px; letter-spacing: .18em; padding: 4px 12px;
+  border-radius: 999px; border: 1px solid var(--rule); color: var(--mut); }
+.badge.cekirdek { border-color: var(--acc); color: var(--acc); }
+.badge.guncel { border-color: var(--ok); color: var(--ok); }
+.badge.yeni { background: var(--acc); color: var(--acc-ink); border-color: var(--acc); }
+.bilgi h2 { font-size: 64px; margin: 16px 0 20px; letter-spacing: -.01em; }
+.hook { font-size: 26px; line-height: 1.5; color: var(--ink); }
+.feats { margin: 30px 0 0; padding: 0; list-style: none; }
+.feats li { position: relative; padding-left: 30px; margin-bottom: 15px;
+  font-size: 21px; line-height: 1.45; color: var(--mut); }
+.feats li::before { content: ""; position: absolute; left: 0; top: 11px;
+  width: 12px; height: 12px; border: 2px solid var(--acc); border-radius: 3px;
+  transform: rotate(45deg); }
+.yol { margin-top: 30px; }
+.yol code { font-family: var(--mono); font-size: 16px; color: var(--mut);
+  background: var(--sf); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 8px 12px; display: inline-block; max-width: 440px;
+  overflow-wrap: break-word; line-height: 1.45; }
+.ac { display: inline-block; margin-top: 20px; color: var(--acc);
+  text-decoration: none; font-size: 21px; border-bottom: 1px solid transparent; }
+.ac:hover { border-bottom-color: var(--acc); }
 
-    /* Chart slide */
-    .chart-wrap { display: grid; grid-template-rows: auto 1fr auto; gap: 16px; min-height: 0; }
-    .chart-wrap svg { width: 100%; height: 100%; min-height: 0; }
+.sahne { position: relative; width: 1210px; height: 681px; border-radius: 18px;
+  border: 1px solid var(--rule); background: #000; overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+.sahne iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px;
+  border: 0; transform: scale(.6302); transform-origin: 0 0; background: #000; }
+.yukleniyor { position: absolute; inset: 0; display: grid; place-items: center;
+  text-align: center; color: var(--mut); font-size: 24px; line-height: 1.6; }
 
-    /* Morph slide */
-    .morph-wrap { align-content: center; display: grid; gap: 18px; max-width: 1280px; }
-    .morph-wrap .demo-bar { height: 64px; font-size: 26px; }
-    .btn-row { display: flex; gap: 14px; margin-top: 10px; }
-    .btn-row button, .eq-buttons button, .nn-controls button {
-      border: 1.5px solid var(--color-ink); border-radius: 999px; background: var(--color-ink);
-      color: var(--color-canvas); padding: 12px 26px; font: 650 21px/1 inherit; cursor: pointer; }
-    .btn-row button[data-secondary], .eq-buttons button[data-secondary] {
-      background: transparent; color: var(--color-ink); }
+/* ── kapanış ── */
+.closing h2 { font-size: 96px; margin-bottom: 24px; }
+.buyuk-link { display: inline-block; margin-top: 26px; font-size: 40px;
+  color: var(--acc); text-decoration: none; border: 1px solid var(--acc);
+  border-radius: 14px; padding: 18px 36px; }
+.buyuk-link:hover { background: var(--acc); color: var(--acc-ink); }
+.closing .not { margin-top: 60px; font-size: 22px; color: var(--mut);
+  max-width: 1200px; line-height: 1.7; }
 
-    /* Section break */
-    .break-grid { display: grid; grid-template-columns: 1fr .45fr; align-items: center; gap: 60px; }
-    .break-grid .motif svg { width: 100%; height: auto; opacity: .85; }
+/* ── tesisat ── */
+#sayac { position: fixed; right: 28px; bottom: 22px; font-family: var(--mono);
+  font-size: 15px; color: var(--mut); background: rgba(26,28,33,.82);
+  border: 1px solid var(--rule); border-radius: 999px; padding: 7px 16px;
+  cursor: pointer; z-index: 40; }
+#sayac:hover { color: var(--acc); border-color: var(--acc); }
+#oklar { position: fixed; left: 28px; bottom: 22px; display: flex; gap: 8px; z-index: 40; }
+#oklar button { background: rgba(26,28,33,.82); color: var(--mut);
+  border: 1px solid var(--rule); border-radius: 999px; width: 40px; height: 34px;
+  font-size: 16px; cursor: pointer; }
+#oklar button:hover { color: var(--acc); border-color: var(--acc); }
 
-    /* Timeline slide */
-    .tl-host { outline: none; }
-
-    /* Lunaris slide: the figure owns the whole content region */
-    /* Veri animasyonları slaydı */
-    .danim { display: grid; grid-template-columns: 1.02fr .98fr; gap: 44px; min-height: 0; }
-    .danim-col { display: grid; grid-template-rows: 1fr auto; gap: 14px; min-height: 0; }
-    .danim-col .sci-chart { min-height: 0; }
-    .danim-col svg { width: 100%; height: 100%; min-height: 0; }
-    .danim-btns { display: flex; gap: 12px; }
-    .danim-btns button { background: var(--color-surface); border: 1.5px solid var(--color-rule);
-      color: var(--color-ink); padding: 10px 18px; border-radius: 9px; cursor: pointer;
-      font: 650 20px/1 ui-sans-serif, system-ui; }
-    .danim-btns button:hover { border-color: var(--color-accent); }
-
-    /* İkon vitrini — aileler satır satır, ad altında */
-    .icon-wall { display: grid; gap: 26px; align-content: center; }
-    .icon-fam { display: grid; grid-template-columns: 210px 1fr; gap: 26px; align-items: center; }
-    .icon-fam h3 { margin: 0; font: 700 25px/1.15 "Source Serif 4", Georgia, serif;
-                   color: var(--color-accent); }
-    .icon-fam h3 small { display: block; margin-top: 5px; font: 600 17px/1.2 ui-monospace, monospace;
-                         color: var(--color-muted); letter-spacing: .04em; }
-    .icon-row { display: flex; gap: 14px; }
-    .icon-cell { flex: 1; display: grid; justify-items: center; gap: 9px; padding: 16px 8px 12px;
-                 background: var(--color-surface); border: 1.5px solid var(--color-rule);
-                 border-radius: 12px; color: var(--color-accent); }
-    .icon-cell svg { width: 46px; height: 46px; }
-    .icon-cell span { font: 600 16px/1.2 ui-sans-serif, system-ui; color: var(--color-ink);
-                      text-align: center; }
-    .lunaris-slide { grid-template-rows: auto 1fr auto; }
-    #cosmosHost, #jwstHost { min-height: 0; }
-    #cosmosHost .lunaris-preset { min-height: 0; height: 100%; }
-    #jwstHost { display: grid; min-height: 0; }
-    #jwstHost .jwstx { min-height: 0; }
-    .scene-credit { font-size: 19px; color: var(--color-muted); }
-
-    /* Primitives slaydı */
-    .px-demo { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-content: center; min-height: 0; }
-    .px-demo .big-line { font-family: "Source Serif 4", Georgia, serif; font-size: 58px;
-                         line-height: 1.06; letter-spacing: -.02em; }
-    .px-stats { display: flex; gap: 56px; align-items: baseline; margin-top: 34px; }
-    .px-stats .stat-val { font: 750 76px/1 ui-monospace, monospace; color: var(--color-accent); }
-    .px-stats .stat-lab { display: block; margin-top: 10px; font-size: 22px; color: var(--color-muted); }
-    .px-card-zone { display: grid; gap: 24px; align-content: center; }
-    .px-chips .chip { display: inline-block; padding: 12px 22px; background: var(--color-surface);
-                      border: 1.5px solid var(--color-rule); border-radius: 10px;
-                      font: 650 22px/1 ui-sans-serif, system-ui; white-space: nowrap; }
-    #lunarisHost { min-height: 0; }
-    #lunarisHost .lunaris-preset { min-height: 0; height: 100%; }
-
-    /* Equation slide */
-    .eq-board { align-self: center; display: grid; gap: 34px; padding: 54px 64px; }
-    .eq-write { font: 500 58px/1.3 "STIX Two Math", "Cambria Math", Cambria, serif; }
-    .eq-write sup { font-size: .6em; }
-    .eq-caption { font-size: 24px; color: var(--color-muted); }
-    .eq-buttons { display: flex; gap: 14px; }
-
-    /* NN slide */
-    .nn-grid { display: grid; grid-template-columns: 1.25fr .55fr; gap: 56px; align-items: center; min-height: 0; }
-    .nn-side { display: grid; gap: 22px; align-content: center; }
-    .nn-side p { margin: 0; font-size: 26px; line-height: 1.45; color: var(--color-muted); }
-
-    .progress { position: absolute; left: 0; bottom: 0; height: 6px;
-                background: var(--color-accent); transition: width .25s ease; z-index: 50; }
-
-    /* Screen-sized control bar, outside the scaled stage */
-    .controls { position: fixed; right: 16px; bottom: 14px; z-index: 90; display: flex; gap: 8px;
-                align-items: center; font: 600 13px/1 ui-monospace, monospace; }
-    .controls button, .controls span { border: 1px solid #4a4d55; border-radius: 999px;
-                background: #17181c; color: #d8dae0; padding: 8px 14px; }
-    .controls button { cursor: pointer; }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { transition: none !important; animation: none !important; }
-    }
-  </style>
+#dizin { position: fixed; inset: 0; background: rgba(9,10,12,.94); z-index: 60;
+  display: none; overflow-y: auto; padding: 60px 80px; }
+#dizin.acik { display: block; }
+#dizin h3 { color: var(--acc); letter-spacing: .3em; font-size: 15px;
+  text-transform: uppercase; margin: 34px 0 14px; }
+#dizin .grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr));
+  gap: 10px; }
+#dizin button { text-align: left; background: var(--sf); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 10px; padding: 12px 16px;
+  font: 16px var(--font); cursor: pointer; }
+#dizin button:hover { border-color: var(--acc); color: var(--acc); }
+#dizin button .no { font-family: var(--mono); color: var(--mut); font-size: 12px;
+  display: block; margin-bottom: 3px; }
+</style>
 </head>
-<body data-palette="graphite-ember">
-  <main class="viewport" aria-label="Preset kütüphanesi test sunumu">
-    <div class="deck-stage" id="stage">
+<body>
+<div id="viewport"><div id="stage">
 
-      <!-- 1 · Başlık -->
-      <section class="slide is-active" aria-labelledby="s1t">
-        <header>
-          <div class="kicker" data-motion="reveal">Sunum kütüphanesi · canlı test</div>
-          <h1 id="s1t" data-motion="reveal">Tek tasarım sistemi: on yedi palet, 415 ikon, on beş preset</h1>
-        </header>
-        <div class="title-grid">
-          <p class="lede" data-motion="reveal">Bu deste, kütüphanedeki her preset'i gerçek bir slayt akışında
-             gösterir: geçişler, hover, morph, grafik, tablo, ikonlar, WebGL sahneleri, gerçek Webb
-             görüntüleri, kronoloji, denklem yazımı, sinir ağı ve mikro-hareket.</p>
-          <div class="motif" data-motion="rise" aria-hidden="true">
-            <svg viewBox="0 0 240 240"><use href="#orbit-system"/></svg>
-          </div>
-        </div>
-        <footer class="slide-footer"><span>Sunumlar kütüphanesi</span><span>Ağustos 2026</span></footer>
-      </section>
+<section class="slide cover" data-tur="kapak">
+  <div class="stars" aria-hidden="true"></div>
+  <p class="eyebrow">SUNUMATİK</p>
+  <h1>Canlı Katalog</h1>
+  <p class="sub">26 preset · 6 kategori · her kart canlı çalışır</p>
+  <p class="not">Bu deste <b>otomatik üretilir</b> — kütüphaneye eklenen her yeni preset,
+     bir sonraki aktarımda kendiliğinden burada belirir.</p>
+  <p class="hint">→ ile ilerleyin · <kbd>G</kbd> dizin · <kbd>Esc</kbd> kapat</p>
+  <p class="tarih">14.08.2026</p>
+</section>
 
-      <!-- 2 · Ajanda -->
-      <section class="slide" aria-labelledby="s2t">
-        <header>
-          <div class="kicker">Ajanda</div>
-          <h2 id="s2t">On iki durak, tek akış</h2>
-        </header>
-        <div class="agenda" data-hover-group>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-gauge"/></svg>Hover ve bağlantılı vurgu<small>03</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chart-bars"/></svg>Grafik teması<small>04</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-database"/></svg>Tablo preset'leri<small>05</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chart-scatter"/></svg>Veri animasyonları: keman · morph · ışıltı<small>06</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-orbit-elliptical"/></svg>Alan ikonları: 224 duotone<small>07</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-wave"/></svg>Morph geçişi<small>08</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-orbit"/></svg>WebGL sahneler: Ay · Dünya · Güneş · Gezegenler · Kozmos<small>10–14</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-telescope"/></svg>JWST Explorer: gerçek Webb görüntüleri<small>15</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-milestone"/></svg>Kronoloji ağacı<small>16</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-atom"/></svg>Elle yazılan denklem<small>17</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-neural-net"/></svg>Sinir ağı hücreleri<small>18</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-spectrum"/></svg>Primitives mikro-hareket<small>19</small></div>
-        </div>
-        <footer class="slide-footer"><span>İkonlar: science-icons.svg</span><span>2</span></footer>
-      </section>
+<section class="slide divider" data-tur="bolum" data-kat="orbital">
+  <p class="num">01</p>
+  <h2>Yörünge Sahnesi</h2>
+  <p class="sub">Manim ayarında sahne blokları: bir yörünge ver, sahne onu gerçekten uçursun.</p>
+  <p class="uyeler">Yörünge Sahnesi · Araç Blokları · Ay&#x27;a Motorlu İniş</p>
+</section>
 
-      <!-- 3 · Etkileşim -->
-      <section class="slide" aria-labelledby="s3t">
-        <header>
-          <div class="kicker">Etkileşim preset'leri</div>
-          <h2 id="s3t">Hover yorumdur, içerik değil</h2>
-        </header>
-        <div class="duo">
-          <div class="demo-cards">
-            <div class="panel" data-motion="reveal" data-hover="lift" tabindex="0">Kalkış (lift): panelin
-              etkileşimli olduğunu söyler.</div>
-            <div class="panel" data-motion="reveal">Bir <span data-hover="underline" tabindex="0">terimin altı</span>
-              hover veya klavye odağında çizilir.</div>
-            <div class="panel" data-motion="reveal" data-hover="annotate" tabindex="0">Açıklama isteğe bağlı derinleştirir.
-              <span class="hover-note">Kaynak: temsilî örnek, n = 128 · Ağustos 2026</span></div>
-          </div>
-          <div data-motion="reveal">
-            <ol class="legend-list" data-hover-group id="legend3">
-              <li data-hover-member data-series="obs" tabindex="0"><span class="swatch" style="background:var(--color-data-1)"></span>Gözlem</li>
-              <li data-hover-member data-series="model" tabindex="0"><span class="swatch" style="background:var(--color-data-2)"></span>Model</li>
-              <li data-hover-member data-series="proj" tabindex="0"><span class="swatch" style="background:var(--color-accent)"></span>Projeksiyon</li>
-            </ol>
-            <div class="demo-bars" data-hover-group data-hover-link="#legend3">
-              <div class="demo-bar" data-hover-member data-series="obs" style="width:84%;background:var(--color-data-1)">Gözlem 0.84</div>
-              <div class="demo-bar" data-hover-member data-series="model" style="width:76%;background:var(--color-data-2)">Model 0.76</div>
-              <div class="demo-bar" data-hover-member data-series="proj" style="width:58%;background:var(--color-accent)">Projeksiyon 0.58</div>
-            </div>
-          </div>
-        </div>
-        <footer class="slide-footer"><span>Lejantın üzerine gelin: diğer seriler geriler</span><span>3</span></footer>
-      </section>
-
-      <!-- 4 · Grafik -->
-      <section class="slide" aria-labelledby="s4t">
-        <header>
-          <div class="kicker">Grafik teması · temsilî veri</div>
-          <h2 id="s4t">Bulut örtüsü su izini sığlaştırıyor</h2>
-        </header>
-        <div class="chart-wrap">
-          <ol class="legend-list sci-chart-legend" data-hover-group id="legend4">
-            <li data-hover-member data-series="obs" tabindex="0"><span class="swatch" style="background:var(--color-data-1)"></span>Gözlem</li>
-            <li data-hover-member data-series="fit" tabindex="0"><span class="swatch" style="background:var(--color-data-2)"></span>Model (fit)</li>
-          </ol>
-          <svg class="sci-chart" viewBox="0 0 1240 620" data-hover-group data-hover-link="#legend4"
-               role="img" aria-label="Geçiş derinliği ve dalga boyu: gözlem noktaları ve kesikli model eğrisi; 1.4 mikron su bandında derinlik artışı">
-            <g class="grid">
-              <line x1="140" y1="60"  x2="1180" y2="60"/>
-              <line x1="140" y1="175" x2="1180" y2="175"/>
-              <line x1="140" y1="290" x2="1180" y2="290"/>
-              <line x1="140" y1="405" x2="1180" y2="405"/>
-            </g>
-            <g class="axis">
-              <path d="M140 60 L140 520 L1180 520"/>
-              <g class="tick">
-                <text x="126" y="68"  text-anchor="end">1.50</text>
-                <text x="126" y="183" text-anchor="end">1.40</text>
-                <text x="126" y="298" text-anchor="end">1.30</text>
-                <text x="126" y="413" text-anchor="end">1.20</text>
-                <text x="126" y="528" text-anchor="end">1.10</text>
-                <text x="140"  y="562" text-anchor="middle">0.6</text>
-                <text x="348"  y="562" text-anchor="middle">1.0</text>
-                <text x="556"  y="562" text-anchor="middle">1.4</text>
-                <text x="764"  y="562" text-anchor="middle">1.8</text>
-                <text x="972"  y="562" text-anchor="middle">2.2</text>
-                <text x="1180" y="562" text-anchor="middle">2.6</text>
-              </g>
-              <text class="axis-title" x="660" y="606" text-anchor="middle">Dalga boyu <tspan class="axis-unit">(µm)</tspan></text>
-              <text class="axis-title" x="46" y="290" text-anchor="middle" transform="rotate(-90 46 290)">Geçiş derinliği <tspan class="axis-unit">(%)</tspan></text>
-            </g>
-            <g data-series-slot="2" data-series="fit" data-hover-member>
-              <path class="uncertainty-band" d="M140 376 C300 318 440 346 570 283 C700 240 840 298 1180 378 L1180 422 C840 342 700 284 570 327 C440 390 300 362 140 420 Z"/>
-              <path class="series-line is-fitted" d="M140 398 C300 340 440 368 570 305 C700 262 840 320 1180 400"/>
-              <text class="direct-label" x="1010" y="452">Model</text>
-            </g>
-            <g data-series-slot="1" data-series="obs" data-hover-member>
-              <path class="series-line" d="M140 390 L244 370 L348 352 L452 378 L556 300 L660 285 L764 308 L868 350 L972 362 L1076 382 L1180 395"/>
-              <g class="series-marker">
-                <circle cx="140" cy="390" r="7"/><circle cx="244" cy="370" r="7"/><circle cx="348" cy="352" r="7"/>
-                <circle cx="452" cy="378" r="7"/><circle cx="556" cy="300" r="7"/><circle cx="660" cy="285" r="7"/>
-                <circle cx="764" cy="308" r="7"/><circle cx="868" cy="350" r="7"/><circle cx="972" cy="362" r="7"/>
-                <circle cx="1076" cy="382" r="7"/><circle cx="1180" cy="395" r="7"/>
-              </g>
-              <text class="direct-label" x="620" y="252">Gözlem</text>
-            </g>
-            <g>
-              <line class="ref-line" x1="140" y1="290" x2="1180" y2="290"/>
-              <text class="ref-label" x="1174" y="278" text-anchor="end">tespit eşiği · %1.30</text>
-            </g>
-          </svg>
-          <p class="sci-chart-caption">1.4 µm su bandındaki derinlik artışı üç geçişte tutarlı.
-            <span class="provenance">Temsilî veri — preset testi; belirsizlik bandı modele aittir.</span></p>
-        </div>
-        <footer class="slide-footer"><span>chart-theme.css · tracePath açılışı</span><span>4</span></footer>
-      </section>
-
-      <!-- 5 · Tablo -->
-      <section class="slide" aria-labelledby="s5t">
-        <header>
-          <div class="kicker">Tablo preset'leri</div>
-          <h2 id="s5t">Yörünge adayları bir bakışta</h2>
-        </header>
-        <div class="panel" style="align-self:center" data-motion="reveal">
-          <table class="sci-table sci-table--data sci-table--interactive" data-table-reveal>
-            <caption>Aday yörünge parametreleri</caption>
-            <thead>
-              <tr><th scope="col">Yörünge</th><th scope="col">Yükseklik</th><th scope="col">Periyot</th><th scope="col">Δv bütçesi</th><th scope="col">Kutup kapsaması</th></tr>
-            </thead>
-            <tbody>
-              <tr class="row-units"><th scope="row">—</th><td>km</td><td>saat</td><td>m/s · yıl</td><td>%</td></tr>
-              <tr><th scope="row">Alçak dairesel</th><td class="num">100</td><td class="num">1.96</td><td class="num" data-count>400</td><td class="num" data-bar="0.82">82</td></tr>
-              <tr class="is-key"><th scope="row">Donmuş eliptik</th><td class="num">100 × 8 000</td><td class="num">11.8</td><td class="num" data-count>120</td><td class="num" data-bar="0.96">96</td></tr>
-              <tr><th scope="row">NRHO</th><td class="num">3 200 × 68 000</td><td class="num">154</td><td class="num" data-count>40</td><td class="num" data-bar="0.61">61</td></tr>
-            </tbody>
-            <tfoot><tr><td colspan="5">Temsilî değerler — preset testi. Vurgulu satır tek çıkarımı taşır.</td></tr></tfoot>
-          </table>
-        </div>
-        <footer class="slide-footer"><span>table-presets.css + table-motion: satır kaskadı · Δv sayaçları · kapsam çubukları</span><span>5</span></footer>
-      </section>
-
-      <!-- 6 · Veri animasyonları -->
-      <section class="slide" aria-labelledby="s6da">
-        <header>
-          <div class="kicker">Veri animasyonları · chart-preset</div>
-          <h2 id="s6da">Dağılım büyür, veri süzülür, ışıltı tek atımlık</h2>
-        </header>
-        <div class="danim">
-          <div class="danim-col">
-            <div id="violinChart"></div>
-            <span class="hint">Keman: Gauss KDE · kutu Q1–Q3 · nokta medyan — merkez çizgisinden doğar</span>
-          </div>
-          <div class="danim-col">
-            <div id="scatterChart"></div>
-            <div class="danim-btns">
-              <button id="daMorph">Veriyi değiştir (morph)</button>
-              <button id="daSheen" data-secondary>Işıltı süpürmesi</button>
-            </div>
-          </div>
-        </div>
-        <footer class="slide-footer"><span>chart.mjs · violin + morphTo + sheen — süpürme sunucu tetiklemeli, asla döngüsel değil</span><span>6</span></footer>
-      </section>
-
-      <!-- 7 · Alan ikonları -->
-      <section class="slide" aria-labelledby="s6ic">
-        <header>
-          <div class="kicker">Alan ikonları · duotone</div>
-          <h2 id="s6ic">224 ikon, tek el, bilimsel olarak doğru</h2>
-        </header>
-        <div class="icon-wall">
-          <div class="icon-fam" data-motion="reveal">
-            <h3>Astrodinamik<small>30 ikon</small></h3>
-            <div class="icon-row"><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-orbit-elliptical"/></svg><span>Eliptik yörünge</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-hohmann-transfer"/></svg><span>Hohmann</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-burn-prograde"/></svg><span>Prograde yakış</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-lagrange-points"/></svg><span>Lagrange</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-ground-track"/></svg><span>Yer izi</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-reentry"/></svg><span>Atmosfere giriş</span></div></div>
-          </div>
-          <div class="icon-fam" data-motion="reveal">
-            <h3>Sinyal & Kontrol<small>30 ikon</small></h3>
-            <div class="icon-row"><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-feedback-loop"/></svg><span>Geri besleme</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pid-controller"/></svg><span>PID</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-kalman-filter"/></svg><span>Kalman</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-bode-plot"/></svg><span>Bode</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-root-locus"/></svg><span>Kök yer eğrisi</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-step-response"/></svg><span>Basamak yanıtı</span></div></div>
-          </div>
-          <div class="icon-fam" data-motion="reveal">
-            <h3>Roket & Uydu<small>30 ikon</small></h3>
-            <div class="icon-row"><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-rocket-stages"/></svg><span>Kademeler</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-thrust-vector-control"/></svg><span>İtki vektörü</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-reaction-wheel"/></svg><span>Reaksiyon çarkı</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star-tracker"/></svg><span>Yıldız izleyici</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-cubesat"/></svg><span>CubeSat</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-ground-station"/></svg><span>Yer istasyonu</span></div></div>
-          </div>
-          <div class="icon-fam" data-motion="reveal">
-            <h3>GNC · İtki<small>52 ikon · yeni</small></h3>
-            <div class="icon-row"><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-quaternion"/></svg><span>Kuaterniyon</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-euler-gimbal"/></svg><span>Euler gimbal</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-imu"/></svg><span>IMU</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-specific-impulse"/></svg><span>Özgül itki</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-staged-combustion"/></svg><span>Kademeli yanma</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-hall-thruster"/></svg><span>Hall itici</span></div></div>
-          </div>
-          <div class="icon-fam" data-motion="reveal">
-            <h3>Fizik · Matematik · ML<small>70 ikon</small></h3>
-            <div class="icon-row"><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-torque"/></svg><span>Tork</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-spacetime-curvature"/></svg><span>Uzayzaman</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-gradient-nabla"/></svg><span>Gradyan</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-tensor"/></svg><span>Tensör</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-transformer-attention"/></svg><span>Dikkat</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-gradient-descent"/></svg><span>Gradyan inişi</span></div></div>
-          </div>
-        </div>
-        <footer class="slide-footer"><span>domain-icons.svg · odakta birincil cisim, kapanmayan hiperbol, gerçek nav-ball işaretçileri</span><span>6</span></footer>
-      </section>
-
-      <!-- 6 · Morph -->
-      <section class="slide" aria-labelledby="s6t">
-        <header>
-          <div class="kicker">Morph geçişi</div>
-          <h2 id="s6t">Aynı çubuklar, yeni düzen</h2>
-        </header>
-        <div class="morph-wrap">
-          <div class="demo-bars" id="morph-bars">
-            <div class="demo-bar" data-morph-key="c" style="width:46%;background:var(--color-data-2)">Aday C — 0.46</div>
-            <div class="demo-bar" data-morph-key="a" style="width:88%;background:var(--color-data-1)">Aday A — 0.88</div>
-            <div class="demo-bar" data-morph-key="b" style="width:63%;background:var(--color-accent)">Aday B — 0.63</div>
-          </div>
-          <div class="btn-row">
-            <button id="sortBtn">Değere göre sırala</button>
-            <button id="shuffleBtn" data-secondary>İlk düzen</button>
-          </div>
-        </div>
-        <footer class="slide-footer"><span>morphState · FLIP, kimlik data-morph-key ile korunur</span><span>6</span></footer>
-      </section>
-
-      <!-- 7 · Bölüm kırılması -->
-      <section class="slide" aria-labelledby="s7t" data-enter="wipe-mask">
-        <header>
-          <div class="kicker">Bölüm</div>
-          <h1 id="s7t" style="font-size:110px">Aya yakınlaşıyoruz</h1>
-        </header>
-        <div class="break-grid">
-          <p class="lede">Bu slayta wipe-mask ile girdiniz. Bir sonrakine kamera Ay'a dalarak
-             geçecek ve arkasında bir işaret bırakacak — işaret, vardığınız slayta yerleşir.</p>
-          <div class="motif" id="moonAnchor" aria-hidden="true"><svg viewBox="0 0 240 240"><use href="#moon-terminator"/></svg></div>
-        </div>
-        <footer class="slide-footer"><span>slide-transitions · wipe-mask → zoom-into</span><span>7</span></footer>
-      </section>
-
-      <!-- 8 · Lunaris WebGL -->
-      <section class="slide lunaris-slide" aria-labelledby="s8t" data-enter="zoom-into" data-anchor="#moonAnchor">
-        <header>
-          <div class="kicker"><span data-marker-dock style="display:inline-block;width:46px;height:46px" aria-hidden="true"></span>Lunaris · WebGL</div>
-          <h2 id="s8t">Ay, dokusu ve uydusuyla sahnede</h2>
-        </header>
-        <div id="lunarisHost"></div>
-        <footer class="slide-footer"><span class="hint">Sürükle: kamera · Boşluk: oynat/durdur · R: baştan · PageDown: sonraki slayt</span><span>8</span></footer>
-      </section>
-
-      <!-- 9 · Terra: Dünya şehir turu -->
-      <section class="slide lunaris-slide" aria-labelledby="s9te">
-        <header>
-          <div class="kicker">Terra · WebGL</div>
-          <h2 id="s9te">Dünya: gerçek gece ışıkları, gerçek koordinatlar</h2>
-        </header>
-        <div id="terraHost"></div>
-        <footer class="slide-footer"><span class="hint">Turu başlat · N: sonraki şehir · Boşluk: durdur · PageDown: sonraki slayt</span><span>9</span></footer>
-      </section>
-
-      <!-- 10 · Sol: Güneş -->
-      <section class="slide lunaris-slide" aria-labelledby="s10sol">
-        <header>
-          <div class="kicker">Sol · WebGL</div>
-          <h2 id="s10sol">Güneş: kaynayan yüzey, gerçek kenar kararması</h2>
-        </header>
-        <div id="solHost"></div>
-        <footer class="slide-footer"><span class="hint">Aktivite ve dönüş sürgüleri · Boşluk: durdur · PageDown: sonraki slayt</span><span>10</span></footer>
-      </section>
-
-      <!-- 11 · Planetae: gezegenler -->
-      <section class="slide lunaris-slide" aria-labelledby="s11pl">
-        <header>
-          <div class="kicker">Planetae · WebGL</div>
-          <h2 id="s11pl">Yedi gezegen: gerçek dokular, gerçek eğiklikler</h2>
-        </header>
-        <div id="planetaeHost"></div>
-        <footer class="slide-footer"><span class="hint">← → gezegen değiştirir · Boşluk: durdur · PageDown: sonraki slayt</span><span>11</span></footer>
-      </section>
-
-      <!-- 12 · Cosmos: derin uzay fonu -->
-      <section class="slide lunaris-slide" aria-labelledby="s12cos">
-        <header>
-          <div class="kicker">Cosmos · WebGL</div>
-          <h2 id="s12cos">Derin uzay: gerçek Samanyolu panoraması</h2>
-        </header>
-        <div id="cosmosHost"></div>
-        <footer class="slide-footer"><span class="hint">Sürükle: bakış · M: meteor · PageDown: sonraki slayt</span><span class="scene-credit">Samanyolu: ESO/S. Brunier (CC BY 4.0)</span></footer>
-      </section>
-
-      <!-- 13 · JWST Explorer -->
-      <section class="slide lunaris-slide" aria-labelledby="s13jwst">
-        <header>
-          <div class="kicker">JWST Explorer · veri güdümlü</div>
-          <h2 id="s13jwst">Webb'in gözünden: Yaratılış Sütunları</h2>
-        </header>
-        <div id="jwstHost" data-owns-arrows></div>
-        <footer class="slide-footer"><span class="hint">← → ilgi noktaları · 0: genel bakış · C: Hubble perdesi · tekerlek: yakınlaş</span><span class="scene-credit">Görüntü kredisi kare içinde · CC BY 4.0</span></footer>
-      </section>
-
-      <!-- 12 · Kronoloji -->
-      <section class="slide" aria-labelledby="s9tl" data-enter="push">
-        <header>
-          <div class="kicker">Kronoloji ağacı</div>
-          <h2 id="s9tl">Ay keşfi: görevler üstte, bilim altta</h2>
-        </header>
-        <div class="tl-host" id="tl" data-owns-arrows tabindex="0"></div>
-        <footer class="slide-footer"><span class="hint">← → olaylar arasında gezinir · Boşluk sonraki slayt</span><span>9</span></footer>
-      </section>
-
-      <!-- 9 · Denklem -->
-      <section class="slide" aria-labelledby="s9t">
-        <header>
-          <div class="kicker">Elle yazılan denklem</div>
-          <h2 id="s9t">Tahtada yazar gibi</h2>
-        </header>
-        <div class="panel eq-board">
-          <div>
-            <div class="eq-write" id="eq1" aria-label="Kepler'in üçüncü yasası: T kare eşittir dört pi kare a küp bölü G M">
-              <span data-ink>T<sup>2</sup></span> <span data-ink>=</span> <span data-ink>4π<sup>2</sup></span><span data-ink>a<sup>3</sup></span><span data-ink>/</span><span data-ink>GM</span>
-            </div>
-            <p class="eq-caption">Kepler'in üçüncü yasası — periyot, yarı-büyük eksenle büyür.</p>
-          </div>
-          <div>
-            <div class="eq-write" id="eq2" aria-label="vis-viva: v kare eşittir G M çarpı iki bölü r eksi bir bölü a">
-              <span data-ink>v<sup>2</sup></span> <span data-ink>=</span> <span data-ink>GM</span><span data-ink>(</span><span data-ink>2/r</span> <span data-ink>−</span> <span data-ink>1/a</span><span data-ink>)</span>
-            </div>
-            <p class="eq-caption">Vis-viva — hız, konum ve yörünge enerjisinin dengesi.</p>
-          </div>
-          <div class="eq-buttons">
-            <button id="eqReplay">Yeniden yaz</button>
-            <button id="eqSettle" data-secondary>Anında tamamla</button>
-          </div>
-        </div>
-        <footer class="slide-footer"><span>equation-writing · data-ink konuşma düzeyinde</span><span>10</span></footer>
-      </section>
-
-      <!-- 10 · Sinir ağı -->
-      <section class="slide" aria-labelledby="s10t">
-        <header>
-          <div class="kicker">Sinir ağı preset'i</div>
-          <h2 id="s10t">İleri geçiş, katman katman</h2>
-        </header>
-        <div class="nn-grid">
-          <div id="nnfig"></div>
-          <div class="nn-side">
-            <p>Hücre dolgusu aktivasyon büyüklüğü; yeşil pozitif, mavi negatif.
-               Bağlantı kalınlığı ağırlık, kesikli çizgi negatif işaret.</p>
-            <div class="nn-controls" role="group" aria-label="Animasyon kontrolleri">
-              <button id="nnPlay">Oynat</button>
-              <button id="nnStep" data-secondary>Adımla</button>
-              <button id="nnReset" data-secondary>Sıfırla</button>
-            </div>
-            <span class="nn-truth">Temsilî · tohumlu ağırlıklar, eğitilmiş model değil</span>
-          </div>
-        </div>
-        <footer class="slide-footer"><span>neural-network-preset · deterministik tohum</span><span>11</span></footer>
-      </section>
-
-      <!-- 17 · Primitives mikro-hareket -->
-      <section class="slide" aria-labelledby="s17px">
-        <header>
-          <div class="kicker">Primitives · mikro-hareket</div>
-          <h2 id="s17px"><span class="px-shimmer">Premium dokunuşlar, kaynak sabitleriyle</span></h2>
-        </header>
-        <div class="px-demo">
-          <div>
-            <p class="big-line px-text" data-preset="fade-in-blur" data-per="word">Metin kelime kelime doğar, sayılar yayla yerleşir.</p>
-            <div class="px-stats">
-              <div><span class="stat-val" id="pxNumber">0</span><span class="stat-lab">yaylı sayı (tr-TR)</span></div>
-              <div><span class="stat-val" id="pxOdo"></span><span class="stat-lab">kilometre sayacı</span></div>
-            </div>
-          </div>
-          <div class="px-card-zone">
-            <div class="panel" data-tilt data-border-trail>
-              <b style="font-size:27px">Eğim kartı + kenar kuyruğu</b>
-              <p style="margin:12px 0 0;color:var(--color-muted);font-size:23px;line-height:1.4">
-                İmleci gezdirin: ±15° perspektif eğimi, çerçevede dolaşan kuyruk.</p>
-            </div>
-            <div class="px-marquee px-chips" aria-hidden="true"><div class="px-marquee-track">
-              <span class="chip">shimmer</span><span class="chip">fade-in-blur</span>
-              <span class="chip">scramble</span><span class="chip">text morph</span>
-              <span class="chip">odometre</span><span class="chip">spotlight</span>
-              <span class="chip">tilt</span><span class="chip">magnetic</span>
-              <span class="chip">border trail</span><span class="chip">glow</span>
-            </div></div>
-          </div>
-        </div>
-        <footer class="slide-footer"><span>primitives-motion · motion-primitives'ten uyarlama (MIT)</span><span>17</span></footer>
-      </section>
-
-      <!-- 11 · Kapanış -->
-      <section class="slide" aria-labelledby="s11t" data-enter="wipe-mask">
-        <header>
-          <div class="kicker">Kapanış</div>
-          <h1 id="s11t"><span class="px-shimmer">Her parça aynı token dilini konuşuyor</span></h1>
-        </header>
-        <div class="break-grid">
-          <p class="lede">Sağ alttaki palet düğmesi (veya P tuşu) <b>on yedi paleti</b> dolaşır:
-             grafik, tablo, ikon, motif, denklem ve sinir ağı aynı anda yeni temaya geçer —
-             tek token dili, tek dokunuşta yeni tema.</p>
-          <div class="motif" aria-hidden="true"><svg viewBox="0 0 240 240"><use href="#trajectory"/></svg></div>
-        </div>
-        <footer class="slide-footer"><span>Sunumlar kütüphanesi · preset testi</span><span>12</span></footer>
-      </section>
-
-      <div class="progress" aria-hidden="true"></div>
-    </div>
-  </main>
-
-  <div class="controls">
-    <button id="paletteBtn" title="Paleti değiştir (P)">graphite-ember</button>
-    <span id="counter">1 / 11</span>
+<section class="slide card" data-tur="kart" data-kat="orbital" data-embed="../presets/orbital_stage/index.html?tab=1">
+  <div class="bilgi">
+    <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Yörünge Sahnesi</h2>
+    <p class="hook">Elemanları ver, gerçek koniği çizer: Hohmann transferi, Ay&#x27;a hiperbolik varış, yanma anında okunan ΔV.</p>
+    <ul class="feats">
+      <li>Üç yörünge kaynağı: Kepler elemanları · durum dizisi (veri) · RK4 itki</li>
+      <li>Yanma işaretleri: alev, ΔV oku, öncesi-sonrası hayalet yörüngeler</li>
+      <li>Kamera yönetmeni: chase · orbit · body · free, yumuşak geçişli</li>
+      <li>Zaman çizelgesi, sarma ve telemetri HUD (t, irtifa, |v|, ΔV)</li>
+    </ul>
+    <p class="yol"><code>presets/orbital_stage/index.html?tab=1</code></p>
+    <a class="ac" href="../presets/orbital_stage/index.html?tab=1" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
   </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Yörünge Sahnesi önizleme" loading="lazy" data-src="../presets/orbital_stage/index.html?tab=1"></iframe>
+  </div>
+</section>
 
-  <script>
-    /* file:// altında tarayıcılar ES modüllerini ve fetch'i engeller; deste
-       yalnızca bir yerel sunucudan çalışır. Kullanıcıyı karanlıkta bırakma. */
-    if (location.protocol === 'file:') {
-      document.documentElement.classList.remove('js');
-      const note = document.createElement('div');
-      note.style.cssText = 'position:fixed;inset:auto 16px 16px 16px;z-index:99;padding:18px 22px;' +
-        'background:#fff8e8;color:#3a2c16;border:2px solid #b58224;border-radius:12px;' +
-        'font:600 15px/1.5 ui-sans-serif,system-ui;';
-      note.innerHTML = 'Bu deste doğrudan dosyadan açılamaz (tarayıcı file:// altında modülleri engeller).<br>' +
-        'En kolayı: <b>preset-test\\sunumu-baslat.cmd</b> dosyasına çift tıklayın — sunucuyu başlatıp desteyi açar.<br>' +
-        'Ya da bir terminalde Sunumlar klasöründe <code>python -m http.server 8781</code> çalıştırıp ' +
-        '<code>http://localhost:8781/preset-test/index.html</code> adresini açın.';
-      document.body.appendChild(note);
-    }
-  </script>
-  <script src="../presets/motion_core/primitives-motion.js"></script>
-  <script type="module">
-    import { revealStage, settleAll, tracePath } from '../presets/motion_core/core-motion.js';
-    import { initInteractions } from '../presets/motion_core/interaction-motion.js';
-    import { morphState } from '../presets/motion_core/morph-transition.js';
-    import { transitionSlides } from '../presets/motion_core/slide-transitions.js';
-    import { mountTimeline } from '../presets/timeline_tree/timeline_tree.mjs';
-    import { writeSequence } from '../presets/equation_pen/equation-writing.mjs';
-    import { mountNeuralNetwork } from '../presets/neural_network/neural_network.mjs';
-    import { mountLunaris } from '../presets/moon_advanced/lunaris-moon.mjs';
-    import { mountTerra } from '../presets/earth_advanced/terra-globe.mjs';
-    import { mountSol } from '../presets/sun_advanced/sol-sun.mjs';
-    import { mountPlanetae } from '../presets/planets_advanced/planetae.mjs';
-    import { mountCosmos } from '../presets/cosmos_advanced/cosmos-sky.mjs';
-    import { mountJwstExplorer } from '../presets/jwst_explorer/jwst-explorer.mjs';
-    import { mountChart } from '../presets/charts_icons/chart-preset/chart.mjs';
-    import { observeTableReveal, countCells, cellBars } from '../presets/motion_core/table-motion.js';
+<section class="slide card" data-tur="kart" data-kat="orbital" data-embed="../presets/craft_blocks/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Araç Blokları</h2>
+    <p class="hook">Beş parametrik uzay aracı — tek malzeme dili, donuk API; her sahne bunlara güvenerek kurulur.</p>
+    <ul class="feats">
+      <li>buildOrbiter · buildLander · buildRocket · buildCubesat · buildCapsule</li>
+      <li>Eksen sözleşmesi: +X ileri, −X itki çıkışı, +Z anten yönü</li>
+      <li>Palet sözlüğü: gövde / panel / vurgu / metal — desteye uyar</li>
+    </ul>
+    <p class="yol"><code>presets/craft_blocks/index.html</code></p>
+    <a class="ac" href="../presets/craft_blocks/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Araç Blokları önizleme" loading="lazy" data-src="../presets/craft_blocks/index.html"></iframe>
+  </div>
+</section>
 
-    /* Sprites (motifs + icons) */
-    const sprites = [
-      '../presets/color_themes/space-motifs/space-motifs.svg',
-      '../presets/charts_icons/icons/science-icons.svg',
-      '../presets/charts_icons/domain-icons/domain-icons.svg',
-    ];
-    await Promise.all(sprites.map(url => fetch(url).then(r => r.text())
-      .then(text => document.body.insertAdjacentHTML('beforeend', text))
-      .catch(() => {})));  // eksik sprite ikonları boş bırakır, desteyi öldürmez
+<section class="slide card" data-tur="kart" data-kat="orbital" data-embed="../presets/lunar_descent/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Ay&#x27;a Motorlu İniş</h2>
+    <p class="hook">Üç fazlı iniş gerçek Ay yerçekimine karşı entegre edilir; temas hızı 0,90 m/s, ΔV bütçesi hesaplanır.</p>
+    <ul class="feats">
+      <li>Frenleme → yaklaşma → dikey iniş; gaz kelebeğiyle ölçeklenen alev</li>
+      <li>İrtifa / dikey hız / yakıt HUD&#x27;u, Tsiolkovsky yakıt modeli</li>
+      <li>Chase · yan · yüzey kameraları, temas anında toz</li>
+    </ul>
+    <p class="yol"><code>presets/lunar_descent/index.html</code></p>
+    <a class="ac" href="../presets/lunar_descent/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Ay&#x27;a Motorlu İniş önizleme" loading="lazy" data-src="../presets/lunar_descent/index.html"></iframe>
+  </div>
+</section>
 
-    const stage = document.querySelector('#stage');
-    const slides = [...stage.querySelectorAll('.slide')];
-    let current = 0;
-    let navigating = false;
+<section class="slide divider" data-tur="bolum" data-kat="ml">
+  <p class="num">02</p>
+  <h2>ML Sahneleri</h2>
+  <p class="sub">Gerçek matematik, gerçek gradyan, gerçek softmax — süs değil model.</p>
+  <p class="uyeler">Kayıp Yüzeyi · Dikkat Akışı · Sinir Ağı Yürüyüşü</p>
+</section>
 
-    /* Slayt numaraları içerikten değil sıradan gelir — araya slayt eklemek
-       numaralandırmayı bozamaz. */
-    slides.forEach((slide, index) => {
-      const chip = slide.querySelector('.slide-footer span:last-child');
-      if (chip) chip.textContent = String(index + 1);
-    });
+<section class="slide card" data-tur="kart" data-kat="ml" data-embed="../presets/ml_loss_landscape/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">ML Sahneleri <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Kayıp Yüzeyi</h2>
+    <p class="hook">SGD, momentum ve Adam aynı gerçek gradyan üzerinde yarışır — izler süs değil, entegrasyondur.</p>
+    <ul class="feats">
+      <li>Analitik bileşik yüzey + kapalı biçim ∇f</li>
+      <li>Üç iyileştiricinin adım adım izleri</li>
+      <li>Öğrenme oranı ve momentumun görünür etkisi</li>
+    </ul>
+    <p class="yol"><code>presets/ml_loss_landscape/index.html</code></p>
+    <a class="ac" href="../presets/ml_loss_landscape/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Kayıp Yüzeyi önizleme" loading="lazy" data-src="../presets/ml_loss_landscape/index.html"></iframe>
+  </div>
+</section>
 
-    /* Fixed-stage scaling per contract */
-    const scaleStage = () => {
-      const s = Math.min(innerWidth / 1920, innerHeight / 1080);
-      stage.style.transform = `translate(${(innerWidth - 1920 * s) / 2}px, ${(innerHeight - 1080 * s) / 2}px) scale(${s})`;
-    };
-    addEventListener('resize', scaleStage);
-    scaleStage();
+<section class="slide card" data-tur="kart" data-kat="ml" data-embed="../presets/ml_attention_flow/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">ML Sahneleri <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Dikkat Akışı</h2>
+    <p class="hook">softmax(QKᵀ/√d) sahnede gerçekten hesaplanır; yayların kalınlığı ağırlığın kendisidir.</p>
+    <ul class="feats">
+      <li>Jeton şeritleri üzerinde ağırlıklı dikkat yayları</li>
+      <li>Katman katman ilerleme, kafa seçimi</li>
+      <li>Tohumlu deterministik matrisler — her oynatım aynı</li>
+    </ul>
+    <p class="yol"><code>presets/ml_attention_flow/index.html</code></p>
+    <a class="ac" href="../presets/ml_attention_flow/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Dikkat Akışı önizleme" loading="lazy" data-src="../presets/ml_attention_flow/index.html"></iframe>
+  </div>
+</section>
 
-    /* Slide-specific mounts */
-    const tl = mountTimeline(document.querySelector('#tl'), {
-      orientation: 'horizontal',
-      ariaLabel: 'Ay keşfi kronolojisi',
-      events: [
-        { id: 'luna2', date: '1959', title: 'Luna 2 Ay’a ulaşır', detail: 'Başka bir gök cismine ulaşan ilk insan yapımı araç.', track: 1 },
-        { id: 'apollo11', date: '1969', title: 'Apollo 11 iniş yapar', detail: '21.6 kg örnek Dünya’ya döner.', track: 1 },
-        { id: 'magma', date: '1970’ler', title: 'Magma okyanusu hipotezi', detail: 'Örnek analizleri Ay’ın kökenini yeniden yazar.', track: -1 },
-        { id: 'clementine', date: '1994', title: 'Clementine haritalar', detail: 'Küresel çok bantlı haritalama; kutup hidrojeni ipuçları.', track: 1 },
-        { id: 'water', date: '2009', title: 'Kutup buzu doğrulanır', detail: 'LCROSS çarpma bulutunda su tespit edilir.', track: -1 },
-        { id: 'artemis', date: '2022', title: 'Artemis I uçar', detail: 'Yeni program dönemi başlar.', track: 1 },
-      ],
-      eras: [ { from: 0, to: 2, label: 'İlk dönem' }, { from: 3, to: 5, label: 'Dönüş dönemi' } ],
-    });
+<section class="slide card" data-tur="kart" data-kat="ml" data-embed="../presets/neural_network/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">ML Sahneleri <span class="badge klasik">KLASİK</span></p>
+    <h2>Sinir Ağı Yürüyüşü</h2>
+    <p class="hook">İleri besleme ağını katman katman yürüten klasik anlatım sahnesi.</p>
+    <ul class="feats">
+      <li>Aktivasyonların katman sırasıyla canlanması</li>
+      <li>Ağırlık vurguları ve akış okları</li>
+    </ul>
+    <p class="yol"><code>presets/neural_network/index.html</code></p>
+    <a class="ac" href="../presets/neural_network/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Sinir Ağı Yürüyüşü önizleme" loading="lazy" data-src="../presets/neural_network/index.html"></iframe>
+  </div>
+</section>
 
-    const nn = mountNeuralNetwork(document.querySelector('#nnfig'), {
-      layers: [
-        { size: 3, label: 'girdi' },
-        { size: 6, label: 'gizli 1', activation: 'tanh' },
-        { size: 4, label: 'gizli 2', activation: 'tanh' },
-        { size: 2, label: 'çıktı', activation: 'tanh' },
-      ],
-      seed: 7,
-      showValues: true,
-    });
-    document.querySelector('#nnPlay').addEventListener('click', () => nn.play());
-    document.querySelector('#nnStep').addEventListener('click', () => nn.step());
-    document.querySelector('#nnReset').addEventListener('click', () => nn.reset());
+<section class="slide divider" data-tur="bolum" data-kat="gok">
+  <p class="num">03</p>
+  <h2>Gök Cisimleri ve Fonlar</h2>
+  <p class="sub">Kapak ve kapanışların kahramanları: gerçek dokular, dürüst ışık.</p>
+  <p class="uyeler">Güneş · Ay · Dünya · Gezegenler · Kozmos Fonu · JWST Kaşifi</p>
+</section>
 
-    let eqRun = null;
-    const runEquations = () => {
-      eqRun?.cancel();
-      eqRun = writeSequence([document.querySelector('#eq1'), document.querySelector('#eq2')], { stepGap: 520 });
-    };
-    document.querySelector('#eqReplay').addEventListener('click', runEquations);
-    document.querySelector('#eqSettle').addEventListener('click', () => eqRun?.settle());
+<section class="slide card" data-tur="kart" data-kat="gok" data-embed="../presets/sun_advanced/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Gök Cisimleri ve Fonlar <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Güneş</h2>
+    <p class="hook">Granülasyon, tayflı korona ve ışık halkası — kapanış slaytlarının kahramanı.</p>
+    <ul class="feats">
+      <li>Katmanlı korona, yumuşak düşüşlü parlaklık</li>
+      <li>Deste paletine uyan sıcaklık tonları</li>
+    </ul>
+    <p class="yol"><code>presets/sun_advanced/index.html</code></p>
+    <a class="ac" href="../presets/sun_advanced/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Güneş önizleme" loading="lazy" data-src="../presets/sun_advanced/index.html"></iframe>
+  </div>
+</section>
 
-    const morphBars = document.querySelector('#morph-bars');
-    const orderBars = keys => morphState(morphBars, () => {
-      keys.forEach(key => morphBars.appendChild(morphBars.querySelector(`[data-morph-key="${key}"]`)));
-    });
-    document.querySelector('#sortBtn').addEventListener('click', () => orderBars(['a', 'b', 'c']));
-    document.querySelector('#shuffleBtn').addEventListener('click', () => orderBars(['c', 'a', 'b']));
+<section class="slide card" data-tur="kart" data-kat="gok" data-embed="../presets/moon_advanced/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Gök Cisimleri ve Fonlar <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Ay</h2>
+    <p class="hook">Gerçek albedo ve yükseklik dokularıyla dönen, sürüklenebilir Ay.</p>
+    <ul class="feats">
+      <li>Gerçek NASA dokuları</li>
+      <li>Fare ile döndürme, atalet</li>
+    </ul>
+    <p class="yol"><code>presets/moon_advanced/index.html</code></p>
+    <a class="ac" href="../presets/moon_advanced/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Ay önizleme" loading="lazy" data-src="../presets/moon_advanced/index.html"></iframe>
+  </div>
+</section>
 
-    initInteractions();
+<section class="slide card" data-tur="kart" data-kat="gok" data-embed="../presets/earth_advanced/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Gök Cisimleri ve Fonlar <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Dünya</h2>
+    <p class="hook">Gündüz-gece dokuları ve atmosfer kenarıyla Dünya küresi.</p>
+    <ul class="feats">
+      <li>Gündüz / gece doku geçişi</li>
+      <li>Atmosfer saçılım kenarı</li>
+    </ul>
+    <p class="yol"><code>presets/earth_advanced/index.html</code></p>
+    <a class="ac" href="../presets/earth_advanced/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Dünya önizleme" loading="lazy" data-src="../presets/earth_advanced/index.html"></iframe>
+  </div>
+</section>
 
-    /* Lunaris mounts lazily on first visit (orbit data ~5 MB + textures) */
-    let lunaris = null, lunarisLoading = false;
-    const enterLunaris = async () => {
-      if (lunarisLoading) return;
-      if (!lunaris) {
-        lunarisLoading = true;
-        try {
-          lunaris = await mountLunaris(document.querySelector('#lunarisHost'), {
-            assetBaseUrl: '../presets/moon_react_source/public/lunaris',
-            title: 'Bir uydu, tek bir kütleçekim alanını izlemez',
-          });
-        } finally { lunarisLoading = false; }
-      }
-      lunaris?.setActive(true);
-      lunaris?.figure.focus({ preventScroll: true });
-    };
+<section class="slide card" data-tur="kart" data-kat="gok" data-embed="../presets/planets_advanced/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Gök Cisimleri ve Fonlar <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Gezegenler</h2>
+    <p class="hook">Gezegen aileleri tek sahnede — karşılaştırmalı anlatım için.</p>
+    <ul class="feats">
+      <li>Gerçek doku seti</li>
+      <li>Ölçek ve sıralama anlatımı</li>
+    </ul>
+    <p class="yol"><code>presets/planets_advanced/index.html</code></p>
+    <a class="ac" href="../presets/planets_advanced/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Gezegenler önizleme" loading="lazy" data-src="../presets/planets_advanced/index.html"></iframe>
+  </div>
+</section>
 
-    /* Terra da tembel yüklenir (dokular ~2 MB) */
-    let terra = null, terraLoading = false;
-    const enterTerra = async () => {
-      if (terraLoading) return;
-      if (!terra) {
-        terraLoading = true;
-        try {
-          terra = await mountTerra(document.querySelector('#terraHost'), {
-            assetBaseUrl: '../presets/earth_advanced',
-            title: 'Şehirler gerçek yerlerinde, ışıklar gerçek gecede',
-          });
-        } finally { terraLoading = false; }
-      }
-      terra?.setActive(true);
-      terra?.figure.focus({ preventScroll: true });
-    };
+<section class="slide card" data-tur="kart" data-kat="gok" data-embed="../presets/cosmos_advanced/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Gök Cisimleri ve Fonlar <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Kozmos Fonu</h2>
+    <p class="hook">ESO&#x27;nun 360° Samanyolu panoraması (S. Brunier) gerçek doku olarak — fon artık süs değil, gökyüzünün kendisi.</p>
+    <ul class="feats">
+      <li>ESO/S. Brunier panoraması, CC BY 4.0 — kredi zorunlu</li>
+      <li>Prosedürel yıldız katmanları + derinlik paralaksı</li>
+      <li>Dekor modu: başlık slaytları için sakin varyant</li>
+    </ul>
+    <p class="yol"><code>presets/cosmos_advanced/index.html</code></p>
+    <a class="ac" href="../presets/cosmos_advanced/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Kozmos Fonu önizleme" loading="lazy" data-src="../presets/cosmos_advanced/index.html"></iframe>
+  </div>
+</section>
 
-    /* Sol da tembel yüklenir (tamamen prosedürel — doku yok) */
-    let sol = null, solLoading = false;
-    const enterSol = async () => {
-      if (solLoading) return;
-      if (!sol) {
-        solLoading = true;
-        try { sol = await mountSol(document.querySelector('#solHost')); }
-        finally { solLoading = false; }
-      }
-      sol?.setActive(true);
-      sol?.figure.focus({ preventScroll: true });
-    };
+<section class="slide card" data-tur="kart" data-kat="gok" data-embed="../presets/jwst_explorer/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Gök Cisimleri ve Fonlar <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>JWST Kaşifi</h2>
+    <p class="hook">On gerçek James Webb karesi, görsel olarak doğrulanmış 35 ilgi noktası; yaylı kamera hedefe süzülür.</p>
+    <ul class="feats">
+      <li>Yay-sönüm kamera (k=120, c=22), log uzayında yakınlaşma</li>
+      <li>Her karede adlandırılmış ilgi noktaları ve anlatı metni</li>
+      <li>STScI kaynak kayıtları ve lisans notları pakette</li>
+    </ul>
+    <p class="yol"><code>presets/jwst_explorer/index.html</code></p>
+    <a class="ac" href="../presets/jwst_explorer/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="JWST Kaşifi önizleme" loading="lazy" data-src="../presets/jwst_explorer/index.html"></iframe>
+  </div>
+</section>
 
-    /* Planetae de tembel yüklenir (8 doku ~2.9 MB) */
-    let planetae = null, planetaeLoading = false;
-    const enterPlanetae = async () => {
-      if (planetaeLoading) return;
-      if (!planetae) {
-        planetaeLoading = true;
-        try {
-          planetae = await mountPlanetae(document.querySelector('#planetaeHost'), {
-            assetBaseUrl: '../presets/planets_advanced',
-          });
-        } finally { planetaeLoading = false; }
-      }
-      planetae?.setActive(true);
-      planetae?.figure.focus({ preventScroll: true });
-    };
+<section class="slide divider" data-tur="bolum" data-kat="anlatim">
+  <p class="num">04</p>
+  <h2>Denklem ve Anlatım</h2>
+  <p class="sub">Bir elin yazdığı denklemler, adım adım türetmeler, figür üzerinde anlatım.</p>
+  <p class="uyeler">Denklem Kalemi · Türetme Adımları · Figür Anlatımı · Zaman Çizelgesi</p>
+</section>
 
-    /* Cosmos da tembel yüklenir (ESO panoraması ~4.9 MB) */
-    let cosmos = null, cosmosLoading = false;
-    const enterCosmos = async () => {
-      if (cosmosLoading) return;
-      if (!cosmos) {
-        cosmosLoading = true;
-        try { cosmos = await mountCosmos(document.querySelector('#cosmosHost'), { seed: 11 }); }
-        finally { cosmosLoading = false; }
-      }
-      cosmos?.setActive(true);
-      cosmos?.figure.focus({ preventScroll: true });
-    };
+<section class="slide card" data-tur="kart" data-kat="anlatim" data-embed="../presets/equation_pen/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Denklem ve Anlatım <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Denklem Kalemi</h2>
+    <p class="hook">Denklemi bir el yazar gibi çizer — kalem izi, gerçek yazma temposu.</p>
+    <ul class="feats">
+      <li>Vuruş sırasına sadık çizim</li>
+      <li>Desteyle aynı TeX dizgisi</li>
+    </ul>
+    <p class="yol"><code>presets/equation_pen/index.html</code></p>
+    <a class="ac" href="../presets/equation_pen/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Denklem Kalemi önizleme" loading="lazy" data-src="../presets/equation_pen/index.html"></iframe>
+  </div>
+</section>
 
-    /* JWST Explorer: manifest + görüntü ilk ziyarette gelir (~4.4 MB) */
-    let jwst = null, jwstLoading = false, jwstPair = null, jwstComparing = false;
-    const enterJwst = async () => {
-      if (jwstLoading) return;
-      if (!jwst) {
-        jwstLoading = true;
-        try {
-          const base = '../presets/jwst_explorer/images/';
-          const manifest = await fetch(base + 'manifest.json').then(r => r.json());
-          const entries = manifest.images || manifest;
-          const entry = entries.find(e => e.file === 'pillars-nircam.jpg') || entries[0];
-          const pairRef = entry.pairs && entry.pairs[0];
-          jwstPair = pairRef ? entries.find(e => e.file === pairRef.file) || { file: pairRef.file, credit: entry.credit } : null;
-          jwst = await mountJwstExplorer(document.querySelector('#jwstHost'), { entry, imagesBase: base });
-          /* C tuşu Hubble perdesini açıp kapatır — figür odaklıyken */
-          jwst.figure.addEventListener('keydown', async e => {
-            if (e.key === 'c' || e.key === 'C') { e.preventDefault();
-              jwstComparing = !jwstComparing;
-              await jwst.compare(jwstComparing ? jwstPair : null);
-            }
-          });
-        } finally { jwstLoading = false; }
-      }
-      jwst?.figure.focus({ preventScroll: true });
-      window.__deck = Object.assign(window.__deck || {}, { jwst });
-    };
+<section class="slide card" data-tur="kart" data-kat="anlatim" data-embed="../presets/equation_steps/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Denklem ve Anlatım <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Türetme Adımları</h2>
+    <p class="hook">Terim terim türetme: her adımda ne değişti, göz kaybetmeden izler.</p>
+    <ul class="feats">
+      <li>Terim vurgulama ve taşıma</li>
+      <li>Adım adım ilerleme kontrolü</li>
+    </ul>
+    <p class="yol"><code>presets/equation_steps/index.html</code></p>
+    <a class="ac" href="../presets/equation_steps/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Türetme Adımları önizleme" loading="lazy" data-src="../presets/equation_steps/index.html"></iframe>
+  </div>
+</section>
 
-    /* Tablo dolguları: çubuklar bir kez kurulur, kaskad gözlemcisi devreye girer */
-    cellBars(document);
-    observeTableReveal(document);
+<section class="slide card" data-tur="kart" data-kat="anlatim" data-embed="../presets/figure_callouts/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Denklem ve Anlatım <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Figür Anlatımı</h2>
+    <p class="hook">Bir figürün üzerinde adım adım işaretli anlatım — bakışı yöneten oklar ve maskeler.</p>
+    <ul class="feats">
+      <li>Adımlı vurgu bölgeleri</li>
+      <li>Karartma maskesi ile odak</li>
+    </ul>
+    <p class="yol"><code>presets/figure_callouts/index.html</code></p>
+    <a class="ac" href="../presets/figure_callouts/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Figür Anlatımı önizleme" loading="lazy" data-src="../presets/figure_callouts/index.html"></iframe>
+  </div>
+</section>
 
-    /* Veri animasyonları: keman + saçılım (manuel reveal — slayt girişinde) */
-    const violin = mountChart(document.querySelector('#violinChart'), {
-      type: 'violin', reveal: 'manual',
-      title: 'Kalıntı dağılımı üç modelde ayrışıyor',
-      y: { label: 'Kalıntı', unit: 'm', ticks: 5 },
-      series: [
-        { name: 'Model A', slot: 1, values: [-0.6,-0.4,-0.3,-0.2,-0.15,-0.1,0,0.05,0.1,0.15,0.2,0.25,0.3,0.4,0.5,0.6,0.7,-0.5,-0.35,0.45] },
-        { name: 'Model B', slot: 2, values: [-2.4,-1.8,-1.2,-0.8,-0.4,-0.1,0.2,0.5,0.9,1.3,1.7,2.1,2.6,-2.1,-1.5,1.9,2.4,-0.6,0.7,1.1] },
-        { name: 'Model C', slot: 4, values: [-1.8,-1.6,-1.5,-1.3,-1.2,-1.1,-1.0,-0.9,1.0,1.1,1.2,1.3,1.5,1.6,1.8,2.0,-1.4,1.4,0.9,-0.8] },
-      ],
-    });
-    const scatterA = [[1,4.1],[2,4.8],[3,5.6],[4,5.1],[5,6.4],[6,7.0],[7,6.6],[8,7.8],[9,8.3],[10,8.0],[11,9.1],[12,9.6]];
-    const scatterB = [[1,5.0],[2,5.4],[3,5.2],[4,6.3],[5,6.1],[6,6.9],[7,7.7],[8,7.4],[9,8.9],[10,9.4],[11,9.0],[12,9.9]];
-    const scatter = mountChart(document.querySelector('#scatterChart'), {
-      type: 'scatter', reveal: 'manual',
-      title: 'Kalibrasyon turu skorları noktaları taşıyor',
-      x: { label: 'Deneme', ticks: 6 },
-      y: { label: 'Skor', ticks: 5, min: 3, max: 11 },
-      series: [{ name: 'Skor', slot: 1, data: scatterA, markers: true }],
-    });
-    let daState = false;
-    document.querySelector('#daMorph').addEventListener('click', async () => {
-      daState = !daState;
-      await scatter.morphTo([{ data: daState ? scatterB : scatterA }]);
-    });
-    document.querySelector('#daSheen').addEventListener('click', () => {
-      scatter.sheen(0); violin.sheen(2);
-    });
+<section class="slide card" data-tur="kart" data-kat="anlatim" data-embed="../presets/timeline_tree/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Denklem ve Anlatım <span class="badge klasik">KLASİK</span></p>
+    <h2>Zaman Çizelgesi</h2>
+    <p class="hook">Dallanan kronoloji ağacı — tarihsel akış slaytları için.</p>
+    <ul class="feats">
+      <li>Dallı zaman çizgisi</li>
+      <li>Aşamalı ortaya çıkış</li>
+    </ul>
+    <p class="yol"><code>presets/timeline_tree/index.html</code></p>
+    <a class="ac" href="../presets/timeline_tree/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Zaman Çizelgesi önizleme" loading="lazy" data-src="../presets/timeline_tree/index.html"></iframe>
+  </div>
+</section>
 
-    /* Primitives bir kez kurulur; her girişte yeniden doğar */
-    Primitives.init();
-    const pxNumberEl = document.querySelector('#pxNumber');
-    const pxNumber = Primitives.animatedNumber(pxNumberEl);
-    const pxOdo = Primitives.slidingNumber(document.querySelector('#pxOdo'), 1959);
-    const enterPrimitives = slide => {
-      Primitives.reveal(slide);
-      pxNumber.jump(0); pxNumber.set(1620000);   /* katsayı sayısı — tanıdık değer */
-      pxOdo.set(2026);
-    };
+<section class="slide divider" data-tur="bolum" data-kat="veri">
+  <p class="num">05</p>
+  <h2>Veri, Grafik ve Hareket</h2>
+  <p class="sub">Keman grafikleri, morph geçişleri, tablo dolumu, sayfa geçişleri — deste tesisatı.</p>
+  <p class="uyeler">Grafik Motoru · Hareket Primitifleri · Tablo Dolumu · Slayt Geçişleri · Etkileşim Efektleri · Palet Kütüphanesi</p>
+</section>
 
-    /* Per-slide entry behavior */
-    const onEnter = slide => {
-      revealStage(slide);
-      if (slide.contains(document.querySelector('#tl'))) document.querySelector('#tl').focus({ preventScroll: true });
-      if (slide.contains(document.querySelector('#eq1'))) runEquations();
-      if (slide.contains(document.querySelector('#nnfig'))) nn.play();
-      if (slide.contains(document.querySelector('#lunarisHost'))) enterLunaris();
-      if (slide.contains(document.querySelector('#terraHost'))) enterTerra();
-      if (slide.contains(document.querySelector('#solHost'))) enterSol();
-      if (slide.contains(document.querySelector('#planetaeHost'))) enterPlanetae();
-      if (slide.contains(document.querySelector('#cosmosHost'))) enterCosmos();
-      if (slide.contains(document.querySelector('#jwstHost'))) enterJwst();
-      if (slide.contains(document.querySelector('#pxNumber'))) enterPrimitives(slide);
-      if (slide.contains(document.querySelector('#violinChart'))) { violin.reveal(); scatter.reveal(); }
-      if (slide.querySelector('[data-count]')) countCells(slide);
-      slide.querySelectorAll('.sci-chart .series-line').forEach(path => tracePath(path, { duration: 1100 }));
-    };
-    const onLeave = slide => {
-      if (slide.contains(document.querySelector('#lunarisHost'))) lunaris?.setActive(false);
-      if (slide.contains(document.querySelector('#terraHost'))) terra?.setActive(false);
-      if (slide.contains(document.querySelector('#solHost'))) sol?.setActive(false);
-      if (slide.contains(document.querySelector('#planetaeHost'))) planetae?.setActive(false);
-      if (slide.contains(document.querySelector('#cosmosHost'))) cosmos?.setActive(false);
-    };
+<section class="slide card" data-tur="kart" data-kat="veri" data-embed="../presets/charts_icons/chart-preset/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Grafik Motoru</h2>
+    <p class="hook">Keman, saçılım, çubuk ve çizgi — morph ile birbirine dönüşür, ışıltı taraması veriyi ezmeden vurgular.</p>
+    <ul class="feats">
+      <li>type:&#x27;violin&#x27; — Gauss KDE (Silverman bant genişliği)</li>
+      <li>morphTo(): grafik tipleri arası yumuşak dönüşüm</li>
+      <li>sheen(): tek geçişli ışıltı, saçılım damla animasyonu</li>
+    </ul>
+    <p class="yol"><code>presets/charts_icons/chart-preset/index.html</code></p>
+    <a class="ac" href="../presets/charts_icons/chart-preset/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Grafik Motoru önizleme" loading="lazy" data-src="../presets/charts_icons/chart-preset/index.html"></iframe>
+  </div>
+</section>
 
-    const counter = document.querySelector('#counter');
-    const progressBar = document.querySelector('.progress');
-    const updateChrome = () => {
-      counter.textContent = `${current + 1} / ${slides.length}`;
-      progressBar.style.width = `${((current + 1) / slides.length) * 100}%`;
-      history.replaceState(null, '', `#${current + 1}`);
-    };
+<section class="slide card" data-tur="kart" data-kat="veri" data-embed="../presets/motion_core/primitives-preview.html">
+  <div class="bilgi">
+    <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Hareket Primitifleri</h2>
+    <p class="hook">Motion-primitives&#x27;ten uyarlanan giriş efektleri: odometre sayaçlar, harf harf başlıklar, yumuşak beliriş.</p>
+    <ul class="feats">
+      <li>Odometre sayı akışı</li>
+      <li>Kademeli harf/kelime girişi</li>
+      <li>Reveal zinciri</li>
+    </ul>
+    <p class="yol"><code>presets/motion_core/primitives-preview.html</code></p>
+    <a class="ac" href="../presets/motion_core/primitives-preview.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Hareket Primitifleri önizleme" loading="lazy" data-src="../presets/motion_core/primitives-preview.html"></iframe>
+  </div>
+</section>
 
-    let pendingDelta = 0;
-    async function go(delta) {
-      if (navigating) { pendingDelta = delta; return; }  // queue the last press instead of dropping it
-      navigating = true;
-      const next = (current + delta + slides.length) % slides.length;
-      const to = slides[next];
-      const kind = delta > 0 ? (to.dataset.enter || 'fade-through') : 'fade-through';
-      const from = slides[current];
-      await transitionSlides(from, to, { kind, direction: delta, stage, anchor: to.dataset.anchor });
-      onLeave(from);
-      current = next;
-      updateChrome();
-      onEnter(to);
-      navigating = false;
-      if (pendingDelta) { const queued = pendingDelta; pendingDelta = 0; go(queued); }
-    }
+<section class="slide card" data-tur="kart" data-kat="veri" data-embed="../presets/motion_core/table-motion-preview.html">
+  <div class="bilgi">
+    <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Tablo Dolumu</h2>
+    <p class="hook">Tablolar boş gelmez: hücre sayaçları, hücre içi oran çubukları, ısı dolgusu, sütun kaskadı.</p>
+    <ul class="feats">
+      <li>countCells · cellBars · heatFill · columnCascade</li>
+      <li>Görünürlükte tetiklenen doldurma</li>
+    </ul>
+    <p class="yol"><code>presets/motion_core/table-motion-preview.html</code></p>
+    <a class="ac" href="../presets/motion_core/table-motion-preview.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Tablo Dolumu önizleme" loading="lazy" data-src="../presets/motion_core/table-motion-preview.html"></iframe>
+  </div>
+</section>
 
-    /* Palette cycling — the whole token system switches at once */
-    const palettes = ['graphite-ember', 'porcelain-ink', 'obsidian-champagne', 'verdigris-slate',
-                      'oat-cocoa', 'berry-orchid', 'sage-buttercream', 'arctic-mulberry', 'midnight-tangerine',
-                      'ultraviolet-chartreuse', 'cerulean-vermilion', 'prussian-amber', 'magma-basalt',
-                      'aurora-polar', 'heliograph', 'royal-saffron', 'ionosphere'];
-    const paletteBtn = document.querySelector('#paletteBtn');
-    const cyclePalette = () => {
-      const next = palettes[(palettes.indexOf(document.body.dataset.palette) + 1) % palettes.length];
-      document.body.dataset.palette = next;
-      paletteBtn.textContent = next;
-    };
-    paletteBtn.addEventListener('click', cyclePalette);
+<section class="slide card" data-tur="kart" data-kat="veri" data-embed="../presets/motion_core/slide-transition-preview.html">
+  <div class="bilgi">
+    <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Slayt Geçişleri</h2>
+    <p class="hook">Sayfalar arası sinematik geçişler ve morph sürekliliği — kesme yok, akış var.</p>
+    <ul class="feats">
+      <li>Yön duyarlı kaydırma ve perde geçişleri</li>
+      <li>Ortak öğe morph&#x27;u</li>
+    </ul>
+    <p class="yol"><code>presets/motion_core/slide-transition-preview.html</code></p>
+    <a class="ac" href="../presets/motion_core/slide-transition-preview.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Slayt Geçişleri önizleme" loading="lazy" data-src="../presets/motion_core/slide-transition-preview.html"></iframe>
+  </div>
+</section>
 
-    addEventListener('keydown', event => {
-      if (event.key === 'p' || event.key === 'P') { cyclePalette(); return; }
-      if (event.key === 'Escape') { eqRun?.settle(); nn.stop(); return; }
-      const arrows = ['ArrowRight', 'ArrowLeft'];
-      const targetEl = event.target instanceof Element ? event.target : null;
-      if (arrows.includes(event.key) && targetEl?.closest('[data-owns-arrows]')) return;
-      if (event.key === ' ' && targetEl?.closest('[data-owns-keys]')) return;  // Lunaris sahnesi Boşluk'u kendine ayırır
-      if (['ArrowRight', 'PageDown', ' '].includes(event.key)) { event.preventDefault(); go(1); }
-      if (['ArrowLeft', 'PageUp'].includes(event.key)) { event.preventDefault(); go(-1); }
-    });
+<section class="slide card" data-tur="kart" data-kat="veri" data-embed="../presets/motion_core/interaction-preview.html">
+  <div class="bilgi">
+    <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Etkileşim Efektleri</h2>
+    <p class="hook">İmleç ve odak tepkileri: mıknatıs düğmeler, eğilen kartlar, iz bırakan vurgular.</p>
+    <ul class="feats">
+      <li>Hover / odak mikro animasyonları</li>
+      <li>Dokunmatik güvenli davranış</li>
+    </ul>
+    <p class="yol"><code>presets/motion_core/interaction-preview.html</code></p>
+    <a class="ac" href="../presets/motion_core/interaction-preview.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Etkileşim Efektleri önizleme" loading="lazy" data-src="../presets/motion_core/interaction-preview.html"></iframe>
+  </div>
+</section>
 
-    document.fonts.ready.then(() => {
-      const start = Math.max(0, Math.min(slides.length - 1, Number(location.hash.slice(1) || 1) - 1));
-      if (start !== 0) { slides[0].classList.remove('is-active'); slides[start].classList.add('is-active'); current = start; }
-      updateChrome();
-      onEnter(slides[current]);
-    });
-  </script>
+<section class="slide card" data-tur="kart" data-kat="veri" data-embed="../presets/color_themes/palette-preview.html">
+  <div class="bilgi">
+    <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Palet Kütüphanesi</h2>
+    <p class="hook">Renk teorisiyle kurulmuş 17 harmoni paleti + her biri için sıralı ve ıraksak veri rampaları.</p>
+    <ul class="feats">
+      <li>data-palette ile tek satırda tema değişimi</li>
+      <li>--data-1..6 ve --ramp-seq/div jetonları</li>
+      <li>Kontrast denetiminden geçmiş kombinasyonlar</li>
+    </ul>
+    <p class="yol"><code>presets/color_themes/palette-preview.html</code></p>
+    <a class="ac" href="../presets/color_themes/palette-preview.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Palet Kütüphanesi önizleme" loading="lazy" data-src="../presets/color_themes/palette-preview.html"></iframe>
+  </div>
+</section>
+
+<section class="slide divider" data-tur="bolum" data-kat="ikon">
+  <p class="num">06</p>
+  <h2>İkon Katmanları</h2>
+  <p class="sub">Üç katman: kahraman duotone, alan duotone, utility kontur. Katmanlar karışmaz.</p>
+  <p class="uyeler">Alan İkonları · Utility İkonlar · Kahraman Bilim İkonları</p>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="ikon" data-embed="../presets/charts_icons/domain-icons/preview.html">
+  <div class="bilgi">
+    <p class="eyebrow">İkon Katmanları <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Alan İkonları</h2>
+    <p class="hook">Matematikten itkiye 276 duotone ikon, sekiz aile, tek elden: .16 dolgu + 1,8 kontur + tek dolu odak.</p>
+    <ul class="feats">
+      <li>Aileler: matematik · sinyal-kontrol · fizik · astrodinamik · GNC · itki · roket-uydu · ML-kozmos</li>
+      <li>Bilimsel dürüstlük: gerçek nav-ball işaretleri, açık hiperbol</li>
+      <li>Arama + tıkla-kopyala önizleme</li>
+    </ul>
+    <p class="yol"><code>presets/charts_icons/domain-icons/preview.html</code></p>
+    <a class="ac" href="../presets/charts_icons/domain-icons/preview.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Alan İkonları önizleme" loading="lazy" data-src="../presets/charts_icons/domain-icons/preview.html"></iframe>
+  </div>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="ikon" data-embed="../presets/charts_icons/icon-library/preview.html">
+  <div class="bilgi">
+    <p class="eyebrow">İkon Katmanları <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Utility İkonlar</h2>
+    <p class="hook">168 ince kontur ikon — ok, durum, gezinme gibi tesisat işleri için; duotone ile aynı slaytta karışmaz.</p>
+    <ul class="feats">
+      <li>Lucide/Tabler kökenli, lisansları pakette</li>
+      <li>validate-icon-usage.mjs karışımı uyarır</li>
+    </ul>
+    <p class="yol"><code>presets/charts_icons/icon-library/preview.html</code></p>
+    <a class="ac" href="../presets/charts_icons/icon-library/preview.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Utility İkonlar önizleme" loading="lazy" data-src="../presets/charts_icons/icon-library/preview.html"></iframe>
+  </div>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="ikon" data-embed="../presets/charts_icons/icons/icons-preview.html">
+  <div class="bilgi">
+    <p class="eyebrow">İkon Katmanları <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Kahraman Bilim İkonları</h2>
+    <p class="hook">Kapak ve bölüm açılışları için 23 büyük duotone kahraman ikon.</p>
+    <ul class="feats">
+      <li>Alan setiyle aynı çizim dili</li>
+      <li>Büyük boyutta test edilmiş</li>
+    </ul>
+    <p class="yol"><code>presets/charts_icons/icons/icons-preview.html</code></p>
+    <a class="ac" href="../presets/charts_icons/icons/icons-preview.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Kahraman Bilim İkonları önizleme" loading="lazy" data-src="../presets/charts_icons/icons/icons-preview.html"></iframe>
+  </div>
+</section>
+
+<section class="slide divider" data-tur="bolum" data-kat="arsiv">
+  <p class="num">07</p>
+  <h2>Arşiv</h2>
+  <p class="sub">Yerini daha güçlü bloklara bırakanlar; eski desteler bozulmasın diye korunur.</p>
+  <p class="uyeler">Analitik Ay Yörüngesi</p>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="arsiv" data-embed="../presets/lunar_orbit/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">Arşiv <span class="badge arsiv">ARŞİV</span></p>
+    <h2>Analitik Ay Yörüngesi</h2>
+    <p class="hook">Yerini Yörünge Sahnesi aldı; eski desteler bozulmasın diye repoda duruyor.</p>
+    <ul class="feats">
+      <li>Yeni işler için: orbital_stage kullanın</li>
+    </ul>
+    <p class="yol"><code>presets/lunar_orbit/index.html</code></p>
+    <a class="ac" href="../presets/lunar_orbit/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Analitik Ay Yörüngesi önizleme" loading="lazy" data-src="../presets/lunar_orbit/index.html"></iframe>
+  </div>
+</section>
+
+<section class="slide closing" data-tur="kapanis">
+  <div class="stars" aria-hidden="true"></div>
+  <h2>Blok blok bir deste kurun</h2>
+  <p class="sub">Bütün bu parçaların birlikte çalıştığı 20 slaytlık örnek deste:</p>
+  <a class="buyuk-link" href="ornek-deste.html">ornek-deste.html →</a>
+  <p class="not">Yolda olanlar (2. dalga): fırlatma-tırmanış · buluşma-kenetlenme · yer izi 3B ·
+     porkchop · takım uydu kapsaması · atmosfere giriş koridoru · formasyon uçuşu ·
+     gömme projektörü · evrişim görüsü · çizge mesajlaşması</p>
+  <p class="tarih">build-demo.py · 14.08.2026</p>
+</section>
+</div></div>
+<div id="oklar">
+  <button id="geri" aria-label="Önceki">←</button>
+  <button id="ileri" aria-label="Sonraki">→</button>
+</div>
+<button id="sayac" title="Dizin (G)">1 / 35</button>
+<div id="dizin" role="dialog" aria-label="Dizin"></div>
+<script>
+const TOC = [{"i": 0, "ad": "Kapak", "tur": "kapak", "kat": ""}, {"i": 1, "ad": "Yörünge Sahnesi", "tur": "bolum", "kat": "orbital"}, {"i": 2, "ad": "Yörünge Sahnesi", "tur": "kart", "kat": "orbital"}, {"i": 3, "ad": "Araç Blokları", "tur": "kart", "kat": "orbital"}, {"i": 4, "ad": "Ay'a Motorlu İniş", "tur": "kart", "kat": "orbital"}, {"i": 5, "ad": "ML Sahneleri", "tur": "bolum", "kat": "ml"}, {"i": 6, "ad": "Kayıp Yüzeyi", "tur": "kart", "kat": "ml"}, {"i": 7, "ad": "Dikkat Akışı", "tur": "kart", "kat": "ml"}, {"i": 8, "ad": "Sinir Ağı Yürüyüşü", "tur": "kart", "kat": "ml"}, {"i": 9, "ad": "Gök Cisimleri ve Fonlar", "tur": "bolum", "kat": "gok"}, {"i": 10, "ad": "Güneş", "tur": "kart", "kat": "gok"}, {"i": 11, "ad": "Ay", "tur": "kart", "kat": "gok"}, {"i": 12, "ad": "Dünya", "tur": "kart", "kat": "gok"}, {"i": 13, "ad": "Gezegenler", "tur": "kart", "kat": "gok"}, {"i": 14, "ad": "Kozmos Fonu", "tur": "kart", "kat": "gok"}, {"i": 15, "ad": "JWST Kaşifi", "tur": "kart", "kat": "gok"}, {"i": 16, "ad": "Denklem ve Anlatım", "tur": "bolum", "kat": "anlatim"}, {"i": 17, "ad": "Denklem Kalemi", "tur": "kart", "kat": "anlatim"}, {"i": 18, "ad": "Türetme Adımları", "tur": "kart", "kat": "anlatim"}, {"i": 19, "ad": "Figür Anlatımı", "tur": "kart", "kat": "anlatim"}, {"i": 20, "ad": "Zaman Çizelgesi", "tur": "kart", "kat": "anlatim"}, {"i": 21, "ad": "Veri, Grafik ve Hareket", "tur": "bolum", "kat": "veri"}, {"i": 22, "ad": "Grafik Motoru", "tur": "kart", "kat": "veri"}, {"i": 23, "ad": "Hareket Primitifleri", "tur": "kart", "kat": "veri"}, {"i": 24, "ad": "Tablo Dolumu", "tur": "kart", "kat": "veri"}, {"i": 25, "ad": "Slayt Geçişleri", "tur": "kart", "kat": "veri"}, {"i": 26, "ad": "Etkileşim Efektleri", "tur": "kart", "kat": "veri"}, {"i": 27, "ad": "Palet Kütüphanesi", "tur": "kart", "kat": "veri"}, {"i": 28, "ad": "İkon Katmanları", "tur": "bolum", "kat": "ikon"}, {"i": 29, "ad": "Alan İkonları", "tur": "kart", "kat": "ikon"}, {"i": 30, "ad": "Utility İkonlar", "tur": "kart", "kat": "ikon"}, {"i": 31, "ad": "Kahraman Bilim İkonları", "tur": "kart", "kat": "ikon"}, {"i": 32, "ad": "Arşiv", "tur": "bolum", "kat": "arsiv"}, {"i": 33, "ad": "Analitik Ay Yörüngesi", "tur": "kart", "kat": "arsiv"}, {"i": 34, "ad": "Kapanış", "tur": "kapanis", "kat": ""}];
+const slaytlar = [...document.querySelectorAll('.slide')];
+const sayac = document.getElementById('sayac');
+const dizin = document.getElementById('dizin');
+let i = 0;
+
+/* ölçek: 1920x1080 sahneyi pencereye sığdır */
+function olcekle() {
+  const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+  document.getElementById('stage').style.transform =
+    `translate(-50%, -50%) scale(${s})`;
+}
+addEventListener('resize', olcekle); olcekle();
+
+/* iframe yaşam döngüsü: yalnız etkin kart yüklü kalır, 2+ uzaktakiler boşaltılır
+   (her kart bir WebGL bağlamı — hepsi birden açık kalamaz) */
+function iframeYonet() {
+  slaytlar.forEach((sl, k) => {
+    const f = sl.querySelector('iframe');
+    if (!f) return;
+    const uzak = Math.abs(k - i);
+    if (k === i && !f.src) f.src = f.dataset.src;
+    else if (uzak > 1 && f.src) f.removeAttribute('src');
+  });
+}
+
+function git(y, pushHash = true) {
+  i = Math.max(0, Math.min(slaytlar.length - 1, y));
+  slaytlar.forEach((sl, k) => sl.classList.toggle('gecerli', k === i));
+  sayac.textContent = (i + 1) + ' / ' + slaytlar.length;
+  if (pushHash) history.replaceState(null, '', '#' + (i + 1));
+  iframeYonet();
+}
+
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); git(i + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); git(i - 1); }
+  else if (e.key === 'Home') git(0);
+  else if (e.key === 'End') git(slaytlar.length - 1);
+  else if (e.key.toLowerCase() === 'g') dizin.classList.toggle('acik');
+  else if (e.key === 'Escape') dizin.classList.remove('acik');
+});
+document.getElementById('ileri').onclick = () => git(i + 1);
+document.getElementById('geri').onclick = () => git(i - 1);
+sayac.onclick = () => dizin.classList.toggle('acik');
+
+/* dizin */
+{
+  const kategoriler = new Map();
+  TOC.forEach(t => {
+    const grup = t.tur === 'kart' ? t.kat : '_' + t.tur;
+    if (!kategoriler.has(grup)) kategoriler.set(grup, []);
+    kategoriler.get(grup).push(t);
+  });
+  let h = '';
+  const bolumAdi = {};
+  TOC.filter(t => t.tur === 'bolum').forEach(t => bolumAdi[t.kat] = t.ad);
+  for (const [grup, list] of kategoriler) {
+    if (grup.startsWith('_')) continue;
+    h += `<h3>${bolumAdi[grup] || grup}</h3><div class="grid">` +
+      list.filter(t => t.tur === 'kart')
+          .map(t => `<button data-i="${t.i}"><span class="no">${t.i + 1}</span>${t.ad}</button>`)
+          .join('') + '</div>';
+  }
+  dizin.innerHTML = '<h3>Dizin — kapatmak için Esc</h3>' + h;
+  dizin.addEventListener('click', e => {
+    const b = e.target.closest('button[data-i]');
+    if (b) { dizin.classList.remove('acik'); git(+b.dataset.i); }
+  });
+}
+
+/* hash ile doğrudan slayt */
+const h0 = parseInt(location.hash.slice(1), 10);
+git(isNaN(h0) ? 0 : h0 - 1, false);
+</script>
 </body>
 </html>
