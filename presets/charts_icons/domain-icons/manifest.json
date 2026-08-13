@@ -1,0 +1,2579 @@
+{
+  "generated": "2026-08-13",
+  "count": 172,
+  "language": "duotone-v2",
+  "icons": [
+    {
+      "name": "integral",
+      "family": "mathematics",
+      "label_tr": "İntegral",
+      "label_en": "Integral",
+      "tags": [
+        "integral",
+        "alan",
+        "eğri altında alan",
+        "kalkülüs",
+        "integral",
+        "area",
+        "calculus",
+        "antiderivative"
+      ]
+    },
+    {
+      "name": "integral-double",
+      "family": "mathematics",
+      "label_tr": "Çift integral",
+      "label_en": "Double integral",
+      "tags": [
+        "çift integral",
+        "yüzey",
+        "bölge",
+        "hacim",
+        "double integral",
+        "surface",
+        "region",
+        "volume"
+      ]
+    },
+    {
+      "name": "integral-contour",
+      "family": "mathematics",
+      "label_tr": "Çevre integrali",
+      "label_en": "Contour integral",
+      "tags": [
+        "çevre integrali",
+        "kapalı yol",
+        "kontur",
+        "karmaşık analiz",
+        "contour integral",
+        "closed loop",
+        "residue",
+        "complex analysis"
+      ]
+    },
+    {
+      "name": "derivative-partial",
+      "family": "mathematics",
+      "label_tr": "Kısmi türev",
+      "label_en": "Partial derivative",
+      "tags": [
+        "kısmi türev",
+        "türev",
+        "teğet",
+        "eğim",
+        "partial derivative",
+        "tangent",
+        "slope",
+        "calculus"
+      ]
+    },
+    {
+      "name": "gradient-nabla",
+      "family": "mathematics",
+      "label_tr": "Gradyan (nabla)",
+      "label_en": "Gradient (nabla)",
+      "tags": [
+        "gradyan",
+        "nabla",
+        "del",
+        "yön türevi",
+        "gradient",
+        "nabla",
+        "vector field",
+        "steepest ascent"
+      ]
+    },
+    {
+      "name": "summation",
+      "family": "mathematics",
+      "label_tr": "Toplam (sigma)",
+      "label_en": "Summation",
+      "tags": [
+        "toplam",
+        "sigma",
+        "seri",
+        "terimler",
+        "summation",
+        "sigma",
+        "series",
+        "sum"
+      ]
+    },
+    {
+      "name": "product-pi",
+      "family": "mathematics",
+      "label_tr": "Çarpım (pi)",
+      "label_en": "Product",
+      "tags": [
+        "çarpım",
+        "pi",
+        "seri çarpımı",
+        "product",
+        "pi notation",
+        "multiply",
+        "sequence"
+      ]
+    },
+    {
+      "name": "limit",
+      "family": "mathematics",
+      "label_tr": "Limit",
+      "label_en": "Limit",
+      "tags": [
+        "limit",
+        "asimptot",
+        "yakınsama",
+        "süreklilik",
+        "limit",
+        "asymptote",
+        "convergence",
+        "approach"
+      ]
+    },
+    {
+      "name": "matrix",
+      "family": "mathematics",
+      "label_tr": "Matris",
+      "label_en": "Matrix",
+      "tags": [
+        "matris",
+        "dizi",
+        "pivot",
+        "lineer cebir",
+        "matrix",
+        "array",
+        "pivot",
+        "linear algebra"
+      ]
+    },
+    {
+      "name": "determinant",
+      "family": "mathematics",
+      "label_tr": "Determinant",
+      "label_en": "Determinant",
+      "tags": [
+        "determinant",
+        "alan",
+        "ölçek çarpanı",
+        "matris",
+        "determinant",
+        "area",
+        "scaling factor",
+        "matrix"
+      ]
+    },
+    {
+      "name": "vector-arrow",
+      "family": "mathematics",
+      "label_tr": "Vektör",
+      "label_en": "Vector",
+      "tags": [
+        "vektör",
+        "ok",
+        "bileşen",
+        "yön",
+        "vector",
+        "arrow",
+        "components",
+        "direction"
+      ]
+    },
+    {
+      "name": "tensor",
+      "family": "mathematics",
+      "label_tr": "Tensör",
+      "label_en": "Tensor",
+      "tags": [
+        "tensör",
+        "çok boyutlu dizi",
+        "rank",
+        "indis",
+        "tensor",
+        "multidimensional array",
+        "rank",
+        "index"
+      ]
+    },
+    {
+      "name": "eigenvector",
+      "family": "mathematics",
+      "label_tr": "Özvektör",
+      "label_en": "Eigenvector",
+      "tags": [
+        "özvektör",
+        "özdeğer",
+        "dönüşüm",
+        "ölçekleme",
+        "eigenvector",
+        "eigenvalue",
+        "transformation",
+        "scaling"
+      ]
+    },
+    {
+      "name": "transpose",
+      "family": "mathematics",
+      "label_tr": "Devrik (transpoz)",
+      "label_en": "Transpose",
+      "tags": [
+        "devrik",
+        "transpoz",
+        "köşegen",
+        "yansıma",
+        "transpose",
+        "diagonal",
+        "mirror",
+        "matrix"
+      ]
+    },
+    {
+      "name": "norm",
+      "family": "mathematics",
+      "label_tr": "Norm (uzunluk)",
+      "label_en": "Norm",
+      "tags": [
+        "norm",
+        "uzunluk",
+        "büyüklük",
+        "mesafe",
+        "norm",
+        "magnitude",
+        "length",
+        "distance"
+      ]
+    },
+    {
+      "name": "dot-product",
+      "family": "mathematics",
+      "label_tr": "Nokta çarpım",
+      "label_en": "Dot product",
+      "tags": [
+        "nokta çarpım",
+        "skaler çarpım",
+        "izdüşüm",
+        "açı",
+        "dot product",
+        "scalar product",
+        "projection",
+        "angle"
+      ]
+    },
+    {
+      "name": "cross-product",
+      "family": "mathematics",
+      "label_tr": "Vektörel çarpım",
+      "label_en": "Cross product",
+      "tags": [
+        "vektörel çarpım",
+        "dik vektör",
+        "normal",
+        "paralelkenar",
+        "cross product",
+        "normal vector",
+        "perpendicular",
+        "parallelogram"
+      ]
+    },
+    {
+      "name": "set-union",
+      "family": "mathematics",
+      "label_tr": "Birleşim",
+      "label_en": "Union",
+      "tags": [
+        "birleşim",
+        "küme",
+        "venn",
+        "veya",
+        "union",
+        "set",
+        "venn",
+        "or"
+      ]
+    },
+    {
+      "name": "set-intersection",
+      "family": "mathematics",
+      "label_tr": "Kesişim",
+      "label_en": "Intersection",
+      "tags": [
+        "kesişim",
+        "küme",
+        "venn",
+        "ve",
+        "intersection",
+        "set",
+        "venn",
+        "and"
+      ]
+    },
+    {
+      "name": "subset",
+      "family": "mathematics",
+      "label_tr": "Alt küme",
+      "label_en": "Subset",
+      "tags": [
+        "alt küme",
+        "kapsama",
+        "eleman",
+        "küme",
+        "subset",
+        "containment",
+        "element",
+        "set"
+      ]
+    },
+    {
+      "name": "for-all",
+      "family": "mathematics",
+      "label_tr": "Her biri için",
+      "label_en": "For all",
+      "tags": [
+        "her biri için",
+        "evrensel niceleyici",
+        "mantık",
+        "tanım kümesi",
+        "for all",
+        "universal quantifier",
+        "logic",
+        "domain"
+      ]
+    },
+    {
+      "name": "exists",
+      "family": "mathematics",
+      "label_tr": "Vardır",
+      "label_en": "There exists",
+      "tags": [
+        "vardır",
+        "varlık niceleyicisi",
+        "mantık",
+        "tanık",
+        "exists",
+        "existential quantifier",
+        "logic",
+        "witness"
+      ]
+    },
+    {
+      "name": "complex-plane",
+      "family": "mathematics",
+      "label_tr": "Karmaşık düzlem",
+      "label_en": "Complex plane",
+      "tags": [
+        "karmaşık düzlem",
+        "sanal sayı",
+        "argand",
+        "faz",
+        "complex plane",
+        "imaginary",
+        "argand",
+        "phase"
+      ]
+    },
+    {
+      "name": "function-map",
+      "family": "mathematics",
+      "label_tr": "Fonksiyon eşlemesi",
+      "label_en": "Function mapping",
+      "tags": [
+        "fonksiyon",
+        "eşleme",
+        "tanım kümesi",
+        "değer kümesi",
+        "function",
+        "mapping",
+        "domain",
+        "codomain"
+      ]
+    },
+    {
+      "name": "piecewise",
+      "family": "mathematics",
+      "label_tr": "Parçalı fonksiyon",
+      "label_en": "Piecewise function",
+      "tags": [
+        "parçalı fonksiyon",
+        "koşullu",
+        "dal",
+        "küme parantezi",
+        "piecewise",
+        "branches",
+        "cases",
+        "conditional"
+      ]
+    },
+    {
+      "name": "factorial",
+      "family": "mathematics",
+      "label_tr": "Faktöriyel",
+      "label_en": "Factorial",
+      "tags": [
+        "faktöriyel",
+        "permütasyon",
+        "kombinatorik",
+        "çarpım",
+        "factorial",
+        "permutation",
+        "combinatorics",
+        "product"
+      ]
+    },
+    {
+      "name": "proportional",
+      "family": "mathematics",
+      "label_tr": "Orantılı",
+      "label_en": "Proportional",
+      "tags": [
+        "orantı",
+        "doğru orantı",
+        "ölçek",
+        "oran",
+        "proportional",
+        "ratio",
+        "scaling",
+        "proportionality"
+      ]
+    },
+    {
+      "name": "angle-theta",
+      "family": "mathematics",
+      "label_tr": "Açı (teta)",
+      "label_en": "Angle (theta)",
+      "tags": [
+        "açı",
+        "teta",
+        "derece",
+        "trigonometri",
+        "angle",
+        "theta",
+        "degrees",
+        "trigonometry"
+      ]
+    },
+    {
+      "name": "fourier-transform",
+      "family": "signals-control",
+      "label_tr": "Fourier dönüşümü",
+      "label_en": "Fourier transform",
+      "tags": [
+        "fourier",
+        "dönüşüm",
+        "frekans",
+        "spektrum",
+        "transform",
+        "frequency",
+        "zaman"
+      ]
+    },
+    {
+      "name": "laplace-transform",
+      "family": "signals-control",
+      "label_tr": "Laplace dönüşümü",
+      "label_en": "Laplace transform",
+      "tags": [
+        "laplace",
+        "dönüşüm",
+        "s düzlemi",
+        "kutup",
+        "transform",
+        "s-plane",
+        "pole"
+      ]
+    },
+    {
+      "name": "convolution",
+      "family": "signals-control",
+      "label_tr": "Evrişim",
+      "label_en": "Convolution",
+      "tags": [
+        "evrişim",
+        "katlama",
+        "darbe",
+        "convolution",
+        "impulse",
+        "sinyal"
+      ]
+    },
+    {
+      "name": "sine-wave",
+      "family": "signals-control",
+      "label_tr": "Sinüs dalgası",
+      "label_en": "Sine wave",
+      "tags": [
+        "sinüs",
+        "dalga",
+        "harmonik",
+        "sine",
+        "wave",
+        "periyot"
+      ]
+    },
+    {
+      "name": "square-wave",
+      "family": "signals-control",
+      "label_tr": "Kare dalga",
+      "label_en": "Square wave",
+      "tags": [
+        "kare dalga",
+        "darbe",
+        "sayısal",
+        "square",
+        "wave",
+        "pwm"
+      ]
+    },
+    {
+      "name": "sawtooth-wave",
+      "family": "signals-control",
+      "label_tr": "Testere dişi dalga",
+      "label_en": "Sawtooth wave",
+      "tags": [
+        "testere",
+        "rampa",
+        "dalga",
+        "sawtooth",
+        "ramp",
+        "osilatör"
+      ]
+    },
+    {
+      "name": "damped-oscillation",
+      "family": "signals-control",
+      "label_tr": "Sönümlü salınım",
+      "label_en": "Damped oscillation",
+      "tags": [
+        "sönüm",
+        "salınım",
+        "zarf",
+        "damping",
+        "oscillation",
+        "envelope"
+      ]
+    },
+    {
+      "name": "frequency-spectrum",
+      "family": "signals-control",
+      "label_tr": "Frekans spektrumu",
+      "label_en": "Frequency spectrum",
+      "tags": [
+        "spektrum",
+        "frekans",
+        "harmonik",
+        "spectrum",
+        "frequency",
+        "fft"
+      ]
+    },
+    {
+      "name": "lowpass-filter",
+      "family": "signals-control",
+      "label_tr": "Alçak geçiren filtre",
+      "label_en": "Low-pass filter",
+      "tags": [
+        "filtre",
+        "alçak geçiren",
+        "kesim",
+        "lowpass",
+        "filter",
+        "cutoff"
+      ]
+    },
+    {
+      "name": "highpass-filter",
+      "family": "signals-control",
+      "label_tr": "Yüksek geçiren filtre",
+      "label_en": "High-pass filter",
+      "tags": [
+        "filtre",
+        "yüksek geçiren",
+        "kesim",
+        "highpass",
+        "filter",
+        "cutoff"
+      ]
+    },
+    {
+      "name": "bandpass-filter",
+      "family": "signals-control",
+      "label_tr": "Bant geçiren filtre",
+      "label_en": "Band-pass filter",
+      "tags": [
+        "filtre",
+        "bant geçiren",
+        "merkez frekans",
+        "bandpass",
+        "filter",
+        "band"
+      ]
+    },
+    {
+      "name": "sampling",
+      "family": "signals-control",
+      "label_tr": "Örnekleme",
+      "label_en": "Sampling",
+      "tags": [
+        "örnekleme",
+        "ayrıklaştırma",
+        "nyquist",
+        "sampling",
+        "adc",
+        "sinyal"
+      ]
+    },
+    {
+      "name": "impulse-delta",
+      "family": "signals-control",
+      "label_tr": "Birim darbe (delta)",
+      "label_en": "Impulse (delta)",
+      "tags": [
+        "darbe",
+        "dirac",
+        "delta",
+        "impulse",
+        "birim",
+        "dürtü"
+      ]
+    },
+    {
+      "name": "step-function",
+      "family": "signals-control",
+      "label_tr": "Birim basamak",
+      "label_en": "Unit step",
+      "tags": [
+        "basamak",
+        "birim",
+        "heaviside",
+        "step",
+        "süreksizlik",
+        "giriş"
+      ]
+    },
+    {
+      "name": "phase-shift",
+      "family": "signals-control",
+      "label_tr": "Faz kayması",
+      "label_en": "Phase shift",
+      "tags": [
+        "faz",
+        "kayma",
+        "gecikme",
+        "phase",
+        "shift",
+        "lag"
+      ]
+    },
+    {
+      "name": "harmonic-series",
+      "family": "signals-control",
+      "label_tr": "Harmonik dizi",
+      "label_en": "Harmonic series",
+      "tags": [
+        "harmonik",
+        "üst ton",
+        "temel frekans",
+        "harmonic",
+        "overtone",
+        "series"
+      ]
+    },
+    {
+      "name": "feedback-loop",
+      "family": "signals-control",
+      "label_tr": "Geri besleme döngüsü",
+      "label_en": "Feedback loop",
+      "tags": [
+        "geri besleme",
+        "kapalı çevrim",
+        "denetim",
+        "feedback",
+        "closed loop",
+        "control"
+      ]
+    },
+    {
+      "name": "block-diagram",
+      "family": "signals-control",
+      "label_tr": "Blok diyagram",
+      "label_en": "Block diagram",
+      "tags": [
+        "blok",
+        "diyagram",
+        "zincir",
+        "block",
+        "diagram",
+        "sistem"
+      ]
+    },
+    {
+      "name": "summing-junction",
+      "family": "signals-control",
+      "label_tr": "Toplama düğümü",
+      "label_en": "Summing junction",
+      "tags": [
+        "toplama",
+        "düğüm",
+        "hata",
+        "summing",
+        "junction",
+        "comparator"
+      ]
+    },
+    {
+      "name": "pid-controller",
+      "family": "signals-control",
+      "label_tr": "PID denetleyici",
+      "label_en": "PID controller",
+      "tags": [
+        "pid",
+        "denetleyici",
+        "oransal",
+        "integral",
+        "türev",
+        "controller"
+      ]
+    },
+    {
+      "name": "plant-block",
+      "family": "signals-control",
+      "label_tr": "Sistem (plant) bloğu",
+      "label_en": "Plant block",
+      "tags": [
+        "sistem",
+        "plant",
+        "süreç",
+        "blok",
+        "process",
+        "actuator"
+      ]
+    },
+    {
+      "name": "state-observer",
+      "family": "signals-control",
+      "label_tr": "Durum gözlemcisi",
+      "label_en": "State observer",
+      "tags": [
+        "gözlemci",
+        "durum",
+        "kestirim",
+        "observer",
+        "luenberger",
+        "state"
+      ]
+    },
+    {
+      "name": "kalman-filter",
+      "family": "signals-control",
+      "label_tr": "Kalman filtresi",
+      "label_en": "Kalman filter",
+      "tags": [
+        "kalman",
+        "filtre",
+        "belirsizlik",
+        "kestirim",
+        "filter",
+        "estimation"
+      ]
+    },
+    {
+      "name": "state-space",
+      "family": "signals-control",
+      "label_tr": "Durum uzayı",
+      "label_en": "State space",
+      "tags": [
+        "durum uzayı",
+        "matris",
+        "model",
+        "state space",
+        "matrix",
+        "dinamik"
+      ]
+    },
+    {
+      "name": "transfer-function",
+      "family": "signals-control",
+      "label_tr": "Transfer fonksiyonu",
+      "label_en": "Transfer function",
+      "tags": [
+        "transfer",
+        "fonksiyon",
+        "pay",
+        "payda",
+        "transfer function",
+        "kazanç"
+      ]
+    },
+    {
+      "name": "bode-plot",
+      "family": "signals-control",
+      "label_tr": "Bode diyagramı",
+      "label_en": "Bode plot",
+      "tags": [
+        "bode",
+        "genlik",
+        "faz",
+        "köşe frekansı",
+        "plot",
+        "magnitude"
+      ]
+    },
+    {
+      "name": "nyquist-plot",
+      "family": "signals-control",
+      "label_tr": "Nyquist diyagramı",
+      "label_en": "Nyquist plot",
+      "tags": [
+        "nyquist",
+        "kararlılık",
+        "kontur",
+        "plot",
+        "stability",
+        "contour"
+      ]
+    },
+    {
+      "name": "root-locus",
+      "family": "signals-control",
+      "label_tr": "Kök yer eğrisi",
+      "label_en": "Root locus",
+      "tags": [
+        "kök yer eğrisi",
+        "kutup",
+        "sıfır",
+        "root locus",
+        "pole",
+        "zero"
+      ]
+    },
+    {
+      "name": "step-response",
+      "family": "signals-control",
+      "label_tr": "Basamak yanıtı",
+      "label_en": "Step response",
+      "tags": [
+        "basamak yanıtı",
+        "aşım",
+        "yerleşme",
+        "step response",
+        "overshoot",
+        "settling"
+      ]
+    },
+    {
+      "name": "pole-zero-map",
+      "family": "signals-control",
+      "label_tr": "Kutup-sıfır haritası",
+      "label_en": "Pole-zero map",
+      "tags": [
+        "kutup",
+        "sıfır",
+        "birim çember",
+        "pole",
+        "zero",
+        "z düzlemi"
+      ]
+    },
+    {
+      "name": "force-vector",
+      "family": "physics",
+      "label_tr": "Kuvvet vektörü",
+      "label_en": "Force vector",
+      "tags": [
+        "kuvvet",
+        "vektör",
+        "itme",
+        "newton",
+        "force",
+        "vector",
+        "push"
+      ]
+    },
+    {
+      "name": "torque",
+      "family": "physics",
+      "label_tr": "Tork",
+      "label_en": "Torque",
+      "tags": [
+        "tork",
+        "moment",
+        "dönme",
+        "kaldıraç kolu",
+        "torque",
+        "rotation",
+        "moment arm"
+      ]
+    },
+    {
+      "name": "momentum",
+      "family": "physics",
+      "label_tr": "Momentum",
+      "label_en": "Momentum",
+      "tags": [
+        "momentum",
+        "hız",
+        "kütle",
+        "impuls",
+        "velocity",
+        "mass",
+        "impulse"
+      ]
+    },
+    {
+      "name": "work-energy",
+      "family": "physics",
+      "label_tr": "İş ve enerji",
+      "label_en": "Work and energy",
+      "tags": [
+        "iş",
+        "enerji",
+        "yer değiştirme",
+        "kuvvet",
+        "work",
+        "energy",
+        "displacement"
+      ]
+    },
+    {
+      "name": "spring",
+      "family": "physics",
+      "label_tr": "Yay kuvveti",
+      "label_en": "Spring force",
+      "tags": [
+        "yay",
+        "hooke",
+        "esneklik",
+        "salınım",
+        "spring",
+        "elastic",
+        "oscillation"
+      ]
+    },
+    {
+      "name": "pendulum",
+      "family": "physics",
+      "label_tr": "Sarkaç",
+      "label_en": "Pendulum",
+      "tags": [
+        "sarkaç",
+        "salınım",
+        "periyot",
+        "harmonik",
+        "pendulum",
+        "swing",
+        "period"
+      ]
+    },
+    {
+      "name": "lever-moment",
+      "family": "physics",
+      "label_tr": "Kaldıraç momenti",
+      "label_en": "Lever moment",
+      "tags": [
+        "kaldıraç",
+        "denge",
+        "destek noktası",
+        "moment",
+        "lever",
+        "fulcrum",
+        "balance"
+      ]
+    },
+    {
+      "name": "free-body-diagram",
+      "family": "physics",
+      "label_tr": "Serbest cisim diyagramı",
+      "label_en": "Free body diagram",
+      "tags": [
+        "serbest cisim",
+        "kuvvet dengesi",
+        "diyagram",
+        "newton",
+        "free body",
+        "forces",
+        "statics"
+      ]
+    },
+    {
+      "name": "center-of-mass",
+      "family": "physics",
+      "label_tr": "Kütle merkezi",
+      "label_en": "Center of mass",
+      "tags": [
+        "kütle merkezi",
+        "ağırlık merkezi",
+        "denge",
+        "baricenter",
+        "center of mass",
+        "centroid"
+      ]
+    },
+    {
+      "name": "friction",
+      "family": "physics",
+      "label_tr": "Sürtünme",
+      "label_en": "Friction",
+      "tags": [
+        "sürtünme",
+        "yüzey",
+        "direnç",
+        "katsayı",
+        "friction",
+        "surface",
+        "drag"
+      ]
+    },
+    {
+      "name": "electric-charge",
+      "family": "physics",
+      "label_tr": "Elektrik yükü",
+      "label_en": "Electric charge",
+      "tags": [
+        "elektrik",
+        "yük",
+        "coulomb",
+        "alan",
+        "charge",
+        "electric field",
+        "coulomb"
+      ]
+    },
+    {
+      "name": "magnetic-field",
+      "family": "physics",
+      "label_tr": "Manyetik alan",
+      "label_en": "Magnetic field",
+      "tags": [
+        "mıknatıs",
+        "manyetik alan",
+        "kutup",
+        "akı",
+        "magnet",
+        "magnetic field",
+        "poles"
+      ]
+    },
+    {
+      "name": "field-lines",
+      "family": "physics",
+      "label_tr": "Alan çizgileri",
+      "label_en": "Field lines",
+      "tags": [
+        "alan çizgisi",
+        "ışınsal",
+        "kaynak",
+        "akı",
+        "field lines",
+        "radial",
+        "flux"
+      ]
+    },
+    {
+      "name": "circuit",
+      "family": "physics",
+      "label_tr": "Elektrik devresi",
+      "label_en": "Electric circuit",
+      "tags": [
+        "devre",
+        "pil",
+        "direnç",
+        "akım",
+        "circuit",
+        "battery",
+        "resistor",
+        "current"
+      ]
+    },
+    {
+      "name": "photon",
+      "family": "physics",
+      "label_tr": "Foton",
+      "label_en": "Photon",
+      "tags": [
+        "foton",
+        "ışık",
+        "dalga",
+        "enerji paketi",
+        "photon",
+        "light",
+        "wave",
+        "quantum"
+      ]
+    },
+    {
+      "name": "nucleus",
+      "family": "physics",
+      "label_tr": "Atom çekirdeği",
+      "label_en": "Atomic nucleus",
+      "tags": [
+        "çekirdek",
+        "nükleon",
+        "proton",
+        "nötron",
+        "nucleus",
+        "nucleon",
+        "atomic"
+      ]
+    },
+    {
+      "name": "quantum-levels",
+      "family": "physics",
+      "label_tr": "Enerji seviyeleri",
+      "label_en": "Quantum energy levels",
+      "tags": [
+        "enerji seviyesi",
+        "kuantum",
+        "geçiş",
+        "yayınım",
+        "energy levels",
+        "quantum",
+        "emission"
+      ]
+    },
+    {
+      "name": "spin",
+      "family": "physics",
+      "label_tr": "Spin",
+      "label_en": "Spin",
+      "tags": [
+        "spin",
+        "açısal momentum",
+        "dönme",
+        "kuantum",
+        "angular momentum",
+        "rotation"
+      ]
+    },
+    {
+      "name": "entropy",
+      "family": "physics",
+      "label_tr": "Entropi",
+      "label_en": "Entropy",
+      "tags": [
+        "entropi",
+        "düzensizlik",
+        "termodinamik",
+        "mikrodurum",
+        "entropy",
+        "disorder",
+        "thermodynamics"
+      ]
+    },
+    {
+      "name": "heat-flow",
+      "family": "physics",
+      "label_tr": "Isı akışı",
+      "label_en": "Heat flow",
+      "tags": [
+        "ısı",
+        "akış",
+        "sıcaklık",
+        "iletim",
+        "heat",
+        "flow",
+        "temperature",
+        "conduction"
+      ]
+    },
+    {
+      "name": "pressure",
+      "family": "physics",
+      "label_tr": "Basınç",
+      "label_en": "Pressure",
+      "tags": [
+        "basınç",
+        "kap",
+        "gaz",
+        "kuvvet",
+        "pressure",
+        "container",
+        "gas",
+        "force"
+      ]
+    },
+    {
+      "name": "fluid-flow",
+      "family": "physics",
+      "label_tr": "Akışkan akışı",
+      "label_en": "Fluid flow",
+      "tags": [
+        "akışkan",
+        "akım çizgisi",
+        "hidrodinamik",
+        "engel",
+        "fluid",
+        "streamline",
+        "flow"
+      ]
+    },
+    {
+      "name": "spacetime-curvature",
+      "family": "physics",
+      "label_tr": "Uzay-zaman eğriliği",
+      "label_en": "Spacetime curvature",
+      "tags": [
+        "uzay zaman",
+        "eğrilik",
+        "kütleçekim",
+        "görelilik",
+        "spacetime",
+        "curvature",
+        "gravity",
+        "relativity"
+      ]
+    },
+    {
+      "name": "blackbody-curve",
+      "family": "physics",
+      "label_tr": "Kara cisim eğrisi",
+      "label_en": "Blackbody curve",
+      "tags": [
+        "kara cisim",
+        "planck",
+        "spektrum",
+        "sıcaklık",
+        "blackbody",
+        "planck",
+        "spectrum",
+        "wien"
+      ]
+    },
+    {
+      "name": "orbit-elliptical",
+      "family": "astrodynamics",
+      "label_tr": "Eliptik yörünge",
+      "label_en": "Elliptical orbit",
+      "tags": [
+        "yörünge",
+        "elips",
+        "odak",
+        "orbit",
+        "ellipse",
+        "kepler",
+        "focus"
+      ]
+    },
+    {
+      "name": "orbit-circular",
+      "family": "astrodynamics",
+      "label_tr": "Dairesel yörünge",
+      "label_en": "Circular orbit",
+      "tags": [
+        "yörünge",
+        "daire",
+        "dairesel",
+        "orbit",
+        "circular",
+        "LEO"
+      ]
+    },
+    {
+      "name": "trajectory-hyperbolic",
+      "family": "astrodynamics",
+      "label_tr": "Hiperbolik yörünge",
+      "label_en": "Hyperbolic trajectory",
+      "tags": [
+        "hiperbol",
+        "asimptot",
+        "geçiş",
+        "hyperbolic",
+        "trajectory",
+        "asymptote",
+        "flyby"
+      ]
+    },
+    {
+      "name": "escape-trajectory",
+      "family": "astrodynamics",
+      "label_tr": "Kaçış yörüngesi",
+      "label_en": "Escape trajectory",
+      "tags": [
+        "kaçış",
+        "kaçış hızı",
+        "sınır",
+        "escape",
+        "escape velocity",
+        "departure"
+      ]
+    },
+    {
+      "name": "hohmann-transfer",
+      "family": "astrodynamics",
+      "label_tr": "Hohmann transferi",
+      "label_en": "Hohmann transfer",
+      "tags": [
+        "transfer",
+        "hohmann",
+        "yakma",
+        "teğet",
+        "transfer orbit",
+        "burn",
+        "tangent"
+      ]
+    },
+    {
+      "name": "bielliptic-transfer",
+      "family": "astrodynamics",
+      "label_tr": "Çift elipsli transfer",
+      "label_en": "Bi-elliptic transfer",
+      "tags": [
+        "transfer",
+        "çift elips",
+        "üç itki",
+        "bielliptic",
+        "three-burn",
+        "apoapsis"
+      ]
+    },
+    {
+      "name": "plane-change",
+      "family": "astrodynamics",
+      "label_tr": "Düzlem değişimi",
+      "label_en": "Plane change",
+      "tags": [
+        "düzlem",
+        "eğim",
+        "düğüm",
+        "plane change",
+        "inclination",
+        "node",
+        "maneuver"
+      ]
+    },
+    {
+      "name": "apoapsis",
+      "family": "astrodynamics",
+      "label_tr": "Apoapsis",
+      "label_en": "Apoapsis",
+      "tags": [
+        "apoapsis",
+        "apoje",
+        "en uzak nokta",
+        "apogee",
+        "apsis",
+        "orbit"
+      ]
+    },
+    {
+      "name": "periapsis",
+      "family": "astrodynamics",
+      "label_tr": "Periapsis",
+      "label_en": "Periapsis",
+      "tags": [
+        "periapsis",
+        "perije",
+        "en yakın nokta",
+        "perigee",
+        "apsis",
+        "orbit"
+      ]
+    },
+    {
+      "name": "semi-major-axis",
+      "family": "astrodynamics",
+      "label_tr": "Yarı büyük eksen",
+      "label_en": "Semi-major axis",
+      "tags": [
+        "yarı büyük eksen",
+        "elips",
+        "a",
+        "semi-major axis",
+        "ellipse",
+        "kepler"
+      ]
+    },
+    {
+      "name": "inclination",
+      "family": "astrodynamics",
+      "label_tr": "Yörünge eğimi",
+      "label_en": "Inclination",
+      "tags": [
+        "eğim",
+        "ekvator düzlemi",
+        "açı",
+        "inclination",
+        "equatorial plane",
+        "angle"
+      ]
+    },
+    {
+      "name": "raan",
+      "family": "astrodynamics",
+      "label_tr": "Yükselen düğüm boylamı",
+      "label_en": "RAAN",
+      "tags": [
+        "düğüm",
+        "yükselen düğüm",
+        "omega",
+        "RAAN",
+        "ascending node",
+        "reference direction"
+      ]
+    },
+    {
+      "name": "argument-periapsis",
+      "family": "astrodynamics",
+      "label_tr": "Periapsis argümanı",
+      "label_en": "Argument of periapsis",
+      "tags": [
+        "periapsis argümanı",
+        "açı",
+        "düğüm",
+        "argument of periapsis",
+        "omega",
+        "angle"
+      ]
+    },
+    {
+      "name": "true-anomaly",
+      "family": "astrodynamics",
+      "label_tr": "Gerçek anomali",
+      "label_en": "True anomaly",
+      "tags": [
+        "gerçek anomali",
+        "açı",
+        "odak",
+        "true anomaly",
+        "nu",
+        "focus",
+        "position"
+      ]
+    },
+    {
+      "name": "delta-v-burn",
+      "family": "astrodynamics",
+      "label_tr": "Delta-v yakması",
+      "label_en": "Delta-v burn",
+      "tags": [
+        "delta-v",
+        "yakma",
+        "itki",
+        "hız vektörü",
+        "burn",
+        "thrust",
+        "impulse"
+      ]
+    },
+    {
+      "name": "burn-prograde",
+      "family": "astrodynamics",
+      "label_tr": "İleri yönde yakma",
+      "label_en": "Prograde burn",
+      "tags": [
+        "prograde",
+        "ileri yön",
+        "yörünge yükseltme",
+        "burn",
+        "raise orbit",
+        "velocity"
+      ]
+    },
+    {
+      "name": "burn-retrograde",
+      "family": "astrodynamics",
+      "label_tr": "Geri yönde yakma",
+      "label_en": "Retrograde burn",
+      "tags": [
+        "retrograde",
+        "geri yön",
+        "yörünge alçaltma",
+        "burn",
+        "lower orbit",
+        "braking"
+      ]
+    },
+    {
+      "name": "ground-track",
+      "family": "astrodynamics",
+      "label_tr": "Yer izi",
+      "label_en": "Ground track",
+      "tags": [
+        "yer izi",
+        "harita",
+        "sinüs",
+        "ground track",
+        "map",
+        "sinusoid",
+        "pass"
+      ]
+    },
+    {
+      "name": "sphere-of-influence",
+      "family": "astrodynamics",
+      "label_tr": "Etki küresi",
+      "label_en": "Sphere of influence",
+      "tags": [
+        "etki küresi",
+        "sınır",
+        "çekim",
+        "sphere of influence",
+        "SOI",
+        "patched conic"
+      ]
+    },
+    {
+      "name": "lagrange-points",
+      "family": "astrodynamics",
+      "label_tr": "Lagrange noktaları",
+      "label_en": "Lagrange points",
+      "tags": [
+        "lagrange",
+        "L1",
+        "L2",
+        "denge noktası",
+        "lagrange points",
+        "libration"
+      ]
+    },
+    {
+      "name": "gravity-assist",
+      "family": "astrodynamics",
+      "label_tr": "Kütle çekimi desteği",
+      "label_en": "Gravity assist",
+      "tags": [
+        "gravity assist",
+        "sapan",
+        "gezegen",
+        "slingshot",
+        "flyby",
+        "swing-by"
+      ]
+    },
+    {
+      "name": "rendezvous",
+      "family": "astrodynamics",
+      "label_tr": "Randevu",
+      "label_en": "Rendezvous",
+      "tags": [
+        "randevu",
+        "buluşma",
+        "kovalayan",
+        "rendezvous",
+        "chaser",
+        "target",
+        "phasing"
+      ]
+    },
+    {
+      "name": "docking",
+      "family": "astrodynamics",
+      "label_tr": "Kenetlenme",
+      "label_en": "Docking",
+      "tags": [
+        "kenetlenme",
+        "kilitlenme",
+        "halka",
+        "docking",
+        "berthing",
+        "port",
+        "alignment"
+      ]
+    },
+    {
+      "name": "station-keeping",
+      "family": "astrodynamics",
+      "label_tr": "Konum koruma",
+      "label_en": "Station keeping",
+      "tags": [
+        "konum koruma",
+        "kutu",
+        "düzeltme",
+        "station keeping",
+        "box",
+        "correction",
+        "drift"
+      ]
+    },
+    {
+      "name": "reentry",
+      "family": "astrodynamics",
+      "label_tr": "Atmosfere giriş",
+      "label_en": "Reentry",
+      "tags": [
+        "atmosfere giriş",
+        "kapsül",
+        "plazma",
+        "reentry",
+        "capsule",
+        "heat shield",
+        "shock"
+      ]
+    },
+    {
+      "name": "orbital-decay",
+      "family": "astrodynamics",
+      "label_tr": "Yörünge çöküşü",
+      "label_en": "Orbital decay",
+      "tags": [
+        "yörünge çöküşü",
+        "sarmal",
+        "sürüklenme",
+        "orbital decay",
+        "spiral",
+        "drag"
+      ]
+    },
+    {
+      "name": "three-body",
+      "family": "astrodynamics",
+      "label_tr": "Üç cisim problemi",
+      "label_en": "Three-body problem",
+      "tags": [
+        "üç cisim",
+        "sekiz yörünge",
+        "kaos",
+        "three-body",
+        "figure-eight",
+        "dynamics"
+      ]
+    },
+    {
+      "name": "orbital-perturbation",
+      "family": "astrodynamics",
+      "label_tr": "Yörünge bozulması",
+      "label_en": "Orbital perturbation",
+      "tags": [
+        "bozulma",
+        "sapma",
+        "J2",
+        "perturbation",
+        "deviation",
+        "nominal orbit"
+      ]
+    },
+    {
+      "name": "tle-elements",
+      "family": "astrodynamics",
+      "label_tr": "TLE yörünge elemanları",
+      "label_en": "TLE elements",
+      "tags": [
+        "TLE",
+        "iki satır",
+        "yörünge elemanları",
+        "two-line element",
+        "orbital elements",
+        "catalog"
+      ]
+    },
+    {
+      "name": "transfer-window",
+      "family": "astrodynamics",
+      "label_tr": "Transfer penceresi",
+      "label_en": "Transfer window",
+      "tags": [
+        "transfer penceresi",
+        "fırlatma penceresi",
+        "hizalanma",
+        "transfer window",
+        "launch window",
+        "alignment"
+      ]
+    },
+    {
+      "name": "rocket-stages",
+      "family": "space-systems",
+      "label_tr": "Roket kademeleri",
+      "label_en": "Rocket stages",
+      "tags": [
+        "roket",
+        "kademe",
+        "fırlatıcı",
+        "rocket",
+        "stages",
+        "launch vehicle"
+      ]
+    },
+    {
+      "name": "stage-separation",
+      "family": "space-systems",
+      "label_tr": "Kademe ayrılması",
+      "label_en": "Stage separation",
+      "tags": [
+        "kademe",
+        "ayrılma",
+        "roket",
+        "separation",
+        "staging",
+        "rocket"
+      ]
+    },
+    {
+      "name": "booster",
+      "family": "space-systems",
+      "label_tr": "Yardımcı roket",
+      "label_en": "Booster",
+      "tags": [
+        "yardımcı roket",
+        "hızlandırıcı",
+        "itici",
+        "booster",
+        "strap-on",
+        "core stage"
+      ]
+    },
+    {
+      "name": "engine-nozzle",
+      "family": "space-systems",
+      "label_tr": "Motor lülesi",
+      "label_en": "Engine nozzle",
+      "tags": [
+        "lüle",
+        "nozul",
+        "motor",
+        "boğaz",
+        "nozzle",
+        "throat",
+        "engine"
+      ]
+    },
+    {
+      "name": "thrust-vector-control",
+      "family": "space-systems",
+      "label_tr": "İtki vektör kontrolü",
+      "label_en": "Thrust vector control",
+      "tags": [
+        "itki",
+        "vektör",
+        "gimbal",
+        "kontrol",
+        "thrust vector",
+        "tvc",
+        "gimbal"
+      ]
+    },
+    {
+      "name": "launch-pad",
+      "family": "space-systems",
+      "label_tr": "Fırlatma rampası",
+      "label_en": "Launch pad",
+      "tags": [
+        "fırlatma",
+        "rampa",
+        "kule",
+        "launch pad",
+        "tower",
+        "flame trench"
+      ]
+    },
+    {
+      "name": "fairing-separation",
+      "family": "space-systems",
+      "label_tr": "Koruyucu başlık ayrılması",
+      "label_en": "Fairing separation",
+      "tags": [
+        "başlık",
+        "koruyucu",
+        "ayrılma",
+        "faydalı yük",
+        "fairing",
+        "separation",
+        "payload"
+      ]
+    },
+    {
+      "name": "liquid-engine",
+      "family": "space-systems",
+      "label_tr": "Sıvı yakıtlı motor",
+      "label_en": "Liquid engine",
+      "tags": [
+        "sıvı yakıt",
+        "motor",
+        "yakıt hattı",
+        "liquid engine",
+        "propellant line",
+        "combustion chamber"
+      ]
+    },
+    {
+      "name": "solid-motor",
+      "family": "space-systems",
+      "label_tr": "Katı yakıtlı motor",
+      "label_en": "Solid motor",
+      "tags": [
+        "katı yakıt",
+        "motor",
+        "yıldız kesit",
+        "solid motor",
+        "grain",
+        "srb"
+      ]
+    },
+    {
+      "name": "turbopump",
+      "family": "space-systems",
+      "label_tr": "Turbopompa",
+      "label_en": "Turbopump",
+      "tags": [
+        "turbopompa",
+        "pompa",
+        "çark",
+        "türbin",
+        "turbopump",
+        "impeller",
+        "pump"
+      ]
+    },
+    {
+      "name": "launch-trajectory",
+      "family": "space-systems",
+      "label_tr": "Fırlatma rotası",
+      "label_en": "Launch trajectory",
+      "tags": [
+        "fırlatma",
+        "rota",
+        "yörünge",
+        "yerçekimi dönüşü",
+        "trajectory",
+        "gravity turn",
+        "ascent"
+      ]
+    },
+    {
+      "name": "max-q",
+      "family": "space-systems",
+      "label_tr": "Maksimum dinamik basınç",
+      "label_en": "Max Q",
+      "tags": [
+        "max q",
+        "dinamik basınç",
+        "aerodinamik",
+        "tepe",
+        "dynamic pressure",
+        "aerodynamic",
+        "peak"
+      ]
+    },
+    {
+      "name": "landing-legs",
+      "family": "space-systems",
+      "label_tr": "İniş ayakları",
+      "label_en": "Landing legs",
+      "tags": [
+        "iniş",
+        "ayak",
+        "kurtarma",
+        "platform",
+        "landing legs",
+        "touchdown",
+        "booster"
+      ]
+    },
+    {
+      "name": "propellant-tank",
+      "family": "space-systems",
+      "label_tr": "İtici yakıt tankı",
+      "label_en": "Propellant tank",
+      "tags": [
+        "yakıt",
+        "tank",
+        "seviye",
+        "bölme",
+        "propellant",
+        "tank",
+        "bulkhead"
+      ]
+    },
+    {
+      "name": "payload-adapter",
+      "family": "space-systems",
+      "label_tr": "Faydalı yük adaptörü",
+      "label_en": "Payload adapter",
+      "tags": [
+        "faydalı yük",
+        "adaptör",
+        "koni",
+        "arayüz",
+        "payload adapter",
+        "cone",
+        "interface"
+      ]
+    },
+    {
+      "name": "satellite-bus",
+      "family": "space-systems",
+      "label_tr": "Uydu platformu",
+      "label_en": "Satellite bus",
+      "tags": [
+        "uydu",
+        "platform",
+        "gövde",
+        "bus",
+        "satellite bus",
+        "spacecraft",
+        "structure"
+      ]
+    },
+    {
+      "name": "solar-array",
+      "family": "space-systems",
+      "label_tr": "Güneş paneli dizisi",
+      "label_en": "Solar array",
+      "tags": [
+        "güneş paneli",
+        "dizi",
+        "kanat",
+        "menteşe",
+        "solar array",
+        "panel",
+        "wing"
+      ]
+    },
+    {
+      "name": "reaction-wheel",
+      "family": "space-systems",
+      "label_tr": "Reaksiyon tekeri",
+      "label_en": "Reaction wheel",
+      "tags": [
+        "reaksiyon tekeri",
+        "rotor",
+        "yönelim",
+        "dönüş",
+        "reaction wheel",
+        "attitude",
+        "rotor"
+      ]
+    },
+    {
+      "name": "star-tracker",
+      "family": "space-systems",
+      "label_tr": "Yıldız izleyici",
+      "label_en": "Star tracker",
+      "tags": [
+        "yıldız izleyici",
+        "yönelim",
+        "optik",
+        "perde",
+        "star tracker",
+        "baffle",
+        "attitude"
+      ]
+    },
+    {
+      "name": "sun-sensor",
+      "family": "space-systems",
+      "label_tr": "Güneş sensörü",
+      "label_en": "Sun sensor",
+      "tags": [
+        "güneş sensörü",
+        "açı",
+        "ışık",
+        "yönelim",
+        "sun sensor",
+        "incidence angle",
+        "light"
+      ]
+    },
+    {
+      "name": "magnetorquer",
+      "family": "space-systems",
+      "label_tr": "Manyetik tork çubuğu",
+      "label_en": "Magnetorquer",
+      "tags": [
+        "manyetik",
+        "tork",
+        "bobin",
+        "alan",
+        "magnetorquer",
+        "torque rod",
+        "magnetic field"
+      ]
+    },
+    {
+      "name": "thruster-rcs",
+      "family": "space-systems",
+      "label_tr": "RCS iticileri",
+      "label_en": "RCS thrusters",
+      "tags": [
+        "itici",
+        "rcs",
+        "manevra",
+        "püskürtme",
+        "thruster",
+        "attitude control",
+        "nozzle"
+      ]
+    },
+    {
+      "name": "ion-engine",
+      "family": "space-systems",
+      "label_tr": "İyon motoru",
+      "label_en": "Ion engine",
+      "tags": [
+        "iyon",
+        "elektrikli itki",
+        "ızgara",
+        "huzme",
+        "ion engine",
+        "electric propulsion",
+        "beam"
+      ]
+    },
+    {
+      "name": "antenna-highgain",
+      "family": "space-systems",
+      "label_tr": "Yüksek kazançlı anten",
+      "label_en": "High-gain antenna",
+      "tags": [
+        "anten",
+        "çanak",
+        "kazanç",
+        "besleyici",
+        "high gain antenna",
+        "dish",
+        "feed horn"
+      ]
+    },
+    {
+      "name": "phased-array",
+      "family": "space-systems",
+      "label_tr": "Faz dizili anten",
+      "label_en": "Phased array",
+      "tags": [
+        "faz dizisi",
+        "anten",
+        "hüzme",
+        "yönlendirme",
+        "phased array",
+        "beam steering",
+        "panel"
+      ]
+    },
+    {
+      "name": "cubesat",
+      "family": "space-systems",
+      "label_tr": "Küp uydu",
+      "label_en": "CubeSat",
+      "tags": [
+        "küp uydu",
+        "cubesat",
+        "nano uydu",
+        "ray",
+        "small satellite",
+        "rails",
+        "antenna whip"
+      ]
+    },
+    {
+      "name": "constellation",
+      "family": "space-systems",
+      "label_tr": "Uydu takımı",
+      "label_en": "Constellation",
+      "tags": [
+        "uydu takımı",
+        "takımyıldız",
+        "yörünge",
+        "bağlantı",
+        "constellation",
+        "orbit rings",
+        "inter-satellite link"
+      ]
+    },
+    {
+      "name": "ground-station",
+      "family": "space-systems",
+      "label_tr": "Yer istasyonu",
+      "label_en": "Ground station",
+      "tags": [
+        "yer istasyonu",
+        "çanak",
+        "yükseliş ekseni",
+        "sinyal",
+        "ground station",
+        "dish",
+        "elevation axis"
+      ]
+    },
+    {
+      "name": "uplink-downlink",
+      "family": "space-systems",
+      "label_tr": "Yukarı ve aşağı bağlantı",
+      "label_en": "Uplink and downlink",
+      "tags": [
+        "yukarı bağlantı",
+        "aşağı bağlantı",
+        "haberleşme",
+        "çanak",
+        "uplink",
+        "downlink",
+        "link"
+      ]
+    },
+    {
+      "name": "telemetry",
+      "family": "space-systems",
+      "label_tr": "Telemetri",
+      "label_en": "Telemetry",
+      "tags": [
+        "telemetri",
+        "veri",
+        "sinyal",
+        "dalga formu",
+        "telemetry",
+        "data",
+        "signal"
+      ]
+    },
+    {
+      "name": "neuron",
+      "family": "machine-learning",
+      "label_tr": "Yapay nöron",
+      "label_en": "Artificial neuron",
+      "tags": [
+        "nöron",
+        "ağırlık",
+        "aktivasyon",
+        "perceptron",
+        "neuron",
+        "weight",
+        "activation"
+      ]
+    },
+    {
+      "name": "dense-layer",
+      "family": "machine-learning",
+      "label_tr": "Tam bağlı katman",
+      "label_en": "Dense layer",
+      "tags": [
+        "katman",
+        "tam bağlı",
+        "sinir ağı",
+        "dense",
+        "fully connected",
+        "layer"
+      ]
+    },
+    {
+      "name": "cnn-kernel",
+      "family": "machine-learning",
+      "label_tr": "Evrişim çekirdeği",
+      "label_en": "Convolution kernel",
+      "tags": [
+        "evrişim",
+        "çekirdek",
+        "filtre",
+        "öznitelik haritası",
+        "cnn",
+        "kernel",
+        "convolution",
+        "feature map"
+      ]
+    },
+    {
+      "name": "pooling",
+      "family": "machine-learning",
+      "label_tr": "Havuzlama",
+      "label_en": "Pooling",
+      "tags": [
+        "havuzlama",
+        "örnek azaltma",
+        "maksimum",
+        "pooling",
+        "max pool",
+        "downsample"
+      ]
+    },
+    {
+      "name": "rnn-loop",
+      "family": "machine-learning",
+      "label_tr": "Yinelemeli ağ döngüsü",
+      "label_en": "Recurrent loop",
+      "tags": [
+        "yinelemeli",
+        "döngü",
+        "dizi",
+        "zaman",
+        "rnn",
+        "recurrent",
+        "sequence",
+        "unroll"
+      ]
+    },
+    {
+      "name": "transformer-attention",
+      "family": "machine-learning",
+      "label_tr": "Dikkat mekanizması",
+      "label_en": "Attention mechanism",
+      "tags": [
+        "dikkat",
+        "token",
+        "sorgu",
+        "anahtar",
+        "attention",
+        "transformer",
+        "query",
+        "key"
+      ]
+    },
+    {
+      "name": "embedding-space",
+      "family": "machine-learning",
+      "label_tr": "Gömme uzayı",
+      "label_en": "Embedding space",
+      "tags": [
+        "gömme",
+        "vektör",
+        "uzay",
+        "benzerlik",
+        "embedding",
+        "vector",
+        "latent",
+        "similarity"
+      ]
+    },
+    {
+      "name": "gradient-descent",
+      "family": "machine-learning",
+      "label_tr": "Gradyan inişi",
+      "label_en": "Gradient descent",
+      "tags": [
+        "gradyan",
+        "iniş",
+        "eniyileme",
+        "minimum",
+        "gradient descent",
+        "optimization"
+      ]
+    },
+    {
+      "name": "loss-curve",
+      "family": "machine-learning",
+      "label_tr": "Kayıp eğrisi",
+      "label_en": "Loss curve",
+      "tags": [
+        "kayıp",
+        "eğitim",
+        "doğrulama",
+        "epok",
+        "loss",
+        "training",
+        "validation",
+        "epoch"
+      ]
+    },
+    {
+      "name": "learning-rate",
+      "family": "machine-learning",
+      "label_tr": "Öğrenme oranı",
+      "label_en": "Learning rate",
+      "tags": [
+        "öğrenme oranı",
+        "adım",
+        "aşma",
+        "hiperparametre",
+        "learning rate",
+        "step size",
+        "overshoot"
+      ]
+    },
+    {
+      "name": "train-val-split",
+      "family": "machine-learning",
+      "label_tr": "Eğitim/doğrulama ayrımı",
+      "label_en": "Train/validation split",
+      "tags": [
+        "eğitim",
+        "doğrulama",
+        "veri ayrımı",
+        "oran",
+        "train",
+        "validation",
+        "split",
+        "dataset"
+      ]
+    },
+    {
+      "name": "overfitting",
+      "family": "machine-learning",
+      "label_tr": "Aşırı öğrenme",
+      "label_en": "Overfitting",
+      "tags": [
+        "aşırı öğrenme",
+        "ezberleme",
+        "genelleme",
+        "uyum",
+        "overfitting",
+        "generalization",
+        "variance"
+      ]
+    },
+    {
+      "name": "dropout",
+      "family": "machine-learning",
+      "label_tr": "Seyreltme (dropout)",
+      "label_en": "Dropout",
+      "tags": [
+        "seyreltme",
+        "düzenlileştirme",
+        "nöron kapatma",
+        "dropout",
+        "regularization",
+        "pruning"
+      ]
+    },
+    {
+      "name": "confusion-matrix",
+      "family": "machine-learning",
+      "label_tr": "Karışıklık matrisi",
+      "label_en": "Confusion matrix",
+      "tags": [
+        "karışıklık matrisi",
+        "doğru pozitif",
+        "sınıflandırma",
+        "hata",
+        "confusion matrix",
+        "true positive",
+        "classification"
+      ]
+    },
+    {
+      "name": "roc-curve",
+      "family": "machine-learning",
+      "label_tr": "ROC eğrisi",
+      "label_en": "ROC curve",
+      "tags": [
+        "roc",
+        "auc",
+        "duyarlılık",
+        "eşik",
+        "sensitivity",
+        "threshold",
+        "classifier"
+      ]
+    },
+    {
+      "name": "clustering",
+      "family": "machine-learning",
+      "label_tr": "Kümeleme",
+      "label_en": "Clustering",
+      "tags": [
+        "kümeleme",
+        "küme",
+        "merkez",
+        "gözetimsiz",
+        "clustering",
+        "kmeans",
+        "centroid",
+        "unsupervised"
+      ]
+    },
+    {
+      "name": "decision-tree",
+      "family": "machine-learning",
+      "label_tr": "Karar ağacı",
+      "label_en": "Decision tree",
+      "tags": [
+        "karar ağacı",
+        "dallanma",
+        "yaprak",
+        "kural",
+        "decision tree",
+        "split",
+        "leaf",
+        "branch"
+      ]
+    },
+    {
+      "name": "reinforcement-loop",
+      "family": "machine-learning",
+      "label_tr": "Pekiştirmeli öğrenme döngüsü",
+      "label_en": "Reinforcement learning loop",
+      "tags": [
+        "pekiştirmeli öğrenme",
+        "ajan",
+        "ortam",
+        "ödül",
+        "reinforcement",
+        "agent",
+        "environment",
+        "reward"
+      ]
+    },
+    {
+      "name": "exoplanet-transit",
+      "family": "astronomy",
+      "label_tr": "Ötegezegen geçişi",
+      "label_en": "Exoplanet transit",
+      "tags": [
+        "ötegezegen",
+        "geçiş",
+        "parlaklık düşüşü",
+        "yıldız",
+        "exoplanet",
+        "transit",
+        "light dip"
+      ]
+    },
+    {
+      "name": "black-hole",
+      "family": "astronomy",
+      "label_tr": "Kara delik",
+      "label_en": "Black hole",
+      "tags": [
+        "kara delik",
+        "yığılma diski",
+        "olay ufku",
+        "kütleçekim merceği",
+        "black hole",
+        "accretion disc",
+        "event horizon"
+      ]
+    },
+    {
+      "name": "pulsar",
+      "family": "astronomy",
+      "label_tr": "Atarca",
+      "label_en": "Pulsar",
+      "tags": [
+        "atarca",
+        "nötron yıldızı",
+        "huzme",
+        "dönme",
+        "pulsar",
+        "neutron star",
+        "beam",
+        "spin"
+      ]
+    },
+    {
+      "name": "spiral-galaxy",
+      "family": "astronomy",
+      "label_tr": "Sarmal gökada",
+      "label_en": "Spiral galaxy",
+      "tags": [
+        "gökada",
+        "sarmal",
+        "kol",
+        "çekirdek",
+        "galaxy",
+        "spiral",
+        "arm",
+        "core"
+      ]
+    },
+    {
+      "name": "nebula",
+      "family": "astronomy",
+      "label_tr": "Bulutsu",
+      "label_en": "Nebula",
+      "tags": [
+        "bulutsu",
+        "gaz",
+        "toz",
+        "yıldız oluşumu",
+        "nebula",
+        "gas cloud",
+        "star formation"
+      ]
+    },
+    {
+      "name": "supernova",
+      "family": "astronomy",
+      "label_tr": "Süpernova",
+      "label_en": "Supernova",
+      "tags": [
+        "süpernova",
+        "patlama",
+        "kabuk",
+        "serpinti",
+        "supernova",
+        "explosion",
+        "shell",
+        "ejecta"
+      ]
+    },
+    {
+      "name": "comet",
+      "family": "astronomy",
+      "label_tr": "Kuyruklu yıldız",
+      "label_en": "Comet",
+      "tags": [
+        "kuyruklu yıldız",
+        "kuyruk",
+        "koma",
+        "çekirdek",
+        "comet",
+        "tail",
+        "coma",
+        "nucleus"
+      ]
+    },
+    {
+      "name": "asteroid",
+      "family": "astronomy",
+      "label_tr": "Asteroit",
+      "label_en": "Asteroid",
+      "tags": [
+        "asteroit",
+        "kaya",
+        "krater",
+        "gök taşı",
+        "asteroid",
+        "rock",
+        "crater",
+        "minor planet"
+      ]
+    },
+    {
+      "name": "gravitational-wave",
+      "family": "astronomy",
+      "label_tr": "Kütleçekim dalgası",
+      "label_en": "Gravitational wave",
+      "tags": [
+        "kütleçekim dalgası",
+        "çift yıldız",
+        "birleşme",
+        "uzayzaman",
+        "gravitational wave",
+        "binary",
+        "merger",
+        "spacetime"
+      ]
+    },
+    {
+      "name": "light-curve",
+      "family": "astronomy",
+      "label_tr": "Işık eğrisi",
+      "label_en": "Light curve",
+      "tags": [
+        "ışık eğrisi",
+        "parlaklık",
+        "dönem",
+        "değişen yıldız",
+        "light curve",
+        "brightness",
+        "period",
+        "variable star"
+      ]
+    },
+    {
+      "name": "redshift",
+      "family": "astronomy",
+      "label_tr": "Kırmızıya kayma",
+      "label_en": "Redshift",
+      "tags": [
+        "kırmızıya kayma",
+        "tayf",
+        "çizgi kayması",
+        "genişleme",
+        "redshift",
+        "spectrum",
+        "spectral line",
+        "doppler"
+      ]
+    },
+    {
+      "name": "radio-array",
+      "family": "astronomy",
+      "label_tr": "Radyo teleskop dizisi",
+      "label_en": "Radio array",
+      "tags": [
+        "radyo teleskop",
+        "dizi",
+        "çanak",
+        "girişimölçer",
+        "radio array",
+        "dish",
+        "interferometer",
+        "baseline"
+      ]
+    }
+  ]
+}

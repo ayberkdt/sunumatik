@@ -67,6 +67,7 @@ ayrımını açık tutar.
 | [`timeline_tree/`](presets/timeline_tree) · [`neural_network/`](presets/neural_network) | Kronoloji ağacı · sinir ağı ileri-geçiş animasyonu. |
 | [`charts_icons/icons/`](presets/charts_icons/icons) | 23 duotone bilim ikonu (SVG sprite, kahraman katman). |
 | [`charts_icons/icon-library/`](presets/charts_icons/icon-library) | 168 ikonluk yardımcı kütüphane (Lucide/Tabler/Phosphor): TR+EN aranabilir manifest, sprite, canlı filtreli önizleme, lisans metinleri. |
+| [`charts_icons/domain-icons/`](presets/charts_icons/domain-icons) | **172 ikonluk alan seti** (duotone, bilim setiyle aynı el): matematik 28 · sinyal & kontrol 30 · fizik 24 · astrodinamik 30 · roket & uydu 30 · ML 18 · gökcisimleri 12. Bilimsel iddia taşır — odakta birincil cisim, kapanmayan hiperbol, gerçek nav-ball prograde/retrograde işaretçileri. Aile çipli önizleme + `STYLE-CARD.md` (seti genişletmek için çizim sözleşmesi). |
 | [`deck_starter/`](presets/deck_starter) | Yeni desteler için minimum iskelet (sabit sahne + klavye + export kancaları). |
 
 ### `skills/` — üretim talimatları

@@ -143,8 +143,12 @@
     container.innerHTML = '<span class="px-size">0</span>' +
       Array.from({ length: 10 }, (_, n) => `<span class="px-n" data-n="${n}">${n}</span>`).join("");
     const nums = [...container.querySelectorAll(".px-n")];
-    const h = container.getBoundingClientRect().height || container.offsetHeight;
+    /* Yükseklik KURULUMDA değil ilk güncellemede ölçülür: yazı tipi ve düzen
+       oturmadan ölçülen değer ofsetleri kaydırıp komşu rakamı sızdırıyordu. */
+    let h = 0;
     return createSpring({ stiffness: 280, damping: 18, mass: 0.3 }, latest => {
+      if (!h) h = container.offsetHeight || container.getBoundingClientRect().height;
+      if (!h) return;                      /* daha ölçülemedi — bir sonraki karede */
       const place = ((latest % 10) + 10) % 10;
       for (const el of nums) {
         const n = +el.dataset.n;

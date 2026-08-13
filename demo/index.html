@@ -7,17 +7,18 @@
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script>document.documentElement.classList.add('js');</script>
   <script type="importmap">{ "imports": { "three": "../presets/moon_advanced/vendor/three.module.min.js" } }</script>
-  <link rel="stylesheet" href="../presets/moon_react_source/components/moon_react_source.css">
+  <link rel="stylesheet" href="../presets/moon_react_source/components/lunaris-interactive-preset.css">
   <link rel="stylesheet" href="../presets/color_themes/palette-library.css">
   <link rel="stylesheet" href="../presets/color_themes/components/table-presets.css">
   <link rel="stylesheet" href="../presets/charts_icons/chart-theme.css">
   <link rel="stylesheet" href="../presets/motion_core/core-motion.css">
+  <link rel="stylesheet" href="../presets/motion_core/primitives-motion.css">
   <link rel="stylesheet" href="../presets/motion_core/interaction-motion.css">
   <link rel="stylesheet" href="../presets/motion_core/morph-transition.css">
   <link rel="stylesheet" href="../presets/motion_core/slide-transitions.css">
-  <link rel="stylesheet" href="../presets/timeline_tree/timeline_tree.css">
+  <link rel="stylesheet" href="../presets/timeline_tree/timeline-preset.css">
   <link rel="stylesheet" href="../presets/equation_pen/equation-writing.css">
-  <link rel="stylesheet" href="../presets/neural_network/neural_network.css">
+  <link rel="stylesheet" href="../presets/neural_network/neural-network-preset.css">
   <style>
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden;
@@ -95,6 +96,23 @@
 
     /* Lunaris slide: the figure owns the whole content region */
     .lunaris-slide { grid-template-rows: auto 1fr auto; }
+    #cosmosHost, #jwstHost { min-height: 0; }
+    #cosmosHost .lunaris-preset { min-height: 0; height: 100%; }
+    #jwstHost { display: grid; min-height: 0; }
+    #jwstHost .jwstx { min-height: 0; }
+    .scene-credit { font-size: 19px; color: var(--color-muted); }
+
+    /* Primitives slaydı */
+    .px-demo { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-content: center; min-height: 0; }
+    .px-demo .big-line { font-family: "Source Serif 4", Georgia, serif; font-size: 58px;
+                         line-height: 1.06; letter-spacing: -.02em; }
+    .px-stats { display: flex; gap: 56px; align-items: baseline; margin-top: 34px; }
+    .px-stats .stat-val { font: 750 76px/1 ui-monospace, monospace; color: var(--color-accent); }
+    .px-stats .stat-lab { display: block; margin-top: 10px; font-size: 22px; color: var(--color-muted); }
+    .px-card-zone { display: grid; gap: 24px; align-content: center; }
+    .px-chips .chip { display: inline-block; padding: 12px 22px; background: var(--color-surface);
+                      border: 1.5px solid var(--color-rule); border-radius: 10px;
+                      font: 650 22px/1 ui-sans-serif, system-ui; white-space: nowrap; }
     #lunarisHost { min-height: 0; }
     #lunarisHost .lunaris-preset { min-height: 0; height: 100%; }
 
@@ -149,17 +167,19 @@
       <section class="slide" aria-labelledby="s2t">
         <header>
           <div class="kicker">Ajanda</div>
-          <h2 id="s2t">Sekiz durak, tek akış</h2>
+          <h2 id="s2t">On durak, tek akış</h2>
         </header>
         <div class="agenda" data-hover-group>
           <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-gauge"/></svg>Hover ve bağlantılı vurgu<small>03</small></div>
           <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chart-bars"/></svg>Grafik teması<small>04</small></div>
           <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-database"/></svg>Tablo preset'leri<small>05</small></div>
           <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-wave"/></svg>Morph geçişi<small>06</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-orbit"/></svg>WebGL sahneler: Ay · Dünya · Güneş · Gezegenler<small>08–11</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-milestone"/></svg>Kronoloji ağacı<small>12</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-atom"/></svg>Elle yazılan denklem<small>13</small></div>
-          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-neural-net"/></svg>Sinir ağı hücreleri<small>14</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-orbit"/></svg>WebGL sahneler: Ay · Dünya · Güneş · Gezegenler · Kozmos<small>08–12</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-telescope"/></svg>JWST Explorer: gerçek Webb görüntüleri<small>13</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-milestone"/></svg>Kronoloji ağacı<small>14</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-atom"/></svg>Elle yazılan denklem<small>15</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-neural-net"/></svg>Sinir ağı hücreleri<small>16</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-spectrum"/></svg>Primitives mikro-hareket<small>17</small></div>
         </div>
         <footer class="slide-footer"><span>İkonlar: science-icons.svg</span><span>2</span></footer>
       </section>
@@ -356,6 +376,26 @@
         <footer class="slide-footer"><span class="hint">← → gezegen değiştirir · Boşluk: durdur · PageDown: sonraki slayt</span><span>11</span></footer>
       </section>
 
+      <!-- 12 · Cosmos: derin uzay fonu -->
+      <section class="slide lunaris-slide" aria-labelledby="s12cos">
+        <header>
+          <div class="kicker">Cosmos · WebGL</div>
+          <h2 id="s12cos">Derin uzay: gerçek Samanyolu panoraması</h2>
+        </header>
+        <div id="cosmosHost"></div>
+        <footer class="slide-footer"><span class="hint">Sürükle: bakış · M: meteor · PageDown: sonraki slayt</span><span class="scene-credit">Samanyolu: ESO/S. Brunier (CC BY 4.0)</span></footer>
+      </section>
+
+      <!-- 13 · JWST Explorer -->
+      <section class="slide lunaris-slide" aria-labelledby="s13jwst">
+        <header>
+          <div class="kicker">JWST Explorer · veri güdümlü</div>
+          <h2 id="s13jwst">Webb'in gözünden: Yaratılış Sütunları</h2>
+        </header>
+        <div id="jwstHost" data-owns-arrows></div>
+        <footer class="slide-footer"><span class="hint">← → ilgi noktaları · 0: genel bakış · C: Hubble perdesi · tekerlek: yakınlaş</span><span class="scene-credit">Görüntü kredisi kare içinde · CC BY 4.0</span></footer>
+      </section>
+
       <!-- 12 · Kronoloji -->
       <section class="slide" aria-labelledby="s9tl" data-enter="push">
         <header>
@@ -412,7 +452,39 @@
             <span class="nn-truth">Temsilî · tohumlu ağırlıklar, eğitilmiş model değil</span>
           </div>
         </div>
-        <footer class="slide-footer"><span>neural_network · deterministik tohum</span><span>11</span></footer>
+        <footer class="slide-footer"><span>neural-network-preset · deterministik tohum</span><span>11</span></footer>
+      </section>
+
+      <!-- 17 · Primitives mikro-hareket -->
+      <section class="slide" aria-labelledby="s17px">
+        <header>
+          <div class="kicker">Primitives · mikro-hareket</div>
+          <h2 id="s17px"><span class="px-shimmer">Premium dokunuşlar, kaynak sabitleriyle</span></h2>
+        </header>
+        <div class="px-demo">
+          <div>
+            <p class="big-line px-text" data-preset="fade-in-blur" data-per="word">Metin kelime kelime doğar, sayılar yayla yerleşir.</p>
+            <div class="px-stats">
+              <div><span class="stat-val" id="pxNumber">0</span><span class="stat-lab">yaylı sayı (tr-TR)</span></div>
+              <div><span class="stat-val" id="pxOdo"></span><span class="stat-lab">kilometre sayacı</span></div>
+            </div>
+          </div>
+          <div class="px-card-zone">
+            <div class="panel" data-tilt data-border-trail>
+              <b style="font-size:27px">Eğim kartı + kenar kuyruğu</b>
+              <p style="margin:12px 0 0;color:var(--color-muted);font-size:23px;line-height:1.4">
+                İmleci gezdirin: ±15° perspektif eğimi, çerçevede dolaşan kuyruk.</p>
+            </div>
+            <div class="px-marquee px-chips" aria-hidden="true"><div class="px-marquee-track">
+              <span class="chip">shimmer</span><span class="chip">fade-in-blur</span>
+              <span class="chip">scramble</span><span class="chip">text morph</span>
+              <span class="chip">odometre</span><span class="chip">spotlight</span>
+              <span class="chip">tilt</span><span class="chip">magnetic</span>
+              <span class="chip">border trail</span><span class="chip">glow</span>
+            </div></div>
+          </div>
+        </div>
+        <footer class="slide-footer"><span>primitives-motion · motion-primitives'ten uyarlama (MIT)</span><span>17</span></footer>
       </section>
 
       <!-- 11 · Kapanış -->
@@ -454,18 +526,21 @@
       document.body.appendChild(note);
     }
   </script>
+  <script src="../presets/motion_core/primitives-motion.js"></script>
   <script type="module">
     import { revealStage, settleAll, tracePath } from '../presets/motion_core/core-motion.js';
     import { initInteractions } from '../presets/motion_core/interaction-motion.js';
     import { morphState } from '../presets/motion_core/morph-transition.js';
     import { transitionSlides } from '../presets/motion_core/slide-transitions.js';
-    import { mountTimeline } from '../presets/timeline_tree/timeline_tree.mjs';
+    import { mountTimeline } from '../presets/timeline_tree/timeline-preset.mjs';
     import { writeSequence } from '../presets/equation_pen/equation-writing.mjs';
-    import { mountNeuralNetwork } from '../presets/neural_network/neural_network.mjs';
+    import { mountNeuralNetwork } from '../presets/neural_network/neural-network-preset.mjs';
     import { mountLunaris } from '../presets/moon_advanced/lunaris-moon.mjs';
     import { mountTerra } from '../presets/earth_advanced/terra-globe.mjs';
     import { mountSol } from '../presets/sun_advanced/sol-sun.mjs';
     import { mountPlanetae } from '../presets/planets_advanced/planetae.mjs';
+    import { mountCosmos } from '../presets/cosmos_advanced/cosmos-sky.mjs';
+    import { mountJwstExplorer } from '../presets/jwst_explorer/jwst-explorer.mjs';
 
     /* Sprites (motifs + icons) */
     const sprites = [
@@ -567,7 +642,7 @@
         terraLoading = true;
         try {
           terra = await mountTerra(document.querySelector('#terraHost'), {
-            assetBaseUrl: '../presets/earth_advanced',
+            assetBaseUrl: '../presets/terra-vanilla-preset',
             title: 'Şehirler gerçek yerlerinde, ışıklar gerçek gecede',
           });
         } finally { terraLoading = false; }
@@ -597,12 +672,63 @@
         planetaeLoading = true;
         try {
           planetae = await mountPlanetae(document.querySelector('#planetaeHost'), {
-            assetBaseUrl: '../presets/planets_advanced',
+            assetBaseUrl: '../presets/planetae-vanilla-preset',
           });
         } finally { planetaeLoading = false; }
       }
       planetae?.setActive(true);
       planetae?.figure.focus({ preventScroll: true });
+    };
+
+    /* Cosmos da tembel yüklenir (ESO panoraması ~4.9 MB) */
+    let cosmos = null, cosmosLoading = false;
+    const enterCosmos = async () => {
+      if (cosmosLoading) return;
+      if (!cosmos) {
+        cosmosLoading = true;
+        try { cosmos = await mountCosmos(document.querySelector('#cosmosHost'), { seed: 11 }); }
+        finally { cosmosLoading = false; }
+      }
+      cosmos?.setActive(true);
+      cosmos?.figure.focus({ preventScroll: true });
+    };
+
+    /* JWST Explorer: manifest + görüntü ilk ziyarette gelir (~4.4 MB) */
+    let jwst = null, jwstLoading = false, jwstPair = null, jwstComparing = false;
+    const enterJwst = async () => {
+      if (jwstLoading) return;
+      if (!jwst) {
+        jwstLoading = true;
+        try {
+          const base = '../presets/jwst_explorer/images/';
+          const manifest = await fetch(base + 'manifest.json').then(r => r.json());
+          const entries = manifest.images || manifest;
+          const entry = entries.find(e => e.file === 'pillars-nircam.jpg') || entries[0];
+          const pairRef = entry.pairs && entry.pairs[0];
+          jwstPair = pairRef ? entries.find(e => e.file === pairRef.file) || { file: pairRef.file, credit: entry.credit } : null;
+          jwst = await mountJwstExplorer(document.querySelector('#jwstHost'), { entry, imagesBase: base });
+          /* C tuşu Hubble perdesini açıp kapatır — figür odaklıyken */
+          jwst.figure.addEventListener('keydown', async e => {
+            if (e.key === 'c' || e.key === 'C') { e.preventDefault();
+              jwstComparing = !jwstComparing;
+              await jwst.compare(jwstComparing ? jwstPair : null);
+            }
+          });
+        } finally { jwstLoading = false; }
+      }
+      jwst?.figure.focus({ preventScroll: true });
+      window.__deck = Object.assign(window.__deck || {}, { jwst });
+    };
+
+    /* Primitives bir kez kurulur; her girişte yeniden doğar */
+    Primitives.init();
+    const pxNumberEl = document.querySelector('#pxNumber');
+    const pxNumber = Primitives.animatedNumber(pxNumberEl);
+    const pxOdo = Primitives.slidingNumber(document.querySelector('#pxOdo'), 1959);
+    const enterPrimitives = slide => {
+      Primitives.reveal(slide);
+      pxNumber.jump(0); pxNumber.set(1620000);   /* katsayı sayısı — tanıdık değer */
+      pxOdo.set(2026);
     };
 
     /* Per-slide entry behavior */
@@ -615,6 +741,9 @@
       if (slide.contains(document.querySelector('#terraHost'))) enterTerra();
       if (slide.contains(document.querySelector('#solHost'))) enterSol();
       if (slide.contains(document.querySelector('#planetaeHost'))) enterPlanetae();
+      if (slide.contains(document.querySelector('#cosmosHost'))) enterCosmos();
+      if (slide.contains(document.querySelector('#jwstHost'))) enterJwst();
+      if (slide.contains(document.querySelector('#pxNumber'))) enterPrimitives(slide);
       slide.querySelectorAll('.sci-chart .series-line').forEach(path => tracePath(path, { duration: 1100 }));
     };
     const onLeave = slide => {
@@ -622,6 +751,7 @@
       if (slide.contains(document.querySelector('#terraHost'))) terra?.setActive(false);
       if (slide.contains(document.querySelector('#solHost'))) sol?.setActive(false);
       if (slide.contains(document.querySelector('#planetaeHost'))) planetae?.setActive(false);
+      if (slide.contains(document.querySelector('#cosmosHost'))) cosmos?.setActive(false);
     };
 
     const counter = document.querySelector('#counter');
@@ -651,7 +781,9 @@
 
     /* Palette cycling — the whole token system switches at once */
     const palettes = ['graphite-ember', 'porcelain-ink', 'obsidian-champagne', 'verdigris-slate',
-                      'oat-cocoa', 'berry-orchid', 'sage-buttercream', 'arctic-mulberry', 'midnight-tangerine'];
+                      'oat-cocoa', 'berry-orchid', 'sage-buttercream', 'arctic-mulberry', 'midnight-tangerine',
+                      'ultraviolet-chartreuse', 'cerulean-vermilion', 'prussian-amber', 'magma-basalt',
+                      'aurora-polar', 'heliograph', 'royal-saffron', 'ionosphere'];
     const paletteBtn = document.querySelector('#paletteBtn');
     const cyclePalette = () => {
       const next = palettes[(palettes.indexOf(document.body.dataset.palette) + 1) % palettes.length];

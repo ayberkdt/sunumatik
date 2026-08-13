@@ -129,7 +129,7 @@ html.js .px-inview.is-visible { opacity: 1; transform: none; filter: blur(0); }
 /* ── 8 · Kayan basamak (SlidingNumber) — JS slidingNumber ile ── */
 .px-digit {
   position: relative; display: inline-block; width: 1ch;
-  overflow-y: clip; line-height: 1; font-variant-numeric: tabular-nums;
+  overflow: hidden; line-height: 1; font-variant-numeric: tabular-nums;
 }
 .px-digit > .px-size { visibility: hidden; }
 .px-digit > .px-n {

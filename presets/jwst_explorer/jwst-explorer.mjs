@@ -83,7 +83,19 @@ export async function mountJwstExplorer(host, options = {}) {
   /* ── kamera: görüntü uzayında merkez + ölçek ── */
   let W = 0, H = 0, dpr = 1;
   const cam = { cx: img.width / 2, cy: img.height / 2, s: 1 };
-  const minScale = () => Math.min(W / img.width, H / img.height);
+  /* Kadraj ölçeği ASLA 0 ya da tanımsız olamaz: ölçek log uzayında yaylandığı
+     için minScale 0 dönerse log(0) = -sonsuz olur, cam.s exp ile 0'a çöker ve
+     görüntü görünmez kalır (işaretçiler de merkezde üst üste yığılır — ölçüldü:
+     ölçeklenmiş sahnede mount anında kap henüz yerleşmemişti). */
+  const minScale = () => {
+    const m = Math.min(W / img.width, H / img.height);
+    return (isFinite(m) && m > 0) ? m : 1;
+  };
+  /* Kullanıcı kamerayı elle oynattıysa yeniden boyutlanma kadrajı ÇALMAZ. */
+  let userMoved = false;
+  /* activePoi BURADA tanımlanır: resize() onu okuyor ve mount sırasında
+     çağrılıyor — aşağıda tanımlansaydı let'in ölü bölgesinde patlardı. */
+  let activePoi = -1;
   const sx = spring(v => { cam.cx = v; dirty = true; });
   const sy = spring(v => { cam.cy = v; dirty = true; });
   /* Ölçek LOG uzayında yaylanır: iki kat yakınlaşma her seviyede aynı hissettirir. */
@@ -92,17 +104,24 @@ export async function mountJwstExplorer(host, options = {}) {
 
   let dirty = true, rafId = null, disposed = false;
   function resize() {
-    const r = figure.getBoundingClientRect();
+    /* offsetWidth/Height KULLANILIR, getBoundingClientRect DEĞİL: deste sahnesi
+       CSS transform ile ölçekleniyor ve rect ölçeklenmiş ölçüyü döndürüp
+       tamponu küçültüyor (yumuşak görüntü). offset* transformları yok sayar. */
+    const w = figure.offsetWidth, h = figure.offsetHeight;
+    if (!(w > 4 && h > 4)) return;         /* düzen henüz oturmadı — eski ölçüyü koru */
     dpr = Math.min(devicePixelRatio || 1, 2);
-    W = Math.max(2, Math.round(r.width)); H = Math.max(2, Math.round(r.height - 0));
+    W = Math.round(w); H = Math.round(h);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     cv.style.width = W + "px"; cv.style.height = H + "px";
     dirty = true;
+    /* Genel bakıştayken kadraj her ölçüde yeniden oturur. */
+    if (!userMoved && activePoi < 0) overview();
   }
   const ro = new ResizeObserver(resize); ro.observe(figure);
   resize();
 
   function overview() {
+    userMoved = false;
     sx.set(img.width / 2); sy.set(img.height / 2);
     sz.set(Math.log(minScale()));
     setCaption(-1);
@@ -181,7 +200,6 @@ export async function mountJwstExplorer(host, options = {}) {
 
   /* ── ilgi noktaları ── */
   function getPois() { return entry.poi || entry.pois || entry.points || []; }
-  let activePoi = -1;
   function setCaption(i) {
     activePoi = i; dirty = true;
     const pois = getPois();
@@ -195,6 +213,7 @@ export async function mountJwstExplorer(host, options = {}) {
       p.label_tr + "</b> — " + (p.note_tr || "");
   }
   function goTo(n) {
+    userMoved = true;
     const pois = getPois();
     if (n <= 0 || !pois[n - 1]) { overview(); return; }
     const p = pois[n - 1];
@@ -210,7 +229,7 @@ export async function mountJwstExplorer(host, options = {}) {
     cv.setPointerCapture(e.pointerId);
     const split = W * (1 - cmpT * (1 - hudSplit));
     dragCurtain = cmpImg && cmpT > 0.5 && Math.abs(e.offsetX - split) < 18;
-    dragging = true; lx = e.offsetX; ly = e.offsetY;
+    dragging = true; userMoved = true; lx = e.offsetX; ly = e.offsetY;
   });
   cv.addEventListener("pointermove", e => {
     if (!dragging) return;
@@ -226,7 +245,7 @@ export async function mountJwstExplorer(host, options = {}) {
   });
   addEventListener("pointerup", () => { dragging = dragCurtain = false; });
   cv.addEventListener("wheel", e => {
-    e.preventDefault();
+    e.preventDefault(); userMoved = true;
     /* imlece doğru yakınlaş: imlecin görüntü noktası sabit kalır */
     const s0 = cam.s, f = Math.exp(-e.deltaY * 0.0012);
     const s1 = Math.min(minScale() * 40, Math.max(minScale() * 0.9, s0 * f));
@@ -237,6 +256,7 @@ export async function mountJwstExplorer(host, options = {}) {
     sy.jump(iy - (e.offsetY - H / 2) / s1);
   }, { passive: false });
   cv.addEventListener("dblclick", e => {
+    userMoved = true;
     const ix = cam.cx + (e.offsetX - W / 2) / cam.s;
     const iy = cam.cy + (e.offsetY - H / 2) / cam.s;
     sx.set(ix); sy.set(iy); sz.set(Math.log(cam.s * 2.4));
@@ -282,6 +302,11 @@ export async function mountJwstExplorer(host, options = {}) {
     /* Deterministik dışa aktarım / gizli-pencere testi: rAF beklemeden
        mevcut kamera durumunu senkron basar (Sol'un advance() muadili). */
     renderNow() { resize(); dirty = true; draw(); },
+    /* Teşhis: gizli panel/başsız tarayıcıda kadrajı ölçmek için. */
+    _state: () => ({ W, H, dpr, camS: cam.s, camCx: cam.cx, camCy: cam.cy,
+                     minScale: minScale(), imgW: img.width, imgH: img.height,
+                     offW: figure.offsetWidth, offH: figure.offsetHeight,
+                     userMoved, activePoi, cvW: cv.width, cvH: cv.height }),
     dispose() { disposed = true; ro.disconnect(); sx.stop(); sy.stop(); sz.stop(); sc.stop(); host.innerHTML = ""; }
   };
 }
