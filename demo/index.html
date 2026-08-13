@@ -95,6 +95,20 @@
     .tl-host { outline: none; }
 
     /* Lunaris slide: the figure owns the whole content region */
+    /* İkon vitrini — aileler satır satır, ad altında */
+    .icon-wall { display: grid; gap: 26px; align-content: center; }
+    .icon-fam { display: grid; grid-template-columns: 210px 1fr; gap: 26px; align-items: center; }
+    .icon-fam h3 { margin: 0; font: 700 25px/1.15 "Source Serif 4", Georgia, serif;
+                   color: var(--color-accent); }
+    .icon-fam h3 small { display: block; margin-top: 5px; font: 600 17px/1.2 ui-monospace, monospace;
+                         color: var(--color-muted); letter-spacing: .04em; }
+    .icon-row { display: flex; gap: 14px; }
+    .icon-cell { flex: 1; display: grid; justify-items: center; gap: 9px; padding: 16px 8px 12px;
+                 background: var(--color-surface); border: 1.5px solid var(--color-rule);
+                 border-radius: 12px; color: var(--color-accent); }
+    .icon-cell svg { width: 46px; height: 46px; }
+    .icon-cell span { font: 600 16px/1.2 ui-sans-serif, system-ui; color: var(--color-ink);
+                      text-align: center; }
     .lunaris-slide { grid-template-rows: auto 1fr auto; }
     #cosmosHost, #jwstHost { min-height: 0; }
     #cosmosHost .lunaris-preset { min-height: 0; height: 100%; }
@@ -151,11 +165,12 @@
       <section class="slide is-active" aria-labelledby="s1t">
         <header>
           <div class="kicker" data-motion="reveal">Sunum kütüphanesi · canlı test</div>
-          <h1 id="s1t" data-motion="reveal">Bir tasarım sistemi, dokuz palet, on iki preset</h1>
+          <h1 id="s1t" data-motion="reveal">Tek tasarım sistemi: on yedi palet, 363 ikon, on beş preset</h1>
         </header>
         <div class="title-grid">
           <p class="lede" data-motion="reveal">Bu deste, kütüphanedeki her preset'i gerçek bir slayt akışında
-             gösterir: geçişler, hover, morph, grafik, tablo, kronoloji, denklem yazımı ve sinir ağı.</p>
+             gösterir: geçişler, hover, morph, grafik, tablo, ikonlar, WebGL sahneleri, gerçek Webb
+             görüntüleri, kronoloji, denklem yazımı, sinir ağı ve mikro-hareket.</p>
           <div class="motif" data-motion="rise" aria-hidden="true">
             <svg viewBox="0 0 240 240"><use href="#orbit-system"/></svg>
           </div>
@@ -167,12 +182,13 @@
       <section class="slide" aria-labelledby="s2t">
         <header>
           <div class="kicker">Ajanda</div>
-          <h2 id="s2t">On durak, tek akış</h2>
+          <h2 id="s2t">On bir durak, tek akış</h2>
         </header>
         <div class="agenda" data-hover-group>
           <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-gauge"/></svg>Hover ve bağlantılı vurgu<small>03</small></div>
           <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chart-bars"/></svg>Grafik teması<small>04</small></div>
           <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-database"/></svg>Tablo preset'leri<small>05</small></div>
+          <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-orbit-elliptical"/></svg>Alan ikonları: 172 duotone<small>06</small></div>
           <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-wave"/></svg>Morph geçişi<small>06</small></div>
           <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-orbit"/></svg>WebGL sahneler: Ay · Dünya · Güneş · Gezegenler · Kozmos<small>08–12</small></div>
           <div class="agenda-row" data-motion="reveal" data-hover-member data-hover="lift"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-telescope"/></svg>JWST Explorer: gerçek Webb görüntüleri<small>13</small></div>
@@ -300,6 +316,33 @@
           </table>
         </div>
         <footer class="slide-footer"><span>table-presets.css · data varyantı + satır hover</span><span>5</span></footer>
+      </section>
+
+      <!-- 6 · Alan ikonları -->
+      <section class="slide" aria-labelledby="s6ic">
+        <header>
+          <div class="kicker">Alan ikonları · duotone</div>
+          <h2 id="s6ic">172 ikon, tek el, bilimsel olarak doğru</h2>
+        </header>
+        <div class="icon-wall">
+          <div class="icon-fam" data-motion="reveal">
+            <h3>Astrodinamik<small>30 ikon</small></h3>
+            <div class="icon-row"><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-orbit-elliptical"/></svg><span>Eliptik yörünge</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-hohmann-transfer"/></svg><span>Hohmann</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-burn-prograde"/></svg><span>Prograde yakış</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-lagrange-points"/></svg><span>Lagrange</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-ground-track"/></svg><span>Yer izi</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-reentry"/></svg><span>Atmosfere giriş</span></div></div>
+          </div>
+          <div class="icon-fam" data-motion="reveal">
+            <h3>Sinyal & Kontrol<small>30 ikon</small></h3>
+            <div class="icon-row"><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-feedback-loop"/></svg><span>Geri besleme</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-pid-controller"/></svg><span>PID</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-kalman-filter"/></svg><span>Kalman</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-bode-plot"/></svg><span>Bode</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-root-locus"/></svg><span>Kök yer eğrisi</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-step-response"/></svg><span>Basamak yanıtı</span></div></div>
+          </div>
+          <div class="icon-fam" data-motion="reveal">
+            <h3>Roket & Uydu<small>30 ikon</small></h3>
+            <div class="icon-row"><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-rocket-stages"/></svg><span>Kademeler</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-thrust-vector-control"/></svg><span>İtki vektörü</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-reaction-wheel"/></svg><span>Reaksiyon çarkı</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star-tracker"/></svg><span>Yıldız izleyici</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-cubesat"/></svg><span>CubeSat</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-ground-station"/></svg><span>Yer istasyonu</span></div></div>
+          </div>
+          <div class="icon-fam" data-motion="reveal">
+            <h3>Fizik · Matematik · ML<small>70 ikon</small></h3>
+            <div class="icon-row"><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-torque"/></svg><span>Tork</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-spacetime-curvature"/></svg><span>Uzayzaman</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-gradient-nabla"/></svg><span>Gradyan</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-tensor"/></svg><span>Tensör</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-transformer-attention"/></svg><span>Dikkat</span></div><div class="icon-cell"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-gradient-descent"/></svg><span>Gradyan inişi</span></div></div>
+          </div>
+        </div>
+        <footer class="slide-footer"><span>domain-icons.svg · odakta birincil cisim, kapanmayan hiperbol, gerçek nav-ball işaretçileri</span><span>6</span></footer>
       </section>
 
       <!-- 6 · Morph -->
@@ -494,8 +537,9 @@
           <h1 id="s11t">Her parça aynı token dilini konuşuyor</h1>
         </header>
         <div class="break-grid">
-          <p class="lede">Sağ alttaki palet düğmesi (veya P tuşu) dokuz paleti dolaşır:
-             grafik, tablo, motif, denklem ve sinir ağı aynı anda yeni temaya geçer.</p>
+          <p class="lede">Sağ alttaki palet düğmesi (veya P tuşu) <b>on yedi paleti</b> dolaşır:
+             grafik, tablo, ikon, motif, denklem ve sinir ağı aynı anda yeni temaya geçer —
+             tek token dili, tek dokunuşta yeni tema.</p>
           <div class="motif" aria-hidden="true"><svg viewBox="0 0 240 240"><use href="#trajectory"/></svg></div>
         </div>
         <footer class="slide-footer"><span>Sunumlar kütüphanesi · preset testi</span><span>12</span></footer>
@@ -546,6 +590,7 @@
     const sprites = [
       '../presets/color_themes/space-motifs/space-motifs.svg',
       '../presets/charts_icons/icons/science-icons.svg',
+      '../presets/charts_icons/domain-icons/domain-icons.svg',
     ];
     await Promise.all(sprites.map(url => fetch(url).then(r => r.text())
       .then(text => document.body.insertAdjacentHTML('beforeend', text))

@@ -20,7 +20,7 @@ tıkla (port 8781) — örnek deste dahil her şey oradan açılır.
 
 | Ne | Yol |
 |---|---|
-| Tüm preset'leri kullanan 13 slaytlık örnek deste | [preset-test/index.html](preset-test/index.html) → `http://localhost:8781/preset-test/index.html` |
+| Tüm preset'leri kullanan **19 slaytlık** örnek deste (Kozmos · JWST Explorer · alan ikonları · Primitives dahil) | [preset-test/index.html](preset-test/index.html) → `http://localhost:8781/preset-test/index.html` |
 | Sol'u kendi sayfana koymanın hazır şablonu (3 bağlantı: import map + CSS + mountSol) | [preset-test/sol-tek-basina.html](preset-test/sol-tek-basina.html) → `http://localhost:8781/preset-test/sol-tek-basina.html` |
 
 ## Renk temaları — `design-space-science-deck`
@@ -69,6 +69,7 @@ tıkla (port 8781) — örnek deste dahil her şey oradan açılır.
 | Grafik teması: eksen/grid/6 seri rengi/belirsizlik bandı/tooltip | [chart-theme.css](.agents/skills/create-scientific-visuals/presets/charts_icons/chart-theme.css) |
 | **Grafik motoru** — spec ver, animasyonlu SVG grafik al (çizgi/sütun/saçılım + bant + eşik + fit stilleri) | [chart-preset/](.agents/skills/create-scientific-visuals/presets/charts_icons/chart-preset/index.html) |
 | 23 bilim ikonu (SVG sprite) + önizleme | [icons/](.agents/skills/create-scientific-visuals/presets/charts_icons/icons/icons-preview.html) |
+| İkon kullanım denetimi — eksik `#i-` atfı (görünmez boş kutu) + katman karışımı | `node .agents/skills/create-scientific-visuals/scripts/validate-icon-usage.mjs preset-test/index.html` |
 | **172 ikonluk ALAN seti** (duotone, bilim setiyle aynı el) — matematik 28 · sinyal & kontrol 30 · fizik 24 · **astrodinamik 30** · roket & uydu 30 · ML 18 · gökcisimleri 12; aile çipli canlı filtreli önizleme, TR+EN manifest. Bilimsel iddia taşır: odakta birincil cisim, kapanmayan hiperbol, gerçek nav-ball prograde/retrograde işaretçileri | [domain-icons/](.agents/skills/create-scientific-visuals/presets/charts_icons/domain-icons/preview.html) |
 | **168 ikonluk yardımcı kütüphane** (Lucide/Tabler/Phosphor; ISC/MIT) — oklar, grafikler, durum, zaman, uzay/bilim; TR+EN aranabilir manifest, sprite, canlı filtreli önizleme, lisans metinleri | [icon-library/](.agents/skills/create-scientific-visuals/presets/charts_icons/icon-library/preview.html) |
 
