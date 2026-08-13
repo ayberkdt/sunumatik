@@ -28,6 +28,11 @@ demo), `motion-manifest.json`.
   içe aktarım başarısız olursa otomatik olarak basit 4 bacaklı yedek araca düşer
   (blok asla bloğa sert bağımlı olmaz). Ayak tabanı craft-blocks'ta −0.46,
   yedekte −0.50 birimdir; modül bunu kendisi seçer.
+- Motor alevi `../craft_blocks/craft-effects.mjs` → `buildEngineFX`
+  (dondurulmuş API, tip `hover`) dinamik import + try/catch ile bağlanır;
+  modül yoksa koni yer tutucu aynen kalır. FX ışıkları her karede araç
+  ölçeğinin karesiyle (su²) çarpılır — alçak irtifada küçülen araçtan taşan
+  zemin taşkını olmaz (ışık disiplini).
 - Ay dokusu `../moon_react_source/public/lunaris/textures/`'tan
   yeniden kullanılır (aesthetic_moon_real.webp + moon_disp_real.webp);
   yüklenemezse en-iyi-aday yerleşimli prosedürel krater dokusuna düşer.
@@ -80,11 +85,24 @@ anlık çarpan HUD'da görünür.
 - **Ölçek abartısı bildirilir:** araç frenlemede ≈ ×65 (600 m görünür), 150 m
   altında sürekli rampayla gerçek boyuta (~9 m) iner; küçülme yaklaşma fazında
   kamera mesafesiyle örtülür (ekranda sabit görünür).
-- Zemin: uzak yama lunaris albedosu (9× tekrar, bump = gerçek yükseklik
-  haritası); saha çevresinde iki detay yaması — tabanları AYNI albedo
-  dokusundan kırpılır (ton sürekliliği), üstüne en-iyi-aday yerleşimli, alçak
-  güneşle tutarlı gölgeli/rimli kraterler ve regolit greni çizilir. Saha
-  çevresine 110 seeded kaya (düşük-çarpık boylar) uzun gölgeleriyle serpilir.
+- Zemin: GERÇEK KABARTMALI arazi — paylaşılan yükseklik alanı `h(x,z)`
+  (lunar-descent.mjs `araziYukseklik`): seed'li krater alanı (çukur çanak +
+  yükseltilmiş kenar halkası + s⁻³ sönümlü ejecta; çap > 40 birimde merkez
+  tepecik; güç yasalı boy dağılımı, en-iyi-aday yerleşim), 3 oktav fBm
+  regoliti, mare kırışık sırtları (ufuk silueti — ilk üçü kamera ufuklarına
+  nişanlı) ve moon_disp yükseklik dokusundan geniş ölçekli katkı (bump ile
+  aynı 9× tekrar). Örgü TEK kutupsal ızgaradır: merkezde sık, ufka doğru
+  geometrik seyrelen halkalar (~200k tepe, LOD dikişi/z-çatışması yok);
+  `computeVertexNormals` alçak güneşle kraterleri okutur. İNİŞ SAHASI TEMİZ
+  BÖLGESİ: orijin çevresi ~8 birim yumuşakça h≈0'a bastırılır — temas noktası
+  y=0, ayak/gölge/toz mantığı düz zemine güvenmeyi sürdürür. Aynı h(x,z)
+  kamera koruması, kaya oturtma ve toz zemin seviyesinde de kullanılır.
+  Doku katmanları: uzak zemin lunaris albedosu (9× tekrar); saha çevresinde
+  KRATERSİZ üç tonlama yaması (yakın 120, orta 34, mikro 11 birim) — tabanları
+  aynı albedodan kırpılır, üstlerine yalnız gren + geometri-altı (< 1 birim)
+  pockmark çizilir; yakın/orta yamalar araziye h(x,z) ile giydirilir (havada
+  duran boyalı krater görüntüsü yok). Saha çevresi + arazi halkasına ~150
+  seeded kaya `h + gömülme payı` ile oturtulur.
 - Işık: ~11° elevasyonlu sıcak anahtar güneş (uzun gölgeler; gölge
   yarı-gölgeli, intensity .62), zayıf dünya-ışığı dolgusu. Plum: gaz koluyla
   ölçeklenen iki iç içe koni + nokta ışık — doygun sıcak ton, beyaz patlama
@@ -126,7 +144,9 @@ deterministik), kontroller gizlenir, HUD ve altyazı kalır.
 
 ## Sınırlar (manifest'te de)
 
-2B düşey düzlem; sabit g (merkezkaç rahatlaması yok); düz arazi (eğim/engel
-yok); dinamikte sabit kütle; araç ölçeği ve süre sıkıştırılmış. Gerçek görev
+2B düşey düzlem; sabit g (merkezkaç rahatlaması yok); FİZİK düz arazide
+çalışır — 3B görsel kabartma yalnız sunumdur (gerçek bölgenin yükseklik
+modeli değildir) ve iniş sahası çevresi düzleştirilir; dinamikte sabit kütle;
+araç ölçeği ve süre sıkıştırılmış. Gerçek görev
 telemetrisi, rehberlik doğrulaması veya iniş güvenliği analizi için KULLANMA —
 o iş sayısal/veri-güdümlü ayrı bir preset ister.

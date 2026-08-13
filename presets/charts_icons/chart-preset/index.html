@@ -18,11 +18,12 @@
     .panel { background: var(--color-surface); border: 1px solid var(--color-rule);
       border-radius: 10px; padding: 26px; }
     .sci-chart-caption { font-size: 15px; color: var(--color-muted); margin-top: 10px; }
-    .controls { display: flex; gap: 10px; margin-top: 12px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
     .controls button { font: 600 15px/1 inherit; color: var(--color-ink);
       background: var(--color-canvas); border: 1.5px solid var(--color-ink);
       border-radius: 8px; padding: 9px 16px; cursor: pointer; }
     .controls button:hover { background: var(--color-rule); }
+    .koreo-baslik { font-size: 24px; margin: 8px 0 -20px; font-weight: 700; }
   </style>
 </head>
 <body data-palette="graphite-ember">
@@ -42,10 +43,68 @@
       </div>
       <p class="sci-chart-caption">Noktalar veri sırasıyla belirir; Morph iki veri kümesi arasında kaydırır
         (eksenler sabit); Sheen tek seferlik dikkat süpürmesidir.</p></section>
+
+    <p class="koreo-baslik">Koreografi — chart.enter() sahne girişi ve anlatı katmanı</p>
+
+    <section class="panel" data-demo="line"><h2>Çizgi girişi — eksen süpürmesi, komet başı, odometre okuması, alan süpürüşü, bant nefesi</h2>
+      <div id="k1"></div>
+      <div class="controls"><button data-replay="k1" type="button">Tekrar Oynat</button></div>
+      <p class="sci-chart-caption">Okuma, çizilen eğrinin o x'teki değeridir; işaretçiler komet geçerken pop'lar.
+        Sabit-zaman doğrulama: <code>?demo=line&amp;t=0.45</code></p></section>
+
+    <section class="panel" data-demo="bar"><h2>Sütun girişi — yaylı kalkış, sayan değer etiketleri, vurgula()</h2>
+      <div id="k2"></div>
+      <div class="controls">
+        <button data-replay="k2" type="button">Tekrar Oynat</button>
+        <button id="btnVurgula" type="button">Vurgula (3. küme)</button>
+        <button id="btnVurgulaTemizle" type="button">Temizle</button>
+      </div>
+      <p class="sci-chart-caption">vurgula(i): tek nabız + diğerleri kısılır + iddia notu kayarak girer.
+        <code>?demo=bar&amp;t=0.5</code> · <code>?demo=vurgu</code></p></section>
+
+    <section class="panel" data-demo="scatter"><h2>Saçılım girişi — damla yağmuru, fit uçtan çizilir, güven bandı tek nefeste şişer, kumeVurgula()</h2>
+      <div id="k3"></div>
+      <div class="controls">
+        <button data-replay="k3" type="button">Tekrar Oynat</button>
+        <button id="btnKume" type="button">Kümeyi Vurgula (fit üstü)</button>
+        <button id="btnKumeTemizle" type="button">Temizle</button>
+      </div>
+      <p class="sci-chart-caption">Kesikli fit clip ile süpürülür (dash deseni bozulmaz); bant orta hattından
+        dışa TEK nefeste şişer. <code>?demo=scatter&amp;t=0.8</code></p></section>
+
+    <section class="panel" data-demo="violin"><h2>Keman girişi — kontur omurgadan büyür, medyan snap + mikro-sarsım</h2>
+      <div id="k4"></div>
+      <div class="controls"><button data-replay="k4" type="button">Tekrar Oynat</button></div>
+      <p class="sci-chart-caption"><code>?demo=violin&amp;t=0.6</code></p></section>
+
+    <section class="panel" data-demo="set"><h2>setData() — FLIP geçişi, eksen odometresi, delta çipleri</h2>
+      <div id="k5"></div>
+      <div class="controls">
+        <button id="btnSetB" type="button">Kalibrasyon sonrası (B)</button>
+        <button id="btnSetA" type="button">Başlangıç verisi (A)</button>
+      </div>
+      <p class="sci-chart-caption">Domain pin'li olmadığı için eksen yeniden ölçeklenir: tik'ler kayarak
+        yeniden numaralanır, grid/sütunlar birlikte akar; değişen sütunun yanında birimli delta çipi yüzer
+        ve söner. <code>?demo=set&amp;t=0.2</code> (ölçek ortası) · <code>?demo=set&amp;t=0.85</code> (çipler)</p></section>
+
+    <section class="panel" data-demo="sahne"><h2>sahnele() — anlatı modu (ok tuşlarına bağlanabilir olay API'si)</h2>
+      <div id="k6"></div>
+      <div class="controls">
+        <button id="btnGeri" type="button">◀ Geri</button>
+        <button id="btnIleri" type="button">İleri ▶</button>
+      </div>
+      <p class="sci-chart-caption">Her adım {vurgu, not}: grafik adım adım anlatılır; motor global keydown
+        eklemez, deste ileri()/geri() çağırır. <code>?demo=sahne&amp;adim=1</code></p></section>
   </main>
   <script type="module">
     import { mountChart } from './chart.mjs';
 
+    const Q = new URLSearchParams(location.search);
+    const demo = Q.get('demo');
+    const tParam = Q.get('t') === null ? 1 : +Q.get('t');
+    const adimParam = Q.get('adim') === null ? 1 : +Q.get('adim');
+
+    /* ── klasik vitrin (değişmedi) ── */
     mountChart(document.querySelector('#c1'), {
       type: 'line',
       title: 'Katsayı kaybı 60. derecede görev sınırını aşıyor',
@@ -86,23 +145,24 @@
       ],
     });
     /* Keman: üç modelin kalıntı dağılımları — DETERMİNİSTİK literal diziler */
+    const violinSeries = [
+      { name: 'Model A', slot: 1, values: [
+        -1.8,-1.4,-1.1,-0.9,-0.8,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.0,
+        0.1,0.1,0.2,0.3,0.4,0.5,0.6,0.8,0.9,1.1,1.3,1.7] },
+      { name: 'Model B', slot: 2, values: [
+        -3.6,-3.1,-2.6,-2.2,-1.9,-1.5,-1.2,-0.8,-0.5,-0.2,0.1,0.4,
+        0.7,1.0,1.3,1.6,2.0,2.3,2.7,3.1,3.4,3.8,4.3,4.9] },
+      { name: 'Model C', slot: 4, values: [
+        -2.4,-2.1,-1.9,-1.7,-1.6,-1.4,-1.3,-1.2,-1.1,-0.9,-0.3,0.4,
+        1.1,1.6,2.0,2.3,2.6,2.8,3.0,3.2,3.4,3.6,3.9,4.4] },
+    ];
     mountChart(document.querySelector('#c4'), {
       type: 'violin',
       title: 'Model C kalıntıları hem kayık hem geniş',
       subtitle: 'Gauss KDE; kutu Q1–Q3, bıyık 5–95, nokta medyan',
       y: { label: 'Kalıntı', unit: 'mm', ticks: 5 },
       margin: { right: 60 },
-      series: [
-        { name: 'Model A', slot: 1, values: [
-          -1.8,-1.4,-1.1,-0.9,-0.8,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1,0.0,
-          0.1,0.1,0.2,0.3,0.4,0.5,0.6,0.8,0.9,1.1,1.3,1.7] },
-        { name: 'Model B', slot: 2, values: [
-          -3.6,-3.1,-2.6,-2.2,-1.9,-1.5,-1.2,-0.8,-0.5,-0.2,0.1,0.4,
-          0.7,1.0,1.3,1.6,2.0,2.3,2.7,3.1,3.4,3.8,4.3,4.9] },
-        { name: 'Model C', slot: 4, values: [
-          -2.4,-2.1,-1.9,-1.7,-1.6,-1.4,-1.3,-1.2,-1.1,-0.9,-0.3,0.4,
-          1.1,1.6,2.0,2.3,2.6,2.8,3.0,3.2,3.4,3.6,3.9,4.4] },
-      ],
+      series: violinSeries.map(s => ({ ...s, values: [...s.values] })),
     });
 
     /* Saçılım animasyonları: pop-in + morph + sheen.
@@ -124,7 +184,154 @@
     });
     document.querySelector('#btnSheen').addEventListener('click', () => c5.sheen(0));
     window.__c5 = c5;
+
+    /* ── Koreografi panelleri: reveal manual, girişleri chart.enter() sürer ── */
+    const K = {};
+    K.k1 = mountChart(document.querySelector('#k1'), {
+      type: 'line', reveal: 'manual',
+      title: 'Soğutma gücü 40. dakikada eşiğin altına iniyor',
+      subtitle: '%90 güven bandı; alan dolgusu birikimli değil, vurgu amaçlı',
+      x: { label: 'Süre', unit: 'dk', ticks: 6 },
+      y: { label: 'Isıl güç', unit: 'W', ticks: 5 },
+      series: [
+        { name: 'Gözlem', slot: 1, markers: true, area: true,
+          data: [[0,84],[10,78],[20,69],[30,57],[40,44],[50,36],[60,31]],
+          band: [[0,80,88],[10,73,83],[20,63,75],[30,51,63],[40,38,50],[50,30,42],[60,24,38]] },
+        { name: 'Projeksiyon', slot: 2, style: 'projected',
+          data: [[50,36],[60,29],[70,24],[80,21]] },
+      ],
+      refLines: [{ y: 40, label: 'kritik eşik' }],
+      annotations: [{ x: 40, y: 44, text: 'eşik geçişi', dx: 26, dy: -30 }],
+    });
+    K.k2 = mountChart(document.querySelector('#k2'), {
+      type: 'bar', reveal: 'manual',
+      title: 'Kalibrasyon her kümede hatayı en az yarıya indiriyor',
+      x: { label: 'Test kümesi', min: 0.4, max: 4.6, ticks: 4 },
+      y: { label: 'Hata', unit: 'px', ticks: 4 },
+      series: [
+        { name: 'Önceki', slot: 2, data: [[1,0.42],[2,0.39],[3,0.47],[4,0.35]] },
+        { name: 'Kalibre', slot: 1, data: [[1,0.21],[2,0.20],[3,0.24],[4,0.16]] },
+      ],
+    });
+    K.k3 = mountChart(document.querySelector('#k3'), {
+      type: 'scatter', reveal: 'manual',
+      title: 'Gecikme yükseklikle doğrusal artıyor',
+      subtitle: 'Fit çizgisi ve %90 güven bandı; bant fit belirsizliğidir',
+      x: { label: 'Yükseklik', unit: 'km', ticks: 5 },
+      y: { label: 'Sinyal gecikmesi', unit: 'ms', ticks: 5 },
+      series: [
+        { name: 'Ölçümler', slot: 1,
+          data: [[100,1.9],[140,2.6],[180,3.1],[220,4.2],[260,4.6],[300,5.8],[340,6.1],[380,7.4],[420,7.9],[460,9.2]] },
+        { name: 'Doğrusal fit', slot: 3, style: 'fitted',
+          data: [[100,1.8],[280,5.4],[460,9.0]],
+          band: [[100,1.2,2.4],[280,4.9,5.9],[460,8.2,9.8]] },
+      ],
+    });
+    K.k4 = mountChart(document.querySelector('#k4'), {
+      type: 'violin', reveal: 'manual',
+      title: 'Model C kalıntıları hem kayık hem geniş',
+      subtitle: 'Gauss KDE; kutu Q1–Q3, bıyık 5–95, nokta medyan',
+      y: { label: 'Kalıntı', unit: 'mm', ticks: 5 },
+      margin: { right: 60 },
+      series: violinSeries.map(s => ({ ...s, values: [...s.values] })),
+    });
+    /* setData: domain pin'siz → B'ye geçişte eksen yeniden ölçeklenir */
+    const setA = [[1,0.42],[2,0.39],[3,0.47],[4,0.35]];
+    const setB = [[1,1.9],[2,1.42],[3,2.31],[4,1.08]];
+    K.k5 = mountChart(document.querySelector('#k5'), {
+      type: 'bar', reveal: 'manual',
+      title: 'Sıcak koşuda hata 4–5 katına çıkıyor',
+      x: { label: 'Test kümesi', min: 0.4, max: 4.6, ticks: 4 },
+      y: { label: 'Hata', unit: 'px', ticks: 5 },
+      legend: true,   /* tek seri: direct label başlıkla gereksiz yinelenirdi */
+      series: [{ name: 'Hata', slot: 1, data: setA.map(d => [...d]) }],
+    });
+    K.k6 = mountChart(document.querySelector('#k6'), {
+      type: 'bar', reveal: 'manual',
+      title: 'Hata bütçesinin yarısı tek alt sistemde',
+      x: { label: 'Alt sistem', min: 0.4, max: 4.6, ticks: 4 },
+      y: { label: 'Hata payı', unit: '%', ticks: 5 },
+      legend: true,
+      series: [{ name: 'Pay', slot: 1, data: [[1,12],[2,18],[3,49],[4,21]] }],
+    });
+    const sahne = K.k6.sahnele([
+      { not: 'Dört alt sistemin hata bütçesi payları' },
+      { vurgula: { seri: 0, indeks: 2 }, not: '3. alt sistem tek başına %49:\nbütçenin yarısı burada' },
+      { vurgula: { seri: 0, indeks: 3 }, not: 'İkinci sırada %21 — fark 2,3 kat' },
+    ]);
+    window.__sahne = sahne;
+    window.__k = K;
     window.__charts = true;
+
+    /* düğmeler */
+    document.querySelectorAll('[data-replay]').forEach(b =>
+      b.addEventListener('click', () => K[b.dataset.replay].enter()));
+    document.querySelector('#btnVurgula').addEventListener('click', () =>
+      K.k2.vurgula({ seri: 1, indeks: 2 }, { not: '3. kümede %49 iyileşme' }));
+    document.querySelector('#btnVurgulaTemizle').addEventListener('click', () => K.k2.vurgula(null));
+    const kumeMaske = (d) => d[1] > (1.8 + (d[0] - 100) * 0.02);   /* fit üstünde kalanlar */
+    document.querySelector('#btnKume').addEventListener('click', () =>
+      K.k3.kumeVurgula(kumeMaske, { not: 'Fit üstünde kalan ölçümler' }));
+    document.querySelector('#btnKumeTemizle').addEventListener('click', () => K.k3.kumeVurgula(null));
+    let onB = false;
+    document.querySelector('#btnSetB').addEventListener('click', () => {
+      if (onB) return; onB = true;
+      K.k5.setData([{ data: setB.map(d => [...d]) }], { sure: 900 });
+    });
+    document.querySelector('#btnSetA').addEventListener('click', () => {
+      if (!onB) return; onB = false;
+      K.k5.setData([{ data: setA.map(d => [...d]) }], { sure: 900 });
+    });
+    document.querySelector('#btnIleri').addEventListener('click', () => sahne.ileri());
+    document.querySelector('#btnGeri').addEventListener('click', () => sahne.geri());
+
+    /* ── sabit-zaman modu: ?demo=<ad>&t=<0..1> → SENKRON seek (headless) ── */
+    if (demo) {
+      /* demo → panel eşlemesi (vurgu bar panelini, sahne kendi panelini kullanır) */
+      const panelFor = { line: 'line', bar: 'bar', scatter: 'scatter', violin: 'violin',
+        set: 'set', vurgu: 'bar', sahne: 'sahne' };
+      document.querySelectorAll('main > section, main > h1, main > .koreo-baslik').forEach(s => {
+        if (s.dataset?.demo !== panelFor[demo]) s.style.display = 'none';
+      });
+      const t = Math.max(0, Math.min(1, tParam));
+      const enterSeek = c => { const h = c.enter({ oynat: false }); h.seek01(t); return h; };
+      switch (demo) {
+        case 'line': enterSeek(K.k1); break;
+        case 'bar': enterSeek(K.k2); break;
+        case 'scatter': enterSeek(K.k3); break;
+        case 'violin': enterSeek(K.k4); break;
+        case 'set': {
+          K.k5.enter({ oynat: false }).finish();
+          const h = K.k5.setData([{ data: setB.map(d => [...d]) }], { sure: 900, oynat: false });
+          h.seek01(t);
+          break;
+        }
+        case 'vurgu':
+          /* durum doğrulaması: export modu → geçişsiz, deterministik kare */
+          document.documentElement.dataset.export = 'true';
+          K.k2.enter({ oynat: false }).finish();
+          K.k2.vurgula({ seri: 1, indeks: 2 }, { not: '3. kümede %49 iyileşme' });
+          break;
+        case 'sahne':
+          document.documentElement.dataset.export = 'true';
+          K.k6.enter({ oynat: false }).finish();
+          sahne.git(adimParam);
+          break;
+      }
+      window.__demoReady = true;
+    } else {
+      /* normal gezinme: panel görünür olunca giriş filmi bir kez oynar */
+      const entered = new Set();
+      const io = new IntersectionObserver(es => {
+        for (const e of es) {
+          if (!e.isIntersecting) continue;
+          const id = e.target.querySelector('[id^="k"]')?.id;
+          if (id && K[id] && !entered.has(id)) { entered.add(id); K[id].enter(); }
+          io.unobserve(e.target);
+        }
+      }, { threshold: .3 });
+      document.querySelectorAll('section[data-demo]').forEach(s => io.observe(s));
+    }
   </script>
 </body>
 </html>

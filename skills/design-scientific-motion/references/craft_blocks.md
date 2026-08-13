@@ -120,4 +120,32 @@ noktalı ışık (sıcak anahtar + yarıküre dolgu + şampanya jant), palet men
 tel kafes anahtarı, Duraklat düğmesi. `?focus=orbiter|lander|rocket|cubesat|capsule`
 yakın çekim kamerası kurar. `window.__craft.advance(saniye)` deterministik
 sürüş kancasıdır. Hareket kaydı `motion-manifest.json` içindedir
-(tek hareket: `craft-turntable`, illustrative).
+(`craft-turntable` + `craft-engine-ignition`, ikisi de illustrative).
+
+## Motor ateşleme efekti (craft-effects.mjs)
+
+`/presets/craft_blocks/craft-effects.mjs` — DONMUŞ API:
+
+```js
+import { buildEngineFX } from '../craft_blocks/craft-effects.mjs';
+const fx = buildEngineFX({ scale = 1, tip = 'vakum', seed = 1, palette });
+// → { group, update(dt, { gaz, atesle }), dispose() }
+```
+
+- `group` orijini MOTOR AĞZINDA; alev −X'e uzar (eksen sözleşmesiyle aynı).
+  Tüketici grubu aracın çan çıkışına çocuk olarak ekler.
+- `update(dt, { gaz, atesle })` her karede: `gaz` 0..1 throttle; `atesle`
+  false→true ateşleme geçici rejimi (~0.3 sn flaş + halka + kıvılcım +
+  basınçlanma aşımı), true→false ~0.5 sn sönüm kuyruğu.
+- `tip`: `vakum` (geniş açılı seyrek genleşme şalı), `atmosfer` (dar huzme +
+  mach elmasları — instanced hücreler), `hover` (kısa/küt iniş huzmesi).
+- Katmanlar: gradyan dokulu additive çekirdek + iç dil, tip katmanı, ateşleme
+  geçici rejimi, tek PointLight (decay 2), çan iç ağzına oturan emissive kor
+  (craft-blocks malzemelerine DOKUNMAZ — ayrı mesh). Bütçe ≤ 8 mesh +
+  tek Points + tek Sprite. Parlaklık titreşimi 12–30 Hz karışımı, ±%15 sınırlı.
+- Deterministik: seed'li mulberry32; zaman yalnız `update(dt)` toplamı.
+- Vitrin: Ateşleme paneli (araç/tip/gaz/Ateşle-Kes);
+  `?fx=1&arac=<id>&tip=<tip>&gaz=<0..1>[&t=<sn>]` deterministik açılış —
+  `?t=` sabit-zaman modu sahneyi o âna sarıp DONDURUR (headless doğrulama);
+  dışa aktarım / azaltılmış harekette tablo t=2.0 sn orta-yanmadır.
+  Yumuşak bağımlılık: import başarısız olursa vitrin ateşlemesiz çalışır.

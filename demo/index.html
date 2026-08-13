@@ -174,22 +174,23 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   </div>
 </section>
 
-<section class="slide card" data-tur="kart" data-kat="orbital" data-embed="../presets/craft_blocks/index.html">
+<section class="slide card" data-tur="kart" data-kat="orbital" data-embed="../presets/craft_blocks/index.html?fx=1&amp;arac=rocket&amp;tip=atmosfer&amp;gaz=0.9&amp;t=2">
   <div class="bilgi">
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Araç Blokları</h2>
-    <p class="hook">Beş parametrik uzay aracı — tek malzeme dili, donuk API; her sahne bunlara güvenerek kurulur.</p>
+    <p class="hook">Beş parametrik uzay aracı + sinematik ateşleme sistemi: mach elmaslı alevler, ateşleme flaşı, çan kızarması.</p>
     <ul class="feats">
       <li>buildOrbiter · buildLander · buildRocket · buildCubesat · buildCapsule</li>
-      <li>Eksen sözleşmesi: +X ileri, −X itki çıkışı, +Z anten yönü</li>
-      <li>Palet sözlüğü: gövde / panel / vurgu / metal — desteye uyar</li>
+      <li>buildEngineFX: vakum · atmosfer · hover alev tipleri, gaz sürgüsü, Ateşle/Kes</li>
+      <li>Ateşleme geçici rejimi: flaş + açılan halka + kıvılcım; sönüm kuyruğu</li>
+      <li>Eksen sözleşmesi: +X ileri, −X itki çıkışı — sahneler buna güvenir</li>
     </ul>
-    <p class="yol"><code>presets/craft_blocks/index.html</code></p>
-    <a class="ac" href="../presets/craft_blocks/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+    <p class="yol"><code>presets/craft_blocks/index.html?fx=1&amp;arac=rocket&amp;tip=atmosfer&amp;gaz=0.9&amp;t=2</code></p>
+    <a class="ac" href="../presets/craft_blocks/index.html?fx=1&amp;arac=rocket&amp;tip=atmosfer&amp;gaz=0.9&amp;t=2" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
   </div>
   <div class="sahne">
     <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
-    <iframe title="Araç Blokları önizleme" loading="lazy" data-src="../presets/craft_blocks/index.html"></iframe>
+    <iframe title="Araç Blokları önizleme" loading="lazy" data-src="../presets/craft_blocks/index.html?fx=1&amp;arac=rocket&amp;tip=atmosfer&amp;gaz=0.9&amp;t=2"></iframe>
   </div>
 </section>
 
@@ -197,11 +198,12 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <div class="bilgi">
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Ay&#x27;a Motorlu İniş</h2>
-    <p class="hook">Üç fazlı iniş gerçek Ay yerçekimine karşı entegre edilir; temas hızı 0,90 m/s, ΔV bütçesi hesaplanır.</p>
+    <p class="hook">Üç fazlı iniş gerçek Ay yerçekimine karşı entegre edilir; yüzey artık gerçek 3B arazi — kraterler kendi gölgesini düşürür.</p>
     <ul class="feats">
-      <li>Frenleme → yaklaşma → dikey iniş; gaz kelebeğiyle ölçeklenen alev</li>
-      <li>İrtifa / dikey hız / yakıt HUD&#x27;u, Tsiolkovsky yakıt modeli</li>
-      <li>Chase · yan · yüzey kameraları, temas anında toz</li>
+      <li>~550 kraterli yer değiştirme arazisi: yükseltilmiş kenarlar, ejecta, mare sırtlı ufuk</li>
+      <li>Frenleme → yaklaşma → dikey iniş; craft-effects hover alevi entegre</li>
+      <li>İrtifa / dikey hız / yakıt HUD&#x27;u, temas 0,90 m/s, temas anında toz</li>
+      <li>Chase · yan · yüzey kameraları — arazi yüksekliğine karşı korumalı</li>
     </ul>
     <p class="yol"><code>presets/lunar_descent/index.html</code></p>
     <a class="ac" href="../presets/lunar_descent/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
@@ -475,18 +477,19 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <p class="num">05</p>
   <h2>Veri, Grafik ve Hareket</h2>
   <p class="sub">Keman grafikleri, morph geçişleri, tablo dolumu, sayfa geçişleri — deste tesisatı.</p>
-  <p class="uyeler">Grafik Motoru · Hareket Primitifleri · Tablo Dolumu · Slayt Geçişleri · Etkileşim Efektleri · Palet Kütüphanesi</p>
+  <p class="uyeler">Grafik Motoru · Hareket Primitifleri · Tablo Sahnesi · Slayt Geçişleri · Etkileşim Efektleri · Palet Kütüphanesi</p>
 </section>
 
 <section class="slide card" data-tur="kart" data-kat="veri" data-embed="../presets/charts_icons/chart-preset/index.html">
   <div class="bilgi">
     <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Grafik Motoru</h2>
-    <p class="hook">Keman, saçılım, çubuk ve çizgi — morph ile birbirine dönüşür, ışıltı taraması veriyi ezmeden vurgular.</p>
+    <p class="hook">Koreografili grafik motoru: eksenler süpürülür, çizgi komet başıyla çizilir, veri güncellemesi delta çipleriyle akar.</p>
     <ul class="feats">
-      <li>type:&#x27;violin&#x27; — Gauss KDE (Silverman bant genişliği)</li>
-      <li>morphTo(): grafik tipleri arası yumuşak dönüşüm</li>
-      <li>sheen(): tek geçişli ışıltı, saçılım damla animasyonu</li>
+      <li>enter(): eksen → grid → tik → veri; komet başı + canlı odometre okuması</li>
+      <li>setData(): FLIP geçişi, eksen tik&#x27;leri odometre gibi yeniden numaralanır</li>
+      <li>vurgula()/sahnele(): tek nabız + iddia notu; adım adım anlatı modu</li>
+      <li>Keman KDE, morphTo(), sheen(), saçılım damla yağmuru + fit süpürmesi</li>
     </ul>
     <p class="yol"><code>presets/charts_icons/chart-preset/index.html</code></p>
     <a class="ac" href="../presets/charts_icons/chart-preset/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
@@ -518,19 +521,21 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
 
 <section class="slide card" data-tur="kart" data-kat="veri" data-embed="../presets/motion_core/table-motion-preview.html">
   <div class="bilgi">
-    <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge guncel">GÜNCEL</span></p>
-    <h2>Tablo Dolumu</h2>
-    <p class="hook">Tablolar boş gelmez: hücre sayaçları, hücre içi oran çubukları, ısı dolgusu, sütun kaskadı.</p>
+    <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Tablo Sahnesi</h2>
+    <p class="hook">Tablolar sahneye çıkar: odometre silindirleri, toplam satırına akan ışık izleri, FLIP sıralama, sütun düellosu.</p>
     <ul class="feats">
-      <li>countCells · cellBars · heatFill · columnCascade</li>
-      <li>Görünürlükte tetiklenen doldurma</li>
+      <li>Yönetmenli giriş + gerçek odometre dolumu (data-count)</li>
+      <li>data-total-of: toplam hücresine süzülen akış izi — toplamın kaynağı görünür</li>
+      <li>tabloSirala(): FLIP yeniden sıralama; data-duel: fark çipli sütun düellosu</li>
+      <li>Satır spotlight anlatısı + hücre içi kendini çizen sparkline</li>
     </ul>
     <p class="yol"><code>presets/motion_core/table-motion-preview.html</code></p>
     <a class="ac" href="../presets/motion_core/table-motion-preview.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
   </div>
   <div class="sahne">
     <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
-    <iframe title="Tablo Dolumu önizleme" loading="lazy" data-src="../presets/motion_core/table-motion-preview.html"></iframe>
+    <iframe title="Tablo Sahnesi önizleme" loading="lazy" data-src="../presets/motion_core/table-motion-preview.html"></iframe>
   </div>
 </section>
 
@@ -693,7 +698,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
 <button id="sayac" title="Dizin (G)">1 / 35</button>
 <div id="dizin" role="dialog" aria-label="Dizin"></div>
 <script>
-const TOC = [{"i": 0, "ad": "Kapak", "tur": "kapak", "kat": ""}, {"i": 1, "ad": "Yörünge Sahnesi", "tur": "bolum", "kat": "orbital"}, {"i": 2, "ad": "Yörünge Sahnesi", "tur": "kart", "kat": "orbital"}, {"i": 3, "ad": "Araç Blokları", "tur": "kart", "kat": "orbital"}, {"i": 4, "ad": "Ay'a Motorlu İniş", "tur": "kart", "kat": "orbital"}, {"i": 5, "ad": "ML Sahneleri", "tur": "bolum", "kat": "ml"}, {"i": 6, "ad": "Kayıp Yüzeyi", "tur": "kart", "kat": "ml"}, {"i": 7, "ad": "Dikkat Akışı", "tur": "kart", "kat": "ml"}, {"i": 8, "ad": "Sinir Ağı Yürüyüşü", "tur": "kart", "kat": "ml"}, {"i": 9, "ad": "Gök Cisimleri ve Fonlar", "tur": "bolum", "kat": "gok"}, {"i": 10, "ad": "Güneş", "tur": "kart", "kat": "gok"}, {"i": 11, "ad": "Ay", "tur": "kart", "kat": "gok"}, {"i": 12, "ad": "Dünya", "tur": "kart", "kat": "gok"}, {"i": 13, "ad": "Gezegenler", "tur": "kart", "kat": "gok"}, {"i": 14, "ad": "Kozmos Fonu", "tur": "kart", "kat": "gok"}, {"i": 15, "ad": "JWST Kaşifi", "tur": "kart", "kat": "gok"}, {"i": 16, "ad": "Denklem ve Anlatım", "tur": "bolum", "kat": "anlatim"}, {"i": 17, "ad": "Denklem Kalemi", "tur": "kart", "kat": "anlatim"}, {"i": 18, "ad": "Türetme Adımları", "tur": "kart", "kat": "anlatim"}, {"i": 19, "ad": "Figür Anlatımı", "tur": "kart", "kat": "anlatim"}, {"i": 20, "ad": "Zaman Çizelgesi", "tur": "kart", "kat": "anlatim"}, {"i": 21, "ad": "Veri, Grafik ve Hareket", "tur": "bolum", "kat": "veri"}, {"i": 22, "ad": "Grafik Motoru", "tur": "kart", "kat": "veri"}, {"i": 23, "ad": "Hareket Primitifleri", "tur": "kart", "kat": "veri"}, {"i": 24, "ad": "Tablo Dolumu", "tur": "kart", "kat": "veri"}, {"i": 25, "ad": "Slayt Geçişleri", "tur": "kart", "kat": "veri"}, {"i": 26, "ad": "Etkileşim Efektleri", "tur": "kart", "kat": "veri"}, {"i": 27, "ad": "Palet Kütüphanesi", "tur": "kart", "kat": "veri"}, {"i": 28, "ad": "İkon Katmanları", "tur": "bolum", "kat": "ikon"}, {"i": 29, "ad": "Alan İkonları", "tur": "kart", "kat": "ikon"}, {"i": 30, "ad": "Utility İkonlar", "tur": "kart", "kat": "ikon"}, {"i": 31, "ad": "Kahraman Bilim İkonları", "tur": "kart", "kat": "ikon"}, {"i": 32, "ad": "Arşiv", "tur": "bolum", "kat": "arsiv"}, {"i": 33, "ad": "Analitik Ay Yörüngesi", "tur": "kart", "kat": "arsiv"}, {"i": 34, "ad": "Kapanış", "tur": "kapanis", "kat": ""}];
+const TOC = [{"i": 0, "ad": "Kapak", "tur": "kapak", "kat": ""}, {"i": 1, "ad": "Yörünge Sahnesi", "tur": "bolum", "kat": "orbital"}, {"i": 2, "ad": "Yörünge Sahnesi", "tur": "kart", "kat": "orbital"}, {"i": 3, "ad": "Araç Blokları", "tur": "kart", "kat": "orbital"}, {"i": 4, "ad": "Ay'a Motorlu İniş", "tur": "kart", "kat": "orbital"}, {"i": 5, "ad": "ML Sahneleri", "tur": "bolum", "kat": "ml"}, {"i": 6, "ad": "Kayıp Yüzeyi", "tur": "kart", "kat": "ml"}, {"i": 7, "ad": "Dikkat Akışı", "tur": "kart", "kat": "ml"}, {"i": 8, "ad": "Sinir Ağı Yürüyüşü", "tur": "kart", "kat": "ml"}, {"i": 9, "ad": "Gök Cisimleri ve Fonlar", "tur": "bolum", "kat": "gok"}, {"i": 10, "ad": "Güneş", "tur": "kart", "kat": "gok"}, {"i": 11, "ad": "Ay", "tur": "kart", "kat": "gok"}, {"i": 12, "ad": "Dünya", "tur": "kart", "kat": "gok"}, {"i": 13, "ad": "Gezegenler", "tur": "kart", "kat": "gok"}, {"i": 14, "ad": "Kozmos Fonu", "tur": "kart", "kat": "gok"}, {"i": 15, "ad": "JWST Kaşifi", "tur": "kart", "kat": "gok"}, {"i": 16, "ad": "Denklem ve Anlatım", "tur": "bolum", "kat": "anlatim"}, {"i": 17, "ad": "Denklem Kalemi", "tur": "kart", "kat": "anlatim"}, {"i": 18, "ad": "Türetme Adımları", "tur": "kart", "kat": "anlatim"}, {"i": 19, "ad": "Figür Anlatımı", "tur": "kart", "kat": "anlatim"}, {"i": 20, "ad": "Zaman Çizelgesi", "tur": "kart", "kat": "anlatim"}, {"i": 21, "ad": "Veri, Grafik ve Hareket", "tur": "bolum", "kat": "veri"}, {"i": 22, "ad": "Grafik Motoru", "tur": "kart", "kat": "veri"}, {"i": 23, "ad": "Hareket Primitifleri", "tur": "kart", "kat": "veri"}, {"i": 24, "ad": "Tablo Sahnesi", "tur": "kart", "kat": "veri"}, {"i": 25, "ad": "Slayt Geçişleri", "tur": "kart", "kat": "veri"}, {"i": 26, "ad": "Etkileşim Efektleri", "tur": "kart", "kat": "veri"}, {"i": 27, "ad": "Palet Kütüphanesi", "tur": "kart", "kat": "veri"}, {"i": 28, "ad": "İkon Katmanları", "tur": "bolum", "kat": "ikon"}, {"i": 29, "ad": "Alan İkonları", "tur": "kart", "kat": "ikon"}, {"i": 30, "ad": "Utility İkonlar", "tur": "kart", "kat": "ikon"}, {"i": 31, "ad": "Kahraman Bilim İkonları", "tur": "kart", "kat": "ikon"}, {"i": 32, "ad": "Arşiv", "tur": "bolum", "kat": "arsiv"}, {"i": 33, "ad": "Analitik Ay Yörüngesi", "tur": "kart", "kat": "arsiv"}, {"i": 34, "ad": "Kapanış", "tur": "kapanis", "kat": ""}];
 const slaytlar = [...document.querySelectorAll('.slide')];
 const sayac = document.getElementById('sayac');
 const dizin = document.getElementById('dizin');

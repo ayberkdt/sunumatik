@@ -8,8 +8,16 @@
    [data-col-emph]            hovering a header emphasizes its column
                               (JS sets --emph-col)
    [data-count]               countCells() sayacı — tabular-nums burada
+   [data-count="odometer"]    rakam silindirleri (.sci-odo*)
    [data-bar] / .sci-cell-bar cellBars() metin altı veri çubuğu
    [data-heat] / --heat-bg    heatFill() rampa arka planı
+   [data-table-enter]         yönetmenli giriş: başlık altı çizgi → gövde
+                              ("cascade" | "wipe" | "rows")
+   [data-total-of] / .sci-flow-dot  toplam akış izi (totalFlow)
+   [data-duel] / .sci-duel-*  ikili sütun düellosu (cellDuel)
+   .sci-spot-on / .sci-spot-note    satır spotlight anlatısı (tabloAdimlari)
+   [data-spark] / .sci-spark  mini-sparkline hücresi (cellSparks)
+   tr.is-flip / td.is-sort-key      FLIP sıralama (tabloSirala)
 
    Rules:
    - The cascade is an ENTRANCE, not a data statement: order = document
@@ -110,6 +118,218 @@ html.js [data-table-reveal="columns"].is-revealed .sci-cell--heat {
   transition-delay: calc(var(--col-index, 0) * 90ms);
 }
 
+/* ---- Yönetmenli giriş: data-table-enter="cascade|wipe|rows" -------- */
+/* Tek zaman çizgisi: başlık hücreleri iner (col×50ms), başlık altı
+   vurgu çizgisi soldan sağa çizilir (200ms+col×70ms), gövde 550ms'de
+   akmaya başlar. Süreler renderTableEnterAt (JS) ile EŞTİR.           */
+html.js [data-table-enter] thead th {
+  opacity: 0;
+  transform: translateY(-6px);
+  background-image: linear-gradient(var(--color-accent, #E8804A), var(--color-accent, #E8804A));
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  background-size: 0% 2px;
+  background-clip: padding-box;   /* çizgi, rule sınırının hemen üstünde */
+}
+html.js [data-table-enter].is-revealed thead th {
+  opacity: 1;
+  transform: none;
+  background-size: 100% 2px;
+  transition:
+    opacity .3s cubic-bezier(.22, .8, .3, 1) calc(var(--col-index, 0) * 50ms),
+    transform .3s cubic-bezier(.22, .8, .3, 1) calc(var(--col-index, 0) * 50ms),
+    background-size .3s cubic-bezier(.6, 0, .3, 1) calc(200ms + var(--col-index, 0) * 70ms);
+}
+/* cascade: hücreler satır + hücre içi kademeyle yükselir */
+html.js [data-table-enter="cascade"] tbody td,
+html.js [data-table-enter="cascade"] tfoot td { opacity: 0; transform: translateY(10px); }
+html.js [data-table-enter="cascade"].is-revealed tbody td,
+html.js [data-table-enter="cascade"].is-revealed tfoot td {
+  opacity: 1;
+  transform: none;
+  transition: opacity .5s cubic-bezier(.22, .8, .3, 1), transform .5s cubic-bezier(.22, .8, .3, 1);
+  transition-delay: calc(550ms + var(--row-index, 0) * 100ms + var(--col-index, 0) * 50ms);
+}
+/* wipe: her hücre soldan sağa süpürülür (satır boyunca akan perde) */
+html.js [data-table-enter="wipe"] tbody td,
+html.js [data-table-enter="wipe"] tfoot td { clip-path: inset(0 100% 0 0); }
+html.js [data-table-enter="wipe"].is-revealed tbody td,
+html.js [data-table-enter="wipe"].is-revealed tfoot td {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path .4s cubic-bezier(.4, 0, .2, 1);
+  transition-delay: calc(550ms + var(--row-index, 0) * 120ms + var(--col-index, 0) * 60ms);
+}
+/* rows: klasik satır kaskadı, başlık çizgisinden sonra */
+html.js [data-table-enter="rows"] tbody tr,
+html.js [data-table-enter="rows"] tfoot tr { opacity: 0; transform: translateY(10px); }
+html.js [data-table-enter="rows"].is-revealed tbody tr,
+html.js [data-table-enter="rows"].is-revealed tfoot tr {
+  opacity: 1;
+  transform: none;
+  transition: opacity .45s cubic-bezier(.22, .8, .3, 1), transform .45s cubic-bezier(.22, .8, .3, 1);
+  transition-delay: calc(550ms + var(--row-index, 0) * 90ms);
+}
+
+/* ---- Odometre (countCells, data-count="odometer") ------------------ */
+/* Silindir yüksekliği 1.16em — JS'teki ODO_H ile EŞTİR. */
+.sci-odo { display: inline-flex; align-items: center; vertical-align: middle; }
+.sci-odo-c { display: block; line-height: 1.16; white-space: pre; }  /* boşluk/birim korunur */
+.sci-odo-d { display: block; height: 1.16em; line-height: 1.16; overflow: hidden; }
+.sci-odo-reel { display: block; will-change: transform; }
+.sci-odo-reel > span { display: block; height: 1.16em; line-height: 1.16; }
+/* bitişte kısa oturma vurgusu — tek mikro ölçek, süreklilik yok */
+.sci-odo.is-settle { animation: sciOdoSettle .28s cubic-bezier(.34, 1.56, .64, 1) 1; }
+@keyframes sciOdoSettle {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* ---- Tablo üstü katman: akış izleri + spotlight notları ------------ */
+.sci-table-layer { position: absolute; pointer-events: none; z-index: 5; overflow: visible; }
+.sci-flow-dot {
+  position: absolute;
+  left: 0; top: 0;
+  width: 9px; height: 9px;
+  margin: -4.5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 38%,
+    color-mix(in srgb, var(--color-ink, #fff) 55%, var(--color-accent, #E8804A)),
+    var(--color-accent, #E8804A) 65%);
+  box-shadow: 0 0 14px 3px color-mix(in srgb, var(--color-accent, #E8804A) 65%, transparent);
+  opacity: 0;
+}
+/* toplam hücresi her varışta kısa parlar (tek seferlik, JS retrigger) */
+.sci-cell--charge { animation: sciCharge .32s ease-out 1; }
+@keyframes sciCharge {
+  0% { background: color-mix(in srgb, var(--color-accent, #E8804A) 28%, transparent); }
+  100% { background: transparent; }
+}
+
+/* ---- FLIP sıralama (tabloSirala) ----------------------------------- */
+/* süzülen satır kendi zemini ve katmanıyla gider: alttakiler okunur kalır */
+.sci-table tr.is-flip { position: relative; background: var(--color-surface, #1f222a); }
+.sci-table td.is-sort-key { animation: sciSortKey .9s ease-out 1; }
+@keyframes sciSortKey {
+  0% { background: color-mix(in srgb, var(--color-accent, #E8804A) 24%, transparent); }
+  100% { background: transparent; }
+}
+
+/* ---- İkili sütun düellosu (cellDuel) ------------------------------- */
+.sci-cell--duel { position: relative; z-index: 0; }
+.sci-duel-bar {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  height: 62%;
+  width: calc(var(--bar, 0) * 100%);
+  transform: translateY(-50%) scaleX(0);
+  background: color-mix(in srgb, var(--duel-color, var(--color-accent, #E8804A)) 16%, transparent);
+  pointer-events: none;
+  will-change: transform;
+}
+/* A sağdan, B soldan: çubuklar karşılıklı büyür */
+.sci-duel-bar--a { right: 0; transform-origin: right; border-left: 2px solid var(--duel-color, var(--color-accent, #E8804A)); }
+.sci-duel-bar--b { left: 0; transform-origin: left; border-right: 2px solid var(--duel-color, var(--color-accent, #E8804A)); }
+.sci-cell--duel.is-duel-win { animation: sciDuelWin .5s ease-out 1; } /* tek nabız */
+@keyframes sciDuelWin {
+  30% { background: color-mix(in srgb, var(--duel-color, var(--color-accent, #E8804A)) 22%, transparent); }
+  100% { background: transparent; }
+}
+/* çip düzeni etkilemez: hücrenin boş (çubuk kuyruğu) tarafına, mutlak */
+.sci-duel-chip {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: .12em .55em;
+  border-radius: 999px;
+  font-size: .72em;
+  font-weight: 700;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  color: var(--color-accent, #E8804A);
+  border: 1.5px solid color-mix(in srgb, var(--color-accent, #E8804A) 55%, transparent);
+  background: color-mix(in srgb, var(--color-canvas, #16181d) 88%, var(--color-accent, #E8804A));
+  animation: sciChipIn .35s cubic-bezier(.34, 1.56, .64, 1) 1 both;
+}
+@keyframes sciChipIn {
+  0% { opacity: 0; transform: translateY(calc(-50% + 4px)) scale(.85); }
+  100% { opacity: 1; transform: translateY(-50%); }
+}
+
+/* ---- Satır spotlight anlatısı (tabloAdimlari) ---------------------- */
+.sci-spot-on tbody tr {
+  transition: opacity .4s ease, filter .4s ease,
+              transform .5s cubic-bezier(.22, .8, .3, 1), background-color .4s ease;
+}
+.sci-spot-on tbody tr.is-dim { opacity: .3; filter: saturate(.5); }
+.sci-spot-on tbody tr.is-spot {
+  position: relative;
+  z-index: 2;
+  transform: scale(1.015);
+  transform-origin: left center;
+  background: color-mix(in srgb, var(--color-accent, #E8804A) 9%, transparent);
+}
+.sci-spot-on tbody tr.is-spot td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-accent, #E8804A);
+}
+.sci-spot-note {
+  position: absolute;
+  transform: translateY(-50%);
+  width: max-content;          /* katman dışına taşarken daralmasın */
+  max-width: 240px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border-left: 3px solid var(--color-accent, #E8804A);
+  background: var(--color-ink, #f0e9dd);
+  color: var(--color-canvas, #16181d);
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgb(0 0 0 / .25);
+  animation: sciNoteIn .4s cubic-bezier(.34, 1.56, .64, 1) 1 both;
+}
+.sci-spot-note.is-inside { text-align: right; }
+@keyframes sciNoteIn {
+  0% { opacity: 0; transform: translateY(-50%) translateX(-6px); }
+  100% { opacity: 1; transform: translateY(-50%); }
+}
+
+/* ---- Mini-sparkline (cellSparks) ----------------------------------- */
+.sci-spark { display: inline-block; vertical-align: middle; margin-left: .5em; overflow: visible; }
+.sci-spark polyline {
+  fill: none;
+  stroke: var(--spark-color, var(--color-data-2, var(--color-accent, #E8804A)));
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: var(--spark-len);
+  stroke-dashoffset: var(--spark-len);
+}
+html.js table.is-revealed .sci-spark polyline {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset .8s cubic-bezier(.4, 0, .2, 1);
+  transition-delay: calc(var(--row-index, 0) * 70ms + 250ms);
+}
+.sci-spark circle {
+  fill: var(--spark-color, var(--color-data-2, var(--color-accent, #E8804A)));
+  opacity: 0;
+  transform: scale(.4);
+  transform-origin: center;
+  transform-box: fill-box;
+}
+html.js table.is-revealed .sci-spark circle {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity .25s ease, transform .3s cubic-bezier(.34, 1.56, .64, 1);
+  transition-delay: calc(var(--row-index, 0) * 70ms + 950ms);
+}
+
+/* ---- Sabit-zaman / QA anahtarı ------------------------------------- */
+/* renderTableEnterAt ve ?demo=..&t=.. senkron kareleri bunu kullanır */
+.no-anim, .no-anim * { transition: none !important; animation: none !important; }
+
 @media (prefers-reduced-motion: reduce) {
   html.js [data-table-reveal] tbody tr { opacity: 1; transform: none; transition: none; }
   .sci-table tr.is-flash { animation: none; }
@@ -120,6 +340,19 @@ html.js [data-table-reveal="columns"].is-revealed .sci-cell--heat {
   html.js .sci-cell-bar { transform: translateY(-50%) scaleX(1); transition: none; }
   html.js .sci-cell--heat { background-color: var(--heat-bg, transparent); transition: none; }
   html.js .sci-cell--heat-deep { color: var(--color-canvas, #fff); }
+  html.js [data-table-enter] thead th { opacity: 1; transform: none; background-size: 100% 2px; transition: none; }
+  html.js [data-table-enter="cascade"] tbody td,
+  html.js [data-table-enter="cascade"] tfoot td { opacity: 1; transform: none; transition: none; }
+  html.js [data-table-enter="wipe"] tbody td,
+  html.js [data-table-enter="wipe"] tfoot td { clip-path: none; transition: none; }
+  html.js [data-table-enter="rows"] tbody tr,
+  html.js [data-table-enter="rows"] tfoot tr { opacity: 1; transform: none; transition: none; }
+  .sci-odo.is-settle, .sci-cell--charge, .sci-table td.is-sort-key,
+  .sci-cell--duel.is-duel-win, .sci-duel-chip, .sci-spot-note { animation: none; }
+  .sci-spot-on tbody tr { transition: none; }
+  .sci-spot-on tbody tr.is-spot { transform: none; }
+  .sci-spark polyline { stroke-dashoffset: 0 !important; transition: none; }
+  .sci-spark circle { opacity: 1; transform: none; transition: none; }
 }
 html[data-export="true"] [data-table-reveal] tbody tr { opacity: 1; transform: none; transition: none; }
 html[data-export="true"] .sci-table tr.is-flash { animation: none; }
@@ -128,3 +361,20 @@ html[data-export="true"] [data-table-reveal="columns"] td { opacity: 1; transfor
 html[data-export="true"] .sci-cell-bar { transform: translateY(-50%) scaleX(1); transition: none; }
 html[data-export="true"] .sci-cell--heat { background-color: var(--heat-bg, transparent); transition: none; }
 html[data-export="true"] .sci-cell--heat-deep { color: var(--color-canvas, #fff); }
+html[data-export="true"] [data-table-enter] thead th { opacity: 1; transform: none; background-size: 100% 2px; transition: none; }
+html[data-export="true"] [data-table-enter="cascade"] tbody td,
+html[data-export="true"] [data-table-enter="cascade"] tfoot td { opacity: 1; transform: none; transition: none; }
+html[data-export="true"] [data-table-enter="wipe"] tbody td,
+html[data-export="true"] [data-table-enter="wipe"] tfoot td { clip-path: none; transition: none; }
+html[data-export="true"] [data-table-enter="rows"] tbody tr,
+html[data-export="true"] [data-table-enter="rows"] tfoot tr { opacity: 1; transform: none; transition: none; }
+html[data-export="true"] .sci-odo.is-settle,
+html[data-export="true"] .sci-cell--charge,
+html[data-export="true"] .sci-table td.is-sort-key,
+html[data-export="true"] .sci-cell--duel.is-duel-win,
+html[data-export="true"] .sci-duel-chip,
+html[data-export="true"] .sci-spot-note { animation: none; }
+html[data-export="true"] .sci-spot-on tbody tr { transition: none; }
+html[data-export="true"] .sci-spot-on tbody tr.is-spot { transform: none; }
+html[data-export="true"] .sci-spark polyline { stroke-dashoffset: 0 !important; transition: none; }
+html[data-export="true"] .sci-spark circle { opacity: 1; transform: none; transition: none; }

@@ -169,6 +169,58 @@
   pointer-events: none;
 }
 
+/* ── Koreografi katmanı (chart.enter / setData / vurgula) ── */
+/* Komet başı: çizgi ucunda ilerleyen kalem; enter bitince motor KALDIRIR */
+.sci-chart .comet-head {
+  fill: var(--series-color, var(--chart-series-1));
+  stroke: var(--color-surface, var(--color-canvas, #fff));
+  stroke-width: 2;
+  pointer-events: none;
+}
+/* Akan değer okuması: odometre — tabular mono + kanvas renkli hale */
+.sci-chart .comet-readout text {
+  font: 700 20px var(--chart-mono);
+  fill: var(--color-ink, #2d2624);
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke;
+  stroke: var(--color-canvas, #fff);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+/* Sütun değer etiketi: enter ile sayarak gelir, sonrasında kalıcıdır */
+.sci-chart .bar-value {
+  font: 700 20px var(--chart-mono);
+  fill: var(--color-ink, #2d2624);
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke;
+  stroke: var(--color-canvas, #fff);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+/* Delta çipi: setData sonrası kısa ömürlü, birimli fark rozeti (+2,3 m).
+   Renk anlamı yok — işaret metinde; motor 1,4s sonra düğümü KALDIRIR. */
+.sci-chart .delta-chip rect {
+  fill: var(--color-surface, #fbf7df);
+  stroke: var(--color-ink, #2d2624);
+  stroke-width: 1.5;
+}
+.sci-chart .delta-chip text {
+  font: 700 18px var(--chart-mono);
+  fill: var(--color-ink, #2d2624);
+  font-variant-numeric: tabular-nums;
+}
+/* İddia notu (callout): vurgula/sahnele ile kayarak girer; opak mat panel */
+.sci-chart .chart-callout rect {
+  fill: var(--color-surface, #fbf7df);
+  stroke: var(--color-ink, #2d2624);
+  stroke-width: 1.5;
+}
+.sci-chart .chart-callout text {
+  font: 600 20px/1.3 var(--chart-font);
+  fill: var(--color-ink, #2d2624);
+}
+
 /* Reference lines and thresholds: accent, labelled, never unexplained */
 .sci-chart .ref-line {
   stroke: var(--color-accent, #a34f38);

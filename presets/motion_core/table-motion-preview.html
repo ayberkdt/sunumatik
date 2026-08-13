@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Table Motion — Cell Fill Presets</title>
+  <title>Table Motion — Tablo Animasyon Vitrini</title>
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script>document.documentElement.classList.add('js');</script>
   <link rel="stylesheet" href="table-motion.css">
@@ -20,7 +20,7 @@
     * { box-sizing: border-box; }
     body { margin: 0; padding: 5vw; background: var(--color-canvas); color: var(--color-ink);
            font: 500 19px/1.4 ui-sans-serif, system-ui, sans-serif; }
-    main { max-width: 1000px; margin: auto; display: grid; gap: 28px; }
+    main { max-width: 1000px; margin: auto; display: grid; gap: 44px; }
     h1 { font-size: 42px; line-height: 1; margin: 0; letter-spacing: -.02em; }
     h2 { font-size: 15px; letter-spacing: .14em; text-transform: uppercase; color: var(--color-muted); margin: 0 0 14px; }
     section { border-top: 2px solid var(--color-ink); padding-top: 20px; }
@@ -36,13 +36,164 @@
     button { border: 1.5px solid var(--color-ink); border-radius: 999px; background: var(--color-ink);
              color: var(--color-canvas); padding: 10px 20px; font: 600 16px/1 inherit; cursor: pointer; }
     button + button { margin-left: 10px; background: transparent; color: var(--color-ink); }
+    /* tek-demo (headless) kipi: yalnız hedef bölüm görünür */
+    body[data-solo] h1 { display: none; }
+    body[data-solo] section:not(.is-target) { display: none; }
   </style>
 </head>
 <body>
   <main>
-    <h1>Hücre dolgusu dört dilde konuşur.</h1>
+    <h1>Tablolar sahneye böyle çıkar.</h1>
 
-    <section>
+    <!-- 1 ▸ Yönetmenli giriş -->
+    <section id="sec-enter">
+      <h2>Yönetmenli giriş — data-table-enter</h2>
+      <table class="sci-table" id="enterTablo" data-table-enter="cascade">
+        <thead>
+          <tr><th>Görev</th><th>Fırlatma</th><th>Keşif</th><th>Tarama alanı</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Kepler</td><td>2009</td><td>2.708</td><td>115 der²</td></tr>
+          <tr><td>K2</td><td>2014</td><td>548</td><td>Ekliptik şerit</td></tr>
+          <tr><td>TESS</td><td>2018</td><td>691</td><td>Tüm gökyüzü</td></tr>
+          <tr><td>CHEOPS</td><td>2019</td><td>Takip</td><td>Hedefli</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Başlık satırı önce kendini çizgiyle altını çizer; gövde tek zaman
+        çizgisinde akar. Üç dil: <em>cascade</em> (satır+hücre kademesi),
+        <em>wipe</em> (soldan süpürme), <em>rows</em> (klasik satır kaskadı).</p>
+      <p>
+        <button data-enter="cascade">Cascade</button>
+        <button data-enter="wipe">Wipe</button>
+        <button data-enter="rows">Rows</button>
+      </p>
+    </section>
+
+    <!-- 2 ▸ Odometre -->
+    <section id="sec-odo">
+      <h2>Odometre dolumu — data-count="odometer"</h2>
+      <table class="sci-table" id="odoTablo">
+        <thead>
+          <tr><th>Teleskop</th><th>Gözlem saati</th><th>Hedef sayısı</th><th>Tamamlama</th><th>Ort. poz</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>VLT / UT1</td><td data-count="odometer">12.480</td><td data-count="odometer">1.204</td><td data-count="odometer">%93,4</td><td data-count="odometer">42,5 ms</td></tr>
+          <tr><td>Gemini-N</td><td data-count="odometer">9.312</td><td data-count="odometer">876</td><td data-count="odometer">%88,1</td><td data-count="odometer">37,8 ms</td></tr>
+          <tr><td>Subaru</td><td data-count="odometer">10.056</td><td data-count="odometer">1.043</td><td data-count="odometer">%90,7</td><td data-count="odometer">55,2 ms</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Rakamlar gerçek silindirlerde akar; binlik "." ve ondalık ","
+        Türkçe biçimiyle korunur, birimler sabit durur. Bitişte tek mikro-oturma.</p>
+      <p><button id="odoTekrar">Tekrar</button></p>
+    </section>
+
+    <!-- 3 ▸ Toplam satırı akışı -->
+    <section id="sec-total">
+      <h2>Toplam satırı akışı — data-total-of</h2>
+      <table class="sci-table" id="totalTablo" data-table-reveal>
+        <thead>
+          <tr><th>Kampanya</th><th>Aday gezegen</th><th>Doğrulanan</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Sektör 14–26</td><td data-count>1.248</td><td data-count>312</td></tr>
+          <tr><td>Sektör 27–39</td><td data-count>986</td><td data-count>247</td></tr>
+          <tr><td>Sektör 40–55</td><td data-count>1.534</td><td data-count>402</td></tr>
+          <tr><td>Sektör 56–69</td><td data-count>534</td><td data-count>119</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>Toplam</td><td data-total-of="1">4.302</td><td data-total-of="2">1.080</td></tr>
+        </tfoot>
+      </table>
+      <p class="note">Parlak izler sütun hücrelerinden toplam hücresine süzülür;
+        toplam ilk varışla odometreye başlar. İz, toplamın <em>nereden</em>
+        geldiğini gösterir — tek seferliktir.</p>
+      <p><button id="totalTekrar">Tekrar</button></p>
+    </section>
+
+    <!-- 4 ▸ FLIP sıralama -->
+    <section id="sec-flip">
+      <h2>FLIP yeniden sıralama — tabloSirala</h2>
+      <table class="sci-table" id="flipTablo">
+        <thead>
+          <tr><th>Görev</th><th>Keşif</th><th>Verim (keşif/yıl)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>K2</td><td>548</td><td>109,6</td></tr>
+          <tr><td>Kepler</td><td>2.708</td><td>301,0</td></tr>
+          <tr><td>CoRoT</td><td>34</td><td>4,9</td></tr>
+          <tr><td>TESS</td><td>691</td><td>98,7</td></tr>
+        </tbody>
+      </table>
+      <p class="note">"En iyiden en kötüye" ânı: satırlar FLIP ile süzülür
+        (yalnız transform), anahtar sütun kısa vurgulanır.</p>
+      <p>
+        <button id="flipAzalan">Verime göre azalan</button>
+        <button id="flipArtan">Artan</button>
+      </p>
+    </section>
+
+    <!-- 5 ▸ İkili sütun düellosu -->
+    <section id="sec-duel">
+      <h2>Sütun düellosu — data-duel</h2>
+      <table class="sci-table" id="duelTablo" data-duel="2,3">
+        <thead>
+          <tr><th>Yıldız tipi</th><th>Örneklem</th><th>Transit başarımı</th><th>RV başarımı</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>M cücesi</td><td>412</td><td data-bar="0.62">%62</td><td data-bar="0.48">%48</td></tr>
+          <tr><td>K cücesi</td><td>388</td><td data-bar="0.55">%55</td><td data-bar="0.61">%61</td></tr>
+          <tr><td>G tipi</td><td>295</td><td data-bar="0.41">%41</td><td data-bar="0.72">%72</td></tr>
+        </tbody>
+      </table>
+      <p class="note">İki sütunun oran çubukları karşılıklı büyür; kazanan hücre
+        tek nabız atar ve fark çipi (+puan) belirir.</p>
+      <p><button id="duelTekrar">Tekrar</button></p>
+    </section>
+
+    <!-- 6 ▸ Satır spotlight anlatısı -->
+    <section id="sec-spot">
+      <h2>Satır spotlight — tabloAdimlari</h2>
+      <table class="sci-table" id="spotTablo">
+        <thead>
+          <tr><th>Sistem</th><th>Gezegen</th><th>Denge sıcaklığı</th><th>Yaşanabilir kuşak</th></tr>
+        </thead>
+        <tbody>
+          <tr data-not="En yakın yaşanabilir aday: 4,2 ışık yılı."><td>Proxima Cen</td><td>b</td><td>234 K</td><td>İçinde</td></tr>
+          <tr data-not="Yedi kayaç gezegen; üçü kuşakta."><td>TRAPPIST-1</td><td>e</td><td>251 K</td><td>İçinde</td></tr>
+          <tr data-not="Süper-Dünya; yoğun atmosfer şüphesi."><td>LHS 1140</td><td>b</td><td>230 K</td><td>İçinde</td></tr>
+          <tr data-not="Kontrol satırı: kuşak dışı sıcak Jüpiter."><td>51 Peg</td><td>b</td><td>1.260 K</td><td>Dışında</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Adım adım bir satır öne çıkar, diğerleri kısılır; iddia notu
+        satır kenarında belirir. Tuş bağlamak deste yazarına kalır — denetleyici
+        API'si döner, global keydown eklenmez.</p>
+      <p>
+        <button id="spotIleri">İleri</button>
+        <button id="spotGeri">Geri</button>
+        <button id="spotSifirla">Sıfırla</button>
+      </p>
+    </section>
+
+    <!-- 7 ▸ Mini-sparkline -->
+    <section id="sec-spark">
+      <h2>Mini-sparkline — data-spark</h2>
+      <table class="sci-table" id="sparkTablo" data-table-reveal>
+        <thead>
+          <tr><th>Görev</th><th>Yıllık keşif eğilimi</th><th>Toplam</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Kepler</td><td>2009–13 <span data-spark="46,116,842,851,853" data-spark-slot="2"></span></td><td data-count>2.708</td></tr>
+          <tr><td>TESS</td><td>2019–23 <span data-spark="88,104,152,161,186" data-spark-slot="1"></span></td><td data-count>691</td></tr>
+          <tr><td>K2</td><td>2015–19 <span data-spark="104,148,132,96,68"></span></td><td data-count>548</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Küçük SVG çizgi kendini çizerek girer, uçta minik nokta;
+        satır içi kalır, satır yüksekliğini bozmaz.</p>
+      <p><button id="sparkTekrar">Tekrar</button></p>
+    </section>
+
+    <!-- 8 ▸ Klasik dolgular (geriye uyumlu vitrin) -->
+    <section id="sec-karma">
       <h2>Sütun kaskadı + sayaç + veri çubuğu + ısı dolgusu</h2>
       <table class="sci-table" id="demo" data-table-reveal="columns">
         <thead>
@@ -97,20 +248,106 @@
     </section>
   </main>
   <script type="module">
-    import { observeTableReveal, flashRow, countCells, cellBars, heatFill }
+    import { initTableMotion, observeTableReveal, flashRow, countCells, cellBars,
+             heatFill, cellSparks, totalFlow, cellDuel, tabloSirala, tabloAdimlari,
+             renderTableEnterAt }
       from './table-motion.js';
 
-    const table = document.querySelector('#demo');
+    const $ = s => document.querySelector(s);
+    const q = new URLSearchParams(location.search);
+    const demo = q.get('demo');
+    /* solo kipte t verilmezse son kare basılır (deterministik ekran) */
+    const prog = demo ? Math.min(1, Math.max(0, parseFloat(q.get('t') ?? '1') || 0)) : null;
 
-    /* kurulum sırası: önce dolgular hazırlanır, sonra gözlemci açılır */
-    cellBars(table);
-    heatFill(table);
-    observeTableReveal();          /* data-table-reveal="columns" algılanır */
-    countCells(table);
+    /* dolguları kur + tabloyu geçişsiz son duruma al (solo kip zemini) */
+    const revealInstant = table => {
+      cellBars(table); heatFill(table);
+      table.classList.add('no-anim', 'is-revealed');
+    };
 
-    document.querySelector('#recount').addEventListener('click', () => countCells(table));
-    document.querySelector('#flash').addEventListener('click', () =>
-      flashRow(document.querySelector('#total')));
+    if (!demo) {
+      /* ---- canlı vitrin: tek init + düğmeler ---- */
+      initTableMotion(document);
+
+      const spotCtl = tabloAdimlari($('#spotTablo'), [0, 1, 2, 3]);
+
+      $('#odoTekrar').addEventListener('click', () => countCells($('#odoTablo')));
+      $('#totalTekrar').addEventListener('click', () => totalFlow($('#totalTablo'), { repeat: true }));
+      $('#flipAzalan').addEventListener('click', () => tabloSirala($('#flipTablo'), 2, { yon: 'azalan' }));
+      $('#flipArtan').addEventListener('click', () => tabloSirala($('#flipTablo'), 2, { yon: 'artan' }));
+      $('#duelTekrar').addEventListener('click', () => cellDuel($('#duelTablo')));
+      $('#spotIleri').addEventListener('click', () => spotCtl.ileri());
+      $('#spotGeri').addEventListener('click', () => spotCtl.geri());
+      $('#spotSifirla').addEventListener('click', () => spotCtl.sifirla());
+      $('#sparkTekrar').addEventListener('click', () => {
+        const t = $('#sparkTablo');
+        t.classList.remove('is-revealed');
+        cellSparks(t);
+        countCells(t);
+        void t.offsetWidth;
+        requestAnimationFrame(() => t.classList.add('is-revealed'));
+      });
+      for (const b of document.querySelectorAll('[data-enter]'))
+        b.addEventListener('click', () => {
+          const t = $('#enterTablo');
+          t.setAttribute('data-table-enter', b.dataset.enter);
+          t.classList.remove('is-revealed', 'no-anim');
+          t.querySelectorAll('tr, th, td').forEach(el => {
+            el.style.opacity = ''; el.style.transform = '';
+            el.style.clipPath = ''; el.style.backgroundSize = '';
+          });
+          void t.offsetWidth;
+          requestAnimationFrame(() => t.classList.add('is-revealed'));
+        });
+      $('#recount').addEventListener('click', () => countCells($('#demo')));
+      $('#flash').addEventListener('click', () => flashRow($('#total')));
+    } else {
+      /* ---- solo kip: ?demo=X&t=0..1 — senkron, sabit-zaman karesi ----
+         Gizli sekmede rAF donabildiği için her şey tek karede basılır. */
+      document.body.dataset.solo = demo;
+      document.body.classList.add('no-anim');
+      $('#sec-' + demo)?.classList.add('is-target');
+      switch (demo) {
+        case 'enter': {
+          const t = $('#enterTablo');
+          t.setAttribute('data-table-enter', q.get('mode') || 'cascade');
+          renderTableEnterAt(t, prog);
+          break;
+        }
+        case 'odo':
+          revealInstant($('#odoTablo'));
+          countCells($('#odoTablo'), { progress: prog });
+          break;
+        case 'total':
+          revealInstant($('#totalTablo'));
+          countCells($('#totalTablo'), { progress: 1 });
+          totalFlow($('#totalTablo'), { progress: prog, repeat: true });
+          break;
+        case 'flip':
+          revealInstant($('#flipTablo'));
+          tabloSirala($('#flipTablo'), 2, { yon: q.get('yon') || 'azalan', progress: prog });
+          break;
+        case 'duel':
+          revealInstant($('#duelTablo'));
+          cellDuel($('#duelTablo'), { progress: prog });
+          break;
+        case 'spot': {
+          revealInstant($('#spotTablo'));
+          const ctl = tabloAdimlari($('#spotTablo'), [0, 1, 2, 3]);
+          ctl.git(parseInt(q.get('adim') ?? '0', 10));
+          break;
+        }
+        case 'spark':
+          revealInstant($('#sparkTablo'));
+          countCells($('#sparkTablo'), { progress: 1 });
+          cellSparks($('#sparkTablo'), { progress: prog });
+          break;
+        case 'karma':
+          revealInstant($('#demo'));
+          countCells($('#demo'), { progress: prog });
+          break;
+      }
+    }
   </script>
 </body>
 </html>

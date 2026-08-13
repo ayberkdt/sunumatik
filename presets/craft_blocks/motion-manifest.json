@@ -13,6 +13,20 @@
       "exportState": "t=0 tablosu: beş araç kendi başlangıç faz açısında, kamera genel bakışta (0, 2.3, 6.6); ?focus=<id> ile araç yakın çekimi.",
       "accessibility": "Hareket tamamen duraklatılabilir; durduğunda hiçbir bilgi kaybolmaz. Kumandalar klavyeyle erişilebilir yerel form öğeleridir.",
       "notes": "Dönme hızı 0.22 rad/s (tam tur ~28.6 s). Deterministik: duvar saati yerine sabit 1/60 s adım; Math.random kullanılmaz."
+    },
+    {
+      "id": "craft-engine-ignition",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Motor ateşleme/kesme durum geçişini ve gaz (throttle) etkisini göstermek: ~0.3 sn ateşleme flaşı + basınçlanma, sürekli yanma (çekirdek + tip başına mach elmasları / genleşme şalı + çan kızarması), ~0.5 sn sönüm kuyruğu.",
+      "loop": false,
+      "durationMs": 800,
+      "pauseControl": "Ateşle/Kes düğmesi geçişi tetikler ve keser; başlıktaki Duraklat tüm sahneyi dondurur; sekme gizlendiğinde rAF otomatik durur.",
+      "reducedMotion": "prefers-reduced-motion: reduce altında animasyon yok: Ateşle basıldığında (veya ?fx=1 ile) FX, 1/60 sn adımlarla t=2.0 sn ORTA-YANMA tablosuna deterministik sarılıp tek kare çizilir.",
+      "exportState": "html[data-export=\"true\"] veya ?t=<sn> sabit-zaman parametresi: ateşleme t=0 kabul edilir, FX belgelenen âna kadar 1/60 sn adımlarla ilerletilip dondurulur; varsayılan tablo t=2.0 sn orta-yanma. Deterministik açılış: ?fx=1&arac=<id>&tip=<vakum|atmosfer|hover>&gaz=<0..1>[&t=<sn>].",
+      "accessibility": "Parlaklık salınımı ±%15 bandıyla sınırlı (12–30 Hz karışımı düşük genlikli titreşim; tam ekran flaş yok — ateşleme flaşı tek seferlik ~0.3 sn ve yereldir). Kumandalar klavyeyle erişilebilir yerel form öğeleridir; hareket kesildiğinde bilgi kaybolmaz.",
+      "limitations": "Akışkan/yanma simülasyonu DEĞİLDİR; stilize katmanlı gösterimdir. Mach elmasları gerçek şok hücresi çözümü değil, gazla sayısı/aralığı değişen instanced hücrelerdir; vakum genleşmesi ve zemin etkisi yalnız biçimsel imadır; çan kızarması gerçek ısı iletimi modellemez (gecikmeli birinci derece süzgeç).",
+      "notes": "craft-effects.mjs · buildEngineFX({scale, tip, seed, palette}) → {group, update(dt,{gaz,atesle}), dispose}. Deterministik: seed'li mulberry32, zaman yalnız update(dt) toplamı; Math.random/Date.now yok. Bütçe: FX başına ≤8 mesh + tek Points + tek Sprite + tek PointLight (decay 2). Alev diegetik ışıktır; veri işareti glow yasağının kapsamı dışındadır."
     }
   ]
 }
