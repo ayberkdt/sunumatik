@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "shock-oblique-theta-beta-mach",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Draw supersonic wave systems at the angles the gas dynamics actually produces, so the picture and the numbers cannot disagree - and so the detachment of a shock is something the viewer watches happen rather than something a caption asserts.",
+      "model": "Oblique shock angles come from the theta-beta-Mach relation tan(theta) = 2 cot(beta) (M1^2 sin^2(beta) - 1) / (M1^2 (gamma + cos 2beta) + 2), solved for beta by bisection on the branch that contains the weak root. The component of the flow normal to the shock obeys the normal-shock relations, and the tangential component is unchanged, which gives M2, p2/p1, rho2/rho1, T2/T1 and the total-pressure ratio p02/p01. The maximum turning angle theta_max is located by a golden-section search on theta(beta); above it no attached solution exists and the scene switches to a detached bow shock whose standoff follows Billig, Delta/R = 0.143 exp(3.24/M^2), with the shape x(y) = xN - Delta - Rc(M^2-1)[sqrt(1 + y^2/(Rc^2(M^2-1))) - 1] and Rc/R = 1.143 exp(0.54/(M-1)^1.2). Verified against the NACA 1135 tables to four decimals: at M=2 a 10 degree wedge gives beta 39.31 degrees, M2 1.6405, p2/p1 1.7066; a 20 degree wedge gives 53.42 degrees, 1.2102, 2.8429; theta_max(M=2) = 22.97 degrees at beta 64.67; theta_max(M=5) = 41.12 degrees; the normal shock at M=2 gives M2 0.5774, p2/p1 4.5000, T2/T1 1.6875, rho2/rho1 2.6667, p02/p01 0.7209.",
+      "limitations": "Two-dimensional, steady, inviscid, and calorically perfect with gamma fixed at 1.4. There is no boundary layer, so no shock-boundary-layer interaction and no separation. Waves are drawn as straight rays and are NOT reflected or refracted where they meet each other, although in reality an expansion fan crossing a shock weakens it. The Billig correlation is an experimental fit for blunt axisymmetric noses; applying it to a detached wedge uses an effective nose radius derived from the body's frontal height, which is a plausible stand-in rather than a derivation. Above about Mach 5 the perfect-gas assumption fails - vibrational excitation, dissociation and ionisation all set in - and the page says so on screen: qualitative behaviour stays right, absolute numbers drift.",
+      "reducedMotion": "The particle stream is a toggle; with it off the entire scene is static and every wave, region and number remains.",
+      "exportState": "?export=1 hides controls; ?t= advances the particle clock to a stated time and then stops advancing while continuing to redraw.",
+      "accessibility": "Every wave in the drawing has a row in the panel table giving its type, turning angle, downstream Mach, pressure ratio and pressure coefficient. Shocks and expansion fans are distinguished by shape (single bold ray versus a spread beam) as well as by colour, and the caption names both.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "shock-expansion-march",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Compute the supersonic lift and wave drag of a real section by marching the flow along its surface, so that drag appears as a physical consequence of entropy production rather than as a fitted curve.",
+      "model": "Shock-expansion theory. Starting from the freestream, each surface is walked panel by panel; an inward turn is solved as an oblique shock and an outward turn as a Prandtl-Meyer expansion, nu(M) = sqrt((gamma+1)/(gamma-1)) atan sqrt((gamma-1)(M^2-1)/(gamma+1)) - atan sqrt(M^2-1), inverted by bisection. Pressure ratios multiply along the chain, Cp = (p/p_inf - 1)/(0.5 gamma M_inf^2), and the panel normals integrate to Cl and Cd. Verified: nu(1.5) = 11.905, nu(2) = 26.380, nu(3) = 49.757, nu(5) = 76.920 degrees and nu_max = 130.45 degrees, all matching the standard tables; round-tripping M through nu and back returns 3.700000. Against Ackeret's linearised theory on a 10 percent diamond at M=2 the marched solution agrees to 1.3 percent at 1 degree incidence and diverges to 2.4 percent at 8 degrees, which is exactly the expected behaviour of a linearisation; at zero incidence the marched wave drag 0.0231 matches the closed form 4 eps^2 / sqrt(M^2-1) = 0.0229.",
+      "limitations": "Valid only while the waves do not intersect one another and every panel sees the flow that the previous panel left - it cannot handle wave interaction, reflection, or a blunt leading edge, and it says nothing at all about viscous drag. The sign convention is subtle and was got wrong once: whether a given geometric turn is a compression or an expansion depends on which side of the surface the fluid is on, so the same turn compresses the lower surface while expanding the upper one. A single signed angle cannot describe both surfaces.",
+      "reducedMotion": "Static.",
+      "exportState": "The panel table and both coefficient pairs are part of the export.",
+      "accessibility": "Shock-expansion and Ackeret results are printed side by side so the reader can see the size of the linearisation error directly.",
+      "loop": false,
+      "pauseControl": false
+    },
+    {
+      "id": "shock-particle-transport",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Make a shock something the eye can recognise: particles crossing it turn, slow down and bunch up in the same instant, which is what a shock IS.",
+      "model": "Each particle's region is found by testing which waves it lies downstream of, using the sign of the cross product against each wave ray; inside an expansion fan the state is interpolated by angular position between the first and last Mach line, because an expansion is a continuous turn rather than a jump. The particle then moves along that region's flow direction at speed |V|/V_inf = (M/M_inf) sqrt(T/T_inf), so the deceleration across a shock and the acceleration through a fan are computed from the same solution that drew the waves. Trail length is proportional to local speed and trail brightness to local pressure, so compression reads as short bright bunched streaks and expansion as long faint ones.",
+      "limitations": "These are massless tracers of a steady field, not a time-accurate simulation: nothing here is unsteady, and particle density is a drawing choice rather than a computed gas density. Behind a detached bow shock the region logic does not apply and particles simply flow past; the subsonic pocket that really exists there is not modelled.",
+      "reducedMotion": "The stream is a toggle and the scene is fully readable with it off.",
+      "exportState": "?t= freezes the particles at a stated time; positions are deterministic only in distribution, since seeding uses Math.random.",
+      "accessibility": "Nothing in the physics depends on the particles - every quantity they illustrate is also printed as a number.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "shock-hypersonic-heating",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Explain, with numbers that move as the sliders move, why a hypersonic vehicle has a blunt nose - a shape that looks like a mistake until the heat flux is on screen.",
+      "model": "The ISA atmosphere gives T, p, rho and the speed of sound from 0 to 86 km through the standard layer-by-layer integration (verified: 340.29 m/s at sea level, 295.07 m/s and 22.632 kPa at 11 km, 5.475 kPa at 20 km). Stagnation temperature follows T0/T = 1 + 0.2 M^2, so a vehicle at Mach 8 in the stratosphere carries a stagnation temperature near 3000 K. Stagnation-point heat flux uses Sutton-Graves, q = 1.7415e-4 sqrt(rho/Rn) V^3, whose 1/sqrt(Rn) dependence is the entire argument for a blunt nose: halving the nose radius raises the heat flux by 41 percent, and a sharp nose implies an infinite one.",
+      "limitations": "Sutton-Graves is a correlation for a sphere in equilibrium air and ignores radiative heating, which becomes significant above roughly 10 km/s. The stagnation temperature is the perfect-gas value; real dissociation absorbs energy and holds the true temperature well below it, so the printed T0 is an upper bound rather than a prediction. The heat flux uses the drawn nose radius interpreted as metres, which is a scale choice, not a measurement.",
+      "reducedMotion": "Static.",
+      "exportState": "Altitude, T0 and heat flux are printed and carried into the export.",
+      "accessibility": "The stagnation temperature turns amber above 1200 K and a sentence states which modelling assumption has just stopped being safe.",
+      "loop": false,
+      "pauseControl": false
+    }
+  ]
+}

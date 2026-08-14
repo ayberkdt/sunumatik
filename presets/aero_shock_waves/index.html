@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Şok ve Genleşme Dalgaları — aero_shock_waves</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+    #app { position: absolute; inset: 0; display: grid;
+      grid-template-columns: 1fr 366px; grid-template-rows: auto 1fr auto; }
+    header { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 20px;
+      padding: 12px 20px 10px; border-bottom: 1px solid #171c27; }
+    header h1 { margin: 0; font-size: 14.5px; font-weight: 600; letter-spacing: 0.13em;
+      text-transform: uppercase; color: #c9a35c; white-space: nowrap; }
+    header h1 small { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: 0.05em;
+      text-transform: none; color: #8a90a0; margin-top: 3px; line-height: 1.4; max-width: 44ch; }
+    .ctl { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; flex: 1; justify-content: flex-end; }
+    .grp { display: flex; flex-direction: column; gap: 2px; min-width: 116px; }
+    .grp label { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: #6f7686;
+      display: flex; justify-content: space-between; gap: 8px; }
+    .grp label b { color: #e7ebf2; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .grp input[type=range] { width: 100%; accent-color: #c9a35c; margin: 0; }
+    select, button { background: rgba(16,19,27,.9); color: #dfe3ea; border: 1px solid #2b303d;
+      border-radius: 7px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+    select:hover, button:hover { border-color: #c9a35c; }
+    button.on { background: #c9a35c; color: #0c0e14; border-color: #c9a35c; }
+
+    #wrap { position: relative; overflow: hidden; }
+    #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #uyari { position: absolute; left: 18px; bottom: 16px; z-index: 3; max-width: 560px;
+      background: rgba(10,13,19,.92); border: 1px solid #232838; border-radius: 10px;
+      padding: 10px 13px; font-size: 11.5px; line-height: 1.55; }
+    #uyari b { color: #c9a35c; }
+    #uyari .kirmizi { color: #e0894a; }
+
+    aside { border-left: 1px solid #171c27; overflow-y: auto; padding: 12px 14px 16px; }
+    aside h2 { margin: 0 0 2px; font-size: 10px; letter-spacing: .15em; text-transform: uppercase;
+      color: #c9a35c; font-weight: 600; }
+    aside .sub { color: #6f7686; font-size: 10.5px; line-height: 1.45; margin-bottom: 6px; }
+    aside section { margin-bottom: 14px; }
+    aside svg { display: block; width: 100%; }
+    dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; font-size: 12px; }
+    dt { color: #8a90a0; } dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; color: #e7ebf2; }
+    dd.dim { color: #6f7686; } dd.warn { color: #e0894a; }
+    table.paneller { width: 100%; border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
+    table.paneller th { color: #6f7686; font-weight: 500; text-align: right; padding: 2px 3px;
+      border-bottom: 1px solid #1d2231; }
+    table.paneller th:first-child { text-align: left; }
+    table.paneller td { padding: 2px 3px; text-align: right; color: #dfe3ea; }
+    table.paneller td:first-child { text-align: left; color: #8a90a0; }
+    footer { grid-column: 1 / -1; display: flex; gap: 7px; justify-content: center;
+      padding: 8px; border-top: 1px solid #171c27; flex-wrap: wrap; }
+    footer a { text-decoration: none; color: #b9bfcc; font-size: 11.5px;
+      background: rgba(16,19,27,.85); border: 1px solid #2b303d; border-radius: 999px; padding: 5px 12px; }
+    footer a:hover { color: #0c0e14; background: #c9a35c; border-color: #c9a35c; }
+    [data-export="true"] footer, [data-export="true"] .ctl { display: none; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Şok ve Genleşme Dalgaları
+      <small>Açılar θ-β-M bağıntısından ve Prandtl–Meyer fonksiyonundan çözülür.
+        Parçacıklar dalgayı geçerken gerçekten döner ve yavaşlar.</small></h1>
+    <div class="ctl">
+      <div class="grp"><label>Mach M<sub>∞</sub> <b id="vM">2,00</b></label>
+        <input type="range" id="mach" min="1.05" max="10" step="0.05" value="2"></div>
+      <div class="grp"><label>hücum açısı α <b id="vA">4,0°</b></label>
+        <input type="range" id="alpha" min="-8" max="20" step="0.5" value="4"></div>
+      <div class="grp"><label>yarı-kama açısı <b id="vE">5,7°</b></label>
+        <input type="range" id="eps" min="2" max="30" step="0.5" value="5.7"></div>
+      <div class="grp"><label>irtifa <b id="vH">15 km</b></label>
+        <input type="range" id="alt" min="0" max="40" step="0.5" value="15"></div>
+      <div class="grp"><label>cisim</label>
+        <select id="cisim">
+          <option value="elmas">elmas profil</option>
+          <option value="kama">tek kama</option>
+          <option value="kut">küt burun</option>
+        </select></div>
+      <button id="akis" class="on">Akış</button>
+    </div>
+  </header>
+
+  <div id="wrap">
+    <canvas id="cv"></canvas>
+    <div id="uyari"></div>
+  </div>
+
+  <aside>
+    <section>
+      <h2>θ – β – M</h2>
+      <div class="sub">Verilen M için dönüş açısı θ ile şok açısı β arasındaki bağıntı.
+        Tepe noktası KOPMA sınırıdır.</div>
+      <svg id="tbm" viewBox="0 0 338 208"></svg>
+    </section>
+    <section>
+      <h2>Panel panel çözüm</h2>
+      <table class="paneller" id="tbl"></table>
+    </section>
+    <section>
+      <h2>Okumalar</h2>
+      <dl id="nums"></dl>
+    </section>
+  </aside>
+
+  <footer id="presets">
+    <a href="?m=2&a=4&e=5.7">M 2 · elmas</a>
+    <a href="?m=2&a=0&e=25&c=kama">kopma sınırı</a>
+    <a href="?m=1.3&a=4&e=5.7">M 1,3 zar zor</a>
+    <a href="?m=5&a=6&e=8">M 5 hipersonik</a>
+    <a href="?m=8&a=0&e=10&c=kut">M 8 küt burun</a>
+    <a href="?m=3&a=10&e=6">M 3 · α 10°</a>
+  </footer>
+</div>
+
+<script type="module">
+import { obliqueShock, thetaMax, thetaFromBeta, expansion, prandtlMeyer, machAngle,
+         normalShock, shockExpansion, ackeret, bowShockStandoff, suttonGraves,
+         isa, T0overT, p0overp, machDiamondSpacing, NU_MAX }
+  from './shock-solver.mjs';
+
+/* ---- ?m=2&a=4&e=5.7&h=15&c=elmas&t=3&export=1 --------------------------
+   t verilirse parçacık saati DONDURULUR. Demo kartına KOYMA.            */
+const q = new URLSearchParams(location.search);
+const num = (k, d) => (q.has(k) && Number.isFinite(Number(q.get(k))) ? Number(q.get(k)) : d);
+if (q.get('export') === '1') document.documentElement.dataset.export = 'true';
+const el = (i) => document.getElementById(i);
+const D = (r) => (r * 180) / Math.PI, R = (x) => (x * Math.PI) / 180;
+const tr = (v, n = 3) => (v == null || !Number.isFinite(v) ? '—'
+  : v.toLocaleString('tr-TR', { minimumFractionDigits: n, maximumFractionDigits: n }));
+
+const st = {
+  M: num('m', 2), alpha: R(num('a', 4)), eps: R(num('e', 5.7)),
+  altKm: num('h', 15), cisim: q.get('c') || 'elmas', akis: true,
+  coz: null, dalgalar: null, bolgeler: null,
+};
+
+/* ================================================================== */
+/* Geometri: cisim panelleri                                          */
+/* ================================================================== */
+// Panel: { yuzey, phi, len } + çizim için köşe noktaları.
+function govde() {
+  const e = st.eps;
+  if (st.cisim === 'elmas') {
+    const t = Math.tan(e) * 0.5;
+    return {
+      ust: [{ x0: 0, z0: 0, x1: 0.5, z1: t, phi: e, len: 0.5 / Math.cos(e) },
+            { x0: 0.5, z0: t, x1: 1, z1: 0, phi: -e, len: 0.5 / Math.cos(e) }],
+      alt: [{ x0: 0, z0: 0, x1: 0.5, z1: -t, phi: -e, len: 0.5 / Math.cos(e) },
+            { x0: 0.5, z0: -t, x1: 1, z1: 0, phi: e, len: 0.5 / Math.cos(e) }],
+    };
+  }
+  if (st.cisim === 'kama') {
+    const t = Math.tan(e);
+    return {
+      ust: [{ x0: 0, z0: 0, x1: 1, z1: t, phi: e, len: 1 / Math.cos(e) }],
+      alt: [{ x0: 0, z0: 0, x1: 1, z1: -t, phi: -e, len: 1 / Math.cos(e) }],
+    };
+  }
+  // Küt burun: yarım daire + gövde. Panel marşı yapılmaz (şok zaten kopuk).
+  return { kut: true, R: 0.22 };
+}
+
+/* ================================================================== */
+/* Çözüm                                                              */
+/* ================================================================== */
+function coz() {
+  const g = govde();
+  st.geo = g;
+  if (g.kut) { st.coz = null; kurDalgalarKut(g); cizTbm(); yaz(); return; }
+
+  const paneller = [...g.ust.map((p) => ({ yuzey: 'ust', phi: p.phi, len: p.len })),
+                    ...g.alt.map((p) => ({ yuzey: 'alt', phi: p.phi, len: p.len }))];
+  st.coz = shockExpansion(paneller, st.M, st.alpha);
+  kurDalgalar(g);
+  cizTbm();
+  yaz();
+}
+
+/**
+ * Dalga listesi + bölge listesi.
+ * Her yüzey için: serbest akımdan başlanır, her köşede ya şok ya yelpaze.
+ * Şok, ÜST akımın yönüne göre β açısıyla; yelpaze μ₁'den μ₂'ye Mach
+ * çizgileriyle. Bunlar çizim için değil, PARÇACIK TAŞIMASI için de kullanılır:
+ * bir parçacığın hangi bölgede olduğu, hangi dalgaların gerisinde kaldığına
+ * bakılarak bulunur, hızı da o bölgenin M ve T'sinden gelir.
+ */
+function kurDalgalar(g) {
+  const D2 = [];
+  const bolge = { ust: [], alt: [] };
+  for (const yuzey of ['ust', 'alt']) {
+    const ust = yuzey === 'ust';
+    const isaret = ust ? 1 : -1;
+    let M = st.M, phiAkim = st.alpha, pR = 1, TR = 1;
+    bolge[yuzey].push({ phi: phiAkim, M, pR, TR });
+    const list = g[yuzey];
+    for (let i = 0; i < list.length; i++) {
+      const p = list[i];
+      const genlesme = ust ? (phiAkim - p.phi) : (p.phi - phiAkim);
+      if (genlesme < -1e-9) {
+        const s = obliqueShock(M, -genlesme);
+        if (s.detached) {
+          // Şok koptu: yapışık eğik şok yerine cismin ÖNÜNDE duran eğri bir
+          // yay şoku çizilir. Etkin burun yarıçapı, kamanın ön kısmının
+          // kapladığı yükseklikten türetilir — kopmuş şokun duruşu cismin
+          // KÜTLÜĞÜYLE ölçeklenir.
+          const Retkin = Math.max(0.06, Math.abs(p.z1 - p.z0) * 0.9);
+          if (!D2.some((d2) => d2.tip === 'yay'))
+            D2.push({ tip: 'yay', R: Retkin, xN: p.x0,
+                      delta: bowShockStandoff(M, Retkin) });
+          D2.push({ tip: 'kopmus', x0: p.x0, z0: p.z0, ust });
+          break;
+        }
+        D2.push({ tip: 'sok', x0: p.x0, z0: p.z0, ust,
+                  psi: phiAkim + isaret * s.beta, uzun: 2.6 });
+        M = s.M2; pR *= s.p2p1; TR *= s.T2T1; phiAkim = p.phi;
+      } else if (genlesme > 1e-9) {
+        const e2 = expansion(M, genlesme);
+        const psi1 = phiAkim + isaret * machAngle(M);
+        const psi2 = p.phi + isaret * (e2.mu2 || machAngle(e2.M2));
+        D2.push({ tip: 'yelpaze', x0: p.x0, z0: p.z0, ust, psi1, psi2, uzun: 2.6 });
+        M = e2.M2; pR *= e2.p2p1; TR *= e2.T2T1; phiAkim = p.phi;
+      }
+      bolge[yuzey].push({ phi: phiAkim, M, pR, TR });
+    }
+    // Firar kenarı: iki yüzey birbirine dönüp yeniden sıkışır (kuyruk şoku).
+    const son = bolge[yuzey][bolge[yuzey].length - 1];
+    const geriDonus = ust ? (son.phi - st.alpha) : (st.alpha - son.phi);
+    const uc = list[list.length - 1];
+    if (geriDonus > 1e-9 && son.M > 1) {
+      const s = obliqueShock(son.M, geriDonus);
+      if (!s.detached) {
+        D2.push({ tip: 'sok', x0: uc.x1, z0: uc.z1, ust, psi: son.phi + isaret * s.beta, uzun: 2.2 });
+        bolge[yuzey].push({ phi: st.alpha, M: s.M2, pR: son.pR * s.p2p1, TR: son.TR * s.T2T1 });
+      }
+    }
+  }
+  st.dalgalar = D2; st.bolgeler = bolge;
+}
+
+function kurDalgalarKut(g) {
+  st.bolgeler = null;
+  const delta = bowShockStandoff(st.M, g.R);
+  st.kutDelta = delta;
+  st.dalgalar = [{ tip: 'yay', x0: -delta, R: g.R, delta }];
+}
+
+/* ================================================================== */
+/* Tuval                                                              */
+/* ================================================================== */
+const cv = el('cv'), cx = cv.getContext('2d');
+let W = 0, H = 0, sc = 1, ox = 0, oy = 0;
+function olcek() {
+  const r = cv.getBoundingClientRect();
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  W = Math.max(2, Math.round(r.width)); H = Math.max(2, Math.round(r.height));
+  cv.width = W * dpr; cv.height = H * dpr;
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  sc = Math.min(W * 0.34, H * 0.62);
+  ox = W * 0.30; oy = H * 0.50;
+}
+const SX = (x) => ox + x * sc, SY = (z) => oy - z * sc;
+
+// Basınç oranı → renk. Sıkışma sıcak, genleşme mavi, serbest akım nötr.
+function renkP(pR) {
+  const t = Math.log(Math.max(pR, 1e-3));
+  const NOTR = [12, 17, 26];
+  if (t > 0) { const u = Math.min(1, t / 1.6); return `rgb(${12 + 200 * u},${17 + 92 * u},${26 + 40 * u})`; }
+  const u = Math.min(1, -t / 1.2);
+  return `rgb(${12 + 22 * u},${17 + 108 * u},${26 + 160 * u})`;
+}
+
+/** Bir noktanın dalganın gerisinde olup olmadığı (çapraz çarpım işareti). */
+function gerisinde(p, o, psi, ust) {
+  const dx = p[0] - o[0], dz = p[1] - o[1];
+  const c = dx * Math.sin(psi) - dz * Math.cos(psi);
+  return ust ? c > 0 : c < 0;
+}
+
+/** Parçacığın bulunduğu bölgenin akım durumu. Yelpazede ara değer. */
+function durum(x, z) {
+  if (!st.bolgeler) return { phi: st.alpha, M: st.M, TR: 1, pR: 1 };
+  const ust = z >= 0;
+  const yuzey = ust ? 'ust' : 'alt';
+  const B = st.bolgeler[yuzey];
+  let k = 0, karisim = null;
+  for (const w of st.dalgalar) {
+    if (w.ust !== ust || w.tip === 'kopmus') continue;
+    if (w.tip === 'sok') { if (gerisinde([x, z], [w.x0, w.z0], w.psi, ust)) k++; }
+    else {
+      const g1 = gerisinde([x, z], [w.x0, w.z0], w.psi1, ust);
+      const g2 = gerisinde([x, z], [w.x0, w.z0], w.psi2, ust);
+      if (g2) k++;
+      else if (g1) {
+        // Yelpazenin İÇİNDE: iki Mach çizgisi arasındaki açısal konuma göre
+        // karıştır. Genleşme sürekli bir dönüştür; keskin bir sıçrama değil.
+        const a = Math.atan2(z - w.z0, x - w.x0);
+        const t = Math.max(0, Math.min(1, (a - w.psi1) / (w.psi2 - w.psi1 || 1e-6)));
+        karisim = { k, t };
+        k++;
+      }
+    }
+  }
+  const A = B[Math.min(k, B.length - 1)];
+  if (!karisim) return A;
+  const P = B[Math.min(karisim.k, B.length - 1)], Q = B[Math.min(karisim.k + 1, B.length - 1)];
+  const t = karisim.t;
+  return { phi: P.phi + (Q.phi - P.phi) * t, M: P.M + (Q.M - P.M) * t,
+           TR: P.TR + (Q.TR - P.TR) * t, pR: P.pR + (Q.pR - P.pR) * t };
+}
+
+function cismindeMi(x, z) {
+  const g = st.geo;
+  if (g.kut) return (x * x + z * z) < g.R * g.R || (x > 0 && Math.abs(z) < g.R && x < 1);
+  if (x < 0 || x > 1) return false;
+  const t = Math.tan(st.eps);
+  const h = st.cisim === 'elmas' ? (x < 0.5 ? x * t : (1 - x) * t) : x * t;
+  return Math.abs(z) < h;
+}
+
+/* ── Parçacıklar ─────────────────────────────────────────────────── */
+// Hız: |V|/V∞ = (M/M∞)·√(T/T∞). Şoku geçen parçacık HEM döner HEM yavaşlar
+// hem de sıklaşır — şokun ne olduğunu anlatan tek gösterge budur.
+let parc = [];
+function parcSifirla() {
+  parc = [];
+  for (let i = 0; i < 620; i++) parc.push([-1.0 - Math.random() * 2.2, -0.85 + Math.random() * 1.7]);
+}
+function parcAdim(dt) {
+  for (const p of parc) {
+    const s = durum(p[0], p[1]);
+    const v = (s.M / st.M) * Math.sqrt(Math.max(s.TR, 1e-6));
+    p[0] += Math.cos(s.phi) * v * dt * 0.85;
+    p[1] += Math.sin(s.phi) * v * dt * 0.85;
+    if (p[0] > 2.6 || Math.abs(p[1]) > 1.1 || cismindeMi(p[0], p[1])) {
+      p[0] = -1.05 - Math.random() * 0.4; p[1] = -0.85 + Math.random() * 1.7;
+    }
+  }
+}
+
+function ciz() {
+  cx.fillStyle = '#05070b'; cx.fillRect(0, 0, W, H);
+
+  // ── Bölge boyaması: her pikselin bölgesini sorgulamak pahalı; bunun
+  // yerine dalgaların arasındaki kamalar poligon olarak doldurulur.
+  if (st.bolgeler) {
+    for (const yuzey of ['ust', 'alt']) {
+      const ust = yuzey === 'ust';
+      const ws = st.dalgalar.filter((w) => w.ust === ust && w.tip !== 'kopmus');
+      const B = st.bolgeler[yuzey];
+      const L = 3.2;
+      for (let k = 0; k < ws.length; k++) {
+        const w = ws[k];
+        const psiA = w.tip === 'sok' ? w.psi : w.psi1;
+        const wn = ws[k + 1];
+        const psiB = wn ? (wn.tip === 'sok' ? wn.psi : wn.psi1) : null;
+        const o = [w.x0, w.z0];
+        cx.beginPath();
+        cx.moveTo(SX(o[0]), SY(o[1]));
+        cx.lineTo(SX(o[0] + L * Math.cos(psiA)), SY(o[1] + L * Math.sin(psiA)));
+        if (wn) {
+          cx.lineTo(SX(wn.x0 + L * Math.cos(psiB)), SY(wn.z0 + L * Math.sin(psiB)));
+          cx.lineTo(SX(wn.x0), SY(wn.z0));
+        } else {
+          cx.lineTo(SX(o[0] + L), SY(o[1] + L * Math.sin(psiA)));
+          cx.lineTo(SX(o[0] + L), SY(o[1]));
+        }
+        cx.closePath();
+        cx.fillStyle = renkP(B[Math.min(k + 1, B.length - 1)].pR);
+        cx.globalAlpha = 0.55; cx.fill(); cx.globalAlpha = 1;
+      }
+    }
+  }
+
+  // ── Parçacıklar
+  if (st.akis) {
+    // Parçacıklar NOKTA değil İZ olarak çizilir: izin uzunluğu yerel hızla
+    // orantılıdır. Şoku geçen parçacığın izi hem KISALIR (yavaşlama) hem de
+    // YÖN DEĞİŞTİRİR (dönüş) — noktayla bunların ikisi de görünmüyordu.
+    cx.lineCap = 'round';
+    for (const p of parc) {
+      const s = durum(p[0], p[1]);
+      const v = (s.M / st.M) * Math.sqrt(Math.max(s.TR, 1e-6));
+      const L3 = 0.052 * Math.max(0.25, Math.min(1.6, v));
+      const x2 = p[0] - Math.cos(s.phi) * L3, z2 = p[1] - Math.sin(s.phi) * L3;
+      // Sıkışan bölgede daha parlak: yoğunluk arttıkça iz kalınlaşır.
+      const yog = Math.min(2.2, Math.max(0.6, s.pR));
+      cx.strokeStyle = `rgba(230,236,246,${(0.30 + 0.30 * Math.min(1, yog - 0.4)).toFixed(3)})`;
+      cx.lineWidth = 0.9 + 0.7 * Math.min(1, yog - 0.5);
+      cx.beginPath(); cx.moveTo(SX(x2), SY(z2)); cx.lineTo(SX(p[0]), SY(p[1])); cx.stroke();
+    }
+  }
+
+  // ── Dalgalar
+  for (const w of st.dalgalar) {
+    if (w.tip === 'yay') { cizYay(w); continue; }
+    if (w.tip === 'kopmus') continue;
+    const o = [SX(w.x0), SY(w.z0)];
+    if (w.tip === 'sok') {
+      cx.strokeStyle = '#e0894a'; cx.lineWidth = 2.1;
+      cx.beginPath(); cx.moveTo(o[0], o[1]);
+      cx.lineTo(SX(w.x0 + w.uzun * Math.cos(w.psi)), SY(w.z0 + w.uzun * Math.sin(w.psi)));
+      cx.stroke();
+    } else {
+      // Yelpaze: μ₁'den μ₂'ye 9 Mach çizgisi. Sürekli bir dönüş olduğu için
+      // tek çizgi değil, YAYILMIŞ bir demet çizilir.
+      cx.strokeStyle = 'rgba(95,158,224,.72)'; cx.lineWidth = 1;
+      for (let i = 0; i <= 8; i++) {
+        const psi = w.psi1 + ((w.psi2 - w.psi1) * i) / 8;
+        cx.beginPath(); cx.moveTo(o[0], o[1]);
+        cx.lineTo(SX(w.x0 + w.uzun * Math.cos(psi)), SY(w.z0 + w.uzun * Math.sin(psi)));
+        cx.stroke();
+      }
+    }
+  }
+
+  // ── Cisim
+  cx.beginPath();
+  const g = st.geo;
+  if (g.kut) {
+    // Küt burun AKIMA BAKAR: yay, +z tepeden −z tabana SOL yarımdır.
+    // (İlk sürüm sağ yarımı çizip gövdeye bağlayınca papyon çıkıyordu.)
+    cx.arc(SX(0), SY(0), g.R * sc, -Math.PI / 2, Math.PI / 2, true);
+    cx.lineTo(SX(1), SY(-g.R)); cx.lineTo(SX(1), SY(g.R));
+  } else {
+    // Ana hat: üst panellerin uçları ileri, alt panellerin uçları GERİ.
+    // Yalnız x0'lardan geçmek tek kamada dejenere üçgen üretiyordu.
+    cx.moveTo(SX(g.ust[0].x0), SY(g.ust[0].z0));
+    for (const p of g.ust) cx.lineTo(SX(p.x1), SY(p.z1));
+    for (let i = g.alt.length - 1; i >= 0; i--) cx.lineTo(SX(g.alt[i].x1), SY(g.alt[i].z1));
+    cx.lineTo(SX(g.alt[0].x0), SY(g.alt[0].z0));
+  }
+  cx.closePath();
+  cx.fillStyle = '#0b0e14'; cx.fill();
+  cx.strokeStyle = '#c9a35c'; cx.lineWidth = 1.8; cx.stroke();
+
+  // ── Serbest akım oku + Mach konisi açısı
+  cx.strokeStyle = '#6f7686'; cx.lineWidth = 1.2;
+  const ax = SX(-0.95), ay = SY(0.72), L2 = 56;
+  cx.beginPath(); cx.moveTo(ax, ay);
+  cx.lineTo(ax + L2 * Math.cos(-st.alpha), ay + L2 * Math.sin(-st.alpha)); cx.stroke();
+  cx.fillStyle = '#8a90a0'; cx.font = '11px "Segoe UI", sans-serif';
+  cx.fillText(`M∞ = ${tr(st.M, 2)}`, ax + L2 * Math.cos(-st.alpha) + 7, ay + L2 * Math.sin(-st.alpha) + 4);
+  const mu = machAngle(st.M);
+  if (mu) {
+    cx.strokeStyle = 'rgba(111,118,134,.55)'; cx.setLineDash([4, 4]); cx.lineWidth = 1;
+    for (const s2 of [1, -1]) {
+      cx.beginPath(); cx.moveTo(SX(-1.15), SY(0));
+      cx.lineTo(SX(-1.15 + 1.1 * Math.cos(s2 * mu)), SY(1.1 * Math.sin(s2 * mu)));
+      cx.stroke();
+    }
+    cx.setLineDash([]);
+    cx.fillStyle = '#6f7686';
+    cx.fillText(`μ = ${tr(D(mu), 1)}°`, SX(-1.10), SY(0) - 8);
+  }
+}
+
+/**
+ * Billig (1967) kopuk şok şekli. Burun x = xN'de, şok tepesi xN − Δ'da.
+ *
+ *   Δ/R   = 0,143 exp(3,24/M²)              (duruş mesafesi)
+ *   R_c/R = 1,143 exp(0,54/(M−1)^1,2)       (şok tepesinin eğrilik yarıçapı)
+ *   x(y)  = xN − Δ − R_c(M²−1)·[√(1 + y²/(R_c²(M²−1))) − 1]
+ *
+ * Asimptot kontrolü: büyük y'de dx/d|y| → −√(M²−1), yani şok çizgisi eksenle
+ * atan(1/√(M²−1)) = μ açısı yapar — Mach açısı. Doğru bir kopuk şok, uzakta
+ * bir Mach dalgasına dönüşmek ZORUNDADIR ve bu formül onu sağlar.
+ * (İlk sürümde katsayılar karışmıştı ve şok neredeyse düz dikey bir çizgi
+ * olarak çıkıyordu, üstelik cismin içinden geçiyordu.)
+ */
+function cizYay(w) {
+  const M2 = Math.max(st.M * st.M - 1, 0.04);
+  const Rc = w.R * 1.143 * Math.exp(0.54 / Math.pow(Math.max(st.M - 1, 0.05), 1.2));
+  const xN = w.xN != null ? w.xN : 0;
+  cx.strokeStyle = '#e0894a'; cx.lineWidth = 2.2;
+  cx.beginPath();
+  for (let i = -80; i <= 80; i++) {
+    const y = (i / 80) * 1.05;
+    const x = xN - w.delta - Rc * M2 * (Math.sqrt(1 + (y * y) / (Rc * Rc * M2)) - 1);
+    if (i === -80) cx.moveTo(SX(x), SY(y)); else cx.lineTo(SX(x), SY(y));
+  }
+  cx.stroke();
+}
+
+/* ================================================================== */
+/* θ-β-M grafiği                                                      */
+/* ================================================================== */
+function cizTbm() {
+  const W2 = 338, H2 = 208, pl = 30, pr = 8, pt = 10, pb = 22;
+  const X = (t) => pl + (t / 46) * (W2 - pl - pr);
+  const Y = (b) => H2 - pb - (b / 90) * (H2 - pt - pb);
+  const g = [];
+  for (const t of [0, 10, 20, 30, 40])
+    g.push(`<line x1="${X(t)}" y1="${pt}" x2="${X(t)}" y2="${H2 - pb}" stroke="#1a2030"/>
+      <text x="${X(t)}" y="${H2 - pb + 12}" fill="#6f7686" font-size="9" text-anchor="middle">${t}°</text>`);
+  for (const b of [0, 30, 60, 90])
+    g.push(`<line x1="${pl}" y1="${Y(b)}" x2="${W2 - pr}" y2="${Y(b)}" stroke="#1a2030"/>
+      <text x="${pl - 4}" y="${Y(b) + 3.5}" fill="#6f7686" font-size="9" text-anchor="end">${b}°</text>`);
+
+  const egri = (M, renk, kalin) => {
+    const mu = Math.asin(1 / M), pts = [];
+    for (let i = 0; i <= 200; i++) {
+      const beta = mu + ((Math.PI / 2 - mu) * i) / 200;
+      const th = thetaFromBeta(M, beta);
+      if (th < -1e-6) continue;
+      pts.push(`${X(D(th)).toFixed(1)} ${Y(D(beta)).toFixed(1)}`);
+    }
+    return `<path d="M${pts.join(' L')}" fill="none" stroke="${renk}" stroke-width="${kalin}"/>`;
+  };
+  const arka = [1.5, 2, 3, 5, 10].map((M) => egri(M, '#2b3446', 1)).join('');
+  const bu = st.M > 1.02 ? egri(st.M, '#5f9ee0', 1.9) : '';
+
+  // Kopma sınırı: her M için θ_max noktalarının yer eğrisi.
+  const kop = [];
+  for (let M = 1.05; M <= 12; M *= 1.06) {
+    const tm = thetaMax(M);
+    kop.push(`${X(D(tm.theta)).toFixed(1)} ${Y(D(tm.beta)).toFixed(1)}`);
+  }
+  let nokta = '';
+  if (st.coz) {
+    const s = st.coz.paneller.find((p) => p.tur === 'sok');
+    if (s) nokta = `<circle cx="${X(D(s.aci))}" cy="${Y(D(s.beta))}" r="4.2" fill="#c9a35c"/>
+      <text x="${X(D(s.aci)) + 7}" y="${Y(D(s.beta)) + 3}" fill="#c9a35c" font-size="9">θ=${tr(D(s.aci), 1)}° β=${tr(D(s.beta), 1)}°</text>`;
+  }
+  el('tbm').innerHTML = g.join('') + arka +
+    `<path d="M${kop.join(' L')}" fill="none" stroke="#e0894a" stroke-width="1.3" stroke-dasharray="4 3"/>` +
+    bu + nokta +
+    `<text x="${pl + 4}" y="${pt + 9}" fill="#5f9ee0" font-size="9">M = ${tr(st.M, 2)}</text>
+     <text x="${pl + 4}" y="${pt + 20}" fill="#e0894a" font-size="9">kopma sınırı (θ_max)</text>
+     <text x="${W2 - pr}" y="${H2 - 4}" fill="#6f7686" font-size="9" text-anchor="end">θ →</text>`;
+}
+
+/* ================================================================== */
+/* Okumalar                                                           */
+/* ================================================================== */
+function yaz() {
+  const atm = isa(st.altKm * 1000);
+  const V = st.M * atm.a;
+  const T0 = atm.T * T0overT(st.M);
+  const r = [], row = (k, v, c) => r.push(`<dt>${k}</dt><dd${c ? ' class="' + c + '"' : ''}>${v}</dd>`);
+
+  const ns = normalShock(st.M);
+  row('Mach açısı μ', tr(D(machAngle(st.M) || NaN), 1) + '°');
+  row('hız V<sub>∞</sub>', tr(V, 0) + ' m/s');
+  row('irtifa T / ρ', tr(atm.T, 1) + ' K · ' + tr(atm.rho, 4));
+  row('durgunluk T₀', `<b>${tr(T0, 0)} K</b>`, T0 > 1200 ? 'warn' : '');
+  row('T₀ / T<sub>∞</sub>', tr(T0overT(st.M), 2), 'dim');
+  row('normal şok p₀₂/p₀₁', tr(ns ? ns.p02p01 : NaN, 4), 'dim');
+  row('ν(M) Prandtl–Meyer', tr(D(prandtlMeyer(st.M)), 2) + '°', 'dim');
+
+  if (st.coz) {
+    const ak = ackeret(st.M, st.alpha, { kalinlikTerimi: 4 * st.eps * st.eps });
+    row('C<sub>l</sub> (şok–genleşme)', `<b>${tr(st.coz.cl)}</b>`);
+    row('C<sub>d</sub> DALGA sürüklemesi', `<b>${tr(st.coz.cd)}</b>`);
+    row('C<sub>l</sub> (Ackeret doğrusal)', tr(ak.cl), 'dim');
+    row('C<sub>d</sub> (Ackeret)', tr(ak.cd), 'dim');
+    row('L / D', tr(st.coz.cd > 1e-6 ? st.coz.cl / st.coz.cd : NaN, 2));
+  } else if (st.geo.kut) {
+    row('yay şoku duruşu Δ', tr(st.kutDelta, 4) + ' (Δ/R = ' + tr(st.kutDelta / st.geo.R, 3) + ')');
+    const q = suttonGraves(atm.rho, V, st.geo.R * 2);   // R_n metre kabulü
+    row('durma ısı akısı', tr(q / 1e6, 2) + ' MW/m²', q > 1e6 ? 'warn' : '');
+  }
+  el('nums').innerHTML = r.join('');
+
+  // Panel tablosu
+  if (st.coz) {
+    const satir = st.coz.paneller.map((p) => `<tr>
+      <td>${p.yuzey === 'ust' ? 'üst' : 'alt'} · ${p.tur === 'sok' ? 'şok' : p.tur === 'genlesme' ? 'yelpaze' : p.tur}</td>
+      <td>${tr(D(p.aci || 0), 1)}°</td><td>${tr(p.M, 2)}</td>
+      <td>${tr(p.pRatio, 2)}</td><td>${tr(p.cp, 3)}</td></tr>`).join('');
+    el('tbl').innerHTML = `<tr><th>bölge</th><th>dönüş</th><th>M</th><th>p/p∞</th><th>Cp</th></tr>${satir}`;
+  } else el('tbl').innerHTML = '<tr><td>küt burunda panel marşı yapılmaz — şok zaten kopuktur.</td></tr>';
+
+  // Uyarılar
+  const u = [];
+  const tm = thetaMax(st.M);
+  if (st.coz && st.coz.kopma) u.push(`<span class="kirmizi"><b>ŞOK KOPTU.</b></span>
+    İstenen dönüş θ, bu Mach için mümkün olan en büyük dönüşü (θ_max =
+    ${tr(D(tm.theta), 2)}°) aşıyor. Akım artık cisme yapışık bir eğik şokla
+    dönemez: önünde eğri bir <b>yay şoku</b> oluşur, arkasında bir bölge ses
+    altına iner ve dalga sürüklemesi fırlar. Hipersonik araçların burnunun
+    KÜT olmasının sebebi de budur — kopmuş şok bir tampon gibi durur.`);
+  if (st.M >= 5) u.push(`M ≥ 5: <b>hipersonik.</b> Durgunluk sıcaklığı ${tr(T0, 0)} K.
+    Bu sıcaklıkta hava artık kalorik olarak mükemmel bir gaz değildir —
+    titreşim modları uyarılır, O₂ ve N₂ ayrışır, iyonlaşma başlar. Bu sayfa
+    γ = 1,4 sabit kabul eder, dolayısıyla <b>M ≳ 5'te sayılar gerçek
+    değerlerden sapar</b>; nitel davranış doğru kalır, mutlak değerler değil.`);
+  if (st.M < 1.05) u.push(`M ≈ 1: akım transonik. Bu sayfanın bütün yöntemleri
+    (eğik şok, Prandtl–Meyer, şok–genleşme) <b>tam süpersonik</b> akım varsayar
+    ve M → 1'de geçerliliğini yitirir.`);
+  if (!u.length) u.push(`Turuncu çizgiler <b>şok</b>: akım bir anda döner, basınç
+    ve sıcaklık sıçrar, Mach düşer, toplam basınç KAYBOLUR. Mavi demetler
+    <b>genleşme yelpazesi</b>: dönüş sürekli ve tersinirdir, Mach yükselir,
+    toplam basınç korunur. Parçacıklar dalgayı geçerken hem döner hem
+    hızlanır/yavaşlar — hız, o bölgenin M ve T'sinden hesaplanır.`);
+  el('uyari').innerHTML = u.join('<br><br>');
+}
+
+/* ================================================================== */
+/* Arayüz + çevrim                                                    */
+/* ================================================================== */
+function etiket() {
+  el('vM').textContent = tr(st.M, 2);
+  el('vA').textContent = tr(D(st.alpha), 1) + '°';
+  el('vE').textContent = tr(D(st.eps), 1) + '°';
+  el('vH').textContent = tr(st.altKm, 0) + ' km';
+}
+function bagla() {
+  el('mach').value = String(st.M); el('alpha').value = String(D(st.alpha));
+  el('eps').value = String(D(st.eps)); el('alt').value = String(st.altKm);
+  el('cisim').value = st.cisim; etiket();
+  el('mach').oninput = () => { st.M = Number(el('mach').value); etiket(); coz(); };
+  el('alpha').oninput = () => { st.alpha = R(Number(el('alpha').value)); etiket(); coz(); };
+  el('eps').oninput = () => { st.eps = R(Number(el('eps').value)); etiket(); coz(); };
+  el('alt').oninput = () => { st.altKm = Number(el('alt').value); etiket(); yaz(); };
+  el('cisim').onchange = () => { st.cisim = el('cisim').value; coz(); parcSifirla(); };
+  el('akis').onclick = () => { st.akis = !st.akis; el('akis').classList.toggle('on', st.akis); };
+  for (const a of document.querySelectorAll('#presets a')) a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const p = new URLSearchParams(a.getAttribute('href').slice(1));
+    if (p.has('m')) st.M = Number(p.get('m'));
+    if (p.has('a')) st.alpha = R(Number(p.get('a')));
+    if (p.has('e')) st.eps = R(Number(p.get('e')));
+    st.cisim = p.get('c') || 'elmas';
+    bagla(); coz(); parcSifirla();
+  });
+}
+
+new ResizeObserver(olcek).observe(el('wrap'));
+olcek(); bagla(); coz(); parcSifirla();
+
+const donmus = q.has('t');
+if (donmus) { const t = num('t', 0); for (let s = 0; s < t; s += 1 / 60) parcAdim(1 / 60);
+              document.documentElement.dataset.frozenAt = String(t); }
+let onceki = performance.now();
+(function tik(now) {
+  requestAnimationFrame(tik);
+  const dt = Math.min(0.05, (now - onceki) / 1000); onceki = now;
+  if (!donmus && st.akis) parcAdim(dt);
+  ciz();
+})(onceki);
+
+window.__shock = { st, coz };
+</script>
+</body>
+</html>
