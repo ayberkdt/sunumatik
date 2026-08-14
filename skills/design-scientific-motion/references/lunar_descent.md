@@ -37,9 +37,13 @@ demo), `motion-manifest.json`.
   yeniden kullanılır (aesthetic_moon_real.webp + moon_disp_real.webp);
   yüklenemezse en-iyi-aday yerleşimli prosedürel krater dokusuna düşer.
 - Demo: `?f=0..1` deterministik kare (duraklatılmış scrub), `?cam=`,
-  `?export=1`, `?kapat=arac,iz,toz,zemin,yakin,kaya,iziz,plum` katman anahtarları
-  (`yakin` = çok ölçekli detay katmanını kapatır, `iziz` = yer izleri)
-  (sözleşme §6 hata avı).
+  `?export=1`, `?kapat=arac,iz,toz,zemin,yakin,kaya,iziz,plum,dunya,ao,golge`
+  katman anahtarları (`yakin` = çok ölçekli detay katmanı, `iziz` = yer izleri,
+  `ao` = temas karartması, `golge` = gölge haritası) (sözleşme §6 hata avı).
+- `api.hataAyikla = { sahne, kamera, renderer, gunes, aracSargi, kayaGrup,
+  zeminUnif, kayaUnif }` — ölçüm kancası. Gölge kutusu, bias'ın DÜNYA
+  karşılığı ve tap frekansları buradan okunur; tap genlikleri tek tek
+  sıfırlanarak kusurun kaynağı izole edilir (moiré avı böyle yapıldı).
 
 ## Fizik — analitik gerçeklik düzeyi (ENTEGRE, keyframe değil)
 
@@ -108,21 +112,71 @@ anlık çarpan HUD'da görünür.
 
   | tap | periyot | texel | rol |
   |---|---|---|---|
-  | A | ≈ 5 m | ≈ 1,0 cm | temas planı greni |
-  | B | ≈ 22 m | ≈ 4,3 cm | ön alan |
-  | C | ≈ 95 m | ≈ 19 cm | orta alan |
-  | D | ≈ 435 m | ≈ 85 cm | ufka kadar |
+  | A | ≈ 5,0 m | ≈ 1,0 cm | temas planı greni |
+  | B | ≈ 21,2 m | ≈ 4,1 cm | ön alan |
+  | C | ≈ 89,7 m | ≈ 17,5 cm | orta alan |
+  | D | ≈ 380 m | ≈ 74 cm | ufka kadar |
+
+  Frekans adımı **φ³ = 4,236068** (altın oranın küpü): kanıtlanabilir biçimde
+  irrasyonel, yani hiçbir tap çifti ortak periyoda oturamaz. Eski dizide
+  4,55/1,05 = **13/3 tam rasyoneldi** — B ile C üç periyotta bir yeniden
+  kayda giriyordu. Aynı düzeltme kayada da yapıldı (41,7 ↔ 139,0 oranı tam
+  10/3'tü; şimdi 41,7 ↔ 41,7·π).
 
   Pockmark alanı güç yasalı + kraterleşme maskelidir (bazı yamalar kraterli,
   bazıları pürüzsüz regolit) ve kenarları iki harmonikle düzensizleştirilir;
   aynı alan her ölçekte tutarlı kaldığı için kraterler 1,5 cm'den ~17 m'ye
   kesintisiz sürer. Tekrar deseni İKİ bağımsız doku + dört ayrı döndürme ve
   kaydırma ile kırılır. **Mesafeye göre detay bedava gelir:** mip zinciri
-  uzakta ortalamayı nötre çeker, yani ince taplar kendiliğinden söner
-  (aliasing/moiré yok), yakında tam açılır. Anizotropi max (16×) — sıyırma
-  açısı asıl kullanım. Eski `bumpMap` KALDIRILDI: three'nin bump türevi ekran
-  uzayındadır, yörünge irtifasında normal sapmasını kontrolsüz büyütüyordu
-  (üstelik aynı yükseklik zaten geometride).
+  uzakta ortalamayı nötre çeker, yani ince taplar kendiliğinden söner,
+  yakında tam açılır. Anizotropi max (16×) — sıyırma açısı asıl kullanım.
+  Eski `bumpMap` KALDIRILDI: three'nin bump türevi ekran uzayındadır,
+  yörünge irtifasında normal sapmasını kontrolsüz büyütüyordu (üstelik aynı
+  yükseklik zaten geometride).
+- **ZEMİN MOİRÉ'Sİ — kök neden ve onarım (ölçüldü).** Şikâyet edilen "çapraz
+  moiré" bir ALIASING DEĞİLDİ. Ölçüm: ön alanda (kameradan 12–20 m, sıyırma
+  açısı ~12,7°) pikselin arazi ayak izi 9,4 mm × 42,8 mm; tap B'nin texeli
+  42,9 mm. Yani doku tam çözülüyor, mip/anizotropi doğru çalışıyor. Görünen
+  şey dokunun KENDİ yapısıydı: `detayDokusu`'nun beş fBm oktavının değer
+  kafesi de EKSENE HİZALI ve aynı yönlüydü, hücre köşeleri üst üste binerek
+  düzenli bir NOKTA IZGARASI kuruyordu.
+  Kanıt (seed 7, ön alan, yüksek geçirgen + FFT): λ = 6,75–6,96 px, açı
+  60–72°; taplar tek tek kapatıldığında güç/medyan **yok 22,6 · A 27,1 ·
+  B 152,2 · C 8,8 · D 10,1** — kaynak tek başına tap B. λ tahmini birebir
+  tutuyor: per=78 oktavının hücresi 6,56 teksel = 281,6 mm, 42,8 mm/px ile
+  6,58 px.
+  **Onarım — Gauss tam sayısı kafes döndürmesi.** Her oktav (a,b) tam sayı
+  çiftiyle tanımlı M = [[a,b],[−b,a]] matrisinden geçirilir: kafes
+  atan(b/a) döner, 1/√(a²+b²) ölçeklenir, `K` bununla bölünerek oktavın
+  frekansı korunur. Açılar 0° · 26,6° · 18,4° · 33,7° · 14,0° — hiçbir iki
+  oktav artık aynı yönde değil. Üstüne 1-periyotlu, iki frekanslı ALAN
+  BÜKMESİ (her oktav için ayrı açıyla döndürülür) düz sıraları da kırar.
+  İkisi de DÖŞENEBİLİRLİĞİ birebir korur.
+  İKİ TUZAK, ikisi de ölçümle yakalandı:
+  1. Önce |det| = 1 olan KESME (shear) matrisleri denendi; ızgara hiç
+     kıpırdamadı. Nedeni matematikseldir: **unimoduler tam sayı matrisi Z²'yi
+     Z² ÜZERİNE eşler** — kafes kendine gider, yalnız hangi hash değerinin
+     hangi düğümde durduğu değişir. Kafesi gerçekten döndürmek için
+     det = a²+b² > 1 (alt-kafes) şarttır.
+  2. Döndürülmüş kafesle birlikte hash MODÜLÜ de dönmelidir. Düz `% K`
+     kullanmak alanı √(a²+b²) kat erken tekrarlatıp yeni bir desen doğuruyor.
+     `hashD` düğümü (a·ix − b·iy, b·ix + a·iy) mod Q ile temsilciye indirir
+     (Q = K·(a²+b²)); bu eşlemenin çekirdeği tam olarak değişmezlik kafesidir,
+     yani doku bir tile'da BİR KEZ tekrarlanır.
+  **Ölçülen sonuç** (sahneden bağımsız: dokunun EĞİM kanalının doğrudan
+  FFT'si, `doku-olc.mjs`) — kafes tepesi/medyan:
+
+  | oktav bandı | eski | yeni | kazanç |
+  |---|---|---|---|
+  | ~78 hücre (kusurun taşıyıcısı) | 99,1 | 23,6 | 4,2× |
+  | ~180 hücre | 83,7 | 7,2 | 11,6× |
+  | ~33 hücre | 72,4 | 48,3 | 1,5× |
+
+  Döşenebilirlik denetimi (karşıt kenar farkı ÷ komşu piksel farkı):
+  eski 0,435 · yeni 0,977 — ikisi de dikişsiz. Bükme alanı 128²'lik kaba
+  ızgarada bir kez hesaplanıp iki doğrusal örneklenir (en ince bileşeni
+  ~47 teksellik bir dalga): texel başına dört ek gürültü çağrısı yerine
+  on altıda bir maliyet, kurulum bütçesi bozulmaz.
 - **Albedo gerçekçiliği:** ayrı bölge haritası (`bolgeAlbedosu`, 2048²,
   ±800 km): mare/highland tonlaması, koyu bazalt havzaları, seyrek piroklastik
   lekeler ve KRATER ALANIYLA aynı seed'i kullanan taze krater ejecta örtüsü +
@@ -207,13 +261,68 @@ anlık çarpan HUD'da görünür.
   (`pedIziDokusu`) oturmayla birlikte belirir. İkisi de sim-zamanının sürekli
   fonksiyonudur (scrub/dışa aktarım güvenli), vakumda süpürülen toz geri
   oturmadığı için iz KALICIDIR.
-- Işık: ~11° elevasyonlu sıcak anahtar güneş (uzun gölgeler; gölge
-  yarı-gölgeli, intensity .62), zayıf gökyüzü dolgusu (mikro rölyefin
-  güneşten kaçan yüzleri jilet siyahı olmasın) + dünya-ışığı. Plum: gaz koluyla
-  ölçeklenen iki iç içe koni + nokta ışık — doygun sıcak ton, beyaz patlama
-  yok (ışık disiplini).
+- Işık: ~11° elevasyonlu sıcak anahtar güneş (uzun gölgeler), zayıf gökyüzü
+  dolgusu (mikro rölyefin güneşten kaçan yüzleri jilet siyahı olmasın) +
+  dünya-ışığı. Plum: gaz koluyla ölçeklenen iki iç içe koni + nokta ışık —
+  doygun sıcak ton, beyaz patlama yok (ışık disiplini).
+- **Gölge: ölçeğe göre DİNAMİK, teksel ızgarasına kilitli kutu.** (Bir tur
+  buna gitti; eski kurulum temas planında aracın gölgesini tamamen yok
+  ediyordu.) Ölçülen iki kök neden:
+  1. Kutu yarısı 2,5 birimde SABİT tabanlıydı → 2048'lik haritada 24,4 cm
+     teksel; 9 m'lik araç yalnız 37 teksel, üstüne `radius = 6` PCF
+     bulanıklığı (≈1,5 m) ve `intensity = .62` — gölge silik bir lekeye
+     iniyordu.
+  2. `near = 1, far = 400` → derinlik aralığı 399 birim; ortografik derinlik
+     DOĞRUSAL olduğu için `bias = -0,0004` bunun **15,96 m** dünya
+     ötelemesine denk geliyordu. 11° güneşte gölgenin derinlik farkı
+     h/sin 11° = 5,24·h'dir: aracın 7 m'lik tepesinde 37 m, pedlerin
+     dibinde SIFIR. 16 m'lik bias gölgeyi kökünden yiyordu.
+
+  Yeni kurulum (`durumUygula`): kutu yarısı `max(1,7 · araç ölçeği/0,09 …)`
+  ile büyür ama 1,25'lik GEOMETRİK bir merdivene yuvarlanır (teksel boyu
+  kare içinde sabit kalsın), merkez ışık uzayının iki yanal ekseninde teksel
+  ızgarasına yuvarlanır (gölge kenarı akmaz), derinlik aralığı ASİMETRİKTİR
+  (ışığa doğru 1,6·yarım, arkaya doğru h/sin 11° + 3,5·yarım — simetrik
+  kurulunca 297 m'de zemin `far`ın ötesine düşüp takip kamerasında gölgeyi
+  siliyordu) ve bias/normalBias ÖLÇÜLEN teksel boyundan türetilir
+  (`normalBias = 1,6·teksel`, `bias = −0,35·teksel/(far−near)`).
+  Temas karesinde ölçülen: teksel **8,3 cm** (eski 24,4), dünya bias
+  **3 cm** (eski 15,96 m). `PCFShadowMap` + `radius = 1` + `mapSize 4096`:
+  vakumda penumbra yok denecek kadar dardır (güneşin 0,53°'lik diski 46 m'lik
+  gölgede ancak ~40 cm yarı-gölge bırakır). `intensity = 1` — güneş TAM
+  kapanır, gölge içi karanlığı yalnız dolgu ışıkları belirler (0,62 dolguyu
+  iki kez sayıyordu). `PCFSoftShadowMap` bu three sürümünde kullanımdan
+  kaldırılmıştı ve konsola uyarı basıyordu; artık basmıyor.
+  Ölçülen gölge kontrastı (temas karesi, araçlı/araçsız fark maskesi):
+  gölge içi **21,9**/255, bitişik aydınlık zemin **94,5**/255 → 4,3×.
+- **Temas karartması (ortam örtüşmesi):** `aracAoDokusu` — gövde altındaki
+  yumuşak karartma + dört pedin dibinde keskinleşen çekirdek, çarpımsal
+  harmanla (`ZeroFactor / OneMinusSrcAlpha`: ışık EKLEMEZ, yalnız kısar).
+  Son 30 m'de sürekli açılır (eşik yok). Kayaların "etek izi" ile aynı dil:
+  araç zemine yapıştırılmış değil OTURMUŞ okunur. Gölge haritasının
+  çözemeyeceği bandı doldurur — güneş gölgesinin yerine değil ÜSTÜNE gelir.
+- **Öz-gölge:** araç mesh'lerine `receiveShadow` da açıktır; alçak güneşte
+  gövdenin bacaklara, ayak konsollarının pedlere düşürdüğü gölge aracın
+  hacmini okutan asıl ipuçlarındandır.
+- **Regolit sıçraması — İKİ deneme de ölçümle geri alındı, tekrar denemeyin.**
+  (a) Aşağı bakan ayrı bir `DirectionalLight` (fizikle ölçeklenmiş 0,12
+  şiddet) kareyi yalnız 365 pikselde (%0,03) değiştirdi: yönlü ışık sadece
+  TAM AŞAĞI bakan normalleri aydınlatır, sahnede öyle görünür yüzey yok.
+  (b) `HemisphereLight.groundColor`'ı 2,46× yükseltmek aracın gölgeli gövde
+  yüzünü 10,6 → 10,6'da bıraktı; karenin %98'inde fark ≤ 2 seviye. Nedeni
+  aynı: yarıküre ışığında yukarı bakan yüzeyler (zeminin tamamı) skyColor'ı
+  görür. Sıçrama zaten skyColor + dünya-ışığı dolgusuyla temsil ediliyor;
+  ölçülen gölge/aydınlık zemin oranı 0,23, Apollo bandında. **Görünür
+  katkısı ölçülemeyen ışık eklenmez.**
+- **Güneş elevasyonu GERÇEKTEN 11°.** Eski yön vektörü y bileşenine tan(11°)
+  koyup normalize ediyordu; yatay bileşenin boyu 1 değil 0,717 olduğu için
+  gerçek elevasyon asin(0,2617) = **15,2°** çıkıyordu (belge 11° diyordu —
+  ölçüldü). Artık yatay yön ayrı normalize edilip cos/sin ile ölçekleniyor.
+  Sonuç: gölgeler h/tan 11° = 5,14·h, yani **%38 daha uzun**; alçak güneşin
+  krateri ve blokları okutan asıl aracı bu. Ölçülen yüzey parlaklığı
+  93,7 → 79,0'a düştüğü için pozlama rampası yeniden ölçülüp ayarlandı.
 - **Pozlama rampası:** `toneMappingExposure` irtifayla sürekli rampalanır
-  (13,7 km'de 0,30 → yüzeyde 1,62). Gerekçe fiziktir: araç frenlemede sahanın
+  (13,7 km'de 0,34 → yüzeyde 1,85). Gerekçe fiziktir: araç frenlemede sahanın
   450 km GÜNEŞ TARAFINDADIR, oradaki yerel güneş yüksekliği
   11° + menzil/R_ay ≈ 26–50°, yani sahne iniş boyunca gerçekten 2–4 kat
   kararır. Tek sabit pozlama ya yüzey karesini karartıyor (ort. 28/255) ya

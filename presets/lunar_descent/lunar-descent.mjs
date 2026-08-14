@@ -21,6 +21,11 @@ const R_AY_BIRIM = 17374;       // ay yarıçapı, birim (gerçek: 1737.4 km)
 const ZEMIN_UST = 0.0006;       // arazi yüzeyinin üstündeki ~6 cm oturma payı — ayaklar, kayalar,
                                 // toz ve yer izleri bu payla TEK arazi örgüsüne oturur (z-çatışması yok)
 
+/* Altın oranın küpü: detay taplarının frekans adımı. Rasyonel bir adım
+   (eski 13/3) iki tapın periyodunu ortak katta buluşturur ve vuru deseni
+   üretir; φ³ irrasyonel olduğu için hiçbir tap çifti kayda giremez. */
+const FI3 = ((1 + Math.sqrt(5)) / 2) ** 3;   // 4,236068
+
 const kirp = (v, a, b) => Math.min(b, Math.max(a, v));
 const purussuz = (a, b, v) => { const t = kirp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 /* Küresel yüzeyin sagittası: düz-zemin fiziği ile eğri zemin görselini bağdaştırır —
@@ -221,15 +226,100 @@ function detayDokusu(seed, S = 512) {
     const ab = a + (b - a) * sx;
     return ab + ((c + (d - c) * sx) - ab) * sy;
   };
-  /* (a) fBm regolit dalgalanması + bağımsız albedo benekliliği */
-  const okt = [[6, .46], [14, .26], [33, .145], [78, .075], [180, .038]];
+  /* DÖNDÜRÜLMÜŞ KAFESLİ gürültü — moiré onarımının çekirdeği (bkz. (a) notu).
+     Kafes, Gauss tam sayısı (ga,gb) ile atan(gb/ga) kadar döndürülür. Değişmezlik
+     kafesi K(ga,−gb) ve K(gb,ga) tarafından gerilir; bir düğümün TEMSİLCİSİ
+     (ga·ix − gb·iy, gb·ix + ga·iy) mod Q ile bulunur (Q = K·(ga²+gb²)). Bu
+     eşleme bir homomorfizmadır ve çekirdeği tam olarak o kafestir — yani
+     doku bir tile'da BİR KEZ tekrarlanır (düz `% K` kullanmak, alanı
+     √(ga²+gb²) kat erken tekrarlatıp yeni bir desen doğuruyordu). */
+  const hashD = (ix, iy, Q, ga, gb, kat) => hash(ga * ix - gb * iy, gb * ix + ga * iy, Q, kat);
+  const gurD = (x, y, Q, ga, gb, kat) => {
+    const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+    const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+    const a = hashD(ix, iy, Q, ga, gb, kat), b = hashD(ix + 1, iy, Q, ga, gb, kat);
+    const c = hashD(ix, iy + 1, Q, ga, gb, kat), d = hashD(ix + 1, iy + 1, Q, ga, gb, kat);
+    const ab = a + (b - a) * sx;
+    return ab + ((c + (d - c) * sx) - ab) * sy;
+  };
+  /* (a) fBm regolit dalgalanması + bağımsız albedo benekliliği
+
+     ---- OKTAV KAFESLERİNİN AYRIŞTIRILMASI (zemin moiré'sinin onarımı) ----
+     ÖLÇÜM önce yapıldı: yüzey kamerasının ön alanında (kameradan 12–20 m)
+     tap B'nin texel boyu 42,9 mm, pikselin arazi ayak izi ise (11°'lik sıyırma
+     açısında) 42,8 mm. Yani doku EKSİK ÖRNEKLENMİYOR — mip/anizotropi doğru
+     çalışıyor, aliasing YOK. Görünen kusur bir örnekleme artefaktı değil,
+     dokunun KENDİ yapısıydı: beş oktavın değer kafesi de EKSENE HİZALI ve
+     aynı yönlüydü; hücre köşeleri üst üste binerek düzenli bir NOKTA IZGARASI
+     kuruyordu. FFT kanıtı (seed 7, ön alan): λ = 6,75–6,96 px, açı 60–72°,
+     güç/medyan 152 — ve tapları tek tek kapatınca sayı yalnız tap B'de
+     patlıyor (yok 22,6 · A 27,1 · B 152,2 · C 8,8 · D 10,1). λ tahmini de
+     birebir tutuyor: per=78 oktavının hücresi 6,56 teksel = 281,6 mm,
+     42,8 mm/px ile 6,58 px.
+
+     Onarım iki katmanlı; İKİSİ DE DÖŞENEBİLİRLİĞİ BOZMAZ:
+
+      (a) GAUSS TAM SAYISI DÖNDÜRMESİ. Her oktav (a,b) tam sayı çiftiyle
+          tanımlı M = [[a,b],[−b,a]] matrisinden geçirilir. Bu, ölçekle
+          birleşik bir dönmedir: kafes atan(b/a) kadar DÖNER ve 1/√(a²+b²)
+          ölçeklenir; `per` bununla bölünerek oktavın frekansı korunur.
+          Periyodiklik birebir sürer: tx→tx+1'de px, per·a kadar; py, per·b
+          kadar artar — ikisi de `per` katı, hash mod `per` çalıştığı için
+          değer aynı kalır.
+          DİKKAT — bir tur burada kaybedildi: önce |det| = 1 olan KESME
+          (shear) matrisleri denendi. Ölçüm ızgaranın hiç kıpırdamadığını
+          gösterdi ve nedeni matematikseldir: unimoduler tam sayı matrisi
+          Z²'yi Z² ÜZERİNE eşler, yani kafes kendine gider — yalnız hangi
+          hash değerinin hangi düğümde durduğu değişir. Kafesi gerçekten
+          döndürmek için det = a²+b² > 1 (alt-kafes) ŞARTTIR.
+      (b) 1-periyotlu ALAN BÜKMESİ (iki frekanslı): kaba gürültüden gelen
+          yer değiştirme her oktav için AYRI açıyla döndürülüp uygulanır.
+          Kafesi yalnız döndürmez, EĞER: düz sıralar kalmaz. Genlik tile
+          biriminde sabit tutulur (≈0,03 ≈ 15 teksel), böylece kaba oktavlar
+          (hücre 85 teksel) neredeyse bozulmaz — geniş rölyef korunur — ama
+          ince oktavlar (hücre 2,8 teksel) tamamen kayıt dışına çıkar. */
+  /* [K, ağırlık, ga, gb] — tile başına hücre = K·√(ga²+gb²) ≈ eski periyot
+     (6 · 13,4 · 31,6 · 79,3 · 181,4; eskiden 6 · 14 · 33 · 78 · 180),
+     kafes dönmesi atan(gb/ga) = 0° · 26,6° · 18,4° · 33,7° · 14,0°. */
+  const okt = [[6, .46, 1, 0], [6, .26, 2, 1], [10, .145, 3, 1], [22, .075, 3, 2], [44, .038, 4, 1]];
+  const BUK = 0.030;                                    // tile birimi
+  const bukAci = [0.41, 1.79, 2.63, 4.02, 5.31];        // rad — eş aralıklı DEĞİL
+  /* Bükme alanı KABA IZGARADA (BS²) bir kez hesaplanır ve iki doğrusal
+     örneklenir: en ince bileşeni per=11, yani 512/11 ≈ 47 teksellik bir
+     dalga — 128'lik ızgara (4 teksel adım) bunu fazlasıyla çözer. Texel
+     başına dört `gur` çağrısı yerine on altıda bir maliyet; kurulum
+     bütçesi bu yüzden bozulmaz. Izgara sarmalı olduğu için (BS moduyla
+     okunur) bükme alanı da 1-periyotlu kalır. */
+  const BS = 128, bfX = new Float32Array(BS * BS), bfY = new Float32Array(BS * BS);
+  for (let j = 0; j < BS; j++) for (let i = 0; i < BS; i++) {
+    const gx = i / BS, gy = j / BS;
+    bfX[j * BS + i] = (gur(gx * 4, gy * 4, 4, 201) - .5) + .55 * (gur(gx * 11 + 5.1, gy * 11 - 2.7, 11, 203) - .5);
+    bfY[j * BS + i] = (gur(gx * 4 + 2.3, gy * 4 - 1.1, 4, 202) - .5) + .55 * (gur(gx * 11 - 3.3, gy * 11 + 7.9, 11, 204) - .5);
+  }
+  const bukOku = (alan, gx, gy) => {
+    const i0 = Math.floor(gx), j0 = Math.floor(gy), fx = gx - i0, fy = gy - j0;
+    const ia = ((i0 % BS) + BS) % BS, ib = (ia + 1) % BS;
+    const ja = ((j0 % BS) + BS) % BS, jb = (ja + 1) % BS;
+    const t = alan[ja * BS + ia] + (alan[ja * BS + ib] - alan[ja * BS + ia]) * fx;
+    const b = alan[jb * BS + ia] + (alan[jb * BS + ib] - alan[jb * BS + ia]) * fx;
+    return t + (b - t) * fy;
+  };
+  const bOlcek = BS / S;
   for (let y = 0; y < S; y++) {
     for (let x = 0; x < S; x++) {
+      const tx = x / S, ty = y / S;
+      const bx = bukOku(bfX, x * bOlcek, y * bOlcek);
+      const by = bukOku(bfY, x * bOlcek, y * bOlcek);
       let h = 0, a = 0;
       for (let o = 0; o < okt.length; o++) {
-        const per = okt[o][0], w = okt[o][1];
-        h += (gur(x / S * per, y / S * per, per, o) - .5) * w;
-        if (o < 3) a += (gur(x / S * per + 11.3, y / S * per - 4.7, per, o + 40) - .5) * w * .62;
+        const K = okt[o][0], w = okt[o][1], ga = okt[o][2], gb = okt[o][3];
+        const Q = K * (ga * ga + gb * gb);
+        const ca = Math.cos(bukAci[o]), sa = Math.sin(bukAci[o]);
+        const ux = tx + BUK * (bx * ca - by * sa);
+        const uy = ty + BUK * (bx * sa + by * ca);
+        const px = (ga * ux + gb * uy) * K, py = (ga * uy - gb * ux) * K;
+        h += (gurD(px, py, Q, ga, gb, o) - .5) * w;
+        if (o < 3) a += (gurD(px + 11.3, py - 4.7, Q, ga, gb, o + 40) - .5) * w * .62;
       }
       const i = y * S + x;
       H[i] = h;
@@ -710,6 +800,37 @@ function plumIziDokusu(seed, S = 1024) {
   return cnv;
 }
 
+/* ---- ARAÇ TEMAS KARARTMASI (ortam örtüşmesi) ----
+   Kayaların "etek izi" ile AYNI dil, araca uygulanmış: gövdenin altındaki
+   yarı-küre görüşü kapalıdır, yani dolgu ışığı (yarıküre saçılımı + dünya
+   ışığı) oraya ulaşamaz. Bu, gölge haritasının çözemeyeceği bir yumuşak
+   karartmadır — güneş gölgesinin YERİNE değil, ÜSTÜNE gelir. Dört ped
+   noktasında yoğunlaşır: araç zemine "yapıştırılmış" değil, OTURMUŞ okunur.
+   Pedin yarıçapı craft-blocks'tan okunan AYAK_YANAL ile eşleşir. */
+function aracAoDokusu(pedYari, S = 256) {
+  const cnv = document.createElement('canvas'); cnv.width = cnv.height = S;
+  const c = cnv.getContext('2d'), M = S / 2;
+  // (a) gövde altı geniş, yumuşak karartma
+  const g = c.createRadialGradient(M, M, 0, M, M, M * .62);
+  g.addColorStop(0, 'rgba(26,24,21,.62)');
+  g.addColorStop(.45, 'rgba(38,36,32,.36)');
+  g.addColorStop(.78, 'rgba(58,55,50,.11)');
+  g.addColorStop(1, 'rgba(70,67,61,0)');
+  c.fillStyle = g; c.fillRect(0, 0, S, S);
+  // (b) ped dibi: temas noktasında keskinleşen çekirdek
+  for (let k = 0; k < 4; k++) {
+    const a = Math.PI / 4 + k * Math.PI / 2;
+    const px = M + Math.cos(a) * pedYari * M, py = M + Math.sin(a) * pedYari * M;
+    const r = M * .17;
+    const pg = c.createRadialGradient(px, py, 0, px, py, r);
+    pg.addColorStop(0, 'rgba(14,13,11,.80)');
+    pg.addColorStop(.42, 'rgba(24,22,20,.44)');
+    pg.addColorStop(1, 'rgba(40,38,34,0)');
+    c.fillStyle = pg; c.fillRect(px - r, py - r, r * 2, r * 2);
+  }
+  return cnv;
+}
+
 /* Ayak pedi izi: pedin bastığı sığ çukur (koyu halka) + çevreye serpilen
    ince tozun açık yakası. */
 function pedIziDokusu(S = 256) {
@@ -778,7 +899,14 @@ export async function mountLunarDescent(host, options = {}) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.62;  // başlangıç; irtifayla sürülür (bkz. POZLAMA rampası)
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  /* PCFShadowMap — PCFSoft DEĞİL. İki gerekçe:
+     · Fizik: atmosfer yok, saçılma yok. Güneşin açısal çapı Ay'dan ~0,53°,
+       yani 9 m'lik bir aracın 46 m'lik gölgesinde penumbra ancak ~40 cm —
+       ekranda birkaç piksel. Gölge KESKİN olmalı; PCFSoft'un geniş çekirdeği
+       bu fiziği ihlal ediyordu.
+     · Bu three sürümünde PCFSoftShadowMap KULLANIMDAN KALDIRILDI ve konsola
+       "Using PCFShadowMap instead" uyarısı basıyordu — uyarı da böyle temizlenir. */
+  renderer.shadowMap.type = THREE.PCFShadowMap;
   kok.prepend(renderer.domElement);
 
   const sahne = new THREE.Scene();
@@ -786,13 +914,29 @@ export async function mountLunarDescent(host, options = {}) {
   const kamera = new THREE.PerspectiveCamera(48, 16 / 9, 0.02, 26000);
 
   /* ---- Işık: alçak güneş (uzun gölgeler), zayıf dünya-ışığı dolgusu ---- */
-  const gunesYon = new THREE.Vector3(-0.62, Math.tan(11 * Math.PI / 180), 0.36).normalize(); // ~11° eleve
+  /* Güneş yönü — elevasyon GERÇEKTEN 11°. Eski satır y bileşenine tan(11°)
+     koyup vektörü normalize ediyordu; ama yatay bileşenin boyu 1 değil 0,717
+     olduğu için gerçek elevasyon asin(0,2617) = 15,2°'ye çıkıyordu (belge ve
+     yorumlar 11° diyordu — ölçüldü). Doğrusu: yatay yön ayrı normalize edilip
+     cos/sin ile ölçeklenir. Sonuç: gölgeler h/tan11° = 5,14·h, yani eskisine
+     göre %38 DAHA UZUN — alçak güneşin asıl okuma aracı budur. */
+  const gunesElev = 11 * Math.PI / 180;
+  const gunesYatay = new THREE.Vector3(-0.62, 0, 0.36).normalize();
+  const gunesYon = new THREE.Vector3(
+    gunesYatay.x * Math.cos(gunesElev), Math.sin(gunesElev), gunesYatay.z * Math.cos(gunesElev));
   const gunes = new THREE.DirectionalLight(0xfff1dc, 4.3);
   gunes.castShadow = true;
-  gunes.shadow.mapSize.set(2048, 2048);
-  gunes.shadow.bias = -0.0004;
-  gunes.shadow.radius = 6;        // yumuşak yarı gölge — jilet siyahı leke değil
-  gunes.shadow.intensity = 0.62;  // dünya-ışığı gölgeyi tamamen karartmaz
+  gunes.shadow.mapSize.set(4096, 4096);
+  gunes.shadow.radius = 1;        // vakum: penumbra yok denecek kadar dar
+  /* intensity 1.0 = güneş TAM kapanır. Gölge içi karanlığı artık yalnız
+     dolgu ışıkları (yarıküre saçılımı + dünya-ışığı) belirler; 0,62 ile
+     dolguyu İKİ KEZ saymak gölgeyi silik bir lekeye çeviriyordu. */
+  gunes.shadow.intensity = 1.0;
+  /* bias/normalBias her karede gölge tekseline göre hesaplanır (bkz. GÖLGE
+     KUTUSU). Sabit -0.0004 değeri 399 birimlik derinlik aralığında 15,96 m
+     dünya ötelemesi demekti — 9 m'lik aracın gölgesini tamamen yiyordu. */
+  gunes.shadow.bias = 0;
+  gunes.shadow.normalBias = 0;
   sahne.add(gunes, gunes.target);
   // Mikro rölyefin güneşten kaçan yüzleri jilet siyahı olmasın: zayıf gökyüzü
   // dolgusu (gerçekte de ejecta/kaya saçılımı bu yüzleri hafifçe aydınlatır).
@@ -802,6 +946,20 @@ export async function mountLunarDescent(host, options = {}) {
   const dunyaIsigi = new THREE.DirectionalLight(0x39465c, 0.32); // dünya-ışığı (earthshine)
   dunyaIsigi.position.set(-3600, 470, -2900);
   sahne.add(dunyaIsigi);
+  /* REGOLİT SIÇRAMASI — İKİ DENEME DE ÖLÇÜMLE GERİ ALINDI, tekrar denemeyin:
+     (a) aşağı bakan ayrı bir DirectionalLight (fizikle ölçeklenmiş 0,12
+         şiddet: 11° güneşte zeminin aldığı 0,191·S ışıma × ~0,14 albedo
+         ≈ 0,027·S, anahtar güneş 4,3 → 0,12). Yönlü ışık YALNIZ tam aşağı
+         bakan normalleri aydınlatır; bu sahnede öyle GÖRÜNÜR yüzey yok
+         denecek kadar azdır — kareyi 365 pikselde (%0,03) değiştiriyordu.
+     (b) HemisphereLight'ın groundColor'ını 0x453b2e → 0x6b5b46'ya yükseltmek
+         (ground terimi 2,46×). Ölçüm: aracın gölgeli gövde yüzü 10,6 → 10,6;
+         karenin %98'inde fark ≤ 2 seviye. Nedeni aynı: yarıküre ışığında
+         YUKARI bakan yüzeyler (yani zeminin tamamı) skyColor'ı görür,
+         groundColor'a ancak dik ve aşağı bakan yüzler erişir.
+     Sıçrama sahnede zaten skyColor + dünya-ışığı dolgusuyla temsil ediliyor;
+     ölçülen gölge/aydınlık zemin oranı 21,9/94,5 = 0,23, Apollo yüzey
+     karelerinin bandında. Görünür katkısı olmayan ışık EKLENMEZ. */
 
   /* ---- Gökyüzü ---- */
   sahne.add(yildizlar(seed));
@@ -1134,7 +1292,12 @@ export async function mountLunarDescent(host, options = {}) {
     uDetay: { value: detayTex },
     uDetay2: { value: detayTex2 },
     uBolge: { value: bolgeTex },
-    uFrek: { value: new THREE.Vector4(20.0, 4.55, 1.05, 0.23) },   // tekrar / sahne birimi
+    /* Tap frekansları (tekrar / sahne birimi). Adımlar artık ALTIN ORANIN
+       KÜPÜ (φ³ = 4,236068) — kanıtlanabilir biçimde irrasyonel, yani hiçbir
+       tap çifti ortak periyoda oturamaz. Eski dizide 4,55/1,05 = 13/3 TAM
+       rasyoneldi: B ile C, üç periyotta bir yeniden kayda giriyordu (vuru
+       deseni). Periyotlar: 5,00 m · 21,2 m · 89,7 m · 380 m. */
+    uFrek: { value: new THREE.Vector4(20.0, 20 / FI3, 20 / (FI3 * FI3), 20 / (FI3 * FI3 * FI3)) },
     uAlbAmp: { value: new THREE.Vector4(0.26, 0.24, 0.22, 0.18) },
     /* Eğim genliği ölçülü: alçak güneşte (11°) fazla dik mikro yüzey, aydınlık
        tarafı 11°'nin ALTINA düşürüp kapkara terminatör lekeleri bırakıyordu. */
@@ -1163,7 +1326,10 @@ export async function mountLunarDescent(host, options = {}) {
   const kayaUnif = {
     uDetay: { value: detayTex },
     uDetay2: { value: detayTex2 },
-    uKayaFrek: { value: new THREE.Vector2(41.7, 139.0) },
+    /* 41,7 ↔ 139,0 oranı TAM 10/3'tü (rasyonel: iki tap üç periyotta bir
+       aynı kayda giriyordu). π ile çarpmak oranı irrasyonel yapar; periyot
+       0,72 m'den 0,76 m'ye kayar — ölçülen texel/piksel bandı aynı kalır. */
+    uKayaFrek: { value: new THREE.Vector2(41.7, 41.7 * Math.PI) },
     uKayaAlb: { value: new THREE.Vector2(0.30, 0.26) },
     uKayaEgim: { value: new THREE.Vector2(0.85, 0.70) },
   };
@@ -1410,10 +1576,32 @@ export async function mountLunarDescent(host, options = {}) {
     AYAK_YANAL = 0.44;
   }
   olc('arac');
-  arac.traverse(o => { if (o.isMesh) { o.castShadow = true; } });
+  /* ÖZ-GÖLGE: castShadow tek başına aracın kendi üzerine gölge DÜŞÜRMESİNİ
+     sağlamaz — alıcı taraf da açık olmalı. Alçak güneşte (11°) gövdenin
+     bacaklara, ayak konsollarının pedlere düşürdüğü gölge aracın hacmini
+     okutan asıl ipuçlarından biridir. */
+  arac.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   const aracSargi = new THREE.Group();
   aracSargi.add(arac);
   sahne.add(aracSargi);
+
+  /* Temas karartması çıkartması (bkz. aracAoDokusu). Zemine paralel, arazi
+     yüksekliğine oturur; opaklığı irtifayla sürülür (durumUygula). */
+  const aoTex = new THREE.CanvasTexture(aracAoDokusu(AYAK_YANAL * 0.62, 256));
+  aoTex.colorSpace = THREE.SRGBColorSpace;
+  aoTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  const aoMat = new THREE.MeshBasicMaterial({
+    map: aoTex, transparent: true, opacity: 0, depthWrite: false,
+    blending: THREE.CustomBlending,          // çarpımsal: ışık EKLEMEZ, yalnız kısar
+    blendSrc: THREE.ZeroFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+    polygonOffset: true, polygonOffsetFactor: -5, polygonOffsetUnits: -5,
+  });
+  const aoGeo = new THREE.PlaneGeometry(AYAK_YANAL * 0.09 * 4.4, AYAK_YANAL * 0.09 * 4.4, 1, 1);
+  aoGeo.rotateX(-Math.PI / 2);
+  const aoDecal = new THREE.Mesh(aoGeo, aoMat);
+  aoDecal.renderOrder = 4;
+  aoDecal.visible = false;
+  sahne.add(aoDecal);
 
   /* Ayak pedi izleri: pedin bastırdığı sığ çukur + çevresine serpilen ince
      toz yakası. Temas anında 1,1 s içinde açılır (bacak oturmasıyla aynı
@@ -1666,6 +1854,11 @@ export async function mountLunarDescent(host, options = {}) {
   let sonFazAdi = '';
   let sonDurum = model.durum(0);
   const zEkseni = new THREE.Vector3(0, 0, 1);
+  /* Gölge kutusunun teksel ızgarasına yuvarlanması için ışık uzayı tabanı
+     (three'nin lookAt kuralı: z = göz−hedef, x = up × z, y = z × x). */
+  const YUKARI = new THREE.Vector3(0, 1, 0);
+  const gIsikX = new THREE.Vector3(), gIsikY = new THREE.Vector3();
+  const golgeHedef = new THREE.Vector3();
 
   const durumUygula = s => {
     sonDurum = s;
@@ -1703,7 +1896,11 @@ export async function mountLunarDescent(host, options = {}) {
        iniş boyunca sahne KARARIR; kamera da gerçek çekimdeki gibi açılır. İrtifa
        bu yerel güneş yüksekliğinin (menzille birebir bağlı) vekilidir. Rampa
        süreklidir (eşik yok) ve yalnız s.y'nin fonksiyonudur — scrub güvenli. */
-    renderer.toneMappingExposure = 0.30 + 1.32 * (1 - purussuz(150, 5000, s.y));
+    /* Katsayılar güneş elevasyonu 15,2°'den GERÇEK 11°'ye indirilince yeniden
+       ölçülerek ayarlandı: düz zeminin geliş açısı sin15,2° = 0,262'den
+       sin11° = 0,191'e düşüyor (%27 daha az doğrudan ışık), ölçülen yüzey
+       parlaklığı 93,7'den 79,0'a iniyordu. 0,30/1,32 → 0,34/1,51. */
+    renderer.toneMappingExposure = 0.34 + 1.51 * (1 - purussuz(150, 5000, s.y));
 
     // Toz
     tozGuncelle(s.t);
@@ -1731,14 +1928,71 @@ export async function mountLunarDescent(host, options = {}) {
     iz.material.opacity = 0.3 * purussuz(90, 600, s.y);
     iz.visible = iz.material.opacity > 0.01;
 
-    // Gölge kamerası aracı izler (alçakta anlamlı, sürekli)
+    /* ---- GÖLGE KUTUSU: sahne ölçeğine göre DİNAMİK, teksel ızgarasına kilitli
+       Eski kurulum ölçüldü ve iki ayrı nedenle temas planında gölgeyi YOK
+       ediyordu (kanıt: baz-temas.png):
+         · kutu yarısı 2,5 birim (=250 m) sabit tabanlıydı → 2048 haritada
+           24,4 cm/teksel; 9 m'lik araç yalnız 37 teksel, üstüne radius=6 PCF
+           bulanıklığı (≈1,5 m) → gölge silik bir lekeye iniyordu.
+         · near=1, far=400 → derinlik aralığı 399 birim; bias=-0,0004 bunun
+           DÜNYA karşılığı olarak 15,96 m'ye denk geliyordu. Araç gövdesi
+           zeminden ancak 7 m yukarıdaydı; 11° güneşte gölge derinlik farkı
+           h/sin11° = 5,24·h, yani 37 m tepede ama pedlerin dibinde SIFIR.
+           16 m'lik bias gölgenin köküyle birlikte tamamını yiyordu.
+       Yeni kurulum: kutu araç ölçeğiyle büyür, GEOMETRİK bir kademe merdivenine
+       yuvarlanır (teksel boyu kare içinde sabit kalsın → snapping anlamlı olsun),
+       merkez ışık uzayında teksel ızgarasına yuvarlanır (gölge kenarı akmaz) ve
+       bias/normalBias ölçülen teksel boyundan türetilir. */
     const gk = gunes.shadow.camera;
-    const yarim = Math.max(2.5, su * 11);
+    const yerYuk = Math.max(0, aracPoz.y - araziYukseklik(xs, 0));   // zeminden yükseklik
+    /* Taban 1,7 birim (=170 m): yüzey kamerası araçtan 101 m ötede duruyor,
+       yani ön alandaki kayalar da kutunun içinde kalır (gölge düşürürler). */
+    const gerek = Math.max(1.7, su * 3.4);
+    const KADEME = 1.25;                                    // geometrik merdiven
+    const yarim = 1.7 * Math.pow(KADEME, Math.max(0, Math.ceil(Math.log(gerek / 1.7) / Math.log(KADEME))));
+    const teksel = 2 * yarim / gunes.shadow.mapSize.x;
+    /* Alçak güneşte (11°) yerdeki gölge, ışık uzayında aracın TAM ALTINDADIR
+       (yalnız derinlikte 5,24·h kadar geridedir) — bu yüzden kutuyu araca
+       ortalamak gölgenin tamamını kapsamak için yeterli; derinlik aralığını
+       irtifayla açmak gerekir. */
+    /* Derinlik aralığı ASİMETRİKTİR. Araç, kutunun derinlik ekseninde D'de
+       durur; ışığa DOĞRU yalnız kendi boyu kadar yer gerekir, ama ARKADA
+       yerdeki gölgeye kadar h/sin(11°) = 5,24·h uzanmak gerekir. (Bir tur
+       burada kaybedildi: fazla derinlik `near` tarafına verilince 297 m'de
+       zemin `far`ın ötesinde kalıyor ve takip kamerasında gölge yok oluyordu
+       — kanıt golge-t4-chase.png.) */
+    const arkaDerinlik = yerYuk / gunesYon.y + 3.5 * yarim + 1;
+    const D = 2 * yarim + 1;
+    golgeHedef.copy(aracPoz);
+    // Teksel ızgarasına yuvarla: ışık uzayının iki yanal ekseninde
+    gIsikX.crossVectors(YUKARI, gunesYon).normalize();
+    gIsikY.crossVectors(gunesYon, gIsikX);
+    golgeHedef.addScaledVector(gIsikX, Math.round(golgeHedef.dot(gIsikX) / teksel) * teksel - golgeHedef.dot(gIsikX));
+    golgeHedef.addScaledVector(gIsikY, Math.round(golgeHedef.dot(gIsikY) / teksel) * teksel - golgeHedef.dot(gIsikY));
     gk.left = -yarim; gk.right = yarim; gk.top = yarim; gk.bottom = -yarim;
-    gk.near = 1; gk.far = 400;
-    gunes.position.copy(aracPoz).addScaledVector(gunesYon, 160);
-    gunes.target.position.set(xs, araziYukseklik(xs, 0), 0); // gölge hedefi yerel arazide
+    gk.near = D - 1.6 * yarim;          // = 0,4·yarım + 1 > 0
+    gk.far = D + arkaDerinlik;
+    /* Ortografik derinlik DOĞRUSALDIR: bias'ın dünya karşılığı = bias·(far−near).
+       Akne'yi normalBias (dünya birimi, normal boyunca) taşır; bias yalnız
+       küçük bir emniyet payıdır — böylece peter-panning teksel mertebesinde
+       kalır ve pedler ile gölgenin kökü BİRLEŞİK okunur. */
+    gunes.shadow.normalBias = 1.6 * teksel;
+    gunes.shadow.bias = -0.35 * teksel / (gk.far - gk.near);
+    gunes.position.copy(golgeHedef).addScaledVector(gunesYon, D);
+    gunes.target.position.copy(golgeHedef);
     gk.updateProjectionMatrix();
+
+    /* Temas karartması: aracın gövdesi altındaki ortam örtüşmesi (AO). Kayaların
+       "etek izi" diliyle aynı — araç zemine YAPIŞTIRILMIŞ değil OTURMUŞ okunur.
+       Yerden yüksekliğe göre sürekli söner (eşik yok): 30 m'de görünmez,
+       temasta tam güçte ve pedlerin altında yoğunlaşır. */
+    const aoGuc = 1 - purussuz(0, 30, s.y);      // son 30 m'de sürekli açılır
+    aoMat.opacity = 0.86 * aoGuc;
+    aoDecal.visible = aoGuc > 0.01;
+    if (aoDecal.visible) {
+      aoDecal.position.set(xs, araziYukseklik(xs, 0) + ZEMIN_UST * 0.35, 0);
+      aoDecal.scale.setScalar(su / 0.09);
+    }
 
     // HUD
     m_irtifa.textContent = s.y >= 1000
@@ -1873,6 +2127,9 @@ export async function mountLunarDescent(host, options = {}) {
       kok.remove();
     },
     model: { ozet, olaylar, sabitler: SABITLER },
+    /* Hata avı kancası (sözleşme §6: ölçülür, tahmin edilmez). Gölge kutusu,
+       bias'ın DÜNYA karşılığı ve tap frekansları buradan okunup ölçülür. */
+    hataAyikla: { sahne, kamera, renderer, gunes, aracSargi, kayaGrup, zeminUnif, kayaUnif },
     toplamOynat: model.toplamOynat,
     aracKaynak,
     get oynatZamani() { return oynatZaman; },
@@ -1881,7 +2138,7 @@ export async function mountLunarDescent(host, options = {}) {
   };
 
   /* Katman kapatma anahtarları (sözleşme §6: hata avı için) —
-     ?kapat=arac,iz,toz,zemin,yakin,plum,dunya */
+     ?kapat=arac,iz,toz,zemin,yakin,plum,dunya,kaya,iziz,ao,golge */
   {
     const kapat = new URLSearchParams(location.search).get('kapat');
     if (kapat) {
@@ -1893,6 +2150,8 @@ export async function mountLunarDescent(host, options = {}) {
       if (k.has('yakin')) zeminUnif.uDetayGuc.value = 0; // çok ölçekli detay katmanı kapalı
       if (k.has('kaya')) sahne.remove(kayaGrup);
       if (k.has('iziz')) { sahne.remove(supurme); sahne.remove(pedGrup); }
+      if (k.has('ao')) sahne.remove(aoDecal);           // temas karartması
+      if (k.has('golge')) renderer.shadowMap.enabled = false;
       if (k.has('plum')) {
         plumGrup.removeFromParent(); sahne.remove(plumIsik);
         if (motorFX) motorFX.group.removeFromParent();
