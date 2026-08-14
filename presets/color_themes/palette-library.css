@@ -581,6 +581,276 @@
   --ramp-div-5: #EFD7B9;
 }
 
+[data-palette="aurora-boreal"] {
+  /* Aurora / Polar Night — açık — analogous-cool */
+  --color-canvas: #3FD98A;
+  --color-surface: #35D181;
+  --color-ink: #06202B;
+  --color-muted: #175848;
+  --color-accent: #06202B;
+  --color-accent-ink: #3FD98A;
+  --color-rule: #299366;
+  --color-data-1: #3FD98A;
+  --color-data-2: #E05A63;
+  --color-data-3: #6C7BE0;
+  --color-data-4: #2FA8A0;
+  --color-data-5: #B44A7A;
+  --color-data-6: #E6C36A;
+  --ramp-seq-1: #35D181;
+  --ramp-seq-2: #29A56C;
+  --ramp-seq-3: #1E7856;
+  --ramp-seq-4: #124C40;
+  --ramp-seq-5: #06202B;
+  --ramp-div-1: #E05A63;
+  --ramp-div-2: #87A078;
+  --ramp-div-3: #175848;
+  --ramp-div-4: #53AFB1;
+  --ramp-div-5: #6C7BE0;
+}
+
+[data-palette="aurora-boreal-dark"] {
+  /* Aurora / Polar Night — koyu — analogous-cool */
+  --color-canvas: #06202B;
+  --color-surface: #0A2E3E;
+  --color-ink: #3FD98A;
+  --color-muted: #2C9A6A;
+  --color-accent: #3FD98A;
+  --color-accent-ink: #06202B;
+  --color-rule: #165446;
+  --color-data-1: #A0E9C3;
+  --color-data-2: #F0BBBE;
+  --color-data-3: #CACFF2;
+  --color-data-4: #75D2CC;
+  --color-data-5: #D29DB5;
+  --color-data-6: #F5E9CC;
+  --ramp-seq-1: #0A2E3E;
+  --ramp-seq-2: #175951;
+  --ramp-seq-3: #248464;
+  --ramp-seq-4: #32AE77;
+  --ramp-seq-5: #3FD98A;
+  --ramp-div-1: #F0BBBE;
+  --ramp-div-2: #6F666D;
+  --ramp-div-3: #2C9A6A;
+  --ramp-div-4: #5E6F85;
+  --ramp-div-5: #CACFF2;
+}
+
+[data-palette="neptune-methane"] {
+  /* Neptune Methane / Deep Blue — açık — monochromatic-cool */
+  --color-canvas: #8FD9E8;
+  --color-surface: #83D2E2;
+  --color-ink: #0D2C4E;
+  --color-muted: #34607C;
+  --color-accent: #0D2C4E;
+  --color-accent-ink: #8FD9E8;
+  --color-rule: #5E97AD;
+  --color-data-1: #3FA9D6;
+  --color-data-2: #1C4E7A;
+  --color-data-3: #57C9C0;
+  --color-data-4: #7C6BD0;
+  --color-data-5: #D9A65C;
+  --color-data-6: #C2617E;
+  --ramp-seq-1: #83D2E2;
+  --ramp-seq-2: #66A8BD;
+  --ramp-seq-3: #487F98;
+  --ramp-seq-4: #2A5673;
+  --ramp-seq-5: #0D2C4E;
+  --ramp-div-1: #1C4E7A;
+  --ramp-div-2: #5B9AB6;
+  --ramp-div-3: #34607C;
+  --ramp-div-4: #76D2D6;
+  --ramp-div-5: #57C9C0;
+}
+
+[data-palette="neptune-methane-dark"] {
+  /* Neptune Methane / Deep Blue — koyu — monochromatic-cool */
+  --color-canvas: #0D2C4E;
+  --color-surface: #13375F;
+  --color-ink: #8FD9E8;
+  --color-muted: #639EB4;
+  --color-accent: #8FD9E8;
+  --color-accent-ink: #0D2C4E;
+  --color-rule: #315C79;
+  --color-data-1: #9ED1E7;
+  --color-data-2: #3C88CB;
+  --color-data-3: #AFE2DE;
+  --color-data-4: #C9C2E9;
+  --color-data-5: #ECD7B9;
+  --color-data-6: #DFB5C1;
+  --ramp-seq-1: #13375F;
+  --ramp-seq-2: #326081;
+  --ramp-seq-3: #5188A3;
+  --ramp-seq-4: #70B0C6;
+  --ramp-seq-5: #8FD9E8;
+  --ramp-div-1: #3C88CB;
+  --ramp-div-2: #225586;
+  --ramp-div-3: #639EB4;
+  --ramp-div-4: #567E8F;
+  --ramp-div-5: #AFE2DE;
+}
+
+[data-palette="eclipse-corona"] {
+  /* Eclipse / Corona Pearl — açık — neutral-with-warm-accent */
+  --color-canvas: #F2E8DC;
+  --color-surface: #ECDFD0;
+  --color-ink: #171226;
+  --color-muted: #59525D;
+  --color-accent: #171226;
+  --color-accent-ink: #F2E8DC;
+  --color-rule: #9F9797;
+  --color-data-1: #E0708A;
+  --color-data-2: #6B5B95;
+  --color-data-3: #C0392B;
+  --color-data-4: #4F8A8B;
+  --color-data-5: #D4A94E;
+  --color-data-6: #8C8C99;
+  --ramp-seq-1: #ECDFD0;
+  --ramp-seq-2: #B7ACA6;
+  --ramp-seq-3: #82787B;
+  --ramp-seq-4: #4C4550;
+  --ramp-seq-5: #171226;
+  --ramp-div-1: #6B5B95;
+  --ramp-div-2: #B5A9BC;
+  --ramp-div-3: #59525D;
+  --ramp-div-4: #DB998C;
+  --ramp-div-5: #C0392B;
+}
+
+[data-palette="eclipse-corona-dark"] {
+  /* Eclipse / Corona Pearl — koyu — neutral-with-warm-accent */
+  --color-canvas: #171226;
+  --color-surface: #211B34;
+  --color-ink: #F2E8DC;
+  --color-muted: #A89F9E;
+  --color-accent: #F2E8DC;
+  --color-accent-ink: #171226;
+  --color-rule: #544E59;
+  --color-data-1: #F2CED6;
+  --color-data-2: #A9A1BF;
+  --color-data-3: #DD877E;
+  --color-data-4: #91B9B9;
+  --color-data-5: #E7D4AB;
+  --color-data-6: #CACACB;
+  --ramp-seq-1: #211B34;
+  --ramp-seq-2: #554E5E;
+  --ramp-seq-3: #8A8288;
+  --ramp-seq-4: #BEB5B2;
+  --ramp-seq-5: #F2E8DC;
+  --ramp-div-1: #A9A1BF;
+  --ramp-div-2: #59526B;
+  --ramp-div-3: #A89F9E;
+  --ramp-div-4: #70474E;
+  --ramp-div-5: #DD877E;
+}
+
+[data-palette="geoid-anomaly"] {
+  /* Geoid Anomaly / Chart Paper — açık — diverging-axis */
+  --color-canvas: #EDF1F2;
+  --color-surface: #E4E8EA;
+  --color-ink: #0B2E3B;
+  --color-muted: #4F6872;
+  --color-accent: #0B2E3B;
+  --color-accent-ink: #EDF1F2;
+  --color-rule: #97A7AC;
+  --color-data-1: #2166AC;
+  --color-data-2: #B2182B;
+  --color-data-3: #2A7F8C;
+  --color-data-4: #B98A45;
+  --color-data-5: #46586A;
+  --color-data-6: #6E8B7B;
+  --ramp-seq-1: #E4E8EA;
+  --ramp-seq-2: #AEBABE;
+  --ramp-seq-3: #788B92;
+  --ramp-seq-4: #415D67;
+  --ramp-seq-5: #0B2E3B;
+  --ramp-div-1: #B2182B;
+  --ramp-div-2: #D28F98;
+  --ramp-div-3: #4F6872;
+  --ramp-div-4: #95BEC4;
+  --ramp-div-5: #2A7F8C;
+}
+
+[data-palette="geoid-anomaly-dark"] {
+  /* Geoid Anomaly / Chart Paper — koyu — diverging-axis */
+  --color-canvas: #0B2E3B;
+  --color-surface: #103C4C;
+  --color-ink: #EDF1F2;
+  --color-muted: #A0AFB4;
+  --color-accent: #EDF1F2;
+  --color-accent-ink: #0B2E3B;
+  --color-rule: #4A656E;
+  --color-data-1: #629EDB;
+  --color-data-2: #E35769;
+  --color-data-3: #5EBAC8;
+  --color-data-4: #D4BD9A;
+  --color-data-5: #7F90A1;
+  --color-data-6: #B0BAB4;
+  --ramp-seq-1: #103C4C;
+  --ramp-seq-2: #476976;
+  --ramp-seq-3: #7E969F;
+  --ramp-seq-4: #B6C4C8;
+  --ramp-seq-5: #EDF1F2;
+  --ramp-div-1: #E35769;
+  --ramp-div-2: #6C4050;
+  --ramp-div-3: #A0AFB4;
+  --ramp-div-4: #306D7A;
+  --ramp-div-5: #5EBAC8;
+}
+
+[data-palette="graticule-slate"] {
+  /* Graticule Slate / Ellipsoid Amber — açık — complementary-muted */
+  --color-canvas: #9FC4D4;
+  --color-surface: #96BBCB;
+  --color-ink: #16222E;
+  --color-muted: #3F5360;
+  --color-accent: #16222E;
+  --color-accent-ink: #9FC4D4;
+  --color-rule: #6B8695;
+  --color-data-1: #7FB6C9;
+  --color-data-2: #D9A441;
+  --color-data-3: #8C7FD0;
+  --color-data-4: #3E7CA8;
+  --color-data-5: #6FA36B;
+  --color-data-6: #C4574B;
+  --ramp-seq-1: #96BBCB;
+  --ramp-seq-2: #7695A4;
+  --ramp-seq-3: #566E7C;
+  --ramp-seq-4: #364855;
+  --ramp-seq-5: #16222E;
+  --ramp-div-1: #D9A441;
+  --ramp-div-2: #B9B692;
+  --ramp-div-3: #3F5360;
+  --ramp-div-4: #96A5D2;
+  --ramp-div-5: #8C7FD0;
+}
+
+[data-palette="graticule-slate-dark"] {
+  /* Graticule Slate / Ellipsoid Amber — koyu — complementary-muted */
+  --color-canvas: #16222E;
+  --color-surface: #1F2D3C;
+  --color-ink: #9FC4D4;
+  --color-muted: #708D9C;
+  --color-accent: #9FC4D4;
+  --color-accent-ink: #16222E;
+  --color-rule: #3C4F5C;
+  --color-data-1: #D0E2E9;
+  --color-data-2: #E9D0A1;
+  --color-data-3: #D7D3ED;
+  --color-data-4: #89B1CE;
+  --color-data-5: #B5CBB3;
+  --color-data-6: #DDA8A3;
+  --ramp-seq-1: #1F2D3C;
+  --ramp-seq-2: #3F5362;
+  --ramp-seq-3: #5F7888;
+  --ramp-seq-4: #7F9EAE;
+  --ramp-seq-5: #9FC4D4;
+  --ramp-div-1: #E9D0A1;
+  --ramp-div-2: #757062;
+  --ramp-div-3: #708D9C;
+  --ramp-div-4: #6D7284;
+  --ramp-div-5: #D7D3ED;
+}
+
 
 
 /* ==== Fade paletleri — başlık zemini · ışık olayı · SIRALI veri rampası.
@@ -663,4 +933,52 @@
   --ramp-seq-3: #293E63;
   --ramp-seq-4: #344E7D;
   --ramp-seq-5: #3E5E96;
+}
+
+[data-gradient="airglow-limb"] {
+  /* Airglow Limb — yörüngeden görülen gece tarafı uzuv parlaması, atmosfer katmanları, irtifa rampası */
+  --grad-start: #040B16;
+  --grad-end: #35C4B4;
+  --grad-mid: #1C6865;
+  --grad-text: #FFFFFF;
+  --gradient: linear-gradient(100deg, var(--grad-start), var(--grad-end));
+  --ramp-seq-1: #040B16;
+  --ramp-seq-2: #10393E;
+  --ramp-seq-3: #1C6865;
+  --ramp-seq-4: #29968C;
+  --ramp-seq-5: #35C4B4;
+  --grad-scrim: linear-gradient(rgba(0,0,0,0.33), rgba(0,0,0,0.33));
+  --grad-scrim-alpha: 0.33;
+}
+
+[data-gradient="solar-photosphere"] {
+  /* Solar Photosphere — yıldız yüzeyi, ısı ve sıcaklık rampaları, motor plümü sıcaklık ölçeği */
+  --grad-start: #4A1002;
+  --grad-end: #FFC24D;
+  --grad-mid: #A46927;
+  --grad-text: #FFFFFF;
+  --gradient: linear-gradient(100deg, var(--grad-start), var(--grad-end));
+  --ramp-seq-1: #4A1002;
+  --ramp-seq-2: #773C15;
+  --ramp-seq-3: #A46927;
+  --ramp-seq-4: #D2953A;
+  --ramp-seq-5: #FFC24D;
+  --grad-scrim: linear-gradient(rgba(0,0,0,0.42), rgba(0,0,0,0.42));
+  --grad-scrim-alpha: 0.42;
+}
+
+[data-gradient="geoid-undulation"] {
+  /* Geoid Undulation — geoit ondülasyonu, yükseklik/derinlik rampaları, anomali haritaları */
+  --grad-start: #1B3A6B;
+  --grad-end: #D98C3F;
+  --grad-mid: #7A6355;
+  --grad-text: #FFFFFF;
+  --gradient: linear-gradient(100deg, var(--grad-start), var(--grad-end));
+  --ramp-seq-1: #1B3A6B;
+  --ramp-seq-2: #4A4E60;
+  --ramp-seq-3: #7A6355;
+  --ramp-seq-4: #AA784A;
+  --ramp-seq-5: #D98C3F;
+  --grad-scrim: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.25));
+  --grad-scrim-alpha: 0.25;
 }

@@ -1642,6 +1642,626 @@
         "measured": 4.45,
         "displayOnly": true
       }
+    },
+    {
+      "id": "aurora-boreal",
+      "name": "Aurora / Polar Night — açık",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "analogous-cool",
+      "wheel": "kutup gecesi mavi-yeşili ile 557,7 nm oksijen yeşili — auroranın kendi tayfı",
+      "pair": {
+        "primary": "#06202B",
+        "secondary": "#3FD98A"
+      },
+      "character": [
+        "space",
+        "cool",
+        "luminous",
+        "night",
+        "light"
+      ],
+      "tokens": {
+        "canvas": "#3FD98A",
+        "surface": "#35D181",
+        "ink": "#06202B",
+        "muted": "#175848",
+        "accent": "#06202B",
+        "accentInk": "#3FD98A",
+        "data1": "#3FD98A",
+        "data2": "#E05A63",
+        "data3": "#6C7BE0",
+        "data4": "#2FA8A0",
+        "data5": "#B44A7A",
+        "data6": "#E6C36A",
+        "rule": "#299366"
+      },
+      "ramps": {
+        "sequential": [
+          "#35D181",
+          "#29A56C",
+          "#1E7856",
+          "#124C40",
+          "#06202B"
+        ],
+        "diverging": [
+          "#E05A63",
+          "#87A078",
+          "#175848",
+          "#53AFB1",
+          "#6C7BE0"
+        ]
+      },
+      "cvd": "data1 (oksijen yeşili) ile data4 (iyonosfer turkuazı) protanopide yakınlaşır; auroranın kırmızı kolu (data2) ayırt edici seri olarak kullanılsın.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "aurora-boreal-dark",
+      "name": "Aurora / Polar Night — koyu",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "analogous-cool",
+      "wheel": "kutup gecesi mavi-yeşili ile 557,7 nm oksijen yeşili — auroranın kendi tayfı",
+      "pair": {
+        "primary": "#06202B",
+        "secondary": "#3FD98A"
+      },
+      "character": [
+        "space",
+        "cool",
+        "luminous",
+        "night",
+        "dark"
+      ],
+      "tokens": {
+        "canvas": "#06202B",
+        "surface": "#0A2E3E",
+        "ink": "#3FD98A",
+        "muted": "#2C9A6A",
+        "accent": "#3FD98A",
+        "accentInk": "#06202B",
+        "data1": "#A0E9C3",
+        "data2": "#F0BBBE",
+        "data3": "#CACFF2",
+        "data4": "#75D2CC",
+        "data5": "#D29DB5",
+        "data6": "#F5E9CC",
+        "rule": "#165446"
+      },
+      "ramps": {
+        "sequential": [
+          "#0A2E3E",
+          "#175951",
+          "#248464",
+          "#32AE77",
+          "#3FD98A"
+        ],
+        "diverging": [
+          "#F0BBBE",
+          "#6F666D",
+          "#2C9A6A",
+          "#5E6F85",
+          "#CACFF2"
+        ]
+      },
+      "cvd": "data1 (oksijen yeşili) ile data4 (iyonosfer turkuazı) protanopide yakınlaşır; auroranın kırmızı kolu (data2) ayırt edici seri olarak kullanılsın.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "neptune-methane",
+      "name": "Neptune Methane / Deep Blue — açık",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "monochromatic-cool",
+      "wheel": "metan soğurmasının mavisi; tek soğuk yayda değer basamakları",
+      "pair": {
+        "primary": "#0D2C4E",
+        "secondary": "#8FD9E8"
+      },
+      "character": [
+        "space",
+        "cool",
+        "planetary",
+        "calm",
+        "light"
+      ],
+      "tokens": {
+        "canvas": "#8FD9E8",
+        "surface": "#83D2E2",
+        "ink": "#0D2C4E",
+        "muted": "#34607C",
+        "accent": "#0D2C4E",
+        "accentInk": "#8FD9E8",
+        "data1": "#3FA9D6",
+        "data2": "#1C4E7A",
+        "data3": "#57C9C0",
+        "data4": "#7C6BD0",
+        "data5": "#D9A65C",
+        "data6": "#C2617E",
+        "rule": "#5E97AD"
+      },
+      "ramps": {
+        "sequential": [
+          "#83D2E2",
+          "#66A8BD",
+          "#487F98",
+          "#2A5673",
+          "#0D2C4E"
+        ],
+        "diverging": [
+          "#1C4E7A",
+          "#5B9AB6",
+          "#34607C",
+          "#76D2D6",
+          "#57C9C0"
+        ]
+      },
+      "cvd": "Tek yayda mavi seriler bitişik kullanıldığında ayrışmaz: data1/data2 arasına daima data5 (kum) ya da data6 (gül) koyun.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "neptune-methane-dark",
+      "name": "Neptune Methane / Deep Blue — koyu",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "monochromatic-cool",
+      "wheel": "metan soğurmasının mavisi; tek soğuk yayda değer basamakları",
+      "pair": {
+        "primary": "#0D2C4E",
+        "secondary": "#8FD9E8"
+      },
+      "character": [
+        "space",
+        "cool",
+        "planetary",
+        "calm",
+        "dark"
+      ],
+      "tokens": {
+        "canvas": "#0D2C4E",
+        "surface": "#13375F",
+        "ink": "#8FD9E8",
+        "muted": "#639EB4",
+        "accent": "#8FD9E8",
+        "accentInk": "#0D2C4E",
+        "data1": "#9ED1E7",
+        "data2": "#3C88CB",
+        "data3": "#AFE2DE",
+        "data4": "#C9C2E9",
+        "data5": "#ECD7B9",
+        "data6": "#DFB5C1",
+        "rule": "#315C79"
+      },
+      "ramps": {
+        "sequential": [
+          "#13375F",
+          "#326081",
+          "#5188A3",
+          "#70B0C6",
+          "#8FD9E8"
+        ],
+        "diverging": [
+          "#3C88CB",
+          "#225586",
+          "#639EB4",
+          "#567E8F",
+          "#AFE2DE"
+        ]
+      },
+      "cvd": "Tek yayda mavi seriler bitişik kullanıldığında ayrışmaz: data1/data2 arasına daima data5 (kum) ya da data6 (gül) koyun.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "eclipse-corona",
+      "name": "Eclipse / Corona Pearl — açık",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "neutral-with-warm-accent",
+      "wheel": "tutulma karanlığı ile korona incisi; kromosferin gülü tek sıcak vurgu",
+      "pair": {
+        "primary": "#171226",
+        "secondary": "#F2E8DC"
+      },
+      "character": [
+        "space",
+        "dramatic",
+        "editorial",
+        "premium",
+        "light"
+      ],
+      "tokens": {
+        "canvas": "#F2E8DC",
+        "surface": "#ECDFD0",
+        "ink": "#171226",
+        "muted": "#59525D",
+        "accent": "#171226",
+        "accentInk": "#F2E8DC",
+        "data1": "#E0708A",
+        "data2": "#6B5B95",
+        "data3": "#C0392B",
+        "data4": "#4F8A8B",
+        "data5": "#D4A94E",
+        "data6": "#8C8C99",
+        "rule": "#9F9797"
+      },
+      "ramps": {
+        "sequential": [
+          "#ECDFD0",
+          "#B7ACA6",
+          "#82787B",
+          "#4C4550",
+          "#171226"
+        ],
+        "diverging": [
+          "#6B5B95",
+          "#B5A9BC",
+          "#59525D",
+          "#DB998C",
+          "#C0392B"
+        ]
+      },
+      "cvd": "data1 (kromosfer gülü) ile data3 (protüberans kırmızısı) kırmızı-yeşil körlüğünde birleşir; ikisini aynı grafikte kullanmayın.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "eclipse-corona-dark",
+      "name": "Eclipse / Corona Pearl — koyu",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "neutral-with-warm-accent",
+      "wheel": "tutulma karanlığı ile korona incisi; kromosferin gülü tek sıcak vurgu",
+      "pair": {
+        "primary": "#171226",
+        "secondary": "#F2E8DC"
+      },
+      "character": [
+        "space",
+        "dramatic",
+        "editorial",
+        "premium",
+        "dark"
+      ],
+      "tokens": {
+        "canvas": "#171226",
+        "surface": "#211B34",
+        "ink": "#F2E8DC",
+        "muted": "#A89F9E",
+        "accent": "#F2E8DC",
+        "accentInk": "#171226",
+        "data1": "#F2CED6",
+        "data2": "#A9A1BF",
+        "data3": "#DD877E",
+        "data4": "#91B9B9",
+        "data5": "#E7D4AB",
+        "data6": "#CACACB",
+        "rule": "#544E59"
+      },
+      "ramps": {
+        "sequential": [
+          "#211B34",
+          "#554E5E",
+          "#8A8288",
+          "#BEB5B2",
+          "#F2E8DC"
+        ],
+        "diverging": [
+          "#A9A1BF",
+          "#59526B",
+          "#A89F9E",
+          "#70474E",
+          "#DD877E"
+        ]
+      },
+      "cvd": "data1 (kromosfer gülü) ile data3 (protüberans kırmızısı) kırmızı-yeşil körlüğünde birleşir; ikisini aynı grafikte kullanmayın.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "geoid-anomaly",
+      "name": "Geoid Anomaly / Chart Paper — açık",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "diverging-axis",
+      "wheel": "harita kağıdı zemin; negatif anomali mavisi ↔ pozitif anomali kırmızısı",
+      "pair": {
+        "primary": "#0B2E3B",
+        "secondary": "#EDF1F2"
+      },
+      "character": [
+        "geodesy",
+        "cartographic",
+        "analytic",
+        "light",
+        "light"
+      ],
+      "tokens": {
+        "canvas": "#EDF1F2",
+        "surface": "#E4E8EA",
+        "ink": "#0B2E3B",
+        "muted": "#4F6872",
+        "accent": "#0B2E3B",
+        "accentInk": "#EDF1F2",
+        "data1": "#2166AC",
+        "data2": "#B2182B",
+        "data3": "#2A7F8C",
+        "data4": "#B98A45",
+        "data5": "#46586A",
+        "data6": "#6E8B7B",
+        "rule": "#97A7AC"
+      },
+      "ramps": {
+        "sequential": [
+          "#E4E8EA",
+          "#AEBABE",
+          "#788B92",
+          "#415D67",
+          "#0B2E3B"
+        ],
+        "diverging": [
+          "#B2182B",
+          "#D28F98",
+          "#4F6872",
+          "#95BEC4",
+          "#2A7F8C"
+        ]
+      },
+      "cvd": "data1/data2 RdBu ekseni deuteranopi ve protanopide korunur — jeodezik anomali haritalarında bilinçli tercih; data6 (yosun) ile data3 (deniz) bitişik seri olmasın.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "geoid-anomaly-dark",
+      "name": "Geoid Anomaly / Chart Paper — koyu",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "diverging-axis",
+      "wheel": "harita kağıdı zemin; negatif anomali mavisi ↔ pozitif anomali kırmızısı",
+      "pair": {
+        "primary": "#0B2E3B",
+        "secondary": "#EDF1F2"
+      },
+      "character": [
+        "geodesy",
+        "cartographic",
+        "analytic",
+        "light",
+        "dark"
+      ],
+      "tokens": {
+        "canvas": "#0B2E3B",
+        "surface": "#103C4C",
+        "ink": "#EDF1F2",
+        "muted": "#A0AFB4",
+        "accent": "#EDF1F2",
+        "accentInk": "#0B2E3B",
+        "data1": "#629EDB",
+        "data2": "#E35769",
+        "data3": "#5EBAC8",
+        "data4": "#D4BD9A",
+        "data5": "#7F90A1",
+        "data6": "#B0BAB4",
+        "rule": "#4A656E"
+      },
+      "ramps": {
+        "sequential": [
+          "#103C4C",
+          "#476976",
+          "#7E969F",
+          "#B6C4C8",
+          "#EDF1F2"
+        ],
+        "diverging": [
+          "#E35769",
+          "#6C4050",
+          "#A0AFB4",
+          "#306D7A",
+          "#5EBAC8"
+        ]
+      },
+      "cvd": "data1/data2 RdBu ekseni deuteranopi ve protanopide korunur — jeodezik anomali haritalarında bilinçli tercih; data6 (yosun) ile data3 (deniz) bitişik seri olmasın.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "graticule-slate",
+      "name": "Graticule Slate / Ellipsoid Amber — açık",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "complementary-muted",
+      "wheel": "paralel-meridyen camgöbeği ↔ elipsoit kehribarı; ölçüm defteri dili",
+      "pair": {
+        "primary": "#16222E",
+        "secondary": "#9FC4D4"
+      },
+      "character": [
+        "geodesy",
+        "technical",
+        "instrument",
+        "dark",
+        "light"
+      ],
+      "tokens": {
+        "canvas": "#9FC4D4",
+        "surface": "#96BBCB",
+        "ink": "#16222E",
+        "muted": "#3F5360",
+        "accent": "#16222E",
+        "accentInk": "#9FC4D4",
+        "data1": "#7FB6C9",
+        "data2": "#D9A441",
+        "data3": "#8C7FD0",
+        "data4": "#3E7CA8",
+        "data5": "#6FA36B",
+        "data6": "#C4574B",
+        "rule": "#6B8695"
+      },
+      "ramps": {
+        "sequential": [
+          "#96BBCB",
+          "#7695A4",
+          "#566E7C",
+          "#364855",
+          "#16222E"
+        ],
+        "diverging": [
+          "#D9A441",
+          "#B9B692",
+          "#3F5360",
+          "#96A5D2",
+          "#8C7FD0"
+        ]
+      },
+      "cvd": "data4 (deniz mavisi) ile data1 (grid camgöbeği) yakın; katman ayrımı için birini kesikli çizgi yapın.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "graticule-slate-dark",
+      "name": "Graticule Slate / Ellipsoid Amber — koyu",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "complementary-muted",
+      "wheel": "paralel-meridyen camgöbeği ↔ elipsoit kehribarı; ölçüm defteri dili",
+      "pair": {
+        "primary": "#16222E",
+        "secondary": "#9FC4D4"
+      },
+      "character": [
+        "geodesy",
+        "technical",
+        "instrument",
+        "dark",
+        "dark"
+      ],
+      "tokens": {
+        "canvas": "#16222E",
+        "surface": "#1F2D3C",
+        "ink": "#9FC4D4",
+        "muted": "#708D9C",
+        "accent": "#9FC4D4",
+        "accentInk": "#16222E",
+        "data1": "#D0E2E9",
+        "data2": "#E9D0A1",
+        "data3": "#D7D3ED",
+        "data4": "#89B1CE",
+        "data5": "#B5CBB3",
+        "data6": "#DDA8A3",
+        "rule": "#3C4F5C"
+      },
+      "ramps": {
+        "sequential": [
+          "#1F2D3C",
+          "#3F5362",
+          "#5F7888",
+          "#7F9EAE",
+          "#9FC4D4"
+        ],
+        "diverging": [
+          "#E9D0A1",
+          "#757062",
+          "#708D9C",
+          "#6D7284",
+          "#D7D3ED"
+        ]
+      },
+      "cvd": "data4 (deniz mavisi) ile data1 (grid camgöbeği) yakın; katman ayrımı için birini kesikli çizgi yapın.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
     }
   ],
   "gradients": [
@@ -1860,6 +2480,143 @@
         "endVsWhite": 6.47,
         "startVsBlack": 1.18,
         "endVsBlack": 3.04
+      }
+    },
+    {
+      "id": "airglow-limb",
+      "name": "Airglow Limb",
+      "origin": "user-reference-2026-08-14",
+      "kind": "gradient",
+      "stops": [
+        "#040B16",
+        "#35C4B4"
+      ],
+      "character": [
+        "space",
+        "cool",
+        "atmospheric",
+        "night"
+      ],
+      "usage": "yörüngeden görülen gece tarafı uzuv parlaması, atmosfer katmanları, irtifa rampası",
+      "note": "Fiziksel karşılığı var: 557,7 nm oksijen hava parıltısı, gece tarafında ince bir kuşak olarak görünür. Uzuv kuşağı DAR tutulmalı — tüm slaydı kaplayan bir hava parıltısı gerçekçi değildir.",
+      "midpoint": "#1C6865",
+      "ramps": {
+        "sequential": [
+          "#040B16",
+          "#10393E",
+          "#1C6865",
+          "#29968C",
+          "#35C4B4"
+        ]
+      },
+      "textSafety": {
+        "bestTextColor": "#FFFFFF",
+        "colorName": "beyaz",
+        "worstCaseRatio": 2.16,
+        "verdict": "metin taşımaz (perdesiz)",
+        "measuredAcross": "geçişin 21 noktasında ölçüldü — en kötü nokta esas alınır"
+      },
+      "scrim": {
+        "alpha": 0.33,
+        "css": "linear-gradient(rgba(0,0,0,0.33), rgba(0,0,0,0.33))",
+        "note": "Geçişin en kötü noktasında beyaz metnin 4,5:1'e ulaşması için gereken ASGARİ perde. Perde geçişin ÜSTÜNE serilir; renk kimliği korunur, metin her noktada okunur."
+      },
+      "endpointContrast": {
+        "startVsWhite": 19.73,
+        "endVsWhite": 2.16,
+        "startVsBlack": 1.0,
+        "endVsBlack": 9.1
+      }
+    },
+    {
+      "id": "solar-photosphere",
+      "name": "Solar Photosphere",
+      "origin": "user-reference-2026-08-14",
+      "kind": "gradient",
+      "stops": [
+        "#4A1002",
+        "#FFC24D"
+      ],
+      "character": [
+        "space",
+        "hot",
+        "stellar",
+        "energy"
+      ],
+      "usage": "yıldız yüzeyi, ısı ve sıcaklık rampaları, motor plümü sıcaklık ölçeği",
+      "note": "Sıcaklık rampası olarak kullanıldığında ölçek MUTLAKA etiketlenir; renk sıcaklığı ile fiziksel sıcaklık arasında doğrusal bir eşleme ima etmeyin.",
+      "midpoint": "#A46927",
+      "ramps": {
+        "sequential": [
+          "#4A1002",
+          "#773C15",
+          "#A46927",
+          "#D2953A",
+          "#FFC24D"
+        ]
+      },
+      "textSafety": {
+        "bestTextColor": "#FFFFFF",
+        "colorName": "beyaz",
+        "worstCaseRatio": 1.61,
+        "verdict": "metin taşımaz (perdesiz)",
+        "measuredAcross": "geçişin 21 noktasında ölçüldü — en kötü nokta esas alınır"
+      },
+      "scrim": {
+        "alpha": 0.42,
+        "css": "linear-gradient(rgba(0,0,0,0.42), rgba(0,0,0,0.42))",
+        "note": "Geçişin en kötü noktasında beyaz metnin 4,5:1'e ulaşması için gereken ASGARİ perde. Perde geçişin ÜSTÜNE serilir; renk kimliği korunur, metin her noktada okunur."
+      },
+      "endpointContrast": {
+        "startVsWhite": 15.37,
+        "endVsWhite": 1.61,
+        "startVsBlack": 1.28,
+        "endVsBlack": 12.26
+      }
+    },
+    {
+      "id": "geoid-undulation",
+      "name": "Geoid Undulation",
+      "origin": "user-reference-2026-08-14",
+      "kind": "gradient",
+      "stops": [
+        "#1B3A6B",
+        "#D98C3F"
+      ],
+      "character": [
+        "geodesy",
+        "cartographic",
+        "analytic"
+      ],
+      "usage": "geoit ondülasyonu, yükseklik/derinlik rampaları, anomali haritaları",
+      "note": "DİKKAT — ondülasyon IRAKSAK bir büyüklüktür (elipsoidin altı/üstü). İki duraklı geçiş yalnız TEK işaretli aralıkta doğrudur; sıfırı içeren haritada paletin nötr yüzeyini sıfır durağı yapıp iki yarım rampayı ayrı kullanın ve ölçeği sıfıra çapalayın.",
+      "midpoint": "#7A6355",
+      "ramps": {
+        "sequential": [
+          "#1B3A6B",
+          "#4A4E60",
+          "#7A6355",
+          "#AA784A",
+          "#D98C3F"
+        ]
+      },
+      "textSafety": {
+        "bestTextColor": "#FFFFFF",
+        "colorName": "beyaz",
+        "worstCaseRatio": 2.7,
+        "verdict": "metin taşımaz (perdesiz)",
+        "measuredAcross": "geçişin 21 noktasında ölçüldü — en kötü nokta esas alınır"
+      },
+      "scrim": {
+        "alpha": 0.25,
+        "css": "linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.25))",
+        "note": "Geçişin en kötü noktasında beyaz metnin 4,5:1'e ulaşması için gereken ASGARİ perde. Perde geçişin ÜSTÜNE serilir; renk kimliği korunur, metin her noktada okunur."
+      },
+      "endpointContrast": {
+        "startVsWhite": 11.27,
+        "endVsWhite": 2.7,
+        "startVsBlack": 1.75,
+        "endVsBlack": 7.29
       }
     }
   ]
