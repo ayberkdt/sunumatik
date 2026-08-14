@@ -656,7 +656,11 @@ export function buildAirliner({ scale = 1, palette, gear = false } = {}) {
     { y: 0.130, xqc: -0.92, zqc: 0, chord: 0.24, twist: 0, naca: { m: 0, p: 0.4, t: 0.10 } },
     { y: 0.300, xqc: -1.00, zqc: 0, chord: 0.145, twist: 0, naca: { m: 0, p: 0.4, t: 0.09 } },
   ], m.body, { mirror: false });
-  fin.mesh.rotation.x = -Math.PI / 2;              // açıklık +Y → +Z
+  // DİKEY YÜZEY YÖNÜ — bir kez yanlış kuruldu, ders burada duruyor:
+  // R_x(θ)·(0,1,0) = (0, cosθ, sinθ). θ = −90° ⇒ (0,0,−1), yani açıklık
+  // AŞAĞI gider ve dikey kuyruk gövdenin altında sarkar. Doğrusu +90°.
+  // (Aynı hata kanatçıkta da yapılmıştı; orada yakalanıp burada kalmıştı.)
+  fin.mesh.rotation.x = Math.PI / 2;               // açıklık +Y → +Z (YUKARI)
   fin.mesh.position.z = 0.062;
   g.add(fin.mesh);
 
@@ -665,6 +669,58 @@ export function buildAirliner({ scale = 1, palette, gear = false } = {}) {
     { y: 0.300, xqc: -1.00, zqc: 0.034, chord: 0.095, twist: 0, naca: { m: 0, p: 0.4, t: 0.09 } },
   ], m.body);
   g.add(tail.mesh);
+
+  // ── Sırt kaportası (dorsal fin fillet) ────────────────────────────
+  // Dikey kuyruğun kökünü gövdeye bağlayan alçak üçgen. Yalnız süs değil:
+  // yüksek yana kayma açısında kuyruğun stall'a girmesini geciktirir ve
+  // kanat–gövde birleşimindeki gibi girdap üretir. Siluetin tanınırlığının
+  // büyük kısmı buradan gelir.
+  {
+    const N = 16, pos = [], idx = [];
+    for (let i = 0; i <= N; i++) {
+      const t = i / N;
+      const x = -0.62 + t * 0.30;                       // gövdeden fin köküne
+      const h = 0.062 + 0.055 * t * t;                  // yükselen sırt hattı
+      const w = 0.019 * (1 - t) + 0.006;
+      pos.push(x, -w, 0.030 + 0.020 * t, x, w, 0.030 + 0.020 * t, x, 0, h);
+    }
+    for (let i = 0; i < N; i++) {
+      const a = i * 3, b = a + 3;
+      idx.push(a, b, a + 2, b, b + 2, a + 2);           // sol yüz
+      idx.push(a + 1, a + 2, b + 1, b + 1, a + 2, b + 2); // sağ yüz
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    const sirt = new THREE.Mesh(geo, m.body);
+    sirt.material.side = THREE.DoubleSide;
+    g.add(sirt);
+  }
+
+  // ── Flap ray kaportaları ───────────────────────────────────────────
+  // Kanadın ALTINDAN, firar kenarının GERİSİNE taşan mekik biçimli
+  // kaportalar. İçinde flapı geriye ve aşağıya taşıyan raylar vardır;
+  // bir yolcu uçağının alt siluetini tanınır kılan şey bunlardır.
+  for (const side of [1, -1]) {
+    for (const [yy, len] of [[0.155, 0.20], [0.300, 0.18], [0.460, 0.15]]) {
+      const yerel = wingSec.find((s) => s.y >= yy) || wingSec[wingSec.length - 1];
+      const kap = loftBody([
+        { x:  0.10, ry: 0.0,   rz: 0.0 },
+        { x:  0.03, ry: 0.019, rz: 0.016, nUp: 2.4, nDn: 2.4 },
+        { x: -0.10, ry: 0.021, rz: 0.018, nUp: 2.6, nDn: 2.6 },
+        { x: -len,  ry: 0.008, rz: 0.008, nUp: 2.4, nDn: 2.4 },
+        { x: -len - 0.03, ry: 0.0, rz: 0.0 },
+      ], m.body, { nAround: 16 });
+      kap.position.set(yerel.xqc - 0.16 * yerel.chord, side * yy, yerel.zqc - 0.030);
+      g.add(kap);
+    }
+  }
+
+  // ── APU egzozu: kuyruk konisinin ucundaki küçük koyu ağız ──────────
+  const apu = cylX(0.016, 0.022, 0.05, 16, m.dark, true);
+  apu.position.set(-1.10, 0, 0.064);
+  g.add(apu);
 
   // ── Kokpit camı + kabin şeridi + livre vurgusu
   const cp = canopy(m, { len: 0.20, wid: 0.075, hgt: 0.040 });
@@ -758,10 +814,12 @@ export function buildFighter({ scale = 1, palette } = {}) {
       { y: 0.000, xqc: -0.50, zqc: 0, chord: 0.34, twist: 0, naca: { m: 0, p: 0.4, t: 0.055 } },
       { y: 0.230, xqc: -0.66, zqc: 0, chord: 0.14, twist: 0, naca: { m: 0, p: 0.4, t: 0.045 } },
     ], m.body, { mirror: false });
-    vt.mesh.rotation.x = -Math.PI / 2;
+    vt.mesh.rotation.x = Math.PI / 2;
     vt.mesh.rotation.y = 0;
     vt.mesh.position.set(0, side * 0.098, 0.052);
-    vt.mesh.rotateOnWorldAxis(V3(1, 0, 0), side * 0.47);   // ~27° kanıklık
+    // Kanıklık işareti: sağ kuyruğun (y>0) TEPESİ dışa (+Y) yatmalı.
+    // R_x(−0,47)·(0,0,1) = (0, +0,45, +0,88) — bu yüzden −side.
+    vt.mesh.rotateOnWorldAxis(V3(1, 0, 0), -side * 0.47);  // ~27° dışa kanık
     g.add(vt.mesh);
   }
 
@@ -890,7 +948,7 @@ export function buildDelta({ scale = 1, palette, droopNose = 0 } = {}) {
     { y: 0.140, xqc: -1.12, zqc: 0, chord: 0.30, twist: 0, naca: { m: 0, p: 0.4, t: 0.042 } },
     { y: 0.300, xqc: -1.24, zqc: 0, chord: 0.16, twist: 0, naca: { m: 0, p: 0.4, t: 0.038 } },
   ], m.body, { mirror: false });
-  fin.mesh.rotation.x = -Math.PI / 2;
+  fin.mesh.rotation.x = Math.PI / 2;
   fin.mesh.position.z = 0.042;
   g.add(fin.mesh);
 
@@ -986,9 +1044,9 @@ export function buildWaverider({ scale = 1, palette } = {}) {
       { y: 0.000, xqc: -0.74, zqc: 0, chord: 0.30, twist: 0, naca: { m: 0, p: 0.4, t: 0.05 } },
       { y: 0.150, xqc: -0.84, zqc: 0, chord: 0.14, twist: 0, naca: { m: 0, p: 0.4, t: 0.045 } },
     ], m.body, { mirror: false });
-    fin.mesh.rotation.x = -Math.PI / 2;
+    fin.mesh.rotation.x = Math.PI / 2;
     fin.mesh.position.set(0, side * 0.240, 0.030);
-    fin.mesh.rotateOnWorldAxis(V3(1, 0, 0), side * 0.38);
+    fin.mesh.rotateOnWorldAxis(V3(1, 0, 0), -side * 0.38);  // tepesi dışa
     g.add(fin.mesh);
   }
 
@@ -1067,7 +1125,7 @@ export function buildGlider({ scale = 1, palette } = {}) {
     { y: 0.000, xqc: -1.02, zqc: 0, chord: 0.19, twist: 0, naca: { m: 0, p: 0.4, t: 0.10 } },
     { y: 0.190, xqc: -1.10, zqc: 0, chord: 0.10, twist: 0, naca: { m: 0, p: 0.4, t: 0.09 } },
   ], m.body, { mirror: false });
-  fin.mesh.rotation.x = -Math.PI / 2;
+  fin.mesh.rotation.x = Math.PI / 2;
   fin.mesh.position.z = 0.020;
   g.add(fin.mesh);
 

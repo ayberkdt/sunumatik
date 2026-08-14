@@ -71,10 +71,60 @@ yuvarlaması küçücük bir panel olduğu için AR_ref 19,5 çıkardı; gerçek
 31,3 iken. Artık ana paneli KURUCU bildiriyor, bildirmezse alan `null` ve
 arayüz "—" yazıyor. Uydurma sayı üretmemek, sayı üretmemekten daha iyidir.
 
-**3. Kanıklık işareti.** Kanatçık +Y'ye açılan yarım yüzey olarak kurulup
-her iki tarafa aynı X dönmesiyle konunca sağ kanatçık yukarı, sol AŞAĞI
-bakıyordu. Doğrusu solu doğrudan −Y istasyonlarıyla kurup dönmenin işaretini
-de çevirmek: R_x(∓76°)·(0,±1,0) ikisinde de yukarı.
+**3. Dikey yüzey işareti — İKİ KEZ.** R_x(θ)·(0,1,0) = (0, cosθ, sinθ).
+θ = −90° ⇒ (0,0,−1), yani açıklık AŞAĞI gider.
+
+Bu hata önce kanatçıkta yakalandı (sağ yukarı, sol aşağı bakıyordu) ve orada
+düzeltildi — ama **dikey kuyruklarda aynen kaldı**, çünkü onlar ayrı satırlardı
+ve tek tek bakılmamıştı. Kullanıcı bildirdi: "uçakların kuyruklarındaki
+yapılar yukarı bakması gerekirken aşağıya bakıyorlar." Beş araçta birden.
+
+Ders: bir işaret hatası bulunduğunda **aynı dönüşümün geçtiği bütün yerleri
+tara**, yalnız bulunduğu yeri düzeltme. `grep -n "rotation.x = -Math.PI / 2"`
+altı satır gösteriyordu.
+
+Kanık çiftlerde ikinci bir işaret daha var: sağ kuyruğun (y>0) TEPESİ dışa
+yatmalı, bunun için R_x(**−**side·φ) gerekir.
+
+## Kesit düzlemi: dünya uzayı tuzağı
+
+three.js'te kırpma düzlemleri **DÜNYA uzayındadır**. Düzlemin sabitini bir
+kez hesaplayıp bırakmak, torna dönerken düzlemin uçağın içinden testere gibi
+geçmesi demek: kesit bazen kanadı, bazen gövdeyi buluyor, çoğu açıda hiçbir
+şey kesmiyordu. "Kesit bozuk çalışıyor" şikâyetinin sebebi buydu.
+
+Doğrusu: kesim istasyonunu **yerel** birimde tutmak ve düzlemi her karede iç
+grubun dünya matrisinden kurmak —
+
+```js
+_kn.set(0, 1, 0).transformDirection(inner.matrixWorld).normalize().negate();
+_kp.set(0, sonKesitY, 0).applyMatrix4(inner.matrixWorld);
+clipPlane.setFromNormalAndCoplanarPoint(_kn, _kp);
+```
+
+Ölçek, merkezleme ötelemesi ve torna dönmesi matrisin içinde zaten var.
+
+Kırpma geometriyi keser ama **kapatmaz**: mesh kabuk olduğu için kesim
+yerinde delik kalır. Kapatmanın standart yolu stencil'dir; burada daha
+doğrudan bir yol var — kesitin poligonu zaten panelde çizilmek üzere
+hesaplanıyor. Aynı noktalarla dolu bir yüz kurulup tam o istasyona konuyor,
+böylece paneldeki çizim ile 3B'deki kesim yüzü aynı sayılardan gelir.
+
+## Sahne: karanlık zeminde uçak okunmaz
+
+İlk sürümde araç düz #05070b üstünde duruyordu ve neredeyse siyah bir siluet
+gibi görünüyordu. Sebep malzeme değil **ortam eksikliğiydi**: saten boya ve
+çıplak metal görüntüsünü YANSITTIKLARI şeyden alır; yansıyacak bir şey yoksa
+geriye yalnız bir yönlü ışığın difüz terimi kalır.
+
+Çözüm iki degrade doku: biri fon (gece mavisi, ufuk hizası açık), biri PMREM
+ile ön işlenip `scene.environment`'a verilen ortam haritası. Yarımküre ışığı
+kaldırıldı — ortam haritası aynı işi hem daha doğru hem yöne bağlı yapıyor,
+ikisi birlikte kalınca gövde düz ve donuk çıkıyordu.
+
+Sayfanın varsayılan paleti **havayolu livresi** (açık gövde, lacivert vurgu).
+Modülün varsayılanı yine obsidyen–şampanya: craft-blocks ile aynı sahnede
+durabilsin diye. Bir yolcu uçağı obsidyende siyah okunuyor ve şekil kayboluyor.
 
 ## Sayfa (index.html)
 

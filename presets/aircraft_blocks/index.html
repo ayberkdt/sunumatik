@@ -152,6 +152,10 @@
 
     /* ── Paletler: deste temalarıyla aynı dil ───────────────────────── */
     const PALETLER = {
+      // Sayfanın VARSAYILANI havayolu livresi: obsidyen gövde bir yolcu
+      // uçağında siyah okunuyor ve şekil kayboluyor. Modülün varsayılanı
+      // yine obsidyen — craft-blocks ile aynı sahnede durabilsin diye.
+      havayolu:  { ad: 'havayolu livresi', p: { body: 0xe8ecf2, panel: 0x1b2430, accent: 0x1f4e79, metal: 0x9aa2ae } },
       obsidyen:  { ad: 'obsidyen–şampanya', p: AIRCRAFT_PALETTE },
       buz:       { ad: 'buz–bakır',    p: { body: 0xd7dde5, panel: 0x1b2430, accent: 0xb87333, metal: 0x8d95a3 } },
       grafit:    { ad: 'grafit–kor',   p: { body: 0x2a2d33, panel: 0x14171c, accent: 0xd4552a, metal: 0xa8aeb8 } },
@@ -166,11 +170,52 @@
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.06;
+    renderer.toneMappingExposure = 1.0;
     stage.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x05070b);
+
+    /* ── Ortam: fon + yansıma haritası ────────────────────────────────
+       İlk sürümde sahne düz #05070b üstünde duruyordu ve uçak okunmuyordu.
+       Sebep malzeme değil ORTAM eksikliğiydi: saten boya ve çıplak metal
+       görüntüsünü YANSITTIKLARI şeyden alır. Yansıyacak hiçbir şey yoksa
+       geriye yalnız tek bir yönlü ışığın difüz terimi kalır — o da düz
+       gri bir siluet demektir.
+
+       İki doku üretiliyor:
+        · FON — dikey degrade, yukarısı gece mavisi, ufuk hizası biraz açık.
+          Uçağın arkasında bir "yer" hissi verir, kadrajı da yatay böler.
+        · ORTAM — aynı degradenin daha parlak, ufkunda geniş bir ışık bandı
+          olan hâli. PMREM ile ön işlenip scene.environment'a verilir; artık
+          gövde üstü gökten, altı zeminden ışık alır. Stüdyo aydınlatmasının
+          yaptığı iş budur.                                                */
+    function degradeDoku(duraklar, yukseklik = 512) {
+      const cv = document.createElement('canvas');
+      cv.width = 8; cv.height = yukseklik;
+      const g = cv.getContext('2d');
+      const grd = g.createLinearGradient(0, 0, 0, yukseklik);
+      for (const [t, c] of duraklar) grd.addColorStop(t, c);
+      g.fillStyle = grd; g.fillRect(0, 0, 8, yukseklik);
+      const tex = new THREE.CanvasTexture(cv);
+      tex.mapping = THREE.EquirectangularReflectionMapping;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    scene.background = degradeDoku([
+      [0.00, '#070b12'], [0.34, '#0d1420'], [0.50, '#16202e'],
+      [0.56, '#101825'], [1.00, '#05070b'],
+    ]);
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    pmrem.compileEquirectangularShader();
+    const ortamDoku = degradeDoku([
+      [0.00, '#1a2740'], [0.30, '#33445f'], [0.46, '#6e7e96'],
+      [0.52, '#8b9099'], [0.58, '#3a3f49'], [1.00, '#12151b'],
+    ]);
+    scene.environment = pmrem.fromEquirectangular(ortamDoku).texture;
+    scene.environmentIntensity = 0.85;
+    ortamDoku.dispose();
     const camera = new THREE.PerspectiveCamera(34, 1, 0.05, 60);
     camera.position.set(2.35, -2.75, 1.35);
     camera.up.set(0, 0, 1);                       // +Z yukarı (blok sözleşmesi)
@@ -187,7 +232,7 @@
        anahtar ışıktan daha çok boyuyordu, uçak buzlu mavi görünüyordu.
        Gök 0,34'e indi, güneş 3,20'ye çıktı; kenar ışığı da yalnız SİLUET
        için, yüzey rengi için değil.                                      */
-    const sun = new THREE.DirectionalLight(0xfff3e0, 3.20);
+    const sun = new THREE.DirectionalLight(0xfff3e0, 2.30);
     sun.position.set(3.2, -2.4, 4.0);
     sun.castShadow = true;
     // Gölge kamerası DAR tutulur: ortografik gölgede sapma (bias) derinlik
@@ -199,8 +244,10 @@
     sun.shadow.bias = -0.00035;
     sun.shadow.normalBias = 0.012;
     scene.add(sun);
-    scene.add(new THREE.HemisphereLight(0x9fb6d8, 0x0a0d13, 0.34));
-    const rim = new THREE.DirectionalLight(0x9dc4ff, 0.62);
+    // Yarımküre ışığı ARTIK YOK: ortam haritası aynı işi hem daha doğru
+    // hem de yöne bağlı olarak yapıyor. İkisi birlikte kalınca gövde
+    // düz ve donuk çıkıyordu.
+    const rim = new THREE.DirectionalLight(0x9dc4ff, 0.45);
     rim.position.set(-3.4, 2.2, 1.1);
     scene.add(rim);
 
@@ -229,7 +276,7 @@
     const ground = new THREE.Mesh(
       new THREE.CircleGeometry(3.0, 96),
       new THREE.MeshStandardMaterial({
-        color: 0x11161f, roughness: 0.94, metalness: 0.0,
+        color: 0x1b2330, roughness: 0.92, metalness: 0.0,
         transparent: true, alphaMap: zeminAlfa(), depthWrite: false,
       })
     );
@@ -238,8 +285,8 @@
     scene.add(ground);
     // Zemin halkası: aracın nereye oturduğunu okutan tek dekor öğesi.
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(1.32, 1.335, 96),
-      new THREE.MeshBasicMaterial({ color: 0x1b2331, transparent: true, opacity: 0.85 })
+      new THREE.RingGeometry(1.32, 1.338, 96),
+      new THREE.MeshBasicMaterial({ color: 0x35435a, transparent: true, opacity: 0.9 })
     );
     ring.position.z = -0.4585;
     scene.add(ring);
@@ -251,7 +298,7 @@
     /* ================= araç ================= */
     const pivot = new THREE.Group();
     scene.add(pivot);
-    let current = null, currentKind = null, currentPal = 'obsidyen';
+    let current = null, currentKind = null, currentPal = 'havayolu';
 
     function kur(kind) {
       if (current) { pivot.remove(current); current.traverse((o) => { if (o.isMesh) o.geometry.dispose(); }); }
@@ -288,8 +335,12 @@
     function uygulaKesit() {
       const on = document.querySelector('#cut').checked;
       const mat = [];
-      current.traverse((o) => { if (o.isMesh && !mat.includes(o.material)) mat.push(o.material); });
+      current.traverse((o) => {
+        if (o === kesitYuzu) return;                 // kesim yüzü kırpılmaz
+        if (o.isMesh && !mat.includes(o.material)) mat.push(o.material);
+      });
       for (const mm of mat) mm.clippingPlanes = on ? [clipPlane] : null;
+      cizKesit();
     }
 
     /* ================= ölçüm paneli ================= */
@@ -365,6 +416,8 @@
         pts, y,
         chord: a.chord + (b.chord - a.chord) * f,
         twist: a.twist + (b.twist - a.twist) * f,
+        xqc: a.xqc + (b.xqc - a.xqc) * f,
+        zqc: a.zqc + (b.zqc - a.zqc) * f,
       };
     }
 
@@ -423,12 +476,67 @@
       document.querySelector('#rM').textContent = '%' + nf(mMax * 100, 1) + ' @ ' + nf(xM, 2) + 'c';
       document.querySelector('#rTw').textContent = nf(k.twist, 1) + '°';
 
-      // Kesit düzlemini o istasyona taşı: panelin gösterdiği yer ile sahnenin
-      // kestiği yer AYNI olsun. Düzlem normali (0,−1,0) olduğu için
-      // −y + c ≥ 0 ⇒ y ≤ c korunur; c = kesim istasyonunun DÜNYA y'si.
-      // Tasarım biriminden dünyaya geçiş modelScale ile olur (kanat y'de
-      // simetrik olduğundan finalize'ın merkezleme ötelemesi y'de sıfırdır).
-      clipPlane.constant = k.y * (current.userData.modelScale || 1);
+      // Kesim istasyonu YEREL (tasarım) birimde saklanır; düzlemin kendisi
+      // her karede aracın güncel dünya dönüşümünden kurulur (aşağıya bak).
+      sonKesitY = k.y;
+      kesitYuzuKur(k);
+    }
+
+    /* ── Kesim YÜZÜ ────────────────────────────────────────────────
+       Kırpma düzlemi geometriyi keser ama KAPATMAZ: mesh bir kabuk olduğu
+       için kesim yerinde delik kalır, kesit görünmez. Kapatmanın standart
+       yolu stencil'dir; burada daha doğrudan bir yol var — kesitin poligonu
+       ZATEN elimizde (panelde onu çiziyoruz). Aynı noktalarla dolu bir yüz
+       kurulup tam o istasyona konuyor. Böylece paneldeki çizim ile 3B'deki
+       kesim yüzü aynı sayılardan gelir, ayrışamazlar.                      */
+    let kesitYuzu = null;
+    function kesitYuzuKur(k) {
+      const inner = current && current.children[0];
+      if (kesitYuzu) { kesitYuzu.parent && kesitYuzu.parent.remove(kesitYuzu);
+                       kesitYuzu.geometry.dispose(); kesitYuzu = null; }
+      if (!inner || !k || !document.querySelector('#cut').checked) return;
+      const tw = (k.twist * Math.PI) / 180, ct = Math.cos(tw), stw = Math.sin(tw);
+      const pos = [], idx = [];
+      let cxs = 0, czs = 0;
+      for (const [xc, zc] of k.pts) {
+        const dx = -(xc - 0.25) * k.chord, dz = zc * k.chord;
+        const X = k.xqc + dx * ct - dz * stw, Z = k.zqc + dx * stw + dz * ct;
+        pos.push(X, k.y, Z); cxs += X; czs += Z;
+      }
+      const n = k.pts.length;
+      const ci = n;
+      pos.push(cxs / n, k.y, czs / n);
+      for (let i = 0; i < n - 1; i++) idx.push(ci, i, i + 1);
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+      geo.setIndex(idx);
+      geo.computeVertexNormals();
+      kesitYuzu = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+        color: 0xc9a35c, roughness: 0.42, metalness: 0.30, side: THREE.DoubleSide,
+        clippingPlanes: null,           // kesim yüzü KENDİSİ kırpılmamalı
+      }));
+      inner.add(kesitYuzu);
+    }
+
+    /* ── Kesit düzlemi ARAÇLA BİRLİKTE DÖNER ────────────────────────
+       İlk sürüm düzlemin sabitini bir kez hesaplayıp bırakıyordu. Ama
+       three.js'te kırpma düzlemleri DÜNYA uzayındadır ve araç tornada
+       dönüyor: düzlem sabit kalınca uçağın içinden testere gibi geçiyor,
+       kesit bazen kanadı bazen gövdeyi buluyor, çoğu açıda hiçbir şey
+       kesmiyordu. "Bozuk" görünmesinin sebebi buydu.
+       Doğrusu: kesim istasyonunu YEREL birimde tutmak ve düzlemi her
+       karede iç grubun dünya matrisinden kurmak. Normal, yerel +Y ekseninin
+       dünya karşılığıdır; düzlem de yerel (0, kesitY, 0) noktasından geçer —
+       ölçek, merkezleme ötelemesi ve torna dönmesi matrisin içinde zaten var. */
+    let sonKesitY = 0;
+    const _kn = new THREE.Vector3(), _kp = new THREE.Vector3();
+    function kesitDuzlemiTazele() {
+      if (!current || !document.querySelector('#cut').checked) return;
+      const inner = current.children[0];
+      inner.updateWorldMatrix(true, false);
+      _kn.set(0, 1, 0).transformDirection(inner.matrixWorld).normalize().negate();
+      _kp.set(0, sonKesitY, 0).applyMatrix4(inner.matrixWorld);
+      clipPlane.setFromNormalAndCoplanarPoint(_kn, _kp);
     }
 
     /* ================= arayüz ================= */
@@ -446,7 +554,7 @@
     }
 
     kindSel.value = AIRCRAFT_BUILDERS[q.get('arac')] ? q.get('arac') : 'airliner';
-    palSel.value = PALETLER[q.get('pal')] ? q.get('pal') : 'obsidyen';
+    palSel.value = PALETLER[q.get('pal')] ? q.get('pal') : 'havayolu';
     currentPal = palSel.value;
     document.querySelector('#cut').checked = q.get('kesit') === '1';
     if (q.has('eta')) document.querySelector('#eta').value = String(Math.round(num('eta', 0.4) * 100));
@@ -492,7 +600,7 @@
       saat += dt;
       if (document.querySelector('#spin').checked) pivot.rotation.z += dt * 0.22;
     }
-    function ciz() { controls.update(); renderer.render(scene, camera); }
+    function ciz() { kesitDuzlemiTazele(); controls.update(); renderer.render(scene, camera); }
 
     // NOT: donmuş mod rozeti AŞAĞIDA, donmusMod tanımlandıktan SONRA kurulur.
     // (Yukarı konduğunda `const donmusMod` henüz TDZ'de olduğu için modül
