@@ -1,0 +1,690 @@
+{
+  "generatedAt": "2026-08-14",
+  "note": "Tum aileler acik lisansli (SIL OFL 1.1) ve google/fonts upstream deposundan alinmistir. TTF'ler burada latin + latin-ext + bilim sembolleri alt kumesine indirgenip WOFF2'ye cevrilmistir. Degisken eksenler korunmustur. Calisma aninda DIS AG YOK - yerel yol.",
+  "charset": {
+    "codepointsRequested": 578,
+    "ranges": "U+0020-007E, U+00A0-017F, Greek, punctuation, super/subscript, math, arrows, astronomical, currency (incl. U+20BA lira)"
+  },
+  "families": [
+    {
+      "key": "archivo",
+      "family": "Archivo",
+      "role": "display+text",
+      "designer": "Omnibus-Type (Héctor Gatti)",
+      "license": "SIL OFL 1.1",
+      "licenseFile": "archivo/LICENSE",
+      "sourceRepo": "https://github.com/google/fonts/tree/main/ofl/archivo",
+      "downloaded": "2026-08-14",
+      "files": [
+        {
+          "path": "archivo/archivo.woff2",
+          "style": "normal",
+          "sourceFile": "Archivo[wdth,wght].ttf",
+          "sourceUrl": "https://raw.githubusercontent.com/google/fonts/main/ofl/archivo/Archivo%5Bwdth%2Cwght%5D.ttf",
+          "version": "Version 2.001",
+          "axes": {
+            "wght": [
+              100.0,
+              600.0,
+              900.0
+            ],
+            "wdth": [
+              62.0,
+              100.0,
+              125.0
+            ]
+          },
+          "originalBytes": 658596,
+          "subsetBytes": 141148,
+          "glyphsAfterSubset": 431,
+          "turkishMissing": [],
+          "optionalMissing": [
+            "lambda"
+          ],
+          "features": [
+            "aalt",
+            "case",
+            "ccmp",
+            "dnom",
+            "frac",
+            "kern",
+            "liga",
+            "lnum",
+            "locl",
+            "mark",
+            "mkmk",
+            "numr",
+            "onum",
+            "ordn",
+            "pnum",
+            "rvrn",
+            "subs",
+            "sups",
+            "tnum",
+            "zero"
+          ],
+          "tnumFeature": true,
+          "digitAdvanceWidths": [
+            575,
+            576,
+            576,
+            576,
+            577,
+            575,
+            576,
+            576,
+            576,
+            575
+          ],
+          "figuresTabularByDefault": false,
+          "tabularFigures": true,
+          "liningFigures": true,
+          "oldstyleFigures": true,
+          "slashedZero": true,
+          "turkishLocl": true
+        }
+      ]
+    },
+    {
+      "key": "big-shoulders-display",
+      "family": "Big Shoulders Display",
+      "role": "display",
+      "designer": "Patric King / Production Type",
+      "license": "SIL OFL 1.1",
+      "licenseFile": "big-shoulders-display/LICENSE",
+      "sourceRepo": "https://github.com/google/fonts/tree/main/ofl/bigshouldersdisplay",
+      "downloaded": "2026-08-14",
+      "files": [
+        {
+          "path": "big-shoulders-display/big-shoulders-display.woff2",
+          "style": "normal",
+          "sourceFile": "BigShouldersDisplay[wght].ttf",
+          "sourceUrl": "https://raw.githubusercontent.com/google/fonts/main/ofl/bigshouldersdisplay/BigShouldersDisplay%5Bwght%5D.ttf",
+          "version": "Version 2.002",
+          "axes": {
+            "wght": [
+              100.0,
+              100.0,
+              900.0
+            ]
+          },
+          "originalBytes": 219532,
+          "subsetBytes": 60556,
+          "glyphsAfterSubset": 429,
+          "turkishMissing": [],
+          "optionalMissing": [
+            "lambda"
+          ],
+          "features": [
+            "aalt",
+            "case",
+            "ccmp",
+            "dnom",
+            "frac",
+            "kern",
+            "liga",
+            "locl",
+            "mark",
+            "mkmk",
+            "numr",
+            "ordn",
+            "salt",
+            "ss01",
+            "subs",
+            "sups"
+          ],
+          "tnumFeature": false,
+          "digitAdvanceWidths": [
+            596,
+            316,
+            618,
+            590,
+            612,
+            600,
+            585,
+            492,
+            580,
+            583
+          ],
+          "figuresTabularByDefault": false,
+          "tabularFigures": false,
+          "liningFigures": false,
+          "oldstyleFigures": false,
+          "slashedZero": false,
+          "turkishLocl": true
+        }
+      ]
+    },
+    {
+      "key": "fraunces",
+      "family": "Fraunces",
+      "role": "display",
+      "designer": "Undercase Type (Phaedra Charles, Flavia Zimbardi)",
+      "license": "SIL OFL 1.1",
+      "licenseFile": "fraunces/LICENSE",
+      "sourceRepo": "https://github.com/google/fonts/tree/main/ofl/fraunces",
+      "downloaded": "2026-08-14",
+      "files": [
+        {
+          "path": "fraunces/fraunces.woff2",
+          "style": "normal",
+          "sourceFile": "Fraunces[SOFT,WONK,opsz,wght].ttf",
+          "sourceUrl": "https://raw.githubusercontent.com/google/fonts/main/ofl/fraunces/Fraunces%5BSOFT%2CWONK%2Copsz%2Cwght%5D.ttf",
+          "version": "Version 1.000;[b76b70a41]",
+          "axes": {
+            "opsz": [
+              9.0,
+              9.0,
+              144.0
+            ],
+            "wght": [
+              100.0,
+              900.0,
+              900.0
+            ],
+            "SOFT": [
+              0.0,
+              0.0,
+              100.0
+            ],
+            "WONK": [
+              0.0,
+              1.0,
+              1.0
+            ]
+          },
+          "originalBytes": 360440,
+          "subsetBytes": 154812,
+          "glyphsAfterSubset": 385,
+          "turkishMissing": [],
+          "optionalMissing": [
+            "lambda"
+          ],
+          "features": [
+            "case",
+            "kern",
+            "liga",
+            "rvrn",
+            "ss01"
+          ],
+          "tnumFeature": false,
+          "digitAdvanceWidths": [
+            1461,
+            1024,
+            1334,
+            1237,
+            1397,
+            1267,
+            1348,
+            1145,
+            1385,
+            1348
+          ],
+          "figuresTabularByDefault": false,
+          "tabularFigures": false,
+          "liningFigures": false,
+          "oldstyleFigures": false,
+          "slashedZero": false,
+          "turkishLocl": false
+        }
+      ]
+    },
+    {
+      "key": "space-grotesk",
+      "family": "Space Grotesk",
+      "role": "display",
+      "designer": "Florian Karsten",
+      "license": "SIL OFL 1.1",
+      "licenseFile": "space-grotesk/LICENSE",
+      "sourceRepo": "https://github.com/google/fonts/tree/main/ofl/spacegrotesk",
+      "downloaded": "2026-08-14",
+      "files": [
+        {
+          "path": "space-grotesk/space-grotesk.woff2",
+          "style": "normal",
+          "sourceFile": "SpaceGrotesk[wght].ttf",
+          "sourceUrl": "https://raw.githubusercontent.com/google/fonts/main/ofl/spacegrotesk/SpaceGrotesk%5Bwght%5D.ttf",
+          "version": "Version 2.000",
+          "axes": {
+            "wght": [
+              300.0,
+              300.0,
+              700.0
+            ]
+          },
+          "originalBytes": 136676,
+          "subsetBytes": 35780,
+          "glyphsAfterSubset": 434,
+          "turkishMissing": [],
+          "optionalMissing": [
+            "lambda"
+          ],
+          "features": [
+            "aalt",
+            "case",
+            "ccmp",
+            "dnom",
+            "frac",
+            "kern",
+            "liga",
+            "lnum",
+            "locl",
+            "mark",
+            "mkmk",
+            "numr",
+            "onum",
+            "ordn",
+            "pnum",
+            "salt",
+            "ss01",
+            "ss02",
+            "ss03",
+            "ss04",
+            "ss05",
+            "subs",
+            "sups",
+            "tnum",
+            "zero"
+          ],
+          "tnumFeature": true,
+          "digitAdvanceWidths": [
+            638,
+            404,
+            606,
+            603,
+            620,
+            598,
+            610,
+            568,
+            632,
+            610
+          ],
+          "figuresTabularByDefault": false,
+          "tabularFigures": true,
+          "liningFigures": true,
+          "oldstyleFigures": true,
+          "slashedZero": true,
+          "turkishLocl": true
+        }
+      ]
+    },
+    {
+      "key": "source-sans-3",
+      "family": "Source Sans 3",
+      "role": "text",
+      "designer": "Adobe (Paul D. Hunt)",
+      "license": "SIL OFL 1.1",
+      "licenseFile": "source-sans-3/LICENSE",
+      "sourceRepo": "https://github.com/google/fonts/tree/main/ofl/sourcesans3",
+      "downloaded": "2026-08-14",
+      "files": [
+        {
+          "path": "source-sans-3/source-sans-3.woff2",
+          "style": "normal",
+          "sourceFile": "SourceSans3[wght].ttf",
+          "sourceUrl": "https://raw.githubusercontent.com/google/fonts/main/ofl/sourcesans3/SourceSans3%5Bwght%5D.ttf",
+          "version": "Version 3.052;hotconv 1.1.0;makeotfexe 2.6.0",
+          "axes": {
+            "wght": [
+              200.0,
+              200.0,
+              900.0
+            ]
+          },
+          "originalBytes": 646340,
+          "subsetBytes": 81208,
+          "glyphsAfterSubset": 530,
+          "turkishMissing": [],
+          "optionalMissing": [],
+          "features": [
+            "aalt",
+            "case",
+            "ccmp",
+            "cv01",
+            "cv02",
+            "cv03",
+            "cv04",
+            "cv05",
+            "cv06",
+            "cv07",
+            "cv08",
+            "cv09",
+            "cv10",
+            "dnom",
+            "frac",
+            "kern",
+            "liga",
+            "locl",
+            "mark",
+            "mkmk",
+            "numr",
+            "onum",
+            "ordn",
+            "pnum",
+            "salt",
+            "ss01",
+            "ss02",
+            "ss03",
+            "ss04",
+            "ss05",
+            "ss06",
+            "ss07",
+            "ss08",
+            "ss09",
+            "ss10",
+            "subs",
+            "sups",
+            "titl",
+            "zero"
+          ],
+          "tnumFeature": false,
+          "digitAdvanceWidths": [
+            472,
+            472,
+            472,
+            472,
+            472,
+            472,
+            472,
+            472,
+            472,
+            472
+          ],
+          "figuresTabularByDefault": true,
+          "tabularFigures": true,
+          "liningFigures": false,
+          "oldstyleFigures": true,
+          "slashedZero": true,
+          "turkishLocl": true
+        },
+        {
+          "path": "source-sans-3/source-sans-3-italic.woff2",
+          "style": "italic",
+          "sourceFile": "SourceSans3-Italic[wght].ttf",
+          "sourceUrl": "https://raw.githubusercontent.com/google/fonts/main/ofl/sourcesans3/SourceSans3-Italic%5Bwght%5D.ttf",
+          "version": "Version 3.052;hotconv 1.1.0;makeotfexe 2.6.0",
+          "axes": {
+            "wght": [
+              200.0,
+              200.0,
+              900.0
+            ]
+          },
+          "originalBytes": 395372,
+          "subsetBytes": 66696,
+          "glyphsAfterSubset": 530,
+          "turkishMissing": [],
+          "optionalMissing": [],
+          "features": [
+            "aalt",
+            "case",
+            "ccmp",
+            "cv01",
+            "cv02",
+            "cv03",
+            "cv04",
+            "cv05",
+            "cv06",
+            "cv07",
+            "cv08",
+            "cv09",
+            "cv10",
+            "dnom",
+            "frac",
+            "kern",
+            "liga",
+            "locl",
+            "mark",
+            "mkmk",
+            "numr",
+            "onum",
+            "ordn",
+            "pnum",
+            "salt",
+            "ss01",
+            "ss02",
+            "ss03",
+            "ss04",
+            "ss05",
+            "ss06",
+            "ss07",
+            "ss08",
+            "ss09",
+            "ss10",
+            "subs",
+            "sups",
+            "titl",
+            "zero"
+          ],
+          "tnumFeature": false,
+          "digitAdvanceWidths": [
+            456,
+            456,
+            456,
+            456,
+            456,
+            456,
+            456,
+            456,
+            456,
+            456
+          ],
+          "figuresTabularByDefault": true,
+          "tabularFigures": true,
+          "liningFigures": false,
+          "oldstyleFigures": true,
+          "slashedZero": true,
+          "turkishLocl": true
+        }
+      ]
+    },
+    {
+      "key": "source-serif-4",
+      "family": "Source Serif 4",
+      "role": "text",
+      "designer": "Adobe (Frank Grießhammer)",
+      "license": "SIL OFL 1.1",
+      "licenseFile": "source-serif-4/LICENSE",
+      "sourceRepo": "https://github.com/google/fonts/tree/main/ofl/sourceserif4",
+      "downloaded": "2026-08-14",
+      "files": [
+        {
+          "path": "source-serif-4/source-serif-4.woff2",
+          "style": "normal",
+          "sourceFile": "SourceSerif4[opsz,wght].ttf",
+          "sourceUrl": "https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserif4/SourceSerif4%5Bopsz%2Cwght%5D.ttf",
+          "version": "Version 4.004;hotconv 1.0.116;makeotfexe 2.5.65601",
+          "axes": {
+            "wght": [
+              200.0,
+              400.0,
+              900.0
+            ],
+            "opsz": [
+              8.0,
+              20.0,
+              60.0
+            ]
+          },
+          "originalBytes": 1209508,
+          "subsetBytes": 272300,
+          "glyphsAfterSubset": 483,
+          "turkishMissing": [],
+          "optionalMissing": [],
+          "features": [
+            "aalt",
+            "case",
+            "ccmp",
+            "dnom",
+            "frac",
+            "kern",
+            "liga",
+            "lnum",
+            "locl",
+            "mark",
+            "mkmk",
+            "numr",
+            "onum",
+            "ordn",
+            "pnum",
+            "subs",
+            "sups",
+            "tnum",
+            "zero"
+          ],
+          "tnumFeature": true,
+          "digitAdvanceWidths": [
+            500,
+            500,
+            500,
+            500,
+            500,
+            500,
+            500,
+            500,
+            500,
+            500
+          ],
+          "figuresTabularByDefault": true,
+          "tabularFigures": true,
+          "liningFigures": true,
+          "oldstyleFigures": true,
+          "slashedZero": true,
+          "turkishLocl": true
+        },
+        {
+          "path": "source-serif-4/source-serif-4-italic.woff2",
+          "style": "italic",
+          "sourceFile": "SourceSerif4-Italic[opsz,wght].ttf",
+          "sourceUrl": "https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserif4/SourceSerif4-Italic%5Bopsz%2Cwght%5D.ttf",
+          "version": "Version 4.004;hotconv 1.0.116;makeotfexe 2.5.65601",
+          "axes": {
+            "wght": [
+              200.0,
+              400.0,
+              900.0
+            ],
+            "opsz": [
+              8.0,
+              20.0,
+              60.0
+            ]
+          },
+          "originalBytes": 855432,
+          "subsetBytes": 234288,
+          "glyphsAfterSubset": 483,
+          "turkishMissing": [],
+          "optionalMissing": [],
+          "features": [
+            "aalt",
+            "case",
+            "ccmp",
+            "dnom",
+            "frac",
+            "kern",
+            "liga",
+            "lnum",
+            "locl",
+            "mark",
+            "mkmk",
+            "numr",
+            "onum",
+            "ordn",
+            "pnum",
+            "ss03",
+            "subs",
+            "sups",
+            "tnum",
+            "zero"
+          ],
+          "tnumFeature": true,
+          "digitAdvanceWidths": [
+            511,
+            511,
+            511,
+            511,
+            511,
+            511,
+            511,
+            511,
+            511,
+            511
+          ],
+          "figuresTabularByDefault": true,
+          "tabularFigures": true,
+          "liningFigures": true,
+          "oldstyleFigures": true,
+          "slashedZero": true,
+          "turkishLocl": true
+        }
+      ]
+    },
+    {
+      "key": "jetbrains-mono",
+      "family": "JetBrains Mono",
+      "role": "mono",
+      "designer": "JetBrains (Philipp Nurullin, Konstantin Bulenkov)",
+      "license": "SIL OFL 1.1",
+      "licenseFile": "jetbrains-mono/LICENSE",
+      "sourceRepo": "https://github.com/google/fonts/tree/main/ofl/jetbrainsmono",
+      "downloaded": "2026-08-14",
+      "files": [
+        {
+          "path": "jetbrains-mono/jetbrains-mono.woff2",
+          "style": "normal",
+          "sourceFile": "JetBrainsMono[wght].ttf",
+          "sourceUrl": "https://raw.githubusercontent.com/google/fonts/main/ofl/jetbrainsmono/JetBrainsMono%5Bwght%5D.ttf",
+          "version": "Version 2.211",
+          "axes": {
+            "wght": [
+              100.0,
+              400.0,
+              800.0
+            ]
+          },
+          "originalBytes": 187208,
+          "subsetBytes": 52632,
+          "glyphsAfterSubset": 488,
+          "turkishMissing": [],
+          "optionalMissing": [
+            "lira-sign"
+          ],
+          "features": [
+            "aalt",
+            "calt",
+            "case",
+            "ccmp",
+            "frac",
+            "locl",
+            "mark",
+            "ordn",
+            "subs",
+            "sups",
+            "zero"
+          ],
+          "tnumFeature": false,
+          "digitAdvanceWidths": [
+            600,
+            600,
+            600,
+            600,
+            600,
+            600,
+            600,
+            600,
+            600,
+            600
+          ],
+          "figuresTabularByDefault": true,
+          "tabularFigures": true,
+          "liningFigures": false,
+          "oldstyleFigures": false,
+          "slashedZero": true,
+          "turkishLocl": true
+        }
+      ]
+    }
+  ],
+  "totalSubsetBytes": 1099420,
+  "totalSubsetKB": 1073.7
+}

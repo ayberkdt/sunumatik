@@ -48,7 +48,9 @@
              border: 1.5px solid var(--color-rule); border-radius: 14px; }
     .motif { color: var(--color-muted); }
     .icon { width: 40px; height: 40px; flex: none; }
-    .hint { font: 600 20px/1.3 ui-monospace, monospace; color: var(--color-muted); letter-spacing: .04em; }
+    /* T-12: pozitif harf aralığı yalnız BÜYÜK HARFTE; küçük harfli ipucu
+       satırında aralık kelimeleri dağıtıyordu. */
+    .hint { font: 600 20px/1.3 ui-monospace, monospace; color: var(--color-muted); letter-spacing: 0; }
 
     /* Title */
     .title-grid { display: grid; grid-template-columns: 1.2fr .6fr; align-items: center; gap: 60px; }
@@ -58,7 +60,7 @@
     .agenda { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 28px; align-content: center; }
     .agenda-row { display: flex; align-items: center; gap: 16px; padding: 20px 22px;
                   background: var(--color-surface); border: 1.5px solid var(--color-rule);
-                  border-radius: 12px; font-size: 24px; font-weight: 650; }
+                  border-radius: 14px; font-size: 24px; font-weight: 650; }
     .agenda-row .icon { color: var(--color-accent); }
     .agenda-row small { margin-left: auto; font: 700 18px/1 ui-monospace, monospace; color: var(--color-muted); }
 
@@ -66,7 +68,8 @@
     .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-content: center; }
     .demo-cards { display: grid; gap: 18px; }
     .demo-cards .panel { font-size: 27px; line-height: 1.35; }
-    .hover-note { display: block; margin-top: 10px; font-size: 21px; color: var(--color-muted); }
+    /* T-14: kart/panel punto tabanı 24 px — taşarsa kopya kesilir, punto değil. */
+    .hover-note { display: block; margin-top: 10px; font-size: 24px; color: var(--color-muted); }
     .legend-list { list-style: none; display: flex; gap: 30px; margin: 0 0 20px; padding: 0;
                    font-size: 25px; font-weight: 700; }
     .legend-list .swatch { display: inline-block; width: 26px; height: 10px; border-radius: 2px; margin-right: 9px; }
@@ -103,7 +106,7 @@
     .danim-col svg { width: 100%; height: 100%; min-height: 0; }
     .danim-btns { display: flex; gap: 12px; }
     .danim-btns button { background: var(--color-surface); border: 1.5px solid var(--color-rule);
-      color: var(--color-ink); padding: 10px 18px; border-radius: 9px; cursor: pointer;
+      color: var(--color-ink); padding: 10px 18px; border-radius: 8px; cursor: pointer;
       font: 650 20px/1 ui-sans-serif, system-ui; }
     .danim-btns button:hover { border-color: var(--color-accent); }
 
@@ -113,11 +116,11 @@
     .icon-fam h3 { margin: 0; font: 700 25px/1.15 "Source Serif 4", Georgia, serif;
                    color: var(--color-accent); }
     .icon-fam h3 small { display: block; margin-top: 5px; font: 600 17px/1.2 ui-monospace, monospace;
-                         color: var(--color-muted); letter-spacing: .04em; }
+                         color: var(--color-muted); letter-spacing: 0; }  /* T-12 */
     .icon-row { display: flex; gap: 14px; }
     .icon-cell { flex: 1; display: grid; justify-items: center; gap: 9px; padding: 16px 8px 12px;
                  background: var(--color-surface); border: 1.5px solid var(--color-rule);
-                 border-radius: 12px; color: var(--color-accent); }
+                 border-radius: 14px; color: var(--color-accent); }
     .icon-cell svg { width: 46px; height: 46px; }
     .icon-cell span { font: 600 16px/1.2 ui-sans-serif, system-ui; color: var(--color-ink);
                       text-align: center; }
@@ -126,7 +129,7 @@
     #cosmosHost .lunaris-preset { min-height: 0; height: 100%; }
     #jwstHost { display: grid; min-height: 0; }
     #jwstHost .jwstx { min-height: 0; }
-    .scene-credit { font-size: 19px; color: var(--color-muted); }
+    .scene-credit { font-size: 24px; color: var(--color-muted); }  /* T-14 */
 
     /* Primitives slaydı */
     .px-demo { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-content: center; min-height: 0; }
@@ -134,10 +137,10 @@
                          line-height: 1.06; letter-spacing: -.02em; }
     .px-stats { display: flex; gap: 56px; align-items: baseline; margin-top: 34px; }
     .px-stats .stat-val { font: 750 76px/1 ui-monospace, monospace; color: var(--color-accent); }
-    .px-stats .stat-lab { display: block; margin-top: 10px; font-size: 22px; color: var(--color-muted); }
+    .px-stats .stat-lab { display: block; margin-top: 10px; font-size: 24px; color: var(--color-muted); }  /* T-14 */
     .px-card-zone { display: grid; gap: 24px; align-content: center; }
     .px-chips .chip { display: inline-block; padding: 12px 22px; background: var(--color-surface);
-                      border: 1.5px solid var(--color-rule); border-radius: 10px;
+                      border: 1.5px solid var(--color-rule); border-radius: 8px;
                       font: 650 22px/1 ui-sans-serif, system-ui; white-space: nowrap; }
     #lunarisHost { min-height: 0; }
     #lunarisHost .lunaris-preset { min-height: 0; height: 100%; }
@@ -600,7 +603,7 @@
       document.documentElement.classList.remove('js');
       const note = document.createElement('div');
       note.style.cssText = 'position:fixed;inset:auto 16px 16px 16px;z-index:99;padding:18px 22px;' +
-        'background:#fff8e8;color:#3a2c16;border:2px solid #b58224;border-radius:12px;' +
+        'background:#fff8e8;color:#3a2c16;border:2px solid #b58224;border-radius:14px;' +
         'font:600 15px/1.5 ui-sans-serif,system-ui;';
       note.innerHTML = 'Bu deste doğrudan dosyadan açılamaz (tarayıcı file:// altında modülleri engeller).<br>' +
         'En kolayı: <b>preset-test\\sunumu-baslat.cmd</b> dosyasına çift tıklayın — sunucuyu başlatıp desteyi açar.<br>' +

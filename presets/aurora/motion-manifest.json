@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "aurora-emission-layering",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Show WHY an aurora is layered in color: the curtain's colors are not a palette choice but a consequence of which species emits at which altitude, with a sharp lower border and a diffuse upper edge.",
+      "model": "Four auroral emissions are evaluated per fragment from the fragment's altitude h (km). Atmosphere: log10 of the total number density n(h) is an MSIS-like profile built from a base slope plus four softplus-blended slope changes (smooth to all orders; it reproduces 100-400 km anchor values to about 0.03 dex), and the atomic O / N2 ratio grows exponentially with altitude (diffusive separation) giving the O fraction fO(h). Electron deposition: an asymmetric profile with a sharp lower cut (Gaussian, sigma 7.5 km - the penetration depth) and a diffuse exponential upper tail (42 km), peaking at h = 86 + 130/(1+(E0/2.2)^1.1) km, which places 1 keV near 180 km, 10 keV near 106 km and 20 keV near 97 km; the spectrum is the sum of a hard component at E0(Kp) and a fixed soft tail at 0.7 keV (peak near 187 km). Emission per line: 557.7 nm O(1S) is proportional to deposition times fO^0.45 times the collisional quenching factor 1/(1+n/n_crit) with n_crit about 3.6e12 cm-3 total-equivalent (from A = 1/0.7 s-1 and k(O2) about 4e-12 cm3 s-1 with an O2 fraction near 0.1); 630.0 nm O(1D) is proportional to deposition times fO times 1/(1+n/n_crit) with n_crit = A/k = (1/110 s-1)/(2e-11 cm3 s-1) about 4.5e8 cm-3, which is why it only survives above roughly 200 km; 427.8 nm N2+ 1NG and the N2 first positive band (about 650-680 nm) are prompt, unquenched, and follow the hard deposition through the N2 fraction, with 1PG additionally gated to 90-110 km. Colors are computed from the CIE 1931 colour matching functions (Wyman-Sloan-Shirley multi-lobe fits) for 557.7, 630.0, 427.8 and 670 nm, converted to sRGB and desaturated toward white only as far as needed to enter the gamut - no colour was chosen by hand. Curtain geometry is field-aligned: a horizontal arc extruded along a magnetic field direction tilted 6.9 degrees from vertical, so rays converge in perspective; the geometry spans a FIXED 82-360 km and is never rebuilt - the emission model alone decides what is visible.",
+      "limitations": "This is NOT a precipitation or transport simulation. The physics is a per-altitude rate balance (excitation proportional to deposition, radiative versus collisional loss); there is no electron transport code, no chemistry network, no line-of-sight integration through the volume, and no Earth curvature. The BRIGHTNESS FIELD is stylized: fold wavelengths, ray-filament amplitudes, curtain lengths and the Kp to E0 / energy-flux mapping are presentation choices, and absolute distances are framing choices. Displayed brightness is compressed as the square root of energy flux (real flux varies by more than an order of magnitude across Kp) - ORDER is preserved, absolute photometry is not. The field-line tilt is softened to 6.9 degrees from the real inclination of about 78 degrees so the curtain stays in frame. The O2 fraction used to convert the O(1S) quench constant to a total-density threshold is a single constant, not an altitude-dependent profile. Colours are photopic CIE conversions with a small whitening for legibility; the naked eye sees 630.0 far more weakly than any camera does.",
+      "reducedMotion": "Static declared frame at t=16 s: no curtain drift, no fold travel, no surge, no star twinkle; the layering, the altitude axis and both physics markers stay fully readable.",
+      "exportState": "Same declared frame at t=16 s with controls and page chrome hidden; heading, altitude axis and truth caption remain.",
+      "accessibility": "The caption states, as text, which line sits at which altitude and why; the altitude axis is labelled in km; the telemetry line prints Kp, E0, the lower border altitude and the 630.0 base altitude as numbers; all controls are native inputs.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "aurora-quenching-density",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Make the atom-density control teach the real mechanism: raising the thermospheric density physically extinguishes the red crown, it does not merely dim it.",
+      "model": "The density slider multiplies the whole number-density profile n(h) by 0.35-2.6 (the real thermosphere varies by a comparable factor with solar activity and geomagnetic heating). Two consequences follow from the same number: (1) the collisional quenching factor 1/(1+n/n_crit) shrinks everywhere, and because n_crit for O(1D) is only about 4.5e8 cm-3, the altitude at which 630.0 nm can radiate before being collisionally deactivated moves UP - the on-screen marker 'kirmizi taban' is the altitude at which the 630.0 volume emission first reaches half its peak, recomputed in JavaScript from the SAME constants the shader uses; (2) a denser atmosphere stops the electrons higher, so the deposition peak shifts by 8*ln(density) km and the sharp lower border rises with it. Both effects are visible simultaneously: the red crown fades and the whole curtain lifts.",
+      "limitations": "The density multiplier is applied uniformly at all altitudes; a real density change has an altitude-dependent shape (scale-height and composition changes). The 8 km per ln(density) stopping shift is a single-scale-height approximation. The half-maximum 'red base' is a readout definition chosen for legibility, not a standard photometric quantity.",
+      "reducedMotion": "The slider still works; the scene is a static frame, so the change is seen as a cut between two still states rather than a continuous sweep.",
+      "exportState": "Frozen at the density value that was set; the caption and the axis marker print the resulting red-base altitude.",
+      "accessibility": "A one-line explanation under the slider names the mechanism (collisional quenching of the 110 s metastable state) and prints the resulting altitude in km, so the effect is legible without seeing the colour change.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "aurora-activity-morphology",
+      "type": "parameter-sweep",
+      "truthLevel": "illustrative",
+      "purpose": "Walk the observed auroral form sequence with one control: quiet homogeneous arc, rayed arc, folding curtain, substorm onset, breakup with a travelling spiral surge.",
+      "model": "The Kp 0-9 slider drives four coupled quantities: the characteristic electron energy E0 = 3.5 + 1.9*Kp keV (harder precipitation penetrates deeper, so the lower border descends from about 135 km to about 97 km), the relative energy flux 0.30 + 0.42*Kp, the soft-spectrum fraction 0.42 - 0.030*Kp, and the distance to the arc (the auroral oval expands equatorward as Kp rises - the commonly used equatorward-boundary relation is about 67 - 2*Kp degrees magnetic latitude - so the arc approaches the observer and climbs the sky). Morphology gates ramp in the observed order: ray filaments from Kp 1-3.5, folds from Kp 2.5-5.5, and a localised rotational surge (the breakup spiral) from Kp 5-8, implemented as a smooth localised rotation of the curtain's ground curve that travels westward. The camera pitch eases toward the arc so the framing follows the physics.",
+      "limitations": "Kp is a global 3-hour planetary index; it does not determine local form, energy or brightness - the mapping here is a legible caricature of a real correlation. Absolute distances are framing choices with a clamp, not a latitude calculation, and the observer's latitude is fixed. Fold wavelengths, surge width and travel speed are stylized. Real substorm onset is a sudden, non-monotonic event; here the sequence is a continuous, reversible sweep.",
+      "reducedMotion": "Form still responds to the slider but nothing travels: no fold motion, no surge travel, no camera easing - a static frame per Kp value.",
+      "exportState": "Declared frame at t=16 s; at high Kp the surge sits wherever the deterministic clock places it, which is reproducible for a given t.",
+      "accessibility": "The telemetry line names the form in words (homogeneous arc, rayed arc, folding curtain, substorm onset, breakup) alongside Kp and E0, so the morphology is readable as text.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "aurora-line-mixer",
+      "type": "state-transition",
+      "truthLevel": "analytic",
+      "purpose": "Let the colour controls be an honest instrument: sliders per EMISSION LINE (557.7 / 630.0 / 427.8 / N2 1PG) rather than raw RGB, each labelled with its wavelength and species, plus an explicitly declared free-colour mode for artistic use.",
+      "model": "Each slider scales the volume emission rate of one line by 0-1.6 before the four contributions are summed additively in linear light. The displayed swatch beside each slider is the CIE-derived sRGB of that wavelength, so the control and the scene cannot disagree. Turning off 557.7 and 630.0 leaves exactly the prompt N2+ 1NG and N2 1PG emissions, which the model already confines to 90-110 km - the pink-violet lower border then stands alone, and the pink is visibly the SUM of the 1PG red and the 427.8 violet rather than a separate 'pink line'. In free-colour mode the four physical colours are replaced by hue-rotated palette colours; the altitude ORDERING is kept (it is structural), the colour mapping is abandoned.",
+      "limitations": "Scaling a single line independently is not physical - the four emissions share one electron population, so a real change in precipitation moves all of them together; the sliders are an analytic decomposition for teaching, not an achievable atmospheric state. In free-colour mode NOTHING about the colour is physical, and the preset says so in the always-visible telemetry line, in the note under the controls and by switching the caption's accent.",
+      "reducedMotion": "Slider changes apply immediately to the static frame; no crossfade animation is used.",
+      "exportState": "Whatever line gains were set are baked into the exported frame; free-colour mode carries its 'colours are not physical' warning into the export because the warning lives in the caption, not in the hidden control panel.",
+      "accessibility": "Every slider carries the wavelength, the emitting species and its altitude range as text; the free-colour mode announces itself in words rather than only by appearance.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "aurora-altitude-axis",
+      "type": "focus",
+      "truthLevel": "analytic",
+      "purpose": "Make the layering measurable rather than merely pretty: a kilometre scale at the edge of the frame, with two markers that move with the two physics controls.",
+      "model": "Altitude ticks at 100-350 km are projected through the actual scene camera at the primary curtain's distance and along the same field-line direction the vertex shader uses, then drawn as an SVG overlay - so the scale is the true projection of the 3D geometry and stays correct while the camera drifts or the user looks around. Two derived markers ride the same axis: the deposition peak (the sharp lower border, driven by Kp through E0 and by density through the stopping shift) and the 630.0 nm half-maximum base (driven by density through collisional quenching). Both are computed in JavaScript from the same constants compiled into the GLSL, so the numbers printed on screen and the pixels rendered cannot drift apart.",
+      "limitations": "The scale is exact only along the curtain's own field line at the primary curtain's distance; other objects in the frame (the two more distant curtains) sit at different ranges and must not be measured against it. Earth curvature is ignored, which is a sub-degree effect at these ranges but a real one.",
+      "reducedMotion": "Fully present and static.",
+      "exportState": "Kept in the export - it is the part of the frame that makes the still readable.",
+      "accessibility": "Numeric labels in kilometres with a unit header; marker labels are text ('cokelme tepesi 121 km', '630,0 tabani 184 km'); the axis can be switched off for backdrop use.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "aurora-night-sky",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "Give the curtain a sky and a ground so its altitude reads as altitude: a star field with horizon extinction, the 557.7 nm airglow layer brightening toward the horizon, and a dark ridge for scale.",
+      "model": "Stars share the cosmos preset's language: magnitudes inverse-CDF sampled from N(m) proportional to 10^(0.35m) over m in [-1.2, 6.8], colours from a black-body ramp (about 2600 K red through 15000 K blue-white), twinkle only on the brightest 2 percent, and an atmospheric extinction factor exp(-0.23*(airmass-1)) with airmass = 1/sin(altitude) so stars fade toward the horizon. The airglow is the real 557.7 nm nightglow layer near 97 km, brightened toward the horizon by the van Rhijn factor 1/sqrt(1-(R/(R+h))^2 sin^2 z) capped at about 6, then reduced again by extinction - so it peaks a few degrees above the horizon, as observed. The ridge is a seeded periodic Fourier silhouette at 26 km with a faint aurora-lit rim.",
+      "limitations": "Star POSITIONS are seeded random - there are no real constellations in this sky and none should be named. Twinkle is decorative. The airglow layer is a single-altitude shell with no structure or gravity-wave banding. The ridge is a procedural silhouette, not terrain data, and the light it receives from the aurora is a fixed faint tint rather than a computed irradiance.",
+      "reducedMotion": "Twinkle amplitude forced to zero; everything else in this layer is already static.",
+      "exportState": "Rendered as-is in the declared frame.",
+      "accessibility": "Purely contextual; each element has a toggle, and no information is carried only by these layers.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "aurora-brightness-safety",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "Keep the scene safe to look at for a long time: auroral pulsation is present as a slow travelling brightness wave, never as flashing.",
+      "model": "A single sinusoidal modulation travels along the curtain's arc coordinate with an amplitude capped at 12 percent (uPulse <= 0.12) and a period of tens of seconds. All other visible change is spatial - folds and filaments moving through the frame - not global luminance change.",
+      "limitations": "Real pulsating aurora modulates at 2-20 s with a much larger contrast and is a distinct phenomenon (magnetospheric wave-particle scattering) that this preset deliberately does NOT reproduce; what is shown is a gentle stand-in chosen for photosensitivity safety, and the omission is the honest trade.",
+      "reducedMotion": "Pulsation amplitude forced to exactly zero.",
+      "exportState": "Frozen at the t=16 s phase.",
+      "accessibility": "Global brightness oscillation stays within plus or minus 12 percent, well inside photosensitive-safety guidance; no strobing, no neon flashing, and a pause control is always available.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

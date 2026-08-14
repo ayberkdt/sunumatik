@@ -1,0 +1,4 @@
+interface:
+  display_name: "Koşullu Tasarım Taktikleri"
+  short_description: "Belirtiyi adlandır, mekanizmayı söyle, tek çareyi uygula — ölç ve doğrula"
+  default_prompt: "Use $apply-design-tactics to diagnose this deck's visual defects by symptom and apply the matching remedy from the tactics catalog."

@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kompozisyon — ilkeler, önce/sonra, kılavuz katmanı</title>
+<link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+<script>document.documentElement.classList.add('js');</script>
+<link rel="stylesheet" href="../color_themes/palette-library.css">
+<link rel="stylesheet" href="../color_themes/components/card-presets.css">
+<link rel="stylesheet" href="composition-guides.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 40px 120px;
+    background: color-mix(in srgb, var(--color-canvas) 88%, #000);
+    color: var(--color-ink);
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+  header { max-width: 1632px; margin: 0 auto 44px; }
+  h1 { font-size: 32px; margin: 0 0 10px; letter-spacing: -.01em; }
+  .altbaslik { color: var(--color-muted); font-size: 16px; margin: 0 0 20px; max-width: 78ch; line-height: 1.55; }
+  .araclar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  button {
+    font: inherit; font-size: 15px; padding: 9px 16px; cursor: pointer;
+    background: var(--color-surface); color: var(--color-ink);
+    border: 1px solid var(--color-rule); border-radius: 8px;
+  }
+  button[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-accent); }
+  .ipucu { color: var(--color-muted); font-size: 14px; }
+  main { max-width: 1632px; margin: 0 auto; display: grid; gap: 72px; }
+  section > h2 { font-size: 22px; margin: 0 0 6px; }
+  .iddia {
+    margin: 0 0 20px; font-size: 17px; line-height: 1.5;
+    color: var(--color-ink); border-left: 3px solid var(--color-accent);
+    padding-left: 14px; max-width: 84ch;
+  }
+  .ikili { display: grid; grid-template-columns: 800px 800px; gap: 32px; }
+  figure { margin: 0; }
+  figcaption {
+    font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--color-muted); margin-bottom: 8px; font-weight: 700;
+  }
+  figure.sonra figcaption { color: var(--color-accent); }
+  .sahne-cerceve {
+    width: 800px; height: 450px; overflow: hidden;
+    border: 1px solid var(--color-rule); border-radius: 6px;
+    background: var(--color-canvas);
+  }
+  .sahne-cerceve > .komp-sahne { transform-origin: 0 0; transform: scale(.4166667); }
+  pre.olcum {
+    margin: 10px 0 0; padding: 10px 12px; font-size: 12.5px; line-height: 1.65;
+    font-family: ui-monospace, "IBM Plex Mono", monospace;
+    color: var(--color-muted); background: var(--color-surface);
+    border: 1px solid var(--color-rule); border-radius: 6px;
+    white-space: pre-wrap; min-height: 74px;
+  }
+  pre.olcum b { color: var(--color-ink); font-weight: 600; }
+  pre.olcum i { color: var(--color-accent); font-style: normal; }
+
+  /* ── sahne içi deste dili (1920×1080 koordinatlarında) ───────────── */
+  .komp-sahne { background: var(--color-canvas); color: var(--color-ink); }
+  .d-kicker { font-size: 24px; letter-spacing: .14em; text-transform: uppercase;
+              color: var(--color-accent); font-weight: 700; margin: 0 0 14px; }
+  .d-baslik { font-size: 64px; line-height: 1.06; margin: 0; font-weight: 700;
+              letter-spacing: -.015em; }
+  .d-baslik--kucuk { font-size: 46px; }
+  .d-govde  { font-size: 30px; line-height: 1.45; color: var(--color-muted); margin: 18px 0 0; }
+  .d-not    { font-size: 24px; color: var(--color-muted); margin: 12px 0 0; }
+  .d-deger  { font-size: 120px; font-weight: 700; line-height: 1;
+              font-family: ui-monospace, "IBM Plex Mono", monospace;
+              font-variant-numeric: tabular-nums; margin: 0; }
+  .d-deger--kucuk { font-size: 56px; }
+  .d-birim  { font-size: 40px; color: var(--color-muted); margin-left: 8px; }
+  .d-panel  { background: var(--color-surface); border: 1px solid var(--color-rule);
+              border-radius: 10px; padding: 24px 26px; }
+  .d-etiket { font-size: 22px; letter-spacing: .1em; text-transform: uppercase;
+              color: var(--color-muted); font-weight: 700; margin: 0 0 10px; }
+  .d-sekil  { display: block; }
+  /* karşıtlıkta paneller BİTİŞİK: kendi kenarlıkları çift çizgi yapardı,
+     ayrımı yalnız .komp-karsit'in tek saç teli kural çizgisi yapar */
+  .komp-karsit .d-panel { border: 0; border-radius: 0; }
+</style>
+</head>
+<body data-palette="graphite-ember">
+
+<header>
+  <h1>Kompozisyon — bilim slaydına uyarlanmış ilkeler</h1>
+  <p class="altbaslik">
+    Her bölüm aynı içeriği iki kez gösterir: <b>ÖNCE</b> ilke uygulanmadan,
+    <b>SONRA</b> uygulanarak. Altındaki sayılar <code>olcCompozisyon()</code>
+    ölçüm katmanından gelir — göz kararı değil. Kılavuz katmanı geliştirme
+    zamanına aittir: dışa aktarımda ve <code>prefers-reduced-motion</code>
+    altında görünmez.
+  </p>
+  <div class="araclar">
+    <button id="kilavuzDugme" aria-pressed="false">Kılavuzları aç/kapat</button>
+    <button id="spiralDugme" aria-pressed="false">Altın spiral (referans)</button>
+    <span class="ipucu">
+      klavye: <b>K</b> &nbsp;·&nbsp; adres: <code>?kilavuz=1</code>,
+      <code>?export=1</code>, <code>?bolum=ucler</code>
+    </span>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════════════════════════════════ 1. ÜÇLER KURALI ═══════════ -->
+<section id="ucler">
+  <h2>1 · Üçler kuralı</h2>
+  <p class="iddia">Figürün ilgi noktası kesişime çapalandığında slayt bir
+    iddiaya, ortaya yapıştırıldığında bir dosya ekine benzer.</p>
+  <div class="ikili">
+    <figure>
+      <figcaption>Önce — her şey ortada</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s1a" style="--komp-olcek:.4166667">
+        <div style="position:absolute;left:96px;top:60px;right:96px;text-align:center">
+          <p class="d-kicker">Rotasyon profili</p>
+          <h2 class="d-baslik d-baslik--kucuk" data-komp-oge="baslik">Diferansiyel dönme 171. derecede kararlı kalıyor</h2>
+        </div>
+        <div data-komp-oge="figur" style="position:absolute;left:610px;top:300px;width:700px;height:420px">
+          <svg class="d-sekil" viewBox="0 0 700 420" width="700" height="420" aria-hidden="true">
+            <rect width="700" height="420" fill="var(--color-surface)"/>
+            <path d="M60 360 L60 40 M60 360 L660 360" stroke="var(--color-rule)" stroke-width="2" fill="none"/>
+            <path d="M60 330 C180 300 260 230 340 150 C420 70 520 120 660 96"
+                  fill="none" stroke="var(--color-data-1)" stroke-width="5"/>
+            <circle cx="340" cy="150" r="9" fill="var(--color-accent)"/>
+          </svg>
+        </div>
+        <p class="d-not" style="position:absolute;left:96px;bottom:60px">n = 1200 · MONTE v4.2</p>
+      </div></div>
+      <pre class="olcum" data-olc="s1a"></pre>
+    </figure>
+    <figure class="sonra">
+      <figcaption>Sonra — tepe nokta sağ-üst kesişimde</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s1b" style="--komp-olcek:.4166667">
+        <div data-komp-oge="iddia" style="position:absolute;left:96px;top:300px;width:470px">
+          <p class="d-kicker">Rotasyon profili</p>
+          <h2 class="d-baslik d-baslik--kucuk" data-komp-oge="baslik">Kararlılık 171. derecede kırılıyor</h2>
+          <p class="d-govde">Kırılma noktası tanφ teriminden doğuyor.</p>
+        </div>
+        <!-- figür, tepe noktası (340,150) kesişime (1280,360) gelecek şekilde -->
+        <div data-komp-oge="figur" style="position:absolute;left:940px;top:210px;width:700px;height:420px">
+          <svg class="d-sekil" viewBox="0 0 700 420" width="700" height="420" aria-hidden="true">
+            <rect width="700" height="420" fill="var(--color-surface)"/>
+            <path d="M60 360 L60 40 M60 360 L660 360" stroke="var(--color-rule)" stroke-width="2" fill="none"/>
+            <path d="M60 330 C180 300 260 230 340 150 C420 70 520 120 660 96"
+                  fill="none" stroke="var(--color-data-1)" stroke-width="5"/>
+            <circle cx="340" cy="150" r="12" fill="var(--color-accent)"/>
+          </svg>
+        </div>
+        <p class="d-not" style="position:absolute;left:96px;bottom:60px">n = 1200 · MONTE v4.2</p>
+      </div></div>
+      <pre class="olcum" data-olc="s1b"></pre>
+    </figure>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ 2. ÇERÇEVE İÇİNDE ÇERÇEVE ═════════ -->
+<section id="cerceve">
+  <h2>2 · Çerçeve içinde çerçeve (ROI kadrajı)</h2>
+  <p class="iddia">Detayı anlatmak yerine kadrajlayın: pencere nerede
+    baktığınızı, panel ne gördüğünüzü, oran (3×) ne kadar büyüttüğünüzü söyler.</p>
+  <div class="ikili">
+    <figure>
+      <figcaption>Önce — "soldaki küçük çıkıntıya bakın"</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s2a" style="--komp-olcek:.4166667">
+        <h2 class="d-baslik d-baslik--kucuk" data-komp-oge="baslik"
+            style="position:absolute;left:96px;top:80px;width:1300px">Spektrumda 656 nm yakınında ikincil bir çizgi var</h2>
+        <div data-komp-oge="figur" style="position:absolute;left:120px;top:300px;width:1000px;height:520px">
+          <svg class="d-sekil" viewBox="0 0 720 420" width="1000" height="520" aria-hidden="true">
+            <rect width="720" height="420" fill="var(--color-surface)"/>
+            <path d="M40 380 L680 380 M40 380 L40 30" stroke="var(--color-rule)" stroke-width="2"/>
+            <path d="M40 300 L140 296 L200 305 L280 292 L360 300 L400 302 L430 180 L444 300
+                     L462 298 L470 232 L482 299 L520 304 L600 295 L680 300"
+                  fill="none" stroke="var(--color-data-2)" stroke-width="3"/>
+          </svg>
+        </div>
+        <p class="d-govde" style="position:absolute;left:1200px;top:420px;width:600px">
+          Ana çizginin sağındaki küçük ikinci tepe, soldaki grafiğin ortasına yakın bir yerde görülebilir.</p>
+      </div></div>
+      <pre class="olcum" data-olc="s2a"></pre>
+    </figure>
+    <figure class="sonra">
+      <figcaption>Sonra — pencere + 3× detay paneli</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s2b" style="--komp-olcek:.4166667">
+        <h2 class="d-baslik d-baslik--kucuk" data-komp-oge="baslik"
+            style="position:absolute;left:96px;top:80px;width:1100px">İkincil çizgi ana çizginin 1,4 nm sağında</h2>
+        <!-- Kaynak: 1000×520 kutuda viewBox 720×420 → preserveAspectRatio
+             varsayılanı (meet) ile ölçek 520/420 = 1,2381 ve x-ofset 54,3 px.
+             ROI penceresi ve detay paneli bu ölçeğe göre hesaplanmıştır. -->
+        <div data-komp-oge="figur" class="komp-cerceve" id="kaynak2"
+             style="position:absolute;left:120px;top:300px;width:1000px;height:520px;--komp-cerceve-ic:0px">
+          <svg class="d-sekil" viewBox="0 0 720 420" width="1000" height="520" aria-hidden="true">
+            <rect width="720" height="420" fill="var(--color-surface)"/>
+            <path d="M40 340 L680 340 M40 340 L40 30" stroke="var(--color-rule)" stroke-width="2"/>
+            <path d="M40 285 L140 282 L200 288 L280 280 L360 285 L400 286 L415 220 L428 285
+                     L455 284 L465 245 L476 286 L520 288 L600 283 L680 286"
+                  fill="none" stroke="var(--color-data-2)" stroke-width="3"/>
+          </svg>
+          <!-- pencere 150×100 → detay 450×300 = TAM 3× -->
+          <div class="komp-cerceve-pencere" id="pencere2"
+               style="left:540px;top:260px;width:150px;height:100px"></div>
+        </div>
+        <!-- detay paneli sağ-üst kesişime (1280·360) çapalı: merkez 1385·360 -->
+        <div class="komp-cerceve-detay" data-komp-oge="detay" id="detay2"
+             style="left:1160px;top:210px;width:450px;height:300px">
+          <div style="position:absolute;left:-1620px;top:-780px;width:3000px;height:1560px">
+            <svg viewBox="0 0 720 420" width="3000" height="1560" aria-hidden="true">
+              <rect width="720" height="420" fill="var(--color-surface)"/>
+              <path d="M40 285 L140 282 L200 288 L280 280 L360 285 L400 286 L415 220 L428 285
+                       L455 284 L465 245 L476 286 L520 288 L600 283 L680 286"
+                    fill="none" stroke="var(--color-data-2)" stroke-width="3"/>
+            </svg>
+          </div>
+          <span class="komp-cerceve-detay__etiket">3×</span>
+        </div>
+        <p class="d-not" style="position:absolute;left:1160px;top:540px;width:520px">
+          Ayrım gücü 0,3 nm · aynı poz süresinde</p>
+      </div></div>
+      <pre class="olcum" data-olc="s2b"></pre>
+    </figure>
+  </div>
+</section>
+
+<!-- ══════════════════════════ 3. YÖNLENDİREN ÇİZGİ ═════════════════ -->
+<section id="iz">
+  <h2>3 · Yönlendiren çizgi (leading line)</h2>
+  <p class="iddia">Çizgi gözü veriden iddiaya götürür; slayttan dışarı
+    götüren çizgi ise dinleyiciyi de götürür.</p>
+  <div class="ikili">
+    <figure>
+      <figcaption>Önce — iz slayttan dışarı çıkıyor</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s3a" style="--komp-olcek:.4166667">
+        <div data-komp-oge="grafik" id="grafik3a" style="position:absolute;left:620px;top:250px;width:820px;height:500px">
+          <svg class="d-sekil" viewBox="0 0 820 500" width="820" height="500" aria-hidden="true">
+            <rect width="820" height="500" fill="var(--color-surface)"/>
+            <path d="M60 440 L780 440 M60 440 L60 40" stroke="var(--color-rule)" stroke-width="2"/>
+            <path d="M60 400 L180 380 L300 330 L420 250 L540 120 L660 90 L780 84"
+                  fill="none" stroke="var(--color-data-1)" stroke-width="5"/>
+            <circle id="tepe3a" cx="540" cy="120" r="10" fill="var(--color-accent)"/>
+          </svg>
+        </div>
+        <p class="d-govde" data-komp-oge="not" id="not3a"
+           style="position:absolute;left:60px;top:830px;width:420px">Doygunluk 40 düğümde başlıyor.</p>
+      </div></div>
+      <pre class="olcum" data-olc="s3a"></pre>
+    </figure>
+    <figure class="sonra">
+      <figcaption>Sonra — iz kırılmadan iddiaya iniyor</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s3b" style="--komp-olcek:.4166667">
+        <div data-komp-oge="grafik" id="grafik3b" style="position:absolute;left:900px;top:170px;width:820px;height:500px">
+          <svg class="d-sekil" viewBox="0 0 820 500" width="820" height="500" aria-hidden="true">
+            <rect width="820" height="500" fill="var(--color-surface)"/>
+            <path d="M60 440 L780 440 M60 440 L60 40" stroke="var(--color-rule)" stroke-width="2"/>
+            <path d="M60 400 L180 380 L300 330 L420 250 L540 120 L660 90 L780 84"
+                  fill="none" stroke="var(--color-data-1)" stroke-width="5"/>
+            <circle cx="540" cy="120" r="10" fill="var(--color-accent)"/>
+          </svg>
+        </div>
+        <div data-komp-oge="iddia" id="iddia3b" class="d-panel"
+             style="position:absolute;left:130px;top:640px;width:640px">
+          <p class="d-etiket">Sonuç</p>
+          <p class="d-baslik d-baslik--kucuk" style="font-size:40px">40 düğümden sonra ek donanım kazanç getirmiyor</p>
+        </div>
+      </div></div>
+      <pre class="olcum" data-olc="s3b"></pre>
+    </figure>
+  </div>
+</section>
+
+<!-- ══════════════════════════ 4. İNİŞ NOKTASI ══════════════════════ -->
+<section id="inis">
+  <h2>4 · İniş noktası ve tek baskın öğe</h2>
+  <p class="iddia">Dört eşit kart hiçbir şeyi birinci yapmaz; baskınlık
+    oranı 1,6'nın altındaysa gözün ineceği bir yer yok demektir.</p>
+  <div class="ikili">
+    <figure>
+      <figcaption>Önce — dört eşit kart</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s4a" style="--komp-olcek:.4166667">
+        <h2 class="d-baslik d-baslik--kucuk" data-komp-oge="baslik"
+            style="position:absolute;left:96px;top:96px">Ölçüm özeti</h2>
+        <div style="position:absolute;left:96px;top:280px;right:96px;display:grid;grid-template-columns:repeat(4,1fr);gap:24px">
+          <article class="sci-card sci-card--accent" data-komp-oge="kart-1">
+            <p class="sci-card__kicker">Medyan hata</p><p class="d-deger d-deger--kucuk">0,21</p></article>
+          <article class="sci-card sci-card--accent" data-komp-oge="kart-2">
+            <p class="sci-card__kicker">Çözüm süresi</p><p class="d-deger d-deger--kucuk">6,8</p></article>
+          <article class="sci-card sci-card--accent" data-komp-oge="kart-3">
+            <p class="sci-card__kicker">Bellek</p><p class="d-deger d-deger--kucuk">1,4</p></article>
+          <article class="sci-card sci-card--accent" data-komp-oge="kart-4">
+            <p class="sci-card__kicker">Hata birikimi</p><p class="d-deger d-deger--kucuk">10⁻⁸</p></article>
+        </div>
+        <p class="d-not" style="position:absolute;left:96px;top:620px">Hepsi önemli.</p>
+      </div></div>
+      <pre class="olcum" data-olc="s4a"></pre>
+    </figure>
+    <figure class="sonra">
+      <figcaption>Sonra — bir tane birinci</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s4b" style="--komp-olcek:.4166667">
+        <div data-komp-oge="hero" style="position:absolute;left:96px;top:240px;width:900px">
+          <p class="d-kicker">Çözüm süresi</p>
+          <p class="d-deger">6,8<span class="d-birim">sn</span></p>
+          <p class="d-govde">GEODYN II'nin yarısından az (14,2 sn, n = 1200)</p>
+        </div>
+        <div class="komp-yakinlik" data-komp-oge="ikincil"
+             style="position:absolute;left:1180px;top:300px;width:640px">
+          <p class="d-not"><b>Medyan hata</b> 0,21 px — önceki yöntemin yarısı</p>
+          <p class="d-not"><b>Bellek</b> 1,4 GB — %33 daha az</p>
+          <p class="d-not"><b>Hata birikimi</b> 10⁻⁸/gün — iki mertebe düşük</p>
+        </div>
+      </div></div>
+      <pre class="olcum" data-olc="s4b"></pre>
+    </figure>
+  </div>
+</section>
+
+<!-- ══════════════════════════ 5. KARŞITLIK ═════════════════════════ -->
+<section id="karsitlik">
+  <h2>5 · Karşıtlık (juxtaposition)</h2>
+  <p class="iddia">Öncesi/sonrası ancak bitişikse ve ölçekler aynıysa
+    karşılaştırmadır; aradaki boşluk ile farklı eksen onu iki ayrı resme çevirir.</p>
+  <div class="ikili">
+    <figure>
+      <figcaption>Önce — ayrık paneller, farklı ölçek</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s5a" style="--komp-olcek:.4166667">
+        <h2 class="d-baslik d-baslik--kucuk" data-komp-oge="baslik"
+            style="position:absolute;left:96px;top:80px">Düzeltme öncesi ve sonrası</h2>
+        <div class="d-panel" data-komp-oge="sol" style="position:absolute;left:96px;top:280px;width:700px;height:520px">
+          <p class="d-etiket">Düzeltmesiz</p>
+          <svg class="d-sekil" viewBox="0 0 640 400" width="640" height="400" aria-hidden="true">
+            <path d="M20 360 L620 360 M20 360 L20 20" stroke="var(--color-rule)" stroke-width="2"/>
+            <path d="M20 340 L120 300 L220 250 L320 320 L420 180 L520 260 L620 120"
+                  fill="none" stroke="var(--color-data-2)" stroke-width="4"/>
+            <text x="30" y="45" font-size="26" fill="var(--color-muted)">y: 0–40</text>
+          </svg>
+        </div>
+        <div class="d-panel" data-komp-oge="sag" style="position:absolute;left:1120px;top:320px;width:700px;height:440px">
+          <p class="d-etiket">Düzeltmeli</p>
+          <svg class="d-sekil" viewBox="0 0 640 340" width="640" height="340" aria-hidden="true">
+            <path d="M20 300 L620 300 M20 300 L20 20" stroke="var(--color-rule)" stroke-width="2"/>
+            <path d="M20 290 L120 280 L220 272 L320 278 L420 265 L520 270 L620 262"
+                  fill="none" stroke="var(--color-data-1)" stroke-width="4"/>
+            <text x="30" y="45" font-size="26" fill="var(--color-muted)">y: 0–8</text>
+          </svg>
+        </div>
+      </div></div>
+      <pre class="olcum" data-olc="s5a"></pre>
+    </figure>
+    <figure class="sonra">
+      <figcaption>Sonra — bitişik, tek eksen, sayısı yazılı</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s5b" style="--komp-olcek:.4166667">
+        <h2 class="d-baslik d-baslik--kucuk" data-komp-oge="baslik"
+            style="position:absolute;left:96px;top:80px">Düzeltme, saçılmayı 5,1 kat azaltıyor</h2>
+        <div class="komp-karsit" data-komp-oge="karsit"
+             style="position:absolute;left:96px;top:280px;width:1728px;height:540px">
+          <div class="d-panel" style="border-radius:10px 0 0 10px">
+            <p class="d-etiket">Düzeltmesiz · σ = 4,1</p>
+            <svg class="d-sekil" viewBox="0 0 820 400" width="820" height="400" aria-hidden="true">
+              <path d="M20 360 L800 360 M20 360 L20 20" stroke="var(--color-rule)" stroke-width="2"/>
+              <path d="M20 340 L150 300 L280 250 L410 320 L540 180 L670 260 L800 120"
+                    fill="none" stroke="var(--color-data-2)" stroke-width="4"/>
+              <text x="30" y="45" font-size="26" fill="var(--color-muted)">y: 0–40</text>
+            </svg>
+          </div>
+          <div class="d-panel" style="border-radius:0 10px 10px 0">
+            <p class="d-etiket">Düzeltmeli · σ = 0,8</p>
+            <svg class="d-sekil" viewBox="0 0 820 400" width="820" height="400" aria-hidden="true">
+              <path d="M20 360 L800 360 M20 360 L20 20" stroke="var(--color-rule)" stroke-width="2"/>
+              <path d="M20 336 L150 328 L280 320 L410 326 L540 312 L670 318 L800 308"
+                    fill="none" stroke="var(--color-data-1)" stroke-width="4"/>
+              <text x="30" y="45" font-size="26" fill="var(--color-muted)">y: 0–40</text>
+            </svg>
+          </div>
+        </div>
+      </div></div>
+      <pre class="olcum" data-olc="s5b"></pre>
+    </figure>
+  </div>
+</section>
+
+<!-- ══════════════════════════ 6. NEGATİF ALAN ══════════════════════ -->
+<section id="negatif">
+  <h2>6 · Negatif alan</h2>
+  <p class="iddia">Kalabalık slaydın en ucuz çaresi bir şey eklemek değil,
+    çıkarmaktır: boş alan oranı %30'un altına düştüğünde slayt okunmayı bırakır.</p>
+  <div class="ikili">
+    <figure>
+      <figcaption>Önce — boş alan %'si düşük</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s6a" style="--komp-olcek:.4166667">
+        <h2 class="d-baslik d-baslik--kucuk" data-komp-oge="baslik"
+            style="position:absolute;left:64px;top:40px">Yöntem</h2>
+        <div style="position:absolute;left:64px;top:150px;right:64px;bottom:40px;display:grid;
+                    grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:12px">
+          <div class="d-panel" data-komp-oge="p1"><p class="d-not">Ham telemetri 1 Hz'de toplanıyor ve zaman damgaları UTC'ye çevriliyor.</p></div>
+          <div class="d-panel" data-komp-oge="p2"><p class="d-not">Aykırı değerler 3σ eşiğiyle ayıklanıyor, boşluklar doğrusal dolduruluyor.</p></div>
+          <div class="d-panel" data-komp-oge="p3"><p class="d-not">Kalibrasyon katsayıları her geçişte yeniden kestiriliyor.</p></div>
+          <div class="d-panel" data-komp-oge="p4"><p class="d-not">Model 171. dereceye kadar harmonik açılım kullanıyor.</p></div>
+          <div class="d-panel" data-komp-oge="p5"><p class="d-not">Çözüm MONTE v4.2 üzerinde 40 düğümde koşuyor.</p></div>
+          <div class="d-panel" data-komp-oge="p6"><p class="d-not">Doğrulama, bağımsız GEODYN II çıktısıyla yapılıyor.</p></div>
+        </div>
+      </div></div>
+      <pre class="olcum" data-olc="s6a"></pre>
+    </figure>
+    <figure class="sonra">
+      <figcaption>Sonra — tek iddia, nefes alanı</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s6b" style="--komp-olcek:.4166667">
+        <!-- .komp-olcu 940 px ölçü verir; blok merkezi sol-üst kesişime
+             (640·360) oturacak şekilde konumlandırıldı -->
+        <div data-komp-oge="iddia" class="komp-olcu"
+             style="position:absolute;left:170px;top:242px">
+          <p class="d-kicker">Yöntem</p>
+          <h2 class="d-baslik" data-komp-oge="baslik">Kalibrasyon her geçişte yeniden kestiriliyor</h2>
+          <p class="d-govde">Kalan beş adım konuşma metnine ve ekte duruyor.</p>
+        </div>
+      </div></div>
+      <pre class="olcum" data-olc="s6b"></pre>
+    </figure>
+  </div>
+</section>
+
+<!-- ══════════════════════════ 7. OPTİK MERKEZ ══════════════════════ -->
+<section id="optik">
+  <h2>7 · Optik merkez (960 · 504)</h2>
+  <p class="iddia">Dikeyde ortalanan hero blok 540'a değil 504'e oturur;
+    36 px'lik fark "biraz aşağı kaymış" hissini ortadan kaldırır.</p>
+  <div class="ikili">
+    <figure>
+      <figcaption>Önce — geometrik merkez (540)</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s7a" style="--komp-olcek:.4166667">
+        <div data-komp-oge="baslik" style="position:absolute;left:50%;top:540px;translate:-50% -50%;width:1400px;text-align:center">
+          <p class="d-kicker">Bölüm 3</p>
+          <h2 class="d-baslik">Kararlılık sınırı nereden geliyor?</h2>
+        </div>
+      </div></div>
+      <pre class="olcum" data-olc="s7a"></pre>
+    </figure>
+    <figure class="sonra">
+      <figcaption>Sonra — optik merkez (504)</figcaption>
+      <div class="sahne-cerceve"><div class="komp-sahne" id="s7b" style="--komp-olcek:.4166667">
+        <div data-komp-oge="baslik" class="komp-optik-merkez" style="width:1400px;text-align:center">
+          <p class="d-kicker">Bölüm 3</p>
+          <h2 class="d-baslik">Kararlılık sınırı nereden geliyor?</h2>
+        </div>
+      </div></div>
+      <pre class="olcum" data-olc="s7b"></pre>
+    </figure>
+  </div>
+</section>
+
+</main>
+
+<script type="module">
+import {
+  kompHazirla, enableCompositionGuides, olcCompozisyon, izCiz, roiBagla, KOMP
+} from './composition-guides.js';
+
+const ayar = kompHazirla();
+
+/* ?bolum=ucler → yalnız o bölümü göster (kare alma / QA kolaylığı) */
+if (ayar.bolum) {
+  for (const s of document.querySelectorAll('main > section'))
+    if (s.id !== ayar.bolum) s.remove();
+}
+
+const sahneler = [...document.querySelectorAll('.komp-sahne')];
+
+/* ── kılavuzlar: ilk sahne klavyeyi taşır, kalanlar olayla eşitlenir ── */
+const denetleyiciler = sahneler.map((sahne, i) =>
+  enableCompositionGuides(sahne, { tus: i === 0 ? 'k' : null }));
+
+const dugme = document.querySelector('#kilavuzDugme');
+const spiralDugme = document.querySelector('#spiralDugme');
+
+function esitle(acik) {
+  denetleyiciler.slice(1).forEach(d => (acik ? d.ac() : d.kapat()));
+  dugme.setAttribute('aria-pressed', String(acik));
+}
+sahneler[0]?.addEventListener('kompkilavuz', e => esitle(e.detail.acik));
+dugme.addEventListener('click', () => {
+  const acik = denetleyiciler[0].degistir();
+  esitle(denetleyiciler[0].acikMi() || acik);
+});
+spiralDugme.addEventListener('click', () => {
+  const yeni = spiralDugme.getAttribute('aria-pressed') !== 'true';
+  denetleyiciler.forEach(d => d.katmanAyarla('spiral', yeni));
+  spiralDugme.setAttribute('aria-pressed', String(yeni));
+});
+if (ayar.kilavuz) esitle(true);
+
+/* ── yönlendiren çizgiler ─────────────────────────────────────────── */
+const s3a = document.querySelector('#s3a');
+if (s3a) {
+  /* YANLIŞ örnek: iz sol-alt köşeden slayt dışına doğru sonlanıyor */
+  izCiz(s3a, { baslangic: '#grafik3a', bitis: [20, 1040], egri: .3 });
+}
+const s3b = document.querySelector('#s3b');
+if (s3b) {
+  izCiz(s3b, { baslangic: '#grafik3b', bitis: '#iddia3b', egri: .22,
+               etiket: 'buradan buraya' });
+}
+
+/* ── ROI bağı ─────────────────────────────────────────────────────── */
+const s2b = document.querySelector('#s2b');
+if (s2b) roiBagla(s2b, '#pencere2', '#detay2');
+
+/* ── ölçüm okumaları ──────────────────────────────────────────────── */
+const yuzde = n => `%${Math.round(n * 100)}`;
+function yaz(sahne) {
+  const hedef = document.querySelector(`pre.olcum[data-olc="${sahne.id}"]`);
+  if (!hedef) return;
+  const o = olcCompozisyon(sahne);
+  const enYakin = o.ogeler.length
+    ? Math.min(...o.ogeler.map(x => x.kesisimUzakligi.px)) : '—';
+  const capali = o.ogeler.filter(x => x.kesisimUzakligi.capali).length;
+  const sapma = o.optikMerkez.sapma
+    ? `${o.optikMerkez.sapma.y > 0 ? '+' : ''}${o.optikMerkez.sapma.y} px` : '—';
+  const satirlar = [
+    `<b>boş alan</b> ${yuzde(o.bosAlanOrani)}   <b>baskınlık</b> ${o.baskinlik === Infinity ? '∞' : o.baskinlik}   <b>öğe</b> ${o.ogeSayisi}`,
+    `<b>en yakın kesişim</b> ${enYakin} px (çapalı ${capali}/${o.ogeSayisi})   <b>başlık→optik y</b> ${sapma}`,
+    `<b>denge</b> ${o.denge.tur} · ağırlık merkezi ${o.denge.agirlikMerkezi.x}·${o.denge.agirlikMerkezi.y} (sapma ${o.denge.sapma.px} px)`,
+    ...o.uyarilar.map(u => `<i>⚠ ${u}</i>`)
+  ];
+  hedef.innerHTML = satirlar.join('\n');
+  return o;
+}
+
+const olcumler = {};
+/* yerleşim oturduktan sonra ölç (yazı tipleri + SVG düzeni) */
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  for (const s of sahneler) olcumler[s.id] = yaz(s);
+  document.documentElement.dataset.kompHazir = 'true';
+}));
+
+/* headless QA / konsol incelemesi için */
+window.__komp = { KOMP, sahneler, denetleyiciler, olcCompozisyon, olcumler, yaz };
+</script>
+</body>
+</html>

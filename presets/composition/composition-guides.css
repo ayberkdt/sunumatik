@@ -1,0 +1,445 @@
+/* KOMPOZİSYON — kılavuz katmanı + yerleşim yardımcıları
+   1920×1080 sabit sahne. Eş dosya: composition-guides.js
+   Doküman: ../references/composition.md   Demo: composition-demo.html
+
+   Palet jetonlarını TÜKETİR (design-space-science-deck/presets/color_themes/palette-library.css):
+   --color-canvas/-surface/-ink/-muted/-accent/-accent-ink/-data-1/-data-2/-rule
+
+   Mevcut ızgara diliyle ÇELİŞMEZ, ÜSTÜNE gelir:
+   alignment-and-grid.md → 12 sütun, 64 px kenar, 24 px oluk, 8 px taban satırı
+   typography-and-layout.md → güvenli alan ≥ 96 px yatay / 72 px dikey
+
+   SÖZLEŞME
+   - Kılavuzlar GELİŞTİRME ZAMANI katmanıdır: html[data-export="true"] ve
+     prefers-reduced-motion altında GÖRÜNMEZ (aşağıda !important ile mühürlü).
+   - Yardımcı sınıflar (.komp-*) export'ta AYNEN kalır — onlar yerleşimdir,
+     kılavuz değildir.                                                        */
+
+/* ═══════════════════════════════════════════════════════════════════════
+   1. SAHNE JETONLARI — tüm sayılar tek yerde
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.komp-sahne,
+[data-komp-sahne] {
+  /* sahne ölçüleri */
+  --komp-sahne-en: 1920px;
+  --komp-sahne-boy: 1080px;
+
+  /* üçler kuralı çizgileri (sahne px) */
+  --komp-ucler-x1: 640px;
+  --komp-ucler-x2: 1280px;
+  --komp-ucler-y1: 360px;   /* 45 × 8 px taban satırı — TAM oturur */
+  --komp-ucler-y2: 720px;   /* 90 × 8 px taban satırı — TAM oturur */
+
+  /* optik merkez: geometrik merkezin (540) %3,3 = 36 px ÜSTÜ.
+     504 = 63 × 8 → taban satırına oturur, yuvarlama borcu yok. */
+  --komp-optik-x: 960px;
+  --komp-optik-y: 504px;
+
+  /* güvenli alan (typography-and-layout.md tabanları) */
+  --komp-guvenli-x: 96px;
+  --komp-guvenli-y: 72px;
+
+  /* 12 sütun ızgara (alignment-and-grid.md) */
+  --komp-kenar: 64px;
+  --komp-oluk: 24px;
+  --komp-sutun: 127.3333px;          /* (1920 − 128 − 11×24) ÷ 12 */
+  --komp-sutun-adim: 151.3333px;     /* sütun + oluk */
+
+  /* nefes (negatif alan) ölçekleri — 8/16/24/40/64 skalasının üstü */
+  --komp-nefes-xs: 24px;
+  --komp-nefes-s: 40px;
+  --komp-nefes-m: 64px;
+  --komp-nefes-l: 96px;
+  --komp-nefes-xl: 144px;
+  --komp-nefes-xxl: 216px;
+
+  /* kılavuz görünümü — ölçekli sahnede kalınlığı korumak için:
+     .komp-sahne { --komp-olcek: .42; } demo bunu ayarlar */
+  --komp-olcek: 1;
+  --kk-cizgi: calc(2px / var(--komp-olcek));
+  --kk-ince: calc(1px / var(--komp-olcek));
+  --kk-yazi: calc(18px / var(--komp-olcek));
+  --kk-nokta: calc(9px / var(--komp-olcek));
+
+  position: relative;
+  width: var(--komp-sahne-en);
+  height: var(--komp-sahne-boy);
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   2. KILAVUZ BİNDİRMESİ — JS'in kurduğu DOM'un stili
+   DOM: .komp-kilavuz > svg.komp-kilavuz__cizim + .komp-kilavuz__rozet
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.komp-kilavuz {
+  position: absolute;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+  display: none;                 /* varsayılan KAPALI */
+  --kk-ana: var(--color-accent, #F54F1F);
+  --kk-ikinci: var(--color-data-1, #78C4B4);
+  --kk-sessiz: var(--color-muted, #A6A9B1);
+}
+.komp-kilavuz.acik { display: block; }
+
+.komp-kilavuz__cizim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* --- 12 sütun ızgara: en sessiz katman, metin kenarlarını denetler ---- */
+.kk-izgara rect {
+  fill: color-mix(in srgb, var(--kk-sessiz) 8%, transparent);
+}
+
+/* --- güvenli alan: kesikli dikdörtgen ---------------------------------- */
+.kk-guvenli rect {
+  fill: none;
+  stroke: color-mix(in srgb, var(--kk-sessiz) 62%, transparent);
+  stroke-width: var(--kk-ince);
+  stroke-dasharray: calc(10px / var(--komp-olcek)) calc(8px / var(--komp-olcek));
+}
+
+/* --- üçler ızgarası: ana çizgiler --------------------------------------- */
+.kk-ucler line {
+  stroke: color-mix(in srgb, var(--kk-ana) 55%, transparent);
+  stroke-width: var(--kk-cizgi);
+}
+
+/* --- kesişim jetonları: halka + göbek ----------------------------------- */
+.kk-kesisim circle.kk-halka {
+  fill: none;
+  stroke: var(--kk-ana);
+  stroke-width: var(--kk-cizgi);
+}
+.kk-kesisim circle.kk-gobek { fill: var(--kk-ana); }
+
+/* --- optik merkez: artı imi (geometrik merkez soluk gösterilir) --------- */
+.kk-optik line { stroke: var(--kk-ikinci); stroke-width: var(--kk-cizgi); }
+.kk-optik line.kk-geometrik {
+  stroke: color-mix(in srgb, var(--kk-sessiz) 45%, transparent);
+  stroke-dasharray: calc(6px / var(--komp-olcek)) calc(6px / var(--komp-olcek));
+}
+
+/* --- altın spiral: DAİMA "referans" etiketiyle, asla ana kılavuz değil -- */
+.kk-spiral path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--kk-sessiz) 70%, transparent);
+  stroke-width: var(--kk-ince);
+  stroke-dasharray: calc(9px / var(--komp-olcek)) calc(7px / var(--komp-olcek));
+}
+.kk-spiral rect {
+  fill: none;
+  stroke: color-mix(in srgb, var(--kk-sessiz) 35%, transparent);
+  stroke-width: var(--kk-ince);
+}
+
+.kk-etiket {
+  fill: var(--kk-sessiz);
+  font-family: ui-monospace, "IBM Plex Mono", monospace;
+  font-size: var(--kk-yazi);
+  letter-spacing: .04em;
+}
+.kk-etiket--ana { fill: var(--kk-ana); }
+
+/* --- rozet: hangi kılavuzun açık olduğunu söyler ------------------------ */
+.komp-kilavuz__rozet {
+  position: absolute;
+  left: var(--komp-kenar);
+  bottom: calc(var(--komp-kenar) / 2);
+  padding: calc(8px / var(--komp-olcek)) calc(14px / var(--komp-olcek));
+  border: var(--kk-ince) solid color-mix(in srgb, var(--kk-ana) 45%, transparent);
+  border-radius: calc(6px / var(--komp-olcek));
+  background: color-mix(in srgb, var(--color-canvas, #141519) 82%, transparent);
+  color: var(--kk-ana);
+  font-family: ui-monospace, "IBM Plex Mono", monospace;
+  font-size: var(--kk-yazi);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ═══ MÜHÜR: dışa aktarım ve reduced-motion → kılavuz YOK ═══════════════ */
+html[data-export="true"] .komp-kilavuz,
+html[data-export="true"] .komp-iz-katman--kilavuz { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .komp-kilavuz,
+  .komp-iz-katman--kilavuz { display: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   3. ÜÇLER KURALINA ÇAPALAMA
+   Öğe SAHNE KOORDİNATINA konur; hangi noktasının çizgiye oturacağını
+   .komp-capa-* seçer. Varsayılan çapa: öğenin MERKEZİ (figür davranışı).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[class*="komp-ucler-"] {
+  position: absolute;
+  left: var(--komp-x, 640px);
+  top: var(--komp-y, 360px);
+  translate: -50% -50%;                 /* varsayılan: merkez çapa */
+}
+
+.komp-ucler-sol-ust { --komp-x: var(--komp-ucler-x1); --komp-y: var(--komp-ucler-y1); }
+.komp-ucler-sag-ust { --komp-x: var(--komp-ucler-x2); --komp-y: var(--komp-ucler-y1); }
+.komp-ucler-sol-alt { --komp-x: var(--komp-ucler-x1); --komp-y: var(--komp-ucler-y2); }
+.komp-ucler-sag-alt { --komp-x: var(--komp-ucler-x2); --komp-y: var(--komp-ucler-y2); }
+
+/* Çapa seçimi: öğenin HANGİ noktası kesişime oturuyor */
+.komp-capa-merkez   { translate: -50% -50%; }
+.komp-capa-sol-ust  { translate: 0 0; }
+.komp-capa-sol-alt  { translate: 0 -100%; }
+.komp-capa-sag-ust  { translate: -100% 0; }
+.komp-capa-sag-alt  { translate: -100% -100%; }
+
+/* Metin bloğu çapası: İLK SATIRIN başı kesişime oturur.
+   Metnin görsel çapası kutusu değil, ilk satırının okunmaya başladığı
+   yerdir; kutu merkezine hizalamak başlığı gözle YUKARI kaydırır. */
+.komp-capa-metin {
+  translate: 0 calc(var(--komp-satir, 1.06em) * -0.5);
+}
+
+/* Üçler çizgisi ile sütun ızgarası ARASINDAKİ gerçek ilişki
+   (composition.md "Üçler kuralı" bölümü): 640 px, 4. sütunun sağ kenarına
+   (645,33) 5,33 px uzaktadır; 1280 px, 9. sütunun sol kenarına (1274,67)
+   yine 5,33 px uzaktadır. Yani üçler çizgisine çapalanan bir FİGÜR ile
+   sütuna hizalanan METİN aynı düşey çizgi olarak okunur — ama sayılar
+   eşit DEĞİLDİR. Metni sütuna, figürü üçlere bağlayın; ikisini aynı
+   öğede karıştırmayın. Sütun kenarına oturtmak isteyen için: */
+.komp-sutun-4-sag { position: absolute; left: 645.3333px; }
+.komp-sutun-9-sol { position: absolute; left: 1274.6667px; }
+
+/* Optik merkez: hero başlık / tek denklem / tek figür için */
+.komp-optik-merkez {
+  position: absolute;
+  left: var(--komp-optik-x);
+  top: var(--komp-optik-y);
+  translate: -50% -50%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   4. ÇERÇEVE İÇİNDE ÇERÇEVE
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Ana görselin İÇİNDEN çerçeveleme: içeriden bir kural dikdörtgeni +
+   yönlü perde. Kart chrome'u DEĞİLDİR — kenar yok, sadece iç çizgi. */
+.komp-cerceve {
+  position: relative;
+  /* ZORUNLU: .komp-cerceve-pencere'nin dış karartması 9999 px yayılır;
+     kırpılmazsa slaydın TAMAMINI (başlık dahil) karartır. */
+  overflow: hidden;
+  --komp-cerceve-ic: 40px;
+  --komp-cerceve-renk: var(--color-rule, #454D76);
+}
+.komp-cerceve::after {
+  content: "";
+  position: absolute;
+  inset: var(--komp-cerceve-ic);
+  border: 1px solid color-mix(in srgb, var(--komp-cerceve-renk) 80%, transparent);
+  pointer-events: none;
+}
+/* Perde: çerçevenin dışında kalan alanı karartıp bakışı içeri iter.
+   decor-layering.md'deki "scrim" kuralıyla aynı iş, kadraj ölçeğinde. */
+.komp-cerceve--perde::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to right,
+      color-mix(in srgb, var(--color-canvas, #141519) 72%, transparent) 0,
+      transparent var(--komp-cerceve-ic),
+      transparent calc(100% - var(--komp-cerceve-ic)),
+      color-mix(in srgb, var(--color-canvas, #141519) 72%, transparent) 100%),
+    linear-gradient(to bottom,
+      color-mix(in srgb, var(--color-canvas, #141519) 72%, transparent) 0,
+      transparent var(--komp-cerceve-ic),
+      transparent calc(100% - var(--komp-cerceve-ic)),
+      color-mix(in srgb, var(--color-canvas, #141519) 72%, transparent) 100%);
+}
+
+/* ROI (ilgi bölgesi) kadrajı: ana görselin ÜSTÜNDEKİ pencere + büyütülmüş
+   detay paneli. İkisini izCiz()/roiBagla() birleştirir. */
+.komp-cerceve-pencere {
+  position: absolute;
+  border: 2px solid var(--color-accent, #F54F1F);
+  border-radius: 2px;
+  box-shadow: 0 0 0 9999px color-mix(in srgb, var(--color-canvas, #141519) 42%, transparent);
+  pointer-events: none;
+}
+.komp-cerceve-detay {
+  position: absolute;
+  overflow: hidden;
+  border: 2px solid var(--color-accent, #F54F1F);
+  border-radius: 4px;
+  background: var(--color-surface, #1E2026);
+}
+.komp-cerceve-detay > .komp-cerceve-detay__etiket {
+  position: absolute;
+  left: 0; bottom: 0;
+  padding: 6px 12px;
+  background: var(--color-accent, #F54F1F);
+  color: var(--color-accent-ink, #15182B);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   5. YÖNLENDİREN ÇİZGİ (.komp-iz) — JS'in ürettiği SVG yolunun stili
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.komp-iz-katman {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 40;                 /* içeriğin üstünde, kılavuzun altında */
+}
+.komp-iz {
+  fill: none;
+  stroke: var(--komp-iz-renk, var(--color-accent, #F54F1F));
+  stroke-width: var(--komp-iz-kalinlik, 3px);
+  stroke-linecap: round;
+}
+.komp-iz--kesikli { stroke-dasharray: 10 9; }
+.komp-iz--sessiz {
+  stroke: color-mix(in srgb, var(--color-muted, #A6A9B1) 70%, transparent);
+  stroke-width: 2px;
+}
+.komp-iz-uc { fill: var(--komp-iz-renk, var(--color-accent, #F54F1F)); }
+.komp-iz-etiket {
+  fill: var(--color-ink, #F1F0EB);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+}
+.komp-iz-etiket-zemin {
+  fill: color-mix(in srgb, var(--color-canvas, #141519) 88%, transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   6. NEGATİF ALAN — boşluk bir özne, artık değil
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.komp-negatif { padding: var(--komp-nefes, var(--komp-nefes-m, 64px)); }
+.komp-negatif--xs  { --komp-nefes: var(--komp-nefes-xs); }
+.komp-negatif--s   { --komp-nefes: var(--komp-nefes-s); }
+.komp-negatif--m   { --komp-nefes: var(--komp-nefes-m); }
+.komp-negatif--l   { --komp-nefes: var(--komp-nefes-l); }
+.komp-negatif--xl  { --komp-nefes: var(--komp-nefes-xl); }
+.komp-negatif--xxl { --komp-nefes: var(--komp-nefes-xxl); }
+
+/* Metin ölçüsü: satır 45–75 karakteri geçerse boşluk değil, duvar olur.
+   TUZAK: `ch` öğenin KENDİ font-size'ına göre çözülür. Sahne kabında
+   font-size küçük (16 px) olduğu için bir SARMALAYICIYA `62ch` vermek
+   ~500 px'lik bir kutu üretir — metin ölçüsü değil, kaza. Sahne sabit
+   1920×1080 olduğundan ölçüyü px olarak veriyoruz (30 px gövde tabanında
+   ortalama karakter ≈ 15 px). */
+.komp-olcu      { max-width: 940px; }  /* ≈ 62 karakter @ 30 px */
+.komp-olcu--dar { max-width: 660px; }  /* ≈ 44 karakter @ 30 px */
+/* Ölçüyü METİN öğesinin kendisine veriyorsanız ch kullanılabilir: */
+.komp-olcu-ch      { max-width: 62ch; }
+.komp-olcu-ch--dar { max-width: 44ch; }
+
+/* Yakınlık (Gestalt): grup İÇİ boşluk, grup ARASI boşluğun en çok yarısı */
+.komp-yakinlik {
+  display: grid;
+  gap: var(--komp-ic-bosluk, 16px);
+}
+.komp-yakinlik-kume {
+  display: grid;
+  gap: var(--komp-dis-bosluk, 64px);
+}
+
+/* Ortak bölge (Gestalt): sessiz kuşatma — kart değil, alan */
+.komp-ortak-bolge {
+  padding: 32px 36px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-surface, #1E2026) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-rule, #454D76) 60%, transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   7. KARŞITLIK (juxtaposition)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Öncesi/sonrası BİTİŞİK olmalı: aradaki boşluk karşılaştırmayı öldürür.
+   Tek saç teli kural çizgisi ayırır, oluk değil. */
+.komp-karsit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  align-items: stretch;
+}
+.komp-karsit > * + * {
+  border-left: 1px solid var(--color-rule, #454D76);
+}
+/* Ölçek karşıtlığı: eşit değil, EZİCİ oran (≥ 3:1) — "biraz büyük" yok */
+.komp-karsit--olcek { grid-template-columns: 3fr 1fr; }
+.komp-karsit--olcek-ters { grid-template-columns: 1fr 3fr; }
+/* Aynı eksende iki rejim: dikey ayrım çizgisi rejim sınırını işaretler */
+.komp-karsit-sinir {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 0;
+  border-left: 2px dashed color-mix(in srgb, var(--color-accent, #F54F1F) 60%, transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   8. DERİNLİK KATMANLAMA — decor-layering.md ile aynı bütçe
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.komp-derinlik-arka  { position: absolute; z-index: 0;  opacity: .5; }
+.komp-derinlik-orta  { position: absolute; z-index: 10; opacity: .82; }
+.komp-derinlik-on    { position: absolute; z-index: 20; opacity: 1; }
+/* Perde: ön katman metni arka katmanın üstünde okunacaksa ZORUNLU */
+.komp-derinlik-perde {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  background: linear-gradient(
+    var(--komp-perde-yon, 100deg),
+    color-mix(in srgb, var(--color-canvas, #141519) 88%, transparent) 0%,
+    color-mix(in srgb, var(--color-canvas, #141519) 55%, transparent) 46%,
+    transparent 78%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   9. KADRAJ: taşma (bleed) vs içeride tutma
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.komp-tasma-sag  { position: absolute; right: 0; }
+.komp-tasma-sol  { position: absolute; left: 0; }
+.komp-tasma-alt  { position: absolute; bottom: 0; }
+.komp-tasma-tam  { position: absolute; inset: 0; }
+/* Taşan öğe SAHNE KENARINA yapışır; güvenli alanla arasında boşluk
+   BIRAKMAZ. 20 px'lik "az taşma" kaza gibi görünür — ya 0 ya da hiç. */
+.komp-icerde { position: absolute; inset: var(--komp-guvenli-y) var(--komp-guvenli-x); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   10. RİTİM: seri slaytlarda sabit çapa ("aynı yerde aynı şey")
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.komp-capa-kicker { position: absolute; left: var(--komp-kenar); top: 72px; }
+.komp-capa-baslik { position: absolute; left: var(--komp-kenar); top: 132px; }
+.komp-capa-altbilgi {
+  position: absolute;
+  left: var(--komp-kenar);
+  right: var(--komp-kenar);
+  bottom: 48px;
+}
+.komp-capa-sayac { position: absolute; right: var(--komp-kenar); bottom: 48px; }
+
+/* Ölçüm yardımcısının işaretlediği öğeler (isteğe bağlı, açık işaretleme) */
+[data-komp-oge] { /* stil yok — yalnız olcCompozisyon() için işaret */ }

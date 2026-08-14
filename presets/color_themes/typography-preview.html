@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tipografi sistemi — bilim destesi</title>
+<link rel="stylesheet" href="palette-library.css">
+<link rel="stylesheet" href="type-treatments.css">
+<style>
+  :root{
+    --pg-bg:#0B1116; --pg-fg:#E6EDF2; --pg-dim:#8FA3B0; --pg-line:#22323D;
+    --pg-card:#111A21; --pg-accent:#6FD3B4;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--pg-bg); color:var(--pg-fg);
+    font-family:"Source Sans 3 Deck","Segoe UI",system-ui,sans-serif;
+    font-size:17px; line-height:1.55; padding:0 0 96px;
+  }
+  header{padding:40px 40px 24px;border-bottom:1px solid var(--pg-line)}
+  h1{font-family:"Archivo Deck",system-ui,sans-serif;font-weight:700;
+     font-size:40px;letter-spacing:-.02em;margin:0 0 8px}
+  .lede{color:var(--pg-dim);max-width:78ch;margin:0}
+  .warn{margin:18px 0 0;padding:12px 16px;border-left:3px solid #E6C36A;
+        background:#1A1710;color:#F0E2C0;max-width:90ch;font-size:15px}
+  main{padding:0 40px}
+  section{padding:36px 0;border-bottom:1px solid var(--pg-line)}
+  h2{font-family:"Archivo Deck",system-ui,sans-serif;font-weight:700;font-size:26px;
+     letter-spacing:-.01em;margin:0 0 6px}
+  h3{font-family:"Archivo Deck",system-ui,sans-serif;font-weight:600;font-size:19px;margin:0 0 4px}
+  .sub{color:var(--pg-dim);font-size:15px;margin:0 0 20px;max-width:86ch}
+  .card{background:var(--pg-card);border:1px solid var(--pg-line);border-radius:10px;
+        padding:24px 26px;margin:0 0 20px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--pg-dim);
+        font-family:"JetBrains Mono Deck",monospace;margin:6px 0 16px}
+  .meta b{color:var(--pg-fg);font-weight:500}
+  .tag{display:inline-block;padding:2px 8px;border:1px solid var(--pg-line);
+       border-radius:999px;font-size:12px;color:var(--pg-dim);
+       font-family:"JetBrains Mono Deck",monospace}
+  .tag.ok{border-color:#2F7A5A;color:#7FD9B0}
+  .tag.no{border-color:#7A3A3A;color:#E89A9A}
+  .specimen{font-size:56px;line-height:1.1;margin:10px 0 6px;letter-spacing:-.02em}
+  .pangram{font-size:30px;line-height:1.25;margin:0 0 10px}
+  .tr-zoom{font-size:112px;line-height:1;letter-spacing:.06em;margin:8px 0;
+           padding:10px 16px;background:#080D11;border:1px dashed var(--pg-line);
+           border-radius:8px;display:inline-block}
+  .tr-zoom .hl{color:var(--pg-accent)}
+  .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px}
+  table.num{border-collapse:collapse;font-size:19px;width:100%}
+  table.num th{text-align:left;font-size:12px;color:var(--pg-dim);font-weight:500;
+    text-transform:uppercase;letter-spacing:.08em;padding:0 10px 8px 0;
+    font-family:"JetBrains Mono Deck",monospace}
+  table.num td{padding:3px 10px 3px 0;border-bottom:1px solid #1A252D}
+  td.n{text-align:right}
+  .prop{font-variant-numeric:proportional-nums}
+  .tab{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1,"lnum" 1}
+  .proof{font-size:12px;color:var(--pg-dim);margin:8px 0 0;font-family:"JetBrains Mono Deck",monospace}
+
+  /* ---- muamele gosterimi ---- */
+  .demo{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--pg-line);
+        border-radius:10px;overflow:hidden;margin:0 0 12px}
+  .demo>div{padding:30px 26px;min-height:190px;display:flex;flex-direction:column;
+            justify-content:center;gap:10px}
+  .demo .lbl{font-family:"JetBrains Mono Deck",monospace;font-size:11px;
+             letter-spacing:.1em;text-transform:uppercase;opacity:.6}
+  .surf-dark{background:#06131A;color:#E9F2F6}
+  .surf-light{background:#F2EEE6;color:#151C22}
+  .big{font-family:var(--tf-display,"Archivo Deck",sans-serif);font-weight:700;
+       font-size:74px;line-height:1.02;letter-spacing:-.02em;margin:0}
+  .ctrl{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:0 0 16px;
+        font-size:14px;color:var(--pg-dim)}
+  .ctrl label{display:flex;gap:6px;align-items:center}
+  .ctrl input[type=range]{width:130px}
+  .measure{font-family:"JetBrains Mono Deck",monospace;font-size:12px;color:var(--pg-dim);
+           margin:6px 0 0}
+  .pairgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px}
+  .pairtitle{font-size:44px;line-height:1.05;margin:0 0 8px}
+  .pairbody{font-size:18px;margin:0 0 8px;color:#C3D2DB}
+  .pairmono{font-size:14px;color:var(--pg-accent)}
+  code{font-family:"JetBrains Mono Deck",monospace;font-size:13px;
+       background:#0A1319;border:1px solid var(--pg-line);padding:1px 6px;border-radius:4px}
+  .hidden{display:none !important}
+  header.compact{padding:16px 40px 12px}
+  header.compact h1{font-size:24px;margin:0}
+  header.compact .lede,header.compact .warn{display:none}
+  a{color:var(--pg-accent)}
+  .nojs-note{font-size:13px;color:var(--pg-dim);margin:10px 0 0}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Tipografi sistemi — bilim destesi</h1>
+  <p class="lede">
+    Yedi acik lisansli yazi karakteri ailesi (SIL OFL 1.1), bes hazir ucla eslesme
+    (goruntu + metin + mono) ve alti <b>goruntu tipi muamelesi</b>. Tum fontlar
+    yereldir; calisma aninda dis ag istegi yoktur.
+  </p>
+  <p class="warn">
+    <b>Durustluk notu.</b> Burada yeni bir yazi karakteri <i>cizilmemistir</i>.
+    "Kraterli ay fontu" bir font degil, gercek bir yazi karakterinin uzerine
+    CSS/SVG ile uygulanan bir <b>muameledir</b> (<code>.tip-ay</code>).
+    Yeni bir yazi karakteri cizmek ayri bir meslektir; bu butceyle sahtesi yapilirdi.
+  </p>
+  <p class="lede" id="budget" style="margin-top:14px"></p>
+</header>
+
+<main>
+
+<!-- ================= ESLESMELER ================= -->
+<section id="eslesmeler">
+  <h2>Hazir ucluler</h2>
+  <p class="sub">
+    Font secmek zorunda degilsin: konuya gore bir eslesme sec, gerisi baglidir.
+    Kullanim: <code>&lt;div class="deck" data-type-pair="gorev"&gt;</code> —
+    sonra basliklarda <code>.tf-display</code>, govdede <code>.tf-text</code>,
+    telemetride <code>.tf-mono</code>.
+  </p>
+  <div class="pairgrid" id="pairs"></div>
+</section>
+
+<!-- ================= AILELER ================= -->
+<section id="aileler">
+  <h2>Aileler</h2>
+  <p class="sub">
+    Her ailenin Turkce pangramı, noktali/noktasiz i buyutmesi, rakam tablosu ve
+    <b>tabular figures kaniti</b>. Sag sutundaki sayilar hizali degilse o aile
+    sayi sutunlarinda kullanilamaz.
+  </p>
+  <div id="families"></div>
+</section>
+
+<!-- ================= MUAMELELER ================= -->
+<section id="muameleler">
+  <h2>Goruntu tipi muameleleri</h2>
+  <p class="sub">
+    Alti muamele, solda <b>ham</b> sagda <b>muameleli</b>. Kurallar: yalniz
+    goruntu boyutunda (&ge;&nbsp;64&nbsp;px), yalniz baslikta, govde metnine asla.
+    <code>prefers-reduced-motion</code> ve <code>[data-export]</code> altinda statik.
+  </p>
+  <div class="ctrl">
+    <label>tohum <input type="range" id="seed" min="1" max="60" value="7"></label>
+    <label>yon <input type="range" id="yon" min="0" max="359" value="210"></label>
+    <label>siddet <input type="range" id="siddet" min="0" max="100" value="100"></label>
+    <label><input type="checkbox" id="canli"> canli (hareketli)</label>
+    <label><input type="checkbox" id="expmode"> data-export</label>
+    <span id="ctrlread" class="measure"></span>
+  </div>
+  <div id="treatments"></div>
+  <p class="nojs-note">
+    JS kapaliysa bu bolum yine gorunur: muameleler saf-CSS karsiliklariyla
+    (<code>.tip-ay</code> vb.) calisir, tohumlu alan yerine sabit alan kullanilir.
+    <code>background-clip:text</code> desteklenmiyorsa metin duz ve tam kontrastli kalir.
+  </p>
+</section>
+
+</main>
+
+<script src="type-treatments.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  /* ---- sabitler once (TDZ yok: her sey kullanimdan ONCE tanimli) ---- */
+  var global = window;
+  var PANGRAM = 'Pijamalı hasta yağız şoföre çabucak güvendi';
+  var TESTSTR = 'Işığın kırılışı: yörünge çözümü — ÇĞİÖŞÜ çğıöşü';
+
+  var FAMILIES = [
+    { key:'archivo', css:"'Archivo Deck'", name:'Archivo', role:'goruntu + metin',
+      lic:'SIL OFL 1.1', designer:'Omnibus-Type', kb:137,
+      axes:'wght 100–900, wdth 62–125',
+      tnum:true, tabDefault:false, spread:0.3,
+      why:'Genis wdth ekseni uzun Turkce basliklari kirmadan daraltir; rakamlari tnum ile tam hizali.',
+      themes:'verdigris-slate, arctic-mulberry, botanical-signal' },
+    { key:'big-shoulders-display', css:"'Big Shoulders Deck'", name:'Big Shoulders Display',
+      role:'yalniz goruntu', lic:'SIL OFL 1.1', designer:'Patric King / Production Type', kb:59,
+      axes:'wght 100–900', tnum:false, tabDefault:false, spread:48.9,
+      why:'Sikistirilmis muhendislik sesi: dar sutuna uzun gorev basligi sigar.',
+      themes:'mission-review, orbital-blueprint, graphite-ember' },
+    { key:'fraunces', css:"'Fraunces Deck'", name:'Fraunces', role:'yalniz goruntu',
+      lic:'SIL OFL 1.1', designer:'Undercase Type', kb:151,
+      axes:'opsz 9–144, wght 100–900, SOFT 0–100, WONK 0–1',
+      tnum:false, tabDefault:false, spread:29.9,
+      why:'opsz + WONK eksenleri dev baslikta arsiv/rasathane karakteri verir; kucukte sakinlesir.',
+      themes:'lunar-archive, cream-observatory, porcelain-ink, cosmic-scholar' },
+    { key:'space-grotesk', css:"'Space Grotesk Deck'", name:'Space Grotesk', role:'goruntu',
+      lic:'SIL OFL 1.1', designer:'Florian Karsten', kb:34,
+      axes:'wght 300–700', tnum:true, tabDefault:false, spread:36.7,
+      why:'34 KB karsiliginda notr-teknik bir ses; tnum ACIKKEN sayi sutunlarinda da calisir.',
+      themes:'deep-space-observatory, aurora-boreal, spectral-analysis' },
+    { key:'source-sans-3', css:"'Source Sans 3 Deck'", name:'Source Sans 3', role:'govde (mevcut)',
+      lic:'SIL OFL 1.1', designer:'Adobe', kb:144, axes:'wght 200–900 (+italik)',
+      tnum:false, tabDefault:true, spread:0,
+      why:'Destenin mevcut govdesi; rakamlari VARSAYILAN olarak sabit genislikte, projeksiyonda acik.',
+      themes:'tumu' },
+    { key:'source-serif-4', css:"'Source Serif 4 Deck'", name:'Source Serif 4', role:'serif govde (mevcut)',
+      lic:'SIL OFL 1.1', designer:'Adobe', kb:493, axes:'wght 200–900, opsz 8–60 (+italik)',
+      tnum:true, tabDefault:true, spread:0,
+      why:'Destenin mevcut serifi; kaynakca ve alinti italigi icin korunmustur. Kutuphanenin en agir ailesi.',
+      themes:'cosmic-scholar, cream-observatory, porcelain-ink' },
+    { key:'jetbrains-mono', css:"'JetBrains Mono Deck'", name:'JetBrains Mono', role:'mono',
+      lic:'SIL OFL 1.1', designer:'JetBrains', kb:51, axes:'wght 100–800',
+      tnum:false, tabDefault:true, spread:0,
+      why:'Telemetri/katalog kimligi; monospace oldugu icin rakamlar zaten hizali, Cascadia Mono gibi sisteme bagli degil.',
+      themes:'tumu' }
+  ];
+
+  var PAIRS = [
+    { key:'gorev', name:'Gorev', d:'Big Shoulders Display', t:'Source Sans 3', m:'JetBrains Mono',
+      title:'Yörünge düzeltme yakması: ΔV bütçesi',
+      why:'Gorev incelemesi, GNC, uydu, yer segmenti. Sikistirilmis baslik dar sutuna sigar.',
+      tip:'gravur' },
+    { key:'rasathane', name:'Rasathane', d:'Fraunces', t:'Source Serif 4', m:'JetBrains Mono',
+      title:'Ay yüzeyinde ışığın kırılışı',
+      why:'Arsiv, jeodezi, tarihsel gozlem, akademik kurul. Serif govde uzun metni tasir.',
+      tip:'ay' },
+    { key:'kozmos', name:'Kozmos', d:'Space Grotesk', t:'Source Sans 3', m:'JetBrains Mono',
+      title:'Tayfsal çözümleme ve kızıla kayma',
+      why:'Kozmoloji, tayf, aurora, derin uzay. Notr-teknik, 34 KB.',
+      tip:'yildiz' },
+    { key:'olcum', name:'Olcum', d:'Archivo', t:'Source Sans 3', m:'JetBrains Mono',
+      title:'Ölçüm belirsizliği ve hata bütçesi',
+      why:'Veri agirlikli, tablo/grafik yogun muhendislik raporu. wdth ekseni uzun basligi daraltir.',
+      tip:'buz' },
+    { key:'klasik', name:'Klasik', d:'Source Serif 4', t:'Source Sans 3', m:'JetBrains Mono',
+      title:'Güneş fotosferinde çığ etkisi',
+      why:'Mevcut destenin korunmus hali. En guvenli, en tanidik secim.',
+      tip:'isil' }
+  ];
+
+  var TREATMENTS = [
+    { key:'ay', name:'Ay / kraterli',
+      text:'Ay yüzeyi',
+      why:'Yuzeyde cukurlasma: tohumlu krater alani, alcak gunesle tutarli TEK yon. '+
+           'Kraterin isiga bakan ic duvari golgede, karsi duvar aydinlik, dis kenar isik tarafinda parlak — '+
+           'lunar-descent sahnesindeki fiziksel dilin aynisi.',
+      use:'Ay, gezegen yuzeyi, inis, regolit.' },
+    { key:'gravur', name:'Gravur / alet paneli',
+      text:'GNC paneli',
+      why:'Ince ic egim + ust kenar isigi. Dolgu KATI kalir, bu yuzden kontrasti neredeyse hic degistirmez.',
+      use:'GNC, uydu, alet paneli, gorev kromu.' },
+    { key:'isil', name:'Isil / plazma',
+      text:'İtki sıcaklığı',
+      why:'Dolgu solar-photosphere GECIS JETONLARINDAN gelir; yeni renk uydurulmaz. '+
+           'Koyu zeminde rampanin parlak yarisi, acik zeminde koyu yarisi kullanilir — '+
+           'rampanin tamami kontrasti oldururdu.',
+      use:'Itki, plazma, isil analiz, yildiz yuzeyi.' },
+    { key:'yildiz', name:'Yildiz alani',
+      text:'Kozmik ağ',
+      why:'Gercek gece-gogu dolgusu (koyu taban + seyrek parlak nokta) harflerin ic kontrastini oldururdu; '+
+           'bu yuzden metnin ICI parlak kalir, nebula ve yildizlar bu parlak taban uzerinde modulasyon yapar. '+
+           'aurora-boreal jetonlariyla uyumlu.',
+      use:'Kozmoloji, aurora, derin uzay.' },
+    { key:'baski', name:'Baski izi / arsiv',
+      text:'Arşiv kaydı',
+      why:'Hafif murekkep yayilmasi + ince kagit dokusu. Dolgu kati kaldigi icin en iyi davranan muamele.',
+      use:'Jeodezi, arsiv, tarihsel kayit.' },
+    { key:'buz', name:'Buz / kiragi',
+      text:'Kriyojenik',
+      why:'Kristal kenar ve soguk dolgu. Koyu zeminde parlak, acik zeminde koyu varyant.',
+      use:'Ice giant, kriyojenik, kutup.' }
+  ];
+
+  /* ---- URL parametreleri: deterministik acilis ---- */
+  var params = new URLSearchParams(location.search);
+  var wantFam = params.get('aile');
+  var wantTip = params.get('muamele');
+  var wantSurf = params.get('zemin');            /* koyu | acik */
+  var wantSeed = parseInt(params.get('tohum'), 10);
+  var wantYon  = parseInt(params.get('yon'), 10);
+  var noJsMode = params.get('js') === 'kapali';  /* saf-CSS yolu testi */
+
+  var seedEl = document.getElementById('seed');
+  var yonEl = document.getElementById('yon');
+  var siddetEl = document.getElementById('siddet');
+  var canliEl = document.getElementById('canli');
+  var expEl = document.getElementById('expmode');
+  if (isFinite(wantSeed)) seedEl.value = String(wantSeed);
+  if (isFinite(wantYon)) yonEl.value = String(wantYon);
+  if (params.get('canli') === '1') canliEl.checked = true;
+  if (params.get('export') === '1') expEl.checked = true;
+
+  /* ---- butce ---- */
+  var totalKB = 0;
+  FAMILIES.forEach(function(f){ totalKB += f.kb; });
+  document.getElementById('budget').innerHTML =
+    'Kutuphane toplami <b>1074 KB</b> (9 WOFF2 dosyasi, 7 aile). ' +
+    'Bir deste yalnizca kendi ucluesunu yukler: <b>Kozmos 231 KB</b>, ' +
+    'Gorev 255 KB, Olcum 334 KB, Klasik 691 KB, Rasathane 697 KB ' +
+    '(italikler haric sirasiyla 166 / 190 / 269 / 397 / 469 KB). ' +
+    'Lisanslar <code>typefaces/&lt;aile&gt;/LICENSE</code>, kaynak/surum ' +
+    '<code>typefaces/provenance.json</code>.';
+
+  /* ---- ESLESMELER ---- */
+  var pairsHost = document.getElementById('pairs');
+  PAIRS.forEach(function(p){
+    var el = document.createElement('div');
+    el.className = 'card';
+    el.setAttribute('data-type-pair', p.key);
+    el.innerHTML =
+      '<h3>' + p.name + '</h3>' +
+      '<div class="meta"><span><b>goruntu</b> ' + p.d + '</span>' +
+      '<span><b>metin</b> ' + p.t + '</span><span><b>mono</b> ' + p.m + '</span></div>' +
+      '<p class="pairtitle tf-display">' + p.title + '</p>' +
+      '<p class="pairbody tf-text">' + TESTSTR + '</p>' +
+      '<p class="pairmono tf-mono tf-tabular">2026-08-14T04:12:33Z &nbsp; ΔV 118.4 m/s &nbsp; σ 0.037</p>' +
+      '<p class="sub" style="margin:12px 0 0">' + p.why +
+      ' <span class="tag">onerilen muamele: .tip-' + p.tip + '</span></p>';
+    pairsHost.appendChild(el);
+  });
+
+  /* ---- AILELER ---- */
+  var famHost = document.getElementById('families');
+  FAMILIES.forEach(function(f){
+    if (wantFam && wantFam !== 'hepsi' && wantFam !== f.key) return;
+    var tabTag = f.tabDefault
+      ? '<span class="tag ok">rakamlar varsayilan olarak hizali</span>'
+      : (f.tnum
+        ? '<span class="tag ok">tnum ile hizalanir</span>'
+        : '<span class="tag no">tnum YOK — sayi sutununda kullanma</span>');
+    var el = document.createElement('div');
+    el.className = 'card';
+    el.style.setProperty('--fam', f.css);
+    el.innerHTML =
+      '<h3>' + f.name + '</h3>' +
+      '<div class="meta">' +
+        '<span><b>rol</b> ' + f.role + '</span>' +
+        '<span><b>lisans</b> ' + f.lic + '</span>' +
+        '<span><b>dokumhane</b> ' + f.designer + '</span>' +
+        '<span><b>boyut</b> ' + f.kb + ' KB</span>' +
+        '<span><b>eksenler</b> ' + f.axes + '</span>' +
+      '</div>' +
+      '<div class="specimen" style="font-family:' + f.css + '">' + PANGRAM + '</div>' +
+      '<div class="pangram" style="font-family:' + f.css + '">' + TESTSTR + '</div>' +
+      '<div class="tr-zoom" style="font-family:' + f.css + '">' +
+        'I<span class="hl">ı</span> <span class="hl">İ</span>i ğĞ şŞ çÇ öÖ üÜ</div>' +
+      '<div class="cols" style="margin-top:18px">' +
+        '<div><table class="num"><thead><tr><th>oransal (varsayilan)</th><th>&nbsp;</th></tr></thead><tbody>' +
+          numRows(f.css, 'prop') +
+        '</tbody></table></div>' +
+        '<div><table class="num"><thead><tr><th>tabular (tnum acik)</th><th>&nbsp;</th></tr></thead><tbody>' +
+          numRows(f.css, 'tab') +
+        '</tbody></table>' +
+        '<p class="proof">rakam genisligi yayilimi: ' + f.spread.toFixed(1) + '%  ' +
+        (f.spread === 0 ? '(zaten sabit)' : '') + '</p></div>' +
+      '</div>' +
+      '<p class="sub" style="margin-top:14px">' + f.why + ' ' + tabTag +
+      ' <span class="tag">tema: ' + f.themes + '</span></p>';
+    famHost.appendChild(el);
+  });
+
+  function numRows(css, mode){
+    var rows = [
+      ['Perigee irtifasi', '1 118 004'],
+      ['Apogee irtifasi',  '  35 786'],
+      ['Egim',             '     51.6'],
+      ['Donem',            '  1 439.7'],
+      ['Ekssantriklik',    '  0.000 11']
+    ];
+    var out = '';
+    rows.forEach(function(r){
+      out += '<tr><td style="font-size:14px;color:#8FA3B0">' + r[0] + '</td>' +
+             '<td class="n ' + mode + '" style="font-family:' + css + '">' +
+             r[1].replace(/ /g,'&nbsp;') + '</td></tr>';
+    });
+    return out;
+  }
+
+  /* ---- MUAMELELER ---- */
+  var tHost = document.getElementById('treatments');
+  var handles = [];
+
+  function buildTreatments(){
+    handles.forEach(function(h){ try{ h.destroy(); }catch(e){} });
+    handles = [];
+    tHost.innerHTML = '';
+
+    var opts = {
+      seed: parseInt(seedEl.value,10) || 7,
+      yon: parseInt(yonEl.value,10),
+      siddet: (parseInt(siddetEl.value,10)||100)/100,
+      canli: canliEl.checked
+    };
+    document.getElementById('ctrlread').textContent =
+      'tohum=' + opts.seed + '  yon=' + opts.yon + '°  siddet=' + opts.siddet.toFixed(2);
+
+    TREATMENTS.forEach(function(t){
+      if (wantTip && wantTip !== 'hepsi' && wantTip !== t.key) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'card';
+      var surfaces = wantSurf === 'acik' ? ['light']
+                   : wantSurf === 'koyu' ? ['dark']
+                   : ['dark','light'];
+      var html = '<h3>' + t.name + ' <span class="tag">.tip-' + t.key + '</span></h3>' +
+                 '<p class="sub">' + t.why + ' <b>Kullanim:</b> ' + t.use + '</p>';
+      surfaces.forEach(function(s){
+        var pair = PAIRS.filter(function(p){ return p.tip === t.key; })[0];
+        var pk = pair ? pair.key : 'olcum';
+        html +=
+          '<div class="demo" data-type-pair="' + pk + '">' +
+            '<div class="surf-' + s + '"><span class="lbl">ham — ' +
+              (s==='dark'?'koyu zemin':'acik zemin') + '</span>' +
+              '<p class="big">' + t.text + '</p></div>' +
+            '<div class="surf-' + s + '"><span class="lbl">muameleli — .tip-' + t.key + '</span>' +
+              '<p class="big js-tip" data-kind="' + t.key + '">' + t.text + '</p>' +
+              '<p class="measure" data-measure></p></div>' +
+          '</div>';
+      });
+      wrap.innerHTML = html;
+      tHost.appendChild(wrap);
+    });
+
+    if (!noJsMode && global.applyTypeTreatment) {
+      var nodes = tHost.querySelectorAll('.js-tip');
+      for (var i=0;i<nodes.length;i++){
+        handles.push(global.applyTypeTreatment(nodes[i], nodes[i].getAttribute('data-kind'), opts));
+      }
+    } else if (noJsMode) {
+      /* saf-CSS yolu: sinifi elle ekle, JS gelistirmesi yok */
+      var pure = tHost.querySelectorAll('.js-tip');
+      for (var j=0;j<pure.length;j++){
+        pure[j].classList.add('tip-' + pure[j].getAttribute('data-kind'));
+      }
+    }
+    annotate();
+  }
+
+  /* zemin/murekkep kontrastini bildir (dolgunun EN KOTU durak degeri
+     ayri olarak Python harness'inda piksel uzerinden olculur) */
+  function annotate(){
+    var cells = tHost.querySelectorAll('[data-measure]');
+    for (var i=0;i<cells.length;i++){
+      var cell = cells[i];
+      var tip = cell.parentElement.querySelector('.js-tip');
+      if (!tip || !global.TypeTreatments) continue;
+      var surf = global.TypeTreatments.surfaceColorOf(tip);
+      var ink = getComputedStyle(tip).color;
+      var cr = global.TypeTreatments.contrastRatio(ink, surf);
+      var off = tip.hasAttribute('data-tip-off');
+      cell.textContent = 'zemin rgb(' + [surf.r|0,surf.g|0,surf.b|0].join(',') + ')  ' +
+        'taban murekkep kontrasti ' + (isFinite(cr)?cr.toFixed(2):'?') + ':1' +
+        (off ? '  [muamele sokuldu: <64px]' : '');
+    }
+  }
+
+  [seedEl,yonEl,siddetEl,canliEl].forEach(function(c){
+    c.addEventListener('input', buildTreatments);
+  });
+  expEl.addEventListener('change', function(){
+    if (expEl.checked) document.body.setAttribute('data-export','1');
+    else document.body.removeAttribute('data-export');
+    buildTreatments();
+  });
+  if (expEl.checked) document.body.setAttribute('data-export','1');
+
+  buildTreatments();
+
+  /* deterministik acilis: istenen bolum YALNIZ basina, sayfanin en ustunde.
+     ?aile=archivo        -> yalniz o ailenin ornegi
+     ?muamele=ay          -> yalniz o muamele
+     ?muamele=hepsi       -> alti muamele bir arada (yalniz bu bolum)
+     ?aile=hepsi          -> tum aileler (yalniz bu bolum)
+     ?muamele=ay&zemin=koyu&tohum=12&yon=250
+     ?js=kapali           -> saf-CSS yolu (JS gelistirmesi yok)  */
+  function isolate(keepId){
+    var ids = ['eslesmeler','aileler','muameleler'];
+    for (var i=0;i<ids.length;i++){
+      if (ids[i] === keepId) continue;
+      var s = document.getElementById(ids[i]);
+      if (s) s.classList.add('hidden');
+    }
+    var hdr = document.querySelector('header');
+    if (hdr) hdr.classList.add('compact');
+  }
+  if (wantTip) isolate('muameleler');
+  else if (wantFam) isolate('aileler');
+
+  window.__tipoPreview = {
+    families: FAMILIES, pairs: PAIRS, treatments: TREATMENTS,
+    rebuild: buildTreatments, handles: function(){ return handles; }
+  };
+})();
+</script>
+</body>
+</html>
