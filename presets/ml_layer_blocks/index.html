@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Katman Blokları — ml_layer_blocks</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+    #stage { position: absolute; inset: 0; cursor: grab; }
+    #stage.suruklu { cursor: grabbing; }
+    header {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 14px 22px; pointer-events: none;
+    }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.14em;
+      text-transform: uppercase; color: #c9a35c; }
+    header h1 small { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: 0.06em;
+      text-transform: none; color: #8a90a0; margin-top: 3px; }
+    .controls { display: flex; gap: 10px; align-items: center; pointer-events: auto; flex-wrap: wrap;
+      justify-content: flex-end; }
+    select, button, label.chk {
+      background: rgba(16, 19, 27, 0.85); color: #dfe3ea; border: 1px solid #2b303d;
+      border-radius: 8px; padding: 7px 12px; font-size: 12.5px; cursor: pointer;
+    }
+    select:hover, button:hover, label.chk:hover { border-color: #c9a35c; }
+    button.on { color: #0c0e14; background: #c9a35c; border-color: #c9a35c; }
+    button:disabled { opacity: 0.55; cursor: default; }
+    footer {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 5;
+      display: flex; gap: 7px; justify-content: center; padding: 14px; pointer-events: none;
+      flex-wrap: wrap;
+    }
+    footer a {
+      pointer-events: auto; text-decoration: none; color: #b9bfcc; font-size: 11.5px;
+      background: rgba(16, 19, 27, 0.85); border: 1px solid #2b303d; border-radius: 999px;
+      padding: 5px 12px;
+    }
+    footer a:hover, footer a.on { color: #0c0e14; background: #c9a35c; border-color: #c9a35c; }
+    /* Etiket katmanı — her bloğun altında ad, giriş→çıkış, parametre */
+    #etiketler { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+    .etiket {
+      position: absolute; transform: translate(-50%, 0); text-align: center; white-space: nowrap;
+      background: rgba(8, 10, 15, 0.72); border: 1px solid #232837; border-radius: 8px;
+      padding: 5px 9px; line-height: 1.35;
+    }
+    .etiket .ad { display: block; font-size: 12px; font-weight: 600; color: #e6e9f0; letter-spacing: 0.02em; }
+    .etiket .sekil { display: block; font-size: 10.5px; color: #8f97a8; font-variant-numeric: tabular-nums; }
+    .etiket .par { display: block; font-size: 10.5px; color: #c9a35c; font-variant-numeric: tabular-nums; }
+    /* Zincir modu: dokuz etiket yan yana — daha küçük gövde, iki sıraya kaydırma JS'te */
+    .etiket.kucuk { padding: 3px 7px; }
+    .etiket.kucuk .ad { font-size: 10.5px; }
+    .etiket.kucuk .sekil, .etiket.kucuk .par { font-size: 9.5px; }
+    #ipucu { position: absolute; left: 22px; bottom: 58px; z-index: 5;
+      font-size: 11px; color: #6f7688; pointer-events: none; }
+    #toplam { position: absolute; right: 22px; bottom: 58px; z-index: 5; text-align: right;
+      font-size: 11.5px; color: #8f97a8; pointer-events: none; }
+    #toplam b { color: #c9a35c; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <div id="etiketler"></div>
+  <header>
+    <h1>Katman Blokları<small>ml_layer_blocks · sinir ağı katman kütüphanesi</small></h1>
+    <div class="controls">
+      <select id="palet" title="Palet">
+        <option value="obsidyen" selected>Obsidyen · Şampanya</option>
+        <option value="gece">Gece · Bakır</option>
+        <option value="grafit">Grafit · Gümüş</option>
+        <option value="fildisi">Fildişi · Petrol</option>
+      </select>
+      <button id="agBtn" title="Blokları bir CNN olarak blok blok diz">Ağ kur</button>
+      <button id="durdur">Duraklat</button>
+      <button id="tamEkran" title="Tam ekran (F)">⤢ Tam ekran</button>
+    </div>
+  </header>
+  <div id="ipucu">Sürükle: döndür · Tekerlek: yakınlaş · Sağ tık: kaydır · Çift tık: bloğa odaklan</div>
+  <div id="toplam"></div>
+  <footer id="odaklar"></footer>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import {
+      buildInput, buildConv, buildPool, buildDense, buildFlatten, buildNorm,
+      buildActivation, buildAttention, buildResidual, buildOutput,
+      ML_PALETTE, applyLayerPalette, zincirle, diz, katmanOzeti,
+    } from './ml-layer-blocks.mjs';
+
+    /* ---------- kamera kumandası (yumuşak bağımlılık) ---------- */
+    // Vendor'dan gelir; CDN yok. Yüklenemezse vitrin sabit kamerayla çalışır.
+    let OrbitControls = null;
+    try {
+      ({ OrbitControls } = await import('../moon_advanced/vendor/controls/OrbitControls.js'));
+    } catch (hata) {
+      console.warn('OrbitControls yüklenemedi; kamera kumandası devre dışı.', hata);
+    }
+
+    /* ---------- durum sabitleri (TDZ tuzağı: HEPSİ en üstte) ---------- */
+    const sorgu = new URLSearchParams(location.search);
+    const DT = 1 / 60;
+    const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const disaAktarim = document.documentElement.dataset.export === 'true' || sorgu.get('export') === '1';
+    const sabitT = sorgu.has('t') ? Math.max(0, parseFloat(sorgu.get('t')) || 0) : null;
+    const donmusMod = azaltilmis || disaAktarim || sabitT !== null;
+    // Sergi yönelimi: blokların ÖN YÜZÜ (+X normali = veri akış yönü) izleyiciye
+    // dönsün diye her sehpa sabit bir yaw ile kurulur — 3/4 görünüş. Sözleşme
+    // eksenleri DEĞİŞMEZ; bu yalnız vitrinin duruşudur (craft'taki yonele() gibi).
+    const TEMEL_YAW = -0.92;     // rad — vitrin ızgarası
+    const ODAK_YAW = -1.24;      // rad — tek blok: daha güçlü 3/4, derinlik okunur
+    const SALINIM = 0.30;        // rad — inceleme salınımı genliği (±17°)
+    const SALINIM_HIZ = 0.30;    // rad/s
+    const AG_GIRIS = [32, 32, 3];
+
+    const PALETLER = {
+      obsidyen: ML_PALETTE,
+      gece:    { body: 0x1b2330, panel: 0x0d151f, accent: 0xc47a4a, metal: 0x93a1b3 },
+      grafit:  { body: 0x2a2c31, panel: 0x121317, accent: 0xd7dde6, metal: 0xaab1bb },
+      fildisi: { body: 0xd9d4c8, panel: 0x1a2b33, accent: 0x2e6f7e, metal: 0xb9b4a6 },
+    };
+
+    // Vitrin dizilimi: 10 blok, 5 sütun × 2 sıra.
+    const TANIMLAR = [
+      { id: 'input',      yap: (p) => buildInput({ sekil: [32, 32, 3], palette: p }) },
+      { id: 'conv',       yap: (p) => buildConv({ filtre: 32, cekirdek: [3, 3], adim: 1, palette: p, girisSekli: [32, 32, 3] }) },
+      { id: 'norm',       yap: (p) => buildNorm({ tip: 'batch', palette: p, girisSekli: [32, 32, 32] }) },
+      { id: 'activation', yap: (p) => buildActivation({ tip: 'relu', palette: p, girisSekli: [32, 32, 32] }) },
+      { id: 'pool',       yap: (p) => buildPool({ tip: 'max', boyut: [2, 2], palette: p, girisSekli: [32, 32, 32] }) },
+      { id: 'flatten',    yap: (p) => buildFlatten({ palette: p, girisSekli: [16, 16, 64] }) },
+      { id: 'dense',      yap: (p) => buildDense({ birim: 64, palette: p, girisSekli: [1024] }) },
+      { id: 'attention',  yap: (p) => buildAttention({ kafa: 4, palette: p, girisSekli: [64] }) },
+      // Artık bağlantı vitrinde GERÇEK kullanımıyla gösterilir: varsayılan
+      // açıklık sözleşme kalınlığıdır (0.25), ama kemer asıl işini iki bloğun
+      // ÜSTÜNDEN geçerken yapar — burada 0.95 açıklıkla sergilenir.
+      { id: 'residual',   yap: (p) => buildResidual({ atlama: 2, aciklik: 0.95, palette: p, girisSekli: [64] }) },
+      { id: 'output',     yap: (p) => buildOutput({ birim: 10, tip: 'softmax', palette: p, girisSekli: [64] }) },
+    ];
+    const SUTUN = 5, DX = 1.52, DZ = 1.95;
+
+    // "Ağ kur" zinciri: gerçek bir küçük CNN — şekiller ve parametreler
+    // zincirle() ile blok blok ilerletilir (elle yazılmış sayı YOK).
+    const AG = [
+      { id: 'ag-input',  yap: (p) => buildInput({ sekil: AG_GIRIS, palette: p }) },
+      { id: 'ag-conv1',  yap: (p) => buildConv({ filtre: 32, cekirdek: [3, 3], palette: p }) },
+      { id: 'ag-norm',   yap: (p) => buildNorm({ tip: 'batch', palette: p }) },
+      { id: 'ag-act',    yap: (p) => buildActivation({ tip: 'relu', palette: p }) },
+      { id: 'ag-pool',   yap: (p) => buildPool({ tip: 'max', boyut: [2, 2], palette: p }) },
+      { id: 'ag-conv2',  yap: (p) => buildConv({ filtre: 64, cekirdek: [3, 3], adim: 2, palette: p }) },
+      { id: 'ag-flat',   yap: (p) => buildFlatten({ palette: p }) },
+      { id: 'ag-dense',  yap: (p) => buildDense({ birim: 64, palette: p }) },
+      { id: 'ag-out',    yap: (p) => buildOutput({ birim: 10, tip: 'softmax', palette: p }) },
+    ];
+    const AG_ADIM = 0.40;        // sn — blok başına açılma gecikmesi
+    const AG_SURE = 0.55;        // sn — tek bloğun oturma süresi
+
+    const odakParam = sorgu.get('blok');
+    const paletParam = PALETLER[sorgu.get('palet')] ? sorgu.get('palet') : 'obsidyen';
+    const agParam = sorgu.get('ag') === '1';
+
+    /* ---------- sahne ---------- */
+    const host = document.querySelector('#stage');
+    const etiketKat = document.querySelector('#etiketler');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.18;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    host.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x05070b);
+    scene.fog = new THREE.FogExp2(0x05070b, 0.045);
+
+    const zemin = new THREE.Mesh(
+      new THREE.CircleGeometry(60, 64),
+      new THREE.MeshStandardMaterial({ color: 0x03050a, roughness: 1.0, metalness: 0.0 }),
+    );
+    zemin.rotation.x = -Math.PI / 2;
+    zemin.receiveShadow = true;
+    scene.add(zemin);
+
+    // Üç noktalı ışık: sıcak anahtar + yarıküre dolgu + şampanya jant.
+    const anahtar = new THREE.DirectionalLight(0xfff4ea, 2.6);
+    anahtar.position.set(4.2, 7.5, 5.0);
+    anahtar.castShadow = true;
+    anahtar.shadow.mapSize.set(2048, 2048);
+    anahtar.shadow.camera.left = -7; anahtar.shadow.camera.right = 7;
+    anahtar.shadow.camera.top = 6; anahtar.shadow.camera.bottom = -4;
+    anahtar.shadow.camera.near = 2; anahtar.shadow.camera.far = 24;
+    anahtar.shadow.bias = -0.0004;
+    scene.add(anahtar);
+    scene.add(new THREE.HemisphereLight(0xb6c6e2, 0x0c1016, 2.0));
+    const jant = new THREE.DirectionalLight(0xd9c08a, 1.15);   // şampanya jant ışığı
+    jant.position.set(-5.5, 3.0, -6.0);
+    scene.add(jant);
+    const on = new THREE.DirectionalLight(0xc8d6f0, 1.05);     // soğuk ön dolgu:
+    on.position.set(2.0, 1.2, 8.0);                            // ön yüzler karanlıkta kalmasın
+    scene.add(on);
+
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 80);
+
+    let controls = null;
+    let kameraKirli = false;
+    let gecis = null;
+    if (OrbitControls) {
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.075;
+      controls.rotateSpeed = 0.85;
+      controls.zoomSpeed = 0.95;
+      controls.minDistance = 0.5;
+      controls.maxDistance = 18;
+      controls.minPolarAngle = 0.10;
+      controls.maxPolarAngle = Math.PI / 2 - 0.045;
+      controls.maxTargetRadius = 7.0;
+      controls.target.set(0, 0.55, 0);
+      controls.addEventListener('start', () => { gecis = null; host.classList.add('suruklu'); });
+      controls.addEventListener('end', () => host.classList.remove('suruklu'));
+      controls.addEventListener('change', () => { kameraKirli = true; kareIste(); });
+    }
+
+    /* ---------- blok kurulumu ---------- */
+    const pivotlar = [];        // salınım sehpaları (vitrin dizilimi)
+    let bloklar = [];           // canlı kök gruplar
+    let kaideler = [];
+    let etiketler = [];
+    let agModu = agParam;
+    let agGrup = null;          // ağ zincirinin taşıyıcısı
+    let agOzet = null;
+    let agT = 0;                // ağ açılma zamanı (sn)
+    let etkinOdak = odakParam && TANIMLAR.some((t) => t.id === odakParam) ? odakParam : '';
+
+    // Sökme: malzemeler blok içinde ONLARCA mesh tarafından PAYLAŞILIR,
+    // bu yüzden mesh başına değil BENZERSİZ kaynak başına bir kez dispose.
+    function sok(kokler) {
+      const geoler = new Set(), malzemeler = new Set();
+      for (const kok of kokler) {
+        if (kok.parent) kok.parent.remove(kok);
+        kok.traverse((o) => {
+          if (!o.isMesh) return;
+          if (o.geometry) geoler.add(o.geometry);
+          const mm = Array.isArray(o.material) ? o.material : [o.material];
+          for (const mt of mm) if (mt) malzemeler.add(mt);
+        });
+      }
+      for (const g of geoler) g.dispose();
+      for (const mt of malzemeler) mt.dispose();
+    }
+
+    function golgeAc(kok) {
+      kok.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    }
+
+    // Bloğu kaidenin üstüne OTURTUR. Ölçüm EBEVEYNE EKLEMEDEN yapılır:
+    // Box3.setFromObject dünya uzayında ölçer (sözleşme tuzağı).
+    function tabanaOturt(kok, kaideUst) {
+      kok.updateMatrixWorld(true);
+      const bb = new THREE.Box3().setFromObject(kok);
+      kok.position.y = kaideUst - bb.min.y;
+      return bb;
+    }
+
+    function kaideYap(x, z, r = 0.62) {
+      const k = new THREE.Mesh(
+        new THREE.CylinderGeometry(r, r * 1.08, 0.05, 48),
+        new THREE.MeshStandardMaterial({ color: 0x0e1015, roughness: 0.6, metalness: 0.35 }),
+      );
+      k.position.set(x, 0.025, z);
+      k.castShadow = true; k.receiveShadow = true;
+      scene.add(k);
+      kaideler.push(k);
+      return k;
+    }
+
+    function etiketYap() {
+      const el = document.createElement('div');
+      el.className = 'etiket';
+      el.innerHTML = '<span class="ad"></span><span class="sekil"></span><span class="par"></span>';
+      etiketKat.appendChild(el);
+      return el;
+    }
+
+    function etiketYaz(el, kok) {
+      const u = kok.userData;
+      el.querySelector('.ad').textContent = u.ad;
+      const s = (a) => (Array.isArray(a) ? a.join('×') : '?');
+      el.querySelector('.sekil').textContent = `${s(u.girisSekli)} → ${s(u.cikisSekli)}`;
+      el.querySelector('.par').textContent = `${u.parametre.toLocaleString('tr-TR')} parametre`;
+    }
+
+    function temizle() {
+      sok(bloklar);
+      bloklar = [];
+      for (const p of pivotlar) scene.remove(p);
+      pivotlar.length = 0;
+      for (const k of kaideler) { scene.remove(k); k.geometry.dispose(); k.material.dispose(); }
+      kaideler = [];
+      for (const e of etiketler) e.remove();
+      etiketler = [];
+      if (agGrup) { scene.remove(agGrup); agGrup = null; }
+      agOzet = null;
+    }
+
+    // --- vitrin dizilimi (10 blok, ızgara) ---
+    function kurVitrin(paletAdi) {
+      temizle();
+      const p = PALETLER[paletAdi];
+      const tekli = etkinOdak ? TANIMLAR.filter((t) => t.id === etkinOdak) : TANIMLAR;
+      tekli.forEach((t, i) => {
+        const kok = t.yap(p);
+        golgeAc(kok);
+        const sutun = tekli.length === 1 ? 0 : i % SUTUN;
+        const sira = tekli.length === 1 ? 0 : Math.floor(i / SUTUN);
+        const x = tekli.length === 1 ? 0 : (sutun - (SUTUN - 1) / 2) * DX;
+        const z = tekli.length === 1 ? 0 : (sira - 0.5) * DZ;
+        kaideYap(x, z);
+        const pivot = new THREE.Group();
+        pivot.position.set(x, 0, z);
+        scene.add(pivot);
+        pivotlar.push(pivot);
+        tabanaOturt(kok, 0.05);
+        pivot.add(kok);
+        bloklar.push(kok);
+        const el = etiketYap();
+        etiketYaz(el, kok);
+        etiketler.push(el);
+      });
+      toplamYaz(null);
+    }
+
+    // --- ağ dizilimi (blok blok kurulan CNN) ---
+    function kurAg(paletAdi) {
+      temizle();
+      const p = PALETLER[paletAdi];
+      agGrup = new THREE.Group();
+      scene.add(agGrup);
+      const kokler = AG.map((a) => a.yap(p));
+      // Şekiller ve parametreler ZİNCİRDEN gelir (elle sayı yok).
+      agOzet = zincirle(kokler, AG_GIRIS);
+      const uzunluk = diz(kokler, { bosluk: 0.16, x0: 0 });
+      for (const kok of kokler) {
+        golgeAc(kok);
+        const x = kok.position.x;
+        kok.position.x = 0;                       // ölçüm için sıfırla
+        tabanaOturt(kok, 0.05);
+        kok.position.x = x - uzunluk / 2;         // zinciri ortala
+        agGrup.add(kok);
+        bloklar.push(kok);
+        const el = etiketYap();
+        etiketYaz(el, kok);
+        etiketler.push(el);
+      }
+      // Kaide: zincir boyunca uzanan ince plinth.
+      const plinth = new THREE.Mesh(
+        new THREE.BoxGeometry(uzunluk + 0.5, 0.05, 1.15),
+        new THREE.MeshStandardMaterial({ color: 0x0e1015, roughness: 0.6, metalness: 0.35 }),
+      );
+      plinth.position.set(0, 0.025, 0);
+      plinth.castShadow = true; plinth.receiveShadow = true;
+      scene.add(plinth);
+      kaideler.push(plinth);
+      agT = donmusMod ? 99 : 0;
+      toplamYaz(agOzet);
+      console.log('[mlblok] ağ zinciri:', agOzet.katmanlar
+        .map((k) => `${k.ad} | ${k.giris.join('×')} → ${k.cikis.join('×')} | ${k.parametre}`).join(' ;; '));
+      console.log('[mlblok] toplam parametre:', agOzet.toplamParametre);
+    }
+
+    function kur(paletAdi) {
+      if (agModu) kurAg(paletAdi); else kurVitrin(paletAdi);
+      kameraKirli = true;
+    }
+
+    function toplamYaz(ozet) {
+      const el = document.querySelector('#toplam');
+      if (ozet) {
+        el.innerHTML = `zincir: ${AG_GIRIS.join('×')} → ${ozet.cikisSekli.join('×')}<br>toplam <b>${ozet.toplamParametre.toLocaleString('tr-TR')}</b> parametre`;
+      } else {
+        const t = bloklar.reduce((a, b) => a + b.userData.parametre, 0);
+        el.innerHTML = `vitrin toplamı <b>${t.toLocaleString('tr-TR')}</b> parametre<br>(bloklar bağımsızdır; zincir için “Ağ kur”)`;
+      }
+    }
+
+    /* ---------- kamera kadrajları ---------- */
+    function kadraj() {
+      if (agModu) {
+        // Zincir büyüdükçe kamera geri çekilir (kadraj hep dolu kalır).
+        const n = Math.max(1, Math.min(bloklar.length, Math.floor(agT / AG_ADIM) + 1));
+        const oran = n / Math.max(1, bloklar.length);
+        // Zincir uzadıkça kamera geri çekilir ve yükselir: kadraj hep dolu kalır,
+        // yeni blok her zaman görüş alanına girer (kesme yok, sürekli takip).
+        return {
+          poz: new THREE.Vector3(0.60 * oran, 1.10 + 0.90 * oran, 1.90 + 2.40 * oran),
+          hedef: new THREE.Vector3(0, 0.50, 0),
+        };
+      }
+      if (etkinOdak) {
+        return { poz: new THREE.Vector3(1.62, 1.10, 1.34), hedef: new THREE.Vector3(0, 0.52, 0) };
+      }
+      return { poz: new THREE.Vector3(0.10, 2.80, 6.30), hedef: new THREE.Vector3(0, 0.40, 0) };
+    }
+
+    function kamerayiKur() {
+      const k = kadraj();
+      camera.position.copy(k.poz);
+      if (controls) { controls.target.copy(k.hedef); controls.update(); }
+      else camera.lookAt(k.hedef);
+      kameraKirli = true;
+    }
+
+    function kamerayaGit(sure = 0.8) {
+      const k = kadraj();
+      if (!controls || donmusMod) { kamerayiKur(); ciz(); return; }
+      gecis = { p0: camera.position.clone(), p1: k.poz, h0: controls.target.clone(), h1: k.hedef, t: 0, sure };
+      kareIste();
+    }
+
+    function gecisGuncelle(dt) {
+      if (!gecis) return false;
+      gecis.t = Math.min(gecis.sure, gecis.t + dt);
+      const u = gecis.t / gecis.sure;
+      const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;   // easeInOutCubic
+      camera.position.lerpVectors(gecis.p0, gecis.p1, e);
+      controls.target.lerpVectors(gecis.h0, gecis.h1, e);
+      if (gecis.t >= gecis.sure) gecis = null;
+      return true;
+    }
+
+    /* ---------- boyutlandırma (bağlanmadan ÖNCE boyut) ---------- */
+    function boyutla() {
+      const w = host.clientWidth, h = host.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+
+    /* ---------- etiketlerin izdüşümü ---------- */
+    const gecici = new THREE.Vector3();
+    function etiketleriTasi() {
+      const w = host.clientWidth, h = host.clientHeight;
+      for (let i = 0; i < bloklar.length; i++) {
+        const kok = bloklar[i], el = etiketler[i];
+        if (!el) continue;
+        if (!kok.visible || kok.scale.x < 0.35) { el.style.display = 'none'; continue; }
+        el.classList.toggle('kucuk', agModu);
+        kok.getWorldPosition(gecici);
+        gecici.y = 0.02;                      // etiket kaide hizasından asılır
+        gecici.project(camera);
+        if (gecici.z > 1) { el.style.display = 'none'; continue; }
+        el.style.display = '';
+        el.style.left = `${(gecici.x * 0.5 + 0.5) * w}px`;
+        // Zincir modunda etiketler yan yana sıkışır: tek/çift bloklar İKİ SIRAYA
+        // ayrılır (üst üste binme okunabilirliği tamamen bitiriyordu).
+        const kaydir = agModu ? (i % 2) * 42 : 0;
+        el.style.top = `${(-gecici.y * 0.5 + 0.5) * h + 10 + kaydir}px`;
+        el.style.opacity = String(Math.max(0.25, Math.min(1, kok.scale.x)));
+      }
+    }
+
+    /* ---------- kumandalar ---------- */
+    const paletSec = document.querySelector('#palet');
+    // Palet değişimi blokları YENİDEN KURMAZ (webgl-scene-contract §2):
+    // malzeme renkleri yerinde tazelenir (türetilmiş çerçeve/ikincil gövde dahil).
+    function paletiUygula(ad) {
+      const p = PALETLER[ad] || PALETLER.obsidyen;
+      for (const kok of bloklar) applyLayerPalette(kok, p);
+      kameraKirli = true;
+      ciz();
+    }
+    paletSec.addEventListener('change', (e) => paletiUygula(e.target.value));
+
+    let calisiyor = true;
+    const durButon = document.querySelector('#durdur');
+    durButon.addEventListener('click', () => {
+      calisiyor = !calisiyor;
+      durButon.textContent = calisiyor ? 'Duraklat' : 'Devam';
+      kareIste(); ciz();
+    });
+
+    const agBtn = document.querySelector('#agBtn');
+    function agEtiket() {
+      agBtn.textContent = agModu ? 'Vitrine dön' : 'Ağ kur';
+      agBtn.classList.toggle('on', agModu);
+    }
+    agBtn.addEventListener('click', () => {
+      agModu = !agModu;
+      if (agModu) etkinOdak = '';
+      agEtiket(); cipleriIsaretle();
+      kur(paletSec.value);
+      kamerayiKur();
+      ciz(); kareIste();
+      const url = agModu ? '?ag=1' : '?';
+      history.replaceState(null, '', url + location.hash);
+    });
+
+    const tamEkranBtn = document.querySelector('#tamEkran');
+    function tamEkranEtiket() {
+      const acik = !!document.fullscreenElement;
+      tamEkranBtn.textContent = acik ? '⤡ Çık' : '⤢ Tam ekran';
+      tamEkranBtn.title = acik ? 'Tam ekrandan çık (ESC)' : 'Tam ekran (F)';
+    }
+    function tamEkranDegistir() {
+      if (document.fullscreenElement) document.exitFullscreen?.();
+      else document.documentElement.requestFullscreen?.().catch(() => {});
+    }
+    tamEkranBtn.addEventListener('click', tamEkranDegistir);
+    document.addEventListener('fullscreenchange', () => { tamEkranEtiket(); boyutla(); kameraKirli = true; ciz(); });
+    tamEkranEtiket();
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'f' || e.key === 'F') {
+        if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName || '')) return;
+        tamEkranDegistir();
+      }
+    });
+
+    /* ---------- odak çipleri ---------- */
+    const odaklarEl = document.querySelector('#odaklar');
+    const cipler = new Map();
+    function cipleriIsaretle() {
+      for (const [id, el] of cipler) el.classList.toggle('on', !agModu && (etkinOdak || '') === id);
+    }
+    function odaklan(id) {
+      if (agModu) { agModu = false; agEtiket(); }
+      etkinOdak = id || '';
+      cipleriIsaretle();
+      history.replaceState(null, '', (etkinOdak ? `?blok=${etkinOdak}` : '?') + location.hash);
+      kur(paletSec.value);
+      kamerayiKur();
+      ciz(); kareIste();
+    }
+    function cipYap(id, ad, href) {
+      const a = document.createElement('a');
+      a.href = href; a.textContent = ad;
+      a.addEventListener('click', (e) => { e.preventDefault(); odaklan(id); });
+      odaklarEl.appendChild(a);
+      cipler.set(id, a);
+    }
+    cipYap('', 'Tümü', '?');
+
+    /* ---------- döngü ---------- */
+    let t = 0;
+    if (donmusMod) {
+      durButon.disabled = true;
+      durButon.textContent = 'Donmuş kare';
+      durButon.title = sabitT !== null
+        ? `Sabit-zaman modu (?t=${sabitT}): sahne bu ânda dondurulmuştur.`
+        : (disaAktarim ? 'Dışa aktarım modu: sahne son karede dondurulmuştur.'
+                       : 'Sistem "hareketi azalt" ayarı açık: sahne dondurulmuştur.');
+    }
+    const zamanAkiyor = () => calisiyor && !donmusMod;
+
+    // easeOutCubic — blokların oturması (aşırı yay/zıplama yok, ağır ve kararlı).
+    function yumusa(u) { return 1 - Math.pow(1 - Math.min(1, Math.max(0, u)), 3); }
+
+    function ciz() {
+      if (agModu) {
+        // Blok blok açılma: her blok kendi sırası gelince akış yönünden (+X)
+        // kayarak oturur. Ölçek 0'dan başlar → C0 sürekli, pop yok.
+        for (let i = 0; i < bloklar.length; i++) {
+          const kok = bloklar[i];
+          const u = yumusa((agT - i * AG_ADIM) / AG_SURE);
+          kok.scale.setScalar(Math.max(0.0001, u));
+          kok.position.z = (1 - u) * 0.55;
+          const rot = (1 - u) * 0.5;
+          kok.rotation.y = rot;
+        }
+      } else {
+        // İnceleme salınımı: ±24° — blokların ÖN yüzü (akış yönü) hep okunur kalır.
+        const temel = etkinOdak ? ODAK_YAW : TEMEL_YAW;
+        for (let i = 0; i < pivotlar.length; i++) {
+          pivotlar[i].rotation.y = temel + Math.sin(t * SALINIM_HIZ + i * 0.55) * SALINIM;
+        }
+      }
+      renderer.render(scene, camera);
+      etiketleriTasi();
+      kameraKirli = false;
+    }
+
+    let istekId = 0;
+    function kareIste() {
+      if (istekId || document.hidden) return;
+      istekId = requestAnimationFrame(dongu);
+    }
+    function dongu() {
+      istekId = 0;
+      if (document.hidden) return;
+      const gecisVar = gecisGuncelle(DT);
+      const kameraDegisti = controls ? controls.update() : false;
+      const akiyor = zamanAkiyor();
+      let agAkiyor = false;
+      if (akiyor) {
+        t += DT;
+        if (agModu && agT < bloklar.length * AG_ADIM + AG_SURE) {
+          agT += DT;
+          agAkiyor = true;
+          if (!gecis) {
+            // Kamera zincirle birlikte açılır (kadraj dolu kalır) — yumuşak takip.
+            const k = kadraj();
+            camera.position.lerp(k.poz, 0.05);
+            if (controls) controls.target.lerp(k.hedef, 0.05);
+          }
+        }
+      }
+      if (akiyor || gecisVar || kameraDegisti || kameraKirli) ciz();
+      if (akiyor || gecisVar || kameraDegisti) kareIste();
+      void agAkiyor;
+    }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) kareIste(); });
+
+    /* ---------- çift tık ile odak ---------- */
+    const isinlayici = new THREE.Raycaster();
+    const fareNDC = new THREE.Vector2();
+    renderer.domElement.addEventListener('dblclick', (e) => {
+      if (agModu) return;
+      const r = renderer.domElement.getBoundingClientRect();
+      fareNDC.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      isinlayici.setFromCamera(fareNDC, camera);
+      const vurus = isinlayici.intersectObjects(bloklar, true)[0];
+      if (!vurus) { odaklan(''); return; }
+      let o = vurus.object, i = -1;
+      while (o && i < 0) { i = bloklar.indexOf(o); o = o.parent; }
+      odaklan(i >= 0 ? bloklar[i].userData.tur : '');
+    });
+
+    /* ---------- başlat ---------- */
+    boyutla();
+    paletSec.value = paletParam;
+    agEtiket();
+    kur(paletParam);
+    // Çipler blok adlarıyla kurulur (kurulum sonrası: adlar userData'dan gelir).
+    for (const tan of TANIMLAR) {
+      const gecici2 = bloklar.find((b) => b.userData.tur === tan.id);
+      cipYap(tan.id, gecici2 ? gecici2.userData.ad.split(' ')[0] : tan.id, `?blok=${tan.id}`);
+    }
+    cipleriIsaretle();
+    kamerayiKur();
+
+    // Sabit-zaman modu: sahne istenen âna deterministik sarılır ve DONDURULUR.
+    if (sabitT !== null) {
+      const n = Math.max(0, Math.round(sabitT / DT));
+      for (let k = 0; k < n; k++) t += DT;
+      agT = sabitT;
+    }
+    ciz();
+    kareIste();
+    window.addEventListener('resize', () => { boyutla(); ciz(); });
+
+    // Deterministik test / dışa aktarma kancası.
+    window.__mlblok = {
+      scene, camera, renderer, controls,
+      get bloklar() { return bloklar; },
+      advance(saniye) {
+        const n = Math.max(1, Math.round(saniye / DT));
+        for (let k = 0; k < n; k++) { t += DT; if (agModu) agT += DT; }
+        ciz();
+      },
+      setPalette(ad) { paletSec.value = ad; paletiUygula(ad); },
+      rebuild(ad) { paletSec.value = ad || paletSec.value; kur(paletSec.value); kamerayiKur(); ciz(); },
+      focus(id) { odaklan(id || ''); },
+      ag(acik) { if (!!acik !== agModu) agBtn.click(); },
+      kamera({ poz, hedef } = {}) {
+        if (poz) camera.position.set(poz[0], poz[1], poz[2]);
+        if (hedef && controls) controls.target.set(hedef[0], hedef[1], hedef[2]);
+        gecis = null;
+        if (controls) controls.update(); else if (hedef) camera.lookAt(hedef[0], hedef[1], hedef[2]);
+        ciz();
+      },
+      bilgi() {
+        return bloklar.map((b) => ({
+          ad: b.userData.ad, tur: b.userData.tur,
+          giris: b.userData.girisSekli, cikis: b.userData.cikisSekli,
+          parametre: b.userData.parametre, olcu: b.userData.olcu, parca: b.userData.parca,
+        }));
+      },
+      ozet() { return agOzet; },
+      katmanOzeti,
+    };
+    console.log('[mlblok] hazır:', JSON.stringify(window.__mlblok.bilgi()));
+    window.dispatchEvent(new CustomEvent('mlblok:hazir', { detail: window.__mlblok }));
+  </script>
+</body>
+</html>

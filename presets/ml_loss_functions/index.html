@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kayıp Fonksiyonları Preseti</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <style>
+    :root {
+      color-scheme: dark;
+      /* obsidian-champagne (design-space-science-deck palet kütüphanesi) */
+      --color-canvas: #0F1013;
+      --color-surface: #1A1C21;
+      --color-ink: #F4EEE1;
+      --color-muted: #A9A296;
+      --color-accent: #D3B26A;
+      --color-accent-ink: #191307;
+      --color-data-1: #5590C9;
+      --color-data-2: #C86A40;
+      --color-data-3: #6FBF9A;
+      --color-data-4: #A88BD9;
+      --color-data-5: #D9C36A;
+      --color-data-6: #C95F6A;
+      --color-rule: #2E3037;
+      --ramp-seq-1: #1A1C21; --ramp-seq-2: #4A4030; --ramp-seq-3: #7D6A42;
+      --ramp-seq-4: #A88E54; --ramp-seq-5: #D3B26A;
+      --ramp-div-1: #5590C9; --ramp-div-2: #8A9BAD; --ramp-div-3: #A9A296;
+      --ramp-div-4: #BE8A68; --ramp-div-5: #C86A40;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #08090B; }
+    main { width: 100%; height: 100%; padding: 18px; }
+    main > div { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <main><div id="host"></div></main>
+  <script type="module">
+    import { mountLossFunctions } from './loss-functions.mjs';
+
+    /* Deterministik açılış parametreleri (başsız doğrulama için):
+         ?adim=4          → 1 tabanlı anlatı adımı
+         ?kayip=huber     → o kaybı vurgula, diğerlerini kıs
+         ?delta=1.2       → Huber δ
+         ?gama=2          → Focal γ
+         ?eta=0.25        → öğrenme oranı
+         ?aykiri=11.5     → aykırı değerin y'si
+         ?p=0.05          → olasılık imleci
+         ?kosu=120        → eğitim adımı (0..600); yoksa son adım
+         ?export=1        → donuk son kare, kontroller gizli               */
+    const q = new URLSearchParams(location.search);
+    const say = (ad) => (q.has(ad) ? Number(q.get(ad)) : undefined);
+
+    const lf = mountLossFunctions(document.querySelector('#host'), {
+      adim: say('adim'),
+      delta: say('delta'),
+      gama: say('gama'),
+      eta: say('eta'),
+      aykiri: say('aykiri'),
+      p: say('p'),
+      kayip: q.get('kayip') || undefined,
+    });
+
+    if (q.has('kosu')) lf.setKosu(say('kosu'));
+    if (q.has('bitir') || q.get('export') === '1') lf.finish();
+
+    /* Deste bu denetleyiciyi kendi ok tuşu navigasyonuna bağlar; preset
+       GLOBAL keydown eklemez (kendi kök öğesinde dinler). */
+    window.__kayipAnlati = lf.anlati();
+    window.__kayip = lf;                 // denetim kancası
+    lf.el.focus({ preventScroll: true });
+  </script>
+</body>
+</html>

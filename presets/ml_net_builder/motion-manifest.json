@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "net-block-assembly",
+      "type": "reveal",
+      "truthLevel": "analytic",
+      "purpose": "Build a declared network architecture BLOCK BY BLOCK: each layer glides into its slot on the spine rail, its card states the layer name, the input to output shape, the size formula it used, and its parameter count, and the HUD counters accumulate layers and parameters as the net grows.",
+      "model": "Shape inference is exact, not decorative: spatial layers use out = floor((in + 2p - k)/s) + 1 with padding 'gecerli' (p=0), 'ayni' (out = ceil(in/s), padding derived) or an explicit per-side integer, and stride support on both axes. Parameter counts are derived per layer type: conv = kh*kw*Cin*F + F; dense/output = Din*U + U; batch/layer norm = 2C trainable (batch norm additionally reports 2C non-trainable running statistics); multi-head self-attention = 4d^2 + 4d; pool/flatten/activation/residual = 0. Residual addition validates that the skipped source shape equals the incoming shape. The activation volume drawn between two blocks is sized from the inferred shape (spatial extent by sqrt of the largest map, thickness by log2 of the channel count), so the tensor that shrinks and deepens IS the inferred shape.",
+      "limitations": "Counts assume bias terms unless bias:false is given and no weight sharing, quantization, or fused ops; the drawn block bodies are schematic solids from ml-layer-blocks (or labelled placeholders when that module is absent) and their proportions are a visual language, not physical dimensions; activation-volume size is a monotone visual mapping (sqrt / log2), not a linear one, so relative sizes must not be read off as ratios; padding is reported as a total and displayed halved.",
+      "reducedMotion": "No autoplay; the timeline holds the declared tableau (the fully assembled network, all cards and shape tags visible) and stays scrubbable via the range control, the step button and the arrow keys.",
+      "exportState": "Deterministic freeze through ?mimari=cnn|mlp|resnet|trafo with ?adim=N (network built up to block N), ?t=<seconds> or ?export=1 (assembled network); every visual is a pure function of timeline t, and the seeded layout has no wall-clock input.",
+      "accessibility": "Native buttons drive assembly (Space play/pause, N next block, arrow keys step focus); the HUD reports layer count, running parameter total, input and output shape as text; each block card repeats its shape and parameter count in text, and the page caption restates the totals in prose.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "net-residual-arc",
+      "type": "trace",
+      "truthLevel": "analytic",
+      "purpose": "Show a residual connection as what it is: an arc that leaves the output of an earlier layer, passes over every bypassed block, and lands on the addition node, drawn in as that node is placed.",
+      "model": "The arc endpoints are the actual scene positions of the source layer (index i - atlama - 1) and the residual block; the connection only exists if shape inference proved the two tensors are addable (identical shapes), otherwise the architecture is rejected with an explicit message naming both shapes.",
+      "limitations": "The arc height and curvature are presentation choices; projection/downsample shortcuts (1x1 conv on the skip path) are not modelled — mismatched shapes are reported as an error rather than silently projected.",
+      "reducedMotion": "The arc draw fraction is a pure function of timeline t, so a paused or frozen timeline shows the fully drawn arc without ongoing animation.",
+      "exportState": "?mimari=resnet&export=1 freezes with the arc fully drawn over the three bypassed blocks.",
+      "accessibility": "The arc carries a text tag and the residual block card names the source layer and how many layers are skipped; no information depends on seeing the curve.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "net-forward-pulse",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "After assembly, send one data pulse from input to output: it slows inside each block (that block brightens and its card reopens while it is 'working'), sweeps through each activation volume between blocks, and ends by raising the output distribution bars with the winning class labelled.",
+      "model": "Motion only. The pulse position is a weighted traversal of the block/gap segments with an in-block deceleration profile; the output bars are a softmax over SEEDED illustrative logits, not the output of any trained network and not a computation over any input.",
+      "limitations": "Nothing here is a numerical forward pass: no weights, no input sample, no arithmetic. The pacing is authored for narration and says nothing about real inference latency; the class probabilities are decorative and must never be presented as a model prediction.",
+      "reducedMotion": "No autoplay: the frozen tableau is the assembled network before the pulse; the pulse only runs on explicit play or the 'İleri geçiş' button.",
+      "exportState": "?t=<seconds> inside the forward window reproduces any pulse position exactly (pulse position, block emphasis, sweep and bar heights are all pure functions of t); the loop wrap is C0 because pulse opacity and bar heights ramp to zero at both ends of the window.",
+      "accessibility": "The phase strip names in text which block is processing or which activation shape is flowing; the winning class and its probability are printed as text; the pulse can be paused at any moment.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "net-camera-director",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Direct attention across the three phases: a wide framing that pulls back as the net grows, an over-the-shoulder flow view riding behind the pulse, and an arrival shot that swings past the last block to read the output distribution head-on; plus manual overview, layer close-up and free-orbit modes.",
+      "model": "Camera choreography only; it never changes any inferred number. Framing distance is computed from the built extent and the current horizontal field of view, so the visible net always fits.",
+      "limitations": "Framing, lens choice (33 degrees, deliberately long to flatten a 16-block row), damping and the slow overview azimuth are presentation choices with no meaning.",
+      "reducedMotion": "No autonomous camera motion beyond explicit mode changes; scrubbing snaps the camera to its target pose instead of easing.",
+      "exportState": "?cam=yonetmen|genel|katman|akis|cikis|serbest picks the mode and every pose is a deterministic function of mode and timeline t.",
+      "accessibility": "Modes are native buttons mirrored on keys 0-5; no information is carried by camera motion alone — the HUD, cards and caption carry every number as text.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

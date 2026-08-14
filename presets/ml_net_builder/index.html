@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mimari Kurucu — ml_net_builder</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    /* palet: obsidian-champagne ailesi — sahne bu token'ları tüketir */
+    :root {
+      --color-canvas: #0b0c10;
+      --color-surface: #15161a;
+      --color-ink: #e9e4d8;
+      --color-muted: #9a938a;
+      --color-accent: #d9b877;
+      --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd;
+      --color-data-2: #d78f6c;
+      --color-rule: #3a3c42;
+      --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body {
+      background: var(--color-canvas); color: var(--color-ink);
+      font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden;
+    }
+    header {
+      display: flex; align-items: center; gap: 20px; padding: 13px 22px 11px;
+      border-bottom: 1px solid var(--color-rule); flex: 0 0 auto;
+    }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+    .tabs button {
+      appearance: none; border: 1px solid var(--color-rule); background: transparent;
+      color: var(--color-muted); font: 600 12.5px/1 var(--font-body); letter-spacing: .04em;
+      padding: 9px 14px; border-radius: 8px; cursor: pointer;
+    }
+    .tabs button[aria-selected="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .work { display: flex; flex: 1 1 auto; min-height: 0; }
+    .stage-area { position: relative; flex: 1 1 auto; min-width: 0; }
+    #stage { position: absolute; inset: 0; }
+    aside {
+      flex: 0 0 322px; border-left: 1px solid var(--color-rule); background: var(--color-surface);
+      display: flex; flex-direction: column; gap: 9px; padding: 12px 14px; overflow: auto;
+    }
+    aside h2 { margin: 0; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--color-muted); }
+    aside p.hint { margin: 0; font-size: 11.5px; line-height: 1.45; color: var(--color-muted); }
+    #mimariText {
+      width: 100%; flex: 1 1 auto; min-height: 210px; resize: vertical;
+      background: #0e0f13; color: var(--color-ink); border: 1px solid var(--color-rule);
+      border-radius: 8px; padding: 9px 10px; font: 11.5px/1.5 var(--font-mono); tab-size: 2;
+    }
+    .add-row { display: flex; flex-wrap: wrap; gap: 5px; }
+    .add-row button {
+      appearance: none; border: 1px dashed var(--color-rule); background: transparent;
+      color: var(--color-ink); font: 500 11.5px/1 var(--font-body); padding: 6px 9px;
+      border-radius: 6px; cursor: pointer;
+    }
+    .add-row button:hover { border-style: solid; border-color: var(--color-accent); }
+    .apply-row { display: flex; gap: 8px; align-items: center; }
+    .apply-row button {
+      appearance: none; border: 1px solid var(--color-accent); background: var(--color-accent);
+      color: var(--color-accent-ink); font: 600 12.5px/1 var(--font-body); padding: 9px 14px;
+      border-radius: 7px; cursor: pointer;
+    }
+    .apply-row button.ghost { background: transparent; color: var(--color-ink); border-color: var(--color-rule); }
+    #durum { font-size: 11.5px; line-height: 1.45; min-height: 2.4em; }
+    #durum.ok { color: var(--color-muted); }
+    #durum.err { color: var(--color-data-2); }
+    #ozet { font-size: 11.5px; line-height: 1.5; color: var(--color-muted); border-top: 1px solid var(--color-rule); padding-top: 8px; }
+    #ozet b { color: var(--color-ink); font-family: var(--font-mono); }
+    footer {
+      flex: 0 0 auto; display: flex; flex-direction: column; gap: 9px;
+      padding: 11px 22px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface);
+    }
+    .scrub-row { display: flex; align-items: center; gap: 12px; }
+    .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); }
+    .scrub-row .time { font: 500 12.5px var(--font-mono); color: var(--color-muted); min-width: 92px; text-align: right; font-variant-numeric: tabular-nums; }
+    .control-row { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+    .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    .control-row button, .control-row label.toggle {
+      appearance: none; border: 1px solid var(--color-rule); background: transparent;
+      color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px;
+      border-radius: 7px; cursor: pointer; user-select: none;
+    }
+    .control-row button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .control-row label.toggle { display: inline-flex; gap: 6px; align-items: center; }
+    .control-row label.toggle input { accent-color: var(--color-accent); margin: 0; }
+    .caption { font-size: 13px; color: var(--color-muted); margin: 0; }
+    .caption strong { color: var(--color-ink); font-weight: 600; }
+    .caption .nums { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--color-ink); }
+    .kbd-help { margin-left: auto; font-size: 11.5px; color: var(--color-muted); }
+    kbd { border: 1px solid var(--color-rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font: 11px var(--font-mono); }
+    #testOut { position: fixed; inset: 6% 6%; overflow: auto; z-index: 30; padding: 18px 20px;
+      background: #06070a; border: 1px solid var(--color-rule); border-radius: 10px;
+      font: 12px/1.5 var(--font-mono); white-space: pre; color: var(--color-ink); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mimari Kurucu<small>ml_net_builder · katmanlama, şekil çıkarımı, ileri geçiş</small></h1>
+    <div class="tabs" role="tablist" aria-label="Hazır mimariler">
+      <button role="tab" data-mimari="cnn" aria-selected="true">Küçük ESA</button>
+      <button role="tab" data-mimari="mlp" aria-selected="false">ÇKA</button>
+      <button role="tab" data-mimari="resnet" aria-selected="false">Artık bloklu</button>
+      <button role="tab" data-mimari="trafo" aria-selected="false">Dönüştürücü</button>
+    </div>
+  </header>
+
+  <div class="work">
+    <div class="stage-area"><div id="stage"></div></div>
+    <aside>
+      <h2>Kendi mimarin</h2>
+      <p class="hint">Katman listesini düzenle ya da düğmelerle ekle; <kbd>Ctrl</kbd>+<kbd>Enter</kbd> ile kur.
+        Şekiller ve parametreler tarifden hesaplanır.</p>
+      <div class="add-row" id="ekleSatir">
+        <button data-ekle="conv">+ konv</button>
+        <button data-ekle="pool">+ havuz</button>
+        <button data-ekle="activation">+ ReLU</button>
+        <button data-ekle="norm">+ norm</button>
+        <button data-ekle="flatten">+ düzleştir</button>
+        <button data-ekle="dense">+ tam bağlı</button>
+        <button data-ekle="residual">+ artık</button>
+        <button data-ekle="attention">+ dikkat</button>
+      </div>
+      <textarea id="mimariText" spellcheck="false" aria-label="Mimari tarifi (JSON)"></textarea>
+      <div class="apply-row">
+        <button id="uygulaBtn">Kur</button>
+        <button id="geriAlBtn" class="ghost">Sekmeye dön</button>
+      </div>
+      <div id="durum" class="ok"></div>
+      <div id="ozet"></div>
+    </aside>
+  </div>
+
+  <footer>
+    <div class="scrub-row">
+      <button id="playBtn" aria-pressed="false" title="Boşluk">Oynat</button>
+      <button id="adimBtn" title="N">Sonraki blok</button>
+      <button id="ileriBtn" title="F">İleri geçiş</button>
+      <input id="scrub" type="range" min="0" max="1000" step="1" value="0" aria-label="Kurulum zaman çizelgesi">
+      <span class="time" id="timeOut">—</span>
+    </div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Kamera">
+        <span>Kamera</span>
+        <button data-cam="yonetmen" aria-pressed="true" title="0">Yönetmen</button>
+        <button data-cam="genel" title="1">Genel</button>
+        <button data-cam="katman" title="2">Katman</button>
+        <button data-cam="akis" title="3">Akış</button>
+        <button data-cam="cikis" title="5">Çıkış</button>
+        <button data-cam="serbest" title="4">Serbest</button>
+      </div>
+      <div class="group">
+        <label class="toggle"><input type="checkbox" id="hudChk" checked> HUD</label>
+      </div>
+      <span class="kbd-help"><kbd>Boşluk</kbd> oynat · <kbd>N</kbd> sonraki blok · <kbd>F</kbd> ileri geçiş · <kbd>←</kbd><kbd>→</kbd> blok · <kbd>0–5</kbd> kamera</span>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+
+  <script type="module">
+    import { mountNetBuilder, cikarim, ORNEK_MIMARILER, MimariHatasi, netMath } from './net-builder.mjs';
+
+    const params = new URLSearchParams(location.search);
+    const qMimari = params.get('mimari') && ORNEK_MIMARILER[params.get('mimari')] ? params.get('mimari') : 'cnn';
+    const qAdim = params.has('adim') ? Number(params.get('adim')) : null;
+    const qT = params.has('t') ? Number(params.get('t')) : null;
+    const qCam = params.get('cam');
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const exportMode = params.get('export') === '1' || document.documentElement.dataset.export === 'true';
+    const senaryo = params.get('senaryo');
+    const deterministic = qT != null || qAdim != null || reduced || exportMode || senaryo != null;
+    const nf = new Intl.NumberFormat('tr-TR');
+
+    const bicimle = m => '[\n' + m.map(l => '  ' + JSON.stringify(l)).join(',\n') + '\n]';
+    /* gevşek okuma: tırnaksız anahtar, tek tırnak ve sondaki virgül bağışlanır (eval YOK) */
+    function gevsekParse(txt) {
+      try { return JSON.parse(txt); } catch (e) { /* düzeltmeyi dene */ }
+      const d = txt
+        .replace(/([{,]\s*)([A-Za-zçğıöşüÇĞİÖŞÜ_$][\w$]*)\s*:/g, '$1"$2":')
+        .replace(/'/g, '"')
+        .replace(/,(\s*[}\]])/g, '$1');
+      return JSON.parse(d);
+    }
+
+    const stage = await mountNetBuilder(document.querySelector('#stage'), {
+      mimari: ORNEK_MIMARILER[qMimari].mimari,
+      seed: 7, autoplay: !deterministic, hud: true,
+      cam: qCam || 'yonetmen',
+      bloom: params.get('bloom') !== '0',      /* ?bloom=0 — ölçüm ve zayıf donanım */
+    });
+
+    /* ---------------- durum ve arayüz */
+    const el = {
+      text: document.querySelector('#mimariText'),
+      durum: document.querySelector('#durum'),
+      ozet: document.querySelector('#ozet'),
+      caption: document.querySelector('#caption'),
+      scrub: document.querySelector('#scrub'),
+      timeOut: document.querySelector('#timeOut'),
+      playBtn: document.querySelector('#playBtn'),
+    };
+    let aktifSekme = qMimari;
+    el.text.value = bicimle(ORNEK_MIMARILER[qMimari].mimari);
+    document.querySelectorAll('.tabs button').forEach(x =>
+      x.setAttribute('aria-selected', String(x.dataset.mimari === qMimari)));
+
+    function ozetYaz(sonuc, baslik) {
+      const k = sonuc.katmanlar;
+      el.ozet.innerHTML =
+        `<b>${k.length}</b> katman · <b>${nf.format(sonuc.toplamParametre)}</b> eğitilebilir parametre`
+        + (sonuc.toplamDurgun ? ` (+<b>${nf.format(sonuc.toplamDurgun)}</b> durgun)` : '')
+        + `<br>giriş <b>${sonuc.girisSekli.join('×')}</b> → çıkış <b>${sonuc.cikisSekli.join('×')}</b>`
+        + `<br>blok kaynağı: <b>${stage.blokKaynak}</b>`;
+      const ornek = ORNEK_MIMARILER[aktifSekme];
+      el.caption.innerHTML =
+        `<strong>${baslik}:</strong> ${ornek && baslik === ornek.ad ? ornek.ozet + ' ' : ''}`
+        + `Şekiller <span class="nums">${netMath.formul}</span> ile katman katman türetilir; `
+        + `toplam <span class="nums">${nf.format(sonuc.toplamParametre)}</span> eğitilebilir parametre, `
+        + `çıkış <span class="nums">${sonuc.cikisSekli.join('×')}</span>. `
+        + `Bloklar sırayla yerleşir, sonra bir veri darbesi girişten çıkışa akar — akışın hızı anlatım içindir, `
+        + `gerçek hesap süresini temsil etmez.`;
+    }
+
+    async function kurMimari(mimari, baslik) {
+      try {
+        const sonuc = await stage.kur(mimari);
+        el.durum.className = 'ok';
+        el.durum.textContent = `Kuruldu: ${sonuc.katmanlar.length} katman, ${nf.format(sonuc.toplamParametre)} parametre.`;
+        ozetYaz(sonuc, baslik);
+        el.scrub.max = String(Math.round(stage.timeline.duration * 100));
+        syncUi();
+        return sonuc;
+      } catch (e) {
+        el.durum.className = 'err';
+        el.durum.textContent = e instanceof MimariHatasi ? e.message : `Okunamadı: ${e.message}`;
+        return null;
+      }
+    }
+
+    document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', async () => {
+      aktifSekme = b.dataset.mimari;
+      document.querySelectorAll('.tabs button').forEach(x =>
+        x.setAttribute('aria-selected', String(x === b)));
+      el.text.value = bicimle(ORNEK_MIMARILER[aktifSekme].mimari);
+      await kurMimari(ORNEK_MIMARILER[aktifSekme].mimari, ORNEK_MIMARILER[aktifSekme].ad);
+    }));
+
+    const SABLON = {
+      conv: { tur: 'conv', filtre: 32, cekirdek: [3, 3] },
+      pool: { tur: 'pool', tip: 'max', boyut: [2, 2] },
+      activation: { tur: 'activation', tip: 'relu' },
+      norm: { tur: 'norm', tip: 'yigin' },
+      flatten: { tur: 'flatten' },
+      dense: { tur: 'dense', birim: 128 },
+      residual: { tur: 'residual', atlama: 2 },
+      attention: { tur: 'attention', kafa: 8 },
+    };
+    document.querySelectorAll('[data-ekle]').forEach(b => b.addEventListener('click', () => {
+      let liste;
+      try { liste = gevsekParse(el.text.value); }
+      catch (e) { el.durum.className = 'err'; el.durum.textContent = `Metin okunamadı: ${e.message}`; return; }
+      const yeni = SABLON[b.dataset.ekle];
+      const sonIdx = liste.findIndex(l => l && l.tur === 'output');
+      if (sonIdx >= 0) liste.splice(sonIdx, 0, yeni); else liste.push(yeni);
+      el.text.value = bicimle(liste);
+      el.durum.className = 'ok';
+      el.durum.textContent = 'Katman eklendi — "Kur" ile uygula.';
+    }));
+
+    document.querySelector('#uygulaBtn').addEventListener('click', async () => {
+      let liste;
+      try { liste = gevsekParse(el.text.value); }
+      catch (e) {
+        el.durum.className = 'err';
+        el.durum.textContent = `JSON okunamadı: ${e.message} — her katman {tur:"conv", filtre:32} biçiminde olmalı.`;
+        return;
+      }
+      await kurMimari(liste, 'Kendi mimarin');
+    });
+    document.querySelector('#geriAlBtn').addEventListener('click', async () => {
+      el.text.value = bicimle(ORNEK_MIMARILER[aktifSekme].mimari);
+      await kurMimari(ORNEK_MIMARILER[aktifSekme].mimari, ORNEK_MIMARILER[aktifSekme].ad);
+    });
+    el.text.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); document.querySelector('#uygulaBtn').click(); }
+    });
+
+    /* ---------------- oynatma kontrolleri */
+    function syncUi() {
+      const tl = stage.timeline;
+      el.playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat';
+      el.playBtn.setAttribute('aria-pressed', String(tl.playing));
+      if (document.activeElement !== el.scrub) el.scrub.value = String(Math.round(tl.t * 100));
+      el.timeOut.textContent = tl.t < tl.kurulumSonu
+        ? `kurulum ${tl.t.toFixed(1)} s`
+        : `ileri ${(tl.t - tl.kurulumSonu).toFixed(1)} s`;
+      document.querySelectorAll('[data-cam]').forEach(b =>
+        b.setAttribute('aria-pressed', String(b.dataset.cam === stage.camera.current)));
+    }
+    setInterval(syncUi, 180);
+    el.playBtn.addEventListener('click', () => {
+      stage.timeline.playing ? stage.timeline.pause() : stage.timeline.play();
+      syncUi();
+    });
+    document.querySelector('#adimBtn').addEventListener('click', () => { stage.adim(); syncUi(); });
+    document.querySelector('#ileriBtn').addEventListener('click', () => { stage.ileri(); syncUi(); });
+    el.scrub.addEventListener('input', () => { stage.timeline.scrub(Number(el.scrub.value) / 100); syncUi(); });
+    document.querySelectorAll('[data-cam]').forEach(b =>
+      b.addEventListener('click', () => { stage.camera.transitionTo(b.dataset.cam, { duration: 1100 }); syncUi(); }));
+    document.querySelector('#hudChk').addEventListener('change', e => stage.hud(e.target.checked));
+
+    let odakIdx = 0;
+    document.addEventListener('keydown', e => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const tl = stage.timeline;
+      if (e.code === 'Space') { e.preventDefault(); tl.playing ? tl.pause() : tl.play(); }
+      else if (e.key.toLowerCase() === 'n') stage.adim();
+      else if (e.key.toLowerCase() === 'f') stage.ileri();
+      else if (e.key === 'ArrowRight') { odakIdx = Math.min(stage.adimSayisi, odakIdx + 1); stage.git(odakIdx); stage.odakla(odakIdx - 1); }
+      else if (e.key === 'ArrowLeft') { odakIdx = Math.max(0, odakIdx - 1); stage.git(odakIdx); stage.odakla(odakIdx - 1); }
+      else if (e.key === '0') stage.camera.transitionTo('yonetmen', { duration: 1000 });
+      else if (e.key === '1') stage.camera.transitionTo('genel', { duration: 1000 });
+      else if (e.key === '2') stage.camera.transitionTo('katman', { duration: 1000 });
+      else if (e.key === '3') stage.camera.transitionTo('akis', { duration: 1000 });
+      else if (e.key === '4') stage.camera.transitionTo('serbest');
+      else if (e.key === '5') stage.camera.transitionTo('cikis', { duration: 1000 });
+      else if (e.key.toLowerCase() === 'h') { const c = document.querySelector('#hudChk'); c.checked = !c.checked; stage.hud(c.checked); }
+      syncUi();
+    });
+
+    /* ---------------- ilk özet + deterministik açılış */
+    ozetYaz(stage.sonuc, ORNEK_MIMARILER[qMimari].ad);
+    el.scrub.max = String(Math.round(stage.timeline.duration * 100));
+    el.durum.textContent = `Kuruldu: ${stage.sonuc.katmanlar.length} katman, ${nf.format(stage.sonuc.toplamParametre)} parametre.`;
+
+    if (deterministic) {
+      stage.timeline.pause();
+      if (qCam) stage.camera.transitionTo(qCam, { duration: 0 });
+      if (qT != null) stage.timeline.scrub(qT);
+      else if (qAdim != null) { stage.git(qAdim); stage.odakla(qAdim - 1); }
+      else stage.timeline.scrub(stage.timeline.kurulumSonu);   /* tablo: TAM kurulmuş ağ */
+      stage.advance(0);
+      stage.advance(0);
+      stage.setActive(false);            /* başsız yakalama: rAF durur, kare tuvalde kalır */
+      document.title += ' · hazır';
+      syncUi();
+    }
+    /* ?senaryo=yeniden|hata — kur() YENİDEN İNŞA yolunu ve hata panelini
+       başsız doğrulamak için (kenar çubuğuna elle yazmaya gerek kalmadan) */
+    if (senaryo === 'dongu') {
+      /* ileri geçiş DÖNGÜ dikişi: t sonun hemen öncesine sarılır, 60 kare
+         ilerletilir (1 s) ve sarma sonrası kare yakalanır — kopukluk aranır */
+      stage.timeline.scrub(stage.timeline.duration - .35);
+      stage.timeline.play();
+      for (let i = 0; i < 60; i++) stage.advance(1 / 60);
+      stage.timeline.pause();
+      stage.setActive(false);
+      console.info(`net-builder dongu: t=${stage.timeline.t.toFixed(2)} / ${stage.timeline.duration.toFixed(2)}`);
+    }
+    if (senaryo === 'yeniden' || senaryo === 'hata') {
+      const ozel = senaryo === 'yeniden'
+        ? [{ tur: 'input', sekil: [64, 64, 3] },
+          { tur: 'conv', filtre: 16, cekirdek: 5, adim: 2, dolgu: 'ayni' },
+          { tur: 'norm', tip: 'yigin' },
+          { tur: 'activation', tip: 'gelu' },
+          { tur: 'pool', tip: 'ort', boyut: 2 },
+          { tur: 'conv', filtre: 32, cekirdek: 3, dolgu: 'ayni' },
+          { tur: 'activation', tip: 'relu' },
+          { tur: 'flatten' },
+          { tur: 'dense', birim: 64 },
+          { tur: 'output', birim: 4, tip: 'softmax' }]
+        : [{ tur: 'input', sekil: [28, 28, 1] },
+          { tur: 'conv', filtre: 32, cekirdek: [3, 3] },
+          { tur: 'pool', tip: 'max', boyut: [2, 2] },
+          { tur: 'dense', birim: 10 }];
+      el.text.value = bicimle(ozel);
+      await kurMimari(ozel, 'Kendi mimarin');
+      stage.timeline.pause();
+      stage.timeline.scrub(stage.timeline.kurulumSonu);
+      stage.advance(0); stage.advance(0);
+      stage.setActive(false);
+      console.info(`net-builder senaryo=${senaryo} · ${el.durum.textContent}`);
+    }
+
+    if (params.has('perf')) {
+      for (let i = 0; i < 180; i++) stage.advance(1 / 60);
+      const d = document.createElement('div');
+      d.id = 'perfOut';
+      d.textContent = `advanceMs=${stage.stats.advanceMs.toFixed(2)}`;
+      document.body.appendChild(d);
+      console.info(`net-builder advance(): ${stage.stats.advanceMs.toFixed(2)} ms`);
+    }
+
+    /* ---------------- ?test=1 — şekil çıkarımının kendi kendini sınaması */
+    if (params.get('test') === '1') {
+      const satir = [];
+      let hata = 0;
+      const esit = (ad, a, b) => {
+        const ok = JSON.stringify(a) === JSON.stringify(b);
+        if (!ok) hata++;
+        const s = `${ok ? 'OK  ' : 'HATA'} ${ad}: ${JSON.stringify(a)}${ok ? '' : ' ≠ beklenen ' + JSON.stringify(b)}`;
+        satir.push(s);
+        console.log('NETTEST ' + s);
+      };
+      const c = cikarim(ORNEK_MIMARILER.cnn.mimari);
+      esit('cnn konv1 çıkış', c.katmanlar[1].cikisSekli, [26, 26, 32]);
+      esit('cnn konv1 param', c.katmanlar[1].parametre, 320);
+      esit('cnn konv2 param', c.katmanlar[4].parametre, 18496);
+      esit('cnn havuz2 çıkış', c.katmanlar[6].cikisSekli, [5, 5, 64]);
+      esit('cnn düzleştir', c.katmanlar[7].cikisSekli, [1600]);
+      esit('cnn dense param', c.katmanlar[8].parametre, 204928);
+      esit('cnn TOPLAM', c.toplamParametre, 225034);
+      const m = cikarim(ORNEK_MIMARILER.mlp.mimari);
+      esit('mlp TOPLAM', m.toplamParametre, 218058);
+      const r = cikarim(ORNEK_MIMARILER.resnet.mimari);
+      esit('resnet konv1 param', r.katmanlar[1].parametre, 1792);
+      esit('resnet artık kaynak', r.katmanlar[9].kaynak, 3);
+      esit('resnet TOPLAM', r.toplamParametre, 601738);
+      esit('resnet durgun', r.toplamDurgun, 384);
+      const t = cikarim(ORNEK_MIMARILER.trafo.mimari);
+      esit('trafo dikkat param', t.katmanlar[2].parametre, 66048);
+      esit('trafo TOPLAM', t.toplamParametre, 198272);
+      esit('adım/dolgu 28,k5,s2,ayni',
+        cikarim([{ tur: 'input', sekil: [28, 28, 1] }, { tur: 'conv', filtre: 8, cekirdek: 5, adim: 2, dolgu: 'ayni' }]).katmanlar[1].cikisSekli, [14, 14, 8]);
+      esit('adım/dolgu 32,k7,s3,p2',
+        cikarim([{ tur: 'input', sekil: [32, 32, 3] }, { tur: 'conv', filtre: 16, cekirdek: 7, adim: 3, dolgu: 2 }]).katmanlar[1].cikisSekli, [10, 10, 16]);
+      let mesajlar = 0;
+      for (const kotu of [[], [{ tur: 'conv', filtre: 8 }],
+        [{ tur: 'input', sekil: [8, 8, 3] }, { tur: 'dense', birim: 10 }],
+        [{ tur: 'input', sekil: [4, 4, 1] }, { tur: 'conv', filtre: 8, cekirdek: 7 }]]) {
+        try { cikarim(kotu); satir.push('HATA geçersiz mimari hata vermedi'); hata++; }
+        catch (e) { mesajlar++; satir.push(`OK   geçersiz mimari yakalandı: ${e.message}`); console.log('NETTEST OK ' + e.message); }
+      }
+      satir.push(hata ? `SONUÇ: ${hata} HATA` : `SONUÇ: tüm testler geçti (${mesajlar} hata mesajı doğrulandı)`);
+      console.log('NETTEST ' + satir[satir.length - 1]);
+      const pre = document.createElement('pre');
+      pre.id = 'testOut';
+      pre.textContent = satir.join('\n');
+      document.body.appendChild(pre);
+    }
+
+    window.__netBuilder = { stage, cikarim, ORNEK_MIMARILER, netMath };
+    setTimeout(() => console.info(`net-builder advance(): ${stage.stats.advanceMs.toFixed(2)} ms · bloklar: ${stage.blokKaynak}`), 6000);
+  </script>
+</body>
+</html>

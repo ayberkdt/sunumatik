@@ -140,7 +140,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <div class="stars" aria-hidden="true"></div>
   <p class="eyebrow">SUNUMATİK</p>
   <h1>Canlı Katalog</h1>
-  <p class="sub">26 preset · 6 kategori · her kart canlı çalışır</p>
+  <p class="sub">30 preset · 6 kategori · her kart canlı çalışır</p>
   <p class="not">Bu deste <b>otomatik üretilir</b> — kütüphaneye eklenen her yeni preset,
      bir sonraki aktarımda kendiliğinden burada belirir.</p>
   <p class="hint">→ ile ilerleyin · <kbd>G</kbd> dizin · <kbd>Esc</kbd> kapat</p>
@@ -218,7 +218,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <p class="num">02</p>
   <h2>ML Sahneleri</h2>
   <p class="sub">Gerçek matematik, gerçek gradyan, gerçek softmax — süs değil model.</p>
-  <p class="uyeler">Kayıp Yüzeyi · Dikkat Akışı · Sinir Ağı Yürüyüşü</p>
+  <p class="uyeler">Kayıp Yüzeyi · Dikkat Akışı · Mimari Kurucu · Katman Blokları · Evrişimli Görü · Kayıp Fonksiyonları · Sinir Ağı Yürüyüşü</p>
 </section>
 
 <section class="slide card" data-tur="kart" data-kat="ml" data-embed="../presets/ml_loss_landscape/index.html">
@@ -256,6 +256,86 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <div class="sahne">
     <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
     <iframe title="Dikkat Akışı önizleme" loading="lazy" data-src="../presets/ml_attention_flow/index.html"></iframe>
+  </div>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="ml" data-embed="../presets/ml_net_builder/index.html?mimari=cnn">
+  <div class="bilgi">
+    <p class="eyebrow">ML Sahneleri <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Mimari Kurucu</h2>
+    <p class="hook">Mimariyi tarif et, sahne onu blok blok kursun: her katman yerine otururken şekli ve parametre sayısı belirir.</p>
+    <ul class="feats">
+      <li>Gerçek şekil çıkarımı: out = ⌊(in+2p−k)/s⌋+1, stride ve dolgu dahil</li>
+      <li>Parametre sayıları doğrulanmış — küçük CNN 225.034 (Keras MNIST ile birebir)</li>
+      <li>Kendi mimarini yaz ve kur; geçersiz tarifte anlaşılır Türkçe hata</li>
+      <li>Hazır örnekler: CNN · MLP · rezidüel · dönüştürücü; kurulum sonrası ileri geçiş</li>
+    </ul>
+    <p class="yol"><code>presets/ml_net_builder/index.html?mimari=cnn</code></p>
+    <a class="ac" href="../presets/ml_net_builder/index.html?mimari=cnn" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Mimari Kurucu önizleme" loading="lazy" data-src="../presets/ml_net_builder/index.html?mimari=cnn"></iframe>
+  </div>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="ml" data-embed="../presets/ml_layer_blocks/index.html">
+  <div class="bilgi">
+    <p class="eyebrow">ML Sahneleri <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Katman Blokları</h2>
+    <p class="hook">On katman tipi, tek elden: ne yaptıkları renk kodundan değil geometrilerinden okunur.</p>
+    <ul class="feats">
+      <li>buildConv · buildPool · buildDense · buildFlatten · buildNorm · buildActivation</li>
+      <li>buildAttention · buildResidual · buildInput · buildOutput — donmuş API</li>
+      <li>Evrişim filtre sayısıyla derinleşen dilim destesi; havuzlama küçülten kademe</li>
+      <li>Her blok kendi giriş→çıkış şeklini ve parametre sayısını taşır</li>
+    </ul>
+    <p class="yol"><code>presets/ml_layer_blocks/index.html</code></p>
+    <a class="ac" href="../presets/ml_layer_blocks/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Katman Blokları önizleme" loading="lazy" data-src="../presets/ml_layer_blocks/index.html"></iframe>
+  </div>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="ml" data-embed="../presets/ml_conv_vision/index.html?sahne=kaydir&amp;adim=120">
+  <div class="bilgi">
+    <p class="eyebrow">ML Sahneleri <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Evrişimli Görü</h2>
+    <p class="hook">Çekirdek görüntü üzerinde kayarken dokuz çarpım, toplamı ve doğan çıktı pikseli ekranda — evrişim gerçekten hesaplanır.</p>
+    <ul class="feats">
+      <li>Sobel · Laplace · Gauss + tohumlu çekirdekler; altı filtre altı öznitelik haritası</li>
+      <li>Adım ve dolgu değiştirilebilir; çıktı boyutu formülü canlı doğrulanır</li>
+      <li>Maks/ortalama havuzlama, ReLU öncesi-sonrası, alıcı alan büyümesi</li>
+      <li>Karar HOG yönelim histogramından — &#x27;eğitilmiş model yok&#x27; rozeti her karede</li>
+    </ul>
+    <p class="yol"><code>presets/ml_conv_vision/index.html?sahne=kaydir&amp;adim=120</code></p>
+    <a class="ac" href="../presets/ml_conv_vision/index.html?sahne=kaydir&amp;adim=120" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Evrişimli Görü önizleme" loading="lazy" data-src="../presets/ml_conv_vision/index.html?sahne=kaydir&amp;adim=120"></iframe>
+  </div>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="ml" data-embed="../presets/ml_loss_functions/index.html?adim=4">
+  <div class="bilgi">
+    <p class="eyebrow">ML Sahneleri <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Kayıp Fonksiyonları</h2>
+    <p class="hook">Aykırı değeri sürükleyin: MSE&#x27;nin gradyanı doğrusal büyürken MAE ve Huber tavana çarpıp orada kalır.</p>
+    <ul class="feats">
+      <li>MSE · MAE · Huber(δ) · log-cosh · BCE/CCE · hinge · focal(γ) — eğri VE türev</li>
+      <li>Türevler merkezî farkla doğrulandı (en kötü sapma 4,3e−6)</li>
+      <li>Aynı veri farklı kayıpla eğitilir: aykırısız EKK 2,260 · MSE 3,155 · Huber 2,456</li>
+      <li>Focal bölümü ölçüme dayanır: γ kolay örneği bastırır, sınıf dengesini α yapar</li>
+    </ul>
+    <p class="yol"><code>presets/ml_loss_functions/index.html?adim=4</code></p>
+    <a class="ac" href="../presets/ml_loss_functions/index.html?adim=4" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Kayıp Fonksiyonları önizleme" loading="lazy" data-src="../presets/ml_loss_functions/index.html?adim=4"></iframe>
   </div>
 </section>
 
@@ -695,10 +775,10 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <button id="geri" aria-label="Önceki">←</button>
   <button id="ileri" aria-label="Sonraki">→</button>
 </div>
-<button id="sayac" title="Dizin (G)">1 / 35</button>
+<button id="sayac" title="Dizin (G)">1 / 39</button>
 <div id="dizin" role="dialog" aria-label="Dizin"></div>
 <script>
-const TOC = [{"i": 0, "ad": "Kapak", "tur": "kapak", "kat": ""}, {"i": 1, "ad": "Yörünge Sahnesi", "tur": "bolum", "kat": "orbital"}, {"i": 2, "ad": "Yörünge Sahnesi", "tur": "kart", "kat": "orbital"}, {"i": 3, "ad": "Araç Blokları", "tur": "kart", "kat": "orbital"}, {"i": 4, "ad": "Ay'a Motorlu İniş", "tur": "kart", "kat": "orbital"}, {"i": 5, "ad": "ML Sahneleri", "tur": "bolum", "kat": "ml"}, {"i": 6, "ad": "Kayıp Yüzeyi", "tur": "kart", "kat": "ml"}, {"i": 7, "ad": "Dikkat Akışı", "tur": "kart", "kat": "ml"}, {"i": 8, "ad": "Sinir Ağı Yürüyüşü", "tur": "kart", "kat": "ml"}, {"i": 9, "ad": "Gök Cisimleri ve Fonlar", "tur": "bolum", "kat": "gok"}, {"i": 10, "ad": "Güneş", "tur": "kart", "kat": "gok"}, {"i": 11, "ad": "Ay", "tur": "kart", "kat": "gok"}, {"i": 12, "ad": "Dünya", "tur": "kart", "kat": "gok"}, {"i": 13, "ad": "Gezegenler", "tur": "kart", "kat": "gok"}, {"i": 14, "ad": "Kozmos Fonu", "tur": "kart", "kat": "gok"}, {"i": 15, "ad": "JWST Kaşifi", "tur": "kart", "kat": "gok"}, {"i": 16, "ad": "Denklem ve Anlatım", "tur": "bolum", "kat": "anlatim"}, {"i": 17, "ad": "Denklem Kalemi", "tur": "kart", "kat": "anlatim"}, {"i": 18, "ad": "Türetme Adımları", "tur": "kart", "kat": "anlatim"}, {"i": 19, "ad": "Figür Anlatımı", "tur": "kart", "kat": "anlatim"}, {"i": 20, "ad": "Zaman Çizelgesi", "tur": "kart", "kat": "anlatim"}, {"i": 21, "ad": "Veri, Grafik ve Hareket", "tur": "bolum", "kat": "veri"}, {"i": 22, "ad": "Grafik Motoru", "tur": "kart", "kat": "veri"}, {"i": 23, "ad": "Hareket Primitifleri", "tur": "kart", "kat": "veri"}, {"i": 24, "ad": "Tablo Sahnesi", "tur": "kart", "kat": "veri"}, {"i": 25, "ad": "Slayt Geçişleri", "tur": "kart", "kat": "veri"}, {"i": 26, "ad": "Etkileşim Efektleri", "tur": "kart", "kat": "veri"}, {"i": 27, "ad": "Palet Kütüphanesi", "tur": "kart", "kat": "veri"}, {"i": 28, "ad": "İkon Katmanları", "tur": "bolum", "kat": "ikon"}, {"i": 29, "ad": "Alan İkonları", "tur": "kart", "kat": "ikon"}, {"i": 30, "ad": "Utility İkonlar", "tur": "kart", "kat": "ikon"}, {"i": 31, "ad": "Kahraman Bilim İkonları", "tur": "kart", "kat": "ikon"}, {"i": 32, "ad": "Arşiv", "tur": "bolum", "kat": "arsiv"}, {"i": 33, "ad": "Analitik Ay Yörüngesi", "tur": "kart", "kat": "arsiv"}, {"i": 34, "ad": "Kapanış", "tur": "kapanis", "kat": ""}];
+const TOC = [{"i": 0, "ad": "Kapak", "tur": "kapak", "kat": ""}, {"i": 1, "ad": "Yörünge Sahnesi", "tur": "bolum", "kat": "orbital"}, {"i": 2, "ad": "Yörünge Sahnesi", "tur": "kart", "kat": "orbital"}, {"i": 3, "ad": "Araç Blokları", "tur": "kart", "kat": "orbital"}, {"i": 4, "ad": "Ay'a Motorlu İniş", "tur": "kart", "kat": "orbital"}, {"i": 5, "ad": "ML Sahneleri", "tur": "bolum", "kat": "ml"}, {"i": 6, "ad": "Kayıp Yüzeyi", "tur": "kart", "kat": "ml"}, {"i": 7, "ad": "Dikkat Akışı", "tur": "kart", "kat": "ml"}, {"i": 8, "ad": "Mimari Kurucu", "tur": "kart", "kat": "ml"}, {"i": 9, "ad": "Katman Blokları", "tur": "kart", "kat": "ml"}, {"i": 10, "ad": "Evrişimli Görü", "tur": "kart", "kat": "ml"}, {"i": 11, "ad": "Kayıp Fonksiyonları", "tur": "kart", "kat": "ml"}, {"i": 12, "ad": "Sinir Ağı Yürüyüşü", "tur": "kart", "kat": "ml"}, {"i": 13, "ad": "Gök Cisimleri ve Fonlar", "tur": "bolum", "kat": "gok"}, {"i": 14, "ad": "Güneş", "tur": "kart", "kat": "gok"}, {"i": 15, "ad": "Ay", "tur": "kart", "kat": "gok"}, {"i": 16, "ad": "Dünya", "tur": "kart", "kat": "gok"}, {"i": 17, "ad": "Gezegenler", "tur": "kart", "kat": "gok"}, {"i": 18, "ad": "Kozmos Fonu", "tur": "kart", "kat": "gok"}, {"i": 19, "ad": "JWST Kaşifi", "tur": "kart", "kat": "gok"}, {"i": 20, "ad": "Denklem ve Anlatım", "tur": "bolum", "kat": "anlatim"}, {"i": 21, "ad": "Denklem Kalemi", "tur": "kart", "kat": "anlatim"}, {"i": 22, "ad": "Türetme Adımları", "tur": "kart", "kat": "anlatim"}, {"i": 23, "ad": "Figür Anlatımı", "tur": "kart", "kat": "anlatim"}, {"i": 24, "ad": "Zaman Çizelgesi", "tur": "kart", "kat": "anlatim"}, {"i": 25, "ad": "Veri, Grafik ve Hareket", "tur": "bolum", "kat": "veri"}, {"i": 26, "ad": "Grafik Motoru", "tur": "kart", "kat": "veri"}, {"i": 27, "ad": "Hareket Primitifleri", "tur": "kart", "kat": "veri"}, {"i": 28, "ad": "Tablo Sahnesi", "tur": "kart", "kat": "veri"}, {"i": 29, "ad": "Slayt Geçişleri", "tur": "kart", "kat": "veri"}, {"i": 30, "ad": "Etkileşim Efektleri", "tur": "kart", "kat": "veri"}, {"i": 31, "ad": "Palet Kütüphanesi", "tur": "kart", "kat": "veri"}, {"i": 32, "ad": "İkon Katmanları", "tur": "bolum", "kat": "ikon"}, {"i": 33, "ad": "Alan İkonları", "tur": "kart", "kat": "ikon"}, {"i": 34, "ad": "Utility İkonlar", "tur": "kart", "kat": "ikon"}, {"i": 35, "ad": "Kahraman Bilim İkonları", "tur": "kart", "kat": "ikon"}, {"i": 36, "ad": "Arşiv", "tur": "bolum", "kat": "arsiv"}, {"i": 37, "ad": "Analitik Ay Yörüngesi", "tur": "kart", "kat": "arsiv"}, {"i": 38, "ad": "Kapanış", "tur": "kapanis", "kat": ""}];
 const slaytlar = [...document.querySelectorAll('.slide')];
 const sayac = document.getElementById('sayac');
 const dizin = document.getElementById('dizin');

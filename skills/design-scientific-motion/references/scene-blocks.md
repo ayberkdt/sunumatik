@@ -30,11 +30,22 @@ and a matching family of ML scenes. Quality over count. Every block obeys
 |---|---|---|
 | `ml_loss_landscape` | **wave 1** | 3D loss surface (analytic composite), REAL optimizer integration on its gradient: SGD vs momentum vs Adam trails racing to minima |
 | `ml_attention_flow` | **wave 1** | Transformer attention as animated weighted arcs over token strips — real softmax over deterministic embeddings, layer stepping |
-| `ml-embedding-projector-preset` | wave 2 | 3D point-cloud embedding space: cluster morph, semantic axis sweep |
-| `ml-conv-vision-preset` | wave 2 | Image → sliding kernels → feature maps pipeline, stride/padding visible |
-| `ml-graph-message-preset` | wave 2 | Graph neural net message passing: pulses along edges, node state updates |
+| `ml_layer_blocks` | **wave 3** | THE layer LIBRARY (no mount, frozen API — the ML twin of craft-blocks): conv/pool/dense/flatten/norm/activation/attention/residual/input/output builders; type readable from GEOMETRY not colour; every block carries its own in→out shape and parameter count |
+| `ml_net_builder` | **wave 3** | THE core ML stage (the ML twin of orbital-stage): give it a declarative architecture, it assembles the net BLOCK BY BLOCK; real shape inference `out=⌊(in+2p−k)/s⌋+1`, verified parameter counts (small CNN = 225,034, matches Keras MNIST exactly), user-editable architecture, forward-pass pulse, camera director |
+| `ml_conv_vision` | **wave 3** | Image → sliding kernel → feature maps → pooling → ReLU → decision, with the convolution ACTUALLY computed: the 3×3 patch, all nine products, their sum and the born output pixel are on screen; stride/padding change and the size formula is verified live |
+| `ml_loss_functions` | **wave 3** | Loss gallery + comparison: MSE/MAE/Huber/log-cosh, cross-entropy/hinge/focal — curve AND derivative, outlier drag showing MSE blowing up while Huber holds, same data trained under different losses |
+| `ml-embedding-projector-preset` | wave 4 | 3D point-cloud embedding space: cluster morph, semantic axis sweep |
+| `ml-graph-message-preset` | wave 4 | Graph neural net message passing: pulses along edges, node state updates |
 
 (`neural_network` — feed-forward walkthrough — already exists and stays.)
+
+**Wave 3 was user-driven** (2026-08-14): "ML animasyonlarını beğenmedim. Katmanlama, loss
+fonksiyonları ekleme blok blok istenen yapı getirme. CNN gibi görüntü işleme şeylerini
+ekleme yok." The lesson generalises: a category is only finished when you can COMPOSE with
+it (declare a structure, get it built), not when it has a few standalone scenes. The
+frozen-API + placeholder-fallback contract that made the ORBITAL wave parallelisable was
+reused verbatim here and worked again — net-builder was coded and verified against a
+placeholder while layer-blocks was still being written.
 
 ## The frozen craft API (blocks compose against THIS)
 

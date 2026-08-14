@@ -1,0 +1,45 @@
+{
+  "preset": "ml_layer_blocks",
+  "motions": [
+    {
+      "id": "mlblok-inceleme-salinimi",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Katman bloklarının geometrisini her açıdan okutmak: her blok kendi sehpasında ±17°'lik yavaş bir salınım yapar. Tam tur DÖNDÜRÜLMEZ — bloklar akış yönünü (+X) taşıyan yönlü nesnelerdir; tam tur, ön yüzü (çekirdek karesi, eğri kabartması, sınıf çubukları) yarı sürenin yarısında izleyiciden çevirirdi. Salınım derinliği (dilim yığını, kademe, paralel şeritler) ortaya çıkarır, yönü kaybettirmez.",
+      "loop": true,
+      "durationMs": 20944,
+      "pauseControl": "Başlıktaki Duraklat/Devam düğmesi; sekme gizlendiğinde rAF otomatik durur. Duraklatılmışken kamera kumandası (sürükle/tekerlek/kaydır) çalışmaya devam eder — sahne zamanı ilerlemeden blok incelenebilir.",
+      "reducedMotion": "prefers-reduced-motion: reduce altında salınım hiç başlamaz; her blok bildirilen t=0 fazında (temel yaw −0.92 rad + sin(i·0.55)·0.30) tek kare çizilir. Kamera kumandası bu modda da açıktır ve sahne zamanını ilerletmez.",
+      "exportState": "html[data-export=\"true\"], ?export=1 veya ?t=<sn>: sahne o âna deterministik sarılıp dondurulur. Varsayılan tablo t=0'dır; doğrulama kareleri ?t=3 ile alınır. Duraklat düğmesi bu modda 'Donmuş kare' etiketiyle devre dışıdır (sessiz işlevsizlik bir kez 'bug' olarak okunmuştu).",
+      "accessibility": "Hareket tamamen duraklatılabilir; durduğunda hiçbir bilgi kaybolmaz — blok kimliği geometriden, sayılar DOM etiketlerinden okunur (etiketler ekran okuyucuya açık gerçek metindir, tuvale çizilmez). Parlaklık salınımı yok, flaş yok. Kumandalar klavyeyle erişilebilir yerel form öğeleridir; tam ekran F kısayoluyla da açılır.",
+      "notes": "Salınım hızı 0.30 rad/s, genlik 0.30 rad; blok başına 0.55 rad faz kaymasıyla dizi tek ağızdan sallanmaz. Deterministik: duvar saati yerine sabit 1/60 s adım, Math.random yok. Palet değişimi blokları YENİDEN KURMAZ — malzeme renkleri yerinde tazelenir (ml-layer-blocks.applyLayerPalette), türetilmiş çerçeve ve ikincil gövde tonları dahil."
+    },
+    {
+      "id": "mlblok-odak-gecisi",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Tek bir katman bloğunu yakın plana almak: ?blok=<tur> veya alttaki çipler sahneyi o bloğa indirger ve kamerayı daha güçlü bir 3/4 duruşa (yaw −1.24 rad) taşır — dilim yığınının derinliği, çekirdek karesi, huni kademesi bu açıdan okunur. Vitrin açısı (yaw −0.92) on bloğu birlikte göstermek için optimize edilmiştir; odak açısı tek bloğun hacmini gösterir.",
+      "loop": false,
+      "durationMs": 800,
+      "pauseControl": "Geçiş sırasında sürüklemeye başlamak geçişi anında iptal eder (kullanıcı kamerayı her zaman devralır); Duraklat sahne zamanını durdurur ama kamerayı kilitlemez.",
+      "reducedMotion": "prefers-reduced-motion: reduce (ve ?export=1 / ?t= donmuş modu) altında geçiş yok: kamera hedef kadraja tek karede oturur.",
+      "exportState": "?blok=conv|pool|dense|… bildirilen sabit kadrajı tek karede açar; açılışta geçiş çalışmaz. Kamera hareketi sahne zamanını İLERLETMEZ — ?t= tablosu kameradan bağımsızdır.",
+      "accessibility": "Odak çipleri gerçek bağlantılardır (klavyeyle gezilebilir, href korunur, JS'siz de derin bağlantı olarak çalışır); çift tıkla bloğa odaklanma ek kolaylıktır. Kamera sınırları izleyicinin kaybolmasını engeller: zemin altına inilemez (kutup açısı ≤ π/2 − 0.045), sahneden uzaklaşılamaz (mesafe 0.5–18, hedef yarıçapı ≤ 7).",
+      "notes": "OrbitControls vendor'dan gelir (../moon_advanced/vendor/controls/OrbitControls.js; dış ağ yok, importmap 'three'i çözer). Geçiş easeInOutCubic, 0.80 s, konum ve hedef birlikte taşınır; damping 0.075. Kumanda yüklenemezse vitrin sabit kameralarla çalışmaya devam eder."
+    },
+    {
+      "id": "mlblok-ag-kurulumu",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Mimarinin BLOK BLOK kurulduğunu göstermek: 'Ağ kur' düğmesi (veya ?ag=1) dokuz bloğu bir CNN zinciri olarak dizer ve her bloğu sırayla oturtur. Her blok akış yönünden (+Z'de 0.55 birim geriden, 0.5 rad dönmüş) gelip yerine oturur; ölçek 0'dan 1'e büyür. Aynı anda kamera geri çekilip yükselir, böylece zincir uzarken kadraj dolu kalır ve yeni gelen blok her zaman görüş alanına girer. Etiketler blok göründükçe açılır: her katmanın giriş→çıkış şekli ve parametre sayısı canlı olarak okunur.",
+      "loop": false,
+      "durationMs": 4150,
+      "pauseControl": "Başlıktaki Duraklat/Devam düğmesi kurulumu istenen blokta dondurur (sunumda 'burada duralım' anı); 'Vitrine dön' düğmesi zinciri söküp ızgara vitrinine geri döner; sekme gizlendiğinde rAF durur.",
+      "reducedMotion": "prefers-reduced-motion: reduce altında kurulum animasyonu YOKTUR: zincir kurulur kurulmaz tamamlanmış tabloya (agT=99, tüm bloklar ölçek 1) oturur ve tek kare çizilir. Bilgi kaybı olmaz — sıra bilgisi zaten +X ekseninin kendisidir.",
+      "exportState": "?ag=1 zinciri kurar; ?ag=1&t=<sn> kurulumu o âna deterministik sarıp dondurur (t=1.7 yarı kurulmuş, t≥4.2 tamamlanmış tablo). ?export=1 tamamlanmış tabloyu verir.",
+      "accessibility": "Hareket duraklatılabilir ve tamamen atlanabilir; blok blok açılma bir BİLGİ taşıyıcısıdır (sıra), animasyon durduğunda bu bilgi diziliş sırasında korunur. Ölçek 0'dan büyür (C0 sürekli), ani yanıp sönme veya flaş yoktur; parlaklık sabittir. Etiketler zincir modunda iki sıraya kaydırılır — üst üste binen metin okunamıyordu.",
+      "limitations": "Bir eğitim/çıkarım simülasyonu DEĞİLDİR: veri akışı canlandırılmaz, aktivasyon değerleri hesaplanmaz. Gösterilen şekiller ve parametre sayıları ise GERÇEKTİR — zincirle() giriş şeklini blok blok ilerletir (conv/pool 'ayni' dolgu varsayımıyla: H' = ceil(H/adım)); parametreler standart formüllerden tam sayı olarak hesaplanır (conv: (kH·kW·Cin+1)·filtre, dense/çıktı: (Cin+1)·birim, norm: 2·C, dikkat: 4·(d²+d), pool/flatten/aktivasyon/artık: 0). Blok geometrisi NİCEL değildir: dilim sayısı filtre sayısıyla logaritmik artar (8→3, 128→7 dilim), nöron sütunu 7'den sonra '…' ile kısaltılır, sınıf çubuklarının yükseklikleri seed'li örnek bir softmax dağılımıdır — ölçülmüş bir çıktı değildir.",
+      "notes": "Blok başına gecikme 0.40 s, oturma süresi 0.55 s (easeOutCubic). Zincir: girdi 32×32×3 → evrişim 32@3×3 → toplu norm → ReLU → maks havuzlama 2×2 → evrişim 64@3×3 adım 2 → düzleştirme → tam bağlı 64 → çıktı 10 softmax; toplam 282.314 parametre (konsola da basılır: '[mlblok] toplam parametre'). Yerleşim diz() ile ölçülmüş X kalınlıklarından üretilir, elle konum yazılmaz. Deterministik: sabit 1/60 s adım, Math.random/Date.now yok; window.__mlblok.advance(sn) sahneyi aynı adımlarla sürer."
+    }
+  ]
+}
