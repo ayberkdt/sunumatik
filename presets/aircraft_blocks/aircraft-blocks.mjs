@@ -77,6 +77,7 @@ function makeMats(palette) {
     frame:   new THREE.MeshStandardMaterial({ color: frame,   roughness: 0.46, metalness: 0.40 }),
     metal:   new THREE.MeshStandardMaterial({ color: p.metal, roughness: 0.26, metalness: 0.86 }),
     metalDS: new THREE.MeshStandardMaterial({ color: p.metal, roughness: 0.26, metalness: 0.86, side: THREE.DoubleSide }),
+    bodyDS:  new THREE.MeshStandardMaterial({ color: p.body,  roughness: 0.44, metalness: 0.28, side: THREE.DoubleSide }),
     accent:  new THREE.MeshStandardMaterial({ color: p.accent, roughness: 0.30, metalness: 0.66 }),
     dark:    new THREE.MeshStandardMaterial({ color: 0x07090c, roughness: 0.62, metalness: 0.22, side: THREE.DoubleSide }),
   };
@@ -90,6 +91,7 @@ export function applyAircraftPalette(root, palette) {
   if (!m) return false;
   const p = { ...AIRCRAFT_PALETTE, ...(palette || {}) };
   m.body.color.set(p.body);
+  m.bodyDS.color.set(p.body);
   m.wing.color.set(p.body);
   m.panel.color.set(p.panel);
   m.glass.color.set(p.panel);
@@ -435,7 +437,7 @@ function box(w, h, d, mat) { return new THREE.Mesh(new THREE.BoxGeometry(w, h, d
  * baypas nozulu, koyu fan yüzü ve sıcak çekirdek konisi.
  * Yüksek baypas oranı büyük fan çapı demektir; bu yüzden çap/uzunluk ≈ 0,55.
  */
-function turbofan(m, { r = 0.1, len = 0.34 } = {}) {
+function turbofan(m, { r = 0.1, len = 0.34, blades = 20 } = {}) {
   const g = new THREE.Group();
   const seg = 30;
   // Kaporta profili: LatheGeometry ile dış hat (dudak yuvarlak, kıç daralan).
@@ -450,29 +452,111 @@ function turbofan(m, { r = 0.1, len = 0.34 } = {}) {
     else rr = r * (1.0 - 0.30 * Math.pow((u - 0.62) / 0.38, 1.5));
     outer.push(new THREE.Vector2(rr, -len * u));
   }
-  const cowl = new THREE.Mesh(new THREE.LatheGeometry(outer, seg), m.metalDS);
+  outer.reverse();
+  // LatheGeometry normalleri profilin YÖNÜNE bağlıdır: y azalarak giden bir
+  // profil, normalleri İÇE bakan bir yüzey üretir. DoubleSide olduğu için
+  // yüzey görünür ama ters normalle aydınlanır — kaporta, palet açık renk
+  // olsa bile SİYAH bir kütle gibi çıkıyordu. Profil y artacak biçimde
+  // sıralanır.
+  // Nasel kaportası BOYALIDIR (çıplak metal değil): metalness 0,86'lık bir
+  // yüzey karanlık ortamda yansıtacak bir şey bulamayıp siyah okunuyordu.
+  const cowl = new THREE.Mesh(new THREE.LatheGeometry(outer, seg), m.bodyDS);
   cowl.geometry.rotateZ(-Math.PI / 2);          // eksen −Y → −X
   cowl.position.x = len * 0.5;
   g.add(cowl);
-  // Giriş dudağının iç yüzü + koyu fan yüzü.
+  // Giriş dudağının iç yüzü + kanal karanlığı (fanın ARKASI).
   const lip = cylX(r * 0.82, r * 0.72, 0.055, seg, m.metalDS, true);
   lip.position.x = len * 0.5 - 0.027;
   g.add(lip);
-  const fan = new THREE.Mesh(new THREE.CircleGeometry(r * 0.74, seg), m.dark);
-  fan.rotation.y = Math.PI / 2;
-  fan.position.x = len * 0.5 - 0.06;
+  const kanal = cylX(r * 0.72, r * 0.70, 0.20, seg, m.dark, true);
+  kanal.position.x = len * 0.5 - 0.17;
+  g.add(kanal);
+
+  // ── FAN: gerçek kanatçıklar ────────────────────────────────────────
+  const fan = fanRotoru(m, { rHub: r * 0.19, rTip: r * 0.71, blades });
+  fan.position.x = len * 0.5 - 0.055;
+  fan.name = 'fan';
   g.add(fan);
-  // Fan göbeği (spinner) — küçük koni.
-  const spin = cylX(0.0, r * 0.17, 0.05, 16, m.frame);
-  spin.position.x = len * 0.5 - 0.035;
-  g.add(spin);
-  // Çekirdek nozulu ve sıcak koni.
+
+  // ── OGV (çıkış yönlendirici kanatları) ─────────────────────────────
+  // Fanın arkasındaki SABİT kanat sırası. Görevi fanın verdiği dönmeyi
+  // (swirl) söküp akımı eksene paralel hâle getirmek — dönen akım itki
+  // üretmez, yalnız kayıp üretir. Bu yüzden statörler düzdür ve sayıları
+  // fan kanatçığı sayısıyla ORTAK BÖLEN vermeyecek biçimde seçilir
+  // (rezonans ve sirene benzeyen ton oluşmasın diye).
+  const ogv = new THREE.Group();
+  const ogvGeo = new THREE.BoxGeometry(0.035, 0.004, r * 0.48);
+  for (let i = 0; i < 29; i++) {
+    const v = new THREE.Mesh(ogvGeo, m.metal);
+    v.position.set(0, 0, r * 0.47);
+    const kol = new THREE.Group();
+    kol.add(v);
+    kol.rotation.x = (i * 2 * Math.PI) / 29;
+    ogv.add(kol);
+  }
+  ogv.position.x = len * 0.5 - 0.135;
+  g.add(ogv);
+
+  // ── Çekirdek nozulu ve sıcak koni ──────────────────────────────────
   const core = cylX(r * 0.44, r * 0.40, 0.10, seg, m.metal);
   core.position.x = -len * 0.42;
   g.add(core);
   const plug = cylX(r * 0.06, r * 0.38, 0.12, seg, m.dark);
   plug.position.x = -len * 0.52;
   g.add(plug);
+
+  g.userData.fan = fan;              // sahneler döndürebilsin diye
+  return g;
+}
+
+/**
+ * Fan rotoru — burulmalı kanatçıklar + spiralli spinner.
+ *
+ * NEDEN BURULMA: kanatçığın yerel hücum açısı, eksenel hava hızı ile
+ * ÇEVRESEL hızın (Ωr) bileşkesine göredir. Ω sabit olduğu için çevresel hız
+ * yarıçapla DOĞRUSAL büyür: kökte hava kanatçığa neredeyse eksenden gelir,
+ * uçta ise neredeyse teğetten. Aynı hücum açısını her yarıçapta tutturmak
+ * için kanatçık kökten uca ~40° burkulmak zorundadır. Düz bir kanatçık
+ * kökte stall'da, uçta boşta çalışırdı.
+ *
+ * Kanatçık, kanat loft'unun ta kendisiyle kurulur: açıklık = yarıçap yönü,
+ * veter = eksen yönü, istasyon tablosunda burulma. Tek geometri üretilip
+ * bütün kanatçıklarda PAYLAŞILIR (N mesh, 1 tampon).
+ */
+function fanRotoru(m, { rHub = 0.02, rTip = 0.075, blades = 20 } = {}) {
+  const g = new THREE.Group();
+  const c = rTip * 0.72;                       // kök veteri (geniş veterli fan)
+  const kanatcik = loftWing([
+    { y: rHub,                       xqc: 0.000, zqc: 0, chord: c * 0.86, twist:  58, naca: { m: 0.02, p: 0.5, t: 0.10 } },
+    { y: rHub + (rTip - rHub) * 0.35, xqc: -0.008, zqc: 0, chord: c * 1.02, twist:  40, naca: { m: 0.02, p: 0.5, t: 0.075 } },
+    { y: rHub + (rTip - rHub) * 0.72, xqc: -0.020, zqc: 0, chord: c * 0.98, twist:  25, naca: { m: 0.015, p: 0.5, t: 0.055 } },
+    { y: rTip,                       xqc: -0.034, zqc: 0, chord: c * 0.80, twist:  16, naca: { m: 0.01, p: 0.5, t: 0.042 } },
+  ], m.metal, { mirror: false });
+
+  for (let i = 0; i < blades; i++) {
+    const b = new THREE.Mesh(kanatcik.mesh.geometry, m.metal);   // geometri PAYLAŞILIR
+    const kol = new THREE.Group();
+    kol.add(b);
+    kol.rotation.x = (i * 2 * Math.PI) / blades;
+    g.add(kol);
+  }
+
+  // Spinner: koni + üstünde spiral şerit. Spiral süs değil — yerdeyken
+  // motorun döndüğünü uzaktan gösteren emniyet işaretidir.
+  const spin = new THREE.Mesh(new THREE.ConeGeometry(rHub * 1.05, rHub * 2.6, 20), m.frame);
+  spin.rotation.z = -Math.PI / 2;
+  spin.position.x = rHub * 1.3;
+  g.add(spin);
+  const spiral = [];
+  for (let i = 0; i <= 40; i++) {
+    const t = i / 40;
+    const rr = rHub * 1.05 * (1 - t) + 0.0008;
+    const a = t * Math.PI * 1.6;
+    spiral.push(new THREE.Vector3(rHub * 2.6 * t, rr * Math.cos(a), rr * Math.sin(a)));
+  }
+  const sp = new THREE.Mesh(
+    new THREE.TubeGeometry(new THREE.CatmullRomCurve3(spiral), 40, rHub * 0.09, 6, false), m.dark);
+  g.add(sp);
   return g;
 }
 
@@ -1227,6 +1311,158 @@ export function buildFlyingWing({ scale = 1, palette } = {}) {
     regime: 'ses altı · yüksek menzil, kuyruksuz',
     why: 'Kuyruk ve gövde olmadığı için ıslak yüzey en aza iner; boyuna denge uçtaki −4,6° washout ile kurulur; yönlü kararlılık dikey yüzey yokluğunda bölünmüş firar kenarı frenlerine ve uçuş bilgisayarına kalır.',
   });
+}
+
+/* ================================================================== */
+/* BLOK — YÜKSEK BAYPAS TURBOFAN (tek başına, isteğe bağlı kesitli)    */
+/* ================================================================== */
+//
+// Uçaktan bağımsız bir blok: motoru tek başına göstermek, kesip içini
+// anlatmak ya da bir Brayton çevrimi sahnesine mount etmek için.
+//
+// İSTASYONLAR — gerçek bir turbofanın akış yolu, önden arkaya:
+//   0 giriş  → 1 FAN → baypas kanalı (itkinin ~%80'i buradan)
+//                    ↘ çekirdek: 2 LPC → 3 HPC → 4 YANMA ODASI
+//                      → 5 HPT (HPC'yi döndürür) → 6 LPT (fan ve LPC'yi
+//                      döndürür) → 7 çekirdek nozulu
+//
+// Neden iki ayrı mil: HPC'nin verimli çalıştığı devir, fanın çalışabildiği
+// devirden çok yüksektir (fan ucu ses hızını geçemez). Bu yüzden yüksek ve
+// alçak basınç makineleri AYRI millerde döner, biri ötekinin içinden geçer.
+//
+// Neden yüksek baypas: itki ṁ·Δv'dir, itki gücü ise ~ ṁ·Δv²/2. Aynı itkiyi
+// ÇOK havayı AZ hızlandırarak üretmek, az havayı çok hızlandırmaktan daha
+// verimlidir — büyük fanın sebebi budur, ve gürültünün düşmesi de öyle.
+export function buildTurbofan({ scale = 1, palette, blades = 20, cutaway = false } = {}) {
+  const m = makeMats(palette);
+  const g = new THREE.Group();
+  const R = 0.5, L = 1.6;                     // fan yarıçapı ve nasel boyu
+  const yari = cutaway ? Math.PI : Math.PI * 2;
+  const bas = cutaway ? Math.PI * 0.5 : 0;
+
+  // ── Nasel kaportası (kesitte yarım) ────────────────────────────────
+  const dis = [];
+  for (let i = 0; i <= 26; i++) {
+    const u = i / 26;
+    let rr;
+    if (u < 0.10) rr = R * (0.86 + 0.14 * Math.sin((u / 0.10) * Math.PI * 0.5));
+    else if (u < 0.60) rr = R * (1.0 + 0.05 * Math.sin(((u - 0.10) / 0.5) * Math.PI));
+    else rr = R * (1.0 - 0.34 * Math.pow((u - 0.60) / 0.40, 1.4));
+    dis.push(new THREE.Vector2(rr, -L * u));
+  }
+  dis.reverse();   // profil y ARTARAK sıralanmalı — yoksa normaller içe bakar
+  // Kaporta BOYALI yüzeydir, çıplak metal değil: karanlık bir ortamda
+  // metalness 0,86'lık bir yüzey yansıtacak bir şey bulamayıp siyah bir
+  // kütle gibi okunuyordu. Metal yalnız dudakta, statörlerde ve nozulda.
+  const cowl = new THREE.Mesh(new THREE.LatheGeometry(dis, 56, bas, yari), m.bodyDS);
+  cowl.geometry.rotateZ(-Math.PI / 2);
+  cowl.position.x = L * 0.5;
+  g.add(cowl);
+  // Kaportanın İÇ yüzü (baypas kanalının dışı)
+  const ic = [];
+  for (let i = 0; i <= 20; i++) {
+    const u = i / 20;
+    ic.push(new THREE.Vector2(R * (0.86 - 0.14 * u), -L * (0.08 + 0.84 * u)));
+  }
+  ic.reverse();
+  const icCowl = new THREE.Mesh(new THREE.LatheGeometry(ic, 56, bas, yari), m.metalDS);
+  icCowl.geometry.rotateZ(-Math.PI / 2);
+  icCowl.position.x = L * 0.5;
+  g.add(icCowl);
+
+  // ── Fan + OGV ──────────────────────────────────────────────────────
+  const fan = fanRotoru(m, { rHub: R * 0.20, rTip: R * 0.84, blades });
+  fan.position.x = L * 0.40;
+  fan.name = 'fan';
+  g.add(fan);
+
+  const ogvGeo = new THREE.BoxGeometry(0.10, 0.014, R * 0.42);
+  for (let i = 0; i < 29; i++) {
+    const v = new THREE.Mesh(ogvGeo, m.metal);
+    v.position.set(0, 0, R * 0.55);
+    const kol = new THREE.Group(); kol.add(v);
+    kol.rotation.x = (i * 2 * Math.PI) / 29;
+    if (cutaway && Math.sin(kol.rotation.x) < -0.1) continue;
+    // NOT: Object3D.position SALT OKUNUR bir alandır (Vector3 nesnesi
+    // yerinde değişir, yeniden atanamaz). Object.assign ile atamak
+    // "Cannot assign to read only property 'position'" ile patlıyordu.
+    kol.position.x = L * 0.24;
+    g.add(kol);
+  }
+
+  // ── Çekirdek: kademe kademe ────────────────────────────────────────
+  // Her kademe bir DİSK + üstünde radyal kanatçık sırası. Basınç arttıkça
+  // hava yoğunlaşır, dolayısıyla akış kesiti KÜÇÜLÜR: kompresör kademeleri
+  // arkaya doğru incelir, türbin kademeleri ise genişler. Bu daralma-genişleme
+  // profili motorun siluetidir.
+  function kademe(x, rIn, rOut, n, mat, kalinlik = 0.05) {
+    const grp = new THREE.Group();
+    const disk = cylX(rIn, rIn, kalinlik, 28, m.metal);
+    grp.add(disk);
+    const bg = new THREE.BoxGeometry(kalinlik * 0.7, 0.012, rOut - rIn);
+    for (let i = 0; i < n; i++) {
+      const b = new THREE.Mesh(bg, mat);
+      b.position.set(0, 0, (rIn + rOut) / 2);
+      const kol = new THREE.Group(); kol.add(b);
+      kol.rotation.x = (i * 2 * Math.PI) / n + i * 0.11;
+      if (cutaway && Math.sin(kol.rotation.x) < -0.15) continue;
+      grp.add(kol);
+    }
+    grp.position.x = x;
+    return grp;
+  }
+
+  // ÇEKİRDEK NASELİN İÇİNDE OTURMALI. İlk yerleşimde sıcak kısım (yanma
+  // odası, HPT, LPT) kaportanın arkasından ~1 birim dışarı taşıyordu:
+  // motor, ucuna türbin takılmış bir varil gibi görünüyordu. Gerçekte
+  // çekirdek nasel boyunun ~%60'ıdır ve dışarı YALNIZ çekirdek nozulu ile
+  // sıcak koni çıkar. Kaporta x ∈ [+0,8L/2, −0,8L/2] aralığında.
+  const govde = cylX(R * 0.36, R * 0.30, L * 0.75, 34, m.body);
+  govde.position.x = -L * 0.06;
+  g.add(govde);
+
+  // LPC — 3 kademe, dönen
+  for (let i = 0; i < 3; i++) g.add(kademe(0.46 - i * 0.08, R * 0.14, R * 0.30, 26, m.metal, 0.045));
+  // HPC — 6 kademe, arkaya doğru incelen
+  for (let i = 0; i < 6; i++) {
+    const t = i / 5;
+    g.add(kademe(0.20 - i * 0.062, R * 0.16, R * (0.28 - 0.09 * t), 30, m.metal, 0.038));
+  }
+  // Yanma odası — halka; vurgu rengi (sıcak bölge)
+  const yanma = new THREE.Mesh(
+    new THREE.TorusGeometry(R * 0.235, R * 0.085, 12, 40, yari), m.accent);
+  yanma.rotation.y = Math.PI / 2;
+  yanma.rotation.z = bas;
+  yanma.position.x = -0.24;
+  g.add(yanma);
+  // HPT — 2 kademe, LPT — 4 kademe, arkaya doğru GENİŞLEYEN
+  for (let i = 0; i < 2; i++) g.add(kademe(-0.36 - i * 0.07, R * 0.16, R * (0.26 + 0.03 * i), 34, m.frame, 0.036));
+  for (let i = 0; i < 4; i++) g.add(kademe(-0.55 - i * 0.07, R * 0.16, R * (0.28 + 0.035 * i), 32, m.frame, 0.042));
+
+  // Mil (kesitte görünür)
+  const mil = cylX(R * 0.055, R * 0.055, 1.34, 16, m.frame);
+  mil.position.x = -0.16;
+  g.add(mil);
+
+  // Çekirdek nozulu + sıcak koni
+  const noz = cylX(R * 0.30, R * 0.26, 0.20, 34, m.metalDS, true);
+  noz.position.x = -0.90;
+  g.add(noz);
+  const plug = cylX(R * 0.04, R * 0.24, 0.28, 30, m.dark);
+  plug.position.x = -1.03;
+  g.add(plug);
+
+  // Pilon bağlantısı (üstte), motorun nereye asıldığını okutur
+  const bag = box(L * 0.5, 0.06, 0.16, m.body);
+  bag.position.set(L * 0.10, 0, R * 1.02);
+  g.add(bag);
+
+  const root = finalize(g, cutaway ? 'turbofan-kesit' : 'turbofan', scale, m, null, {
+    regime: 'yüksek baypas turbofan · seyir M 0,78–0,85',
+    why: 'İtki ṁΔv, itki gücü ise ~ṁΔv²/2 ile gider: aynı itkiyi ÇOK havayı AZ hızlandırarak üretmek daha verimlidir. Büyük fanın da, düşük gürültünün de sebebi budur. Fan ucu ses hızını geçemediği için fan ve HPC ayrı millerde döner.',
+  });
+  root.userData.fan = fan;
+  return root;
 }
 
 /* ================================================================== */

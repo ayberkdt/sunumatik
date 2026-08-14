@@ -129,13 +129,15 @@
     <a href="?arac=glider">planör</a>
     <a href="?arac=flyingwing">uçan kanat</a>
     <a href="?arac=fighter&kesit=1&eta=0.62">kesit</a>
+    <a href="?arac=turbofan">turbofan</a>
+    <a href="?arac=turbofanKesit&pal=grafit">turbofan kesiti</a>
   </footer>
 
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
     import { AIRCRAFT_BUILDERS, AIRCRAFT_ENVELOPE, AIRCRAFT_PALETTE,
-             applyAircraftPalette, nacaSection } from './aircraft-blocks.mjs';
+             applyAircraftPalette, nacaSection, buildTurbofan } from './aircraft-blocks.mjs';
 
     /* ---- deterministik açılış parametreleri -------------------------------
        ?arac=fighter&pal=buz&eta=0.62&kesit=1&burun=12&t=4&export=1
@@ -300,13 +302,25 @@
     scene.add(pivot);
     let current = null, currentKind = null, currentPal = 'havayolu';
 
+    // Uçak kütüphanesi + uçak OLMAYAN bloklar. AIRCRAFT_BUILDERS donmuş bir
+    // sözleşme (başka sahneler ondan araç seçiyor); motoru oraya karıştırmak
+    // yerine sayfa kendi listesini kuruyor.
+    const KURUCULAR = {
+      ...AIRCRAFT_BUILDERS,
+      turbofan:      (o) => buildTurbofan({ ...o, cutaway: false }),
+      turbofanKesit: (o) => buildTurbofan({ ...o, cutaway: true }),
+    };
+    const ETIKET = { turbofan: 'turbofan motoru', turbofanKesit: 'turbofan · kesit' };
+
     function kur(kind) {
       if (current) { pivot.remove(current); current.traverse((o) => { if (o.isMesh) o.geometry.dispose(); }); }
       const opts = { scale: 2.0, palette: PALETLER[currentPal].p };
       if (kind === 'delta') opts.droopNose = num('burun', 0);
-      current = AIRCRAFT_BUILDERS[kind]({ ...opts });
+      current = KURUCULAR[kind]({ ...opts });
       currentKind = kind;
       pivot.add(current);
+      fanlar.length = 0;
+      current.traverse((o) => { if (o.name === 'fan') fanlar.push(o); });
       cerceveleAraci();
       uygulaKesit();
       yazMetrikler();
@@ -318,6 +332,7 @@
     // mesafesinde planör kadraja sığmıyor, waverider ise kaybolmuş gibi
     // duruyordu. Mesafe, sınır küresinden hesaplanır — bakış YÖNÜ korunur,
     // yalnız uzaklık ölçeklenir, böylece kullanıcının çevirdiği açı bozulmaz.
+    const fanlar = [];
     const _bb = new THREE.Box3(), _kure = new THREE.Sphere();
     function cerceveleAraci() {
       _bb.setFromObject(current);
@@ -541,9 +556,9 @@
 
     /* ================= arayüz ================= */
     const kindSel = document.querySelector('#kind');
-    for (const key of Object.keys(AIRCRAFT_BUILDERS)) {
+    for (const key of Object.keys(KURUCULAR)) {
       const o = document.createElement('option');
-      o.value = key; o.textContent = AIRCRAFT_ENVELOPE[key]?.label || key;
+      o.value = key; o.textContent = AIRCRAFT_ENVELOPE[key]?.label || ETIKET[key] || key;
       kindSel.appendChild(o);
     }
     const palSel = document.querySelector('#pal');
@@ -553,7 +568,7 @@
       palSel.appendChild(o);
     }
 
-    kindSel.value = AIRCRAFT_BUILDERS[q.get('arac')] ? q.get('arac') : 'airliner';
+    kindSel.value = KURUCULAR[q.get('arac')] ? q.get('arac') : 'airliner';
     palSel.value = PALETLER[q.get('pal')] ? q.get('pal') : 'havayolu';
     currentPal = palSel.value;
     document.querySelector('#cut').checked = q.get('kesit') === '1';
@@ -599,6 +614,9 @@
     function adim(dt) {
       saat += dt;
       if (document.querySelector('#spin').checked) pivot.rotation.z += dt * 0.22;
+      // Fan döner: rölantide bile dönüyor olması, motorun cansız bir kabuk
+      // değil bir MAKİNE olduğunu okutan tek hareket.
+      if (fanlar.length) for (const f of fanlar) f.rotation.x += dt * 6.4;
     }
     function ciz() { kesitDuzlemiTazele(); controls.update(); renderer.render(scene, camera); }
 
