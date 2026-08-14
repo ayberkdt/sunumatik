@@ -129,7 +129,7 @@ sürüş kancasıdır. Hareket kaydı `motion-manifest.json` içindedir
 ```js
 import { buildEngineFX } from '../craft_blocks/craft-effects.mjs';
 const fx = buildEngineFX({ scale = 1, tip = 'vakum', seed = 1, palette });
-// → { group, update(dt, { gaz, atesle }), dispose() }
+// → { group, update(dt, { gaz, atesle, zeminMesafe }), dispose() }
 ```
 
 - `group` orijini MOTOR AĞZINDA; alev −X'e uzar (eksen sözleşmesiyle aynı).
@@ -137,13 +137,63 @@ const fx = buildEngineFX({ scale = 1, tip = 'vakum', seed = 1, palette });
 - `update(dt, { gaz, atesle })` her karede: `gaz` 0..1 throttle; `atesle`
   false→true ateşleme geçici rejimi (~0.3 sn flaş + halka + kıvılcım +
   basınçlanma aşımı), true→false ~0.5 sn sönüm kuyruğu.
-- `tip`: `vakum` (geniş açılı seyrek genleşme şalı), `atmosfer` (dar huzme +
-  mach elmasları — instanced hücreler), `hover` (kısa/küt iniş huzmesi).
-- Katmanlar: gradyan dokulu additive çekirdek + iç dil, tip katmanı, ateşleme
-  geçici rejimi, tek PointLight (decay 2), çan iç ağzına oturan emissive kor
-  (craft-blocks malzemelerine DOKUNMAZ — ayrı mesh). Bütçe ≤ 8 mesh +
-  tek Points + tek Sprite. Parlaklık titreşimi 12–30 Hz karışımı, ±%15 sınırlı.
-- Deterministik: seed'li mulberry32; zaman yalnız `update(dt)` toplamı.
+  `zeminMesafe` OPSİYONELDİR (sahne birimi, motor ağzından çarpma düzlemine):
+  verilmezse `hover` plüm ucunu zemin sayar, diğer tiplerde zemin etkisi
+  yoktur — mevcut çağrılar birebir korunur.
+
+### Plüm modeli (hacimsel, shader tabanlı)
+
+Plüm TEK BufferGeometry + TEK ShaderMaterial'dır: q = r/R(u) oranında 7 eş
+eksenli iç içe KABUK. Additive toplamları, görüş ışını boyunca yoğunluk
+integralinin (Abel dönüşümünün) ayrıklaştırmasıdır — merkezde kalın, kenarda
+ince optik yol kendiliğinden çıkar, plüm boyalı koni değil HACİM okunur.
+Konum her karede vertex shader'da uniform'lardan kurulur; görünür geometri
+hiç yeniden inşa edilmez (webgl-scene-contract §2).
+
+- **Kesme katmanı**: yarıçap, aşağı akışa ADVEKTE eden seed'li periyodik değer
+  gürültüsüyle bozulur (`faz = u·kx − t·v`); genlik u ile büyür ve q² ile dış
+  kabuklarda yoğunlaşır (çekirdek = izentropik potansiyel koni, düzgün kalır).
+  Büyük burgaçlar tüm kabuklarda ORTAKTIR — kabuklar birbirini kesmez; kesişen
+  kabuklar moiré benzeri dikey lif bandı üretiyordu.
+- **Burgaç frekansı geometriden gelir** (`nAci`/`nEks`): dar/uzun huzmede az
+  açısal + çok eksenel, kısa/geniş huzmede tersi. Tek sabit çift kullanılırsa
+  geniş plümler yelpaze gibi kırışır.
+- **Sıcaklık rampası**: renk YALNIZ T(u,q)'dan analitik türetilir (doku yok).
+  Additive katmanlar sRGB tamponda toplandığı ve ACESFilmic katman başına
+  uygulandığı için renk durakları ÖLÇÜLEREK ön-telafi edilmiştir: kaynak
+  renkler ekranda görünenden doygundur. Ölçülen eksen profili (atmosfer,
+  gaz 0.9): boğaz beyaz (doygunluk 0.00) → sarı 0.33 → gövde turuncu
+  0.63–0.67 → uç 0.46. Griye yıkanma yok.
+- **Kenar (limb) katkısı** sonlu kalınlıklı kabuk için ANALİTİK integre edilir
+  (`(√(f²+2δ+δ²) − √(f²−2δ+δ²))/2δ`). Noktasal `1/|N·V|` çekirdeği q=b'de
+  ıraksar ve her kabuğun kenarına birer parlak dikey çizgi basar.
+- `tip` farkları FİZİKTİR, stil değil:
+  - `atmosfer`: eksen boyunca ŞOK HÜCRELERİ. Hücre içi faz p'den şok cephesi
+    yarıçapı `rf=|1−2p|`; parlak bölgenin radyal genişliği hücre içinde şişip
+    söner → dönel süpürmede ELMAS kesit (küre değil), kesme katmanıyla sınırlı.
+    Aralık aşağı akışta genişler (`c=u/(1+0.85u)`) ve gazla UZAR
+    (L≈1.3·D·√(Mj²−1)) → gaz 1.0'da az/uzun, gaz 0.25'te çok/kısa hücre.
+    Hücreler ortalama etrafında ZITLIK yaratır (taban söner, hücre doyar).
+  - `vakum`: şok hücresi YOK; boğazdan itibaren çok geniş açıyla genleşen,
+    SOLUK ve SAYDAM plüm (seyrek gaz → zayıf karışım, düşük türbülans).
+    Arka plan/gölge dış zarftan geçer.
+  - `hover`: zemin etkisi — plüm çarpma düzlemine yaklaşırken yarıçap kabarır
+    (durma bölgesi) ve ısınır; düzlemde dışa advekte eden IŞINSAL saçaklı
+    duvar jeti tabakası. Saçak merkezde düzleştirilir (açısal koordinat r→0'da
+    tekildir; düzleştirilmezse yıldız patlaması artefaktı doğar).
+- Diğer katmanlar: ateşleme geçici rejimi (Sprite flaş + halka + Points
+  kıvılcım), tek PointLight (decay 2), çan iç ağzına oturan emissive kor
+  (craft-blocks malzemelerine DOKUNMAZ — ayrı mesh). **Bütçe (ölçüldü)**:
+  3–4 mesh + tek Points + tek Sprite + tek PointLight; 2–3 çizim çağrısı,
+  ~86k üçgen. **Maliyet**: `buildEngineFX` 13–20 ms (eski koni+CanvasTexture
+  sürümü ~26 ms), ilk karede bir kerelik shader derlemesi 84–121 ms
+  (SwiftShader/yazılım), `update()` 0.01–0.04 ms.
+  Parlaklık titreşimi 12–30 Hz karışımı, ±%15 sınırlı; plüm, zemin jeti ve
+  ışık AYNI titreşim değerini paylaşır (bileşik band büyümez).
+- Fragment'ler `#include <tonemapping_fragment>` + `<colorspace_fragment>` ile
+  biter; `pow` tabanları guard'lı, smoothstep kenarları asla çakışmaz (§3).
+- Deterministik: seed'li mulberry32 + saf GLSL hash; zaman yalnız
+  `update(dt)` toplamı. Math.random / Date.now yok.
 - Vitrin: Ateşleme paneli (araç/tip/gaz/Ateşle-Kes);
   `?fx=1&arac=<id>&tip=<tip>&gaz=<0..1>[&t=<sn>]` deterministik açılış —
   `?t=` sabit-zaman modu sahneyi o âna sarıp DONDURUR (headless doğrulama);
