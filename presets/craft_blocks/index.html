@@ -452,6 +452,20 @@
       kareIste();
       ciz();
     });
+    // Donmuş modda (?t= · ?export=1 · azaltılmış hareket) sahne zamanı hiç
+    // akmaz; Duraklat sessizce işlevsizdir. Bu SESSİZLİK bir kez gerçek kafa
+    // karışıklığına yol açtı (demo kartına ?t=2 konmuştu: alev donuk, tornalar
+    // duruyor, Duraklat tepkisiz — "bug" gibi okundu). Artık durumu söyler.
+    if (donmusMod) {
+      durButon.disabled = true;
+      durButon.textContent = 'Donmuş kare';
+      durButon.title = sabitT !== null
+        ? `Sabit-zaman modu (?t=${sabitT}): sahne bu ânda dondurulmuştur.`
+        : (disaAktarim ? 'Dışa aktarım modu: sahne son karede dondurulmuştur.'
+                       : 'Sistem "hareketi azalt" ayarı açık: sahne dondurulmuştur.');
+      durButon.style.opacity = '0.55';
+      durButon.style.cursor = 'default';
+    }
 
     // Sahne zamanı gerçekten akıyor mu? (duraklatılmış / donmuş modda AKMAZ —
     // bu durumlarda ateşleme ve gaz değişimi deterministik sarma ile gösterilir,
