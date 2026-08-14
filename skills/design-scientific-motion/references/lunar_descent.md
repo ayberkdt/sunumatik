@@ -128,17 +128,72 @@ anlık çarpan HUD'da görünür.
   lekeler ve KRATER ALANIYLA aynı seed'i kullanan taze krater ejecta örtüsü +
   ışın demetleri (ışınlar gerçek krater kenarlarından çıkar).
 - **Kayalar:** rastgele yarı-uzayların kesişimi olan DIŞBÜKEY ÇOK YÜZLÜ
-  (`kayaGeometrisi`) — çarpma kırılmasının gerçek biçim ailesi; üzerine üç
-  oktav yön tabanlı çentik pürüzü, `flatShading` ile keskin kırık yüzeyler.
-  Boy dağılımı güç yasalı (N(>D) ∝ D^-2,1: çok küçük çok, iri nadir),
-  yerleşim krater kenarı / ejecta hattı yoğunluk alanına göre REDDETME
+  (`kayaGeometrisi`) — çarpma kırılmasının gerçek biçim ailesi. Yüzeyler TAM
+  DÜZLEMSELDİR: yarıçap yalnız yarı-uzayların minimumudur, üzerine hiçbir
+  warp binmez. Boy dağılımı güç yasalı (N(>D) ∝ D^-2,1: çok küçük çok, iri
+  nadir), yerleşim krater kenarı / ejecta hattı yoğunluk alanına göre REDDETME
   ÖRNEKLEMESİYLE kümelenir (düzlükler seyrek, kenarlar kalabalık — tekdüze
   serpme değil), her blok boyunun %22–77'si kadar gömülüdür ve oturduğu yerde
   toz halkası + temas karanlığı (etek izi) bırakır. Görünen boya
   (boy ÷ min(sahaya, yüzey kamerasına uzaklık)) göre dört kalite kademesi:
-  1280 / 320 / 80 / 20 yüz; ~1300 blok tek malzemede 4 çizim çağrısına
-  kaynaklanır. Yüzey kamerasının 5 m'lik dibine iri blok düşmez (kamera
-  platosu), 24 m'ye kadar boy sürekli sınırlanır.
+  2000 / 180 / 80 / 20 yüz; ~1300 blok tek malzemede 4 çizim çağrısına
+  kaynaklanır. Kademeler EŞİKLE değil SIRALAMAYLA dağıtılır (eşik kuralında
+  slotları ilk uyan blok kapıyordu): kota 12 + 90, üstelik ilk 5 slot yüzey
+  kamerasının kadrajına ayrılır — kalanı genel görünürlüğe. NOT: three'de
+  `IcosahedronGeometry(1, d)` bir yüzü (d+1)² parçaya böler, 4^d değil.
+- **Konjuge eklem takımları (biçim):** kesme düzlemlerinin normalleri küreye
+  SERBEST serpilmez. Her blok için bir ortonormal üçlü kurulur; ilk ekseni
+  düşeye ≤25° yakındır (blok kırık bir yüzünün üstüne OTURUR), 18–30 düzlem bu
+  üçlünün ±eksenleri çevresine saçılır — oturma takımı ≤8°, yan takımlar ≤22°
+  koni içinde. Gerekçe ölçüldü: güneş 11° elevede olduğu için N·L normal yönüne
+  aşırı duyarlıdır (yataya yakın bir faseti 8° eğmek parlaklığı ~6 kat
+  değiştirir). Serbest saçılım ~25 ayrı normal yönü demekti ve blok birbirinden
+  kopuk tonlu fasetlerden oluşan bir "kamuflaj deseni" gibi okuyordu. Düzlem
+  SAYISI yüksek (zengin köşeli siluet), normal AİLESİ altı: büyük yüzeyler
+  tutarlı tonlarda okur. Bloğun üstündeki yataya yakın geniş faset,
+  regolitle aynı 11° sıyırma ışığını aldığı için çevresiyle uyumlu bir tonda
+  okur — yüzey kamerası ışığın karşı yakasına baktığı (bakış ile ışık arası
+  ≈97°) için bloğun okunurluğunu taşıyan yüzey budur.
+- **Tepe normali = kesme düzlemi normali:** `computeVertexNormals` yerine her
+  tepeye kazanan yarı-uzayın normali yazılır. Faset içinde hiçbir fark yoktur
+  (bütün tepeler aynı düzleme aittir), fark yalnız dihedral kenara BİNEN üçgen
+  sırasındadır: geometrik normal orada iki düzlemin arasında bir değer alıyor
+  ve 11° güneşte kenar boyunca parlak bir TESTERE DİŞİ şeridi bırakıyordu
+  (bölünmeyi 980'den 2000 yüze çıkarmak dişi inceltiyor ama yok etmiyordu).
+  Düzlem normaliyle binen üçgen iki normal arasında yumuşak geçer: kenar
+  aşınmış ince bir pah gibi okur.
+- **Kaya yüzey dokusu — GEOMETRİ DEĞİL, TRİPLANAR:** kırık yüzeyin 5–30 cm'lik
+  yonga/çentik dokusunu tümüyle `kayaDetayiEkle` taşır; kayalar zeminle AYNI
+  detay dokusunu üç düzlemli (|n|³ ağırlıklı) izdüşümle örnekler. Her düzlem VE
+  her tap ayrı bir 2×2 DÖNDÜRME ile örneklenir (eğim vektörü aynı döndürmeyle
+  sağdan çarpılıp dünya eksenine geri çevrilir): detay dokusunun gürültüsü
+  eksene hizalı bir değer kafesidir ve GB kanalları o kafesin merkezi farkıdır,
+  ham eksen izdüşümü genlik yükselince doğrudan KARE yamalar bırakıyordu.
+  Ölçek ölçülerek seçildi (yüzey kamerası, 1600×900, fov 32°, blok ~15 m'de →
+  piksel ayak izi ≈13 mm): tap A ≈2,4 m periyot → 4,7 mm/texel → 2,8
+  texel/piksel; tap B ≈0,72 m → 1,4 mm/texel → 9,4 texel/piksel. Hiçbir tap
+  BÜYÜTÜLMEZ. Eski 38 cm'lik tap 17 texel/piksele düşüp mip'e gömülüyordu:
+  bütün triplanar katkısını sıfırlamak aydınlık yüz parlaklığını 39,6'dan
+  yalnız 38,9'a indiriyordu, yani hiç okunmuyordu.
+- **Geri alınan tur (kayıt):** "kristal/oyuncak" okumasını kırmak için bir tur
+  boyunca en yakın kademe d=9'a çıkarılıp tepeler sırt (ridged) gürültüsüyle
+  ötelenmişti. Ölçüm iki kusurun da buradan geldiğini gösterdi: (a) 2000 yüz,
+  2,6 m'lik blokta ≈8 cm faset = ekranda 6–11 px; `flatShading` ile her faset
+  tek ton, yani şikâyet edilen "JPEG bloğu" yamalar fasetlerin kendisiydi
+  (triplanar katkısı tamamen sıfırlandığında yamalar aynen kalıyordu). (b) 11°
+  güneşte komşudan 11–13° sapan normaller büyük tutarlı aydınlık düzlem
+  bırakmıyor, her şey orta-koyu bulamaca iniyordu: aydınlık yüz / regolit
+  parlaklık oranı 0,607'den 0,495'e düşmüştü. Politopu daha ince BÖLMEK yeni
+  yüzey detayı üretmez (parçalı düzlemsel bir fonksiyon daha sık örneklenmiş
+  olur); "kristal" okumasının çaresi daha çok KIRILMA DÜZLEMİ + yüzeyde gerçek
+  doku. Onarım sonrası oran 0,655.
+- **Ön plan kompozisyonu:** yüzey kamerasının 6,5 m'lik dibine blok düşmez, boy
+  TAVANI 30 m'ye kadar doğrusal rampalanır (8 m'de 0,8 m, 15 m'de 2,6 m) ve
+  10–20 m penceresindeki İLK blok deterministik olarak tavanın %58'ine çekilir.
+  İki uçtan da kaçınılır: eski kural (5,5 m + boy serbest) ~22 m'deki 2,5 m'lik
+  bir bloğun kadrajın köşesini kapatmasına izin veriyordu; bir sonraki tur bunu
+  aşırı sıkıp ön planı 1,3 m'ye indirince ölçek duygusu kayboldu. Kahraman blok
+  şansa bırakılmaz: bu halkada 20 m içine ortalama ~1,4 blok düşüyor.
 - **Saha kraterleri + yakın alan dalgalanması:** uzak krater alanı sahanın
   1400 m çevresini boş bırakıyordu. `sahaKraterleri` (6–90 m çap, 0,15–9
   birim halkası) ve 7–21 m dalga boylu ±10–28 cm dalgalanma h(x,z)'ye eklenir;

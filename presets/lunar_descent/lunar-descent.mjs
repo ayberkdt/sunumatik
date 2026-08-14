@@ -417,40 +417,211 @@ function zeminDetayiEkle(mat, unif) {
   return mat;
 }
 
+/* Kaya malzemesine AYNI detay dokusunu üç düzlemli (triplanar) izdüşümle
+   uygular: kayaların uv'si yoktur (silme: `deleteAttribute('uv')`) ve yüzeyleri
+   her yöne bakar, o yüzden zeminin düz XZ izdüşümü burada sıvanma yapardı.
+   Ağırlık: |n|³. Varying, tepeye yazılmış KESME DÜZLEMİ normalidir (bkz.
+   kayaGeometrisi): faset içinde sabit, yalnız kenara binen üçgen sırasında
+   iki düzlem arasında yumuşak geçer. Zeminle aynı malzeme dili: R = albedo modülasyonu, GB = mikro
+   rölyefin eğimi — mikro pürüz BOYANMAZ, gerçek normalden gelir, alçak güneş
+   döndüğünde onunla döner.
+
+   KAFES DÖNDÜRME (kusur onarımı): detay dokusunun gürültüsü EKSENE HİZALI
+   bir değer kafesidir ve GB kanalları o kafesin merkezi farkıdır — yani
+   dikdörtgen hücre sınırlarını en güçlü taşıyan kanal. Zemin bunu dört tapı
+   dört ayrı 2×2 DÖNDÜRME ile örnekleyerek gizler; kayanın triplanar'ı ise
+   ham eksen izdüşümü kullanıyordu (yalnız ötelenmiş). Genlik yükseltilir
+   yükseltilmez kafes doğrudan yüzeye vuruyor ve "JPEG bloğu" gibi KARE
+   yamalar bırakıyordu. Artık her düzlem VE her tap ayrı bir döndürmeyle
+   örneklenir; eğim vektörü aynı döndürmeyle sağdan çarpılarak (v * M = Mᵀv)
+   dünya eksenine geri çevrilir, böylece rölyefin yönü doğru kalır.
+
+   Ölçek seçimi ÖLÇÜLEREK yapıldı (yüzey kamerası, 1600×900, fov 32°, blok
+   ~15 m'de): piksel ayak izi ≈ 13 mm. 512² doku ile
+     tap A ≈ 2,4 m periyot → 4,7 mm/texel → 2,8 texel/piksel (mip ~1,5)
+     tap B ≈ 0,72 m periyot → 1,4 mm/texel → 9,4 texel/piksel (mip ~3,2)
+   Yani hiçbir tap BÜYÜTÜLMEZ (magnification yok, mip her zaman ≥1) — eski
+   38 cm'lik tap 17 texel/piksele düşüyordu, tamamen mip'e gömülüyor ve hiç
+   okunmuyordu. Yeni periyotlarda dokunun taşıyıcı oktavları (≈85 ve ≈37
+   texel) ekranda 10–40 px ve 4–12 px'e denk gelir: kırık yüzeyin 5–30 cm'lik
+   yonga/çentik dokusu tam olarak bu bant. */
+function kayaDetayiEkle(mat, unif) {
+  mat.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, unif);
+    sh.vertexShader = 'varying vec3 vKayaP; varying vec3 vKayaN;\n' + sh.vertexShader.replace(
+      '#include <begin_vertex>',
+      `#include <begin_vertex>
+       vKayaP = (modelMatrix * vec4(transformed, 1.0)).xyz;
+       vKayaN = normalize(mat3(modelMatrix) * objectNormal);`
+    );
+    sh.fragmentShader = `varying vec3 vKayaP; varying vec3 vKayaN;
+      uniform sampler2D uDetay; uniform sampler2D uDetay2;
+      uniform vec2 uKayaFrek; uniform vec2 uKayaAlb; uniform vec2 uKayaEgim;
+      ` + sh.fragmentShader
+      .replace('#include <map_fragment>', `#include <map_fragment>
+        vec3 kw = abs(vKayaN); kw *= kw * kw; kw /= max(1e-4, kw.x + kw.y + kw.z);
+        mat2 KD1 = mat2( 0.8000, 0.6000, -0.6000,  0.8000);
+        mat2 KD2 = mat2(-0.5137, 0.8580, -0.8580, -0.5137);
+        mat2 KD3 = KD1 * KD2;
+        mat2 KD4 = KD2 * KD2;
+        mat2 KD5 = KD3 * KD1;
+        mat2 KD6 = KD4 * KD3;
+        vec4 kAx = texture2D(uDetay,  (KD1 * vKayaP.zy) * uKayaFrek.x + vec2(0.13, 0.57));
+        vec4 kAy = texture2D(uDetay,  (KD2 * vKayaP.xz) * uKayaFrek.x + vec2(0.61, 0.29));
+        vec4 kAz = texture2D(uDetay,  (KD3 * vKayaP.xy) * uKayaFrek.x + vec2(0.37, 0.83));
+        vec4 kBx = texture2D(uDetay2, (KD4 * vKayaP.zy) * uKayaFrek.y + vec2(0.41, 0.13));
+        vec4 kBy = texture2D(uDetay2, (KD5 * vKayaP.xz) * uKayaFrek.y + vec2(0.77, 0.62));
+        vec4 kBz = texture2D(uDetay2, (KD6 * vKayaP.xy) * uKayaFrek.y + vec2(0.19, 0.88));
+        float kAlb = dot(vec3(kAx.r, kAy.r, kAz.r) - 0.5, kw) * uKayaAlb.x
+                   + dot(vec3(kBx.r, kBy.r, kBz.r) - 0.5, kw) * uKayaAlb.y;
+        diffuseColor.rgb *= 1.0 + kAlb;`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        vec2 sAx = ((kAx.gb - 0.5) * uKayaEgim.x) * KD1 + ((kBx.gb - 0.5) * uKayaEgim.y) * KD4;
+        vec2 sAy = ((kAy.gb - 0.5) * uKayaEgim.x) * KD2 + ((kBy.gb - 0.5) * uKayaEgim.y) * KD5;
+        vec2 sAz = ((kAz.gb - 0.5) * uKayaEgim.x) * KD3 + ((kBz.gb - 0.5) * uKayaEgim.y) * KD6;
+        vec3 kEgim = vec3(0.0, -sAx.y, -sAx.x) * kw.x
+                   + vec3(-sAy.x, 0.0, -sAy.y) * kw.y
+                   + vec3(-sAz.x, -sAz.y, 0.0) * kw.z;
+        vec3 kN = normalize(vKayaN + kEgim);
+        normal = normalize((viewMatrix * vec4(kN, 0.0)).xyz);`);
+  };
+  return mat;
+}
+
 /* ---- KAYA GEOMETRİSİ: kırık (dışbükey çok yüzlü) siluet ----
    Yarıçap yön fonksiyonudur: R(d) = min_i(d_i / <d, n_i>) — yani rastgele
    yarı-uzayların kesişimi. Bu, çarpma kırılmasıyla oluşmuş köşeli blokların
-   gerçek biçim ailesidir (yamru yumru "top" değil). Üzerine yön tabanlı kaba
-   pürüz eklenir. Kalite kademesi ikosfer bölünmesiyle verilir: yakın kayalar
-   keskin kenarlı (320 yüz), uzaktakiler ucuz (20 yüz). */
-function kayaGeometrisi(rnd, kalite) {
-  const geo = new THREE.IcosahedronGeometry(1, kalite);
+   gerçek biçim ailesidir (yamru yumru "top" değil). Kalite kademesi ikosfer
+   bölünmesiyle verilir: uzaktakiler ucuz (20 yüz), orta alan 80/180, en yakın
+   kademe 500. DİKKAT: three'de PolyhedronGeometry bir yüzü (detay+1)² parçaya
+   böler (4^detay DEĞİL) — yüz sayısı 20·(d+1)².
+
+   ---- Neden GEOMETRİK mikro pürüz YOK (bir tur geri alındı) ----
+   Bir önceki tur "kristal/oyuncak" okumasını kırmak için en yakın kademeyi
+   d=9'a (2000 yüz) çıkarıp tepeleri sırt (ridged) gürültüsüyle ötelemişti.
+   Ölçüm bunun iki ayrı kusur ürettiğini gösterdi:
+     · 2000 yüz, 2,6 m'lik bir blokta ≈ 8 cm faset demek; yüzey kamerasında
+       piksel ayak izi 13 mm olduğu için faset ekranda ≈ 6–11 px. flatShading
+       ile her faset TEK ton — yani şikâyet edilen "JPEG bloğu" yamalar tam
+       olarak fasetlerin kendisiydi (doku örnekleme kusuru DEĞİL: triplanar
+       katkısı sıfırlandığında yamalar aynen kaldı, ölçüldü).
+     · Güneş 11° elevede. Faset normalleri komşusundan 11–13° sapınca yüzey
+       bir terminatör mozaiğine dönüyor: büyük tutarlı AYDINLIK düzlem kalmıyor,
+       her şey orta-koyu bulamaca iniyor (aydınlık yüz L 52,7 → 39,6 ölçüldü).
+   Alçak güneşte faset ölçekli normal saçılımı kazanılamayacak bir kavgadır.
+   O yüzden yüzey dokusu artık GEOMETRİDE değil, piksel başına sürekli olan
+   triplanar detayda taşınır (bkz. kayaDetayiEkle) — mozaik riski yok, alçak
+   güneşte terminatörü delmiyor.
+
+   ---- "Kristal" okumasının GERÇEK çaresi: daha çok kırılma düzlemi ----
+   Politopu daha ince BÖLMEK yeni yüzey detayı üretmez (parçalı düzlemsel bir
+   fonksiyonu daha sık örneklemiş olursunuz, hepsi bu). Blok oyuncak gibi
+   duruyorsa sebep az sayıda İRİ düz yüzdür. Çare kesme düzlemi sayısını
+   artırmak (10–18 → 17–29) ve ofset bandını daraltmaktır (0,54–1,06 →
+   0,50–0,86; üst uç 1'in altında olduğu için HER düzlem küreyi gerçekten
+   keser, yuvarlak kalıntı bırakmaz).
+
+   ---- KONJUGE EKLEM TAKIMLARI (normal saçılımı denetimi) ----
+   Düzlem normallerini küreye SERBEST serpmek 17–29 düzlemde ~25 ayrı normal
+   yönü demek. Güneş 11° elevede olduğu için N·L bu yönlere aşırı duyarlıdır:
+   blok, tonu birbirinden kopuk fasetlerden oluşan bir "kamuflaj deseni" gibi
+   okunuyordu (ölçüldü ve gözle doğrulandı). Gerçek kırılma zaten böyle
+   çalışmaz: çarpma kırığı, birbirine yakın dik KONJUGE EKLEM TAKIMLARI
+   boyunca ilerler — bir blokta birkaç baskın düzlem ailesi vardır.
+   Bu yüzden her kaya için rastgele bir ORTONORMAL ÜÇLÜ kurulur; her kesme
+   düzlemi bu üçlünün ±eksenlerinden birine ≤22°'lik bir koni içinde
+   saçılır. Sonuç: düzlem SAYISI yüksek (zengin, köşeli siluet, çok sayıda
+   faset ve kenar) ama normal AİLESİ altı tane — bloğun büyük yüzeyleri
+   tutarlı tonlarda okur, alçak güneşte mozaik yapmaz. */
+function kayaGeometrisi(rnd, bolunme) {
+  const geo = new THREE.IcosahedronGeometry(1, bolunme);
   const duzlem = [];
-  const nD = 10 + Math.floor(rnd() * 9);
-  for (let i = 0; i < nD; i++) {
+  const kure = () => {                       // düzgün dağılmış birim yön
     const t = rnd() * Math.PI * 2, u = rnd() * 2 - 1, s = Math.sqrt(Math.max(0, 1 - u * u));
-    duzlem.push([s * Math.cos(t), u, s * Math.sin(t), .54 + rnd() * .52]);
+    return [s * Math.cos(t), u, s * Math.sin(t)];
+  };
+  const capraz = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const birim = v => { const L = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / L, v[1] / L, v[2] / L]; };
+  /* Üçlünün ilk ekseni DÜŞEYE yakın tutulur (≤25°). Gerekçe hem fizik hem
+     kompozisyon: bir blok, kırık yüzeylerinden birinin üstüne OTURUR — yani
+     eklem takımlarından biri kabaca yataydır. Sonuç, bloğun üstünde yataya
+     yakın geniş bir faset olması; yüzey kamerası güneşin karşı yakasına
+     baktığı için (bakış ile ışık arası ≈ 97°) dik yüzler zaten karanlıkta
+     kalır, bloğun okunurluğunu bu YATAY faset taşır: regolitle aynı 11°
+     sıyırma ışığını alır, dolayısıyla çevresiyle uyumlu bir tonda okur. */
+  const yd = kure();
+  const dik = Math.tan(.436 * Math.sqrt(rnd()));           // ≤25° eğim
+  const yat = birim([yd[0], 0, yd[2]]);
+  const e1 = birim([yat[0] * dik, 1, yat[2] * dik]);
+  const e2 = birim(capraz(e1, kure()));      // e1'e dik (kure() e1'e paralel gelemez: ölçü sıfır)
+  const e3 = capraz(e1, e2);
+  const eksen = [e1, e2, e3];
+  const nD = 18 + Math.floor(rnd() * 13);    // 18–30 kesme düzlemi
+  for (let i = 0; i < nD; i++) {
+    /* İlk altı düzlem ±e1, ±e2, ±e3 — blok her yönden kapanır ve KUTUMSU bir
+       çekirdek kazanır; kalanlar rastgele eksen/işaret seçer (köşe pahları). */
+    const ek = i < 6 ? i >> 1 : Math.floor(rnd() * 3);
+    const e = eksen[ek];
+    const im = (i < 6 ? i : Math.floor(rnd() * 2)) & 1 ? -1 : 1;
+    /* Koni açısı takıma göre. OTURMA takımı (e1 — yataya yakın olan) DAR
+       tutulur (≤8°): güneş 11° elevede olduğu için yataya yakın bir fasetin
+       20° eğilmesi N·L'yi kat kat değiştirir, bloğun üstü aydınlık/koyu
+       basamaklara bölünüyordu. Dar koni üst yüzeyi tek ve tutarlı aydınlıkta
+       bırakır; kırılma dokusunu orada triplanar detay taşır. Yan takımlar
+       geniş kalır (≤22°): onlar zaten güneşin karşı yakasında, hepsi koyu. */
+    const sap = Math.tan((ek === 0 ? .140 : .384) * Math.sqrt(rnd()));
+    const yan = birim(capraz(e, kure()));
+    duzlem.push([
+      ...birim([e[0] * im + yan[0] * sap, e[1] * im + yan[1] * sap, e[2] * im + yan[2] * sap]),
+      .50 + rnd() * .36,
+    ]);
   }
-  const f1 = 4 + rnd() * 5, f2 = 4 + rnd() * 5, o1 = rnd() * 6.28, o2 = rnd() * 6.28;
+  /* ---- Yarıçap = yarı-uzayların kesişimi, BAŞKA HİÇBİR ŞEY ----
+     Eskiden bunun üzerine dört sinüs çarpımıyla bir "yonga warp"ı biniyordu.
+     İkisi birden kaldırıldı, iki ayrı gerekçeyle:
+       · sin(ax)·sin(by)·sin(cz) AYRIŞTIRILABİLİR bir çarpımdır — yani eksene
+         hizalı bir 3B dama tahtası. 320 yüzlük eski kademede çözülemediği için
+         zararsız görünüyordu; ön plandaki iri blokta faset başına çözülünce
+         üst yüzey açık/koyu kareli bir "kamuflaj" desenine dönüyordu.
+       · Daha temeli: warp, politopun DÜZ yüzlerini eğriltir. Genlik %8,5 ve
+         dalga boyu ≈ 0,86 R olduğu için yüzey eğimi ≈ 32°'ye çıkıyordu — güneş
+         11° elevede olduğundan bu, tek bir kırık yüzeyi bile aydınlık/karanlık
+         şeritlere bölmeye fazlasıyla yetiyor; üçgen başına sabit normalle de
+         eğrilik sert faset basamaklarına dönüşüyor.
+     Warp gidince her yüz TAM DÜZLEMSEL olur — bir kırık yüzey tek ve tutarlı
+     tonda okur, üzerindeki değişimi yalnız triplanar detay taşır
+     (bkz. kayaDetayiEkle).
+     Biçim zenginliği artık tek bir yerden gelir: kesme düzlemlerinin sayısı,
+     yönü ve ofsetleri. */
   const p = geo.attributes.position;
+  const nrm = new Float32Array(p.count * 3);
   for (let i = 0; i < p.count; i++) {
     let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
     const L = Math.hypot(x, y, z) || 1; x /= L; y /= L; z /= L;
-    let R = 1.3;
+    let R = 1.3, nx = x, ny = y, nz = z;   // kazanan yarı-uzayın normali
     for (const d of duzlem) {
       const dp = x * d[0] + y * d[1] + z * d[2];
-      if (dp > .14) R = Math.min(R, d[3] / dp);
+      if (dp <= .14) continue;
+      const r = d[3] / dp;
+      if (r < R) { R = r; nx = d[0]; ny = d[1]; nz = d[2]; }
     }
-    // kırık yüzeylerin üzerinde kopmuş köşe / çentik pürüzü (yön fonksiyonu →
-    // kopya tepeler aynı yarıçapı alır, örgü yırtılmaz)
-    R *= 1 + .085 * Math.sin(x * f1 + o1) * Math.sin(y * f2 + o2) * Math.sin(z * 7.3 + o1)
-           + .045 * Math.sin(x * f1 * 2.7 + o2) * Math.sin(z * f2 * 2.3 + o1)
-           + .030 * Math.sin(x * 17.3 + o2) * Math.sin(y * 14.1 + o1) * Math.sin(z * 19.7 + o2)
-           + .016 * Math.sin(x * 31.7 + o1) * Math.sin(y * 27.3 + o2) * Math.sin(z * 35.1 + o1);
     p.setXYZ(i, x * R, y * R, z * R);
+    nrm[i * 3] = nx; nrm[i * 3 + 1] = ny; nrm[i * 3 + 2] = nz;
   }
   geo.deleteAttribute('uv');
-  geo.computeVertexNormals();
+  /* Normal, üçgenin GEOMETRİK normali değil, tepenin bağlı olduğu KESME
+     DÜZLEMİNİN normalidir. Fark yalnız kenarlarda ortaya çıkar ve tam da
+     oradaki kusuru kaldırır: iki fasetin arasındaki dihedral kenarı bir
+     üçgen sırası "biniyor" (üç tepesi iki ayrı düzleme ait). computeVertexNormals
+     bu üçgenlere ikisinin ARASINDA bir normal veriyordu; güneş 11° elevede
+     olduğu için o ara değer kenar boyunca parlak bir TESTERE DİŞİ şeridi
+     bırakıyordu (bölünmeyi artırmak dişi inceltiyor ama yok etmiyordu).
+     Düzlem normali yazılınca binen üçgen iki düzlem normali arasında
+     YUMUŞAK geçer: keskin kenar, aşınmış ince bir pah gibi okur — hem
+     kusur gider hem gerçeğe daha yakın olur. Faset İÇİ hiç değişmez: bir
+     fasetin bütün tepeleri aynı düzleme aittir, normal sabittir, yüzey
+     düz tonda kalır. */
+  geo.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
   return geo;
 }
 
@@ -976,6 +1147,26 @@ export async function mountLunarDescent(host, options = {}) {
        katman yığma değil, tek yerden yönetilen pozlama. */
     uZeminTon: { value: new THREE.Vector2(1.05, 2.45) },
   };
+  /* Kaya yüzey dokusunun TAMAMI buradan gelir (zeminle tek malzeme dili,
+     yalnız üç düzlemli izdüşümle). Siluet politoptan, yüzey bu iki taptan:
+       tap A ≈ 2,4 m periyot → 4,7 mm/texel → 2,8 texel/px (mip ~1,5)
+       tap B ≈ 0,72 m periyot → 1,4 mm/texel → 9,4 texel/px (mip ~3,2)
+     Eski genlikler (albedo 0,22/0,20 · eğim 0,20/0,16) ÖLÇÜLEBİLİR bir katkı
+     vermiyordu: hepsini sıfırlamak aydınlık yüz parlaklığını 39,6'dan yalnız
+     38,9'a indiriyordu (yani hiçbir şey), çünkü 38 cm'lik tap 17 texel/piksele
+     düşüp mip'e gömülüyordu. Şimdi EĞİM kanalı ~4 kat yükseltildi — kırık
+     yüzeyin okunmasını taşıyan kanal bu. ALBEDO kanalı ise ölçülü tutuldu
+     (zeminin tap başına üst sınırıyla aynı mertebe): yükseltmek yüzeye görünür
+     bir katkı yapmıyor (0,60/0,50 ile 0,30/0,26 arasında aydınlık yüz farkı
+     0,1 L ölçüldü), yalnız kontrast kirletiyordu. Sonuç ÖLÇÜLDÜ: aydınlık yüz
+     / regolit oranı 0,645 — düzeltme öncesi 0,495, gerileme öncesi 0,607. */
+  const kayaUnif = {
+    uDetay: { value: detayTex },
+    uDetay2: { value: detayTex2 },
+    uKayaFrek: { value: new THREE.Vector2(41.7, 139.0) },
+    uKayaAlb: { value: new THREE.Vector2(0.30, 0.26) },
+    uKayaEgim: { value: new THREE.Vector2(0.85, 0.70) },
+  };
   if (albedo) albedo.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
   olc('doku');
@@ -1000,13 +1191,23 @@ export async function mountLunarDescent(host, options = {}) {
        yükselir, düzlüklerde düşer (reddetme örneklemesi) + yamalı seyreklik.
      · Duruş: her blok boyunun %22–77'si kadar GÖMÜLÜ; oturduğu yerde toz
        halkası + temas karanlığı (etek izi).
-     · Kalite kademesi: yakın/iri bloklar 320 yüz, orta 80, uzak 20. */
+     · Kalite kademesi (4 kademe): en yakın bloklar 500 yüz, sonra 180/80/20.
+       Kademe SIRALAMAYLA dağıtılır (aşağıya bak). */
   const kayaGrup = new THREE.Group();
   let kayaTepe = 0, kayaSay = 0;
   {
     const rnd = mulberry32(seed ^ 0xCA7A);
     const havuz = [[], [], [], []];
-    for (let q = 0; q < 4; q++) for (let i = 0, n = q === 3 ? 6 : 12; i < n; i++) havuz[q].push(kayaGeometrisi(rnd, q));
+    /* Kademe 3 = EN YAKIN: d=9 → 2000 yüz. Bir önceki turda 2000 yüz KUSUR
+       kaynağıydı; artık değil, çünkü sebep bölünme sayısı değil, o bölünmenin
+       üstündeki EĞRİLİKti (sırt gürültüsü + sinüs warp). Yüzey artık parçalı
+       DÜZLEMSEL: bir fasetin bütün üçgenleri tam eş düzlemlidir, dolayısıyla
+       ek üçgen ek normal saçılımı üretmez — bölünme yalnız kesme düzlemi
+       KENARLARININ ne kadar doğru çizildiğini belirler. Yüksek bölünme burada
+       bedava: 18–30 düzlemin kesişim kenarları temiz çıkar. */
+    for (let q = 0; q < 4; q++)
+      for (let i = 0, n = q === 3 ? 6 : 12; i < n; i++)
+        havuz[q].push(kayaGeometrisi(rnd, q === 3 ? 9 : q));
     /* Kaya albedosu zeminle AYNI pozlama kazancını alır (uZeminTon ile aynı
        çarpan): aksi hâlde bloklar sahnenin geri kalanından ~3 kat koyu, siyah
        leke gibi okunuyordu. Gerçekte kaya yüzeyi regolitten hafifçe PARLAKTIR
@@ -1041,31 +1242,35 @@ export async function mountLunarDescent(host, options = {}) {
 
     const parcalar = [[], [], [], []];
     const etekler = [];
+    const bloklar = [];
     const V3 = (a, b, c) => new THREE.Vector3(a, b, c);
     const m4 = new THREE.Matrix4(), qt = new THREE.Quaternion(), eu = new THREE.Euler();
-    let kaliteA = 0, kaliteS = 0;
-    const yerlestir = (r0, r1, boyTaban, boyTavan, hedef) => {
+    const yerlestir = (r0, r1, boyTaban, boyTavan, hedef, kahraman = 0) => {
       let kabul = 0, deneme = 0;
       while (kabul < hedef && deneme++ < hedef * 40) {
         const t = rnd() * Math.PI * 2;
         const rr = Math.sqrt(r0 * r0 + rnd() * (r1 * r1 - r0 * r0));
         const x = Math.cos(t) * rr, z = Math.sin(t) * rr;
         if (rnd() > Math.min(1, yogunluk(x, z))) continue;
-        // Yüzey kamerasının önü: iri blok kadrajı kapatmasın (kamera platosu)
+        /* KAMERA PLATOSU (kompozisyon) — TAVAN ve TABAN birlikte.
+           Kucakta dev blok istemiyoruz, ama bir önceki tur tavanı öyle sıktı ki
+           ön plandaki blok 22 m'de 1,3 m'ye indi: kadraj boşaldı, ölçek duygusu
+           kayboldu (istenen şey buydu değil). Şimdi:
+             · 6,5 m'ye kadar blok yok; boy TAVANI 30 m'ye kadar DOĞRUSAL
+               rampalanır (8 m'de 0,8 m — 15 m'de 2,6 m). Yani iri blok yine
+               kadrajı kapatamaz, ama ön plan da bodur kalmaz.
+             · 10–20 m penceresindeki İLK blok "kahraman" seçilir ve boyu
+               tavana çekilir. Ön planda okunaklı bir bloğun bulunması artık
+               şansa (bu halkada 20 m içine ~1,4 blok düşüyor) bırakılmaz.
+               Deterministik: yerleşim sırasının ve uzaklığın fonksiyonu. */
         const kamD = Math.hypot(x - YUZEY_KAM.x, z - YUZEY_KAM.z);
-        if (kamD < 0.055) continue;
+        const SD0 = 0.065, SD1 = 0.30;
+        if (kamD < SD0) continue;
         kabul++;
         let boy = Math.min(boyTavan, boyTaban * Math.pow(1 - rnd() * .9995, -1 / 2.1));
-        if (kamD < 0.24) boy = Math.min(boy, 0.0016 + 0.026 * (kamD - 0.055) / 0.185);
-        /* Kalite kademesi GÖRÜNEN boya göre: ölçüt, bloğun sahaya VE yüzey
-           kamerasına olan mesafesinin küçüğüdür. Kameranın dibindeki blok 1280
-           yüzle (köşeleri keskin, yüzü pürüzlü), orta alan 320/80, ufuktaki
-           çakıl 20 yüzle çizilir. */
-        const gorunur = boy / Math.max(.1, Math.min(rr, kamD));
-        const kalite = (gorunur > .045 && kaliteS < 12) ? 3
-          : (gorunur > .006 && kaliteA < 90) ? 2 : gorunur > .0016 ? 1 : 0;
-        if (kalite === 3) kaliteS++; else if (kalite === 2) kaliteA++;
-        const geo = havuz[kalite][Math.floor(rnd() * havuz[kalite].length)];
+        const tavan = 0.004 + 0.063 * kirp((kamD - SD0) / (SD1 - SD0), 0, 1);
+        if (kamD < SD1) boy = Math.min(boy, tavan);
+        if (kahraman > 0 && kamD > 0.10 && kamD < 0.20) { boy = Math.max(boy, tavan * .58); kahraman--; }
         const gom = .22 + rnd() * .55;                         // kısmen GÖMÜLÜ duruş
         const egik = (rnd() < .18 ? 1.15 : .38);
         eu.set((rnd() - .5) * egik, rnd() * Math.PI * 2, (rnd() - .5) * egik, 'YXZ');
@@ -1075,18 +1280,46 @@ export async function mountLunarDescent(host, options = {}) {
           V3(boy * (.82 + rnd() * .46), boy * (.48 + rnd() * .46), boy * (.82 + rnd() * .46)));
         const ton = tonlar[Math.floor(rnd() * tonlar.length)];
         const p = .86 + rnd() * .3;
-        parcalar[kalite].push({ geo, m: m4.clone(), renk: [ton[0] * p, ton[1] * p, ton[2] * p] });
+        bloklar.push({
+          m: m4.clone(), renk: [ton[0] * p, ton[1] * p, ton[2] * p], u: rnd(),
+          pk: boy / Math.max(.1, kamD),        // yüzey kamerasındaki görünen boy
+          ps: boy / Math.max(.1, rr),          // iniş sahasındaki görünen boy
+        });
         kayaSay++;
         if (boy >= .0032) etekler.push({ x, z, y: araziYukseklik(x, z) + ZEMIN_UST * .6, s: boy * (2.1 + rnd() * 1.3), a: rnd() * Math.PI });
       }
     };
-    yerlestir(0.13, 3.6, 0.0026, 0.026, 780);   // 13–360 m: yüzey kamerasının ön/orta alanı
+    yerlestir(0.13, 3.6, 0.0026, 0.026, 780, 1);   // 13–360 m: yüzey kamerasının ön/orta alanı
     yerlestir(3.4, 16, 0.004, 0.055, 280);      // saha çevresi
     yerlestir(15, 70, 0.008, 0.16, 240);        // arazi halkası: krater kenarları, sırt etekleri
 
-    const kayaMat = new THREE.MeshStandardMaterial({
-      vertexColors: true, flatShading: true, roughness: .95, metalness: 0,
-    });
+    /* ---- Kalite kotası SIRALAMAYLA dağıtılır ----
+       Eski kural eşikliydi ve slotları İLK uyan blok kapıyordu; boy tavanı
+       düşünce yüzey kamerasının ön planı hiç eşiği geçemeyip orta kademede
+       (180 yüz) kalabiliyordu. Şimdi bütün bloklar toplanır, görünen boya göre sıralanır
+       ve kota tepeden dağıtılır. Kota İKİ kameraya paylaştırılır: 5 slot yüzey
+       kamerasının kadrajına (pk), 7 slot genel görünürlüğe (pk|ps) — aksi hâlde
+       iniş sahasının dibindeki bloklar bütün kotayı yerdi. Sıralama
+       deterministik: eşitlikte yerleşim sırası bozar. */
+    const YAKIN_KOTA = 12, ORTA_KOTA = 90;
+    bloklar.forEach((b, i) => { b.i = i; b.pg = Math.max(b.pk, b.ps); b.k = -1; });
+    const kotaDagit = (anahtar, kota, kademe) => {
+      bloklar.filter(b => b.k < 0).sort((a, b) => anahtar(b) - anahtar(a) || a.i - b.i)
+        .slice(0, kota).forEach(b => { b.k = kademe; });
+    };
+    kotaDagit(b => b.pk, 5, 3);
+    kotaDagit(b => b.pg, YAKIN_KOTA - 5, 3);
+    kotaDagit(b => b.pg, ORTA_KOTA, 2);
+    for (const b of bloklar) {
+      const kalite = b.k >= 0 ? b.k : b.pg > .0016 ? 1 : 0;
+      parcalar[kalite].push({
+        geo: havuz[kalite][Math.floor(b.u * havuz[kalite].length)], m: b.m, renk: b.renk,
+      });
+    }
+
+    const kayaMat = kayaDetayiEkle(new THREE.MeshStandardMaterial({
+      vertexColors: true, roughness: .95, metalness: 0,
+    }), kayaUnif);
     for (let q = 0; q < 4; q++) {
       if (!parcalar[q].length) continue;
       const g = birlestirParcalar(parcalar[q]);
