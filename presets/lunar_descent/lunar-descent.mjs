@@ -2017,6 +2017,7 @@ export async function mountLunarDescent(host, options = {}) {
   };
 
   /* ---- Zaman sürücüsü ---- */
+  const fxAgizDunya = V();        // motor ağzı dünya konumu (kare başına yeniden kullanılır)
   let oynatiliyor = false;
   let aktif = options.active !== false;
   let oynatZaman = 0;
@@ -2026,7 +2027,22 @@ export async function mountLunarDescent(host, options = {}) {
   const cizVeGuncelle = gercekDt => {
     durumUygula(model.durum(oynatZaman));
     if (motorFX) {
-      motorFX.update(gercekDt, { gaz: sonDurum.gaz, atesle: !sonDurum.temas && sonDurum.gaz > 0.002 });
+      /* Zemin etkisi İRTİFAYA bağlıdır, sabit değil. zeminMesafe verilmezse
+         craft-effects 'hover' plüm ucunu çarpma düzlemi sayar ve duvar jetini
+         HER irtifada tam güçte çalıştırır — araç 15 km'de bile zemin süpürüyor
+         gibi görünüyordu. Gerçek mesafeyi ölçüp veriyoruz: motor ağzının dünya
+         yüksekliği eksi o noktadaki arazi yüksekliği, aracın kendi ölçeğine
+         bölünerek FX'in YEREL birimine çevrilir (FX group aracSargi'nın
+         çocuğudur ve aracSargi irtifayla ölçeklenir). Böylece jet ve kabarma
+         yalnız yere yaklaşınca açılır, temasta tam güce çıkar. */
+      const agizD = motorFX.group.getWorldPosition(fxAgizDunya);
+      const yerelOlcek = Math.max(1e-4, aracSargi.scale.x);
+      const zeminMesafe = Math.max(0, agizD.y - araziYukseklik(agizD.x, agizD.z)) / yerelOlcek;
+      motorFX.update(gercekDt, {
+        gaz: sonDurum.gaz,
+        atesle: !sonDurum.temas && sonDurum.gaz > 0.002,
+        zeminMesafe,
+      });
       // Işık disiplini: FX ışıkları araç ölçeğiyle (su²) çarpılır — alçak
       // irtifada küçülen araçtan taşan beyaz zemin taşkını olmaz.
       const su2 = aracOlcek(sonDurum.y) ** 2;
