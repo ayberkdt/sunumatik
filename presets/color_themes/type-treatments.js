@@ -1,44 +1,44 @@
 /* ===========================================================================
-   type-treatments.js — goruntu tipi muameleleri (display type treatments)
+   type-treatments.js — görüntü tipi muameleleri (display type treatments)
    ---------------------------------------------------------------------------
-   DURUSTLUK NOTU: burada YENI BIR YAZI KARAKTERI CIZILMEZ. Bu dosya, gercek
-   yazi karakterlerinin uzerine uygulanan CSS/SVG efektlerini yonetir.
-   "Kraterli ay fontu" bir font degil, bir MUAMELEDIR.
+   DÜRÜSTLÜK NOTU: burada YENİ BİR YAZI KARAKTERİ ÇİZİLMEZ. Bu dosya, gerçek
+   yazı karakterlerinin üzerine uygulanan CSS/SVG efektlerini yönetir.
+   "Kraterli ay fontu" bir font değil, bir MUAMELEDİR.
 
    API
      applyTypeTreatment(el, 'ay'|'gravur'|'isil'|'yildiz'|'baski'|'buz', {
-       seed:   number   // tohum — ayni tohum ayni krater/yildiz alani
-       yon:    number   // isigin GELDIGI aci, derece (210 = sol ust)
+       seed:   number   // tohum — aynı tohum aynı krater/yıldız alanı
+       yon:    number   // ışığın GELDİĞİ açı, derece (210 = sol üst)
        siddet: number   // 0..1
-       canli:  boolean  // hareketli varyant (yalniz isil/yildiz)
+       canli:  boolean  // hareketli varyant (yalnız isil/yildiz)
      }) -> { el, kind, destroy(), refresh() }
 
-     autoTypeTreatments(root)   // [data-tip] tasiyan her ogeyi baglar
-     contrastRatio(a, b)        // WCAG kontrast orani
-     surfaceColorOf(el)         // ogenin ardindaki etkin zemin rengi
+     autoTypeTreatments(root)   // [data-tip] taşıyan her ögeyi bağlar
+     contrastRatio(a, b)        // WCAG kontrast oranı
+     surfaceColorOf(el)         // ögenin ardındaki etkin zemin rengi
 
-   ASAMALI GELISTIRME
-     Bu dosya HIC calismazsa, type-treatments.css metni DUZ ama TAM
-     KONTRASTLI birakir. JS yalnizca tohumlu krater/yildiz alanini, zemin
-     algilamayi ve >=64px kural denetimini EKLER.
+   AŞAMALI GELİŞTİRME
+     Bu dosya HİÇ çalışmazsa, type-treatments.css metni DÜZ ama TAM
+     KONTRASTLI bırakır. JS yalnızca tohumlu krater/yıldız alanını, zemin
+     algılamayı ve >=64px kural denetimini EKLER.
 
    KURALLAR
-     - Muamele yalniz goruntu boyutunda (>= 64px) ve yalniz baslikta.
-       Kucukse muamele SOKULUR (data-tip-off) ve konsola uyari dusulur.
-     - prefers-reduced-motion ve [data-export] altinda statik.
-     - Hareketli varyantta parlaklik salinimi +-%15'i gecmez (kod +-%5).
+     - Muamele yalnız görüntü boyutunda (>= 64px) ve yalnız başlıkta.
+       Küçükse muamele SÖKÜLÜR (data-tip-off) ve konsola uyarı düşülür.
+     - prefers-reduced-motion ve [data-export] altında statik.
+     - Hareketli varyantta parlaklık salınımı +-%15'i geçmez (kod +-%5).
    =========================================================================== */
 (function (global) {
   'use strict';
 
-  /* --- sabitler: her seyden ONCE tanimli (TDZ tuzagi) -------------------- */
+  /* --- sabitler: her şeyden ÖNCE tanımlı (TDZ tuzağı) -------------------- */
   var KINDS = ['ay', 'gravur', 'isil', 'yildiz', 'baski', 'buz'];
   var CLASS_OF = {
     ay: 'tip-ay', gravur: 'tip-gravur', isil: 'tip-isil',
     yildiz: 'tip-yildiz', baski: 'tip-baski', buz: 'tip-buz'
   };
-  var MIN_DISPLAY_PX = 64;   /* belge kurali: muamele tabani */
-  var HERO_ONLY_PX = 96;     /* "yalniz dev baslik" damgali muameleler */
+  var MIN_DISPLAY_PX = 64;   /* belge kuralı: muamele tabanı */
+  var HERO_ONLY_PX = 96;     /* "yalnız dev başlık" damgalı muameleler */
   var DEFAULTS = { seed: 7, yon: 210, siddet: 1, canli: false };
   var STORE = '__tipTreatment';
 
@@ -53,7 +53,7 @@
     };
   }
 
-  /* --- renk yardimcilari ------------------------------------------------- */
+  /* --- renk yardımcıları ------------------------------------------------- */
   function parseRGB(str) {
     if (!str) return null;
     var m = String(str).match(/rgba?\(([^)]+)\)/i);
@@ -99,7 +99,7 @@
     return (hi + 0.05) / (lo + 0.05);
   }
 
-  /* Ogenin ARDINDAKI etkin zemin: seffaf katmanlari asagidan yukari birlestir. */
+  /* Ögenin ARDINDAKİ etkin zemin: şeffaf katmanları aşağıdan yukarı birleştir. */
   function surfaceColorOf(el) {
     var stack = [];
     var node = el;
@@ -124,9 +124,9 @@
     return !!(el.closest && el.closest('[data-export]'));
   }
 
-  /* --- mavi-gurultu (best-candidate) yerlesim ----------------------------
-     Kucuk populasyonlar uniform-rastgele DAIMA kumelenir; her yeni noktayi
-     mevcut noktalara EN UZAK adaydan sec. (WebGL sahne sozlesmesi §5) */
+  /* --- mavi-gürültü (best-candidate) yerleşim ----------------------------
+     Küçük popülasyonlar uniform-rastgele DAİMA kümelenir; her yeni noktayı
+     mevcut noktalara EN UZAK adaydan seç. (WebGL sahne sözleşmesi §5) */
   function blueNoise(n, rand, w, h, tries) {
     var pts = [];
     tries = tries || 12;
@@ -148,7 +148,7 @@
     return pts;
   }
 
-  /* olcek dagilimi DUSUGE egilir, nadiren buyuk (contract §5) */
+  /* ölçek dağılımı DÜŞÜĞE eğilir, nadiren büyük (contract §5) */
   function skewLow(rand, min, max) {
     var u = rand();
     return min + (max - min) * Math.pow(u, 2.2);
@@ -156,32 +156,32 @@
 
   function lightVec(yonDeg) {
     var r = (yonDeg * Math.PI) / 180;
-    return { x: Math.cos(r), y: Math.sin(r) };   /* ogeden ISIGA dogru */
+    return { x: Math.cos(r), y: Math.sin(r) };   /* ögeden IŞIĞA doğru */
   }
 
-  /* --- krater alani ------------------------------------------------------
-     Fizik: alcak gunes, TEK yon.
-       - Kraterin ISIGA BAKAN ic duvari  -> GOLGE  (yakin taraf)
-       - Kraterin KARSI ic duvari        -> AYDINLIK (uzak taraf)
-       - Yukseltilmis dis kenar, isik tarafinda ince parlak yay
-     Boylece "parlak kenar" ile "ic golge" TAM KARSI yonlerdedir. */
+  /* --- krater alanı ------------------------------------------------------
+     Fizik: alçak güneş, TEK yön.
+       - Kraterin IŞIĞA BAKAN iç duvarı -> GÖLGE  (yakın taraf)
+       - Kraterin KARŞI iç duvarı       -> AYDINLIK (uzak taraf)
+       - Yükseltilmiş dış kenar, ışık tarafında ince parlak yay
+     Böylece "parlak kenar" ile "iç gölge" TAM KARŞI yönlerdedir. */
   function craterField(w, h, opts) {
     var rand = rng(opts.seed);
     var s = lightVec(opts.yon);
     var area = w * h;
-    /* Gorunur murekkep, kutunun KUCUK bir kesridir (harf govdeleri arasi bosluk
-       maskelenir). Bu yuzden yogunluk yuksek, yaricap ise kutuya degil PUNTOYA
-       baglidir: krater govde kalinligiyla ayni mertebede olmali, yoksa
-       kirpilir ve hic gorunmez. */
+    /* Görünür mürekkep, kutunun KÜÇÜK bir kesridir (harf gövdeleri arası boşluk
+       maskelenir). Bu yüzden yoğunluk yüksek, yarıçap ise kutuya değil PUNTOYA
+       bağlıdır: krater gövde kalınlığıyla aynı mertebede olmalı, yoksa
+       kırpılır ve hiç görünmez. */
     var fs = opts.fontSize || Math.min(w, h);
-    /* KONTRAST SINIRI (piksel olcumuyle kalibre edildi).
-       Koyu zeminde murekkep PARLAKTIR; krater ic golgesi onu karartir ve
-       4.5:1'in altina dusurebilir. Parlak murekkep uzerinde siyah alfa a
-       icin sonuc ~ ink*(1-a); katmanlar da carpisir. Olcum, koyu zeminde
-       toplam kararmanin ~0.43'u gecmemesi gerektigini gosterdi, bu yuzden
-       ic golge 0.66 -> 0.30, benek 0.16 -> 0.07 olarak kisilir.
-       Acik zeminde murekkep KOYUDUR; karartma zaten kontrasti ARTIRIR,
-       dolayisiyla tam siddet serbesttir. */
+    /* KONTRAST SINIRI (piksel ölçümüyle kalibre edildi).
+       Koyu zeminde mürekkep PARLAKTIR; krater iç gölgesi onu karartır ve
+       4.5:1'in altına düşürebilir. Parlak mürekkep üzerinde siyah alfa a
+       için sonuç ~ ink*(1-a); katmanlar da çarpışır. Ölçüm, koyu zeminde
+       toplam kararmanın ~0.43'ü geçmemesi gerektiğini gösterdi, bu yüzden
+       iç gölge 0.66 -> 0.30, benek 0.16 -> 0.07 olarak kısılır.
+       Açık zeminde mürekkep KOYUDUR; karartma zaten kontrastı ARTIRIR,
+       dolayısıyla tam şiddet serbesttir. */
     var dark = !!opts.darkSurface;
     var aGolge = dark ? 0.30 : 0.66;
     var aBenek = dark ? 0.07 : 0.16;
@@ -193,28 +193,28 @@
       var p = pts[i];
       var r = skewLow(rand, base * 0.055, base * 0.185);
       var k = opts.siddet;
-      /* YUKSELTILMIS KENAR HALKASI — kraterin dairesel okunmasini saglayan sey
-         budur. Halka olmadan yonlu golgeler yalnizca bir leke gibi okunur. */
+      /* YÜKSELTİLMİŞ KENAR HALKASI — kraterin dairesel okunmasını sağlayan şey
+         budur. Halka olmadan yönlü gölgeler yalnızca bir leke gibi okunur. */
       out.push('radial-gradient(circle ' + r.toFixed(1) + 'px at ' +
         p.x.toFixed(1) + 'px ' + p.y.toFixed(1) + 'px, ' +
         'rgba(255,255,255,0) 0 68%, rgba(255,255,255,' + (0.30 * k).toFixed(3) +
         ') 78%, rgba(255,255,255,0) 100%)');
-      /* ic golge — ISIGA yakin taraf; kenari sert tutulur, yoksa bulanir */
+      /* iç gölge — IŞIĞA yakın taraf; kenarı sert tutulur, yoksa bulanır */
       out.push('radial-gradient(circle ' + (r * 0.74).toFixed(1) + 'px at ' +
         (p.x + s.x * r * 0.26).toFixed(1) + 'px ' + (p.y + s.y * r * 0.26).toFixed(1) + 'px, ' +
         'rgba(0,0,0,' + (aGolge * k).toFixed(3) + ') 0 46%, rgba(0,0,0,' + (aGolge * 0.64 * k).toFixed(3) +
         ') 74%, rgba(0,0,0,0) 96%)');
-      /* aydinlik ic duvar — TAM KARSI taraf, dar ve platolu */
+      /* aydınlık iç duvar — TAM KARŞI taraf, dar ve platolu */
       out.push('radial-gradient(circle ' + (r * 0.52).toFixed(1) + 'px at ' +
         (p.x - s.x * r * 0.40).toFixed(1) + 'px ' + (p.y - s.y * r * 0.40).toFixed(1) + 'px, ' +
         'rgba(255,255,255,' + (0.62 * k).toFixed(3) + ') 0 40%, rgba(255,255,255,' +
         (0.34 * k).toFixed(3) + ') 70%, rgba(255,255,255,0) 98%)');
-      /* dis kenarin isik alan yamaci — ince parlak yay */
+      /* dış kenarın ışık alan yamacı — ince parlak yay */
       out.push('radial-gradient(circle ' + (r * 0.30).toFixed(1) + 'px at ' +
         (p.x + s.x * r * 1.02).toFixed(1) + 'px ' + (p.y + s.y * r * 1.02).toFixed(1) + 'px, ' +
         'rgba(255,255,255,' + (0.42 * k).toFixed(3) + ') 0 35%, rgba(255,255,255,0) 100%)');
     }
-    /* regolit mikro benek — kontrasti bozmayan ince doku */
+    /* regolit mikro benek — kontrastı bozmayan ince doku */
     var grains = blueNoise(Math.round(n * 1.6), rand, w, h);
     for (var g = 0; g < grains.length; g++) {
       var q = grains[g];
@@ -226,7 +226,7 @@
     return out.join(', ');
   }
 
-  /* --- yildiz alani ------------------------------------------------------ */
+  /* --- yıldız alanı ------------------------------------------------------ */
   function starField(w, h, opts) {
     var rand = rng(opts.seed + 991);
     var base = opts.fontSize || Math.min(w, h);
@@ -244,7 +244,7 @@
     return out.join(', ');
   }
 
-  /* --- kiragi kristalleri ------------------------------------------------ */
+  /* --- kırağı kristalleri ------------------------------------------------ */
   function frostField(w, h, opts) {
     var rand = rng(opts.seed + 3307);
     var base = opts.fontSize || Math.min(w, h);
@@ -264,10 +264,10 @@
 
   /* --- ana API ----------------------------------------------------------- */
   function applyTypeTreatment(el, kind, options) {
-    if (!el || el.nodeType !== 1) throw new TypeError('applyTypeTreatment: gecerli bir oge gerekli');
+    if (!el || el.nodeType !== 1) throw new TypeError('applyTypeTreatment: geçerli bir öge gerekli');
     if (KINDS.indexOf(kind) === -1) {
       throw new RangeError('applyTypeTreatment: bilinmeyen muamele "' + kind +
-        '". Gecerli: ' + KINDS.join(', '));
+        '". Geçerli: ' + KINDS.join(', '));
     }
     var prev = el[STORE];
     if (prev) prev.destroy();
@@ -288,7 +288,7 @@
     var raf = 0;
 
     function paint() {
-      /* 1) boyut kurali — belge kurali: >= 64px, yalniz baslik */
+      /* 1) boyut kuralı — belge kuralı: >= 64px, yalnız başlık */
       var cs = getComputedStyle(el);
       var px = parseFloat(cs.fontSize) || 0;
       var heroOnly = el.hasAttribute('data-tip-only-hero');
@@ -297,14 +297,14 @@
         el.setAttribute('data-tip-off', 'kucuk');
         if (global.console && console.warn) {
           console.warn('[type-treatments] "' + kind + '" ' + px.toFixed(0) +
-            'px olan ogede sokuldu; taban ' + floor + 'px. Muameleler yalniz ' +
-            'goruntu boyutunda ve yalniz baslikta kullanilir.');
+            'px olan ögede söküldü; taban ' + floor + 'px. Muameleler yalnız ' +
+            'görüntü boyutunda ve yalnız başlıkta kullanılır.');
         }
         return;
       }
       el.removeAttribute('data-tip-off');
 
-      /* 2) zemin algilama -> dolgu jetonlarini koyu/acik zemine gore sec */
+      /* 2) zemin algılama -> dolgu jetonlarını koyu/açık zemine göre seç */
       var dark = isDarkSurface(el);
       el.classList.toggle('tip-on-dark', dark);
       el.classList.toggle('tip-on-light', !dark);
@@ -313,14 +313,14 @@
       el.style.setProperty('--tip-yon', o.yon + 'deg');
       el.style.setProperty('--tip-siddet', String(o.siddet));
 
-      /* 4) hareket: azaltilmis hareket veya disa aktarimda ASLA */
+      /* 4) hareket: azaltılmış hareket veya dışa aktarımda ASLA */
       var still = reducedMotion() || exporting(el);
       el.classList.toggle('tip-canli', !!o.canli && !still);
 
-      /* 5) tohumlu alanlar — px tabanli, en-boy oranindan bagimsiz */
+      /* 5) tohumlu alanlar — px tabanlı, en-boy oranından bağımsız */
       var w = el.offsetWidth || 0, h = el.offsetHeight || 0;
       if (!w || !h) return;
-      o.fontSize = px;   /* alan olcekleri PUNTOYA baglidir, kutuya degil */
+      o.fontSize = px;   /* alan ölçekleri PUNTOYA bağlıdır, kutuya değil */
       o.darkSurface = dark;
       if (kind === 'ay') {
         el.style.setProperty('--tip-ay-kraterler', craterField(w, h, o));

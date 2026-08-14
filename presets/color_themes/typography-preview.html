@@ -57,7 +57,7 @@
   .tab{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:"tnum" 1,"lnum" 1}
   .proof{font-size:12px;color:var(--pg-dim);margin:8px 0 0;font-family:"JetBrains Mono Deck",monospace}
 
-  /* ---- muamele gosterimi ---- */
+  /* ---- muamele gösterimi ---- */
   .demo{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--pg-line);
         border-radius:10px;overflow:hidden;margin:0 0 12px}
   .demo>div{padding:30px 26px;min-height:190px;display:flex;flex-direction:column;
@@ -93,65 +93,65 @@
 <header>
   <h1>Tipografi sistemi — bilim destesi</h1>
   <p class="lede">
-    Yedi acik lisansli yazi karakteri ailesi (SIL OFL 1.1), bes hazir ucla eslesme
-    (goruntu + metin + mono) ve alti <b>goruntu tipi muamelesi</b>. Tum fontlar
-    yereldir; calisma aninda dis ag istegi yoktur.
+    Yedi açık lisanslı yazı karakteri ailesi (SIL OFL 1.1), beş hazır üçlü eşleşme
+    (görüntü + metin + mono) ve altı <b>görüntü tipi muamelesi</b>. Tüm fontlar
+    yereldir; çalışma anında dış ağ isteği yoktur.
   </p>
   <p class="warn">
-    <b>Durustluk notu.</b> Burada yeni bir yazi karakteri <i>cizilmemistir</i>.
-    "Kraterli ay fontu" bir font degil, gercek bir yazi karakterinin uzerine
+    <b>Dürüstlük notu.</b> Burada yeni bir yazı karakteri <i>çizilmemiştir</i>.
+    "Kraterli ay fontu" bir font değil, gerçek bir yazı karakterinin üzerine
     CSS/SVG ile uygulanan bir <b>muameledir</b> (<code>.tip-ay</code>).
-    Yeni bir yazi karakteri cizmek ayri bir meslektir; bu butceyle sahtesi yapilirdi.
+    Yeni bir yazı karakteri çizmek ayrı bir meslektir; bu bütçeyle sahtesi yapılırdı.
   </p>
   <p class="lede" id="budget" style="margin-top:14px"></p>
 </header>
 
 <main>
 
-<!-- ================= ESLESMELER ================= -->
+<!-- ================= EŞLEŞMELER ================= -->
 <section id="eslesmeler">
-  <h2>Hazir ucluler</h2>
+  <h2>Hazır üçlüler</h2>
   <p class="sub">
-    Font secmek zorunda degilsin: konuya gore bir eslesme sec, gerisi baglidir.
-    Kullanim: <code>&lt;div class="deck" data-type-pair="gorev"&gt;</code> —
-    sonra basliklarda <code>.tf-display</code>, govdede <code>.tf-text</code>,
+    Font seçmek zorunda değilsin: konuya göre bir eşleşme seç, gerisi bağlıdır.
+    Kullanım: <code>&lt;div class="deck" data-type-pair="gorev"&gt;</code> —
+    sonra başlıklarda <code>.tf-display</code>, gövdede <code>.tf-text</code>,
     telemetride <code>.tf-mono</code>.
   </p>
   <div class="pairgrid" id="pairs"></div>
 </section>
 
-<!-- ================= AILELER ================= -->
+<!-- ================= AİLELER ================= -->
 <section id="aileler">
   <h2>Aileler</h2>
   <p class="sub">
-    Her ailenin Turkce pangramı, noktali/noktasiz i buyutmesi, rakam tablosu ve
-    <b>tabular figures kaniti</b>. Sag sutundaki sayilar hizali degilse o aile
-    sayi sutunlarinda kullanilamaz.
+    Her ailenin Türkçe pangramı, noktalı/noktasız i büyütmesi, rakam tablosu ve
+    <b>tabular figures kanıtı</b>. Sağ sütundaki sayılar hizalı değilse o aile
+    sayı sütunlarında kullanılamaz.
   </p>
   <div id="families"></div>
 </section>
 
 <!-- ================= MUAMELELER ================= -->
 <section id="muameleler">
-  <h2>Goruntu tipi muameleleri</h2>
+  <h2>Görüntü tipi muameleleri</h2>
   <p class="sub">
-    Alti muamele, solda <b>ham</b> sagda <b>muameleli</b>. Kurallar: yalniz
-    goruntu boyutunda (&ge;&nbsp;64&nbsp;px), yalniz baslikta, govde metnine asla.
-    <code>prefers-reduced-motion</code> ve <code>[data-export]</code> altinda statik.
+    Altı muamele, solda <b>ham</b> sağda <b>muameleli</b>. Kurallar: yalnız
+    görüntü boyutunda (&ge;&nbsp;64&nbsp;px), yalnız başlıkta, gövde metnine asla.
+    <code>prefers-reduced-motion</code> ve <code>[data-export]</code> altında statik.
   </p>
   <div class="ctrl">
     <label>tohum <input type="range" id="seed" min="1" max="60" value="7"></label>
-    <label>yon <input type="range" id="yon" min="0" max="359" value="210"></label>
-    <label>siddet <input type="range" id="siddet" min="0" max="100" value="100"></label>
-    <label><input type="checkbox" id="canli"> canli (hareketli)</label>
+    <label>yön <input type="range" id="yon" min="0" max="359" value="210"></label>
+    <label>şiddet <input type="range" id="siddet" min="0" max="100" value="100"></label>
+    <label><input type="checkbox" id="canli"> canlı (hareketli)</label>
     <label><input type="checkbox" id="expmode"> data-export</label>
     <span id="ctrlread" class="measure"></span>
   </div>
   <div id="treatments"></div>
   <p class="nojs-note">
-    JS kapaliysa bu bolum yine gorunur: muameleler saf-CSS karsiliklariyla
-    (<code>.tip-ay</code> vb.) calisir, tohumlu alan yerine sabit alan kullanilir.
-    <code>background-clip:text</code> desteklenmiyorsa metin duz ve tam kontrastli kalir.
+    JS kapalıysa bu bölüm yine görünür: muameleler saf-CSS karşılıklarıyla
+    (<code>.tip-ay</code> vb.) çalışır, tohumlu alan yerine sabit alan kullanılır.
+    <code>background-clip:text</code> desteklenmiyorsa metin düz ve tam kontrastlı kalır.
   </p>
 </section>
 
@@ -162,108 +162,108 @@
 (function(){
   'use strict';
 
-  /* ---- sabitler once (TDZ yok: her sey kullanimdan ONCE tanimli) ---- */
+  /* ---- sabitler önce (TDZ yok: her şey kullanımdan ÖNCE tanımlı) ---- */
   var global = window;
   var PANGRAM = 'Pijamalı hasta yağız şoföre çabucak güvendi';
   var TESTSTR = 'Işığın kırılışı: yörünge çözümü — ÇĞİÖŞÜ çğıöşü';
 
   var FAMILIES = [
-    { key:'archivo', css:"'Archivo Deck'", name:'Archivo', role:'goruntu + metin',
+    { key:'archivo', css:"'Archivo Deck'", name:'Archivo', role:'görüntü + metin',
       lic:'SIL OFL 1.1', designer:'Omnibus-Type', kb:137,
       axes:'wght 100–900, wdth 62–125',
       tnum:true, tabDefault:false, spread:0.3,
-      why:'Genis wdth ekseni uzun Turkce basliklari kirmadan daraltir; rakamlari tnum ile tam hizali.',
+      why:'Geniş wdth ekseni uzun Türkçe başlıkları kırmadan daraltır; rakamları tnum ile tam hizalı.',
       themes:'verdigris-slate, arctic-mulberry, botanical-signal' },
     { key:'big-shoulders-display', css:"'Big Shoulders Deck'", name:'Big Shoulders Display',
-      role:'yalniz goruntu', lic:'SIL OFL 1.1', designer:'Patric King / Production Type', kb:59,
+      role:'yalnız görüntü', lic:'SIL OFL 1.1', designer:'Patric King / Production Type', kb:59,
       axes:'wght 100–900', tnum:false, tabDefault:false, spread:48.9,
-      why:'Sikistirilmis muhendislik sesi: dar sutuna uzun gorev basligi sigar.',
+      why:'Sıkıştırılmış mühendislik sesi: dar sütuna uzun görev başlığı sığar.',
       themes:'mission-review, orbital-blueprint, graphite-ember' },
-    { key:'fraunces', css:"'Fraunces Deck'", name:'Fraunces', role:'yalniz goruntu',
+    { key:'fraunces', css:"'Fraunces Deck'", name:'Fraunces', role:'yalnız görüntü',
       lic:'SIL OFL 1.1', designer:'Undercase Type', kb:151,
       axes:'opsz 9–144, wght 100–900, SOFT 0–100, WONK 0–1',
       tnum:false, tabDefault:false, spread:29.9,
-      why:'opsz + WONK eksenleri dev baslikta arsiv/rasathane karakteri verir; kucukte sakinlesir.',
+      why:'opsz + WONK eksenleri dev başlıkta arşiv/rasathane karakteri verir; küçükte sakinleşir.',
       themes:'lunar-archive, cream-observatory, porcelain-ink, cosmic-scholar' },
-    { key:'space-grotesk', css:"'Space Grotesk Deck'", name:'Space Grotesk', role:'goruntu',
+    { key:'space-grotesk', css:"'Space Grotesk Deck'", name:'Space Grotesk', role:'görüntü',
       lic:'SIL OFL 1.1', designer:'Florian Karsten', kb:34,
       axes:'wght 300–700', tnum:true, tabDefault:false, spread:36.7,
-      why:'34 KB karsiliginda notr-teknik bir ses; tnum ACIKKEN sayi sutunlarinda da calisir.',
+      why:'34 KB karşılığında nötr-teknik bir ses; tnum AÇIKKEN sayı sütunlarında da çalışır.',
       themes:'deep-space-observatory, aurora-boreal, spectral-analysis' },
-    { key:'source-sans-3', css:"'Source Sans 3 Deck'", name:'Source Sans 3', role:'govde (mevcut)',
+    { key:'source-sans-3', css:"'Source Sans 3 Deck'", name:'Source Sans 3', role:'gövde (mevcut)',
       lic:'SIL OFL 1.1', designer:'Adobe', kb:144, axes:'wght 200–900 (+italik)',
       tnum:false, tabDefault:true, spread:0,
-      why:'Destenin mevcut govdesi; rakamlari VARSAYILAN olarak sabit genislikte, projeksiyonda acik.',
-      themes:'tumu' },
-    { key:'source-serif-4', css:"'Source Serif 4 Deck'", name:'Source Serif 4', role:'serif govde (mevcut)',
+      why:'Destenin mevcut gövdesi; rakamları VARSAYILAN olarak sabit genişlikte, projeksiyonda açık.',
+      themes:'tümü' },
+    { key:'source-serif-4', css:"'Source Serif 4 Deck'", name:'Source Serif 4', role:'serif gövde (mevcut)',
       lic:'SIL OFL 1.1', designer:'Adobe', kb:493, axes:'wght 200–900, opsz 8–60 (+italik)',
       tnum:true, tabDefault:true, spread:0,
-      why:'Destenin mevcut serifi; kaynakca ve alinti italigi icin korunmustur. Kutuphanenin en agir ailesi.',
+      why:'Destenin mevcut serifi; kaynakça ve alıntı italiği için korunmuştur. Kütüphanenin en ağır ailesi.',
       themes:'cosmic-scholar, cream-observatory, porcelain-ink' },
     { key:'jetbrains-mono', css:"'JetBrains Mono Deck'", name:'JetBrains Mono', role:'mono',
       lic:'SIL OFL 1.1', designer:'JetBrains', kb:51, axes:'wght 100–800',
       tnum:false, tabDefault:true, spread:0,
-      why:'Telemetri/katalog kimligi; monospace oldugu icin rakamlar zaten hizali, Cascadia Mono gibi sisteme bagli degil.',
-      themes:'tumu' }
+      why:'Telemetri/katalog kimliği; monospace olduğu için rakamlar zaten hizalı, Cascadia Mono gibi sisteme bağlı değil.',
+      themes:'tümü' }
   ];
 
   var PAIRS = [
-    { key:'gorev', name:'Gorev', d:'Big Shoulders Display', t:'Source Sans 3', m:'JetBrains Mono',
+    { key:'gorev', name:'Görev', d:'Big Shoulders Display', t:'Source Sans 3', m:'JetBrains Mono',
       title:'Yörünge düzeltme yakması: ΔV bütçesi',
-      why:'Gorev incelemesi, GNC, uydu, yer segmenti. Sikistirilmis baslik dar sutuna sigar.',
+      why:'Görev incelemesi, GNC, uydu, yer segmenti. Sıkıştırılmış başlık dar sütuna sığar.',
       tip:'gravur' },
     { key:'rasathane', name:'Rasathane', d:'Fraunces', t:'Source Serif 4', m:'JetBrains Mono',
       title:'Ay yüzeyinde ışığın kırılışı',
-      why:'Arsiv, jeodezi, tarihsel gozlem, akademik kurul. Serif govde uzun metni tasir.',
+      why:'Arşiv, jeodezi, tarihsel gözlem, akademik kurul. Serif gövde uzun metni taşır.',
       tip:'ay' },
     { key:'kozmos', name:'Kozmos', d:'Space Grotesk', t:'Source Sans 3', m:'JetBrains Mono',
       title:'Tayfsal çözümleme ve kızıla kayma',
-      why:'Kozmoloji, tayf, aurora, derin uzay. Notr-teknik, 34 KB.',
+      why:'Kozmoloji, tayf, aurora, derin uzay. Nötr-teknik, 34 KB.',
       tip:'yildiz' },
-    { key:'olcum', name:'Olcum', d:'Archivo', t:'Source Sans 3', m:'JetBrains Mono',
+    { key:'olcum', name:'Ölçüm', d:'Archivo', t:'Source Sans 3', m:'JetBrains Mono',
       title:'Ölçüm belirsizliği ve hata bütçesi',
-      why:'Veri agirlikli, tablo/grafik yogun muhendislik raporu. wdth ekseni uzun basligi daraltir.',
+      why:'Veri ağırlıklı, tablo/grafik yoğun mühendislik raporu. wdth ekseni uzun başlığı daraltır.',
       tip:'buz' },
     { key:'klasik', name:'Klasik', d:'Source Serif 4', t:'Source Sans 3', m:'JetBrains Mono',
       title:'Güneş fotosferinde çığ etkisi',
-      why:'Mevcut destenin korunmus hali. En guvenli, en tanidik secim.',
+      why:'Mevcut destenin korunmuş hali. En güvenli, en tanıdık seçim.',
       tip:'isil' }
   ];
 
   var TREATMENTS = [
     { key:'ay', name:'Ay / kraterli',
       text:'Ay yüzeyi',
-      why:'Yuzeyde cukurlasma: tohumlu krater alani, alcak gunesle tutarli TEK yon. '+
-           'Kraterin isiga bakan ic duvari golgede, karsi duvar aydinlik, dis kenar isik tarafinda parlak — '+
-           'lunar-descent sahnesindeki fiziksel dilin aynisi.',
-      use:'Ay, gezegen yuzeyi, inis, regolit.' },
-    { key:'gravur', name:'Gravur / alet paneli',
+      why:'Yüzeyde çukurlaşma: tohumlu krater alanı, alçak güneşle tutarlı TEK yön. '+
+           'Kraterin ışığa bakan iç duvarı gölgede, karşı duvar aydınlık, dış kenar ışık tarafında parlak — '+
+           'lunar-descent sahnesindeki fiziksel dilin aynısı.',
+      use:'Ay, gezegen yüzeyi, iniş, regolit.' },
+    { key:'gravur', name:'Gravür / alet paneli',
       text:'GNC paneli',
-      why:'Ince ic egim + ust kenar isigi. Dolgu KATI kalir, bu yuzden kontrasti neredeyse hic degistirmez.',
-      use:'GNC, uydu, alet paneli, gorev kromu.' },
-    { key:'isil', name:'Isil / plazma',
+      why:'İnce iç eğim + üst kenar ışığı. Dolgu KATI kalır, bu yüzden kontrastı neredeyse hiç değiştirmez.',
+      use:'GNC, uydu, alet paneli, görev kromu.' },
+    { key:'isil', name:'Isıl / plazma',
       text:'İtki sıcaklığı',
-      why:'Dolgu solar-photosphere GECIS JETONLARINDAN gelir; yeni renk uydurulmaz. '+
-           'Koyu zeminde rampanin parlak yarisi, acik zeminde koyu yarisi kullanilir — '+
-           'rampanin tamami kontrasti oldururdu.',
-      use:'Itki, plazma, isil analiz, yildiz yuzeyi.' },
-    { key:'yildiz', name:'Yildiz alani',
+      why:'Dolgu solar-photosphere GEÇİŞ JETONLARINDAN gelir; yeni renk uydurulmaz. '+
+           'Koyu zeminde rampanın parlak yarısı, açık zeminde koyu yarısı kullanılır — '+
+           'rampanın tamamı kontrastı öldürürdü.',
+      use:'İtki, plazma, ısıl analiz, yıldız yüzeyi.' },
+    { key:'yildiz', name:'Yıldız alanı',
       text:'Kozmik ağ',
-      why:'Gercek gece-gogu dolgusu (koyu taban + seyrek parlak nokta) harflerin ic kontrastini oldururdu; '+
-           'bu yuzden metnin ICI parlak kalir, nebula ve yildizlar bu parlak taban uzerinde modulasyon yapar. '+
-           'aurora-boreal jetonlariyla uyumlu.',
+      why:'Gerçek gece-göğü dolgusu (koyu taban + seyrek parlak nokta) harflerin iç kontrastını öldürürdü; '+
+           'bu yüzden metnin İÇİ parlak kalır, nebula ve yıldızlar bu parlak taban üzerinde modülasyon yapar. '+
+           'aurora-boreal jetonlarıyla uyumlu.',
       use:'Kozmoloji, aurora, derin uzay.' },
-    { key:'baski', name:'Baski izi / arsiv',
+    { key:'baski', name:'Baskı izi / arşiv',
       text:'Arşiv kaydı',
-      why:'Hafif murekkep yayilmasi + ince kagit dokusu. Dolgu kati kaldigi icin en iyi davranan muamele.',
-      use:'Jeodezi, arsiv, tarihsel kayit.' },
-    { key:'buz', name:'Buz / kiragi',
+      why:'Hafif mürekkep yayılması + ince kâğıt dokusu. Dolgu katı kaldığı için en iyi davranan muamele.',
+      use:'Jeodezi, arşiv, tarihsel kayıt.' },
+    { key:'buz', name:'Buz / kırağı',
       text:'Kriyojenik',
-      why:'Kristal kenar ve soguk dolgu. Koyu zeminde parlak, acik zeminde koyu varyant.',
+      why:'Kristal kenar ve soğuk dolgu. Koyu zeminde parlak, açık zeminde koyu varyant.',
       use:'Ice giant, kriyojenik, kutup.' }
   ];
 
-  /* ---- URL parametreleri: deterministik acilis ---- */
+  /* ---- URL parametreleri: deterministik açılış ---- */
   var params = new URLSearchParams(location.search);
   var wantFam = params.get('aile');
   var wantTip = params.get('muamele');
@@ -282,18 +282,18 @@
   if (params.get('canli') === '1') canliEl.checked = true;
   if (params.get('export') === '1') expEl.checked = true;
 
-  /* ---- butce ---- */
+  /* ---- bütçe ---- */
   var totalKB = 0;
   FAMILIES.forEach(function(f){ totalKB += f.kb; });
   document.getElementById('budget').innerHTML =
-    'Kutuphane toplami <b>1074 KB</b> (9 WOFF2 dosyasi, 7 aile). ' +
-    'Bir deste yalnizca kendi ucluesunu yukler: <b>Kozmos 231 KB</b>, ' +
-    'Gorev 255 KB, Olcum 334 KB, Klasik 691 KB, Rasathane 697 KB ' +
-    '(italikler haric sirasiyla 166 / 190 / 269 / 397 / 469 KB). ' +
-    'Lisanslar <code>typefaces/&lt;aile&gt;/LICENSE</code>, kaynak/surum ' +
+    'Kütüphane toplamı <b>1074 KB</b> (9 WOFF2 dosyası, 7 aile). ' +
+    'Bir deste yalnızca kendi üçlüsünü yükler: <b>Kozmos 231 KB</b>, ' +
+    'Görev 255 KB, Ölçüm 334 KB, Klasik 691 KB, Rasathane 697 KB ' +
+    '(italikler hariç sırasıyla 166 / 190 / 269 / 397 / 469 KB). ' +
+    'Lisanslar <code>typefaces/&lt;aile&gt;/LICENSE</code>, kaynak/sürüm ' +
     '<code>typefaces/provenance.json</code>.';
 
-  /* ---- ESLESMELER ---- */
+  /* ---- EŞLEŞMELER ---- */
   var pairsHost = document.getElementById('pairs');
   PAIRS.forEach(function(p){
     var el = document.createElement('div');
@@ -301,25 +301,25 @@
     el.setAttribute('data-type-pair', p.key);
     el.innerHTML =
       '<h3>' + p.name + '</h3>' +
-      '<div class="meta"><span><b>goruntu</b> ' + p.d + '</span>' +
+      '<div class="meta"><span><b>görüntü</b> ' + p.d + '</span>' +
       '<span><b>metin</b> ' + p.t + '</span><span><b>mono</b> ' + p.m + '</span></div>' +
       '<p class="pairtitle tf-display">' + p.title + '</p>' +
       '<p class="pairbody tf-text">' + TESTSTR + '</p>' +
       '<p class="pairmono tf-mono tf-tabular">2026-08-14T04:12:33Z &nbsp; ΔV 118.4 m/s &nbsp; σ 0.037</p>' +
       '<p class="sub" style="margin:12px 0 0">' + p.why +
-      ' <span class="tag">onerilen muamele: .tip-' + p.tip + '</span></p>';
+      ' <span class="tag">önerilen muamele: .tip-' + p.tip + '</span></p>';
     pairsHost.appendChild(el);
   });
 
-  /* ---- AILELER ---- */
+  /* ---- AİLELER ---- */
   var famHost = document.getElementById('families');
   FAMILIES.forEach(function(f){
     if (wantFam && wantFam !== 'hepsi' && wantFam !== f.key) return;
     var tabTag = f.tabDefault
-      ? '<span class="tag ok">rakamlar varsayilan olarak hizali</span>'
+      ? '<span class="tag ok">rakamlar varsayılan olarak hizalı</span>'
       : (f.tnum
-        ? '<span class="tag ok">tnum ile hizalanir</span>'
-        : '<span class="tag no">tnum YOK — sayi sutununda kullanma</span>');
+        ? '<span class="tag ok">tnum ile hizalanır</span>'
+        : '<span class="tag no">tnum YOK — sayı sütununda kullanma</span>');
     var el = document.createElement('div');
     el.className = 'card';
     el.style.setProperty('--fam', f.css);
@@ -328,7 +328,7 @@
       '<div class="meta">' +
         '<span><b>rol</b> ' + f.role + '</span>' +
         '<span><b>lisans</b> ' + f.lic + '</span>' +
-        '<span><b>dokumhane</b> ' + f.designer + '</span>' +
+        '<span><b>dökümhane</b> ' + f.designer + '</span>' +
         '<span><b>boyut</b> ' + f.kb + ' KB</span>' +
         '<span><b>eksenler</b> ' + f.axes + '</span>' +
       '</div>' +
@@ -337,13 +337,13 @@
       '<div class="tr-zoom" style="font-family:' + f.css + '">' +
         'I<span class="hl">ı</span> <span class="hl">İ</span>i ğĞ şŞ çÇ öÖ üÜ</div>' +
       '<div class="cols" style="margin-top:18px">' +
-        '<div><table class="num"><thead><tr><th>oransal (varsayilan)</th><th>&nbsp;</th></tr></thead><tbody>' +
+        '<div><table class="num"><thead><tr><th>oransal (varsayılan)</th><th>&nbsp;</th></tr></thead><tbody>' +
           numRows(f.css, 'prop') +
         '</tbody></table></div>' +
-        '<div><table class="num"><thead><tr><th>tabular (tnum acik)</th><th>&nbsp;</th></tr></thead><tbody>' +
+        '<div><table class="num"><thead><tr><th>tabular (tnum açık)</th><th>&nbsp;</th></tr></thead><tbody>' +
           numRows(f.css, 'tab') +
         '</tbody></table>' +
-        '<p class="proof">rakam genisligi yayilimi: ' + f.spread.toFixed(1) + '%  ' +
+        '<p class="proof">rakam genişliği yayılımı: ' + f.spread.toFixed(1) + '%  ' +
         (f.spread === 0 ? '(zaten sabit)' : '') + '</p></div>' +
       '</div>' +
       '<p class="sub" style="margin-top:14px">' + f.why + ' ' + tabTag +
@@ -353,11 +353,11 @@
 
   function numRows(css, mode){
     var rows = [
-      ['Perigee irtifasi', '1 118 004'],
-      ['Apogee irtifasi',  '  35 786'],
-      ['Egim',             '     51.6'],
-      ['Donem',            '  1 439.7'],
-      ['Ekssantriklik',    '  0.000 11']
+      ['Perigee irtifası', '1 118 004'],
+      ['Apogee irtifası',  '  35 786'],
+      ['Eğim',             '     51.6'],
+      ['Dönem',            '  1 439.7'],
+      ['Eksantriklik',     '  0.000 11']
     ];
     var out = '';
     rows.forEach(function(r){
@@ -394,14 +394,14 @@
                    : wantSurf === 'koyu' ? ['dark']
                    : ['dark','light'];
       var html = '<h3>' + t.name + ' <span class="tag">.tip-' + t.key + '</span></h3>' +
-                 '<p class="sub">' + t.why + ' <b>Kullanim:</b> ' + t.use + '</p>';
+                 '<p class="sub">' + t.why + ' <b>Kullanım:</b> ' + t.use + '</p>';
       surfaces.forEach(function(s){
         var pair = PAIRS.filter(function(p){ return p.tip === t.key; })[0];
         var pk = pair ? pair.key : 'olcum';
         html +=
           '<div class="demo" data-type-pair="' + pk + '">' +
             '<div class="surf-' + s + '"><span class="lbl">ham — ' +
-              (s==='dark'?'koyu zemin':'acik zemin') + '</span>' +
+              (s==='dark'?'koyu zemin':'açık zemin') + '</span>' +
               '<p class="big">' + t.text + '</p></div>' +
             '<div class="surf-' + s + '"><span class="lbl">muameleli — .tip-' + t.key + '</span>' +
               '<p class="big js-tip" data-kind="' + t.key + '">' + t.text + '</p>' +
@@ -418,7 +418,7 @@
         handles.push(global.applyTypeTreatment(nodes[i], nodes[i].getAttribute('data-kind'), opts));
       }
     } else if (noJsMode) {
-      /* saf-CSS yolu: sinifi elle ekle, JS gelistirmesi yok */
+      /* saf-CSS yolu: sınıfı elle ekle, JS geliştirmesi yok */
       var pure = tHost.querySelectorAll('.js-tip');
       for (var j=0;j<pure.length;j++){
         pure[j].classList.add('tip-' + pure[j].getAttribute('data-kind'));
@@ -427,8 +427,8 @@
     annotate();
   }
 
-  /* zemin/murekkep kontrastini bildir (dolgunun EN KOTU durak degeri
-     ayri olarak Python harness'inda piksel uzerinden olculur) */
+  /* zemin/mürekkep kontrastını bildir (dolgunun EN KÖTÜ durak değeri
+     ayrı olarak Python harness'ında piksel üzerinden ölçülür) */
   function annotate(){
     var cells = tHost.querySelectorAll('[data-measure]');
     for (var i=0;i<cells.length;i++){
@@ -440,8 +440,8 @@
       var cr = global.TypeTreatments.contrastRatio(ink, surf);
       var off = tip.hasAttribute('data-tip-off');
       cell.textContent = 'zemin rgb(' + [surf.r|0,surf.g|0,surf.b|0].join(',') + ')  ' +
-        'taban murekkep kontrasti ' + (isFinite(cr)?cr.toFixed(2):'?') + ':1' +
-        (off ? '  [muamele sokuldu: <64px]' : '');
+        'taban mürekkep kontrastı ' + (isFinite(cr)?cr.toFixed(2):'?') + ':1' +
+        (off ? '  [muamele söküldü: <64px]' : '');
     }
   }
 
@@ -457,13 +457,13 @@
 
   buildTreatments();
 
-  /* deterministik acilis: istenen bolum YALNIZ basina, sayfanin en ustunde.
-     ?aile=archivo        -> yalniz o ailenin ornegi
-     ?muamele=ay          -> yalniz o muamele
-     ?muamele=hepsi       -> alti muamele bir arada (yalniz bu bolum)
-     ?aile=hepsi          -> tum aileler (yalniz bu bolum)
+  /* deterministik açılış: istenen bölüm YALNIZ başına, sayfanın en üstünde.
+     ?aile=archivo        -> yalnız o ailenin örneği
+     ?muamele=ay          -> yalnız o muamele
+     ?muamele=hepsi       -> altı muamele bir arada (yalnız bu bölüm)
+     ?aile=hepsi          -> tüm aileler (yalnız bu bölüm)
      ?muamele=ay&zemin=koyu&tohum=12&yon=250
-     ?js=kapali           -> saf-CSS yolu (JS gelistirmesi yok)  */
+     ?js=kapali           -> saf-CSS yolu (JS geliştirmesi yok)  */
   function isolate(keepId){
     var ids = ['eslesmeler','aileler','muameleler'];
     for (var i=0;i<ids.length;i++){

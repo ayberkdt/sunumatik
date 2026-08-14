@@ -1,25 +1,25 @@
 /* ===========================================================================
    type-treatments.css — Sunumlar bilim destesi tipografi sistemi
    ---------------------------------------------------------------------------
-   Iki katman:
-     1) YAZI KARAKTERLERI  — 7 acik lisansli aile (SIL OFL 1.1), yerel WOFF2,
-        degisken eksenler korunmus, latin + latin-ext + bilim sembolleri.
-        Calisma aninda DIS AG YOK. Lisanslar: typefaces/<aile>/LICENSE
-        Kaynak/surum/tarih: typefaces/provenance.json
-     2) GORUNTU TIPI MUAMELELERI (display type treatments) — .tip-* siniflari.
-        DURUSTLUK NOTU: burada YENI BIR YAZI KARAKTERI CIZILMEMISTIR. Bunlar,
-        gercek yazi karakterlerinin uzerine CSS/SVG ile uygulanan efektlerdir.
-        "Kraterli ay fontu" bir font degil, bir MUAMELEDIR (.tip-ay).
+   İki katman:
+     1) YAZI KARAKTERLERİ  — 7 açık lisanslı aile (SIL OFL 1.1), yerel WOFF2,
+        değişken eksenler korunmuş, latin + latin-ext + bilim sembolleri.
+        Çalışma anında DIŞ AĞ YOK. Lisanslar: typefaces/<aile>/LICENSE
+        Kaynak/sürüm/tarih: typefaces/provenance.json
+     2) GÖRÜNTÜ TİPİ MUAMELELERİ (display type treatments) — .tip-* sınıfları.
+        DÜRÜSTLÜK NOTU: burada YENİ BİR YAZI KARAKTERİ ÇİZİLMEMİŞTİR. Bunlar,
+        gerçek yazı karakterlerinin üzerine CSS/SVG ile uygulanan efektlerdir.
+        "Kraterli ay fontu" bir font değil, bir MUAMELEDİR (.tip-ay).
 
-   Bu dosya references/typography-and-layout.md kurallarinin USTUNE gelir;
-   oradaki taban olculeri (baslik >= 48px, govde >= 30px ...) EZMEZ.
+   Bu dosya references/typography-and-layout.md kurallarının ÜSTÜNE gelir;
+   oradaki taban ölçüleri (başlık >= 48px, gövde >= 30px ...) EZMEZ.
    =========================================================================== */
 
 /* ===========================================================================
-   1. YAZI KARAKTERLERI
+   1. YAZI KARAKTERLERİ
    =========================================================================== */
 
-/* --- Archivo — Omnibus-Type, OFL 1.1 — degisken wght + wdth ------------- */
+/* --- Archivo — Omnibus-Type, OFL 1.1 — değişken wght + wdth ------------- */
 @font-face {
   font-family: "Archivo Deck";
   src: url("typefaces/archivo/archivo.woff2") format("woff2");
@@ -29,7 +29,7 @@
   font-display: swap;
 }
 
-/* --- Big Shoulders Display — OFL 1.1 — degisken wght -------------------- */
+/* --- Big Shoulders Display — OFL 1.1 — değişken wght -------------------- */
 @font-face {
   font-family: "Big Shoulders Deck";
   src: url("typefaces/big-shoulders-display/big-shoulders-display.woff2") format("woff2");
@@ -47,7 +47,7 @@
   font-display: swap;
 }
 
-/* --- Space Grotesk — Florian Karsten, OFL 1.1 — degisken wght ----------- */
+/* --- Space Grotesk — Florian Karsten, OFL 1.1 — değişken wght ----------- */
 @font-face {
   font-family: "Space Grotesk Deck";
   src: url("typefaces/space-grotesk/space-grotesk.woff2") format("woff2");
@@ -56,7 +56,7 @@
   font-display: swap;
 }
 
-/* --- Source Sans 3 — Adobe, OFL 1.1 — MEVCUT GOVDE, korunmustur --------- */
+/* --- Source Sans 3 — Adobe, OFL 1.1 — MEVCUT GÖVDE, korunmuştur --------- */
 @font-face {
   font-family: "Source Sans 3 Deck";
   src: url("typefaces/source-sans-3/source-sans-3.woff2") format("woff2");
@@ -72,7 +72,7 @@
   font-display: swap;
 }
 
-/* --- Source Serif 4 — Adobe, OFL 1.1 — MEVCUT SERIF, korunmustur -------- */
+/* --- Source Serif 4 — Adobe, OFL 1.1 — MEVCUT SERİF, korunmuştur -------- */
 @font-face {
   font-family: "Source Serif 4 Deck";
   src: url("typefaces/source-serif-4/source-serif-4.woff2") format("woff2");
@@ -99,34 +99,34 @@
 
 /* ===========================================================================
    2. ROL JETONLARI
-   Slaytta DOGRUDAN aile adi yazma; her zaman bu uc rolu kullan.
+   Slaytta DOĞRUDAN aile adı yazma; her zaman bu üç rolü kullan.
    =========================================================================== */
 :root {
   --tf-display: "Source Serif 4 Deck", Georgia, "Times New Roman", serif;
   --tf-text:    "Source Sans 3 Deck", "Segoe UI", system-ui, sans-serif;
   --tf-mono:    "JetBrains Mono Deck", "Cascadia Mono", Consolas, ui-monospace, monospace;
 
-  /* Baslik varyasyon eksenleri — eslesme onayarlari bunlari ezer */
+  /* Başlık varyasyon eksenleri — eşleşme önayarları bunları ezer */
   --tf-display-vars: normal;
   --tf-display-weight: 700;
   --tf-display-tracking: -0.015em;
   --tf-text-weight: 400;
 
-  /* Muamele ortak jetonlari */
-  --tip-ink: currentColor;          /* taban murekkep — kontrastin sahibi   */
-  --tip-yon: 210deg;                /* isigin GELDIGI aci (210 = sol ust)   */
-  --tip-siddet: 1;                  /* 0..1 efekt siddeti                   */
-  --tip-min-boy: 64px;              /* muamele tabani (belge kurali)        */
+  /* Muamele ortak jetonları */
+  --tip-ink: currentColor;          /* taban mürekkep — kontrastın sahibi   */
+  --tip-yon: 210deg;                /* ışığın GELDİĞİ açı (210 = sol üst)   */
+  --tip-siddet: 1;                  /* 0..1 efekt şiddeti                   */
+  --tip-min-boy: 64px;              /* muamele tabanı (belge kuralı)        */
 }
 
 /* ===========================================================================
-   3. HAZIR UCLU ESLESMELER  (goruntu + metin + mono)
-   Kullanim:  <div class="deck" data-type-pair="gorev"> ...
-   Her eslesmenin gerekcesi ve tema haritasi:
+   3. HAZIR ÜÇLÜ EŞLEŞMELER  (görüntü + metin + mono)
+   Kullanım:  <div class="deck" data-type-pair="gorev"> ...
+   Her eşleşmenin gerekçesi ve tema haritası:
    references/typeface-system.md
    =========================================================================== */
 
-/* GOREV — gorev incelemesi, GNC, uydu, yer segmenti */
+/* GÖREV — görev incelemesi, GNC, uydu, yer segmenti */
 [data-type-pair="gorev"] {
   --tf-display: "Big Shoulders Deck", "Archivo Deck", Impact, sans-serif;
   --tf-text:    "Source Sans 3 Deck", "Segoe UI", system-ui, sans-serif;
@@ -135,7 +135,7 @@
   --tf-display-tracking: 0.005em;
 }
 
-/* RASATHANE — arsiv, jeodezi, tarihsel gozlem, akademik kurul */
+/* RASATHANE — arşiv, jeodezi, tarihsel gözlem, akademik kurul */
 [data-type-pair="rasathane"] {
   --tf-display: "Fraunces Deck", "Source Serif 4 Deck", Georgia, serif;
   --tf-text:    "Source Serif 4 Deck", Georgia, serif;
@@ -154,17 +154,17 @@
   --tf-display-tracking: -0.01em;
 }
 
-/* OLCUM — veri agirlikli, tablo/grafik yogun, muhendislik raporu */
+/* ÖLÇÜM — veri ağırlıklı, tablo/grafik yoğun, mühendislik raporu */
 [data-type-pair="olcum"] {
   --tf-display: "Archivo Deck", "Space Grotesk Deck", system-ui, sans-serif;
   --tf-text:    "Source Sans 3 Deck", "Segoe UI", system-ui, sans-serif;
   --tf-mono:    "JetBrains Mono Deck", "Cascadia Mono", Consolas, monospace;
   --tf-display-weight: 700;
-  --tf-display-vars: "wdth" 88;     /* uzun Turkce basliklar icin daralt */
+  --tf-display-vars: "wdth" 88;     /* uzun Türkçe başlıklar için daralt */
   --tf-display-tracking: -0.015em;
 }
 
-/* KLASIK — mevcut destenin korunmus hali; en guvenli secim */
+/* KLASİK — mevcut destenin korunmuş hali; en güvenli seçim */
 [data-type-pair="klasik"] {
   --tf-display: "Source Serif 4 Deck", Georgia, serif;
   --tf-text:    "Source Sans 3 Deck", "Segoe UI", system-ui, sans-serif;
@@ -174,7 +174,7 @@
 }
 
 /* ===========================================================================
-   4. ROL SINIFLARI + SAYISAL DAVRANIS
+   4. ROL SINIFLARI + SAYISAL DAVRANIŞ
    =========================================================================== */
 .tf-display {
   font-family: var(--tf-display);
@@ -191,44 +191,44 @@
 }
 .tf-mono { font-family: var(--tf-mono); font-variant-ligatures: none; }
 
-/* Tablo/grafik rakamlari: sabit genislik + dilimli sifir.
-   Big Shoulders ve Fraunces'te tnum YOKTUR — sayi sutunlarinda
+/* Tablo/grafik rakamları: sabit genişlik + dilimli sıfır.
+   Big Shoulders ve Fraunces'te tnum YOKTUR — sayı sütunlarında
    KULLANMA (bkz. references/typeface-system.md). */
 .tf-tabular { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
 .tf-zero    { font-feature-settings: "tnum" 1, "lnum" 1, "zero" 1; }
 .tf-oldstyle{ font-variant-numeric: oldstyle-nums; }
 .tf-frac    { font-variant-numeric: diagonal-fractions; }
 
-/* Sayi sutunlari her zaman hizali olsun */
+/* Sayı sütunları her zaman hizalı olsun */
 table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lining-nums; text-align: right; }
 
 /* ===========================================================================
 /* ===========================================================================
-   5. GORUNTU TIPI MUAMELELERI
+   5. GÖRÜNTÜ TİPİ MUAMELELERİ
    ---------------------------------------------------------------------------
-   KURALLAR (belgede de yazili):
-     - YALNIZ goruntu boyutunda: >= 64px. Govde metnine ASLA.
-     - YALNIZ baslikta (h1/h2 veya .tf-display).
-     - Muameleden SONRA da zemin kontrasti korunur.
-     - prefers-reduced-motion ve [data-export] altinda STATIK ve okunur.
-     - Hareketli muamelede parlaklik salinimi +-%15'i gecmez.
+   KURALLAR (belgede de yazılı):
+     - YALNIZ görüntü boyutunda: >= 64px. Gövde metnine ASLA.
+     - YALNIZ başlıkta (h1/h2 veya .tf-display).
+     - Muameleden SONRA da zemin kontrastı korunur.
+     - prefers-reduced-motion ve [data-export] altında STATİK ve okunur.
+     - Hareketli muamelede parlaklık salınımı +-%15'i geçmez.
 
-   ASAMALI GELISTIRME:
-     background-clip:text desteklenmiyorsa ya da JS calismiyorsa metin
-     DUZ ve tam kontrastli kalir — hicbir muamele metni gorunmez yapmaz.
+   AŞAMALI GELİŞTİRME:
+     background-clip:text desteklenmiyorsa ya da JS çalışmıyorsa metin
+     DÜZ ve tam kontrastlı kalır — hiçbir muamele metni görünmez yapmaz.
 
    ---------------------------------------------------------------------------
-   BOYAMA SIRASI TUZAGI (canli hata ayiklama turuyla odendi)
-   `background-clip: text` dolgusu ARKA PLAN katmanindadir; text-shadow ise
-   metin katmaninda, yani DOLGUNUN USTUNDE cizilir. Bu yuzden sert kenarli
-   (blursuz, yuksek alfali) bir text-shadow, kirpilmis dolguyu BOYAR ve
-   muameleyi yok eder — gravur'de olcum bunu 2.24:1 medyan olarak yakaladi.
-   KURAL: kirpilmis dolgu kullanan her muamelede golge `filter: drop-shadow()`
-   ile verilir (bu, birlesik sonuca uygulanir, dolguyu ezmez). text-shadow
-   yalnizca KATI dolgulu muamelelerde (gravur) mesrudur.
+   BOYAMA SIRASI TUZAĞI (canlı hata ayıklama turuyla ödendi)
+   `background-clip: text` dolgusu ARKA PLAN katmanındadır; text-shadow ise
+   metin katmanında, yani DOLGUNUN ÜSTÜNDE çizilir. Bu yüzden sert kenarlı
+   (blursuz, yüksek alfalı) bir text-shadow, kırpılmış dolguyu BOYAR ve
+   muameleyi yok eder — gravür'de ölçüm bunu 2.24:1 medyan olarak yakaladı.
+   KURAL: kırpılmış dolgu kullanan her muamelede gölge `filter: drop-shadow()`
+   ile verilir (bu, birleşik sonuca uygulanır, dolguyu ezmez). text-shadow
+   yalnızca KATI dolgulu muamelelerde (gravür) meşrudur.
    =========================================================================== */
 
-/* Ortak taban — her .tip-* once DUZ ve okunur metindir. */
+/* Ortak taban — her .tip-* önce DÜZ ve okunur metindir. */
 [class*="tip-"] {
   color: var(--tip-ink);
   -webkit-text-fill-color: currentColor;
@@ -236,19 +236,19 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
   --tip-golge: 0 0.018em 0.05em rgba(0, 0, 0, calc(0.40 * var(--tip-siddet)));
 }
 
-/* Zemin uyarlamasi: dolgu jetonlari koyu/acik zemine gore secilir.
-   Varsayilan = koyu zemin (destenin cogunlugu). JS otomatik dogrular. */
+/* Zemin uyarlaması: dolgu jetonları koyu/açık zemine göre seçilir.
+   Varsayılan = koyu zemin (destenin çoğunluğu). JS otomatik doğrular. */
 .tip-on-light { --tip-surface: light; }
 .tip-on-dark  { --tip-surface: dark; }
 
 /* ---------------------------------------------------------------------------
-   5.1  .tip-ay — AY / KRATERLI
-   Fizik: alcak gunes, TEK yon. Kraterin isiga BAKAN ic duvari golgede,
-   TAM KARSI ic duvari aydinlik, yukseltilmis dis kenar isik tarafinda
-   parlak. Boylece parlak kenar ile ic golge karsi yonlerdedir — ayni dil
-   lunar-descent sahnesindekiyle aynidir.
-   Tohumlu krater alani JS ile --tip-ay-kraterler'e yazilir; asagidaki
-   varsayilan alan JS'siz de calisir.
+   5.1  .tip-ay — AY / KRATERLİ
+   Fizik: alçak güneş, TEK yön. Kraterin ışığa BAKAN iç duvarı gölgede,
+   TAM KARŞI iç duvarı aydınlık, yükseltilmiş dış kenar ışık tarafında
+   parlak. Böylece parlak kenar ile iç gölge karşı yönlerdedir — aynı dil
+   lunar-descent sahnesindekiyle aynıdır.
+   Tohumlu krater alanı JS ile --tip-ay-kraterler'e yazılır; aşağıdaki
+   varsayılan alan JS'siz de çalışır.
 --------------------------------------------------------------------------- */
 .tip-ay {
   --tip-ay-taban: var(--tip-ink);
@@ -274,7 +274,7 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
     radial-gradient(circle at 63% 88%, rgba(0,0,0,.08) 0 .5%, transparent .7%),
     radial-gradient(circle at 82% 72%, rgba(0,0,0,.10) 0 .6%, transparent .8%),
     radial-gradient(circle at 95% 18%, rgba(0,0,0,.09) 0 .5%, transparent .7%);
-  /* tum yuzeye alcak gunes egimi — isigin geldigi yon aydinlik */
+  /* tüm yüzeye alçak güneş eğimi — ışığın geldiği yön aydınlık */
   --tip-ay-egim: linear-gradient(
       var(--tip-yon),
       rgba(255,255,255, calc(0.10 * var(--tip-siddet))) 0%,
@@ -282,8 +282,8 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
       rgba(0,0,0, calc(0.11 * var(--tip-siddet))) 100%);
   filter: drop-shadow(var(--tip-golge));
 }
-/* Koyu zeminde krater ic golgesi kontrasti asagi ceker: 4.5:1 tabanini
-   korumak icin golge alfasi dusurulur, aydinlik duvar guclendirilir. */
+/* Koyu zeminde krater iç gölgesi kontrastı aşağı çeker: 4.5:1 tabanını
+   korumak için gölge alfası düşürülür, aydınlık duvar güçlendirilir. */
 .tip-ay.tip-on-dark { --tip-ay-golge: rgba(0, 0, 0, calc(0.26 * var(--tip-siddet))); }
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
   .tip-ay {
@@ -301,10 +301,10 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
 }
 
 /* ---------------------------------------------------------------------------
-   5.2  .tip-gravur — GRAVUR / ALET PANELI
-   Ince ic egim + ust kenar isigi. GNC, uydu, alet paneli konulari.
-   KIRPILMIS DOLGU KULLANMAZ: dolgu KATI murekkeptir, bu yuzden kontrast
-   ham metinle AYNI kalir ve sert kenarli bevel golgeleri mesrudur.
+   5.2  .tip-gravur — GRAVÜR / ALET PANELİ
+   İnce iç eğim + üst kenar ışığı. GNC, uydu, alet paneli konuları.
+   KIRPILMIŞ DOLGU KULLANMAZ: dolgu KATI mürekkeptir, bu yüzden kontrast
+   ham metinle AYNI kalır ve sert kenarlı bevel gölgeleri meşrudur.
 --------------------------------------------------------------------------- */
 .tip-gravur {
   --tip-gravur-ust: rgba(255,255,255, calc(0.62 * var(--tip-siddet)));
@@ -316,23 +316,23 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
      0  0.013em 0 var(--tip-gravur-alt),
      0  0.03em  0.045em rgba(0,0,0, calc(0.28 * var(--tip-siddet)));
 }
-/* Acik zeminde beyaz ust kenar gorunmez olur; kenar isigini koyulastir. */
+/* Açık zeminde beyaz üst kenar görünmez olur; kenar ışığını koyulaştır. */
 .tip-gravur.tip-on-light {
   --tip-gravur-ust: rgba(255,255,255, calc(0.92 * var(--tip-siddet)));
   --tip-gravur-alt: rgba(0,0,0, calc(0.30 * var(--tip-siddet)));
 }
-/* ince kazima cizgisi — alet paneli hissi */
+/* ince kazıma çizgisi — alet paneli hissi */
 .tip-gravur.tip-gravur-cizgi {
   -webkit-text-stroke: 0.006em rgba(0,0,0, calc(0.35 * var(--tip-siddet)));
 }
 
 /* ---------------------------------------------------------------------------
    5.3  .tip-isil — ISIL / PLAZMA
-   Dolgu solar-photosphere GECIS JETONLARINDAN gelir (yeni renk uydurulmaz).
-   KONTRAST KURALI: olcum, rampanin ORTA duraklarinin (seq-3 #A46927) her iki
-   zeminde de 4.5:1'in ALTINDA kaldigini gosterdi (koyu zeminde 4.0:1).
-   Bu yuzden koyu zeminde YALNIZ seq-4..5, acik zeminde YALNIZ seq-1..2
-   kullanilir. Rampanin tamamini kullanmak kontrasti oldururdu.
+   Dolgu solar-photosphere GEÇİŞ JETONLARINDAN gelir (yeni renk uydurulmaz).
+   KONTRAST KURALI: ölçüm, rampanın ORTA duraklarının (seq-3 #A46927) her iki
+   zeminde de 4.5:1'in ALTINDA kaldığını gösterdi (koyu zeminde 4.0:1).
+   Bu yüzden koyu zeminde YALNIZ seq-4..5, açık zeminde YALNIZ seq-1..2
+   kullanılır. Rampanın tamamını kullanmak kontrastı öldürürdü.
 --------------------------------------------------------------------------- */
 .tip-isil {
   --isil-1: var(--ramp-seq-1, #4A1002);
@@ -340,13 +340,13 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
   --isil-3: var(--ramp-seq-3, #A46927);
   --isil-4: var(--ramp-seq-4, #D2953A);
   --isil-5: var(--ramp-seq-5, #FFC24D);
-  /* varsayilan: koyu zemin -> rampanin EN PARLAK iki duragi */
+  /* varsayılan: koyu zemin -> rampanın EN PARLAK iki durağı */
   --tip-isil-dolgu: linear-gradient(
       var(--tip-yon), var(--isil-5) 0%, var(--isil-4) 100%);
   filter: drop-shadow(var(--tip-golge));
 }
 .tip-isil.tip-on-light {
-  /* acik zemin -> rampanin EN KOYU iki duragi */
+  /* açık zemin -> rampanın EN KOYU iki durağı */
   --tip-isil-dolgu: linear-gradient(
       var(--tip-yon), var(--isil-2) 0%, var(--isil-1) 100%);
   --tip-golge: 0 0.015em 0.04em rgba(0,0,0, calc(0.16 * var(--tip-siddet)));
@@ -360,7 +360,7 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
     -webkit-text-fill-color: transparent;
   }
 }
-/* isi titresimi — parlaklik salinimi +-%4 (belge siniri %15) */
+/* ısı titreşimi — parlaklık salınımı +-%4 (belge sınırı %15) */
 @media (prefers-reduced-motion: no-preference) {
   .tip-isil.tip-canli { animation: tip-isil-nabiz 5.5s ease-in-out infinite; }
 }
@@ -371,25 +371,25 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
 
 /* ---------------------------------------------------------------------------
    5.4  .tip-yildiz — YILDIZ ALANI
-   DURUSTLUK NOTU: gercek bir gece-gogu dolgusu (koyu zemin + seyrek parlak
-   nokta) harflerin ic kontrastini oldurur. Bu yuzden metnin ICI PARLAK
-   kalir; nebula dokusu ve yildizlar bu parlak taban UZERINDE modulasyon
-   yapar. aurora-boreal jetonlariyla uyumlu.
-   Olcum: nebula alfalari, taban parlakligini 4.5:1'in altina dusurmeyecek
-   sekilde sinirlandirilmistir.
+   DÜRÜSTLÜK NOTU: gerçek bir gece-göğü dolgusu (koyu zemin + seyrek parlak
+   nokta) harflerin iç kontrastını öldürür. Bu yüzden metnin İÇİ PARLAK
+   kalır; nebula dokusu ve yıldızlar bu parlak taban ÜZERİNDE modülasyon
+   yapar. aurora-boreal jetonlarıyla uyumlu.
+   Ölçüm: nebula alfaları, taban parlaklığını 4.5:1'in altına düşürmeyecek
+   şekilde sınırlandırılmıştır.
 --------------------------------------------------------------------------- */
 .tip-yildiz {
-  /* TABAN, PALET JETONUNDAN GELMEZ. Olcum sirasinda ogrenildi: palette-library
-     `:root` varsayilani oat-cocoa'dir ve --color-data-1 koyu zeytindir
-     (#617552); tabani oradan almak medyan kontrasti 4.15:1'e dusuruyordu.
-     Palet veri jetonlari GRAFIK kategorileri icin ayarlidir, metin-zemin
-     kontrasti icin degil. Bu yuzden taban HER ZAMAN --tip-ink'tir; palet
-     yalnizca nebulayi SINIRLI alfayla renklendirir. */
-  /* Taban SAF murekkep DEGIL, hafifce tonlanmis murekkeptir: koyu zeminde
-     murekkep zaten neredeyse beyazdir ve BEYAZ yildizlar uzerinde kaybolur.
-     Taban %20 nebula tonuyla asagi cekilir, "derin uzay" lekeleri tonal
-     degisim yaratir, yildizlar saf beyaz kalir ve boylece PARLAR.
-     Kararma alfasi 0.22 ile sinirli: olculen p05 kontrasti 4.5:1 uzerinde. */
+  /* TABAN, PALET JETONUNDAN GELMEZ. Ölçüm sırasında öğrenildi: palette-library
+     `:root` varsayılanı oat-cocoa'dır ve --color-data-1 koyu zeytindir
+     (#617552); tabanı oradan almak medyan kontrastı 4.15:1'e düşürüyordu.
+     Palet veri jetonları GRAFİK kategorileri için ayarlıdır, metin-zemin
+     kontrastı için değil. Bu yüzden taban HER ZAMAN --tip-ink'tir; palet
+     yalnızca nebulayı SINIRLI alfayla renklendirir. */
+  /* Taban SAF mürekkep DEĞİL, hafifçe tonlanmış mürekkeptir: koyu zeminde
+     mürekkep zaten neredeyse beyazdır ve BEYAZ yıldızlar üzerinde kaybolur.
+     Taban %20 nebula tonuyla aşağı çekilir, "derin uzay" lekeleri tonal
+     değişim yaratır, yıldızlar saf beyaz kalır ve böylece PARLAR.
+     Kararma alfası 0.22 ile sınırlı: ölçülen p05 kontrastı 4.5:1 üzerinde. */
   --yildiz-nebula-a: var(--color-data-3, #CACFF2);
   --yildiz-nebula-b: var(--color-data-4, #75D2CC);
   --yildiz-taban: color-mix(in srgb, var(--tip-ink) 80%, var(--yildiz-nebula-b));
@@ -415,9 +415,9 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
   filter: drop-shadow(var(--tip-golge));
 }
 .tip-yildiz.tip-on-light {
-  /* acik zeminde taban koyu; nebula ve yildizlar hafifce acar */
-  /* Acik zeminde murekkep zaten KOYU: beyaz yildizlar dogal olarak parlar,
-     bu yuzden taban saf murekkeptir. */
+  /* açık zeminde taban koyu; nebula ve yıldızlar hafifçe açar */
+  /* Açık zeminde mürekkep zaten KOYU: beyaz yıldızlar doğal olarak parlar,
+     bu yüzden taban saf mürekkeptir. */
   --yildiz-taban: var(--tip-ink);
   --tip-yildiz-nebula:
     radial-gradient(ellipse 42% 60% at 22% 30%, rgba(255,255,255,.16) 0%, transparent 70%),
@@ -445,11 +445,11 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
 }
 
 /* ---------------------------------------------------------------------------
-   5.5  .tip-baski — BASKI IZI / ARSIV
-   Hafif murekkep yayilmasi + ince kagit dokusu. Dolgu kati murekkep
-   tonundadir; kontrast pratikte degismez. Jeodezi ve arsiv temalari.
-   Murekkep yayilmasi drop-shadow ile verilir — text-shadow kullanilsaydi
-   kagit dokusunu ezerdi (bkz. boyama sirasi tuzagi).
+   5.5  .tip-baski — BASKI İZİ / ARŞİV
+   Hafif mürekkep yayılması + ince kâğıt dokusu. Dolgu katı mürekkep
+   tonundadır; kontrast pratikte değişmez. Jeodezi ve arşiv temaları.
+   Mürekkep yayılması drop-shadow ile verilir — text-shadow kullanılsaydı
+   kâğıt dokusunu ezerdi (bkz. boyama sırası tuzağı).
 --------------------------------------------------------------------------- */
 .tip-baski {
   --tip-baski-yayilma: calc(0.010em * var(--tip-siddet));
@@ -460,7 +460,7 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
   .tip-baski {
     background-image:
-      /* kagit dokusu — cok ince, +-%6 luminans */
+      /* kâğıt dokusu — çok ince, +-%6 luminans */
       repeating-linear-gradient(94deg,
         rgba(0,0,0,.055) 0 0.6px, transparent 0.6px 2.4px),
       repeating-linear-gradient(3deg,
@@ -473,9 +473,9 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
 }
 
 /* ---------------------------------------------------------------------------
-   5.6  .tip-buz — BUZ / KIRAGI
+   5.6  .tip-buz — BUZ / KIRAĞI
    Kristal kenar. Ice giant / kriyojenik konular.
-   Koyu zeminde parlak soguk dolgu; acik zeminde koyu soguk dolgu.
+   Koyu zeminde parlak soğuk dolgu; açık zeminde koyu soğuk dolgu.
 --------------------------------------------------------------------------- */
 .tip-buz {
   --buz-1: #EAF6FB;
@@ -512,14 +512,14 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
 
 
 /* ===========================================================================
-   6. GUVENLIK KAPILARI
+   6. GÜVENLİK KAPILARI
    =========================================================================== */
 
-/* 6.1 Hareket kapali / disa aktarim: TUM muameleler statik.
-   Gorunum korunur, animasyon durur. */
+/* 6.1 Hareket kapalı / dışa aktarım: TÜM muameleler statik.
+   Görünüm korunur, animasyon durur. */
 @media (prefers-reduced-motion: reduce) {
-  /* Hareket durur; GORUNUM korunur. `filter` sifirlanamaz: muamelelerin
-     golgesi artik orada yasiyor (bkz. boyama sirasi tuzagi). */
+  /* Hareket durur; GÖRÜNÜM korunur. `filter` sıfırlanamaz: muamelelerin
+     gölgesi artık orada yaşıyor (bkz. boyama sırası tuzağı). */
   [class*="tip-"] { animation: none !important; transition: none !important; }
 }
 [data-export] [class*="tip-"],
@@ -528,8 +528,8 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
   transition: none !important;
 }
 
-/* 6.2 JS "cok kucuk" dedi (>=64px kurali ihlali) -> muamele SOKULUR,
-   metin kati ve tam kontrastli kalir. */
+/* 6.2 JS "çok küçük" dedi (>=64px kuralı ihlali) -> muamele SÖKÜLÜR,
+   metin katı ve tam kontrastlı kalır. */
 [class*="tip-"][data-tip-off] {
   background-image: none !important;
   -webkit-text-fill-color: currentColor !important;
@@ -539,14 +539,14 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
   animation: none !important;
 }
 
-/* 6.3 Yalnizca dev baslik damgasi: kontrast olcumunde 4.5:1'in altinda
-   kalan muameleler bu damgayi tasir ve <96px'te kendini sokar.
-   (JS boyutu olcup data-tip-off ekler.) */
+/* 6.3 Yalnızca dev başlık damgası: kontrast ölçümünde 4.5:1'in altında
+   kalan muameleler bu damgayı taşır ve <96px'te kendini söker.
+   (JS boyutu ölçüp data-tip-off ekler.) */
 [class*="tip-"][data-tip-only-hero]::after {
   content: "";
 }
 
-/* 6.4 Yazdirma: dokular murekkep yer; kati metne don. */
+/* 6.4 Yazdırma: dokular mürekkep yer; katı metne dön. */
 @media print {
   [class*="tip-"] {
     background-image: none !important;
@@ -556,12 +556,12 @@ table td.num, table th.num, .tf-num-col { font-variant-numeric: tabular-nums lin
   }
 }
 
-/* 6.5 Govde metnine muamele uygulanirsa gorunur uyari (gelistirme yardimi).
-   ETIKETE gore degil, ROLE gore karar verilir: bir <p> pekala dev bir
-   ifade satiri olabilir. Bu yuzden uyari yalnizca muamele HEM govde
-   etiketinde HEM de .tf-display rolu olmadan kullanildiginda cikar; boyut
+/* 6.5 Gövde metnine muamele uygulanırsa görünür uyarı (geliştirme yardımı).
+   ETİKETE göre değil, ROLE göre karar verilir: bir <p> pekâlâ dev bir
+   ifade satırı olabilir. Bu yüzden uyarı yalnızca muamele HEM gövde
+   etiketinde HEM de .tf-display rolü olmadan kullanıldığında çıkar; boyut
    denetimini JS yapar (data-tip-off).
-   Kapatmak icin: <html data-tip-lint="kapali">                        */
+   Kapatmak için: <html data-tip-lint="kapali">                        */
 :root:not([data-tip-lint="kapali"]) :is(p, li, td, small)[class*="tip-"]:not(.tf-display):not([data-tip]) {
   outline: 2px dashed #E05A63;
   outline-offset: 4px;
