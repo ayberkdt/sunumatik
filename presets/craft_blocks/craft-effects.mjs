@@ -3,6 +3,8 @@
 // DONMUŞ API:
 //   buildEngineFX({ scale = 1, tip = 'vakum', seed = 1, palette } = {})
 //     → { group, update(dt, { gaz, atesle }), dispose() }
+//   (setPalette(palette) EK bir kolaylıktır — donmuş üçlü aynen korunur;
+//    dış tüketiciler varlığını `fx.setPalette?.(p)` ile yoklamalıdır.)
 //
 //   • group: THREE.Group — orijin MOTOR AĞZINDA, alev −X yönünde uzar
 //     (craft-blocks eksen sözleşmesiyle aynı: −X = egzoz).
@@ -51,14 +53,27 @@ const clamp01 = (x) => Math.min(1, Math.max(0, x));
 const TIPLER = Object.freeze({
   // vakum: genleşme oranı yüksek, huzme geniş açılır; şal ÇOK geniş ve soluk.
   vakum:    { boy: 0.95, agiz: 0.100, cikis: 0.21, isik: 1.0,
-              sal: { boy: 1.15, agiz: 0.13, cikis: 0.55, op: 0.14 }, elmas: false },
+              sal: { boy: 1.15, agiz: 0.13, cikis: 0.55, op: 0.20 }, elmas: false,
+              toz: null },
   // atmosfer: dış basınç huzmeyi sıkar → dar koni + mach elması hücreleri.
   atmosfer: { boy: 1.35, agiz: 0.085, cikis: 0.105, isik: 1.15,
-              sal: null, elmas: true },
-  // hover: iniş motoru; kısa/küt huzme, zemin etkisine uygun geniş şal.
+              sal: null, elmas: true, toz: null },
+  // hover: iniş motoru; kısa/küt huzme, zemin etkisine uygun geniş şal +
+  // huzmenin çarptığı düzlemde dışa savrulan toz/yansıma yıkaması.
   hover:    { boy: 0.50, agiz: 0.115, cikis: 0.22, isik: 1.3,
-              sal: { boy: 0.55, agiz: 0.15, cikis: 0.34, op: 0.16 }, elmas: false },
+              sal: { boy: 0.55, agiz: 0.15, cikis: 0.34, op: 0.22 }, elmas: false,
+              toz: { yaricap: 0.95, op: 0.30 } },
 });
+
+/* ------------------------------------------------------------------ */
+/* Ateşleme zaman çizelgesi (saniye, ateşleme kenarından itibaren)     */
+/* ------------------------------------------------------------------ */
+// Ateşleme bir OLAY olarak okunmalı; dört evre ayrı ayrı görülebilir:
+//   0 → ON_AKIM      ignitör ön-akımı: kıvılcım tacı + cılız torç, basınç yok
+//   ON_AKIM          SERT FLAŞ: parlama + açılan basınç halkası + kıvılcım patlaması
+//   ON_AKIM → ~0.35  plüm açılır (basınç yükselir, kısa aşım)
+//   ~0.35 →          kararlı yanma (titreşim bandına oturur)
+const ON_AKIM = 0.055;
 
 /* ------------------------------------------------------------------ */
 /* Doku üretimi (CanvasTexture — deterministik gradyanlar, resim yok)  */
@@ -110,18 +125,28 @@ function radyalDoku(merkezRenk) {
 
 export function buildEngineFX({ scale = 1, tip = 'vakum', seed = 1, palette } = {}) {
   const T = TIPLER[tip] || TIPLER.vakum;
-  const p = { ...CRAFT_PALETTE, ...(palette || {}) };
   const rng = mulberry32((seed | 0) || 1);
   const s = scale;
 
   // Renk ailesi: beyaz-sıcak çekirdek → palet vurgusuna soğuyan kuyruk.
-  const accent = new THREE.Color(p.accent);
-  const sicak  = new THREE.Color(0xffdcb2).lerp(accent, 0.30);  // ağız yakını
-  const orta   = new THREE.Color(0xffa25a).lerp(accent, 0.45);  // gövde
-  const kuyruk = new THREE.Color(0xb0561e).lerp(accent, 0.55);  // uç
-  const isikRenk = new THREE.Color(0xffb46b).lerp(accent, 0.25);
+  // ACES + exposure 1.42 altında additive katmanların GRİYE yıkanmaması için
+  // ara tonlar doygun tutulur (ışık disiplini: beyazla değil HUE ile parlat).
+  const sicak  = new THREE.Color();     // ağız yakını
+  const orta   = new THREE.Color();     // gövde
+  const kuyruk = new THREE.Color();     // uç
+  const isikRenk = new THREE.Color();
   const korSoguk = new THREE.Color(0x8f1e08);                    // çan: derin kızıl
   const korSicak = new THREE.Color(0xffc27a);                    // çan: sarı-ak
+
+  function renkleriKur(pal) {
+    const p = { ...CRAFT_PALETTE, ...(pal || {}) };
+    const accent = new THREE.Color(p.accent);
+    sicak.set(0xfff0d2).lerp(accent, 0.20);
+    orta.set(0xff8f3c).lerp(accent, 0.34);
+    kuyruk.set(0xc2481a).lerp(accent, 0.44);
+    isikRenk.set(0xffb46b).lerp(accent, 0.25);
+  }
+  renkleriKur(palette);
 
   const group = new THREE.Group();
   group.name = `craft-fx:${tip}`;
@@ -143,13 +168,20 @@ export function buildEngineFX({ scale = 1, tip = 'vakum', seed = 1, palette } = 
   }
 
   /* --- 1) Çekirdek: parlak iç koni (gradyan doku, additive) --------- */
-  const alevTex = iz(dogrusalDoku([
-    [0.00, 'rgba(255,255,255,1)'],
-    [0.22, rgba(sicak, 0.95)],
-    [0.50, rgba(orta, 0.70)],
-    [0.80, rgba(kuyruk, 0.34)],
-    [1.00, 'rgba(0,0,0,0)'],                  // additive'de siyah = görünmez
-  ]));
+  // Dokular palet değişiminde YENİDEN üretilir (renk gradyanı palete bağlı);
+  // bu yüzden kaynaklar listesine değil kendi değişkenlerine bağlanırlar.
+  let alevTex = null, flasTex = null;
+  function alevDokusu() {
+    return dogrusalDoku([
+      [0.00, 'rgba(255,255,255,1)'],
+      [0.10, rgba(sicak, 1.0)],
+      [0.34, rgba(orta, 0.88)],
+      [0.66, rgba(kuyruk, 0.46)],
+      [0.88, rgba(kuyruk, 0.14)],
+      [1.00, 'rgba(0,0,0,0)'],                // additive'de siyah = görünmez
+    ]);
+  }
+  alevTex = alevDokusu();
   const cekMat = iz(new THREE.MeshBasicMaterial({
     map: alevTex, transparent: true, opacity: 0,
     blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
@@ -196,8 +228,13 @@ export function buildEngineFX({ scale = 1, tip = 'vakum', seed = 1, palette } = 
     group.add(sal);
   }
 
+  /* --- 3b) Zemin yıkaması ('hover'): huzmenin çarptığı düzlemde toz -- */
+  // Yalnız iniş motorunda: plüm ucunda, ekseni dik kesen additive disk —
+  // dışa savrulan toz / zeminden gelen yansıma hissi.
+  let toz = null, tozMat = null;
+
   /* --- 4) Ateşleme geçici rejimi: flaş + halka + kıvılcım ----------- */
-  const flasTex = iz(radyalDoku(sicak));
+  flasTex = radyalDoku(sicak);
   const flasMat = iz(new THREE.SpriteMaterial({
     map: flasTex, transparent: true, opacity: 0,
     blending: THREE.AdditiveBlending, depthWrite: false,
@@ -250,6 +287,21 @@ export function buildEngineFX({ scale = 1, tip = 'vakum', seed = 1, palette } = 
   kivilcim.renderOrder = 12;
   group.add(kivilcim);
 
+  if (T.toz) {
+    const tozGeo = iz(new THREE.CircleGeometry(1, 44));
+    tozGeo.rotateY(Math.PI / 2);              // disk normali ±X — huzmeye dik
+    tozMat = iz(new THREE.MeshBasicMaterial({
+      map: flasTex, color: 0xffffff, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+    }));
+    toz = new THREE.Mesh(tozGeo, tozMat);
+    toz.userData.fx = true;
+    toz.frustumCulled = false;
+    toz.visible = false;
+    toz.renderOrder = 7;                      // alevin ALTINDA kalsın
+    group.add(toz);
+  }
+
   /* --- 6) Çan kızarması: motor çanının iç ağzına oturan emissive koni */
   // craft-blocks malzemelerine dokunmaz; bu grup içinde ayrı mesh'tir.
   const korDerinlik = T.agiz * 0.9 * s;
@@ -268,7 +320,9 @@ export function buildEngineFX({ scale = 1, tip = 'vakum', seed = 1, palette } = 
   group.add(canKor);
 
   /* --- 5) Işık: tek PointLight, alev rengi, decay 2 ------------------ */
-  const isik = new THREE.PointLight(isikRenk, 0, 9 * s, 2);
+  // Erim, huzme boyunun birkaç katı: zemine/araca DÜŞEN ışık okunmalı
+  // (menzil kısa tutulursa alev parlıyor ama ortamı aydınlatmıyordu).
+  const isik = new THREE.PointLight(isikRenk, 0, 16 * s, 2);
   isik.position.x = -0.35 * T.boy * s;
   group.add(isik);
 
@@ -305,14 +359,22 @@ export function buildEngineFX({ scale = 1, tip = 'vakum', seed = 1, palette } = 
     oncekiAtes = ates;
     if (igT !== Infinity) igT += dt;
 
-    // Basınç dinamiği: hızlı basma (~70 ms), sönümde ~0.5 sn görünür kuyruk.
-    const hedef = ates ? gaz : 0;
+    // Basınç dinamiği: ön-akımda yalnız cılız torç, flaştan sonra hızlı basma
+    // (~70 ms); sönümde ~0.5 sn görünür kuyruk.
+    const onAkimda = ates && igT < ON_AKIM;
+    const hedef = ates ? (onAkimda ? gaz * 0.05 : gaz) : 0;
     const tau = hedef > basinc ? 0.07 : 0.16;
     basinc += (hedef - basinc) * (1 - Math.exp(-dt / tau));
 
-    // Ateşleme geçici rejimi: flaş zarfı + kısa basınçlanma aşımı.
-    const flasEnv = ates && igT < 0.6 ? Math.exp(-igT / 0.09) : 0;
-    const asim = ates && igT < 0.4 ? 0.3 * gaz * Math.exp(-igT / 0.12) : 0;
+    // Ateşleme geçici rejimi: flaş ZARFI — tepe ON_AKIM ânında; öncesi keskin
+    // yükseliş, sonrası sert düşüş + kısa kor kuyruğu (C0-sürekli, tepe 1.12).
+    const dF = igT - ON_AKIM;
+    const flasEnv = !ates || igT > 1.2 ? 0
+      : dF < 0 ? 1.12 * Math.exp(-((dF / 0.028) ** 2))
+               : 0.82 * Math.exp(-((dF / 0.055) ** 2)) + 0.30 * Math.exp(-dF / 0.19);
+    // Basınçlanma aşımı: sıfırdan doğar (pop yok), ~40 ms sonra tepe yapar.
+    const asim = ates && dF > 0 && dF < 0.6
+      ? 0.34 * gaz * Math.exp(-dF / 0.13) * (1 - Math.exp(-dF / 0.03)) : 0;
     const pG = Math.min(basinc + asim, 1.25); // görsel basınç (aşım payıyla)
     const pN = Math.min(pG, 1);
 
@@ -335,14 +397,23 @@ export function buildEngineFX({ scale = 1, tip = 'vakum', seed = 1, palette } = 
     const boyF = (0.32 + 0.78 * pN) * (1 + 0.05 * gurultu(t * 7 + 17));
     const radF = 0.55 + 0.45 * pN;
     cekirdek.scale.set(boyF, radF, radF);
-    cekMat.opacity = clamp01(0.8 * pN * parla + 0.35 * flasEnv);
+    cekMat.opacity = clamp01(0.95 * pN * parla + 0.35 * flasEnv);
     icAlev.scale.set(boyF * 1.05, radF, radF);
-    icMat.opacity = clamp01(0.95 * pN * parla + 0.5 * flasEnv);
+    icMat.opacity = clamp01(1.0 * pN * parla + 0.5 * flasEnv);
 
     // Dış genleşme şalı.
     if (sal) {
       sal.scale.set(boyF * 0.95, 0.6 + 0.4 * pN, 0.6 + 0.4 * pN);
       salMat.opacity = T.sal.op * pN * parla;
+    }
+
+    // Zemin yıkaması (hover): plüm ucunda, gazla genişleyip parlayan disk.
+    if (toz) {
+      const yayilma = T.toz.yaricap * s * (0.45 + 0.85 * pN) * (1 + 0.04 * gurultu(t * 5 + 3));
+      toz.scale.set(1, yayilma, yayilma);
+      toz.position.x = -T.boy * s * boyF * 0.92;
+      tozMat.opacity = clamp01(T.toz.op * pN * parla + 0.30 * flasEnv);
+      toz.visible = tozMat.opacity > 0.004;
     }
 
     // Mach elmasları: gazla sayı ve aralık değişir; uca doğru küçülürler.
@@ -370,22 +441,31 @@ export function buildEngineFX({ scale = 1, tip = 'vakum', seed = 1, palette } = 
       elmasMat.opacity = clamp01(0.85 * pN * parla);
     }
 
-    // Ateşleme flaşı (~0.3 sn) + açılan halka + kıvılcım patlaması.
+    // Ateşleme olayı: (a) ön-akım kıvılcım tacı, (b) sert flaş,
+    // (c) açılan basınç halkası, (d) dışa patlayan kıvılcımlar.
     if (flasEnv > 0.004) {
       flas.visible = true;
-      const acilim = 1 - Math.exp(-igT / 0.05);
-      flas.scale.setScalar(s * (0.5 + 2.0 * acilim));
-      flasMat.opacity = clamp01(1.2 * flasEnv);
+      const acilim = 1 - Math.exp(-Math.max(0, igT) / 0.055);
+      flas.scale.setScalar(s * (0.55 + 3.1 * acilim));
+      flasMat.opacity = clamp01(1.15 * flasEnv);
     } else flas.visible = false;
-    if (ates && igT < 0.7) {
+
+    if (ates && dF > 0 && dF < 0.8) {          // halka yalnız flaştan SONRA
       halka.visible = true;
-      halka.scale.setScalar(s * (0.18 + 2.6 * igT));
-      halkaMat.opacity = 0.85 * Math.exp(-igT / 0.13);
+      halka.scale.setScalar(s * (0.16 + 3.2 * dF));
+      halkaMat.opacity = 0.9 * Math.exp(-dF / 0.14);
+    } else halka.visible = false;
+
+    if (ates && igT < 0.85) {
       kivilcim.visible = true;
-      kivilcim.scale.setScalar(s * 1.8 * (0.06 + igT));
-      kivMat.opacity = Math.exp(-igT / 0.22);
-      kivMat.size = 0.05 * s * Math.max(0.2, 1 - igT);
-    } else { halka.visible = false; kivilcim.visible = false; }
+      // Ön-akımda ağızda kıpırdayan ufak taç; flaştan sonra dışa savrulma.
+      const yay = onAkimda ? 0.10 + 0.55 * igT : 0.13 + 2.1 * dF;
+      kivilcim.scale.setScalar(s * 1.9 * yay);
+      kivMat.opacity = onAkimda
+        ? 0.45 + 0.55 * (igT / ON_AKIM)
+        : Math.exp(-dF / 0.26);
+      kivMat.size = 0.055 * s * Math.max(0.18, 1 - igT * 1.1);
+    } else kivilcim.visible = false;
 
     // Çan kızarması: ısıyla derin kızıldan sarı-aka; hafif titreşimli.
     canKor.visible = isi > 0.02 || pG > 0.02;
@@ -393,15 +473,34 @@ export function buildEngineFX({ scale = 1, tip = 'vakum', seed = 1, palette } = 
     korMat.emissiveIntensity = 3.2 * isi * (1 + 0.1 * flick * Math.min(1, pN * 2));
 
     // Işık: gaz + titreşim + flaş; decay 2 ile makul mesafe sönümü.
-    isik.intensity = s * s * (T.isik * 6.0 * pN * parla + 26 * flasEnv);
+    // Şiddet ölçekle DOĞRUSAL (s² değil): küçük motorlarda ışık yok olmasın —
+    // ateşleme flaşı bir ân için ortamı gerçekten yıkasın.
+    isik.intensity = s * (T.isik * 5.4 * pN * parla + 34 * flasEnv);
+  }
+
+  // Palet değişiminde renk ailesini ve gradyan dokuları yerinde tazeler.
+  // (Donmuş üçlünün dışında EK kolaylık; alev geometrisi yeniden kurulmaz.)
+  function setPalette(pal) {
+    renkleriKur(pal);
+    const eskiAlev = alevTex, eskiFlas = flasTex;
+    alevTex = alevDokusu();
+    flasTex = radyalDoku(sicak);
+    for (const mat of [cekMat, icMat, salMat]) if (mat) { mat.map = alevTex; mat.needsUpdate = true; }
+    for (const mat of [flasMat, kivMat, tozMat]) if (mat) { mat.map = flasTex; mat.needsUpdate = true; }
+    halkaMat.color.copy(sicak);
+    isik.color.copy(isikRenk);
+    if (eskiAlev) eskiAlev.dispose();
+    if (eskiFlas) eskiFlas.dispose();
   }
 
   function dispose() {
     if (group.parent) group.parent.remove(group);
     if (elmaslar) elmaslar.dispose();
     for (const k of kaynaklar) if (k && k.dispose) k.dispose();
+    if (alevTex) alevTex.dispose();
+    if (flasTex) flasTex.dispose();
     isik.dispose();
   }
 
-  return { group, update, dispose };
+  return { group, update, dispose, setPalette };
 }

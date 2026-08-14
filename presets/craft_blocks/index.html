@@ -50,6 +50,13 @@
       font-size: 12px; color: #b9bfcc; user-select: none; }
     #fxPanel input[type="range"] { width: 110px; accent-color: #c9a35c; }
     #atesleBtn.yanik { color: #0c0e14; background: #c9a35c; border-color: #c9a35c; }
+    /* Kamera ipucu — sürükle/tekerlek/pan kısayolları */
+    #ipucu {
+      position: absolute; left: 22px; bottom: 62px; z-index: 5;
+      font-size: 11px; color: #6f7688; letter-spacing: 0.03em; pointer-events: none;
+    }
+    #stage { cursor: grab; }
+    #stage.suruklu { cursor: grabbing; }
   </style>
 </head>
 <body>
@@ -65,8 +72,10 @@
       </select>
       <label class="chk"><input type="checkbox" id="tel"> Tel kafes</label>
       <button id="durdur">Duraklat</button>
+      <button id="tamEkran" title="Tam ekran (F)">⤢ Tam ekran</button>
     </div>
   </header>
+  <div id="ipucu">Sürükle: döndür · Tekerlek: yakınlaş · Sağ tık / iki parmak: kaydır · Çift tık: araca odaklan</div>
   <div id="fxPanel" title="Motor ateşleme efekt sistemi">
     <span class="fx-baslik">Ateşleme</span>
     <select id="fxArac" title="Araç">
@@ -90,7 +99,18 @@
     import * as THREE from 'three';
     import {
       buildOrbiter, buildLander, buildRocket, buildCubesat, buildCapsule, CRAFT_PALETTE,
+      applyCraftPalette,
     } from './craft-blocks.mjs';
+
+    /* ---------- kamera kumandası (yumuşak bağımlılık) ---------- */
+    // OrbitControls vendor'dan gelir (dış ağ YOK; importmap 'three'i çözer).
+    // Yüklenemezse vitrin sabit kameralarla çalışmaya devam eder.
+    let OrbitControls = null;
+    try {
+      ({ OrbitControls } = await import('../moon_advanced/vendor/controls/OrbitControls.js'));
+    } catch (hata) {
+      console.warn('OrbitControls yüklenemedi; kamera kumandası devre dışı.', hata);
+    }
 
     /* ---------- ateşleme efekt sistemi (yumuşak bağımlılık) ---------- */
     // Sözleşme gereği bloklar birbirine sert bağımlı olamaz: import başarısız
@@ -177,6 +197,31 @@
 
     const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 60);
 
+    /* ---------- yörünge kumandası (sürükle / tekerlek / pan) ---------- */
+    // Sınırlar: kamera zeminin ALTINA düşmez (maxPolarAngle), sahneden
+    // kopmaz (maxDistance + maxTargetRadius), araca gömülmez (minDistance).
+    let controls = null;
+    let kameraKirli = false;      // controls 'change' → bir kare daha çiz
+    let gecis = null;             // yumuşak kamera geçişi durumu
+    if (OrbitControls) {
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.075;
+      controls.rotateSpeed = 0.85;
+      controls.zoomSpeed = 0.95;
+      controls.panSpeed = 0.8;
+      controls.minDistance = 0.42;
+      controls.maxDistance = 15;
+      controls.minPolarAngle = 0.10;
+      controls.maxPolarAngle = Math.PI / 2 - 0.045;   // zemin düzleminin üstünde kal
+      controls.maxTargetRadius = 6.0;                 // sehpa alanından uzaklaşma
+      controls.target.set(0, 0.66, 0);
+      const stageEl = host;
+      controls.addEventListener('start', () => { gecis = null; stageEl.classList.add('suruklu'); });
+      controls.addEventListener('end', () => stageEl.classList.remove('suruklu'));
+      controls.addEventListener('change', () => { kameraKirli = true; kareIste(); });
+    }
+
     /* ---------- ateşleme durumu ---------- */
     // Varsayılan tipler mantıksal eşleşmedir: iniş aracı → hover,
     // roket → atmosfer, yörünge aracı / kapsül / küpsat → vakum.
@@ -210,13 +255,23 @@
       // FX aracın çocuğudur; araç sökülmeden önce ayrıca sökülüp sonra geri takılır.
       const fxVardi = !!fx;
       if (fxVardi) fxSok();
-      // Eski araçları söküp kaynakları bırak (görünür yeniden-kurma değil; kullanıcı eylemi).
+      // Eski araçları sök. Malzemeler bir araç içinde ONLARCA mesh tarafından
+      // PAYLAŞILIR (m.body, m.metal, m.panel…); geometriler de yardımcılar
+      // arasında tekrar kullanılabilir. Bu yüzden mesh başına değil, BENZERSİZ
+      // kaynak başına bir kez dispose edilir (Set) ve FX'e ait mesh'ler
+      // (userData.fx) atlanır — onların sahibi craft-effects'tir.
+      const geoler = new Set(), malzemeler = new Set();
       for (const a of araclar) {
-        a.parent.remove(a);
+        if (a.parent) a.parent.remove(a);
         a.traverse((o) => {
-          if (o.isMesh) { o.geometry.dispose(); if (o.material.dispose) o.material.dispose(); }
+          if (!o.isMesh || o.userData.fx) return;
+          if (o.geometry) geoler.add(o.geometry);
+          const mm = Array.isArray(o.material) ? o.material : [o.material];
+          for (const m of mm) if (m) malzemeler.add(m);
         });
       }
+      for (const g of geoler) g.dispose();
+      for (const m of malzemeler) m.dispose();
       araclar = [];
       const p = PALETLER[paletAdi];
       TANIMLAR.forEach((t, i) => {
@@ -233,10 +288,17 @@
         t.agizX = yerelBB.min.x + 0.012;
         yonele(kok, t.yon);
         kok.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-        pivot.add(kok);
         // Yere oturt: yönelimden sonra en alt nokta kaidenin 0.10 üstünde dursun.
+        // ÖLÇÜM PİVOTA EKLEMEDEN ÖNCE yapılır. Box3.setFromObject dünya
+        // uzayında çalışır: kök zaten pivotun çocuğuysa kutuya pivotun KENDİ
+        // yükseltmesi de karışır ve tabanY = 0.15 − (yerelMin + eskiTabanY)
+        // ≈ 0 çıkar; araçlar her yeniden kurmada zemine gömülüp alt parçaları
+        // (bacaklar, motorlar, servis modülü) görünmez olurdu. Ebeveynsizken
+        // ölçmek kutuyu aracın KENDİ çerçevesine sabitler.
+        kok.updateMatrixWorld(true);
         const bb = new THREE.Box3().setFromObject(kok);
         tabanY[i] = 0.15 - bb.min.y;
+        pivot.add(kok);
         pivot.position.y = tabanY[i];
         araclar.push(kok);
         telUygula();
@@ -289,23 +351,62 @@
     const sorgu = new URLSearchParams(location.search);
     const odak = sorgu.get('focus');
     const baslangicPalet = PALETLER[sorgu.get('palet')] ? sorgu.get('palet') : 'obsidyen';
+    let etkinOdak = odak;   // o an çerçevelenen araç ('' → genel bakış)
+
+    // Bir odağın (veya genel bakışın) kamera konumu + bakış hedefi.
+    // Kadrajlar DEĞİŞMEDİ: ?focus= ile açılan kare eskisiyle birebir aynıdır.
+    function odakKadraji(hedefId) {
+      const i = TANIMLAR.findIndex((t) => t.id === hedefId);
+      if (i < 0) {
+        return { poz: new THREE.Vector3(0, 2.0, 6.3), hedef: new THREE.Vector3(0, 0.66, 0) };
+      }
+      const merkez = new THREE.Vector3((i - 2) * ARALIK, pivotlar[i].position.y + 0.05, 0);
+      if (fx && hedefId === fxAracId) {
+        merkez.y -= fxKaldirma() * 0.45;         // alevi de kadraja al
+        return { poz: new THREE.Vector3(merkez.x + 1.3, merkez.y + 0.7, 2.2), hedef: merkez };
+      }
+      return { poz: new THREE.Vector3(merkez.x + 1.0, merkez.y + 0.55, 1.6), hedef: merkez };
+    }
+
+    // Anlık yerleştirme (açılış / donmuş mod): geçiş yok, tek kare.
     function kamerayiKur() {
       // FX aktifken açık odak yoksa ateşlenen araca çerçevelenir (alev dahil).
-      const hedefId = odak || (fx ? fxAracId : null);
-      const i = TANIMLAR.findIndex((t) => t.id === hedefId);
-      if (i >= 0) {
-        const merkez = new THREE.Vector3((i - 2) * ARALIK, pivotlar[i].position.y + 0.05, 0);
-        if (fx && hedefId === fxAracId) {
-          merkez.y -= fxKaldirma() * 0.45;       // alevi de kadraja al
-          camera.position.set(merkez.x + 1.3, merkez.y + 0.7, 2.2);
-        } else {
-          camera.position.set(merkez.x + 1.0, merkez.y + 0.55, 1.6);
-        }
-        camera.lookAt(merkez);
-      } else {
-        camera.position.set(0, 2.0, 6.3);
-        camera.lookAt(0, 0.66, 0);
+      const hedefId = etkinOdak || (fx ? fxAracId : null);
+      const k = odakKadraji(hedefId);
+      camera.position.copy(k.poz);
+      if (controls) { controls.target.copy(k.hedef); controls.update(); }
+      else camera.lookAt(k.hedef);
+    }
+
+    // Yumuşak geçiş: konum ve hedef birlikte easeInOutCubic ile taşınır —
+    // anlık zıplama yok. Kullanıcı sürüklemeye başlarsa geçiş iptal olur.
+    function kamerayaGit(hedefId, sure = 0.85) {
+      const k = odakKadraji(hedefId);
+      if (!controls || donmusMod || azaltilmis) {   // hareket yoksa doğrudan otur
+        camera.position.copy(k.poz);
+        if (controls) { controls.target.copy(k.hedef); controls.update(); }
+        else camera.lookAt(k.hedef);
+        kameraKirli = true;
+        ciz();
+        return;
       }
+      gecis = {
+        p0: camera.position.clone(), p1: k.poz,
+        h0: controls.target.clone(), h1: k.hedef,
+        t: 0, sure,
+      };
+      kareIste();
+    }
+
+    function gecisGuncelle(dt) {
+      if (!gecis) return false;
+      gecis.t = Math.min(gecis.sure, gecis.t + dt);
+      const u = gecis.t / gecis.sure;
+      const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;  // easeInOutCubic
+      camera.position.lerpVectors(gecis.p0, gecis.p1, e);
+      controls.target.lerpVectors(gecis.h0, gecis.h1, e);
+      if (gecis.t >= gecis.sure) gecis = null;
+      return true;
     }
 
     /* ---------- boyutlandırma (bağlanmadan ÖNCE boyut, sözleşme) ---------- */
@@ -327,15 +428,61 @@
     }
     telKutu.addEventListener('change', () => { telUygula(); ciz(); });
 
-    document.querySelector('#palet').addEventListener('change', (e) => {
-      kur(e.target.value); kamerayiKur(); ciz();
-    });
+    // Palet değişimi araçları YENİDEN KURMAZ (webgl-scene-contract §2):
+    // malzeme renkleri yerinde tazelenir — türetilmiş panel çerçevesi dahil.
+    // Böylece sök-tak yolu (ve onunla gelen dispose sınıfı hatalar) hiç
+    // çalışmaz; değişim tek karede ve tahsissiz olur.
+    const paletSec = document.querySelector('#palet');
+    function paletiUygula(ad) {
+      const p = PALETLER[ad] || PALETLER.obsidyen;
+      for (const kok of araclar) applyCraftPalette(kok, p);
+      if (fx) {
+        if (fx.setPalette) fx.setPalette(p);      // alev renk ailesi de tazelensin
+        else { fxTak(); }                          // eski FX sürümü: yalnız FX yeniden kurulur
+      }
+      ciz();
+    }
+    paletSec.addEventListener('change', (e) => paletiUygula(e.target.value));
 
     let calisiyor = true;
     const durButon = document.querySelector('#durdur');
     durButon.addEventListener('click', () => {
       calisiyor = !calisiyor;
       durButon.textContent = calisiyor ? 'Duraklat' : 'Devam';
+      kareIste();
+      ciz();
+    });
+
+    // Sahne zamanı gerçekten akıyor mu? (duraklatılmış / donmuş modda AKMAZ —
+    // bu durumlarda ateşleme ve gaz değişimi deterministik sarma ile gösterilir,
+    // yoksa düğmelere basılınca hiçbir şey olmuyordu.)
+    const zamanAkiyor = () => calisiyor && !donmusMod;
+
+    /* ---------- tam ekran ---------- */
+    const tamEkranBtn = document.querySelector('#tamEkran');
+    function tamEkranEtiket() {
+      const acik = !!document.fullscreenElement;
+      tamEkranBtn.textContent = acik ? '⤡ Çık' : '⤢ Tam ekran';
+      tamEkranBtn.title = acik ? 'Tam ekrandan çık (ESC)' : 'Tam ekran (F)';
+    }
+    function tamEkranDegistir() {
+      if (document.fullscreenElement) document.exitFullscreen?.();
+      else document.documentElement.requestFullscreen?.().catch(() => {});
+    }
+    tamEkranBtn.addEventListener('click', tamEkranDegistir);
+    // ESC ile çıkışta da ikon/etiket senkron kalsın.
+    document.addEventListener('fullscreenchange', () => {
+      tamEkranEtiket();
+      boyutla();
+      kameraKirli = true;
+      ciz();
+    });
+    tamEkranEtiket();
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'f' || e.key === 'F') {
+        if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName || '')) return;
+        tamEkranDegistir();
+      }
     });
 
     // Ateşleme kumandaları.
@@ -347,50 +494,94 @@
       atesleBtn.textContent = fxAtes ? 'Kes' : 'Ateşle';
       atesleBtn.classList.toggle('yanik', fxAtes);
     }
+    // Araç/tip değişiminde FX yeniden kurulur; yanıyorsa kararlı yanmaya
+    // sarılır ki kullanıcı boş bir motora bakmasın.
+    function fxYenidenKur() {
+      if (!fx) return;
+      fxTak();
+      if (fxAtes) fxIleriSar(2.0);
+      kamerayaGit(etkinOdak || fxAracId);      // zıplama değil, kısa geçiş
+    }
     fxAracSec.addEventListener('change', () => {
       fxAracId = fxAracSec.value;
       fxTip = FX_AYAR[fxAracId].tip;
       fxTipSec.value = fxTip;
-      if (fx) { fxTak(); kamerayiKur(); }
+      fxYenidenKur();
       ciz();
     });
     fxTipSec.addEventListener('change', () => {
       fxTip = fxTipSec.value;
-      if (fx) { fxTak(); kamerayiKur(); }
+      fxYenidenKur();
       ciz();
     });
-    gazSurgu.addEventListener('input', () => { fxGaz = parseFloat(gazSurgu.value); });
+    // Gaz sürgüsü ANLIK etki etmeli. Zaman akmıyorken (duraklat / donmuş mod)
+    // hiçbir güncelleme çalışmadığı için sürgü ölüydü: basınç dinamiğini
+    // deterministik olarak oturtup tek kare çiziyoruz.
+    gazSurgu.addEventListener('input', () => {
+      fxGaz = parseFloat(gazSurgu.value);
+      if (!zamanAkiyor()) { fxIleriSar(0.30); ciz(); }
+    });
     atesleBtn.addEventListener('click', () => {
-      if (!fx) { fxTak(); kamerayiKur(); }
+      if (!fx) { fxTak(); kamerayaGit(etkinOdak || fxAracId); }
       fxAtes = !fxAtes;
       atesleEtiket();
-      // Hareket azaltılmışsa animasyon yok: belgelenen orta-yanma tablosu (t=2.0 sn).
-      if (donmusMod && fxAtes) fxIleriSar(2.0);
+      // Zaman akmıyorken (duraklatılmış veya donmuş mod) fx.update hiç
+      // çağrılmıyordu → düğme görsel olarak ÖLÜYDÜ. Ateşlemede belgelenen
+      // orta-yanma tablosuna (t=2.0 sn), kesmede sönüm sonrasına sarıyoruz.
+      if (!zamanAkiyor()) fxIleriSar(fxAtes ? 2.0 : 0.7);
       ciz();
     });
     if (!buildEngineFX) {
       for (const el of [fxAracSec, fxTipSec, gazSurgu, atesleBtn]) el.disabled = true;
     }
 
-    // Odak çipleri.
+    // Odak çipleri. href korunur (derin bağlantı / JS'siz durum) ama tıklama
+    // sayfayı yeniden YÜKLEMEZ: kamera hedefe yumuşak geçişle gider.
     const odaklar = document.querySelector('#odaklar');
-    const genel = document.createElement('a');
-    genel.href = '?'; genel.textContent = 'Genel bakış';
-    if (!odak) genel.className = 'on';
-    odaklar.appendChild(genel);
-    for (const t of TANIMLAR) {
-      const a = document.createElement('a');
-      a.href = `?focus=${t.id}`; a.textContent = t.ad;
-      if (odak === t.id) a.className = 'on';
-      odaklar.appendChild(a);
+    const cipler = new Map();
+    function cipleriIsaretle() {
+      for (const [id, el] of cipler) el.classList.toggle('on', (etkinOdak || '') === id);
     }
+    function odaklan(id) {
+      etkinOdak = id || '';
+      cipleriIsaretle();
+      const url = etkinOdak ? `?focus=${etkinOdak}` : '?';
+      // Sorgu dizgisi korunur ki paylaşılan bağlantı aynı kadrajı açsın.
+      history.replaceState(null, '', url + location.hash);
+      kamerayaGit(etkinOdak);
+    }
+    function cipYap(id, ad, href) {
+      const a = document.createElement('a');
+      a.href = href; a.textContent = ad;
+      a.addEventListener('click', (e) => { e.preventDefault(); odaklan(id); });
+      odaklar.appendChild(a);
+      cipler.set(id, a);
+    }
+    cipYap('', 'Genel bakış', '?');
+    for (const t of TANIMLAR) cipYap(t.id, t.ad, `?focus=${t.id}`);
+    cipleriIsaretle();
+
+    // Çift tık: tıklanan araca odaklan (boşluğa çift tık → genel bakış).
+    const isinlayici = new THREE.Raycaster();
+    const fareNDC = new THREE.Vector2();
+    renderer.domElement.addEventListener('dblclick', (e) => {
+      const r = renderer.domElement.getBoundingClientRect();
+      fareNDC.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      isinlayici.setFromCamera(fareNDC, camera);
+      const vurus = isinlayici.intersectObjects(araclar, true)[0];
+      if (!vurus) { odaklan(''); return; }
+      let o = vurus.object, i = -1;
+      while (o && i < 0) { i = araclar.indexOf(o); o = o.parent; }
+      odaklan(i >= 0 ? TANIMLAR[i].id : '');
+    });
 
     /* ---------- deterministik döngü ---------- */
     // Sanal zaman altında da deterministik olsun diye duvar saati yerine sabit adım.
     let t = 0;
     const DT = 1 / 60;
     const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const disaAktarim = document.documentElement.dataset.export === 'true';
+    const disaAktarim = document.documentElement.dataset.export === 'true'
+      || sorgu.get('export') === '1';           // diğer presetlerle aynı sözleşme
     // Sabit-zaman parametresi (?t=saniye): headless karede istenen ânı yakalamak
     // için sahne o âna deterministik sarılıp DONDURULUR.
     const sabitT = sorgu.has('t') ? Math.max(0, parseFloat(sorgu.get('t')) || 0) : null;
@@ -399,21 +590,42 @@
     function ciz() {
       pivotlar.forEach((pv, i) => { pv.rotation.y = FAZLAR[i] + HIZ * t; });
       renderer.render(scene, camera);
+      kameraKirli = false;
+    }
+
+    // Kare planlayıcı: rAF boşuna dönmez. Zaman akarken kendini yeniler;
+    // donmuş/duraklatılmış modda YALNIZ kamera iş yaptıkça (sürükleme
+    // damping'i, odak geçişi) kare ister — sahne zamanı ilerlemeden.
+    let istekId = 0;
+    function kareIste() {
+      if (istekId || document.hidden) return;
+      istekId = requestAnimationFrame(dongu);
     }
 
     function dongu() {
-      requestAnimationFrame(dongu);
-      if (document.hidden || !calisiyor || donmusMod) return;  // gizliyken/duraklıyken durur
-      t += DT;
-      if (fx) fx.update(DT, { gaz: fxGaz, atesle: fxAtes });
-      ciz();
+      istekId = 0;
+      if (document.hidden) return;                 // gizli sekmede rAF durur
+      // Kamera donmuş modda da yaşar: controls.update() çağrılır (damping ve
+      // sınırlar işlesin) ama SAHNE ZAMANI ilerlemez — ?t= tablosu ve
+      // ?export=1 çıktısı kamera hareketinden etkilenmez.
+      const gecisVar = gecisGuncelle(DT);
+      const kameraDegisti = controls ? controls.update() : false;
+      const akiyor = zamanAkiyor();
+      if (akiyor) {
+        t += DT;
+        if (fx) fx.update(DT, { gaz: fxGaz, atesle: fxAtes });
+      }
+      if (akiyor || gecisVar || kameraDegisti || kameraKirli) ciz();
+      if (akiyor || gecisVar || kameraDegisti) kareIste();
     }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) kareIste(); });
 
     /* ---------- başlat ---------- */
     boyutla();
     document.querySelector('#palet').value = baslangicPalet;
     kur(baslangicPalet);
     kamerayiKur();
+
 
     // Ateşleme açılış parametreleri: ?fx=1&arac=rocket&tip=atmosfer&gaz=0.8[&t=2.0]
     // (deterministik açılış; headless doğrulama sabit-zaman ?t= ile kare yakalar).
@@ -435,13 +647,21 @@
       if (donmusMod) fxIleriSar(sabitT !== null ? sabitT : 2.0);
     }
 
+    // Deterministik palet koşumu (regresyon doğrulaması, headless):
+    // ?paletdizi=gece,grafit,fildisi,obsidyen — verilen sırayla palet değişimi
+    // uygulanır ve son palette durulur. Yerinde renklendirme yolunu kullanır;
+    // sonuç, o paletle DOĞRUDAN açılmış sayfayla piksel olarak aynı olmalıdır.
+    for (const ad of (sorgu.get('paletdizi') || '').split(',')) {
+      if (PALETLER[ad]) { paletSec.value = ad; paletiUygula(ad); }
+    }
+
     ciz();               // bildirilen tablo: t=0, fazlar başlangıç açılarında (senkron ilk kare)
-    if (!donmusMod) dongu();
+    kareIste();          // donmuş modda da: zaman durur, kamera yaşar
     window.addEventListener('resize', () => { boyutla(); ciz(); });
 
     // Deterministik test/dışa aktarma kancası.
     window.__craft = {
-      scene, camera, renderer, araclar, pivotlar,
+      scene, camera, renderer, araclar, pivotlar, controls,
       advance(saniye) {
         const n = Math.max(1, Math.round(saniye / DT));
         for (let k = 0; k < n; k++) {
@@ -450,9 +670,24 @@
         }
         ciz();
       },
-      setPalette(ad) { kur(ad); ciz(); },
+      setPalette(ad) { paletSec.value = ad; paletiUygula(ad); },
+      // Hata avı kancası: araçları gerçekten SÖKÜP yeniden kurar (normal
+      // palet yolu artık bunu kullanmaz — yerinde renklendirme yapar).
+      rebuild(ad) { paletSec.value = ad; kur(ad); kamerayiKur(); ciz(); },
+      focus(id) { odaklan(id || ''); },
+      // Programatik kamera (doğrulama kareleri): {poz:[x,y,z], hedef:[x,y,z]}
+      kamera({ poz, hedef } = {}) {
+        if (poz) camera.position.set(poz[0], poz[1], poz[2]);
+        if (hedef && controls) controls.target.set(hedef[0], hedef[1], hedef[2]);
+        gecis = null;
+        if (controls) controls.update(); else if (hedef) camera.lookAt(hedef[0], hedef[1], hedef[2]);
+        ciz();
+      },
       fxDurum() { return { fx: !!fx, arac: fxAracId, tip: fxTip, gaz: fxGaz, atesle: fxAtes }; },
     };
+    // Modül üst düzey await kullandığı için 'load' olayı __craft hazır olmadan
+    // atabilir; gömen sayfa/koşum bu olayı bekleyebilsin.
+    window.dispatchEvent(new CustomEvent('craft:hazir', { detail: window.__craft }));
   </script>
 </body>
 </html>

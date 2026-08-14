@@ -8,25 +8,38 @@
       "purpose": "Araç geometrisini ve malzeme dilini her açıdan incelemek için yavaş dönme sehpası; dekoratif değil, inceleme amaçlı.",
       "loop": true,
       "durationMs": 28560,
-      "pauseControl": "Başlıktaki Duraklat/Devam düğmesi; sekme gizlendiğinde rAF otomatik durur.",
-      "reducedMotion": "prefers-reduced-motion: reduce altında dönüş hiç başlamaz; her araç bildirilen başlangıç fazında (FAZLAR sabitleri) tek kare çizilir.",
-      "exportState": "t=0 tablosu: beş araç kendi başlangıç faz açısında, kamera genel bakışta (0, 2.3, 6.6); ?focus=<id> ile araç yakın çekimi.",
-      "accessibility": "Hareket tamamen duraklatılabilir; durduğunda hiçbir bilgi kaybolmaz. Kumandalar klavyeyle erişilebilir yerel form öğeleridir.",
-      "notes": "Dönme hızı 0.22 rad/s (tam tur ~28.6 s). Deterministik: duvar saati yerine sabit 1/60 s adım; Math.random kullanılmaz."
+      "pauseControl": "Başlıktaki Duraklat/Devam düğmesi; sekme gizlendiğinde rAF otomatik durur. Duraklatılmışken kamera kumandası çalışmaya devam eder (sahne zamanı ilerlemeden incelenebilir).",
+      "reducedMotion": "prefers-reduced-motion: reduce altında dönüş hiç başlamaz; her araç bildirilen başlangıç fazında (FAZLAR sabitleri) tek kare çizilir. Kamera kumandası bu modda da açıktır; sahne zamanını ilerletmez.",
+      "exportState": "t=0 tablosu: beş araç kendi başlangıç faz açısında, kamera genel bakışta (0, 2.0, 6.3) → hedef (0, 0.66, 0); ?focus=<id> ile araç yakın çekimi (açılışta geçiş YOK, doğrudan kadraj).",
+      "accessibility": "Hareket tamamen duraklatılabilir; durduğunda hiçbir bilgi kaybolmaz. Kumandalar klavyeyle erişilebilir yerel form öğeleridir; tam ekran F kısayoluyla da açılır/kapanır.",
+      "notes": "Dönme hızı 0.22 rad/s (tam tur ~28.6 s). Deterministik: duvar saati yerine sabit 1/60 s adım; Math.random kullanılmaz. Palet değişimi araçları YENİDEN KURMAZ — malzeme renkleri yerinde tazelenir (craft-blocks.applyCraftPalette), böylece görünür geometri hiç sökülmez."
+    },
+    {
+      "id": "craft-kamera-odak",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "İzleyicinin bir araca yaklaşıp inceleyebilmesi: yörünge kumandası (sürükle-döndür, tekerlek zoom, sağ tık/iki parmak kaydırma) ve odak çipleriyle yumuşak kamera geçişi — anlık zıplama okunmaz, yol izlenebilir olmalı.",
+      "loop": false,
+      "durationMs": 850,
+      "pauseControl": "Geçiş sırasında sürüklemeye başlamak geçişi anında iptal eder (kullanıcı her zaman kamerayı devralır); Duraklat sahne zamanını durdurur ama kamerayı kilitlemez.",
+      "reducedMotion": "prefers-reduced-motion: reduce (ve ?t= / ?export=1 donmuş modu) altında geçiş yok: kamera hedef kadraja tek karede oturur.",
+      "exportState": "Dışa aktarımda kamera geçişi çalışmaz; ?focus=<id> ile bildirilen sabit kadraj tek kare olarak çizilir. Kamera hareketi sahne zamanını İLERLETMEZ — ?t= tablosu kameradan bağımsızdır.",
+      "accessibility": "Odak çipleri gerçek bağlantılardır (klavyeyle gezilebilir, href korunur, JS'siz de çalışır); çift tıkla araca odaklanma ek kolaylıktır. Kamera sınırları izleyicinin kaybolmasını engeller: zemin altına inilemez, sahneden uzaklaşılamaz.",
+      "notes": "OrbitControls vendor'dan gelir (../moon_advanced/vendor/controls/OrbitControls.js; dış ağ yok, importmap 'three'i çözer). Geçiş easeInOutCubic, 0.85 s, konum ve hedef birlikte taşınır. Sınırlar: mesafe 0.42–15, kutup açısı 0.10–(π/2 − 0.045), hedef yarıçapı ≤ 6, damping 0.075. Kumanda yüklenemezse vitrin sabit kameralarla çalışır."
     },
     {
       "id": "craft-engine-ignition",
       "type": "state-transition",
       "truthLevel": "illustrative",
-      "purpose": "Motor ateşleme/kesme durum geçişini ve gaz (throttle) etkisini göstermek: ~0.3 sn ateşleme flaşı + basınçlanma, sürekli yanma (çekirdek + tip başına mach elmasları / genleşme şalı + çan kızarması), ~0.5 sn sönüm kuyruğu.",
+      "purpose": "Motor ateşleme/kesme durum geçişini ve gaz (throttle) etkisini göstermek. Ateşleme bir OLAY olarak okunur ve dört evresi ayrı ayrı görülür: (1) ~55 ms ignitör ön-akımı (kıvılcım tacı + cılız torç, basınç yok), (2) sert flaş + açılan basınç halkası + kıvılcım patlaması, (3) ~0.3 sn plüm açılması (basınçlanma aşımı), (4) kararlı yanma (çekirdek + tip başına mach elmasları / genleşme şalı / zemin yıkaması + çan kızarması). Kesmede ~0.5 sn sönüm kuyruğu.",
       "loop": false,
-      "durationMs": 800,
-      "pauseControl": "Ateşle/Kes düğmesi geçişi tetikler ve keser; başlıktaki Duraklat tüm sahneyi dondurur; sekme gizlendiğinde rAF otomatik durur.",
-      "reducedMotion": "prefers-reduced-motion: reduce altında animasyon yok: Ateşle basıldığında (veya ?fx=1 ile) FX, 1/60 sn adımlarla t=2.0 sn ORTA-YANMA tablosuna deterministik sarılıp tek kare çizilir.",
-      "exportState": "html[data-export=\"true\"] veya ?t=<sn> sabit-zaman parametresi: ateşleme t=0 kabul edilir, FX belgelenen âna kadar 1/60 sn adımlarla ilerletilip dondurulur; varsayılan tablo t=2.0 sn orta-yanma. Deterministik açılış: ?fx=1&arac=<id>&tip=<vakum|atmosfer|hover>&gaz=<0..1>[&t=<sn>].",
-      "accessibility": "Parlaklık salınımı ±%15 bandıyla sınırlı (12–30 Hz karışımı düşük genlikli titreşim; tam ekran flaş yok — ateşleme flaşı tek seferlik ~0.3 sn ve yereldir). Kumandalar klavyeyle erişilebilir yerel form öğeleridir; hareket kesildiğinde bilgi kaybolmaz.",
-      "limitations": "Akışkan/yanma simülasyonu DEĞİLDİR; stilize katmanlı gösterimdir. Mach elmasları gerçek şok hücresi çözümü değil, gazla sayısı/aralığı değişen instanced hücrelerdir; vakum genleşmesi ve zemin etkisi yalnız biçimsel imadır; çan kızarması gerçek ısı iletimi modellemez (gecikmeli birinci derece süzgeç).",
-      "notes": "craft-effects.mjs · buildEngineFX({scale, tip, seed, palette}) → {group, update(dt,{gaz,atesle}), dispose}. Deterministik: seed'li mulberry32, zaman yalnız update(dt) toplamı; Math.random/Date.now yok. Bütçe: FX başına ≤8 mesh + tek Points + tek Sprite + tek PointLight (decay 2). Alev diegetik ışıktır; veri işareti glow yasağının kapsamı dışındadır."
+      "durationMs": 1200,
+      "pauseControl": "Ateşle/Kes düğmesi geçişi tetikler ve keser; başlıktaki Duraklat tüm sahne zamanını dondurur; sekme gizlendiğinde rAF otomatik durur.",
+      "reducedMotion": "prefers-reduced-motion: reduce altında animasyon yok: Ateşle basıldığında (veya ?fx=1 ile) FX, 1/60 sn adımlarla t=2.0 sn ORTA-YANMA tablosuna deterministik sarılıp tek kare çizilir; Kes'te sönüm sonrasına (0.7 sn) sarılır. Aynı deterministik sarma, sahne DURAKLATILMIŞKEN de uygulanır — düğmeler ve gaz sürgüsü hareketsiz modda da görünür etki üretir.",
+      "exportState": "html[data-export=\"true\"], ?export=1 veya ?t=<sn> sabit-zaman parametresi: ateşleme t=0 kabul edilir, FX belgelenen âna kadar 1/60 sn adımlarla ilerletilip dondurulur; varsayılan tablo t=2.0 sn orta-yanma. Deterministik açılış: ?fx=1&arac=<id>&tip=<vakum|atmosfer|hover>&gaz=<0..1>[&t=<sn>]. Okunaklı ateşleme kareleri: t=0.03 (ön-akım), t=0.055 (flaş), t=0.12 (plüm açılıyor).",
+      "accessibility": "Parlaklık salınımı ±%15 bandıyla sınırlı (12–30 Hz karışımı düşük genlikli titreşim; tam ekran flaş yok — ateşleme flaşı tek seferlik, ~0.25 sn ve yereldir, motor ağzına bağlıdır). Kumandalar klavyeyle erişilebilir yerel form öğeleridir; hareket kesildiğinde bilgi kaybolmaz.",
+      "limitations": "Akışkan/yanma simülasyonu DEĞİLDİR; stilize katmanlı gösterimdir. Mach elmasları gerçek şok hücresi çözümü değil, gazla sayısı/aralığı değişen instanced hücrelerdir; vakum genleşmesi biçimsel imadır; hover'daki zemin yıkaması gerçek toz kaldırma/çarpma akışı değil, plüm ucuna oturan additive bir disktir (zemin geometrisini bilmez); çan kızarması gerçek ısı iletimi modellemez (gecikmeli birinci derece süzgeç).",
+      "notes": "craft-effects.mjs · buildEngineFX({scale, tip, seed, palette}) → {group, update(dt,{gaz,atesle}), dispose} (DONMUŞ imza; setPalette(palette) ek kolaylıktır). Deterministik: seed'li mulberry32, zaman yalnız update(dt) toplamı; Math.random/Date.now yok. Bütçe: FX başına ≤8 mesh + tek Points + tek Sprite + tek PointLight (decay 2, erim 16×scale). Işık şiddeti ölçekle DOĞRUSAL — küçük motorlarda da zemine ışık düşer. Alev diegetik ışıktır; veri işareti glow yasağının kapsamı dışındadır."
     }
   ]
 }

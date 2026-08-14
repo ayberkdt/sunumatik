@@ -25,10 +25,19 @@ export const CRAFT_PALETTE = Object.freeze({
 /* Malzeme dili — tüm araçlar aynı satın mühendislik yüzeyini paylaşır */
 /* ------------------------------------------------------------------ */
 
+// Panel çerçevesi: hücre renginin aydınlatılmış hâli (ince açık çerçeve kuralı).
+// Palet yerinde güncellenirken de AYNI türetme kullanılır — tek doğruluk kaynağı.
+function cerceveRengi(panel) {
+  return new THREE.Color(panel).lerp(new THREE.Color(0xffffff), 0.42);
+}
+
+// Kök Group → malzeme kaydı. Yerinde palet güncellemesi (applyCraftPalette)
+// için tutulur; kök çöpe gidince kayıt da gider (WeakMap).
+const MALZEME_KAYDI = new WeakMap();
+
 function makeMats(palette) {
   const p = { ...CRAFT_PALETTE, ...(palette || {}) };
-  // Panel çerçevesi: hücre renginin aydınlatılmış hâli (ince açık çerçeve kuralı).
-  const frame = new THREE.Color(p.panel).lerp(new THREE.Color(0xffffff), 0.42);
+  const frame = cerceveRengi(p.panel);
   return {
     body:     new THREE.MeshStandardMaterial({ color: p.body,  roughness: 0.55, metalness: 0.35 }),
     bodyFlat: new THREE.MeshStandardMaterial({ color: p.body,  roughness: 0.55, metalness: 0.35, flatShading: true }),
@@ -146,7 +155,8 @@ function thrusterQuad(m, s = 1) {
 }
 
 // Bitirici: merkeze al, en uzun boyutu 1×scale'e normalle, kök Group döndür.
-function finalize(inner, kind, scale) {
+// m: bu aracın malzeme kaydı — yerinde palet güncellemesi için saklanır.
+function finalize(inner, kind, scale, m) {
   const bb = new THREE.Box3().setFromObject(inner);
   const size = bb.getSize(new THREE.Vector3());
   const center = bb.getCenter(new THREE.Vector3());
@@ -160,7 +170,34 @@ function finalize(inner, kind, scale) {
   let parts = 0;
   inner.traverse((o) => { if (o.isMesh) parts++; });
   root.userData = { preset: 'craft-blocks', kind, parts, designSize: size.toArray() };
+  if (m) MALZEME_KAYDI.set(root, m);
   return root;
+}
+
+/* ------------------------------------------------------------------ */
+/* Yerinde palet güncellemesi                                          */
+/* ------------------------------------------------------------------ */
+//
+// Görünür araç YENİDEN KURULMAZ (webgl-scene-contract §2): palet değişiminde
+// yalnız malzeme renkleri yerinde tazelenir. Sök-tak yolu tamamen ortadan
+// kalkar — ne geometri dispose'u ne de tekrar üretim olur; türetilmiş
+// çerçeve rengi de aynı kaynaktan (cerceveRengi) tazelenir.
+//
+//   applyCraftPalette(root, { body, panel, accent, metal }) → boolean
+//   (root bu modülün kurucularından biriyle üretilmemişse false döner)
+export function applyCraftPalette(root, palette) {
+  const m = MALZEME_KAYDI.get(root);
+  if (!m) return false;
+  const p = { ...CRAFT_PALETTE, ...(palette || {}) };
+  m.body.color.set(p.body);
+  m.bodyFlat.color.set(p.body);
+  m.panel.color.set(p.panel);
+  m.frame.color.copy(cerceveRengi(p.panel));   // TÜRETİLMİŞ renk
+  m.metal.color.set(p.metal);
+  m.metalDS.color.set(p.metal);
+  m.accent.color.set(p.accent);
+  // m.dark palete bağlı değildir (sabit kaportalı boşluk rengi) — dokunulmaz.
+  return true;
 }
 
 /* ================================================================== */
@@ -237,7 +274,7 @@ export function buildOrbiter({ scale = 1, palette } = {}) {
     g.add(q);
   }
 
-  return finalize(g, 'orbiter', scale);
+  return finalize(g, 'orbiter', scale, m);
 }
 
 /* ================================================================== */
@@ -322,7 +359,7 @@ export function buildLander({ scale = 1, palette } = {}) {
     g.add(q);
   }
 
-  return finalize(g, 'lander', scale);
+  return finalize(g, 'lander', scale, m);
 }
 
 /* ================================================================== */
@@ -414,7 +451,7 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
   fairing.position.x = x;
   g.add(fairing);
 
-  return finalize(g, 'rocket', scale);
+  return finalize(g, 'rocket', scale, m);
 }
 
 /* ================================================================== */
@@ -486,7 +523,7 @@ export function buildCubesat({ units = 3, scale = 1, palette } = {}) {
   port.position.set(-L / 2 + 0.05, 0, -0.049);
   g.add(port);
 
-  return finalize(g, 'cubesat', scale);
+  return finalize(g, 'cubesat', scale, m);
 }
 
 /* ================================================================== */
@@ -585,5 +622,5 @@ export function buildCapsule({ scale = 1, palette } = {}) {
   // SM ana motoru (−X egzoz).
   g.add(engineAssembly(m, { rThroat: 0.06, rExit: 0.15, len: 0.23, mountX: -0.578, ringR: 0.095 }));
 
-  return finalize(g, 'capsule', scale);
+  return finalize(g, 'capsule', scale, m);
 }
