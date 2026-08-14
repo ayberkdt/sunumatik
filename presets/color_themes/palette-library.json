@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "defaults": {
     "surfaceTreatment": "matte",
-    "gradientPolicy": "none-unless-data-or-light-phenomenon",
+    "gradientPolicy": "none-unless-data-or-light-phenomenon; named gradients in `gradients` are allowed for title/section grounds, light phenomena and SEQUENTIAL data ramps — never on data marks, never under body text without a scrim",
     "glassPolicy": "avoid",
     "contrastTarget": 4.5
   },
@@ -13,8 +13,16 @@
       "origin": "user-reference-1",
       "harmony": "monochromatic-warm",
       "wheel": "single rose-wine hue, value-stepped; olive counterweight in data",
-      "pair": { "primary": "#5A2132", "secondary": "#EFE9E9" },
-      "character": ["editorial", "warm", "pastel", "premium"],
+      "pair": {
+        "primary": "#5A2132",
+        "secondary": "#EFE9E9"
+      },
+      "character": [
+        "editorial",
+        "warm",
+        "pastel",
+        "premium"
+      ],
       "tokens": {
         "canvas": "#EFE9E9",
         "surface": "#F8F3F2",
@@ -27,8 +35,16 @@
         "rule": "#D8C7CC"
       },
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -37,8 +53,16 @@
       "origin": "user-reference-2",
       "harmony": "analogous-warm",
       "wheel": "yellow → yellow-green neighbours; brick red as the single far accent",
-      "pair": { "primary": "#202B23", "secondary": "#FFD85F" },
-      "character": ["botanical", "vibrant", "optimistic", "technical"],
+      "pair": {
+        "primary": "#202B23",
+        "secondary": "#FFD85F"
+      },
+      "character": [
+        "botanical",
+        "vibrant",
+        "optimistic",
+        "technical"
+      ],
       "tokens": {
         "canvas": "#FFF8DD",
         "surface": "#FFD85F",
@@ -51,8 +75,16 @@
         "rule": "#D9D3B4"
       },
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -61,8 +93,16 @@
       "origin": "user-reference-3",
       "harmony": "complementary-muted",
       "wheel": "ice blue ↔ mulberry red-violet, both desaturated toward pastel",
-      "pair": { "primary": "#BCD3E7", "secondary": "#391D30" },
-      "character": ["cool", "pastel", "observational", "refined"],
+      "pair": {
+        "primary": "#BCD3E7",
+        "secondary": "#391D30"
+      },
+      "character": [
+        "cool",
+        "pastel",
+        "observational",
+        "refined"
+      ],
       "tokens": {
         "canvas": "#BCD3E7",
         "surface": "#E8EFF4",
@@ -75,8 +115,16 @@
         "rule": "#91B1CB"
       },
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -85,8 +133,16 @@
       "origin": "user-reference-4",
       "harmony": "complementary",
       "wheel": "navy blue ↔ orange — the classic warm/cool axis at full commitment",
-      "pair": { "primary": "#1E223D", "secondary": "#F54F1F" },
-      "character": ["vibrant", "editorial", "high-energy", "mission"],
+      "pair": {
+        "primary": "#1E223D",
+        "secondary": "#F54F1F"
+      },
+      "character": [
+        "vibrant",
+        "editorial",
+        "high-energy",
+        "mission"
+      ],
       "tokens": {
         "canvas": "#1E223D",
         "surface": "#2B3154",
@@ -103,13 +159,33 @@
         "rule": "#454D76"
       },
       "ramps": {
-        "sequential": ["#2B3154", "#5E4A4E", "#9A5A3E", "#CE5530", "#F54F1F"],
-        "diverging": ["#78C4B4", "#A9BFAF", "#C3C7D6", "#DE9C7A", "#F54F1F"]
+        "sequential": [
+          "#2B3154",
+          "#5E4A4E",
+          "#9A5A3E",
+          "#CE5530",
+          "#F54F1F"
+        ],
+        "diverging": [
+          "#78C4B4",
+          "#A9BFAF",
+          "#C3C7D6",
+          "#DE9C7A",
+          "#F54F1F"
+        ]
       },
       "cvd": "Blue/orange axis is the safest complementary pair for deuteranopia and protanopia; keep data4 (periwinkle) and data6 (leaf) apart in adjacent series.",
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -118,8 +194,16 @@
       "origin": "user-reference-5",
       "harmony": "analogous-earth",
       "wheel": "yellow-cream → brown neighbours; sage and steel as measured counterpoints",
-      "pair": { "primary": "#F3EEC8", "secondary": "#473835" },
-      "character": ["cream", "earthy", "matte", "scholarly"],
+      "pair": {
+        "primary": "#F3EEC8",
+        "secondary": "#473835"
+      },
+      "character": [
+        "cream",
+        "earthy",
+        "matte",
+        "scholarly"
+      ],
       "tokens": {
         "canvas": "#F3EEC8",
         "surface": "#FBF7DF",
@@ -132,8 +216,16 @@
         "rule": "#D4CBA2"
       },
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -142,8 +234,16 @@
       "origin": "premium-app-study-2026",
       "harmony": "complementary-muted",
       "wheel": "cool graphite blue-grey ↔ ember copper-orange",
-      "pair": { "primary": "#141519", "secondary": "#E8804A" },
-      "character": ["dark-first", "layered-neutral", "product-grade", "premium"],
+      "pair": {
+        "primary": "#141519",
+        "secondary": "#E8804A"
+      },
+      "character": [
+        "dark-first",
+        "layered-neutral",
+        "product-grade",
+        "premium"
+      ],
       "tokens": {
         "canvas": "#141519",
         "surface": "#1E2026",
@@ -160,14 +260,38 @@
         "rule": "#303339"
       },
       "ramps": {
-        "sequential": ["#1E2026", "#4E3A2E", "#855434", "#B96A3E", "#E8804A"],
-        "diverging": ["#2FA98C", "#6FA995", "#A6A9B1", "#C9946E", "#E8804A"]
+        "sequential": [
+          "#1E2026",
+          "#4E3A2E",
+          "#855434",
+          "#B96A3E",
+          "#E8804A"
+        ],
+        "diverging": [
+          "#2FA98C",
+          "#6FA995",
+          "#A6A9B1",
+          "#C9946E",
+          "#E8804A"
+        ]
       },
       "cvd": "Teal/copper diverging axis survives deuteranopia via lightness spread; avoid pairing data4 (coral) with data6 (olive) in adjacent series.",
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "ink",
+          "background": "surface",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -176,8 +300,16 @@
       "origin": "premium-app-study-2026",
       "harmony": "monochromatic-cool",
       "wheel": "single indigo hue on warm porcelain neutrals; earth counter in data",
-      "pair": { "primary": "#44599C", "secondary": "#F6F4EF" },
-      "character": ["light", "editorial", "documentation-grade", "restrained"],
+      "pair": {
+        "primary": "#44599C",
+        "secondary": "#F6F4EF"
+      },
+      "character": [
+        "light",
+        "editorial",
+        "documentation-grade",
+        "restrained"
+      ],
       "tokens": {
         "canvas": "#F6F4EF",
         "surface": "#FFFFFF",
@@ -190,9 +322,21 @@
         "rule": "#DCD8CF"
       },
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "ink",
+          "background": "surface",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -201,8 +345,16 @@
       "origin": "premium-app-study-2026",
       "harmony": "complementary-muted",
       "wheel": "warm champagne gold ↔ cool steel blue, both restrained on obsidian",
-      "pair": { "primary": "#0F1013", "secondary": "#D3B26A" },
-      "character": ["luxury", "keynote", "warm-metallic", "celebratory"],
+      "pair": {
+        "primary": "#0F1013",
+        "secondary": "#D3B26A"
+      },
+      "character": [
+        "luxury",
+        "keynote",
+        "warm-metallic",
+        "celebratory"
+      ],
       "tokens": {
         "canvas": "#0F1013",
         "surface": "#1A1C21",
@@ -219,14 +371,38 @@
         "rule": "#2E3037"
       },
       "ramps": {
-        "sequential": ["#1A1C21", "#4A4030", "#7D6A42", "#A88E54", "#D3B26A"],
-        "diverging": ["#5590C9", "#8A9BAD", "#A9A296", "#BE8A68", "#C86A40"]
+        "sequential": [
+          "#1A1C21",
+          "#4A4030",
+          "#7D6A42",
+          "#A88E54",
+          "#D3B26A"
+        ],
+        "diverging": [
+          "#5590C9",
+          "#8A9BAD",
+          "#A9A296",
+          "#BE8A68",
+          "#C86A40"
+        ]
       },
       "cvd": "Gold/blue is deuteranopia-safe. data3 (mint) and data5 (pale gold) sit close in lightness — separate them with markers or dashing, not hue alone.",
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "ink",
+          "background": "surface",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -235,8 +411,16 @@
       "origin": "premium-app-study-2026",
       "harmony": "analogous-cool",
       "wheel": "green → teal neighbours; ochre and cobalt as far data counterweights",
-      "pair": { "primary": "#152020", "secondary": "#5FBFAE" },
-      "character": ["dark", "cool-organic", "confident", "instrument-grade"],
+      "pair": {
+        "primary": "#152020",
+        "secondary": "#5FBFAE"
+      },
+      "character": [
+        "dark",
+        "cool-organic",
+        "confident",
+        "instrument-grade"
+      ],
       "tokens": {
         "canvas": "#152020",
         "surface": "#1F2E2C",
@@ -253,14 +437,38 @@
         "rule": "#31423E"
       },
       "ramps": {
-        "sequential": ["#1F2E2C", "#2B534C", "#3A7A6E", "#4C9C8E", "#5FBFAE"],
-        "diverging": ["#5B95E8", "#84A4C9", "#9FB3AC", "#AD9F6A", "#BA8A2A"]
+        "sequential": [
+          "#1F2E2C",
+          "#2B534C",
+          "#3A7A6E",
+          "#4C9C8E",
+          "#5FBFAE"
+        ],
+        "diverging": [
+          "#5B95E8",
+          "#84A4C9",
+          "#9FB3AC",
+          "#AD9F6A",
+          "#BA8A2A"
+        ]
       },
       "cvd": "Accent verdigris vs data4 leaf-green are close for deuteranopia — never adjacent series; ochre/cobalt diverging axis is safe.",
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "ink",
+          "background": "surface",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -269,8 +477,16 @@
       "origin": "color-theory-expansion-2026",
       "harmony": "complementary",
       "wheel": "deep violet ↔ yellow-green; maximum hue distance, chroma held on one side",
-      "pair": { "primary": "#14101E", "secondary": "#C9DE4C" },
-      "character": ["bold", "futuristic", "high-energy", "signal"],
+      "pair": {
+        "primary": "#14101E",
+        "secondary": "#C9DE4C"
+      },
+      "character": [
+        "bold",
+        "futuristic",
+        "high-energy",
+        "signal"
+      ],
       "tokens": {
         "canvas": "#14101E",
         "surface": "#1E1830",
@@ -287,14 +503,38 @@
         "rule": "#2E2843"
       },
       "ramps": {
-        "sequential": ["#1E1830", "#4A4A33", "#767C3B", "#9FAD43", "#C9DE4C"],
-        "diverging": ["#9B7EDE", "#A497C9", "#A79FB8", "#B8BF85", "#C9DE4C"]
+        "sequential": [
+          "#1E1830",
+          "#4A4A33",
+          "#767C3B",
+          "#9FAD43",
+          "#C9DE4C"
+        ],
+        "diverging": [
+          "#9B7EDE",
+          "#A497C9",
+          "#A79FB8",
+          "#B8BF85",
+          "#C9DE4C"
+        ]
       },
       "cvd": "Violet/chartreuse reads as blue/yellow for both deuteranopia and protanopia — a safe axis. Keep chartreuse the ONLY high-chroma element per slide.",
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "ink",
+          "background": "surface",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -303,8 +543,16 @@
       "origin": "color-theory-expansion-2026",
       "harmony": "complementary",
       "wheel": "cerulean blue ↔ vermilion red-orange on warm paper — editorial daylight",
-      "pair": { "primary": "#14304A", "secondary": "#C4401F" },
-      "character": ["light", "editorial", "confident", "print-grade"],
+      "pair": {
+        "primary": "#14304A",
+        "secondary": "#C4401F"
+      },
+      "character": [
+        "light",
+        "editorial",
+        "confident",
+        "print-grade"
+      ],
       "tokens": {
         "canvas": "#F4F1EA",
         "surface": "#FFFFFF",
@@ -321,14 +569,38 @@
         "rule": "#DAD4C8"
       },
       "ramps": {
-        "sequential": ["#F4F1EA", "#E5C3AE", "#DC9573", "#D16A45", "#C4401F"],
-        "diverging": ["#2E75A8", "#7E9BB0", "#C9C4B8", "#D08A6A", "#C4401F"]
+        "sequential": [
+          "#F4F1EA",
+          "#E5C3AE",
+          "#DC9573",
+          "#D16A45",
+          "#C4401F"
+        ],
+        "diverging": [
+          "#2E75A8",
+          "#7E9BB0",
+          "#C9C4B8",
+          "#D08A6A",
+          "#C4401F"
+        ]
       },
       "cvd": "Blue/vermilion diverging axis is CVD-safe; olive (data3) and ochre (data6) collide under deuteranopia — never adjacent.",
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "ink",
+          "background": "surface",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -337,8 +609,16 @@
       "origin": "color-theory-expansion-2026",
       "harmony": "split-complementary",
       "wheel": "prussian blue base; amber and rose flank its complement instead of hitting it",
-      "pair": { "primary": "#0E1B26", "secondary": "#E8A33D" },
-      "character": ["dark", "maritime", "archival", "warm-signal"],
+      "pair": {
+        "primary": "#0E1B26",
+        "secondary": "#E8A33D"
+      },
+      "character": [
+        "dark",
+        "maritime",
+        "archival",
+        "warm-signal"
+      ],
       "tokens": {
         "canvas": "#0E1B26",
         "surface": "#16273A",
@@ -355,14 +635,38 @@
         "rule": "#263B4E"
       },
       "ramps": {
-        "sequential": ["#16273A", "#54473A", "#8A683A", "#B9853B", "#E8A33D"],
-        "diverging": ["#5FA8DF", "#84A6BE", "#93A7B5", "#BEA579", "#E8A33D"]
+        "sequential": [
+          "#16273A",
+          "#54473A",
+          "#8A683A",
+          "#B9853B",
+          "#E8A33D"
+        ],
+        "diverging": [
+          "#5FA8DF",
+          "#84A6BE",
+          "#93A7B5",
+          "#BEA579",
+          "#E8A33D"
+        ]
       },
       "cvd": "Amber/sky axis is safe. Rose (data3) vs mint (data4) is a red/green pair — separate by lightness and never encode a critical distinction with only these two.",
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "ink",
+          "background": "surface",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -371,8 +675,16 @@
       "origin": "color-theory-expansion-2026",
       "harmony": "analogous-warm",
       "wheel": "red → orange → gold neighbours on volcanic near-black; one cool outlier for charts",
-      "pair": { "primary": "#131013", "secondary": "#E85D3A" },
-      "character": ["dark", "geophysical", "intense", "thermal"],
+      "pair": {
+        "primary": "#131013",
+        "secondary": "#E85D3A"
+      },
+      "character": [
+        "dark",
+        "geophysical",
+        "intense",
+        "thermal"
+      ],
       "tokens": {
         "canvas": "#131013",
         "surface": "#1E181A",
@@ -389,14 +701,38 @@
         "rule": "#332A2C"
       },
       "ramps": {
-        "sequential": ["#1E181A", "#5A2A22", "#93402A", "#BE4E32", "#E85D3A"],
-        "diverging": ["#57A88C", "#83A48F", "#AC9C94", "#CB7E68", "#E85D3A"]
+        "sequential": [
+          "#1E181A",
+          "#5A2A22",
+          "#93402A",
+          "#BE4E32",
+          "#E85D3A"
+        ],
+        "diverging": [
+          "#57A88C",
+          "#83A48F",
+          "#AC9C94",
+          "#CB7E68",
+          "#E85D3A"
+        ]
       },
       "cvd": "An analogous warm ramp reads as ONE hue family under deuteranopia — lightness steps carry the order, which is exactly why the sequential ramp works. Use data4 (violet) or data5 (jade) whenever two warm series must be told apart.",
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "ink",
+          "background": "surface",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -405,8 +741,16 @@
       "origin": "color-theory-expansion-2026",
       "harmony": "analogous-cool",
       "wheel": "green → teal → violet neighbours, the actual aurora emission sequence",
-      "pair": { "primary": "#0C1418", "secondary": "#55E0A8" },
-      "character": ["dark", "atmospheric", "luminous", "polar"],
+      "pair": {
+        "primary": "#0C1418",
+        "secondary": "#55E0A8"
+      },
+      "character": [
+        "dark",
+        "atmospheric",
+        "luminous",
+        "polar"
+      ],
       "tokens": {
         "canvas": "#0C1418",
         "surface": "#14222A",
@@ -423,14 +767,38 @@
         "rule": "#233640"
       },
       "ramps": {
-        "sequential": ["#14222A", "#1F5246", "#2F8362", "#41B184", "#55E0A8"],
-        "diverging": ["#9C86E8", "#9AA0CE", "#9AB1AC", "#77C9AA", "#55E0A8"]
+        "sequential": [
+          "#14222A",
+          "#1F5246",
+          "#2F8362",
+          "#41B184",
+          "#55E0A8"
+        ],
+        "diverging": [
+          "#9C86E8",
+          "#9AA0CE",
+          "#9AB1AC",
+          "#77C9AA",
+          "#55E0A8"
+        ]
       },
       "cvd": "Green accent vs teal data2 merge under deuteranopia — the lightness gap (L* ≈ 20) carries them; verify in grayscale. Violet/green diverging axis is safer than red/green.",
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "ink",
+          "background": "surface",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -439,8 +807,16 @@
       "origin": "color-theory-expansion-2026",
       "harmony": "triadic",
       "wheel": "gold / teal / coral at 120° spacing — three genuinely equal categories",
-      "pair": { "primary": "#17181C", "secondary": "#E8B84A" },
-      "character": ["dark", "instrument", "three-part", "balanced"],
+      "pair": {
+        "primary": "#17181C",
+        "secondary": "#E8B84A"
+      },
+      "character": [
+        "dark",
+        "instrument",
+        "three-part",
+        "balanced"
+      ],
       "tokens": {
         "canvas": "#17181C",
         "surface": "#222329",
@@ -457,14 +833,38 @@
         "rule": "#33343B"
       },
       "ramps": {
-        "sequential": ["#222329", "#55482F", "#886D38", "#BA9241", "#E8B84A"],
-        "diverging": ["#3FB8A8", "#77B0A1", "#A6A49B", "#C9A472", "#E8B84A"]
+        "sequential": [
+          "#222329",
+          "#55482F",
+          "#886D38",
+          "#BA9241",
+          "#E8B84A"
+        ],
+        "diverging": [
+          "#3FB8A8",
+          "#77B0A1",
+          "#A6A49B",
+          "#C9A472",
+          "#E8B84A"
+        ]
       },
       "cvd": "Reserve the triad for exactly three categories: gold, teal, coral separate cleanly under deuteranopia because each sits at a different lightness. Do not add a fourth equal category — demote it to data4.",
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "ink",
+          "background": "surface",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -473,8 +873,16 @@
       "origin": "color-theory-expansion-2026",
       "harmony": "complementary",
       "wheel": "indigo ↔ saffron yellow-orange on warm ceremonial paper",
-      "pair": { "primary": "#2A2454", "secondary": "#D98A1F" },
-      "character": ["light", "ceremonial", "distinguished", "warm"],
+      "pair": {
+        "primary": "#2A2454",
+        "secondary": "#D98A1F"
+      },
+      "character": [
+        "light",
+        "ceremonial",
+        "distinguished",
+        "warm"
+      ],
       "tokens": {
         "canvas": "#F5F1E8",
         "surface": "#FFFFFF",
@@ -491,14 +899,38 @@
         "rule": "#DDD6C6"
       },
       "ramps": {
-        "sequential": ["#F5F1E8", "#EDD3AC", "#E7B975", "#E0A146", "#D98A1F"],
-        "diverging": ["#4A3FA8", "#8479B0", "#C0BBB0", "#D3A96A", "#D98A1F"]
+        "sequential": [
+          "#F5F1E8",
+          "#EDD3AC",
+          "#E7B975",
+          "#E0A146",
+          "#D98A1F"
+        ],
+        "diverging": [
+          "#4A3FA8",
+          "#8479B0",
+          "#C0BBB0",
+          "#D3A96A",
+          "#D98A1F"
+        ]
       },
       "cvd": "Indigo/saffron is a blue/yellow axis — safe for all common CVD types. Jade (data3) and brick (data4) must never be the only distinction between two series.",
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "ink",
+          "background": "surface",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
     },
     {
@@ -507,8 +939,16 @@
       "origin": "color-theory-expansion-2026",
       "harmony": "monochromatic-cool",
       "wheel": "single electric cyan, value-stepped on abyssal blue-black; apricot counter in data",
-      "pair": { "primary": "#0A1418", "secondary": "#3FC6E8" },
-      "character": ["dark", "plasma", "technical", "cold-luminous"],
+      "pair": {
+        "primary": "#0A1418",
+        "secondary": "#3FC6E8"
+      },
+      "character": [
+        "dark",
+        "plasma",
+        "technical",
+        "cold-luminous"
+      ],
       "tokens": {
         "canvas": "#0A1418",
         "surface": "#122028",
@@ -525,15 +965,902 @@
         "rule": "#20343C"
       },
       "ramps": {
-        "sequential": ["#122028", "#194754", "#237185", "#2F9BB6", "#3FC6E8"],
-        "diverging": ["#E8975A", "#C29C7E", "#8FA8B0", "#68B7CC", "#3FC6E8"]
+        "sequential": [
+          "#122028",
+          "#194754",
+          "#237185",
+          "#2F9BB6",
+          "#3FC6E8"
+        ],
+        "diverging": [
+          "#E8975A",
+          "#C29C7E",
+          "#8FA8B0",
+          "#68B7CC",
+          "#3FC6E8"
+        ]
       },
       "cvd": "Cyan/apricot diverging axis is CVD-safe. In a monochromatic scheme the sequential ramp is the palette's native language — prefer it over multi-hue category colors.",
       "textPairs": [
-        { "foreground": "ink", "background": "canvas", "minimum": 4.5 },
-        { "foreground": "ink", "background": "surface", "minimum": 4.5 },
-        { "foreground": "accentInk", "background": "accent", "minimum": 4.5 }
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "ink",
+          "background": "surface",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
       ]
+    },
+    {
+      "id": "butter-green",
+      "name": "Butter / Deep Green — açık",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "split-complementary",
+      "wheel": "tereyağı sarısı ↔ derin yeşim; sıcak/soğuk ekseni",
+      "pair": {
+        "primary": "#013E37",
+        "secondary": "#FFEFB3"
+      },
+      "character": [
+        "editorial",
+        "warm",
+        "botanical",
+        "premium",
+        "light"
+      ],
+      "tokens": {
+        "canvas": "#FFEFB3",
+        "surface": "#FDEAA3",
+        "ink": "#013E37",
+        "muted": "#4D735C",
+        "accent": "#013E37",
+        "accentInk": "#FFEFB3",
+        "data1": "#0C6B5B",
+        "data2": "#C2681C",
+        "data3": "#4E7CA8",
+        "data4": "#8A5A9B",
+        "data5": "#7A8B2E",
+        "data6": "#B03A48",
+        "rule": "#9EAC84"
+      },
+      "ramps": {
+        "sequential": [
+          "#FDEAA3",
+          "#BEBF88",
+          "#7F946D",
+          "#406952",
+          "#013E37"
+        ],
+        "diverging": [
+          "#C2681C",
+          "#E4B26F",
+          "#4D735C",
+          "#AFBBAE",
+          "#4E7CA8"
+        ]
+      },
+      "cvd": "Sarı zemin ile yeşil mürekkep protanopide de ayrışır; data5 (zeytin) ile data1 (yeşim) komşu seride kullanılmasın.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "butter-green-dark",
+      "name": "Butter / Deep Green — koyu",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "split-complementary",
+      "wheel": "tereyağı sarısı ↔ derin yeşim; sıcak/soğuk ekseni",
+      "pair": {
+        "primary": "#013E37",
+        "secondary": "#FFEFB3"
+      },
+      "character": [
+        "editorial",
+        "warm",
+        "botanical",
+        "premium",
+        "dark"
+      ],
+      "tokens": {
+        "canvas": "#013E37",
+        "surface": "#03534A",
+        "ink": "#FFEFB3",
+        "muted": "#A9B389",
+        "accent": "#FFEFB3",
+        "accentInk": "#013E37",
+        "data1": "#1DCAAD",
+        "data2": "#E4A26A",
+        "data3": "#9BB4CB",
+        "data4": "#BAA2C3",
+        "data5": "#B3C564",
+        "data6": "#D28891",
+        "rule": "#48705A"
+      },
+      "ramps": {
+        "sequential": [
+          "#03534A",
+          "#427A64",
+          "#81A17E",
+          "#C0C899",
+          "#FFEFB3"
+        ],
+        "diverging": [
+          "#E4A26A",
+          "#676B4E",
+          "#A9B389",
+          "#46737A",
+          "#9BB4CB"
+        ]
+      },
+      "cvd": "Sarı zemin ile yeşil mürekkep protanopide de ayrışır; data5 (zeytin) ile data1 (yeşim) komşu seride kullanılmasın.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "vanilla-cherry",
+      "name": "Cream Vanilla / Cherry Cola — açık",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "analogous-warm",
+      "wheel": "krem bej ile kiraz kırmızısı; tek sıcak yayda değer atlaması",
+      "pair": {
+        "primary": "#9A0002",
+        "secondary": "#EFE6DD"
+      },
+      "character": [
+        "editorial",
+        "classic",
+        "archival",
+        "high-contrast",
+        "light"
+      ],
+      "tokens": {
+        "canvas": "#EFE6DD",
+        "surface": "#E8DDD2",
+        "ink": "#9A0002",
+        "muted": "#B34544",
+        "accent": "#9A0002",
+        "accentInk": "#EFE6DD",
+        "data1": "#9A0002",
+        "data2": "#2F5C6E",
+        "data3": "#B4762A",
+        "data4": "#4A6741",
+        "data5": "#7A4B6B",
+        "data6": "#3B3F52",
+        "rule": "#CF8F8A"
+      },
+      "ramps": {
+        "sequential": [
+          "#E8DDD2",
+          "#D4A69E",
+          "#C16E6A",
+          "#AE3736",
+          "#9A0002"
+        ],
+        "diverging": [
+          "#2F5C6E",
+          "#99A8AB",
+          "#B34544",
+          "#D4B48C",
+          "#B4762A"
+        ]
+      },
+      "cvd": "Kırmızı-yeşil körlüğünde data1 (kiraz) ile data4 (yaprak) ayrışmaz; ikisini aynı grafikte bitişik seri yapmayın.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "vanilla-cherry-dark",
+      "name": "Cream Vanilla / Cherry Cola — koyu",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "analogous-warm",
+      "wheel": "krem bej ile kiraz kırmızısı; tek sıcak yayda değer atlaması",
+      "pair": {
+        "primary": "#9A0002",
+        "secondary": "#EFE6DD"
+      },
+      "character": [
+        "editorial",
+        "classic",
+        "archival",
+        "high-contrast",
+        "dark"
+      ],
+      "tokens": {
+        "canvas": "#9A0002",
+        "surface": "#AD0406",
+        "ink": "#EFE6DD",
+        "muted": "#D29893",
+        "accent": "#EFE6DD",
+        "accentInk": "#9A0002",
+        "data1": "#F91114",
+        "data2": "#5C99B1",
+        "data3": "#D9AC75",
+        "data4": "#81A078",
+        "data5": "#AE88A1",
+        "data6": "#70758D",
+        "rule": "#B2403F"
+      },
+      "ramps": {
+        "sequential": [
+          "#AD0406",
+          "#BE3C3C",
+          "#CE7572",
+          "#DEAEA7",
+          "#EFE6DD"
+        ],
+        "diverging": [
+          "#5C99B1",
+          "#7E4551",
+          "#D29893",
+          "#B64D36",
+          "#D9AC75"
+        ]
+      },
+      "cvd": "Kırmızı-yeşil körlüğünde data1 (kiraz) ile data4 (yaprak) ayrışmaz; ikisini aynı grafikte bitişik seri yapmayın.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "aureolin-bistre",
+      "name": "Aureolin / Bistre — açık",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "analogous-warm",
+      "wheel": "saf sarı ile is kahvesi; aynı sıcak yayda uç değer karşıtlığı",
+      "pair": {
+        "primary": "#261606",
+        "secondary": "#FBE311"
+      },
+      "character": [
+        "vibrant",
+        "graphic",
+        "poster",
+        "high-energy",
+        "light"
+      ],
+      "tokens": {
+        "canvas": "#FBE311",
+        "surface": "#F1D909",
+        "ink": "#261606",
+        "muted": "#665309",
+        "accent": "#261606",
+        "accentInk": "#FBE311",
+        "data1": "#261606",
+        "data2": "#0F6E6A",
+        "data3": "#C1440E",
+        "data4": "#5B4B8A",
+        "data5": "#7D6B1F",
+        "data6": "#A61B4B",
+        "rule": "#AA950D"
+      },
+      "ramps": {
+        "sequential": [
+          "#F1D909",
+          "#BEA808",
+          "#8C7808",
+          "#594707",
+          "#261606"
+        ],
+        "diverging": [
+          "#0F6E6A",
+          "#91AE39",
+          "#665309",
+          "#E19B10",
+          "#C1440E"
+        ]
+      },
+      "cvd": "Sarı zemin en güvenli taban; data3 (kiremit) ile data6 (fuşya) protanopide yakınlaşır.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "aureolin-bistre-dark",
+      "name": "Aureolin / Bistre — koyu",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "analogous-warm",
+      "wheel": "saf sarı ile is kahvesi; aynı sıcak yayda uç değer karşıtlığı",
+      "pair": {
+        "primary": "#261606",
+        "secondary": "#FBE311"
+      },
+      "character": [
+        "vibrant",
+        "graphic",
+        "poster",
+        "high-energy",
+        "dark"
+      ],
+      "tokens": {
+        "canvas": "#261606",
+        "surface": "#38210A",
+        "ink": "#FBE311",
+        "muted": "#B39D0D",
+        "accent": "#FBE311",
+        "accentInk": "#261606",
+        "data1": "#834E19",
+        "data2": "#22CBC4",
+        "data3": "#ED8152",
+        "data4": "#978CB9",
+        "data5": "#C9AF43",
+        "data6": "#DD5483",
+        "rule": "#624F09"
+      },
+      "ramps": {
+        "sequential": [
+          "#38210A",
+          "#69520C",
+          "#9A820E",
+          "#CAB20F",
+          "#FBE311"
+        ],
+        "diverging": [
+          "#22CBC4",
+          "#24675C",
+          "#B39D0D",
+          "#804628",
+          "#ED8152"
+        ]
+      },
+      "cvd": "Sarı zemin en güvenli taban; data3 (kiremit) ile data6 (fuşya) protanopide yakınlaşır.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ]
+    },
+    {
+      "id": "lime-vermilion",
+      "name": "Lime Green / Vibrant Red — açık",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "clash-complementary",
+      "wheel": "asit yeşili ↔ saf kırmızı; kasıtlı çarpışma, poster dili",
+      "pair": {
+        "primary": "#F9100C",
+        "secondary": "#D3F00A"
+      },
+      "character": [
+        "vibrant",
+        "poster",
+        "high-energy",
+        "risky",
+        "light"
+      ],
+      "tokens": {
+        "canvas": "#D3F00A",
+        "surface": "#C0DA0E",
+        "ink": "#C30A06",
+        "muted": "#EE530B",
+        "accent": "#F9100C",
+        "accentInk": "#0B0B0B",
+        "data1": "#1B1B1B",
+        "data2": "#0B7A5B",
+        "data3": "#1D3FA8",
+        "data4": "#7A2E86",
+        "data5": "#B35A00",
+        "data6": "#5C6B00",
+        "rule": "#E19B0B"
+      },
+      "ramps": {
+        "sequential": [
+          "#C0DA0E",
+          "#CEA80E",
+          "#DC750D",
+          "#EB420C",
+          "#F9100C"
+        ],
+        "diverging": [
+          "#0B7A5B",
+          "#79BB2E",
+          "#EE530B",
+          "#81A051",
+          "#1D3FA8"
+        ]
+      },
+      "cvd": "İki renk de aşırı doygun ve AYNI açıklıkta: kromostereopsi (titreşim) yapar. Gövde metni için ASLA kullanılmaz.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ],
+      "displayPair": {
+        "note": "Referans çiftin kendisi (#D3F00A üzerinde #F9100C) 3.18:1 — gövde metni eşiğini geçmez. Çift, YALNIZ büyük başlık/afiş için korunur; gövde metni için mürekkep #C30A06 olarak düzeltildi.",
+        "displayInk": "#F9100C",
+        "measured": 3.18,
+        "displayOnly": true
+      }
+    },
+    {
+      "id": "lime-vermilion-dark",
+      "name": "Lime Green / Vibrant Red — koyu",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "clash-complementary",
+      "wheel": "asit yeşili ↔ saf kırmızı; kasıtlı çarpışma, poster dili",
+      "pair": {
+        "primary": "#F9100C",
+        "secondary": "#D3F00A"
+      },
+      "character": [
+        "vibrant",
+        "poster",
+        "high-energy",
+        "risky",
+        "dark"
+      ],
+      "tokens": {
+        "canvas": "#F9100C",
+        "surface": "#F52A27",
+        "ink": "#121401",
+        "muted": "#E0A40B",
+        "accent": "#D3F00A",
+        "accentInk": "#0B0B0B",
+        "data1": "#535353",
+        "data2": "#1ADBA5",
+        "data3": "#5979DC",
+        "data4": "#B562C2",
+        "data5": "#FA922A",
+        "data6": "#B9D605",
+        "rule": "#EE4F0B"
+      },
+      "ramps": {
+        "sequential": [
+          "#F52A27",
+          "#EC5C20",
+          "#E48D18",
+          "#DBBE11",
+          "#D3F00A"
+        ],
+        "diverging": [
+          "#1ADBA5",
+          "#956B51",
+          "#E0A40B",
+          "#B13F6A",
+          "#5979DC"
+        ]
+      },
+      "cvd": "İki renk de aşırı doygun ve AYNI açıklıkta: kromostereopsi (titreşim) yapar. Gövde metni için ASLA kullanılmaz.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ],
+      "displayPair": {
+        "note": "Referans çiftin kendisi (#F9100C üzerinde #D3F00A) 3.18:1 — gövde metni eşiğini geçmez. Çift, YALNIZ büyük başlık/afiş için korunur; gövde metni için mürekkep #121401 olarak düzeltildi.",
+        "displayInk": "#D3F00A",
+        "measured": 3.18,
+        "displayOnly": true
+      }
+    },
+    {
+      "id": "violet-imperial",
+      "name": "Violet / Imperial Red — açık",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "complementary-split",
+      "wheel": "mor gece ↔ mercan kırmızısı; menekşe eksende sıcak vurgu",
+      "pair": {
+        "primary": "#321847",
+        "secondary": "#F15153"
+      },
+      "character": [
+        "editorial",
+        "moody",
+        "contemporary",
+        "stage",
+        "light"
+      ],
+      "tokens": {
+        "canvas": "#F15153",
+        "surface": "#EC4547",
+        "ink": "#2D153F",
+        "muted": "#6B294B",
+        "accent": "#321847",
+        "accentInk": "#FFFFFF",
+        "data1": "#F15153",
+        "data2": "#5FC2C7",
+        "data3": "#E0A458",
+        "data4": "#9B7BD4",
+        "data5": "#4A8FE7",
+        "data6": "#C67FA8",
+        "rule": "#A83B4E"
+      },
+      "ramps": {
+        "sequential": [
+          "#EC4547",
+          "#BE3A47",
+          "#8F2E47",
+          "#602347",
+          "#321847"
+        ],
+        "diverging": [
+          "#5FC2C7",
+          "#AF8487",
+          "#6B294B",
+          "#E97655",
+          "#E0A458"
+        ]
+      },
+      "cvd": "Mor/mercan ekseni deuteranopide korunur; data2 (turkuaz) ile data5 (mavi) komşu seride ayrışmayabilir.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ],
+      "displayPair": {
+        "note": "Referans çiftin kendisi (#F15153 üzerinde #321847) 4.45:1 — gövde metni eşiğini geçmez. Çift, YALNIZ büyük başlık/afiş için korunur; gövde metni için mürekkep #2D153F olarak düzeltildi.",
+        "displayInk": "#321847",
+        "measured": 4.45,
+        "displayOnly": true
+      }
+    },
+    {
+      "id": "violet-imperial-dark",
+      "name": "Violet / Imperial Red — koyu",
+      "origin": "user-reference-2026-08-14",
+      "harmony": "complementary-split",
+      "wheel": "mor gece ↔ mercan kırmızısı; menekşe eksende sıcak vurgu",
+      "pair": {
+        "primary": "#321847",
+        "secondary": "#F15153"
+      },
+      "character": [
+        "editorial",
+        "moody",
+        "contemporary",
+        "stage",
+        "dark"
+      ],
+      "tokens": {
+        "canvas": "#321847",
+        "surface": "#3E2056",
+        "ink": "#F25A5C",
+        "muted": "#B03E4F",
+        "accent": "#F15153",
+        "accentInk": "#0B0B0B",
+        "data1": "#F7BBBB",
+        "data2": "#B5DFE1",
+        "data3": "#EFD7B9",
+        "data4": "#DCD1EE",
+        "data5": "#AFCDF2",
+        "data6": "#E7CEDC",
+        "rule": "#67284A"
+      },
+      "ramps": {
+        "sequential": [
+          "#3E2056",
+          "#6B2C55",
+          "#983855",
+          "#C44554",
+          "#F15153"
+        ],
+        "diverging": [
+          "#B5DFE1",
+          "#6D728C",
+          "#B03E4F",
+          "#876E7A",
+          "#EFD7B9"
+        ]
+      },
+      "cvd": "Mor/mercan ekseni deuteranopide korunur; data2 (turkuaz) ile data5 (mavi) komşu seride ayrışmayabilir.",
+      "textPairs": [
+        {
+          "foreground": "ink",
+          "background": "canvas",
+          "minimum": 4.5
+        },
+        {
+          "foreground": "accentInk",
+          "background": "accent",
+          "minimum": 4.5
+        }
+      ],
+      "displayPair": {
+        "note": "Referans çiftin kendisi (#321847 üzerinde #F15153) 4.45:1 — gövde metni eşiğini geçmez. Çift, YALNIZ büyük başlık/afiş için korunur; gövde metni için mürekkep #F25A5C olarak düzeltildi.",
+        "displayInk": "#F15153",
+        "measured": 4.45,
+        "displayOnly": true
+      }
+    }
+  ],
+  "gradients": [
+    {
+      "id": "ocean-mint-fade",
+      "name": "Ocean Mint Fade",
+      "origin": "user-reference-2026-08-14",
+      "kind": "gradient",
+      "stops": [
+        "#085078",
+        "#9AE4CB"
+      ],
+      "character": [
+        "cool",
+        "aquatic",
+        "calm"
+      ],
+      "usage": "derinlik/sıcaklık haritaları, deniz ve atmosfer olayları",
+      "note": "Uçları arasında 50 puanlık açıklık farkı var: TEK renk metin geçişin tamamında çalışmaz. Metin gerekiyorsa geçişi tek uca sınırlayın ya da perde (scrim) kullanın.",
+      "midpoint": "#519AA2",
+      "ramps": {
+        "sequential": [
+          "#085078",
+          "#2C758D",
+          "#519AA2",
+          "#76BFB6",
+          "#9AE4CB"
+        ]
+      },
+      "textSafety": {
+        "bestTextColor": "#0B0B0B",
+        "colorName": "siyah",
+        "worstCaseRatio": 2.28,
+        "verdict": "metin taşımaz (perdesiz)",
+        "measuredAcross": "geçişin 21 noktasında ölçüldü — en kötü nokta esas alınır"
+      },
+      "scrim": {
+        "alpha": 0.27,
+        "css": "linear-gradient(rgba(255,255,255,0.27), rgba(255,255,255,0.27))",
+        "note": "Geçişin en kötü noktasında siyah metnin 4,5:1'e ulaşması için gereken ASGARİ perde. Perde geçişin ÜSTÜNE serilir; renk kimliği korunur, metin her noktada okunur."
+      },
+      "endpointContrast": {
+        "startVsWhite": 8.65,
+        "endVsWhite": 1.47,
+        "startVsBlack": 2.28,
+        "endVsBlack": 13.43
+      }
+    },
+    {
+      "id": "velvet-berry-glow",
+      "name": "Velvet Berry Glow",
+      "origin": "user-reference-2026-08-14",
+      "kind": "gradient",
+      "stops": [
+        "#4B0C37",
+        "#C8005A"
+      ],
+      "character": [
+        "moody",
+        "vibrant",
+        "stage"
+      ],
+      "usage": "bölüm açılışları, sahne zeminleri, ışıma olayları",
+      "note": "Açıklık farkı dar; beyaz metin geçişin HER noktasında güvenli.",
+      "midpoint": "#8A0648",
+      "ramps": {
+        "sequential": [
+          "#4B0C37",
+          "#6A0940",
+          "#8A0648",
+          "#A90351",
+          "#C8005A"
+        ]
+      },
+      "textSafety": {
+        "bestTextColor": "#FFFFFF",
+        "colorName": "beyaz",
+        "worstCaseRatio": 5.83,
+        "verdict": "gövde metni taşır",
+        "measuredAcross": "geçişin 21 noktasında ölçüldü — en kötü nokta esas alınır"
+      },
+      "scrim": null,
+      "endpointContrast": {
+        "startVsWhite": 14.93,
+        "endVsWhite": 5.83,
+        "startVsBlack": 1.32,
+        "endVsBlack": 3.38
+      }
+    },
+    {
+      "id": "royal-sky",
+      "name": "Royal Sky",
+      "origin": "user-reference-2026-08-14",
+      "kind": "gradient",
+      "stops": [
+        "#292F91",
+        "#4CA8DC"
+      ],
+      "character": [
+        "cool",
+        "corporate",
+        "aerial"
+      ],
+      "usage": "gökyüzü/irtifa anlatıları, başlık zeminleri",
+      "note": "Açık uçta beyaz metin eşiğin altına düşer; başlıkları koyu uçta konumlandırın.",
+      "midpoint": "#3B6CB6",
+      "ramps": {
+        "sequential": [
+          "#292F91",
+          "#324DA4",
+          "#3B6CB6",
+          "#438AC9",
+          "#4CA8DC"
+        ]
+      },
+      "textSafety": {
+        "bestTextColor": "#FFFFFF",
+        "colorName": "beyaz",
+        "worstCaseRatio": 2.64,
+        "verdict": "metin taşımaz (perdesiz)",
+        "measuredAcross": "geçişin 21 noktasında ölçüldü — en kötü nokta esas alınır"
+      },
+      "scrim": {
+        "alpha": 0.26,
+        "css": "linear-gradient(rgba(0,0,0,0.26), rgba(0,0,0,0.26))",
+        "note": "Geçişin en kötü noktasında beyaz metnin 4,5:1'e ulaşması için gereken ASGARİ perde. Perde geçişin ÜSTÜNE serilir; renk kimliği korunur, metin her noktada okunur."
+      },
+      "endpointContrast": {
+        "startVsWhite": 11.0,
+        "endVsWhite": 2.64,
+        "startVsBlack": 1.79,
+        "endVsBlack": 7.44
+      }
+    },
+    {
+      "id": "dusky-orchid",
+      "name": "Dusky Orchid",
+      "origin": "user-reference-2026-08-14",
+      "kind": "gradient",
+      "stops": [
+        "#564A97",
+        "#B75F67"
+      ],
+      "character": [
+        "warm-cool",
+        "twilight",
+        "editorial"
+      ],
+      "usage": "alacakaranlık zeminleri, ıraksak veri rampası (mor↔mercan)",
+      "note": "İki uç birbirine yakın açıklıkta: zemin olarak sakin, ama metin yalnız büyük punto.",
+      "midpoint": "#86557F",
+      "ramps": {
+        "sequential": [
+          "#564A97",
+          "#6E4F8B",
+          "#86557F",
+          "#9F5A73",
+          "#B75F67"
+        ]
+      },
+      "textSafety": {
+        "bestTextColor": "#FFFFFF",
+        "colorName": "beyaz",
+        "worstCaseRatio": 4.33,
+        "verdict": "yalnız büyük başlık",
+        "measuredAcross": "geçişin 21 noktasında ölçüldü — en kötü nokta esas alınır"
+      },
+      "scrim": {
+        "alpha": 0.03,
+        "css": "linear-gradient(rgba(0,0,0,0.03), rgba(0,0,0,0.03))",
+        "note": "Geçişin en kötü noktasında beyaz metnin 4,5:1'e ulaşması için gereken ASGARİ perde. Perde geçişin ÜSTÜNE serilir; renk kimliği korunur, metin her noktada okunur."
+      },
+      "endpointContrast": {
+        "startVsWhite": 7.44,
+        "endVsWhite": 4.33,
+        "startVsBlack": 2.65,
+        "endVsBlack": 4.54
+      }
+    },
+    {
+      "id": "midnight-steel",
+      "name": "Midnight Steel",
+      "origin": "user-reference-2026-08-14",
+      "kind": "gradient",
+      "stops": [
+        "#141E30",
+        "#3E5E96"
+      ],
+      "character": [
+        "cool",
+        "technical",
+        "night"
+      ],
+      "usage": "koyu deste zemini, gece/uzay sahneleri, derinlik rampası",
+      "note": "En güvenli fade: beyaz metin geçişin her noktasında rahat taşır.",
+      "midpoint": "#293E63",
+      "ramps": {
+        "sequential": [
+          "#141E30",
+          "#1E2E4A",
+          "#293E63",
+          "#344E7D",
+          "#3E5E96"
+        ]
+      },
+      "textSafety": {
+        "bestTextColor": "#FFFFFF",
+        "colorName": "beyaz",
+        "worstCaseRatio": 6.47,
+        "verdict": "gövde metni taşır",
+        "measuredAcross": "geçişin 21 noktasında ölçüldü — en kötü nokta esas alınır"
+      },
+      "scrim": null,
+      "endpointContrast": {
+        "startVsWhite": 16.69,
+        "endVsWhite": 6.47,
+        "startVsBlack": 1.18,
+        "endVsBlack": 3.04
+      }
     }
   ]
 }

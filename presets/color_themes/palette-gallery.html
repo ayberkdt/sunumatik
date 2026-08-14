@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Palet Galerisi — 27 palet · 5 geçiş</title>
+<style>
+:root { --bg:#0F1013; --sf:#17191F; --ink:#F4EEE1; --mut:#A9A296; --acc:#D3B26A; --rule:#2C2F37;
+  --iyi:#7FD18A; --orta:#E0B15A; }
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.5 Bahnschrift,'Segoe UI',system-ui,sans-serif;padding:26px 30px 60px}
+h1{font-size:26px;margin:0 0 6px} .sub{color:var(--mut);margin:0 0 6px}
+.kural{color:var(--mut);margin:0 0 18px;max-width:1100px;line-height:1.6}
+.kural b{color:var(--acc)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:20px;position:sticky;top:0;
+  background:var(--bg);padding:8px 0;z-index:5}
+input{background:var(--sf);border:1px solid var(--rule);color:var(--ink);padding:9px 14px;
+  border-radius:9px;min-width:280px;font:inherit}
+button.f{background:var(--sf);border:1px solid var(--rule);color:var(--ink);padding:8px 14px;
+  border-radius:9px;cursor:pointer;font:inherit}
+button.f.on{border-color:var(--acc);color:var(--acc)}
+#say{color:var(--mut);margin-left:auto}
+h2{font-size:15px;letter-spacing:.24em;text-transform:uppercase;color:var(--acc);
+  margin:30px 0 12px;border-top:1px solid var(--rule);padding-top:18px}
+.izgara{display:grid;grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:16px}
+.kart{background:var(--sf);border:1px solid var(--rule);border-radius:14px;overflow:hidden;
+  display:grid;grid-template-columns:236px 1fr}
+.kart.gizli{display:none}
+.onizleme{padding:18px 16px;border-right:1px solid var(--rule);position:relative;
+  display:flex;flex-direction:column;justify-content:center;min-height:196px}
+.onizleme.gecis{border-right:0}
+.onizleme .perde{position:absolute;inset:0}
+.onizleme h3{font-size:20px;margin:8px 0 6px;position:relative}
+.onizleme p{font-size:12.5px;margin:0;line-height:1.45;position:relative}
+.rozet{position:absolute;top:10px;left:16px;font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;padding:3px 8px;border-radius:999px}
+.seri{display:flex;gap:4px;margin-top:12px;position:relative}
+.seri b{width:16px;height:16px;border-radius:4px;display:block}
+.govde{padding:14px 16px}
+.kimlik{font:12px 'Cascadia Mono',Consolas,monospace;color:var(--acc)}
+.cark{color:var(--mut);font-size:12.5px;margin:6px 0 10px;line-height:1.45}
+.olcum{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.olcum span{font:11.5px 'Cascadia Mono',Consolas,monospace;border:1px solid var(--rule);
+  border-radius:999px;padding:3px 9px;color:var(--mut)}
+.olcum .iyi{color:var(--iyi);border-color:#33553B} .olcum .orta{color:var(--orta);border-color:#5A4526}
+.cipler{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.sw{display:flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--rule);
+  border-radius:8px;padding:3px 8px 3px 5px;cursor:pointer;color:var(--ink);font:inherit}
+.sw:hover{border-color:var(--acc)}
+.sw .dot{width:15px;height:15px;border-radius:4px;background:var(--c);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.sw code{font:11px 'Cascadia Mono',Consolas,monospace;color:var(--mut)}
+.sw em{font-style:normal;font-size:10.5px;color:var(--mut);opacity:.75}
+.alt{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:10px 0 5px}
+.rampa{display:flex;height:16px;border-radius:5px;overflow:hidden;margin-bottom:6px;max-width:340px}
+.rampa i{flex:1}
+.uyari{background:#2A1F12;border:1px solid #5A4526;border-radius:8px;padding:8px 10px;
+  font-size:12px;color:#E9D3A8;margin:10px 0 0;line-height:1.5}
+.ok{color:var(--iyi);font-size:12px;margin:10px 0 0}
+.cvd{color:var(--mut);font-size:11.5px;margin:8px 0 0;line-height:1.5}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--acc);
+  color:#191307;padding:9px 18px;border-radius:9px;font-weight:700;opacity:0;transition:.2s}
+#toast.on{opacity:1}
+</style></head><body>
+<h1>Palet Galerisi</h1>
+<p class="sub">27 palet · 5 geçiş · bütün kontrastlar WCAG ile ÖLÇÜLDÜ, göz kararı değil</p>
+<p class="kural">İkili paletler <b>açık ve koyu eşiyle</b> birlikte durur — aynı çift, iki yön.
+Geçişler yalnız <b>başlık/bölüm zemini, ışık olayı ve sıralı veri rampası</b> için meşrudur;
+veri işareti üzerinde ve gövde metni altında degrade kullanılmaz. Bir geçişte metin güvenliği,
+orta noktaya değil <b>geçişin en kötü noktasına</b> göre belirlenir; yetmediğinde gereken asgari
+perde opaklığı kartta yazılıdır.</p>
+<div class="bar">
+  <input id="q" placeholder="ara: butter, fade, koyu, complementary, poster…">
+  <button class="f on" data-f="">Tümü</button>
+  <button class="f" data-f="ikili">İkili</button>
+  <button class="f" data-f="gecis">Geçiş</button>
+  <button class="f" data-f="acik">Açık zemin</button>
+  <button class="f" data-f="koyu">Koyu zemin</button>
+  <span id="say"></span>
+</div>
+<h2 id="b-ikili">İkili paletler — açık ve koyu eşler</h2>
+<div class="izgara" id="g-ikili">
+<article class="kart" data-ara="berry-orchid berry wine / orchid mist editorial warm pastel premium monochromatic-warm">
+  <div class="onizleme" style="background:#EFE9E9;color:#5A2132;
+       border-color:#D8C7CC">
+    <span class="rozet" style="background:#A84D6A;color:#FFF8F5">monochromatic-warm</span>
+    <h3>Berry Wine / Orchid Mist</h3>
+    <p style="color:#76545F">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 10.31:1.</p>
+    <div class="seri"><b style="background:#C98B9E"></b><b style="background:#7C7054"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="berry-orchid"</code>
+    <p class="cark">single rose-wine hue, value-stepped; olive counterweight in data</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 10.31:1</span>
+      <span class="iyi">vurgu çifti 5.08:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#EFE9E9" style="--c:#EFE9E9" title="#EFE9E9 — kopyalamak için tıkla"><span class="dot"></span><code>#EFE9E9</code><em>zemin</em></button><button class="sw" data-hex="#F8F3F2" style="--c:#F8F3F2" title="#F8F3F2 — kopyalamak için tıkla"><span class="dot"></span><code>#F8F3F2</code><em>yüzey</em></button><button class="sw" data-hex="#5A2132" style="--c:#5A2132" title="#5A2132 — kopyalamak için tıkla"><span class="dot"></span><code>#5A2132</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#76545F" style="--c:#76545F" title="#76545F — kopyalamak için tıkla"><span class="dot"></span><code>#76545F</code><em>sönük</em></button><button class="sw" data-hex="#A84D6A" style="--c:#A84D6A" title="#A84D6A — kopyalamak için tıkla"><span class="dot"></span><code>#A84D6A</code><em>vurgu</em></button><button class="sw" data-hex="#FFF8F5" style="--c:#FFF8F5" title="#FFF8F5 — kopyalamak için tıkla"><span class="dot"></span><code>#FFF8F5</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#D8C7CC" style="--c:#D8C7CC" title="#D8C7CC — kopyalamak için tıkla"><span class="dot"></span><code>#D8C7CC</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#C98B9E" style="--c:#C98B9E" title="#C98B9E — kopyalamak için tıkla"><span class="dot"></span><code>#C98B9E</code></button><button class="sw" data-hex="#7C7054" style="--c:#7C7054" title="#7C7054 — kopyalamak için tıkla"><span class="dot"></span><code>#7C7054</code></button></div>
+    <p class="alt">rampa tanımlı değil (temel palet)</p>
+    
+    
+  </div>
+</article>
+<article class="kart" data-ara="sage-buttercream sage leaf / buttercream botanical vibrant optimistic technical analogous-warm">
+  <div class="onizleme" style="background:#FFF8DD;color:#202B23;
+       border-color:#D9D3B4">
+    <span class="rozet" style="background:#FFD85F;color:#202B23">analogous-warm</span>
+    <h3>Sage Leaf / Buttercream</h3>
+    <p style="color:#59655C">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 13.78:1.</p>
+    <div class="seri"><b style="background:#6F8C75"></b><b style="background:#B44F37"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="sage-buttercream"</code>
+    <p class="cark">yellow → yellow-green neighbours; brick red as the single far accent</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 13.78:1</span>
+      <span class="iyi">vurgu çifti 10.65:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#FFF8DD" style="--c:#FFF8DD" title="#FFF8DD — kopyalamak için tıkla"><span class="dot"></span><code>#FFF8DD</code><em>zemin</em></button><button class="sw" data-hex="#FFD85F" style="--c:#FFD85F" title="#FFD85F — kopyalamak için tıkla"><span class="dot"></span><code>#FFD85F</code><em>yüzey</em></button><button class="sw" data-hex="#202B23" style="--c:#202B23" title="#202B23 — kopyalamak için tıkla"><span class="dot"></span><code>#202B23</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#59655C" style="--c:#59655C" title="#59655C — kopyalamak için tıkla"><span class="dot"></span><code>#59655C</code><em>sönük</em></button><button class="sw" data-hex="#FFD85F" style="--c:#FFD85F" title="#FFD85F — kopyalamak için tıkla"><span class="dot"></span><code>#FFD85F</code><em>vurgu</em></button><button class="sw" data-hex="#202B23" style="--c:#202B23" title="#202B23 — kopyalamak için tıkla"><span class="dot"></span><code>#202B23</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#D9D3B4" style="--c:#D9D3B4" title="#D9D3B4 — kopyalamak için tıkla"><span class="dot"></span><code>#D9D3B4</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#6F8C75" style="--c:#6F8C75" title="#6F8C75 — kopyalamak için tıkla"><span class="dot"></span><code>#6F8C75</code></button><button class="sw" data-hex="#B44F37" style="--c:#B44F37" title="#B44F37 — kopyalamak için tıkla"><span class="dot"></span><code>#B44F37</code></button></div>
+    <p class="alt">rampa tanımlı değil (temel palet)</p>
+    
+    
+  </div>
+</article>
+<article class="kart" data-ara="arctic-mulberry arctic sky / mulberry wine cool pastel observational refined complementary-muted">
+  <div class="onizleme" style="background:#BCD3E7;color:#391D30;
+       border-color:#91B1CB">
+    <span class="rozet" style="background:#783A62;color:#F8F2F6">complementary-muted</span>
+    <h3>Arctic Sky / Mulberry Wine</h3>
+    <p style="color:#644A5D">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 9.77:1.</p>
+    <div class="seri"><b style="background:#477C9D"></b><b style="background:#A9513A"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="arctic-mulberry"</code>
+    <p class="cark">ice blue ↔ mulberry red-violet, both desaturated toward pastel</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 9.77:1</span>
+      <span class="iyi">vurgu çifti 7.37:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#BCD3E7" style="--c:#BCD3E7" title="#BCD3E7 — kopyalamak için tıkla"><span class="dot"></span><code>#BCD3E7</code><em>zemin</em></button><button class="sw" data-hex="#E8EFF4" style="--c:#E8EFF4" title="#E8EFF4 — kopyalamak için tıkla"><span class="dot"></span><code>#E8EFF4</code><em>yüzey</em></button><button class="sw" data-hex="#391D30" style="--c:#391D30" title="#391D30 — kopyalamak için tıkla"><span class="dot"></span><code>#391D30</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#644A5D" style="--c:#644A5D" title="#644A5D — kopyalamak için tıkla"><span class="dot"></span><code>#644A5D</code><em>sönük</em></button><button class="sw" data-hex="#783A62" style="--c:#783A62" title="#783A62 — kopyalamak için tıkla"><span class="dot"></span><code>#783A62</code><em>vurgu</em></button><button class="sw" data-hex="#F8F2F6" style="--c:#F8F2F6" title="#F8F2F6 — kopyalamak için tıkla"><span class="dot"></span><code>#F8F2F6</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#91B1CB" style="--c:#91B1CB" title="#91B1CB — kopyalamak için tıkla"><span class="dot"></span><code>#91B1CB</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#477C9D" style="--c:#477C9D" title="#477C9D — kopyalamak için tıkla"><span class="dot"></span><code>#477C9D</code></button><button class="sw" data-hex="#A9513A" style="--c:#A9513A" title="#A9513A — kopyalamak için tıkla"><span class="dot"></span><code>#A9513A</code></button></div>
+    <p class="alt">rampa tanımlı değil (temel palet)</p>
+    
+    
+  </div>
+</article>
+<article class="kart" data-ara="midnight-tangerine midnight navy / burnt tangerine vibrant editorial high-energy mission complementary">
+  <div class="onizleme" style="background:#1E223D;color:#F7F0E3;
+       border-color:#454D76">
+    <span class="rozet" style="background:#F54F1F;color:#15182B">complementary</span>
+    <h3>Midnight Navy / Burnt Tangerine</h3>
+    <p style="color:#C3C7D6">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 13.71:1.</p>
+    <div class="seri"><b style="background:#FFD166"></b><b style="background:#78C4B4"></b><b style="background:#E88AB0"></b><b style="background:#8FA8E8"></b><b style="background:#E8975A"></b><b style="background:#9BC97A"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="midnight-tangerine"</code>
+    <p class="cark">navy blue ↔ orange — the classic warm/cool axis at full commitment</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 13.71:1</span>
+      <span class="iyi">vurgu çifti 5.03:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#1E223D" style="--c:#1E223D" title="#1E223D — kopyalamak için tıkla"><span class="dot"></span><code>#1E223D</code><em>zemin</em></button><button class="sw" data-hex="#2B3154" style="--c:#2B3154" title="#2B3154 — kopyalamak için tıkla"><span class="dot"></span><code>#2B3154</code><em>yüzey</em></button><button class="sw" data-hex="#F7F0E3" style="--c:#F7F0E3" title="#F7F0E3 — kopyalamak için tıkla"><span class="dot"></span><code>#F7F0E3</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#C3C7D6" style="--c:#C3C7D6" title="#C3C7D6 — kopyalamak için tıkla"><span class="dot"></span><code>#C3C7D6</code><em>sönük</em></button><button class="sw" data-hex="#F54F1F" style="--c:#F54F1F" title="#F54F1F — kopyalamak için tıkla"><span class="dot"></span><code>#F54F1F</code><em>vurgu</em></button><button class="sw" data-hex="#15182B" style="--c:#15182B" title="#15182B — kopyalamak için tıkla"><span class="dot"></span><code>#15182B</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#454D76" style="--c:#454D76" title="#454D76 — kopyalamak için tıkla"><span class="dot"></span><code>#454D76</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#FFD166" style="--c:#FFD166" title="#FFD166 — kopyalamak için tıkla"><span class="dot"></span><code>#FFD166</code></button><button class="sw" data-hex="#78C4B4" style="--c:#78C4B4" title="#78C4B4 — kopyalamak için tıkla"><span class="dot"></span><code>#78C4B4</code></button><button class="sw" data-hex="#E88AB0" style="--c:#E88AB0" title="#E88AB0 — kopyalamak için tıkla"><span class="dot"></span><code>#E88AB0</code></button><button class="sw" data-hex="#8FA8E8" style="--c:#8FA8E8" title="#8FA8E8 — kopyalamak için tıkla"><span class="dot"></span><code>#8FA8E8</code></button><button class="sw" data-hex="#E8975A" style="--c:#E8975A" title="#E8975A — kopyalamak için tıkla"><span class="dot"></span><code>#E8975A</code></button><button class="sw" data-hex="#9BC97A" style="--c:#9BC97A" title="#9BC97A — kopyalamak için tıkla"><span class="dot"></span><code>#9BC97A</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#2B3154"></i><i style="background:#5E4A4E"></i><i style="background:#9A5A3E"></i><i style="background:#CE5530"></i><i style="background:#F54F1F"></i></div><div class="rampa"><i style="background:#78C4B4"></i><i style="background:#A9BFAF"></i><i style="background:#C3C7D6"></i><i style="background:#DE9C7A"></i><i style="background:#F54F1F"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Blue/orange axis is the safest complementary pair for deuteranopia and protanopia; keep data4 (periwinkle) and data6 (leaf) apart in adjacent series.</p>
+  </div>
+</article>
+<article class="kart" data-ara="oat-cocoa oat milk / cocoa bean cream earthy matte scholarly analogous-earth">
+  <div class="onizleme" style="background:#F3EEC8;color:#473835;
+       border-color:#D4CBA2">
+    <span class="rozet" style="background:#A34F38;color:#FFF8E8">analogous-earth</span>
+    <h3>Oat Milk / Cocoa Bean</h3>
+    <p style="color:#70615C">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 9.48:1.</p>
+    <div class="seri"><b style="background:#617552"></b><b style="background:#4F7488"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="oat-cocoa"</code>
+    <p class="cark">yellow-cream → brown neighbours; sage and steel as measured counterpoints</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 9.48:1</span>
+      <span class="iyi">vurgu çifti 5.32:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#F3EEC8" style="--c:#F3EEC8" title="#F3EEC8 — kopyalamak için tıkla"><span class="dot"></span><code>#F3EEC8</code><em>zemin</em></button><button class="sw" data-hex="#FBF7DF" style="--c:#FBF7DF" title="#FBF7DF — kopyalamak için tıkla"><span class="dot"></span><code>#FBF7DF</code><em>yüzey</em></button><button class="sw" data-hex="#473835" style="--c:#473835" title="#473835 — kopyalamak için tıkla"><span class="dot"></span><code>#473835</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#70615C" style="--c:#70615C" title="#70615C — kopyalamak için tıkla"><span class="dot"></span><code>#70615C</code><em>sönük</em></button><button class="sw" data-hex="#A34F38" style="--c:#A34F38" title="#A34F38 — kopyalamak için tıkla"><span class="dot"></span><code>#A34F38</code><em>vurgu</em></button><button class="sw" data-hex="#FFF8E8" style="--c:#FFF8E8" title="#FFF8E8 — kopyalamak için tıkla"><span class="dot"></span><code>#FFF8E8</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#D4CBA2" style="--c:#D4CBA2" title="#D4CBA2 — kopyalamak için tıkla"><span class="dot"></span><code>#D4CBA2</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#617552" style="--c:#617552" title="#617552 — kopyalamak için tıkla"><span class="dot"></span><code>#617552</code></button><button class="sw" data-hex="#4F7488" style="--c:#4F7488" title="#4F7488 — kopyalamak için tıkla"><span class="dot"></span><code>#4F7488</code></button></div>
+    <p class="alt">rampa tanımlı değil (temel palet)</p>
+    
+    
+  </div>
+</article>
+<article class="kart" data-ara="graphite-ember graphite / ember copper dark-first layered-neutral product-grade premium complementary-muted">
+  <div class="onizleme" style="background:#141519;color:#F1F0EB;
+       border-color:#303339">
+    <span class="rozet" style="background:#E8804A;color:#1A120B">complementary-muted</span>
+    <h3>Graphite / Ember Copper</h3>
+    <p style="color:#A6A9B1">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 15.99:1.</p>
+    <div class="seri"><b style="background:#2FA98C"></b><b style="background:#B58224"></b><b style="background:#6A9BD9"></b><b style="background:#C96A5A"></b><b style="background:#9A8FD9"></b><b style="background:#86B14A"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="graphite-ember"</code>
+    <p class="cark">cool graphite blue-grey ↔ ember copper-orange</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 15.99:1</span>
+      <span class="iyi">vurgu çifti 6.71:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#141519" style="--c:#141519" title="#141519 — kopyalamak için tıkla"><span class="dot"></span><code>#141519</code><em>zemin</em></button><button class="sw" data-hex="#1E2026" style="--c:#1E2026" title="#1E2026 — kopyalamak için tıkla"><span class="dot"></span><code>#1E2026</code><em>yüzey</em></button><button class="sw" data-hex="#F1F0EB" style="--c:#F1F0EB" title="#F1F0EB — kopyalamak için tıkla"><span class="dot"></span><code>#F1F0EB</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#A6A9B1" style="--c:#A6A9B1" title="#A6A9B1 — kopyalamak için tıkla"><span class="dot"></span><code>#A6A9B1</code><em>sönük</em></button><button class="sw" data-hex="#E8804A" style="--c:#E8804A" title="#E8804A — kopyalamak için tıkla"><span class="dot"></span><code>#E8804A</code><em>vurgu</em></button><button class="sw" data-hex="#1A120B" style="--c:#1A120B" title="#1A120B — kopyalamak için tıkla"><span class="dot"></span><code>#1A120B</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#303339" style="--c:#303339" title="#303339 — kopyalamak için tıkla"><span class="dot"></span><code>#303339</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#2FA98C" style="--c:#2FA98C" title="#2FA98C — kopyalamak için tıkla"><span class="dot"></span><code>#2FA98C</code></button><button class="sw" data-hex="#B58224" style="--c:#B58224" title="#B58224 — kopyalamak için tıkla"><span class="dot"></span><code>#B58224</code></button><button class="sw" data-hex="#6A9BD9" style="--c:#6A9BD9" title="#6A9BD9 — kopyalamak için tıkla"><span class="dot"></span><code>#6A9BD9</code></button><button class="sw" data-hex="#C96A5A" style="--c:#C96A5A" title="#C96A5A — kopyalamak için tıkla"><span class="dot"></span><code>#C96A5A</code></button><button class="sw" data-hex="#9A8FD9" style="--c:#9A8FD9" title="#9A8FD9 — kopyalamak için tıkla"><span class="dot"></span><code>#9A8FD9</code></button><button class="sw" data-hex="#86B14A" style="--c:#86B14A" title="#86B14A — kopyalamak için tıkla"><span class="dot"></span><code>#86B14A</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#1E2026"></i><i style="background:#4E3A2E"></i><i style="background:#855434"></i><i style="background:#B96A3E"></i><i style="background:#E8804A"></i></div><div class="rampa"><i style="background:#2FA98C"></i><i style="background:#6FA995"></i><i style="background:#A6A9B1"></i><i style="background:#C9946E"></i><i style="background:#E8804A"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Teal/copper diverging axis survives deuteranopia via lightness spread; avoid pairing data4 (coral) with data6 (olive) in adjacent series.</p>
+  </div>
+</article>
+<article class="kart" data-ara="porcelain-ink porcelain / measured indigo light editorial documentation-grade restrained monochromatic-cool">
+  <div class="onizleme" style="background:#F6F4EF;color:#23262B;
+       border-color:#DCD8CF">
+    <span class="rozet" style="background:#44599C;color:#F4F6FC">monochromatic-cool</span>
+    <h3>Porcelain / Measured Indigo</h3>
+    <p style="color:#656A73">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 13.81:1.</p>
+    <div class="seri"><b style="background:#178F6E"></b><b style="background:#B0642F"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="porcelain-ink"</code>
+    <p class="cark">single indigo hue on warm porcelain neutrals; earth counter in data</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 13.81:1</span>
+      <span class="iyi">vurgu çifti 6.16:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#F6F4EF" style="--c:#F6F4EF" title="#F6F4EF — kopyalamak için tıkla"><span class="dot"></span><code>#F6F4EF</code><em>zemin</em></button><button class="sw" data-hex="#FFFFFF" style="--c:#FFFFFF" title="#FFFFFF — kopyalamak için tıkla"><span class="dot"></span><code>#FFFFFF</code><em>yüzey</em></button><button class="sw" data-hex="#23262B" style="--c:#23262B" title="#23262B — kopyalamak için tıkla"><span class="dot"></span><code>#23262B</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#656A73" style="--c:#656A73" title="#656A73 — kopyalamak için tıkla"><span class="dot"></span><code>#656A73</code><em>sönük</em></button><button class="sw" data-hex="#44599C" style="--c:#44599C" title="#44599C — kopyalamak için tıkla"><span class="dot"></span><code>#44599C</code><em>vurgu</em></button><button class="sw" data-hex="#F4F6FC" style="--c:#F4F6FC" title="#F4F6FC — kopyalamak için tıkla"><span class="dot"></span><code>#F4F6FC</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#DCD8CF" style="--c:#DCD8CF" title="#DCD8CF — kopyalamak için tıkla"><span class="dot"></span><code>#DCD8CF</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#178F6E" style="--c:#178F6E" title="#178F6E — kopyalamak için tıkla"><span class="dot"></span><code>#178F6E</code></button><button class="sw" data-hex="#B0642F" style="--c:#B0642F" title="#B0642F — kopyalamak için tıkla"><span class="dot"></span><code>#B0642F</code></button></div>
+    <p class="alt">rampa tanımlı değil (temel palet)</p>
+    
+    
+  </div>
+</article>
+<article class="kart" data-ara="obsidian-champagne obsidian / champagne gold luxury keynote warm-metallic celebratory complementary-muted">
+  <div class="onizleme" style="background:#0F1013;color:#F4EEE1;
+       border-color:#2E3037">
+    <span class="rozet" style="background:#D3B26A;color:#191307">complementary-muted</span>
+    <h3>Obsidian / Champagne Gold</h3>
+    <p style="color:#A9A296">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 16.46:1.</p>
+    <div class="seri"><b style="background:#5590C9"></b><b style="background:#C86A40"></b><b style="background:#6FBF9A"></b><b style="background:#A88BD9"></b><b style="background:#D9C36A"></b><b style="background:#C95F6A"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="obsidian-champagne"</code>
+    <p class="cark">warm champagne gold ↔ cool steel blue, both restrained on obsidian</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 16.46:1</span>
+      <span class="iyi">vurgu çifti 9.10:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#0F1013" style="--c:#0F1013" title="#0F1013 — kopyalamak için tıkla"><span class="dot"></span><code>#0F1013</code><em>zemin</em></button><button class="sw" data-hex="#1A1C21" style="--c:#1A1C21" title="#1A1C21 — kopyalamak için tıkla"><span class="dot"></span><code>#1A1C21</code><em>yüzey</em></button><button class="sw" data-hex="#F4EEE1" style="--c:#F4EEE1" title="#F4EEE1 — kopyalamak için tıkla"><span class="dot"></span><code>#F4EEE1</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#A9A296" style="--c:#A9A296" title="#A9A296 — kopyalamak için tıkla"><span class="dot"></span><code>#A9A296</code><em>sönük</em></button><button class="sw" data-hex="#D3B26A" style="--c:#D3B26A" title="#D3B26A — kopyalamak için tıkla"><span class="dot"></span><code>#D3B26A</code><em>vurgu</em></button><button class="sw" data-hex="#191307" style="--c:#191307" title="#191307 — kopyalamak için tıkla"><span class="dot"></span><code>#191307</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#2E3037" style="--c:#2E3037" title="#2E3037 — kopyalamak için tıkla"><span class="dot"></span><code>#2E3037</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#5590C9" style="--c:#5590C9" title="#5590C9 — kopyalamak için tıkla"><span class="dot"></span><code>#5590C9</code></button><button class="sw" data-hex="#C86A40" style="--c:#C86A40" title="#C86A40 — kopyalamak için tıkla"><span class="dot"></span><code>#C86A40</code></button><button class="sw" data-hex="#6FBF9A" style="--c:#6FBF9A" title="#6FBF9A — kopyalamak için tıkla"><span class="dot"></span><code>#6FBF9A</code></button><button class="sw" data-hex="#A88BD9" style="--c:#A88BD9" title="#A88BD9 — kopyalamak için tıkla"><span class="dot"></span><code>#A88BD9</code></button><button class="sw" data-hex="#D9C36A" style="--c:#D9C36A" title="#D9C36A — kopyalamak için tıkla"><span class="dot"></span><code>#D9C36A</code></button><button class="sw" data-hex="#C95F6A" style="--c:#C95F6A" title="#C95F6A — kopyalamak için tıkla"><span class="dot"></span><code>#C95F6A</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#1A1C21"></i><i style="background:#4A4030"></i><i style="background:#7D6A42"></i><i style="background:#A88E54"></i><i style="background:#D3B26A"></i></div><div class="rampa"><i style="background:#5590C9"></i><i style="background:#8A9BAD"></i><i style="background:#A9A296"></i><i style="background:#BE8A68"></i><i style="background:#C86A40"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Gold/blue is deuteranopia-safe. data3 (mint) and data5 (pale gold) sit close in lightness — separate them with markers or dashing, not hue alone.</p>
+  </div>
+</article>
+<article class="kart" data-ara="verdigris-slate slate pine / verdigris dark cool-organic confident instrument-grade analogous-cool">
+  <div class="onizleme" style="background:#152020;color:#ECF3EF;
+       border-color:#31423E">
+    <span class="rozet" style="background:#5FBFAE;color:#0C1B18">analogous-cool</span>
+    <h3>Slate Pine / Verdigris</h3>
+    <p style="color:#9FB3AC">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 14.80:1.</p>
+    <div class="seri"><b style="background:#BA8A2A"></b><b style="background:#5B95E8"></b><b style="background:#C96A8A"></b><b style="background:#7ABF6A"></b><b style="background:#A88BD9"></b><b style="background:#D9B84A"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="verdigris-slate"</code>
+    <p class="cark">green → teal neighbours; ochre and cobalt as far data counterweights</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 14.80:1</span>
+      <span class="iyi">vurgu çifti 8.06:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#152020" style="--c:#152020" title="#152020 — kopyalamak için tıkla"><span class="dot"></span><code>#152020</code><em>zemin</em></button><button class="sw" data-hex="#1F2E2C" style="--c:#1F2E2C" title="#1F2E2C — kopyalamak için tıkla"><span class="dot"></span><code>#1F2E2C</code><em>yüzey</em></button><button class="sw" data-hex="#ECF3EF" style="--c:#ECF3EF" title="#ECF3EF — kopyalamak için tıkla"><span class="dot"></span><code>#ECF3EF</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#9FB3AC" style="--c:#9FB3AC" title="#9FB3AC — kopyalamak için tıkla"><span class="dot"></span><code>#9FB3AC</code><em>sönük</em></button><button class="sw" data-hex="#5FBFAE" style="--c:#5FBFAE" title="#5FBFAE — kopyalamak için tıkla"><span class="dot"></span><code>#5FBFAE</code><em>vurgu</em></button><button class="sw" data-hex="#0C1B18" style="--c:#0C1B18" title="#0C1B18 — kopyalamak için tıkla"><span class="dot"></span><code>#0C1B18</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#31423E" style="--c:#31423E" title="#31423E — kopyalamak için tıkla"><span class="dot"></span><code>#31423E</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#BA8A2A" style="--c:#BA8A2A" title="#BA8A2A — kopyalamak için tıkla"><span class="dot"></span><code>#BA8A2A</code></button><button class="sw" data-hex="#5B95E8" style="--c:#5B95E8" title="#5B95E8 — kopyalamak için tıkla"><span class="dot"></span><code>#5B95E8</code></button><button class="sw" data-hex="#C96A8A" style="--c:#C96A8A" title="#C96A8A — kopyalamak için tıkla"><span class="dot"></span><code>#C96A8A</code></button><button class="sw" data-hex="#7ABF6A" style="--c:#7ABF6A" title="#7ABF6A — kopyalamak için tıkla"><span class="dot"></span><code>#7ABF6A</code></button><button class="sw" data-hex="#A88BD9" style="--c:#A88BD9" title="#A88BD9 — kopyalamak için tıkla"><span class="dot"></span><code>#A88BD9</code></button><button class="sw" data-hex="#D9B84A" style="--c:#D9B84A" title="#D9B84A — kopyalamak için tıkla"><span class="dot"></span><code>#D9B84A</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#1F2E2C"></i><i style="background:#2B534C"></i><i style="background:#3A7A6E"></i><i style="background:#4C9C8E"></i><i style="background:#5FBFAE"></i></div><div class="rampa"><i style="background:#5B95E8"></i><i style="background:#84A4C9"></i><i style="background:#9FB3AC"></i><i style="background:#AD9F6A"></i><i style="background:#BA8A2A"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Accent verdigris vs data4 leaf-green are close for deuteranopia — never adjacent series; ochre/cobalt diverging axis is safe.</p>
+  </div>
+</article>
+<article class="kart" data-ara="ultraviolet-chartreuse ultraviolet / chartreuse signal bold futuristic high-energy signal complementary">
+  <div class="onizleme" style="background:#14101E;color:#F2EFE6;
+       border-color:#2E2843">
+    <span class="rozet" style="background:#C9DE4C;color:#1A2005">complementary</span>
+    <h3>Ultraviolet / Chartreuse Signal</h3>
+    <p style="color:#A79FB8">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 16.27:1.</p>
+    <div class="seri"><b style="background:#C9DE4C"></b><b style="background:#9B7EDE"></b><b style="background:#4FC1B0"></b><b style="background:#E8756A"></b><b style="background:#D9B24A"></b><b style="background:#6E8FD9"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="ultraviolet-chartreuse"</code>
+    <p class="cark">deep violet ↔ yellow-green; maximum hue distance, chroma held on one side</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 16.27:1</span>
+      <span class="iyi">vurgu çifti 11.20:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#14101E" style="--c:#14101E" title="#14101E — kopyalamak için tıkla"><span class="dot"></span><code>#14101E</code><em>zemin</em></button><button class="sw" data-hex="#1E1830" style="--c:#1E1830" title="#1E1830 — kopyalamak için tıkla"><span class="dot"></span><code>#1E1830</code><em>yüzey</em></button><button class="sw" data-hex="#F2EFE6" style="--c:#F2EFE6" title="#F2EFE6 — kopyalamak için tıkla"><span class="dot"></span><code>#F2EFE6</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#A79FB8" style="--c:#A79FB8" title="#A79FB8 — kopyalamak için tıkla"><span class="dot"></span><code>#A79FB8</code><em>sönük</em></button><button class="sw" data-hex="#C9DE4C" style="--c:#C9DE4C" title="#C9DE4C — kopyalamak için tıkla"><span class="dot"></span><code>#C9DE4C</code><em>vurgu</em></button><button class="sw" data-hex="#1A2005" style="--c:#1A2005" title="#1A2005 — kopyalamak için tıkla"><span class="dot"></span><code>#1A2005</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#2E2843" style="--c:#2E2843" title="#2E2843 — kopyalamak için tıkla"><span class="dot"></span><code>#2E2843</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#C9DE4C" style="--c:#C9DE4C" title="#C9DE4C — kopyalamak için tıkla"><span class="dot"></span><code>#C9DE4C</code></button><button class="sw" data-hex="#9B7EDE" style="--c:#9B7EDE" title="#9B7EDE — kopyalamak için tıkla"><span class="dot"></span><code>#9B7EDE</code></button><button class="sw" data-hex="#4FC1B0" style="--c:#4FC1B0" title="#4FC1B0 — kopyalamak için tıkla"><span class="dot"></span><code>#4FC1B0</code></button><button class="sw" data-hex="#E8756A" style="--c:#E8756A" title="#E8756A — kopyalamak için tıkla"><span class="dot"></span><code>#E8756A</code></button><button class="sw" data-hex="#D9B24A" style="--c:#D9B24A" title="#D9B24A — kopyalamak için tıkla"><span class="dot"></span><code>#D9B24A</code></button><button class="sw" data-hex="#6E8FD9" style="--c:#6E8FD9" title="#6E8FD9 — kopyalamak için tıkla"><span class="dot"></span><code>#6E8FD9</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#1E1830"></i><i style="background:#4A4A33"></i><i style="background:#767C3B"></i><i style="background:#9FAD43"></i><i style="background:#C9DE4C"></i></div><div class="rampa"><i style="background:#9B7EDE"></i><i style="background:#A497C9"></i><i style="background:#A79FB8"></i><i style="background:#B8BF85"></i><i style="background:#C9DE4C"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Violet/chartreuse reads as blue/yellow for both deuteranopia and protanopia — a safe axis. Keep chartreuse the ONLY high-chroma element per slide.</p>
+  </div>
+</article>
+<article class="kart" data-ara="cerulean-vermilion cerulean / vermilion field light editorial confident print-grade complementary">
+  <div class="onizleme" style="background:#F4F1EA;color:#14304A;
+       border-color:#DAD4C8">
+    <span class="rozet" style="background:#C4401F;color:#FFF7F2">complementary</span>
+    <h3>Cerulean / Vermilion Field</h3>
+    <p style="color:#5A6B78">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 12.00:1.</p>
+    <div class="seri"><b style="background:#2E75A8"></b><b style="background:#C4401F"></b><b style="background:#7A7A2E"></b><b style="background:#7A4A78"></b><b style="background:#2E8A7A"></b><b style="background:#B87F1F"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="cerulean-vermilion"</code>
+    <p class="cark">cerulean blue ↔ vermilion red-orange on warm paper — editorial daylight</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 12.00:1</span>
+      <span class="iyi">vurgu çifti 4.84:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#F4F1EA" style="--c:#F4F1EA" title="#F4F1EA — kopyalamak için tıkla"><span class="dot"></span><code>#F4F1EA</code><em>zemin</em></button><button class="sw" data-hex="#FFFFFF" style="--c:#FFFFFF" title="#FFFFFF — kopyalamak için tıkla"><span class="dot"></span><code>#FFFFFF</code><em>yüzey</em></button><button class="sw" data-hex="#14304A" style="--c:#14304A" title="#14304A — kopyalamak için tıkla"><span class="dot"></span><code>#14304A</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#5A6B78" style="--c:#5A6B78" title="#5A6B78 — kopyalamak için tıkla"><span class="dot"></span><code>#5A6B78</code><em>sönük</em></button><button class="sw" data-hex="#C4401F" style="--c:#C4401F" title="#C4401F — kopyalamak için tıkla"><span class="dot"></span><code>#C4401F</code><em>vurgu</em></button><button class="sw" data-hex="#FFF7F2" style="--c:#FFF7F2" title="#FFF7F2 — kopyalamak için tıkla"><span class="dot"></span><code>#FFF7F2</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#DAD4C8" style="--c:#DAD4C8" title="#DAD4C8 — kopyalamak için tıkla"><span class="dot"></span><code>#DAD4C8</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#2E75A8" style="--c:#2E75A8" title="#2E75A8 — kopyalamak için tıkla"><span class="dot"></span><code>#2E75A8</code></button><button class="sw" data-hex="#C4401F" style="--c:#C4401F" title="#C4401F — kopyalamak için tıkla"><span class="dot"></span><code>#C4401F</code></button><button class="sw" data-hex="#7A7A2E" style="--c:#7A7A2E" title="#7A7A2E — kopyalamak için tıkla"><span class="dot"></span><code>#7A7A2E</code></button><button class="sw" data-hex="#7A4A78" style="--c:#7A4A78" title="#7A4A78 — kopyalamak için tıkla"><span class="dot"></span><code>#7A4A78</code></button><button class="sw" data-hex="#2E8A7A" style="--c:#2E8A7A" title="#2E8A7A — kopyalamak için tıkla"><span class="dot"></span><code>#2E8A7A</code></button><button class="sw" data-hex="#B87F1F" style="--c:#B87F1F" title="#B87F1F — kopyalamak için tıkla"><span class="dot"></span><code>#B87F1F</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#F4F1EA"></i><i style="background:#E5C3AE"></i><i style="background:#DC9573"></i><i style="background:#D16A45"></i><i style="background:#C4401F"></i></div><div class="rampa"><i style="background:#2E75A8"></i><i style="background:#7E9BB0"></i><i style="background:#C9C4B8"></i><i style="background:#D08A6A"></i><i style="background:#C4401F"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Blue/vermilion diverging axis is CVD-safe; olive (data3) and ochre (data6) collide under deuteranopia — never adjacent.</p>
+  </div>
+</article>
+<article class="kart" data-ara="prussian-amber prussian depth / amber beacon dark maritime archival warm-signal split-complementary">
+  <div class="onizleme" style="background:#0E1B26;color:#EAF1F5;
+       border-color:#263B4E">
+    <span class="rozet" style="background:#E8A33D;color:#201502">split-complementary</span>
+    <h3>Prussian Depth / Amber Beacon</h3>
+    <p style="color:#93A7B5">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 15.29:1.</p>
+    <div class="seri"><b style="background:#E8A33D"></b><b style="background:#5FA8DF"></b><b style="background:#D96A6A"></b><b style="background:#58BF9B"></b><b style="background:#A08FD9"></b><b style="background:#C9B08A"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="prussian-amber"</code>
+    <p class="cark">prussian blue base; amber and rose flank its complement instead of hitting it</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 15.29:1</span>
+      <span class="iyi">vurgu çifti 8.33:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#0E1B26" style="--c:#0E1B26" title="#0E1B26 — kopyalamak için tıkla"><span class="dot"></span><code>#0E1B26</code><em>zemin</em></button><button class="sw" data-hex="#16273A" style="--c:#16273A" title="#16273A — kopyalamak için tıkla"><span class="dot"></span><code>#16273A</code><em>yüzey</em></button><button class="sw" data-hex="#EAF1F5" style="--c:#EAF1F5" title="#EAF1F5 — kopyalamak için tıkla"><span class="dot"></span><code>#EAF1F5</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#93A7B5" style="--c:#93A7B5" title="#93A7B5 — kopyalamak için tıkla"><span class="dot"></span><code>#93A7B5</code><em>sönük</em></button><button class="sw" data-hex="#E8A33D" style="--c:#E8A33D" title="#E8A33D — kopyalamak için tıkla"><span class="dot"></span><code>#E8A33D</code><em>vurgu</em></button><button class="sw" data-hex="#201502" style="--c:#201502" title="#201502 — kopyalamak için tıkla"><span class="dot"></span><code>#201502</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#263B4E" style="--c:#263B4E" title="#263B4E — kopyalamak için tıkla"><span class="dot"></span><code>#263B4E</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#E8A33D" style="--c:#E8A33D" title="#E8A33D — kopyalamak için tıkla"><span class="dot"></span><code>#E8A33D</code></button><button class="sw" data-hex="#5FA8DF" style="--c:#5FA8DF" title="#5FA8DF — kopyalamak için tıkla"><span class="dot"></span><code>#5FA8DF</code></button><button class="sw" data-hex="#D96A6A" style="--c:#D96A6A" title="#D96A6A — kopyalamak için tıkla"><span class="dot"></span><code>#D96A6A</code></button><button class="sw" data-hex="#58BF9B" style="--c:#58BF9B" title="#58BF9B — kopyalamak için tıkla"><span class="dot"></span><code>#58BF9B</code></button><button class="sw" data-hex="#A08FD9" style="--c:#A08FD9" title="#A08FD9 — kopyalamak için tıkla"><span class="dot"></span><code>#A08FD9</code></button><button class="sw" data-hex="#C9B08A" style="--c:#C9B08A" title="#C9B08A — kopyalamak için tıkla"><span class="dot"></span><code>#C9B08A</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#16273A"></i><i style="background:#54473A"></i><i style="background:#8A683A"></i><i style="background:#B9853B"></i><i style="background:#E8A33D"></i></div><div class="rampa"><i style="background:#5FA8DF"></i><i style="background:#84A6BE"></i><i style="background:#93A7B5"></i><i style="background:#BEA579"></i><i style="background:#E8A33D"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Amber/sky axis is safe. Rose (data3) vs mint (data4) is a red/green pair — separate by lightness and never encode a critical distinction with only these two.</p>
+  </div>
+</article>
+<article class="kart" data-ara="magma-basalt magma / basalt field dark geophysical intense thermal analogous-warm">
+  <div class="onizleme" style="background:#131013;color:#F5EDE6;
+       border-color:#332A2C">
+    <span class="rozet" style="background:#E85D3A;color:#230C05">analogous-warm</span>
+    <h3>Magma / Basalt Field</h3>
+    <p style="color:#AC9C94">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 16.32:1.</p>
+    <div class="seri"><b style="background:#E85D3A"></b><b style="background:#F2A03F"></b><b style="background:#C93A55"></b><b style="background:#8A6FD1"></b><b style="background:#57A88C"></b><b style="background:#D9C36A"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="magma-basalt"</code>
+    <p class="cark">red → orange → gold neighbours on volcanic near-black; one cool outlier for charts</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 16.32:1</span>
+      <span class="iyi">vurgu çifti 5.38:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#131013" style="--c:#131013" title="#131013 — kopyalamak için tıkla"><span class="dot"></span><code>#131013</code><em>zemin</em></button><button class="sw" data-hex="#1E181A" style="--c:#1E181A" title="#1E181A — kopyalamak için tıkla"><span class="dot"></span><code>#1E181A</code><em>yüzey</em></button><button class="sw" data-hex="#F5EDE6" style="--c:#F5EDE6" title="#F5EDE6 — kopyalamak için tıkla"><span class="dot"></span><code>#F5EDE6</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#AC9C94" style="--c:#AC9C94" title="#AC9C94 — kopyalamak için tıkla"><span class="dot"></span><code>#AC9C94</code><em>sönük</em></button><button class="sw" data-hex="#E85D3A" style="--c:#E85D3A" title="#E85D3A — kopyalamak için tıkla"><span class="dot"></span><code>#E85D3A</code><em>vurgu</em></button><button class="sw" data-hex="#230C05" style="--c:#230C05" title="#230C05 — kopyalamak için tıkla"><span class="dot"></span><code>#230C05</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#332A2C" style="--c:#332A2C" title="#332A2C — kopyalamak için tıkla"><span class="dot"></span><code>#332A2C</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#E85D3A" style="--c:#E85D3A" title="#E85D3A — kopyalamak için tıkla"><span class="dot"></span><code>#E85D3A</code></button><button class="sw" data-hex="#F2A03F" style="--c:#F2A03F" title="#F2A03F — kopyalamak için tıkla"><span class="dot"></span><code>#F2A03F</code></button><button class="sw" data-hex="#C93A55" style="--c:#C93A55" title="#C93A55 — kopyalamak için tıkla"><span class="dot"></span><code>#C93A55</code></button><button class="sw" data-hex="#8A6FD1" style="--c:#8A6FD1" title="#8A6FD1 — kopyalamak için tıkla"><span class="dot"></span><code>#8A6FD1</code></button><button class="sw" data-hex="#57A88C" style="--c:#57A88C" title="#57A88C — kopyalamak için tıkla"><span class="dot"></span><code>#57A88C</code></button><button class="sw" data-hex="#D9C36A" style="--c:#D9C36A" title="#D9C36A — kopyalamak için tıkla"><span class="dot"></span><code>#D9C36A</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#1E181A"></i><i style="background:#5A2A22"></i><i style="background:#93402A"></i><i style="background:#BE4E32"></i><i style="background:#E85D3A"></i></div><div class="rampa"><i style="background:#57A88C"></i><i style="background:#83A48F"></i><i style="background:#AC9C94"></i><i style="background:#CB7E68"></i><i style="background:#E85D3A"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> An analogous warm ramp reads as ONE hue family under deuteranopia — lightness steps carry the order, which is exactly why the sequential ramp works. Use data4 (violet) or data5 (jade) whenever two warm series must be told apart.</p>
+  </div>
+</article>
+<article class="kart" data-ara="aurora-polar polar night / aurora green dark atmospheric luminous polar analogous-cool">
+  <div class="onizleme" style="background:#0C1418;color:#ECF4F1;
+       border-color:#233640">
+    <span class="rozet" style="background:#55E0A8;color:#062015">analogous-cool</span>
+    <h3>Polar Night / Aurora Green</h3>
+    <p style="color:#9AB1AC">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 16.63:1.</p>
+    <div class="seri"><b style="background:#55E0A8"></b><b style="background:#4FB8D9"></b><b style="background:#9C86E8"></b><b style="background:#E86A9B"></b><b style="background:#D9C36A"></b><b style="background:#7A99A8"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="aurora-polar"</code>
+    <p class="cark">green → teal → violet neighbours, the actual aurora emission sequence</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 16.63:1</span>
+      <span class="iyi">vurgu çifti 10.30:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#0C1418" style="--c:#0C1418" title="#0C1418 — kopyalamak için tıkla"><span class="dot"></span><code>#0C1418</code><em>zemin</em></button><button class="sw" data-hex="#14222A" style="--c:#14222A" title="#14222A — kopyalamak için tıkla"><span class="dot"></span><code>#14222A</code><em>yüzey</em></button><button class="sw" data-hex="#ECF4F1" style="--c:#ECF4F1" title="#ECF4F1 — kopyalamak için tıkla"><span class="dot"></span><code>#ECF4F1</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#9AB1AC" style="--c:#9AB1AC" title="#9AB1AC — kopyalamak için tıkla"><span class="dot"></span><code>#9AB1AC</code><em>sönük</em></button><button class="sw" data-hex="#55E0A8" style="--c:#55E0A8" title="#55E0A8 — kopyalamak için tıkla"><span class="dot"></span><code>#55E0A8</code><em>vurgu</em></button><button class="sw" data-hex="#062015" style="--c:#062015" title="#062015 — kopyalamak için tıkla"><span class="dot"></span><code>#062015</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#233640" style="--c:#233640" title="#233640 — kopyalamak için tıkla"><span class="dot"></span><code>#233640</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#55E0A8" style="--c:#55E0A8" title="#55E0A8 — kopyalamak için tıkla"><span class="dot"></span><code>#55E0A8</code></button><button class="sw" data-hex="#4FB8D9" style="--c:#4FB8D9" title="#4FB8D9 — kopyalamak için tıkla"><span class="dot"></span><code>#4FB8D9</code></button><button class="sw" data-hex="#9C86E8" style="--c:#9C86E8" title="#9C86E8 — kopyalamak için tıkla"><span class="dot"></span><code>#9C86E8</code></button><button class="sw" data-hex="#E86A9B" style="--c:#E86A9B" title="#E86A9B — kopyalamak için tıkla"><span class="dot"></span><code>#E86A9B</code></button><button class="sw" data-hex="#D9C36A" style="--c:#D9C36A" title="#D9C36A — kopyalamak için tıkla"><span class="dot"></span><code>#D9C36A</code></button><button class="sw" data-hex="#7A99A8" style="--c:#7A99A8" title="#7A99A8 — kopyalamak için tıkla"><span class="dot"></span><code>#7A99A8</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#14222A"></i><i style="background:#1F5246"></i><i style="background:#2F8362"></i><i style="background:#41B184"></i><i style="background:#55E0A8"></i></div><div class="rampa"><i style="background:#9C86E8"></i><i style="background:#9AA0CE"></i><i style="background:#9AB1AC"></i><i style="background:#77C9AA"></i><i style="background:#55E0A8"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Green accent vs teal data2 merge under deuteranopia — the lightness gap (L* ≈ 20) carries them; verify in grayscale. Violet/green diverging axis is safer than red/green.</p>
+  </div>
+</article>
+<article class="kart" data-ara="heliograph heliograph charcoal / triad dark instrument three-part balanced triadic">
+  <div class="onizleme" style="background:#17181C;color:#F2EFE8;
+       border-color:#33343B">
+    <span class="rozet" style="background:#E8B84A;color:#211703">triadic</span>
+    <h3>Heliograph Charcoal / Triad</h3>
+    <p style="color:#A6A49B">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 15.45:1.</p>
+    <div class="seri"><b style="background:#E8B84A"></b><b style="background:#3FB8A8"></b><b style="background:#E8705A"></b><b style="background:#7A8FD9"></b><b style="background:#B8D96A"></b><b style="background:#C98AC9"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="heliograph"</code>
+    <p class="cark">gold / teal / coral at 120° spacing — three genuinely equal categories</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 15.45:1</span>
+      <span class="iyi">vurgu çifti 9.58:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#17181C" style="--c:#17181C" title="#17181C — kopyalamak için tıkla"><span class="dot"></span><code>#17181C</code><em>zemin</em></button><button class="sw" data-hex="#222329" style="--c:#222329" title="#222329 — kopyalamak için tıkla"><span class="dot"></span><code>#222329</code><em>yüzey</em></button><button class="sw" data-hex="#F2EFE8" style="--c:#F2EFE8" title="#F2EFE8 — kopyalamak için tıkla"><span class="dot"></span><code>#F2EFE8</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#A6A49B" style="--c:#A6A49B" title="#A6A49B — kopyalamak için tıkla"><span class="dot"></span><code>#A6A49B</code><em>sönük</em></button><button class="sw" data-hex="#E8B84A" style="--c:#E8B84A" title="#E8B84A — kopyalamak için tıkla"><span class="dot"></span><code>#E8B84A</code><em>vurgu</em></button><button class="sw" data-hex="#211703" style="--c:#211703" title="#211703 — kopyalamak için tıkla"><span class="dot"></span><code>#211703</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#33343B" style="--c:#33343B" title="#33343B — kopyalamak için tıkla"><span class="dot"></span><code>#33343B</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#E8B84A" style="--c:#E8B84A" title="#E8B84A — kopyalamak için tıkla"><span class="dot"></span><code>#E8B84A</code></button><button class="sw" data-hex="#3FB8A8" style="--c:#3FB8A8" title="#3FB8A8 — kopyalamak için tıkla"><span class="dot"></span><code>#3FB8A8</code></button><button class="sw" data-hex="#E8705A" style="--c:#E8705A" title="#E8705A — kopyalamak için tıkla"><span class="dot"></span><code>#E8705A</code></button><button class="sw" data-hex="#7A8FD9" style="--c:#7A8FD9" title="#7A8FD9 — kopyalamak için tıkla"><span class="dot"></span><code>#7A8FD9</code></button><button class="sw" data-hex="#B8D96A" style="--c:#B8D96A" title="#B8D96A — kopyalamak için tıkla"><span class="dot"></span><code>#B8D96A</code></button><button class="sw" data-hex="#C98AC9" style="--c:#C98AC9" title="#C98AC9 — kopyalamak için tıkla"><span class="dot"></span><code>#C98AC9</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#222329"></i><i style="background:#55482F"></i><i style="background:#886D38"></i><i style="background:#BA9241"></i><i style="background:#E8B84A"></i></div><div class="rampa"><i style="background:#3FB8A8"></i><i style="background:#77B0A1"></i><i style="background:#A6A49B"></i><i style="background:#C9A472"></i><i style="background:#E8B84A"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Reserve the triad for exactly three categories: gold, teal, coral separate cleanly under deuteranopia because each sits at a different lightness. Do not add a fourth equal category — demote it to data4.</p>
+  </div>
+</article>
+<article class="kart" data-ara="royal-saffron royal indigo / saffron light ceremonial distinguished warm complementary">
+  <div class="onizleme" style="background:#F5F1E8;color:#2A2454;
+       border-color:#DDD6C6">
+    <span class="rozet" style="background:#D98A1F;color:#231603">complementary</span>
+    <h3>Royal Indigo / Saffron</h3>
+    <p style="color:#625E7A">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 12.60:1.</p>
+    <div class="seri"><b style="background:#4A3FA8"></b><b style="background:#D98A1F"></b><b style="background:#2E8A6A"></b><b style="background:#B84A3A"></b><b style="background:#5A7A99"></b><b style="background:#8A4A78"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="royal-saffron"</code>
+    <p class="cark">indigo ↔ saffron yellow-orange on warm ceremonial paper</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 12.60:1</span>
+      <span class="iyi">vurgu çifti 6.40:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#F5F1E8" style="--c:#F5F1E8" title="#F5F1E8 — kopyalamak için tıkla"><span class="dot"></span><code>#F5F1E8</code><em>zemin</em></button><button class="sw" data-hex="#FFFFFF" style="--c:#FFFFFF" title="#FFFFFF — kopyalamak için tıkla"><span class="dot"></span><code>#FFFFFF</code><em>yüzey</em></button><button class="sw" data-hex="#2A2454" style="--c:#2A2454" title="#2A2454 — kopyalamak için tıkla"><span class="dot"></span><code>#2A2454</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#625E7A" style="--c:#625E7A" title="#625E7A — kopyalamak için tıkla"><span class="dot"></span><code>#625E7A</code><em>sönük</em></button><button class="sw" data-hex="#D98A1F" style="--c:#D98A1F" title="#D98A1F — kopyalamak için tıkla"><span class="dot"></span><code>#D98A1F</code><em>vurgu</em></button><button class="sw" data-hex="#231603" style="--c:#231603" title="#231603 — kopyalamak için tıkla"><span class="dot"></span><code>#231603</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#DDD6C6" style="--c:#DDD6C6" title="#DDD6C6 — kopyalamak için tıkla"><span class="dot"></span><code>#DDD6C6</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#4A3FA8" style="--c:#4A3FA8" title="#4A3FA8 — kopyalamak için tıkla"><span class="dot"></span><code>#4A3FA8</code></button><button class="sw" data-hex="#D98A1F" style="--c:#D98A1F" title="#D98A1F — kopyalamak için tıkla"><span class="dot"></span><code>#D98A1F</code></button><button class="sw" data-hex="#2E8A6A" style="--c:#2E8A6A" title="#2E8A6A — kopyalamak için tıkla"><span class="dot"></span><code>#2E8A6A</code></button><button class="sw" data-hex="#B84A3A" style="--c:#B84A3A" title="#B84A3A — kopyalamak için tıkla"><span class="dot"></span><code>#B84A3A</code></button><button class="sw" data-hex="#5A7A99" style="--c:#5A7A99" title="#5A7A99 — kopyalamak için tıkla"><span class="dot"></span><code>#5A7A99</code></button><button class="sw" data-hex="#8A4A78" style="--c:#8A4A78" title="#8A4A78 — kopyalamak için tıkla"><span class="dot"></span><code>#8A4A78</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#F5F1E8"></i><i style="background:#EDD3AC"></i><i style="background:#E7B975"></i><i style="background:#E0A146"></i><i style="background:#D98A1F"></i></div><div class="rampa"><i style="background:#4A3FA8"></i><i style="background:#8479B0"></i><i style="background:#C0BBB0"></i><i style="background:#D3A96A"></i><i style="background:#D98A1F"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Indigo/saffron is a blue/yellow axis — safe for all common CVD types. Jade (data3) and brick (data4) must never be the only distinction between two series.</p>
+  </div>
+</article>
+<article class="kart" data-ara="ionosphere ionosphere cyan / deep field dark plasma technical cold-luminous monochromatic-cool">
+  <div class="onizleme" style="background:#0A1418;color:#E8F2F5;
+       border-color:#20343C">
+    <span class="rozet" style="background:#3FC6E8;color:#04191F">monochromatic-cool</span>
+    <h3>Ionosphere Cyan / Deep Field</h3>
+    <p style="color:#8FA8B0">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 16.38:1.</p>
+    <div class="seri"><b style="background:#3FC6E8"></b><b style="background:#E8975A"></b><b style="background:#6ADF9B"></b><b style="background:#B08FD9"></b><b style="background:#D9CE6A"></b><b style="background:#5A7A99"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="ionosphere"</code>
+    <p class="cark">single electric cyan, value-stepped on abyssal blue-black; apricot counter in data</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 16.38:1</span>
+      <span class="iyi">vurgu çifti 8.98:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#0A1418" style="--c:#0A1418" title="#0A1418 — kopyalamak için tıkla"><span class="dot"></span><code>#0A1418</code><em>zemin</em></button><button class="sw" data-hex="#122028" style="--c:#122028" title="#122028 — kopyalamak için tıkla"><span class="dot"></span><code>#122028</code><em>yüzey</em></button><button class="sw" data-hex="#E8F2F5" style="--c:#E8F2F5" title="#E8F2F5 — kopyalamak için tıkla"><span class="dot"></span><code>#E8F2F5</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#8FA8B0" style="--c:#8FA8B0" title="#8FA8B0 — kopyalamak için tıkla"><span class="dot"></span><code>#8FA8B0</code><em>sönük</em></button><button class="sw" data-hex="#3FC6E8" style="--c:#3FC6E8" title="#3FC6E8 — kopyalamak için tıkla"><span class="dot"></span><code>#3FC6E8</code><em>vurgu</em></button><button class="sw" data-hex="#04191F" style="--c:#04191F" title="#04191F — kopyalamak için tıkla"><span class="dot"></span><code>#04191F</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#20343C" style="--c:#20343C" title="#20343C — kopyalamak için tıkla"><span class="dot"></span><code>#20343C</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#3FC6E8" style="--c:#3FC6E8" title="#3FC6E8 — kopyalamak için tıkla"><span class="dot"></span><code>#3FC6E8</code></button><button class="sw" data-hex="#E8975A" style="--c:#E8975A" title="#E8975A — kopyalamak için tıkla"><span class="dot"></span><code>#E8975A</code></button><button class="sw" data-hex="#6ADF9B" style="--c:#6ADF9B" title="#6ADF9B — kopyalamak için tıkla"><span class="dot"></span><code>#6ADF9B</code></button><button class="sw" data-hex="#B08FD9" style="--c:#B08FD9" title="#B08FD9 — kopyalamak için tıkla"><span class="dot"></span><code>#B08FD9</code></button><button class="sw" data-hex="#D9CE6A" style="--c:#D9CE6A" title="#D9CE6A — kopyalamak için tıkla"><span class="dot"></span><code>#D9CE6A</code></button><button class="sw" data-hex="#5A7A99" style="--c:#5A7A99" title="#5A7A99 — kopyalamak için tıkla"><span class="dot"></span><code>#5A7A99</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#122028"></i><i style="background:#194754"></i><i style="background:#237185"></i><i style="background:#2F9BB6"></i><i style="background:#3FC6E8"></i></div><div class="rampa"><i style="background:#E8975A"></i><i style="background:#C29C7E"></i><i style="background:#8FA8B0"></i><i style="background:#68B7CC"></i><i style="background:#3FC6E8"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Cyan/apricot diverging axis is CVD-safe. In a monochromatic scheme the sequential ramp is the palette&#x27;s native language — prefer it over multi-hue category colors.</p>
+  </div>
+</article>
+<article class="kart" data-ara="butter-green butter / deep green — açık editorial warm botanical premium light split-complementary">
+  <div class="onizleme" style="background:#FFEFB3;color:#013E37;
+       border-color:#9EAC84">
+    <span class="rozet" style="background:#013E37;color:#FFEFB3">split-complementary</span>
+    <h3>Butter / Deep Green — açık</h3>
+    <p style="color:#4D735C">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 10.46:1.</p>
+    <div class="seri"><b style="background:#0C6B5B"></b><b style="background:#C2681C"></b><b style="background:#4E7CA8"></b><b style="background:#8A5A9B"></b><b style="background:#7A8B2E"></b><b style="background:#B03A48"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="butter-green"</code>
+    <p class="cark">tereyağı sarısı ↔ derin yeşim; sıcak/soğuk ekseni</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 10.46:1</span>
+      <span class="iyi">vurgu çifti 10.46:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#FFEFB3" style="--c:#FFEFB3" title="#FFEFB3 — kopyalamak için tıkla"><span class="dot"></span><code>#FFEFB3</code><em>zemin</em></button><button class="sw" data-hex="#FDEAA3" style="--c:#FDEAA3" title="#FDEAA3 — kopyalamak için tıkla"><span class="dot"></span><code>#FDEAA3</code><em>yüzey</em></button><button class="sw" data-hex="#013E37" style="--c:#013E37" title="#013E37 — kopyalamak için tıkla"><span class="dot"></span><code>#013E37</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#4D735C" style="--c:#4D735C" title="#4D735C — kopyalamak için tıkla"><span class="dot"></span><code>#4D735C</code><em>sönük</em></button><button class="sw" data-hex="#013E37" style="--c:#013E37" title="#013E37 — kopyalamak için tıkla"><span class="dot"></span><code>#013E37</code><em>vurgu</em></button><button class="sw" data-hex="#FFEFB3" style="--c:#FFEFB3" title="#FFEFB3 — kopyalamak için tıkla"><span class="dot"></span><code>#FFEFB3</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#9EAC84" style="--c:#9EAC84" title="#9EAC84 — kopyalamak için tıkla"><span class="dot"></span><code>#9EAC84</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#0C6B5B" style="--c:#0C6B5B" title="#0C6B5B — kopyalamak için tıkla"><span class="dot"></span><code>#0C6B5B</code></button><button class="sw" data-hex="#C2681C" style="--c:#C2681C" title="#C2681C — kopyalamak için tıkla"><span class="dot"></span><code>#C2681C</code></button><button class="sw" data-hex="#4E7CA8" style="--c:#4E7CA8" title="#4E7CA8 — kopyalamak için tıkla"><span class="dot"></span><code>#4E7CA8</code></button><button class="sw" data-hex="#8A5A9B" style="--c:#8A5A9B" title="#8A5A9B — kopyalamak için tıkla"><span class="dot"></span><code>#8A5A9B</code></button><button class="sw" data-hex="#7A8B2E" style="--c:#7A8B2E" title="#7A8B2E — kopyalamak için tıkla"><span class="dot"></span><code>#7A8B2E</code></button><button class="sw" data-hex="#B03A48" style="--c:#B03A48" title="#B03A48 — kopyalamak için tıkla"><span class="dot"></span><code>#B03A48</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#FDEAA3"></i><i style="background:#BEBF88"></i><i style="background:#7F946D"></i><i style="background:#406952"></i><i style="background:#013E37"></i></div><div class="rampa"><i style="background:#C2681C"></i><i style="background:#E4B26F"></i><i style="background:#4D735C"></i><i style="background:#AFBBAE"></i><i style="background:#4E7CA8"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Sarı zemin ile yeşil mürekkep protanopide de ayrışır; data5 (zeytin) ile data1 (yeşim) komşu seride kullanılmasın.</p>
+  </div>
+</article>
+<article class="kart" data-ara="butter-green-dark butter / deep green — koyu editorial warm botanical premium dark split-complementary">
+  <div class="onizleme" style="background:#013E37;color:#FFEFB3;
+       border-color:#48705A">
+    <span class="rozet" style="background:#FFEFB3;color:#013E37">split-complementary</span>
+    <h3>Butter / Deep Green — koyu</h3>
+    <p style="color:#A9B389">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 10.46:1.</p>
+    <div class="seri"><b style="background:#1DCAAD"></b><b style="background:#E4A26A"></b><b style="background:#9BB4CB"></b><b style="background:#BAA2C3"></b><b style="background:#B3C564"></b><b style="background:#D28891"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="butter-green-dark"</code>
+    <p class="cark">tereyağı sarısı ↔ derin yeşim; sıcak/soğuk ekseni</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 10.46:1</span>
+      <span class="iyi">vurgu çifti 10.46:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#013E37" style="--c:#013E37" title="#013E37 — kopyalamak için tıkla"><span class="dot"></span><code>#013E37</code><em>zemin</em></button><button class="sw" data-hex="#03534A" style="--c:#03534A" title="#03534A — kopyalamak için tıkla"><span class="dot"></span><code>#03534A</code><em>yüzey</em></button><button class="sw" data-hex="#FFEFB3" style="--c:#FFEFB3" title="#FFEFB3 — kopyalamak için tıkla"><span class="dot"></span><code>#FFEFB3</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#A9B389" style="--c:#A9B389" title="#A9B389 — kopyalamak için tıkla"><span class="dot"></span><code>#A9B389</code><em>sönük</em></button><button class="sw" data-hex="#FFEFB3" style="--c:#FFEFB3" title="#FFEFB3 — kopyalamak için tıkla"><span class="dot"></span><code>#FFEFB3</code><em>vurgu</em></button><button class="sw" data-hex="#013E37" style="--c:#013E37" title="#013E37 — kopyalamak için tıkla"><span class="dot"></span><code>#013E37</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#48705A" style="--c:#48705A" title="#48705A — kopyalamak için tıkla"><span class="dot"></span><code>#48705A</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#1DCAAD" style="--c:#1DCAAD" title="#1DCAAD — kopyalamak için tıkla"><span class="dot"></span><code>#1DCAAD</code></button><button class="sw" data-hex="#E4A26A" style="--c:#E4A26A" title="#E4A26A — kopyalamak için tıkla"><span class="dot"></span><code>#E4A26A</code></button><button class="sw" data-hex="#9BB4CB" style="--c:#9BB4CB" title="#9BB4CB — kopyalamak için tıkla"><span class="dot"></span><code>#9BB4CB</code></button><button class="sw" data-hex="#BAA2C3" style="--c:#BAA2C3" title="#BAA2C3 — kopyalamak için tıkla"><span class="dot"></span><code>#BAA2C3</code></button><button class="sw" data-hex="#B3C564" style="--c:#B3C564" title="#B3C564 — kopyalamak için tıkla"><span class="dot"></span><code>#B3C564</code></button><button class="sw" data-hex="#D28891" style="--c:#D28891" title="#D28891 — kopyalamak için tıkla"><span class="dot"></span><code>#D28891</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#03534A"></i><i style="background:#427A64"></i><i style="background:#81A17E"></i><i style="background:#C0C899"></i><i style="background:#FFEFB3"></i></div><div class="rampa"><i style="background:#E4A26A"></i><i style="background:#676B4E"></i><i style="background:#A9B389"></i><i style="background:#46737A"></i><i style="background:#9BB4CB"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Sarı zemin ile yeşil mürekkep protanopide de ayrışır; data5 (zeytin) ile data1 (yeşim) komşu seride kullanılmasın.</p>
+  </div>
+</article>
+<article class="kart" data-ara="vanilla-cherry cream vanilla / cherry cola — açık editorial classic archival high-contrast light analogous-warm">
+  <div class="onizleme" style="background:#EFE6DD;color:#9A0002;
+       border-color:#CF8F8A">
+    <span class="rozet" style="background:#9A0002;color:#EFE6DD">analogous-warm</span>
+    <h3>Cream Vanilla / Cherry Cola — açık</h3>
+    <p style="color:#B34544">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 7.17:1.</p>
+    <div class="seri"><b style="background:#9A0002"></b><b style="background:#2F5C6E"></b><b style="background:#B4762A"></b><b style="background:#4A6741"></b><b style="background:#7A4B6B"></b><b style="background:#3B3F52"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="vanilla-cherry"</code>
+    <p class="cark">krem bej ile kiraz kırmızısı; tek sıcak yayda değer atlaması</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 7.17:1</span>
+      <span class="iyi">vurgu çifti 7.17:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#EFE6DD" style="--c:#EFE6DD" title="#EFE6DD — kopyalamak için tıkla"><span class="dot"></span><code>#EFE6DD</code><em>zemin</em></button><button class="sw" data-hex="#E8DDD2" style="--c:#E8DDD2" title="#E8DDD2 — kopyalamak için tıkla"><span class="dot"></span><code>#E8DDD2</code><em>yüzey</em></button><button class="sw" data-hex="#9A0002" style="--c:#9A0002" title="#9A0002 — kopyalamak için tıkla"><span class="dot"></span><code>#9A0002</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#B34544" style="--c:#B34544" title="#B34544 — kopyalamak için tıkla"><span class="dot"></span><code>#B34544</code><em>sönük</em></button><button class="sw" data-hex="#9A0002" style="--c:#9A0002" title="#9A0002 — kopyalamak için tıkla"><span class="dot"></span><code>#9A0002</code><em>vurgu</em></button><button class="sw" data-hex="#EFE6DD" style="--c:#EFE6DD" title="#EFE6DD — kopyalamak için tıkla"><span class="dot"></span><code>#EFE6DD</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#CF8F8A" style="--c:#CF8F8A" title="#CF8F8A — kopyalamak için tıkla"><span class="dot"></span><code>#CF8F8A</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#9A0002" style="--c:#9A0002" title="#9A0002 — kopyalamak için tıkla"><span class="dot"></span><code>#9A0002</code></button><button class="sw" data-hex="#2F5C6E" style="--c:#2F5C6E" title="#2F5C6E — kopyalamak için tıkla"><span class="dot"></span><code>#2F5C6E</code></button><button class="sw" data-hex="#B4762A" style="--c:#B4762A" title="#B4762A — kopyalamak için tıkla"><span class="dot"></span><code>#B4762A</code></button><button class="sw" data-hex="#4A6741" style="--c:#4A6741" title="#4A6741 — kopyalamak için tıkla"><span class="dot"></span><code>#4A6741</code></button><button class="sw" data-hex="#7A4B6B" style="--c:#7A4B6B" title="#7A4B6B — kopyalamak için tıkla"><span class="dot"></span><code>#7A4B6B</code></button><button class="sw" data-hex="#3B3F52" style="--c:#3B3F52" title="#3B3F52 — kopyalamak için tıkla"><span class="dot"></span><code>#3B3F52</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#E8DDD2"></i><i style="background:#D4A69E"></i><i style="background:#C16E6A"></i><i style="background:#AE3736"></i><i style="background:#9A0002"></i></div><div class="rampa"><i style="background:#2F5C6E"></i><i style="background:#99A8AB"></i><i style="background:#B34544"></i><i style="background:#D4B48C"></i><i style="background:#B4762A"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Kırmızı-yeşil körlüğünde data1 (kiraz) ile data4 (yaprak) ayrışmaz; ikisini aynı grafikte bitişik seri yapmayın.</p>
+  </div>
+</article>
+<article class="kart" data-ara="vanilla-cherry-dark cream vanilla / cherry cola — koyu editorial classic archival high-contrast dark analogous-warm">
+  <div class="onizleme" style="background:#9A0002;color:#EFE6DD;
+       border-color:#B2403F">
+    <span class="rozet" style="background:#EFE6DD;color:#9A0002">analogous-warm</span>
+    <h3>Cream Vanilla / Cherry Cola — koyu</h3>
+    <p style="color:#D29893">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 7.17:1.</p>
+    <div class="seri"><b style="background:#F91114"></b><b style="background:#5C99B1"></b><b style="background:#D9AC75"></b><b style="background:#81A078"></b><b style="background:#AE88A1"></b><b style="background:#70758D"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="vanilla-cherry-dark"</code>
+    <p class="cark">krem bej ile kiraz kırmızısı; tek sıcak yayda değer atlaması</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 7.17:1</span>
+      <span class="iyi">vurgu çifti 7.17:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#9A0002" style="--c:#9A0002" title="#9A0002 — kopyalamak için tıkla"><span class="dot"></span><code>#9A0002</code><em>zemin</em></button><button class="sw" data-hex="#AD0406" style="--c:#AD0406" title="#AD0406 — kopyalamak için tıkla"><span class="dot"></span><code>#AD0406</code><em>yüzey</em></button><button class="sw" data-hex="#EFE6DD" style="--c:#EFE6DD" title="#EFE6DD — kopyalamak için tıkla"><span class="dot"></span><code>#EFE6DD</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#D29893" style="--c:#D29893" title="#D29893 — kopyalamak için tıkla"><span class="dot"></span><code>#D29893</code><em>sönük</em></button><button class="sw" data-hex="#EFE6DD" style="--c:#EFE6DD" title="#EFE6DD — kopyalamak için tıkla"><span class="dot"></span><code>#EFE6DD</code><em>vurgu</em></button><button class="sw" data-hex="#9A0002" style="--c:#9A0002" title="#9A0002 — kopyalamak için tıkla"><span class="dot"></span><code>#9A0002</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#B2403F" style="--c:#B2403F" title="#B2403F — kopyalamak için tıkla"><span class="dot"></span><code>#B2403F</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#F91114" style="--c:#F91114" title="#F91114 — kopyalamak için tıkla"><span class="dot"></span><code>#F91114</code></button><button class="sw" data-hex="#5C99B1" style="--c:#5C99B1" title="#5C99B1 — kopyalamak için tıkla"><span class="dot"></span><code>#5C99B1</code></button><button class="sw" data-hex="#D9AC75" style="--c:#D9AC75" title="#D9AC75 — kopyalamak için tıkla"><span class="dot"></span><code>#D9AC75</code></button><button class="sw" data-hex="#81A078" style="--c:#81A078" title="#81A078 — kopyalamak için tıkla"><span class="dot"></span><code>#81A078</code></button><button class="sw" data-hex="#AE88A1" style="--c:#AE88A1" title="#AE88A1 — kopyalamak için tıkla"><span class="dot"></span><code>#AE88A1</code></button><button class="sw" data-hex="#70758D" style="--c:#70758D" title="#70758D — kopyalamak için tıkla"><span class="dot"></span><code>#70758D</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#AD0406"></i><i style="background:#BE3C3C"></i><i style="background:#CE7572"></i><i style="background:#DEAEA7"></i><i style="background:#EFE6DD"></i></div><div class="rampa"><i style="background:#5C99B1"></i><i style="background:#7E4551"></i><i style="background:#D29893"></i><i style="background:#B64D36"></i><i style="background:#D9AC75"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Kırmızı-yeşil körlüğünde data1 (kiraz) ile data4 (yaprak) ayrışmaz; ikisini aynı grafikte bitişik seri yapmayın.</p>
+  </div>
+</article>
+<article class="kart" data-ara="aureolin-bistre aureolin / bistre — açık vibrant graphic poster high-energy light analogous-warm">
+  <div class="onizleme" style="background:#FBE311;color:#261606;
+       border-color:#AA950D">
+    <span class="rozet" style="background:#261606;color:#FBE311">analogous-warm</span>
+    <h3>Aureolin / Bistre — açık</h3>
+    <p style="color:#665309">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 13.42:1.</p>
+    <div class="seri"><b style="background:#261606"></b><b style="background:#0F6E6A"></b><b style="background:#C1440E"></b><b style="background:#5B4B8A"></b><b style="background:#7D6B1F"></b><b style="background:#A61B4B"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="aureolin-bistre"</code>
+    <p class="cark">saf sarı ile is kahvesi; aynı sıcak yayda uç değer karşıtlığı</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 13.42:1</span>
+      <span class="iyi">vurgu çifti 13.42:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#FBE311" style="--c:#FBE311" title="#FBE311 — kopyalamak için tıkla"><span class="dot"></span><code>#FBE311</code><em>zemin</em></button><button class="sw" data-hex="#F1D909" style="--c:#F1D909" title="#F1D909 — kopyalamak için tıkla"><span class="dot"></span><code>#F1D909</code><em>yüzey</em></button><button class="sw" data-hex="#261606" style="--c:#261606" title="#261606 — kopyalamak için tıkla"><span class="dot"></span><code>#261606</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#665309" style="--c:#665309" title="#665309 — kopyalamak için tıkla"><span class="dot"></span><code>#665309</code><em>sönük</em></button><button class="sw" data-hex="#261606" style="--c:#261606" title="#261606 — kopyalamak için tıkla"><span class="dot"></span><code>#261606</code><em>vurgu</em></button><button class="sw" data-hex="#FBE311" style="--c:#FBE311" title="#FBE311 — kopyalamak için tıkla"><span class="dot"></span><code>#FBE311</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#AA950D" style="--c:#AA950D" title="#AA950D — kopyalamak için tıkla"><span class="dot"></span><code>#AA950D</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#261606" style="--c:#261606" title="#261606 — kopyalamak için tıkla"><span class="dot"></span><code>#261606</code></button><button class="sw" data-hex="#0F6E6A" style="--c:#0F6E6A" title="#0F6E6A — kopyalamak için tıkla"><span class="dot"></span><code>#0F6E6A</code></button><button class="sw" data-hex="#C1440E" style="--c:#C1440E" title="#C1440E — kopyalamak için tıkla"><span class="dot"></span><code>#C1440E</code></button><button class="sw" data-hex="#5B4B8A" style="--c:#5B4B8A" title="#5B4B8A — kopyalamak için tıkla"><span class="dot"></span><code>#5B4B8A</code></button><button class="sw" data-hex="#7D6B1F" style="--c:#7D6B1F" title="#7D6B1F — kopyalamak için tıkla"><span class="dot"></span><code>#7D6B1F</code></button><button class="sw" data-hex="#A61B4B" style="--c:#A61B4B" title="#A61B4B — kopyalamak için tıkla"><span class="dot"></span><code>#A61B4B</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#F1D909"></i><i style="background:#BEA808"></i><i style="background:#8C7808"></i><i style="background:#594707"></i><i style="background:#261606"></i></div><div class="rampa"><i style="background:#0F6E6A"></i><i style="background:#91AE39"></i><i style="background:#665309"></i><i style="background:#E19B10"></i><i style="background:#C1440E"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Sarı zemin en güvenli taban; data3 (kiremit) ile data6 (fuşya) protanopide yakınlaşır.</p>
+  </div>
+</article>
+<article class="kart" data-ara="aureolin-bistre-dark aureolin / bistre — koyu vibrant graphic poster high-energy dark analogous-warm">
+  <div class="onizleme" style="background:#261606;color:#FBE311;
+       border-color:#624F09">
+    <span class="rozet" style="background:#FBE311;color:#261606">analogous-warm</span>
+    <h3>Aureolin / Bistre — koyu</h3>
+    <p style="color:#B39D0D">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 13.42:1.</p>
+    <div class="seri"><b style="background:#834E19"></b><b style="background:#22CBC4"></b><b style="background:#ED8152"></b><b style="background:#978CB9"></b><b style="background:#C9AF43"></b><b style="background:#DD5483"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="aureolin-bistre-dark"</code>
+    <p class="cark">saf sarı ile is kahvesi; aynı sıcak yayda uç değer karşıtlığı</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 13.42:1</span>
+      <span class="iyi">vurgu çifti 13.42:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#261606" style="--c:#261606" title="#261606 — kopyalamak için tıkla"><span class="dot"></span><code>#261606</code><em>zemin</em></button><button class="sw" data-hex="#38210A" style="--c:#38210A" title="#38210A — kopyalamak için tıkla"><span class="dot"></span><code>#38210A</code><em>yüzey</em></button><button class="sw" data-hex="#FBE311" style="--c:#FBE311" title="#FBE311 — kopyalamak için tıkla"><span class="dot"></span><code>#FBE311</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#B39D0D" style="--c:#B39D0D" title="#B39D0D — kopyalamak için tıkla"><span class="dot"></span><code>#B39D0D</code><em>sönük</em></button><button class="sw" data-hex="#FBE311" style="--c:#FBE311" title="#FBE311 — kopyalamak için tıkla"><span class="dot"></span><code>#FBE311</code><em>vurgu</em></button><button class="sw" data-hex="#261606" style="--c:#261606" title="#261606 — kopyalamak için tıkla"><span class="dot"></span><code>#261606</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#624F09" style="--c:#624F09" title="#624F09 — kopyalamak için tıkla"><span class="dot"></span><code>#624F09</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#834E19" style="--c:#834E19" title="#834E19 — kopyalamak için tıkla"><span class="dot"></span><code>#834E19</code></button><button class="sw" data-hex="#22CBC4" style="--c:#22CBC4" title="#22CBC4 — kopyalamak için tıkla"><span class="dot"></span><code>#22CBC4</code></button><button class="sw" data-hex="#ED8152" style="--c:#ED8152" title="#ED8152 — kopyalamak için tıkla"><span class="dot"></span><code>#ED8152</code></button><button class="sw" data-hex="#978CB9" style="--c:#978CB9" title="#978CB9 — kopyalamak için tıkla"><span class="dot"></span><code>#978CB9</code></button><button class="sw" data-hex="#C9AF43" style="--c:#C9AF43" title="#C9AF43 — kopyalamak için tıkla"><span class="dot"></span><code>#C9AF43</code></button><button class="sw" data-hex="#DD5483" style="--c:#DD5483" title="#DD5483 — kopyalamak için tıkla"><span class="dot"></span><code>#DD5483</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#38210A"></i><i style="background:#69520C"></i><i style="background:#9A820E"></i><i style="background:#CAB20F"></i><i style="background:#FBE311"></i></div><div class="rampa"><i style="background:#22CBC4"></i><i style="background:#24675C"></i><i style="background:#B39D0D"></i><i style="background:#804628"></i><i style="background:#ED8152"></i></div>
+    
+    <p class="cvd"><b>Renk körlüğü:</b> Sarı zemin en güvenli taban; data3 (kiremit) ile data6 (fuşya) protanopide yakınlaşır.</p>
+  </div>
+</article>
+<article class="kart" data-ara="lime-vermilion lime green / vibrant red — açık vibrant poster high-energy risky light clash-complementary">
+  <div class="onizleme" style="background:#D3F00A;color:#C30A06;
+       border-color:#E19B0B">
+    <span class="rozet" style="background:#F9100C;color:#0B0B0B">clash-complementary</span>
+    <h3>Lime Green / Vibrant Red — açık</h3>
+    <p style="color:#EE530B">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 4.82:1.</p>
+    <div class="seri"><b style="background:#1B1B1B"></b><b style="background:#0B7A5B"></b><b style="background:#1D3FA8"></b><b style="background:#7A2E86"></b><b style="background:#B35A00"></b><b style="background:#5C6B00"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="lime-vermilion"</code>
+    <p class="cark">asit yeşili ↔ saf kırmızı; kasıtlı çarpışma, poster dili</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 4.82:1</span>
+      <span class="iyi">vurgu çifti 4.79:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#D3F00A" style="--c:#D3F00A" title="#D3F00A — kopyalamak için tıkla"><span class="dot"></span><code>#D3F00A</code><em>zemin</em></button><button class="sw" data-hex="#C0DA0E" style="--c:#C0DA0E" title="#C0DA0E — kopyalamak için tıkla"><span class="dot"></span><code>#C0DA0E</code><em>yüzey</em></button><button class="sw" data-hex="#C30A06" style="--c:#C30A06" title="#C30A06 — kopyalamak için tıkla"><span class="dot"></span><code>#C30A06</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#EE530B" style="--c:#EE530B" title="#EE530B — kopyalamak için tıkla"><span class="dot"></span><code>#EE530B</code><em>sönük</em></button><button class="sw" data-hex="#F9100C" style="--c:#F9100C" title="#F9100C — kopyalamak için tıkla"><span class="dot"></span><code>#F9100C</code><em>vurgu</em></button><button class="sw" data-hex="#0B0B0B" style="--c:#0B0B0B" title="#0B0B0B — kopyalamak için tıkla"><span class="dot"></span><code>#0B0B0B</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#E19B0B" style="--c:#E19B0B" title="#E19B0B — kopyalamak için tıkla"><span class="dot"></span><code>#E19B0B</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#1B1B1B" style="--c:#1B1B1B" title="#1B1B1B — kopyalamak için tıkla"><span class="dot"></span><code>#1B1B1B</code></button><button class="sw" data-hex="#0B7A5B" style="--c:#0B7A5B" title="#0B7A5B — kopyalamak için tıkla"><span class="dot"></span><code>#0B7A5B</code></button><button class="sw" data-hex="#1D3FA8" style="--c:#1D3FA8" title="#1D3FA8 — kopyalamak için tıkla"><span class="dot"></span><code>#1D3FA8</code></button><button class="sw" data-hex="#7A2E86" style="--c:#7A2E86" title="#7A2E86 — kopyalamak için tıkla"><span class="dot"></span><code>#7A2E86</code></button><button class="sw" data-hex="#B35A00" style="--c:#B35A00" title="#B35A00 — kopyalamak için tıkla"><span class="dot"></span><code>#B35A00</code></button><button class="sw" data-hex="#5C6B00" style="--c:#5C6B00" title="#5C6B00 — kopyalamak için tıkla"><span class="dot"></span><code>#5C6B00</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#C0DA0E"></i><i style="background:#CEA80E"></i><i style="background:#DC750D"></i><i style="background:#EB420C"></i><i style="background:#F9100C"></i></div><div class="rampa"><i style="background:#0B7A5B"></i><i style="background:#79BB2E"></i><i style="background:#EE530B"></i><i style="background:#81A051"></i><i style="background:#1D3FA8"></i></div>
+    <p class="uyari"><b>Referans çift yalnız gösterim:</b> #F9100C üzerinde ölçülen 3.18:1, gövde metni eşiğinin altında. Gövde için mürekkep #C30A06 olarak düzeltildi; referans ton büyük başlık ve dolgu için geçerli.</p>
+    <p class="cvd"><b>Renk körlüğü:</b> İki renk de aşırı doygun ve AYNI açıklıkta: kromostereopsi (titreşim) yapar. Gövde metni için ASLA kullanılmaz.</p>
+  </div>
+</article>
+<article class="kart" data-ara="lime-vermilion-dark lime green / vibrant red — koyu vibrant poster high-energy risky dark clash-complementary">
+  <div class="onizleme" style="background:#F9100C;color:#121401;
+       border-color:#EE4F0B">
+    <span class="rozet" style="background:#D3F00A;color:#0B0B0B">clash-complementary</span>
+    <h3>Lime Green / Vibrant Red — koyu</h3>
+    <p style="color:#E0A40B">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 4.53:1.</p>
+    <div class="seri"><b style="background:#535353"></b><b style="background:#1ADBA5"></b><b style="background:#5979DC"></b><b style="background:#B562C2"></b><b style="background:#FA922A"></b><b style="background:#B9D605"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="lime-vermilion-dark"</code>
+    <p class="cark">asit yeşili ↔ saf kırmızı; kasıtlı çarpışma, poster dili</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 4.53:1</span>
+      <span class="iyi">vurgu çifti 15.22:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#F9100C" style="--c:#F9100C" title="#F9100C — kopyalamak için tıkla"><span class="dot"></span><code>#F9100C</code><em>zemin</em></button><button class="sw" data-hex="#F52A27" style="--c:#F52A27" title="#F52A27 — kopyalamak için tıkla"><span class="dot"></span><code>#F52A27</code><em>yüzey</em></button><button class="sw" data-hex="#121401" style="--c:#121401" title="#121401 — kopyalamak için tıkla"><span class="dot"></span><code>#121401</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#E0A40B" style="--c:#E0A40B" title="#E0A40B — kopyalamak için tıkla"><span class="dot"></span><code>#E0A40B</code><em>sönük</em></button><button class="sw" data-hex="#D3F00A" style="--c:#D3F00A" title="#D3F00A — kopyalamak için tıkla"><span class="dot"></span><code>#D3F00A</code><em>vurgu</em></button><button class="sw" data-hex="#0B0B0B" style="--c:#0B0B0B" title="#0B0B0B — kopyalamak için tıkla"><span class="dot"></span><code>#0B0B0B</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#EE4F0B" style="--c:#EE4F0B" title="#EE4F0B — kopyalamak için tıkla"><span class="dot"></span><code>#EE4F0B</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#535353" style="--c:#535353" title="#535353 — kopyalamak için tıkla"><span class="dot"></span><code>#535353</code></button><button class="sw" data-hex="#1ADBA5" style="--c:#1ADBA5" title="#1ADBA5 — kopyalamak için tıkla"><span class="dot"></span><code>#1ADBA5</code></button><button class="sw" data-hex="#5979DC" style="--c:#5979DC" title="#5979DC — kopyalamak için tıkla"><span class="dot"></span><code>#5979DC</code></button><button class="sw" data-hex="#B562C2" style="--c:#B562C2" title="#B562C2 — kopyalamak için tıkla"><span class="dot"></span><code>#B562C2</code></button><button class="sw" data-hex="#FA922A" style="--c:#FA922A" title="#FA922A — kopyalamak için tıkla"><span class="dot"></span><code>#FA922A</code></button><button class="sw" data-hex="#B9D605" style="--c:#B9D605" title="#B9D605 — kopyalamak için tıkla"><span class="dot"></span><code>#B9D605</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#F52A27"></i><i style="background:#EC5C20"></i><i style="background:#E48D18"></i><i style="background:#DBBE11"></i><i style="background:#D3F00A"></i></div><div class="rampa"><i style="background:#1ADBA5"></i><i style="background:#956B51"></i><i style="background:#E0A40B"></i><i style="background:#B13F6A"></i><i style="background:#5979DC"></i></div>
+    <p class="uyari"><b>Referans çift yalnız gösterim:</b> #D3F00A üzerinde ölçülen 3.18:1, gövde metni eşiğinin altında. Gövde için mürekkep #121401 olarak düzeltildi; referans ton büyük başlık ve dolgu için geçerli.</p>
+    <p class="cvd"><b>Renk körlüğü:</b> İki renk de aşırı doygun ve AYNI açıklıkta: kromostereopsi (titreşim) yapar. Gövde metni için ASLA kullanılmaz.</p>
+  </div>
+</article>
+<article class="kart" data-ara="violet-imperial violet / imperial red — açık editorial moody contemporary stage light complementary-split">
+  <div class="onizleme" style="background:#F15153;color:#2D153F;
+       border-color:#A83B4E">
+    <span class="rozet" style="background:#321847;color:#FFFFFF">complementary-split</span>
+    <h3>Violet / Imperial Red — açık</h3>
+    <p style="color:#6B294B">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 4.68:1.</p>
+    <div class="seri"><b style="background:#F15153"></b><b style="background:#5FC2C7"></b><b style="background:#E0A458"></b><b style="background:#9B7BD4"></b><b style="background:#4A8FE7"></b><b style="background:#C67FA8"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="violet-imperial"</code>
+    <p class="cark">mor gece ↔ mercan kırmızısı; menekşe eksende sıcak vurgu</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 4.68:1</span>
+      <span class="iyi">vurgu çifti 15.47:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#F15153" style="--c:#F15153" title="#F15153 — kopyalamak için tıkla"><span class="dot"></span><code>#F15153</code><em>zemin</em></button><button class="sw" data-hex="#EC4547" style="--c:#EC4547" title="#EC4547 — kopyalamak için tıkla"><span class="dot"></span><code>#EC4547</code><em>yüzey</em></button><button class="sw" data-hex="#2D153F" style="--c:#2D153F" title="#2D153F — kopyalamak için tıkla"><span class="dot"></span><code>#2D153F</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#6B294B" style="--c:#6B294B" title="#6B294B — kopyalamak için tıkla"><span class="dot"></span><code>#6B294B</code><em>sönük</em></button><button class="sw" data-hex="#321847" style="--c:#321847" title="#321847 — kopyalamak için tıkla"><span class="dot"></span><code>#321847</code><em>vurgu</em></button><button class="sw" data-hex="#FFFFFF" style="--c:#FFFFFF" title="#FFFFFF — kopyalamak için tıkla"><span class="dot"></span><code>#FFFFFF</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#A83B4E" style="--c:#A83B4E" title="#A83B4E — kopyalamak için tıkla"><span class="dot"></span><code>#A83B4E</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#F15153" style="--c:#F15153" title="#F15153 — kopyalamak için tıkla"><span class="dot"></span><code>#F15153</code></button><button class="sw" data-hex="#5FC2C7" style="--c:#5FC2C7" title="#5FC2C7 — kopyalamak için tıkla"><span class="dot"></span><code>#5FC2C7</code></button><button class="sw" data-hex="#E0A458" style="--c:#E0A458" title="#E0A458 — kopyalamak için tıkla"><span class="dot"></span><code>#E0A458</code></button><button class="sw" data-hex="#9B7BD4" style="--c:#9B7BD4" title="#9B7BD4 — kopyalamak için tıkla"><span class="dot"></span><code>#9B7BD4</code></button><button class="sw" data-hex="#4A8FE7" style="--c:#4A8FE7" title="#4A8FE7 — kopyalamak için tıkla"><span class="dot"></span><code>#4A8FE7</code></button><button class="sw" data-hex="#C67FA8" style="--c:#C67FA8" title="#C67FA8 — kopyalamak için tıkla"><span class="dot"></span><code>#C67FA8</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#EC4547"></i><i style="background:#BE3A47"></i><i style="background:#8F2E47"></i><i style="background:#602347"></i><i style="background:#321847"></i></div><div class="rampa"><i style="background:#5FC2C7"></i><i style="background:#AF8487"></i><i style="background:#6B294B"></i><i style="background:#E97655"></i><i style="background:#E0A458"></i></div>
+    <p class="uyari"><b>Referans çift yalnız gösterim:</b> #321847 üzerinde ölçülen 4.45:1, gövde metni eşiğinin altında. Gövde için mürekkep #2D153F olarak düzeltildi; referans ton büyük başlık ve dolgu için geçerli.</p>
+    <p class="cvd"><b>Renk körlüğü:</b> Mor/mercan ekseni deuteranopide korunur; data2 (turkuaz) ile data5 (mavi) komşu seride ayrışmayabilir.</p>
+  </div>
+</article>
+<article class="kart" data-ara="violet-imperial-dark violet / imperial red — koyu editorial moody contemporary stage dark complementary-split">
+  <div class="onizleme" style="background:#321847;color:#F25A5C;
+       border-color:#67284A">
+    <span class="rozet" style="background:#F15153;color:#0B0B0B">complementary-split</span>
+    <h3>Violet / Imperial Red — koyu</h3>
+    <p style="color:#B03E4F">Gövde metni bu zeminde böyle okunur — ölçülen kontrast 4.71:1.</p>
+    <div class="seri"><b style="background:#F7BBBB"></b><b style="background:#B5DFE1"></b><b style="background:#EFD7B9"></b><b style="background:#DCD1EE"></b><b style="background:#AFCDF2"></b><b style="background:#E7CEDC"></b></div>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-palette="violet-imperial-dark"</code>
+    <p class="cark">mor gece ↔ mercan kırmızısı; menekşe eksende sıcak vurgu</p>
+    <div class="olcum">
+      <span class="iyi">mürekkep/zemin 4.71:1</span>
+      <span class="iyi">vurgu çifti 5.66:1</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#321847" style="--c:#321847" title="#321847 — kopyalamak için tıkla"><span class="dot"></span><code>#321847</code><em>zemin</em></button><button class="sw" data-hex="#3E2056" style="--c:#3E2056" title="#3E2056 — kopyalamak için tıkla"><span class="dot"></span><code>#3E2056</code><em>yüzey</em></button><button class="sw" data-hex="#F25A5C" style="--c:#F25A5C" title="#F25A5C — kopyalamak için tıkla"><span class="dot"></span><code>#F25A5C</code><em>mürekkep</em></button>
+      <button class="sw" data-hex="#B03E4F" style="--c:#B03E4F" title="#B03E4F — kopyalamak için tıkla"><span class="dot"></span><code>#B03E4F</code><em>sönük</em></button><button class="sw" data-hex="#F15153" style="--c:#F15153" title="#F15153 — kopyalamak için tıkla"><span class="dot"></span><code>#F15153</code><em>vurgu</em></button><button class="sw" data-hex="#0B0B0B" style="--c:#0B0B0B" title="#0B0B0B — kopyalamak için tıkla"><span class="dot"></span><code>#0B0B0B</code><em>vurgu mürekkebi</em></button><button class="sw" data-hex="#67284A" style="--c:#67284A" title="#67284A — kopyalamak için tıkla"><span class="dot"></span><code>#67284A</code><em>çizgi</em></button></div>
+    <p class="alt">veri renkleri</p><div class="cipler"><button class="sw" data-hex="#F7BBBB" style="--c:#F7BBBB" title="#F7BBBB — kopyalamak için tıkla"><span class="dot"></span><code>#F7BBBB</code></button><button class="sw" data-hex="#B5DFE1" style="--c:#B5DFE1" title="#B5DFE1 — kopyalamak için tıkla"><span class="dot"></span><code>#B5DFE1</code></button><button class="sw" data-hex="#EFD7B9" style="--c:#EFD7B9" title="#EFD7B9 — kopyalamak için tıkla"><span class="dot"></span><code>#EFD7B9</code></button><button class="sw" data-hex="#DCD1EE" style="--c:#DCD1EE" title="#DCD1EE — kopyalamak için tıkla"><span class="dot"></span><code>#DCD1EE</code></button><button class="sw" data-hex="#AFCDF2" style="--c:#AFCDF2" title="#AFCDF2 — kopyalamak için tıkla"><span class="dot"></span><code>#AFCDF2</code></button><button class="sw" data-hex="#E7CEDC" style="--c:#E7CEDC" title="#E7CEDC — kopyalamak için tıkla"><span class="dot"></span><code>#E7CEDC</code></button></div>
+    <p class="alt">rampalar · sıralı / ıraksak</p><div class="rampa"><i style="background:#3E2056"></i><i style="background:#6B2C55"></i><i style="background:#983855"></i><i style="background:#C44554"></i><i style="background:#F15153"></i></div><div class="rampa"><i style="background:#B5DFE1"></i><i style="background:#6D728C"></i><i style="background:#B03E4F"></i><i style="background:#876E7A"></i><i style="background:#EFD7B9"></i></div>
+    <p class="uyari"><b>Referans çift yalnız gösterim:</b> #F15153 üzerinde ölçülen 4.45:1, gövde metni eşiğinin altında. Gövde için mürekkep #F25A5C olarak düzeltildi; referans ton büyük başlık ve dolgu için geçerli.</p>
+    <p class="cvd"><b>Renk körlüğü:</b> Mor/mercan ekseni deuteranopide korunur; data2 (turkuaz) ile data5 (mavi) komşu seride ayrışmayabilir.</p>
+  </div>
+</article></div>
+<h2 id="b-gecis">Geçiş (fade) paletleri</h2>
+<div class="izgara" id="g-gecis">
+<article class="kart" data-ara="ocean-mint-fade ocean mint fade gecis fade cool aquatic calm">
+  <div class="onizleme gecis" style="background:linear-gradient(100deg,#085078,#9AE4CB)">
+    <div class="perde" style="background:linear-gradient(rgba(255,255,255,0.27), rgba(255,255,255,0.27))"></div>
+    <h3 style="color:#0B0B0B">Ocean Mint Fade</h3>
+    <p style="color:#0B0B0B;opacity:.92">metin taşımaz (perdesiz) · en kötü nokta 2.28:1</p>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-gradient="ocean-mint-fade"</code>
+    <p class="cark">derinlik/sıcaklık haritaları, deniz ve atmosfer olayları</p>
+    <div class="olcum">
+      <span class="orta">siyah metin, en kötü 2.28:1</span>
+      <span>orta nokta #519AA2</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#085078" style="--c:#085078" title="#085078 — kopyalamak için tıkla"><span class="dot"></span><code>#085078</code><em>başlangıç</em></button><button class="sw" data-hex="#9AE4CB" style="--c:#9AE4CB" title="#9AE4CB — kopyalamak için tıkla"><span class="dot"></span><code>#9AE4CB</code><em>bitiş</em></button><button class="sw" data-hex="#519AA2" style="--c:#519AA2" title="#519AA2 — kopyalamak için tıkla"><span class="dot"></span><code>#519AA2</code><em>orta</em></button></div>
+    <p class="alt">sıralı veri rampası (geçişten türetildi)</p><div class="rampa"><i style="background:#085078"></i><i style="background:#2C758D"></i><i style="background:#519AA2"></i><i style="background:#76BFB6"></i><i style="background:#9AE4CB"></i></div>
+    <p class="uyari"><b>Perde gerekli (α=0.27):</b> Geçişin en kötü noktasında siyah metnin 4,5:1&#x27;e ulaşması için gereken ASGARİ perde. Perde geçişin ÜSTÜNE serilir; renk kimliği korunur, metin her noktada okunur.</p>
+    <p class="cvd">Uçları arasında 50 puanlık açıklık farkı var: TEK renk metin geçişin tamamında çalışmaz. Metin gerekiyorsa geçişi tek uca sınırlayın ya da perde (scrim) kullanın.</p>
+  </div>
+</article>
+<article class="kart" data-ara="velvet-berry-glow velvet berry glow gecis fade moody vibrant stage">
+  <div class="onizleme gecis" style="background:linear-gradient(100deg,#4B0C37,#C8005A)">
+    
+    <h3 style="color:#FFFFFF">Velvet Berry Glow</h3>
+    <p style="color:#FFFFFF;opacity:.92">gövde metni taşır · en kötü nokta 5.83:1</p>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-gradient="velvet-berry-glow"</code>
+    <p class="cark">bölüm açılışları, sahne zeminleri, ışıma olayları</p>
+    <div class="olcum">
+      <span class="iyi">beyaz metin, en kötü 5.83:1</span>
+      <span>orta nokta #8A0648</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#4B0C37" style="--c:#4B0C37" title="#4B0C37 — kopyalamak için tıkla"><span class="dot"></span><code>#4B0C37</code><em>başlangıç</em></button><button class="sw" data-hex="#C8005A" style="--c:#C8005A" title="#C8005A — kopyalamak için tıkla"><span class="dot"></span><code>#C8005A</code><em>bitiş</em></button><button class="sw" data-hex="#8A0648" style="--c:#8A0648" title="#8A0648 — kopyalamak için tıkla"><span class="dot"></span><code>#8A0648</code><em>orta</em></button></div>
+    <p class="alt">sıralı veri rampası (geçişten türetildi)</p><div class="rampa"><i style="background:#4B0C37"></i><i style="background:#6A0940"></i><i style="background:#8A0648"></i><i style="background:#A90351"></i><i style="background:#C8005A"></i></div>
+    <p class="ok">Perdesiz güvenli: metin geçişin her noktasında eşiği geçiyor.</p>
+    <p class="cvd">Açıklık farkı dar; beyaz metin geçişin HER noktasında güvenli.</p>
+  </div>
+</article>
+<article class="kart" data-ara="royal-sky royal sky gecis fade cool corporate aerial">
+  <div class="onizleme gecis" style="background:linear-gradient(100deg,#292F91,#4CA8DC)">
+    <div class="perde" style="background:linear-gradient(rgba(0,0,0,0.26), rgba(0,0,0,0.26))"></div>
+    <h3 style="color:#FFFFFF">Royal Sky</h3>
+    <p style="color:#FFFFFF;opacity:.92">metin taşımaz (perdesiz) · en kötü nokta 2.64:1</p>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-gradient="royal-sky"</code>
+    <p class="cark">gökyüzü/irtifa anlatıları, başlık zeminleri</p>
+    <div class="olcum">
+      <span class="orta">beyaz metin, en kötü 2.64:1</span>
+      <span>orta nokta #3B6CB6</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#292F91" style="--c:#292F91" title="#292F91 — kopyalamak için tıkla"><span class="dot"></span><code>#292F91</code><em>başlangıç</em></button><button class="sw" data-hex="#4CA8DC" style="--c:#4CA8DC" title="#4CA8DC — kopyalamak için tıkla"><span class="dot"></span><code>#4CA8DC</code><em>bitiş</em></button><button class="sw" data-hex="#3B6CB6" style="--c:#3B6CB6" title="#3B6CB6 — kopyalamak için tıkla"><span class="dot"></span><code>#3B6CB6</code><em>orta</em></button></div>
+    <p class="alt">sıralı veri rampası (geçişten türetildi)</p><div class="rampa"><i style="background:#292F91"></i><i style="background:#324DA4"></i><i style="background:#3B6CB6"></i><i style="background:#438AC9"></i><i style="background:#4CA8DC"></i></div>
+    <p class="uyari"><b>Perde gerekli (α=0.26):</b> Geçişin en kötü noktasında beyaz metnin 4,5:1&#x27;e ulaşması için gereken ASGARİ perde. Perde geçişin ÜSTÜNE serilir; renk kimliği korunur, metin her noktada okunur.</p>
+    <p class="cvd">Açık uçta beyaz metin eşiğin altına düşer; başlıkları koyu uçta konumlandırın.</p>
+  </div>
+</article>
+<article class="kart" data-ara="dusky-orchid dusky orchid gecis fade warm-cool twilight editorial">
+  <div class="onizleme gecis" style="background:linear-gradient(100deg,#564A97,#B75F67)">
+    <div class="perde" style="background:linear-gradient(rgba(0,0,0,0.03), rgba(0,0,0,0.03))"></div>
+    <h3 style="color:#FFFFFF">Dusky Orchid</h3>
+    <p style="color:#FFFFFF;opacity:.92">yalnız büyük başlık · en kötü nokta 4.33:1</p>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-gradient="dusky-orchid"</code>
+    <p class="cark">alacakaranlık zeminleri, ıraksak veri rampası (mor↔mercan)</p>
+    <div class="olcum">
+      <span class="orta">beyaz metin, en kötü 4.33:1</span>
+      <span>orta nokta #86557F</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#564A97" style="--c:#564A97" title="#564A97 — kopyalamak için tıkla"><span class="dot"></span><code>#564A97</code><em>başlangıç</em></button><button class="sw" data-hex="#B75F67" style="--c:#B75F67" title="#B75F67 — kopyalamak için tıkla"><span class="dot"></span><code>#B75F67</code><em>bitiş</em></button><button class="sw" data-hex="#86557F" style="--c:#86557F" title="#86557F — kopyalamak için tıkla"><span class="dot"></span><code>#86557F</code><em>orta</em></button></div>
+    <p class="alt">sıralı veri rampası (geçişten türetildi)</p><div class="rampa"><i style="background:#564A97"></i><i style="background:#6E4F8B"></i><i style="background:#86557F"></i><i style="background:#9F5A73"></i><i style="background:#B75F67"></i></div>
+    <p class="uyari"><b>Perde gerekli (α=0.03):</b> Geçişin en kötü noktasında beyaz metnin 4,5:1&#x27;e ulaşması için gereken ASGARİ perde. Perde geçişin ÜSTÜNE serilir; renk kimliği korunur, metin her noktada okunur.</p>
+    <p class="cvd">İki uç birbirine yakın açıklıkta: zemin olarak sakin, ama metin yalnız büyük punto.</p>
+  </div>
+</article>
+<article class="kart" data-ara="midnight-steel midnight steel gecis fade cool technical night">
+  <div class="onizleme gecis" style="background:linear-gradient(100deg,#141E30,#3E5E96)">
+    
+    <h3 style="color:#FFFFFF">Midnight Steel</h3>
+    <p style="color:#FFFFFF;opacity:.92">gövde metni taşır · en kötü nokta 6.47:1</p>
+  </div>
+  <div class="govde">
+    <code class="kimlik">data-gradient="midnight-steel"</code>
+    <p class="cark">koyu deste zemini, gece/uzay sahneleri, derinlik rampası</p>
+    <div class="olcum">
+      <span class="iyi">beyaz metin, en kötü 6.47:1</span>
+      <span>orta nokta #293E63</span>
+    </div>
+    <div class="cipler"><button class="sw" data-hex="#141E30" style="--c:#141E30" title="#141E30 — kopyalamak için tıkla"><span class="dot"></span><code>#141E30</code><em>başlangıç</em></button><button class="sw" data-hex="#3E5E96" style="--c:#3E5E96" title="#3E5E96 — kopyalamak için tıkla"><span class="dot"></span><code>#3E5E96</code><em>bitiş</em></button><button class="sw" data-hex="#293E63" style="--c:#293E63" title="#293E63 — kopyalamak için tıkla"><span class="dot"></span><code>#293E63</code><em>orta</em></button></div>
+    <p class="alt">sıralı veri rampası (geçişten türetildi)</p><div class="rampa"><i style="background:#141E30"></i><i style="background:#1E2E4A"></i><i style="background:#293E63"></i><i style="background:#344E7D"></i><i style="background:#3E5E96"></i></div>
+    <p class="ok">Perdesiz güvenli: metin geçişin her noktasında eşiği geçiyor.</p>
+    <p class="cvd">En güvenli fade: beyaz metin geçişin her noktasında rahat taşır.</p>
+  </div>
+</article></div>
+<div id="toast"></div>
+<script>
+const toast = document.getElementById('toast');
+document.addEventListener('click', e => {
+  const b = e.target.closest('.sw');
+  if (!b) return;
+  const h = b.dataset.hex;
+  navigator.clipboard && navigator.clipboard.writeText(h);
+  toast.textContent = 'Kopyalandı: ' + h;
+  toast.classList.add('on'); clearTimeout(toast._h);
+  toast._h = setTimeout(() => toast.classList.remove('on'), 1100);
+});
+const kartlar = [...document.querySelectorAll('.kart')];
+let q = '', f = '';
+function uygula() {
+  let n = 0;
+  for (const k of kartlar) {
+    const gecis = k.closest('#g-gecis') !== null;
+    const ad = k.dataset.ara;
+    let tur = true;
+    if (f === 'gecis') tur = gecis;
+    else if (f === 'ikili') tur = !gecis;
+    else if (f === 'acik') tur = !gecis && !ad.includes('-dark');
+    else if (f === 'koyu') tur = !gecis && ad.includes('-dark');
+    const ok = tur && (!q || ad.includes(q));
+    k.classList.toggle('gizli', !ok);
+    if (ok) n++;
+  }
+  document.getElementById('say').textContent = n + ' / ' + kartlar.length;
+  for (const id of ['ikili', 'gecis']) {
+    const bos = ![...document.querySelectorAll('#g-' + id + ' .kart')].some(x => !x.classList.contains('gizli'));
+    document.getElementById('b-' + id).style.display = bos ? 'none' : '';
+    document.getElementById('g-' + id).style.display = bos ? 'none' : '';
+  }
+}
+document.getElementById('q').addEventListener('input', e => { q = e.target.value.toLowerCase().trim(); uygula(); });
+for (const b of document.querySelectorAll('button.f'))
+  b.onclick = () => { f = b.dataset.f; document.querySelectorAll('button.f').forEach(x => x.classList.toggle('on', x === b)); uygula(); };
+uygula();
+</script></body></html>
