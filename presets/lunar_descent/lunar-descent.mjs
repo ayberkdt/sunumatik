@@ -18,8 +18,8 @@ import { simulateDescent, SABITLER } from './descent-model.mjs';
 
 const OLCEK = 1 / 100;          // m → sahne birimi
 const R_AY_BIRIM = 17374;       // ay yarıçapı, birim (gerçek: 1737.4 km)
-const ZEMIN_UST = 0.003;        // görünür zemin katmanının (mikro yama) y'si — ayaklar buna basar
-                                // (katman adımları 15-30 cm: sıyırma açısında parlak şerit bırakmaz)
+const ZEMIN_UST = 0.0006;       // arazi yüzeyinin üstündeki ~6 cm oturma payı — ayaklar, kayalar,
+                                // toz ve yer izleri bu payla TEK arazi örgüsüne oturur (z-çatışması yok)
 
 const kirp = (v, a, b) => Math.min(b, Math.max(a, v));
 const purussuz = (a, b, v) => { const t = kirp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
@@ -187,29 +187,371 @@ function kraterDokusu(seed, gunesAcisi, ayar = {}) {
   return cnv;
 }
 
-/* Geometri-altı mikro doku: ekstra gren + minik gölgeli pockmark'lar.
-   Hepsi örgü çözünürlüğünün ALTINDA kalır (< 1 birim) — gölgesi geometrik
-   kraterlerle çelişmez, "havada boyalı krater" etkisi yaratmaz. */
-function mikroDetay(cnv, seed, ga, ayar = {}) {
-  const rnd = mulberry32(seed ^ 0xB0A7);
+/* ---- YÜZEY DETAY DOKUSU (döşenebilir) — yakın planın gerçek çözünürlüğü ----
+   Kanallar:  R = albedo modülasyonu (0.5 nötr) · G,B = yüzey eğimi ∂h/∂x, ∂h/∂z
+   (0.5 düz). Yani tek dokuda hem regolit greni hem de mikro rölyefin NORMALİ
+   taşınır; ışık her ölçekte gerçek yüzey normalinden hesaplanır (boyalı gölge
+   yok — alçak güneş döndüğünde detay da onunla döner).
+
+   Neden döşenebilir + çok ölçekli: aynı doku DÖRT farklı dünya frekansında
+   (≈5 m / 22 m / 95 m / 435 m periyot) örneklenir ve toplanır. Pockmark alanı
+   güç yasalı (çok küçük çok, iri az) olduğundan aynı alan her ölçekte
+   inandırıcı kalır — kraterler 1,5 cm'den 17 m'ye kadar kesintisiz sürer.
+   Tekrar deseni dört ayrı DÖNDÜRME + kaydırmayla kırılır (ızgara sırıtmaz).
+   Mesafeye göre detay BEDAVA gelir: mip zinciri uzakta ortalamayı 0.5'e
+   çeker → katkı kendiliğinden sıfırlanır (ne titreme ne moiré), yakında ise
+   tam çözünürlük açılır. */
+function detayDokusu(seed, S = 512) {
+  const rnd = mulberry32(seed ^ 0xD37A11);
+  const N = S * S;
+  const H = new Float32Array(N);          // mikro yükseklik
+  const A = new Float32Array(N);          // albedo modülasyonu
+  const tohum = (seed ^ 0x5EED17) >>> 0;
+  const hash = (ix, iy, per, kat) => {
+    ix = ((ix % per) + per) % per; iy = ((iy % per) + per) % per;
+    let h = (Math.imul(ix, 374761393) + Math.imul(iy, 668265263) + Math.imul(kat * 7919 + tohum, 69069)) | 0;
+    h = (h ^ (h >>> 13)) | 0; h = Math.imul(h, 1274126177);
+    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  };
+  const gur = (x, y, per, kat) => {                 // periyodik kafes → dikişsiz
+    const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+    const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+    const a = hash(ix, iy, per, kat), b = hash(ix + 1, iy, per, kat);
+    const c = hash(ix, iy + 1, per, kat), d = hash(ix + 1, iy + 1, per, kat);
+    const ab = a + (b - a) * sx;
+    return ab + ((c + (d - c) * sx) - ab) * sy;
+  };
+  /* (a) fBm regolit dalgalanması + bağımsız albedo benekliliği */
+  const okt = [[6, .46], [14, .26], [33, .145], [78, .075], [180, .038]];
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      let h = 0, a = 0;
+      for (let o = 0; o < okt.length; o++) {
+        const per = okt[o][0], w = okt[o][1];
+        h += (gur(x / S * per, y / S * per, per, o) - .5) * w;
+        if (o < 3) a += (gur(x / S * per + 11.3, y / S * per - 4.7, per, o + 40) - .5) * w * .62;
+      }
+      const i = y * S + x;
+      H[i] = h;
+      A[i] = .5 + a + (hash(x, y, S, 91) - .5) * .085;  // + ince kum greni
+    }
+  }
+  /* (b) pockmark alanı: güç yasalı boy dağılımı, çanak + yükseltilmiş kenar +
+         ejecta örtüsü. Kenarları sarmalı (döşenebilirlik) çizilir.
+         KRATERLEŞME MASKESİ: kraterler bir "sünger" gibi her yeri kaplamaz —
+         düşük frekanslı bir alan bazı yamaları yoğun kraterli, bazılarını
+         pürüzsüz regolit örtüsü bırakır (gerçek yüzeyin lekeli dağılımı). */
+  const pockSay = Math.round(S * S / 300);
+  for (let p = 0; p < pockSay; p++) {
+    const cx = rnd() * S, cy = rnd() * S;
+    const maske = gur(cx / S * 5, cy / S * 5, 5, 77);
+    if (rnd() > purussuz(.38, .86, maske)) continue;
+    const r = Math.min(S * .085, 1.7 * Math.pow(1 - rnd() * .9995, -1 / 1.85));
+    const taze = rnd();                              // 1 = taze (parlak ejecta), 0 = aşınmış
+    const derin = r * (.055 + .075 * taze);
+    const kenar = derin * (.20 + .26 * taze);
+    // Gerçek kraterler tam daire DEĞİL: kenar iki harmonikle düzensizleştirilir —
+    // aksi hâlde üstten bakışta alan bir "sabun köpüğü" halısı gibi okuyor.
+    const h3 = .05 + rnd() * .085, h5 = .025 + rnd() * .055, f3 = rnd() * 6.283, f5 = rnd() * 6.283;
+    const R2 = Math.ceil(r * 1.9);
+    for (let dy = -R2; dy <= R2; dy++) for (let dx = -R2; dx <= R2; dx++) {
+      const uz = Math.hypot(dx, dy);
+      if (uz > r * 1.9) continue;
+      const te = Math.atan2(dy, dx);
+      const s = uz / (r * (1 + h3 * Math.sin(3 * te + f3) + h5 * Math.sin(5 * te + f5)));
+      if (s >= 1.7) continue;
+      const ix = ((Math.round(cx) + dx) % S + S) % S, iy = ((Math.round(cy) + dy) % S + S) % S;
+      const i = iy * S + ix;
+      if (s < 1) {
+        H[i] += -derin + (derin + kenar) * Math.pow(s, 2.9);
+        A[i] += (taze > .68 ? .045 : -.038) * (1 - s * .5); // taze taban aydınlık, eski koyu
+      } else {
+        const t = 1 - (s - 1) / .7;
+        H[i] += kenar * t * t;
+        if (taze > .68) A[i] += .062 * t * t;               // taze ejecta halkası
+      }
+    }
+  }
+  /* (c) klastlar: iri kum tanesi / cam boncuk lekeleri (albedo çeşitliliği) */
+  for (let k = 0, n = Math.round(S * S / 900); k < n; k++) {
+    const cx = Math.floor(rnd() * S), cy = Math.floor(rnd() * S);
+    const r = 1 + rnd() * 2.6, ac = rnd() < .42, guc = (ac ? .26 : -.20) * (.5 + rnd() * .5);
+    const R2 = Math.ceil(r);
+    for (let dy = -R2; dy <= R2; dy++) for (let dx = -R2; dx <= R2; dx++) {
+      const s = Math.hypot(dx, dy) / r;
+      if (s >= 1) continue;
+      const i = (((cy + dy) % S + S) % S) * S + (((cx + dx) % S + S) % S);
+      A[i] += guc * (1 - s * s);
+      H[i] += guc * .012;
+    }
+  }
+  /* (d) eğim kanalları: merkezi fark (sarmalı) + RMS'e göre ölçekleme */
+  const gx = new Float32Array(N), gz = new Float32Array(N);
+  let kare = 0;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const i = y * S + x;
+    const sx = H[y * S + (x + 1) % S] - H[y * S + (x + S - 1) % S];
+    const sz = H[((y + 1) % S) * S + x] - H[((y + S - 1) % S) * S + x];
+    gx[i] = sx; gz[i] = sz; kare += sx * sx + sz * sz;
+  }
+  const olcek = .40 / Math.max(1e-6, 2.6 * Math.sqrt(kare / (2 * N)));
+  const cnv = document.createElement('canvas'); cnv.width = cnv.height = S;
+  const ctx = cnv.getContext('2d');
+  const img = ctx.createImageData(S, S), veri = img.data;
+  for (let i = 0; i < N; i++) {
+    veri[i * 4] = kirp(A[i], 0, 1) * 255;
+    veri[i * 4 + 1] = kirp(.5 + gx[i] * olcek, 0, 1) * 255;
+    veri[i * 4 + 2] = kirp(.5 + gz[i] * olcek, 0, 1) * 255;
+    veri[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  return cnv;
+}
+
+/* ---- BÖLGE ALBEDOSU — gerçek Ay tonlaması (mare / highland / taze ejecta) ----
+   Tek tip gri-krem yerine: koyu mare lekeleri, açık highland zeminleri, taze
+   kraterlerden çıkan AÇIK ejecta ışınları ve yer yer koyu piroklastik lekeler.
+   Dünya koordinatına (x,z → uv) doğrudan bağlanır: krater ALANIYLA aynı seed'i
+   kullandığı için ışınlar gerçek krater kenarlarından çıkar, boyanmış süs değil. */
+function bolgeAlbedosu(seed, kraterler, kapsam, S = 2048) {
+  const rnd = mulberry32(seed ^ 0xB016E);
+  const cnv = document.createElement('canvas'); cnv.width = cnv.height = S;
   const c = cnv.getContext('2d');
-  const S = cnv.width;
-  const dx = Math.cos(ga), dy = Math.sin(ga);
-  for (let i = 0, n = ayar.gren ?? 15000; i < n; i++) {
-    c.globalAlpha = .065 + rnd() * .075;
-    c.fillStyle = rnd() < .5 ? '#8d897f' : '#5b584f';
-    c.beginPath(); c.arc(rnd() * S, rnd() * S, .5 + rnd() * (ayar.grenBoy ?? 1.9), 0, Math.PI * 2); c.fill();
+  const px = x => (x / (2 * kapsam) + .5) * S;
+  const py = z => (.5 - z / (2 * kapsam)) * S;
+  const pr = r => r / (2 * kapsam) * S;
+  c.fillStyle = '#7c7b75'; c.fillRect(0, 0, S, S);          // nötr ay grisi (referans)
+  // (a) geniş highland/mare tonlaması — yumuşak, düşük genlikli lekeler
+  for (let i = 0; i < 130; i++) {
+    const r = S * (.04 + Math.pow(rnd(), 1.6) * .30);
+    const x = rnd() * S, y = rnd() * S;
+    const ac = rnd() < .5;
+    const g = c.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, ac ? 'rgba(150,148,141,.30)' : 'rgba(74,72,68,.30)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2);
   }
-  for (let i = 0, n = ayar.pock ?? 140; i < n; i++) {
-    const x = rnd() * S, y = rnd() * S, r = (ayar.rMin ?? 2) + rnd() * ((ayar.rMax ?? 6) - (ayar.rMin ?? 2));
-    c.globalAlpha = .13 + rnd() * .08;   // güneş tarafı iç gölge (kraterDokusu diliyle aynı)
-    c.fillStyle = '#2c2a26';
-    c.beginPath(); c.ellipse(x - dx * r * .22, y - dy * r * .22, r * .8, r * .62, ga, 0, Math.PI * 2); c.fill();
-    c.globalAlpha = .09 + rnd() * .07;   // karşı yay: ince aydınlık rim
-    c.strokeStyle = '#c9c3b6'; c.lineWidth = Math.max(.8, r * .3);
-    c.beginPath(); c.arc(x, y, r * .82, ga - 1.2, ga + 1.2); c.stroke();
+  // (b) mare havzaları: birkaç geniş, belirgin KOYU alan (bazalt dolgusu)
+  for (let i = 0; i < 6; i++) {
+    const r = S * (.14 + rnd() * .20), x = rnd() * S, y = rnd() * S;
+    const g = c.createRadialGradient(x, y, r * .1, x, y, r);
+    g.addColorStop(0, 'rgba(58,57,54,.46)'); g.addColorStop(.65, 'rgba(63,62,58,.30)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2);
   }
-  c.globalAlpha = 1;
+  // (c) taze kraterler: parlak ejecta örtüsü + radyal ışın demeti
+  for (const k of kraterler) {
+    if (k.R < 6 || k.taze < .62) continue;
+    const x = px(k.x), y = py(k.z), r = pr(k.R);
+    if (r < 1.2) continue;
+    const guc = (k.taze - .62) / .38;
+    const g = c.createRadialGradient(x, y, r * .6, x, y, r * 2.6);
+    g.addColorStop(0, `rgba(196,192,182,${(.30 * guc).toFixed(3)})`);
+    g.addColorStop(.35, `rgba(180,176,166,${(.15 * guc).toFixed(3)})`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g; c.fillRect(x - r * 2.6, y - r * 2.6, r * 5.2, r * 5.2);
+    if (k.R < 18) continue;                                  // ışın demeti yalnız irilerde
+    const isinSay = 7 + Math.floor(rnd() * 9);
+    c.save(); c.translate(x, y);
+    for (let i = 0; i < isinSay; i++) {
+      const a = rnd() * Math.PI * 2, uz = r * (3 + Math.pow(rnd(), 1.4) * 7);
+      const yari = r * (.10 + rnd() * .16);
+      c.save(); c.rotate(a);
+      const lg = c.createLinearGradient(r, 0, uz, 0);
+      lg.addColorStop(0, `rgba(202,198,188,${(.26 * guc).toFixed(3)})`);
+      lg.addColorStop(.4, `rgba(190,186,176,${(.13 * guc).toFixed(3)})`);
+      lg.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = lg;
+      c.beginPath(); c.moveTo(r * .8, -yari * .5); c.lineTo(uz, -yari * 1.7);
+      c.lineTo(uz, yari * 1.7); c.lineTo(r * .8, yari * .5); c.closePath(); c.fill();
+      c.restore();
+    }
+    c.restore();
+  }
+  // (d) seyrek koyu lekeler (piroklastik örtü) — düzgünlüğü kırar
+  for (let i = 0; i < 46; i++) {
+    const r = S * (.008 + Math.pow(rnd(), 2) * .05), x = rnd() * S, y = rnd() * S;
+    const g = c.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, 'rgba(52,51,48,.34)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  return cnv;
+}
+
+/* Zemin malzemesine çok ölçekli detayı ve bölge tonlamasını enjekte eder.
+   Albedo: bölge tonu × (1 + Σ detay) · Normal: geometrik normale dünya
+   uzayında Σ eğim eklenir (yatay zeminde birebir doğru, eğimde yeterli). */
+function zeminDetayiEkle(mat, unif) {
+  mat.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, unif);
+    sh.vertexShader = 'varying vec2 vDunyaXZ;\n' + sh.vertexShader.replace(
+      '#include <begin_vertex>',
+      '#include <begin_vertex>\n\tvDunyaXZ = (modelMatrix * vec4(transformed, 1.0)).xz;'
+    );
+    sh.fragmentShader = `varying vec2 vDunyaXZ;
+      uniform sampler2D uDetay; uniform sampler2D uDetay2; uniform sampler2D uBolge;
+      uniform vec4 uFrek; uniform vec4 uAlbAmp; uniform vec4 uEgimAmp;
+      uniform float uDetayGuc; uniform float uBolgeOlcek; uniform vec2 uZeminTon;
+      ` + sh.fragmentShader
+      .replace('#include <map_fragment>', `#include <map_fragment>
+        mat2 DON1 = mat2(0.8000, 0.6000, -0.6000, 0.8000);
+        mat2 DON2 = mat2(-0.5137, 0.8580, -0.8580, -0.5137);
+        mat2 DON3 = DON1 * DON2;
+        vec4 dtA = texture2D(uDetay, vDunyaXZ * uFrek.x);
+        vec4 dtB = texture2D(uDetay2, (DON1 * vDunyaXZ) * uFrek.y + vec2(0.317, 0.771));
+        vec4 dtC = texture2D(uDetay, (DON2 * vDunyaXZ) * uFrek.z + vec2(0.633, 0.194));
+        vec4 dtD = texture2D(uDetay2, (DON3 * vDunyaXZ) * uFrek.w + vec2(0.118, 0.442));
+        float dtAlb = (dtA.r - 0.5) * uAlbAmp.x + (dtB.r - 0.5) * uAlbAmp.y
+                    + (dtC.r - 0.5) * uAlbAmp.z + (dtD.r - 0.5) * uAlbAmp.w;
+        vec3 bolgeTon = texture2D(uBolge, vDunyaXZ * uBolgeOlcek + 0.5).rgb;
+        diffuseColor.rgb *= (uZeminTon.x + uZeminTon.y * bolgeTon) * (1.0 + uDetayGuc * dtAlb);`)
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        vec2 dtEgim = (dtA.gb - 0.5) * uEgimAmp.x
+                    + ((dtB.gb - 0.5) * uEgimAmp.y) * DON1
+                    + ((dtC.gb - 0.5) * uEgimAmp.z) * DON2
+                    + ((dtD.gb - 0.5) * uEgimAmp.w) * DON3;
+        vec3 dnyN = normalize((vec4(normal, 0.0) * viewMatrix).xyz);
+        dnyN = normalize(dnyN + vec3(-dtEgim.x, 0.0, -dtEgim.y) * uDetayGuc);
+        normal = normalize((viewMatrix * vec4(dnyN, 0.0)).xyz);`);
+  };
+  return mat;
+}
+
+/* ---- KAYA GEOMETRİSİ: kırık (dışbükey çok yüzlü) siluet ----
+   Yarıçap yön fonksiyonudur: R(d) = min_i(d_i / <d, n_i>) — yani rastgele
+   yarı-uzayların kesişimi. Bu, çarpma kırılmasıyla oluşmuş köşeli blokların
+   gerçek biçim ailesidir (yamru yumru "top" değil). Üzerine yön tabanlı kaba
+   pürüz eklenir. Kalite kademesi ikosfer bölünmesiyle verilir: yakın kayalar
+   keskin kenarlı (320 yüz), uzaktakiler ucuz (20 yüz). */
+function kayaGeometrisi(rnd, kalite) {
+  const geo = new THREE.IcosahedronGeometry(1, kalite);
+  const duzlem = [];
+  const nD = 10 + Math.floor(rnd() * 9);
+  for (let i = 0; i < nD; i++) {
+    const t = rnd() * Math.PI * 2, u = rnd() * 2 - 1, s = Math.sqrt(Math.max(0, 1 - u * u));
+    duzlem.push([s * Math.cos(t), u, s * Math.sin(t), .54 + rnd() * .52]);
+  }
+  const f1 = 4 + rnd() * 5, f2 = 4 + rnd() * 5, o1 = rnd() * 6.28, o2 = rnd() * 6.28;
+  const p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const L = Math.hypot(x, y, z) || 1; x /= L; y /= L; z /= L;
+    let R = 1.3;
+    for (const d of duzlem) {
+      const dp = x * d[0] + y * d[1] + z * d[2];
+      if (dp > .14) R = Math.min(R, d[3] / dp);
+    }
+    // kırık yüzeylerin üzerinde kopmuş köşe / çentik pürüzü (yön fonksiyonu →
+    // kopya tepeler aynı yarıçapı alır, örgü yırtılmaz)
+    R *= 1 + .085 * Math.sin(x * f1 + o1) * Math.sin(y * f2 + o2) * Math.sin(z * 7.3 + o1)
+           + .045 * Math.sin(x * f1 * 2.7 + o2) * Math.sin(z * f2 * 2.3 + o1)
+           + .030 * Math.sin(x * 17.3 + o2) * Math.sin(y * 14.1 + o1) * Math.sin(z * 19.7 + o2)
+           + .016 * Math.sin(x * 31.7 + o1) * Math.sin(y * 27.3 + o2) * Math.sin(z * 35.1 + o1);
+    p.setXYZ(i, x * R, y * R, z * R);
+  }
+  geo.deleteAttribute('uv');
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/* Dönüştürülmüş parçaları TEK statik geometriye kaynaklar (çizim çağrısı = 1).
+   Tepe rengi: taban ton × üst yüzeylerde biriken ince tozun aydınlığı. */
+function birlestirParcalar(parcalar) {
+  let n = 0;
+  for (const p of parcalar) n += p.geo.attributes.position.count;
+  const poz = new Float32Array(n * 3), nrm = new Float32Array(n * 3), ren = new Float32Array(n * 3);
+  const v = new THREE.Vector3(), nm = new THREE.Matrix3();
+  let o = 0;
+  for (const p of parcalar) {
+    const gp = p.geo.attributes.position, gn = p.geo.attributes.normal;
+    nm.getNormalMatrix(p.m);
+    for (let i = 0; i < gp.count; i++, o++) {
+      v.fromBufferAttribute(gp, i).applyMatrix4(p.m);
+      poz[o * 3] = v.x; poz[o * 3 + 1] = v.y; poz[o * 3 + 2] = v.z;
+      v.fromBufferAttribute(gn, i).applyMatrix3(nm).normalize();
+      nrm[o * 3] = v.x; nrm[o * 3 + 1] = v.y; nrm[o * 3 + 2] = v.z;
+      const ust = Math.max(0, v.y), k = .86 + .30 * ust * ust;
+      ren[o * 3] = p.renk[0] * k; ren[o * 3 + 1] = p.renk[1] * k; ren[o * 3 + 2] = p.renk[2] * k;
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(poz, 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(ren, 3));
+  return g;
+}
+
+/* Kayanın oturduğu yerin izi: temas karanlığı (iç) + savrulmuş ince toz
+   halkası (dış). Tek dokuda renk + alfa birlikte değişir. */
+function etekDokusu(S = 128) {
+  const cnv = document.createElement('canvas'); cnv.width = cnv.height = S;
+  const c = cnv.getContext('2d'), M = S / 2;
+  const g = c.createRadialGradient(M, M, 0, M, M, M);
+  g.addColorStop(0, 'rgba(72,69,63,.46)');
+  g.addColorStop(.30, 'rgba(86,83,76,.34)');
+  g.addColorStop(.52, 'rgba(154,150,140,.15)');
+  g.addColorStop(.78, 'rgba(140,136,127,.06)');
+  g.addColorStop(1, 'rgba(120,116,108,0)');
+  c.fillStyle = g; c.fillRect(0, 0, S, S);
+  return cnv;
+}
+
+/* Plum süpürme izi: motor plümünün radyal olarak süpürdüğü kalıcı desen.
+   İçte sıkışmış/temizlenmiş koyu daire, dışa doğru ince tozun taşındığı AÇIK
+   ışınlar. Vakumda toz balistik gittiği için ışınlar KESKİN ve düz. */
+function plumIziDokusu(seed, S = 1024) {
+  const rnd = mulberry32(seed ^ 0x91A57);
+  const cnv = document.createElement('canvas'); cnv.width = cnv.height = S;
+  const c = cnv.getContext('2d'), M = S / 2;
+  let g = c.createRadialGradient(M, M, S * .012, M, M, S * .21);
+  g.addColorStop(0, 'rgba(92,88,80,.26)'); g.addColorStop(.55, 'rgba(102,98,90,.15)');
+  g.addColorStop(1, 'rgba(118,114,105,0)');
+  c.fillStyle = g; c.fillRect(0, 0, S, S);
+  c.save(); c.translate(M, M);
+  // Açısal KÜMELER: süpürme her yöne eşit değil, motor akışı birkaç yönde
+  // yoğunlaşır (eşit dağılım "lens patlaması" gibi okuyordu).
+  const kume = [];
+  for (let i = 0; i < 9; i++) kume.push(rnd() * Math.PI * 2);
+  for (let i = 0; i < 190; i++) {
+    const a = kume[i % kume.length] + (rnd() - .5) * 0.85;
+    const r0 = S * (.035 + rnd() * .075), r1 = S * (.12 + Math.pow(rnd(), 1.7) * .26);
+    if (r1 <= r0) continue;
+    const w0 = S * (.0014 + rnd() * .0035), w1 = w0 * (2.0 + rnd() * 3.0);
+    const ac = rnd() < .70;
+    c.save(); c.rotate(a);
+    const lg = c.createLinearGradient(r0, 0, r1, 0);
+    const al = (.035 + rnd() * .075).toFixed(3);
+    lg.addColorStop(0, ac ? `rgba(206,201,190,${al})` : `rgba(74,71,65,${al})`);
+    lg.addColorStop(.45, ac ? `rgba(186,181,171,${(al * .6).toFixed(3)})` : `rgba(84,81,74,${(al * .6).toFixed(3)})`);
+    lg.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = lg;
+    c.beginPath(); c.moveTo(r0, -w0); c.lineTo(r1, -w1); c.lineTo(r1, w1); c.lineTo(r0, w0);
+    c.closePath(); c.fill();
+    c.restore();
+  }
+  c.restore();
+  // dış kenar solması — kesik daire bırakmaz
+  c.globalCompositeOperation = 'destination-out';
+  const s2 = c.createRadialGradient(M, M, S * .30, M, M, S * .5);
+  s2.addColorStop(0, 'rgba(0,0,0,0)'); s2.addColorStop(1, 'rgba(0,0,0,1)');
+  c.fillStyle = s2; c.fillRect(0, 0, S, S);
+  c.globalCompositeOperation = 'source-over';
+  return cnv;
+}
+
+/* Ayak pedi izi: pedin bastığı sığ çukur (koyu halka) + çevreye serpilen
+   ince tozun açık yakası. */
+function pedIziDokusu(S = 256) {
+  const cnv = document.createElement('canvas'); cnv.width = cnv.height = S;
+  const c = cnv.getContext('2d'), M = S / 2;
+  const g = c.createRadialGradient(M, M, 0, M, M, M);
+  g.addColorStop(0, 'rgba(70,67,60,.52)');
+  g.addColorStop(.36, 'rgba(56,53,48,.66)');    // pedin bastırdığı sığ çukur halkası
+  g.addColorStop(.47, 'rgba(196,190,177,.40)'); // dışa itilen toz yakası
+  g.addColorStop(.74, 'rgba(160,155,145,.13)');
+  g.addColorStop(1, 'rgba(130,126,118,0)');
+  c.fillStyle = g; c.fillRect(0, 0, S, S);
+  return cnv;
 }
 
 /* Doku yüklenemezse uzak zemin için prosedürel yedek (aynı dil, daha kaba). */
@@ -219,6 +561,8 @@ function uzakZeminYedek(seed) {
 }
 
 export async function mountLunarDescent(host, options = {}) {
+  const kurulusT0 = performance.now();
+  const zaman = {}, olc = k => { zaman[k] = Math.round(performance.now() - kurulusT0); };
   const seed = options.seed ?? 20260813;
   const model = simulateDescent();
   const { ozet, olaylar } = model;
@@ -261,7 +605,7 @@ export async function mountLunarDescent(host, options = {}) {
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.12;
+  renderer.toneMappingExposure = 1.62;  // başlangıç; irtifayla sürülür (bkz. POZLAMA rampası)
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   kok.prepend(renderer.domElement);
@@ -272,15 +616,19 @@ export async function mountLunarDescent(host, options = {}) {
 
   /* ---- Işık: alçak güneş (uzun gölgeler), zayıf dünya-ışığı dolgusu ---- */
   const gunesYon = new THREE.Vector3(-0.62, Math.tan(11 * Math.PI / 180), 0.36).normalize(); // ~11° eleve
-  const gunes = new THREE.DirectionalLight(0xfff1dc, 2.7);
+  const gunes = new THREE.DirectionalLight(0xfff1dc, 4.3);
   gunes.castShadow = true;
   gunes.shadow.mapSize.set(2048, 2048);
   gunes.shadow.bias = -0.0004;
   gunes.shadow.radius = 6;        // yumuşak yarı gölge — jilet siyahı leke değil
   gunes.shadow.intensity = 0.62;  // dünya-ışığı gölgeyi tamamen karartmaz
   sahne.add(gunes, gunes.target);
-  sahne.add(new THREE.HemisphereLight(0x232833, 0x191510, 0.4));
-  const dunyaIsigi = new THREE.DirectionalLight(0x39465c, 0.22); // dünya-ışığı (earthshine)
+  // Mikro rölyefin güneşten kaçan yüzleri jilet siyahı olmasın: zayıf gökyüzü
+  // dolgusu (gerçekte de ejecta/kaya saçılımı bu yüzleri hafifçe aydınlatır).
+  // groundColor = parlak regolitten seken ışık (yüzey sıçraması): alçak güneşte
+  // kayaların ve aracın gölge yüzleri delik gibi kapkara kalmaz.
+  sahne.add(new THREE.HemisphereLight(0x2b3140, 0x453b2e, 0.70));
+  const dunyaIsigi = new THREE.DirectionalLight(0x39465c, 0.32); // dünya-ışığı (earthshine)
   dunyaIsigi.position.set(-3600, 470, -2900);
   sahne.add(dunyaIsigi);
 
@@ -301,6 +649,10 @@ export async function mountLunarDescent(host, options = {}) {
      Aynı araziYukseklik(x,z) HEM geometri yer değiştirmesinde HEM
      kamera/kaya/toz korumalarında kullanılır; arazi statiktir — rAF
      döngüsüne yeni sürekli iş eklemez. */
+  /* Yüzey kamerasının sabit durak noktası (sahne birimi). Kaya yerleşimi de
+     bunu bilir: kadrajı kapatan iri blok kameranın dibine düşmez. */
+  const YUZEY_KAM = { x: 0.62, z: 0.8 };
+
   const yukleyici = new THREE.TextureLoader();
   const dokuUrl = ad => new URL(`../moon_react_source/public/lunaris/textures/${ad}`, import.meta.url).href;
   let albedo = null, engebe = null;
@@ -377,7 +729,7 @@ export async function mountLunarDescent(host, options = {}) {
         const taze = 0.35 + rnd() * 0.65;            // aşınmışlar sığ, tazeler keskin
         const d = R * (0.14 + 0.20 * taze) * Math.min(1, 18 / (6 + R * .25)); // büyükler oransal sığ
         kraterler.push({
-          x, z, R, d,
+          x, z, R, d, taze,
           rim: d * (0.22 + 0.22 * taze),               // yükseltilmiş kenar halkası
           tepe: R > 20 ? d * (0.22 + 0.18 * rnd()) : 0, // çap > 40 birim: merkez tepecik
           us: 2 + 2 * Math.min(1, R / 24),             // büyükte düz taban + dik duvar
@@ -454,20 +806,84 @@ export async function mountLunarDescent(host, options = {}) {
     return h;
   };
 
-  /* --- Paylaşılan yükseklik alanı: sagitta + temiz-bölge kapılı kabartma --- */
+  /* --- SAHA KRATERLERİ: 6–90 m çaplı, yüzey kamerasının GERÇEKTEN gördüğü
+     ölçek. Uzak krater alanı iniş sahasının 1400 m çevresini boş bırakıyordu;
+     yakın planın "düz PNG" duygusunun asıl kaynağı buydu. Bunlar temiz-bölge
+     kapısından BAĞIMSIZ eklenir (kapı 800 m'yi düzler), ama her biri temas
+     noktasından en az 15 m uzakta doğar: ayak teması, gölge ve toz mantığı
+     hâlâ h(0,0)=0 düz zemine dayanır. --- */
+  const sahaKraterleri = [];
+  {
+    const rnd = mulberry32(seed ^ 0x5A4A17);
+    for (let i = 0; i < 300; i++) {
+      const R = 0.028 + Math.pow(rnd(), 2.4) * 0.42;   // 2,8–45 m yarıçap
+      let x = 0, z = 0, enIyi = -1;
+      for (let a = 0; a < 8; a++) {
+        const t = rnd() * Math.PI * 2;
+        const rr = Math.sqrt(0.0225 + rnd() * (81 - 0.0225));  // 0,15–9 birim
+        const ax = Math.cos(t) * rr, az = Math.sin(t) * rr;
+        let yakin = 1e9;
+        for (const k of sahaKraterleri) yakin = Math.min(yakin, Math.hypot(ax - k.x, az - k.z) - k.R * 1.4);
+        if (yakin > enIyi) { enIyi = yakin; x = ax; z = az; }
+      }
+      if (Math.hypot(x, z) - R * 1.3 < 0.15) continue;  // temas alanı dokunulmaz
+      const taze = 0.3 + rnd() * 0.7;
+      const d = R * (0.11 + 0.10 * taze);
+      sahaKraterleri.push({ x, z, R, d, taze, rim: d * (0.20 + 0.24 * taze), us: 2.2 });
+    }
+  }
+  olc('krater');
+  const SHUCRE = 1.2, sahaIzgara = new Map();
+  for (const k of sahaKraterleri) {
+    const yay = k.R * 2.6;
+    for (let ix = Math.floor((k.x - yay) / SHUCRE); ix <= Math.floor((k.x + yay) / SHUCRE); ix++)
+      for (let iz = Math.floor((k.z - yay) / SHUCRE); iz <= Math.floor((k.z + yay) / SHUCRE); iz++) {
+        const anahtar = ix * 100003 + iz;
+        let liste = sahaIzgara.get(anahtar);
+        if (!liste) sahaIzgara.set(anahtar, liste = []);
+        liste.push(k);
+      }
+  }
+  const sahaKraterKatki = (x, z) => {
+    const liste = sahaIzgara.get(Math.floor(x / SHUCRE) * 100003 + Math.floor(z / SHUCRE));
+    if (!liste) return 0;
+    let h = 0;
+    for (const k of liste) {
+      const s = Math.hypot(x - k.x, z - k.z) / k.R;
+      if (s >= 2.5) continue;
+      if (s < 1) h += -k.d + (k.d + k.rim) * Math.pow(s, k.us);
+      else h += k.rim * (1 - purussuz(1.6, 2.5, s)) / (s * s);
+    }
+    return h;
+  };
+  /* Yakın alan dalgalanması: örgünün ÇÖZEBİLDİĞİ ölçekte (7–21 m dalga boyu,
+     ±10–28 cm) hafif kabarma. Ayak halkasının içinde (11 m) tam sıfır, uzakta
+     örgü seyreldikçe (aliasing olmasın diye) yeniden söner. */
+  const yakinKabarti = (x, z, d) => {
+    const kapi = purussuz(0.11, 0.75, d);
+    if (kapi <= 0) return 0;
+    return kapi * (
+        (deger2(x / 0.21 + 12.7, z / 0.21 - 5.3) - .5) * 0.0056 * (1 - purussuz(5, 13, d))
+      + (deger2(x / 0.075 - 3.1, z / 0.075 + 8.9) - .5) * 0.0021 * (1 - purussuz(1.6, 4, d))
+    );
+  };
+
+  /* --- Paylaşılan yükseklik alanı: sagitta + temiz-bölge kapılı kabartma
+     + saha kraterleri + yakın alan dalgalanması --- */
   const araziYukseklik = (x, z) => {
     const d2 = x * x + z * z, d = Math.sqrt(d2);
     // Küresel sagitta + 5000 birim ötesinde ek yuvarlanma (ufuk altına bastırma)
     const kure = -d2 / (2 * R_AY_BIRIM) - (d > 5000 ? ((d - 5000) ** 2) / 1600 : 0);
+    const yakinAlan = d < 12 ? sahaKraterKatki(x, z) + yakinKabarti(x, z, d) : 0;
     const temizlik = purussuz(8, 15, d); // iniş sahası: ~8 birim yarıçapta h≈0
-    if (temizlik <= 0) return kure;
+    if (temizlik <= 0) return kure + yakinAlan;
     let a = kraterKatki(x, z) + sirtKatki(x, z)
       + (deger2(x / 620, z / 620) - .5) * 5.2          // fBm: geniş kabarma
       + (deger2(x / 145 + 37.2, z / 145 - 11.8) - .5) * 1.7
       + (deger2(x / 34 - 8.5, z / 34 + 21.3) - .5) * 0.55
       + (deger2(x / 14 + 55.1, z / 14 - 3.7) - .5) * 0.28; // yakın alan pürüzü
     if (dispOrnek) a += (dispOrnek((x / 13000 + .5) * 9, (.5 - z / 13000) * 9) - .5) * 6.5;
-    return kure + temizlik * a;
+    return kure + temizlik * a + yakinAlan;
   };
 
   /* --- Arazi örgüsü: TEK kutupsal ızgara — merkezde sık, ufka doğru geometrik
@@ -475,7 +891,9 @@ export async function mountLunarDescent(host, options = {}) {
      ≤ 400k bütçenin içinde; kurulumda bir kez örneklenir. --- */
   const ACISAL = 384;
   const yaricaplar = [];
-  for (let r = 1.5; r < 7200; r *= 1.0165) yaricaplar.push(r);
+  // İlk halka 5 m'de başlar (eskiden 150 m): yüzey kamerasının ön alanı artık
+  // dev üçgen dilimleri değil ~1,6 m'lik gerçek örgüdür.
+  for (let r = 0.05; r < 7200; r *= 1.016) yaricaplar.push(r);
   yaricaplar.push(7200);
   const halkaSay = yaricaplar.length;
   const tepeSay = halkaSay * ACISAL + 1;
@@ -506,164 +924,248 @@ export async function mountLunarDescent(host, options = {}) {
       }
     }
   }
+  olc('araziOrnek');
   const araziGeo = new THREE.BufferGeometry();
   araziGeo.setAttribute('position', new THREE.BufferAttribute(aPoz, 3));
   araziGeo.setAttribute('uv', new THREE.BufferAttribute(aUv, 2));
   araziGeo.setIndex(new THREE.BufferAttribute(aIdx, 1));
   araziGeo.computeVertexNormals(); // alçak güneş bu normallerle kraterleri OKUTUR
-  const araziZemin = new THREE.Mesh(araziGeo, new THREE.MeshStandardMaterial({
-    map: albedo, bumpMap: engebe || null, bumpScale: engebe ? 2.4 : 0,
-    roughness: .96, metalness: 0,
-  }));
+  /* ---- Çok ölçekli yüzey detayı (mesafeye göre çözünürlük) ----
+     Eski üç şeffaf tonlama yaması (yakın/orta/mikro) KALDIRILDI: en iyi
+     ihtimalle 54 cm/texel veriyorlardı ve yüzey kamerası bunları 87 piksele
+     büyütüyordu — şikâyet edilen "bulanık PNG" tam olarak buydu. Yerine tek
+     döşenebilir detay dokusu geldi; DÖRT dünya frekansında örneklenir:
+       tap A  ≈   5 m periyot →  ~1,0 cm/texel  (temas planı)
+       tap B  ≈  22 m periyot →  ~4,3 cm/texel  (ön alan)
+       tap C  ≈  95 m periyot →  ~18,6 cm/texel (orta alan)
+       tap D  ≈ 435 m periyot →  ~85 cm/texel   (ufka kadar)
+     Böylece kamera yaklaştıkça açılan bir çözünürlük merdiveni oluşur; mip
+     zinciri uzakta ince tapları 0.5'e (nötr) çektiği için tek renk düzleşmesi
+     de titreme de olmaz. Dört tap ayrı DÖNDÜRME + kaydırma ile örneklendiği
+     için tekrar deseni hiçbir ölçekte ızgara olarak okunmaz. */
+  const detayKur = tohum => {
+    const t = new THREE.CanvasTexture(detayDokusu(tohum, 512));
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.colorSpace = THREE.NoColorSpace ?? THREE.LinearSRGBColorSpace; // ham veri (albedo + eğim)
+    t.flipY = false;              // ŞART: uv.y doğrudan satır indisi → +z eğimi doğru işaretli
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();         // sıyırma açısı ASIL kullanım
+    return t;
+  };
+  // İki bağımsız detay dokusu: taplar arasında öz-benzerlik yakalanmasın diye
+  // A/C bir dokudan, B/D diğerinden örneklenir (tekrar motifi tamamen kırılır).
+  const detayTex = detayKur(seed);
+  const detayTex2 = detayKur(seed ^ 0x2C4F19);
+  const bolgeTex = new THREE.CanvasTexture(bolgeAlbedosu(seed, kraterler, 8000, 2048));
+  bolgeTex.wrapS = bolgeTex.wrapT = THREE.ClampToEdgeWrapping;
+  bolgeTex.colorSpace = THREE.NoColorSpace ?? THREE.LinearSRGBColorSpace;
+  bolgeTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  const zeminUnif = {
+    uDetay: { value: detayTex },
+    uDetay2: { value: detayTex2 },
+    uBolge: { value: bolgeTex },
+    uFrek: { value: new THREE.Vector4(20.0, 4.55, 1.05, 0.23) },   // tekrar / sahne birimi
+    uAlbAmp: { value: new THREE.Vector4(0.26, 0.24, 0.22, 0.18) },
+    /* Eğim genliği ölçülü: alçak güneşte (11°) fazla dik mikro yüzey, aydınlık
+       tarafı 11°'nin ALTINA düşürüp kapkara terminatör lekeleri bırakıyordu. */
+    uEgimAmp: { value: new THREE.Vector4(0.34, 0.32, 0.25, 0.17) },
+    uDetayGuc: { value: 1 },
+    uBolgeOlcek: { value: 1 / 16000 },
+    /* Zemin tonu: albedo × (a + b·bölge). Ay regolitinin gerçek normal albedosu
+       0,12–0,20'dir; bu ölçekte kamera POZLAMASI (toneMappingExposure + anahtar
+       ışık) yükseltilerek Apollo yüzey karelerinin okunur parlaklığı yakalanır —
+       katman yığma değil, tek yerden yönetilen pozlama. */
+    uZeminTon: { value: new THREE.Vector2(1.05, 2.45) },
+  };
+  if (albedo) albedo.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+  olc('doku');
+  /* bumpMap KALDIRILDI: three'nin bump türevi EKRAN uzayındadır — 9× tekrarlı
+     yükseklik dokusu yörünge irtifasında aşırı büyütüldüğünde normal sapması
+     kontrolsüz büyüyüp uzak yüzeyi beyaza patlatıyordu (üstelik aynı yükseklik
+     katkısı zaten GEOMETRİDE var: dispOrnek). Normaller artık iki kaynaktan
+     gelir: gerçek örgü normalleri + dünya uzayında ölçeği bilinen detay eğimi. */
+  const araziZemin = new THREE.Mesh(araziGeo, zeminDetayiEkle(new THREE.MeshStandardMaterial({
+    map: albedo, roughness: .96, metalness: 0,
+  }), zeminUnif));
   araziZemin.receiveShadow = true;
   sahne.add(araziZemin);
 
-  /* Yakın tonlama yaması: BOYALI KRATERSİZ — gerçek albedodan kırpılmış taban +
-     regolit greni, araziye h(x,z) ile GİYDİRİLİR (havada duran boyalı krater
-     görüntüsü kalmadı; kraterler artık geometrinin işi). İç kısmı deliktir:
-     iniş sahasını ve ayak temasını mikro yamaya bırakır. */
-  const albedoImg = albedo && albedo.image && albedo.image.width ? albedo.image : null;
-  const yakinCnv = kraterDokusu(seed, Math.atan2(-gunesYon.z, -gunesYon.x),
-    { taban: albedoImg, tabanOran: .38, kraterSay: 0, grenSay: 9800 });
-  mikroDetay(yakinCnv, seed ^ 0x11, Math.atan2(-gunesYon.z, -gunesYon.x),
-    { gren: 15000, grenBoy: 2.2, pock: 170, rMin: 2, rMax: 6.5 });
-  {
-    const c = yakinCnv.getContext('2d');
-    c.globalCompositeOperation = 'destination-out';
-    // dış kenar solması — uzak zemine dikişsiz karışır
-    const gg = c.createRadialGradient(512, 512, 330, 512, 512, 512);
-    gg.addColorStop(0, 'rgba(0,0,0,0)'); gg.addColorStop(1, 'rgba(0,0,0,1)');
-    c.fillStyle = gg; c.fillRect(0, 0, 1024, 1024);
-    // iç delik — iniş sahası açık kalır (aracın ayağını asla örtmez)
-    const ic = c.createRadialGradient(512, 512, 20, 512, 512, 55);
-    ic.addColorStop(0, 'rgba(0,0,0,1)'); ic.addColorStop(1, 'rgba(0,0,0,0)');
-    c.fillStyle = ic; c.fillRect(0, 0, 1024, 1024);
-    c.globalCompositeOperation = 'source-over';
-  }
-  const yakinTex = new THREE.CanvasTexture(yakinCnv);
-  yakinTex.colorSpace = THREE.SRGBColorSpace;
-  const yakinGeo = new THREE.PlaneGeometry(120, 120, 110, 110);
-  yakinGeo.rotateX(-Math.PI / 2);
-  {
-    const p = yakinGeo.attributes.position;
-    for (let i = 0; i < p.count; i++)
-      p.setY(i, araziYukseklik(p.getX(i), p.getZ(i)) + 0.012); // araziyle HİZALI
-    yakinGeo.computeVertexNormals();
-  }
-  yakinTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  const yakinZemin = new THREE.Mesh(yakinGeo, new THREE.MeshStandardMaterial({
-    map: yakinTex, bumpMap: yakinTex, bumpScale: .6,
-    transparent: true, depthWrite: false, roughness: .97, metalness: 0,
-  }));
-  yakinZemin.renderOrder = 1;
-  yakinZemin.receiveShadow = true;
-  sahne.add(yakinZemin);
-
-  /* Orta yama: 34 birimlik geçiş bandı — yüzey kamerasının 10–60 m alanına
-     insan-ölçeği gren verir (2048 kanvas ≈ 57 cm/texel). KRATERSİZ: kabartma
-     geometrinin işi; yama araziye h(x,z) ile giydirilir. İç delik iniş
-     sahasını mikro yamaya bırakır. */
-  const ortaCnv = kraterDokusu(seed ^ 0x9A1, Math.atan2(-gunesYon.z, -gunesYon.x),
-    { S: 2048, kraterSay: 0, grenSay: 70000, taban: albedoImg, tabanOran: .26 });
-  mikroDetay(ortaCnv, seed ^ 0x33, Math.atan2(-gunesYon.z, -gunesYon.x),
-    { gren: 80000, grenBoy: 4.5, pock: 460, rMin: 3, rMax: 12 });
-  {
-    const c = ortaCnv.getContext('2d');
-    c.globalCompositeOperation = 'destination-out';
-    const gg = c.createRadialGradient(1024, 1024, 780, 1024, 1024, 1024);
-    gg.addColorStop(0, 'rgba(0,0,0,0)'); gg.addColorStop(1, 'rgba(0,0,0,1)');
-    c.fillStyle = gg; c.fillRect(0, 0, 2048, 2048);
-    const ic = c.createRadialGradient(1024, 1024, 220, 1024, 1024, 400);
-    ic.addColorStop(0, 'rgba(0,0,0,1)'); ic.addColorStop(1, 'rgba(0,0,0,0)');
-    c.fillStyle = ic; c.fillRect(0, 0, 2048, 2048);
-    c.globalCompositeOperation = 'source-over';
-  }
-  const ortaTex = new THREE.CanvasTexture(ortaCnv);
-  ortaTex.colorSpace = THREE.SRGBColorSpace;
-  ortaTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  const ortaGeo = new THREE.PlaneGeometry(34, 34, 72, 72);
-  ortaGeo.rotateX(-Math.PI / 2);
-  {
-    const p = ortaGeo.attributes.position;
-    for (let i = 0; i < p.count; i++)
-      p.setY(i, araziYukseklik(p.getX(i), p.getZ(i)) + 0.008);
-    ortaGeo.computeVertexNormals();
-  }
-  const ortaZemin = new THREE.Mesh(ortaGeo, new THREE.MeshStandardMaterial({
-    map: ortaTex, bumpMap: ortaTex, bumpScale: 1.1, // sıyırma açısında gren okunsun
-    transparent: true, depthWrite: false, roughness: .97, metalness: 0,
-  }));
-  ortaZemin.renderOrder = 2;
-  ortaZemin.receiveShadow = true;
-  sahne.add(ortaZemin);
-
-  /* Mikro yama: yüzey kamerasının gördüğü son ~1 km — seyrek küçük kraterler +
-     yoğun gren (2048 kanvas). Kenarı alfa ile solar; düz iniş sahasında durur. */
-  const mikroCnv = kraterDokusu(seed ^ 0x3C7, Math.atan2(-gunesYon.z, -gunesYon.x),
-    { S: 2048, kraterSay: 40, rTaban: 8, rGenis: 52, grenSay: 60000, taban: albedoImg, tabanOran: .16 });
-  mikroDetay(mikroCnv, seed ^ 0x22, Math.atan2(-gunesYon.z, -gunesYon.x),
-    { gren: 90000, grenBoy: 5, pock: 380, rMin: 4, rMax: 15 });
-  {
-    const c = mikroCnv.getContext('2d');
-    c.globalCompositeOperation = 'destination-out';
-    const gg = c.createRadialGradient(1024, 1024, 680, 1024, 1024, 1024);
-    gg.addColorStop(0, 'rgba(0,0,0,0)'); gg.addColorStop(1, 'rgba(0,0,0,1)');
-    c.fillStyle = gg; c.fillRect(0, 0, 2048, 2048);
-    c.globalCompositeOperation = 'source-over';
-  }
-  const mikroTex = new THREE.CanvasTexture(mikroCnv);
-  mikroTex.colorSpace = THREE.SRGBColorSpace;
-  mikroTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  const mikroGeo = new THREE.PlaneGeometry(11, 11, 8, 8);
-  mikroGeo.rotateX(-Math.PI / 2);
-  const mikroZemin = new THREE.Mesh(mikroGeo, new THREE.MeshStandardMaterial({
-    map: mikroTex, bumpMap: mikroTex, bumpScale: 1.0, // sıyırma açısında gren okunsun
-    transparent: true, depthWrite: false, roughness: .97, metalness: 0,
-  }));
-  mikroZemin.position.y = ZEMIN_UST;
-  mikroZemin.renderOrder = 3;
-  mikroZemin.receiveShadow = true;
-  sahne.add(mikroZemin);
-
-  /* Kayalar: saha çevresine seeded, en-iyi-aday yerleşimli regolit blokları.
-     Alçak güneşte uzun gölge düşürürler — yüzey kamerası karesinin tuzu. */
+  /* ---- KAYALAR: kırık bloklar, KÜMELENMİŞ yerleşim, kısmen gömülü ----
+     Eskiden: tek boy dodecahedron, tekdüze en-iyi-aday serpme → "her yere eşit
+     dağılmış koyu yamru yumru bloklar". Şimdi:
+     · Biçim: rastgele yarı-uzayların kesişimi (dışbükey çok yüzlü) = çarpma
+       kırılmasının gerçek biçim ailesi; köşeli siluet, düz kırık yüzeyler.
+     · Boy: güç yasası N(>D) ∝ D^-2,1 — çok küçük ÇOK, iri NADİR.
+     · Yerleşim: kaya yoğunluğu KRATER KENARLARINDA ve ejecta hatlarında
+       yükselir, düzlüklerde düşer (reddetme örneklemesi) + yamalı seyreklik.
+     · Duruş: her blok boyunun %22–77'si kadar GÖMÜLÜ; oturduğu yerde toz
+       halkası + temas karanlığı (etek izi).
+     · Kalite kademesi: yakın/iri bloklar 320 yüz, orta 80, uzak 20. */
   const kayaGrup = new THREE.Group();
+  let kayaTepe = 0, kayaSay = 0;
   {
     const rnd = mulberry32(seed ^ 0xCA7A);
-    const kayaMatA = new THREE.MeshStandardMaterial({ color: 0x7b7a74, roughness: .95, metalness: 0 });
-    const kayaMatB = new THREE.MeshStandardMaterial({ color: 0x676660, roughness: .97, metalness: 0 });
-    const yerler = [];
-    const ekle = (r0, r1, boy0, boy1, adet) => {
-      for (let i = 0; i < adet; i++) {
-        let enIyi = null, enIyiUzak = -1;
-        for (let d = 0; d < 10; d++) {
-          const a = rnd() * Math.PI * 2, r = r0 + Math.pow(rnd(), .8) * (r1 - r0);
-          const aday = { x: Math.cos(a) * r, z: Math.sin(a) * r };
-          let enYakin = 1e9;
-          for (const p of yerler) enYakin = Math.min(enYakin, Math.hypot(aday.x - p.x, aday.z - p.z));
-          if (enYakin > enIyiUzak) { enIyiUzak = enYakin; enIyi = aday; }
-        }
-        yerler.push(enIyi);
-        const boy = boy0 + Math.pow(rnd(), 2.2) * (boy1 - boy0); // düşük-çarpık
-        const kaya = new THREE.Mesh(new THREE.DodecahedronGeometry(boy, 0), rnd() < .6 ? kayaMatA : kayaMatB);
-        // kayalar arazi yüksekliğine oturur (gömülme payı boy*.3)
-        kaya.position.set(enIyi.x, araziYukseklik(enIyi.x, enIyi.z) + ZEMIN_UST + boy * .3, enIyi.z);
-        kaya.rotation.set(rnd() * Math.PI, rnd() * Math.PI, rnd() * Math.PI);
-        kaya.scale.set(1, .5 + rnd() * .4, .8 + rnd() * .4); // yassı, gömülü blok duruşu
-        kaya.castShadow = true; kaya.receiveShadow = true;
-        kayaGrup.add(kaya);
+    const havuz = [[], [], [], []];
+    for (let q = 0; q < 4; q++) for (let i = 0, n = q === 3 ? 6 : 12; i < n; i++) havuz[q].push(kayaGeometrisi(rnd, q));
+    /* Kaya albedosu zeminle AYNI pozlama kazancını alır (uZeminTon ile aynı
+       çarpan): aksi hâlde bloklar sahnenin geri kalanından ~3 kat koyu, siyah
+       leke gibi okunuyordu. Gerçekte kaya yüzeyi regolitten hafifçe PARLAKTIR
+       (daha az olgunlaşmış yüzey), o yüzden çarpan biraz yüksek tutulur. */
+    const KAYA_KAZANC = 2.95;
+    const tonlar = [0x8f8c84, 0x7d7b73, 0x6c6a62, 0x9b988d, 0x605e57]
+      .map(h => {
+        const c = new THREE.Color(h); if (c.convertSRGBToLinear) c.convertSRGBToLinear();
+        return [c.r * KAYA_KAZANC, c.g * KAYA_KAZANC, c.b * KAYA_KAZANC];
+      });
+
+    /* Kaya yoğunluğu alanı — hem saha hem uzak krater alanından beslenir. */
+    const kenarKatki = (liste, x, z, olcek) => {
+      let y = 0;
+      if (liste) for (const k of liste) {
+        const s = Math.hypot(x - k.x, z - k.z) / k.R;
+        if (s > 2.4) continue;
+        if (s > 0.80 && s < 1.32) y += 1.5 * k.taze * olcek;                      // kenar tacı
+        else if (s >= 1.32) y += 0.95 * k.taze * olcek * Math.exp(-(s - 1.32) * 1.8); // ejecta hattı
+        else if (s > 0.5) y += 0.34 * k.taze * olcek;                             // iç duvar dökülmesi
+      }
+      return y;
+    };
+    const yogunluk = (x, z) => {
+      let y = 0.075                                                               // düzlük taban seviyesi
+        + kenarKatki(sahaIzgara.get(Math.floor(x / SHUCRE) * 100003 + Math.floor(z / SHUCRE)), x, z, 1)
+        + kenarKatki(kraterIzgara.get(Math.floor(x / HUCRE) * 100003 + Math.floor(z / HUCRE)), x, z, .8);
+      // yamalı seyreklik: düzlükte bile kümeler var, aralar bomboş
+      y *= 0.16 + 2.5 * Math.pow(deger2(x / 0.62 + 91.3, z / 0.62 - 17.6), 2.7);
+      return y;
+    };
+
+    const parcalar = [[], [], [], []];
+    const etekler = [];
+    const V3 = (a, b, c) => new THREE.Vector3(a, b, c);
+    const m4 = new THREE.Matrix4(), qt = new THREE.Quaternion(), eu = new THREE.Euler();
+    let kaliteA = 0, kaliteS = 0;
+    const yerlestir = (r0, r1, boyTaban, boyTavan, hedef) => {
+      let kabul = 0, deneme = 0;
+      while (kabul < hedef && deneme++ < hedef * 40) {
+        const t = rnd() * Math.PI * 2;
+        const rr = Math.sqrt(r0 * r0 + rnd() * (r1 * r1 - r0 * r0));
+        const x = Math.cos(t) * rr, z = Math.sin(t) * rr;
+        if (rnd() > Math.min(1, yogunluk(x, z))) continue;
+        // Yüzey kamerasının önü: iri blok kadrajı kapatmasın (kamera platosu)
+        const kamD = Math.hypot(x - YUZEY_KAM.x, z - YUZEY_KAM.z);
+        if (kamD < 0.055) continue;
+        kabul++;
+        let boy = Math.min(boyTavan, boyTaban * Math.pow(1 - rnd() * .9995, -1 / 2.1));
+        if (kamD < 0.24) boy = Math.min(boy, 0.0016 + 0.026 * (kamD - 0.055) / 0.185);
+        /* Kalite kademesi GÖRÜNEN boya göre: ölçüt, bloğun sahaya VE yüzey
+           kamerasına olan mesafesinin küçüğüdür. Kameranın dibindeki blok 1280
+           yüzle (köşeleri keskin, yüzü pürüzlü), orta alan 320/80, ufuktaki
+           çakıl 20 yüzle çizilir. */
+        const gorunur = boy / Math.max(.1, Math.min(rr, kamD));
+        const kalite = (gorunur > .045 && kaliteS < 12) ? 3
+          : (gorunur > .006 && kaliteA < 90) ? 2 : gorunur > .0016 ? 1 : 0;
+        if (kalite === 3) kaliteS++; else if (kalite === 2) kaliteA++;
+        const geo = havuz[kalite][Math.floor(rnd() * havuz[kalite].length)];
+        const gom = .22 + rnd() * .55;                         // kısmen GÖMÜLÜ duruş
+        const egik = (rnd() < .18 ? 1.15 : .38);
+        eu.set((rnd() - .5) * egik, rnd() * Math.PI * 2, (rnd() - .5) * egik, 'YXZ');
+        qt.setFromEuler(eu);
+        m4.compose(
+          V3(x, araziYukseklik(x, z) + ZEMIN_UST + boy * (.62 - gom), z), qt,
+          V3(boy * (.82 + rnd() * .46), boy * (.48 + rnd() * .46), boy * (.82 + rnd() * .46)));
+        const ton = tonlar[Math.floor(rnd() * tonlar.length)];
+        const p = .86 + rnd() * .3;
+        parcalar[kalite].push({ geo, m: m4.clone(), renk: [ton[0] * p, ton[1] * p, ton[2] * p] });
+        kayaSay++;
+        if (boy >= .0032) etekler.push({ x, z, y: araziYukseklik(x, z) + ZEMIN_UST * .6, s: boy * (2.1 + rnd() * 1.3), a: rnd() * Math.PI });
       }
     };
-    ekle(0.18, 1.9, 0.0018, 0.010, 96);  // saha çevresi: 18–190 m, 18 cm–1 m bloklar
-    ekle(1.6, 4.6, 0.005, 0.018, 14);    // uzak halka: seyrek iri kayalar (ufuk silueti)
-    ekle(7, 42, 0.006, 0.05, 44);        // arazi halkası: krater kenarlarına/sırtlara oturan bloklar
+    yerlestir(0.13, 3.6, 0.0026, 0.026, 780);   // 13–360 m: yüzey kamerasının ön/orta alanı
+    yerlestir(3.4, 16, 0.004, 0.055, 280);      // saha çevresi
+    yerlestir(15, 70, 0.008, 0.16, 240);        // arazi halkası: krater kenarları, sırt etekleri
+
+    const kayaMat = new THREE.MeshStandardMaterial({
+      vertexColors: true, flatShading: true, roughness: .95, metalness: 0,
+    });
+    for (let q = 0; q < 4; q++) {
+      if (!parcalar[q].length) continue;
+      const g = birlestirParcalar(parcalar[q]);
+      kayaTepe += g.attributes.position.count;
+      const mesh = new THREE.Mesh(g, kayaMat);
+      mesh.castShadow = true; mesh.receiveShadow = true;
+      kayaGrup.add(mesh);
+    }
+    /* Etek izleri: kayanın oturduğu yerde temas karanlığı + savrulmuş toz
+       halkası — blok zemine "yapıştırılmış" değil, GÖMÜLÜ okunur. */
+    if (etekler.length) {
+      const n = etekler.length;
+      const ep = new Float32Array(n * 12), eu2 = new Float32Array(n * 8);
+      const ei = new Uint32Array(n * 6);
+      etekler.forEach((e, i) => {
+        const ca = Math.cos(e.a) * e.s, sa = Math.sin(e.a) * e.s;
+        const uvk = [[0, 0], [1, 0], [0, 1], [1, 1]];
+        for (let k = 0; k < 4; k++) {
+          const u = uvk[k][0] * 2 - 1, v = uvk[k][1] * 2 - 1;   // döndürülmüş kare
+          ep[(i * 4 + k) * 3] = e.x + u * ca - v * sa;
+          ep[(i * 4 + k) * 3 + 1] = e.y;
+          ep[(i * 4 + k) * 3 + 2] = e.z + u * sa + v * ca;
+          eu2[(i * 4 + k) * 2] = uvk[k][0]; eu2[(i * 4 + k) * 2 + 1] = uvk[k][1];
+        }
+        const b = i * 4;
+        ei.set([b, b + 3, b + 1, b, b + 2, b + 3], i * 6);
+      });
+      const eg = new THREE.BufferGeometry();
+      eg.setAttribute('position', new THREE.BufferAttribute(ep, 3));
+      eg.setAttribute('uv', new THREE.BufferAttribute(eu2, 2));
+      eg.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(n * 12).map((_, i) => i % 3 === 1 ? 1 : 0), 3));
+      eg.setIndex(new THREE.BufferAttribute(ei, 1));
+      const etekTex = new THREE.CanvasTexture(etekDokusu(128));
+      etekTex.colorSpace = THREE.SRGBColorSpace;
+      etekTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      const etekMesh = new THREE.Mesh(eg, new THREE.MeshStandardMaterial({
+        map: etekTex, transparent: true, depthWrite: false, roughness: .98, metalness: 0,
+        polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
+      }));
+      etekMesh.renderOrder = 1;
+      kayaGrup.add(etekMesh);
+      kayaTepe += n * 4;
+    }
   }
+  olc('kaya');
   sahne.add(kayaGrup);
 
+  /* ---- Plum süpürme izi: motorun radyal olarak süpürdüğü KALICI desen.
+     İrtifa 25 m'de açılmaya başlar (tozun kalktığı an), temasta tam güce
+     ulaşır ve orada kalır — vakumda süpürülen toz geri oturmaz. Tamamen
+     sim-zamanının fonksiyonu (scrub/dışa aktarım güvenli). ---- */
+  const izTex = new THREE.CanvasTexture(plumIziDokusu(seed, 1024));
+  izTex.colorSpace = THREE.SRGBColorSpace;
+  izTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  const supurmeGeo = new THREE.PlaneGeometry(0.86, 0.86, 72, 72);
+  supurmeGeo.rotateX(-Math.PI / 2);
+  {
+    const p = supurmeGeo.attributes.position;
+    for (let i = 0; i < p.count; i++)
+      p.setY(i, araziYukseklik(p.getX(i), p.getZ(i)) + ZEMIN_UST * .55);
+    supurmeGeo.computeVertexNormals();
+  }
+  const supurmeMat = zeminDetayiEkle(new THREE.MeshStandardMaterial({
+    map: izTex, transparent: true, opacity: 0, depthWrite: false,
+    roughness: .97, metalness: 0,
+    polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3,
+  }), zeminUnif);
+  const supurme = new THREE.Mesh(supurmeGeo, supurmeMat);
+  supurme.renderOrder = 2;
+  supurme.receiveShadow = true;
+  supurme.visible = false;
+  sahne.add(supurme);
+
+  olc('supurme');
   /* ---- Araç: craft-blocks (paralel inşa) → yoksa yedek ---- */
   const PALET = { body: 0x2e2f33, panel: 0xcfb07a, accent: 0xc86a40, metal: 0x9aa0a8 };
   let arac = null, aracKaynak = 'craft-blocks';
-  let AYAK = 0.46; // craft-blocks ayak tabanı ≈ −0.459 (birim boy)
+  let AYAK = 0.46;       // craft-blocks ayak tabanı ≈ −0.459 (birim boy)
+  let AYAK_YANAL = 0.82; // pedlerin eksene dik yarıçapı (craft-blocks: ry/rz × 0.82)
   try {
     const mod = await import(new URL('../craft_blocks/craft-blocks.mjs', import.meta.url).href);
     arac = mod.buildLander({ scale: 1, palette: PALET });
@@ -671,12 +1173,51 @@ export async function mountLunarDescent(host, options = {}) {
     aracKaynak = 'yedek';
     console.info('[lunar-descent] craft-blocks yüklenemedi, yedek araç kullanılıyor:', hata?.message || hata);
     arac = yedekLander(PALET);
-    AYAK = 0.5; // yedek aracın tabanı −0.5
+    AYAK = 0.5;          // yedek aracın tabanı −0.5
+    AYAK_YANAL = 0.44;
   }
+  olc('arac');
   arac.traverse(o => { if (o.isMesh) { o.castShadow = true; } });
   const aracSargi = new THREE.Group();
   aracSargi.add(arac);
   sahne.add(aracSargi);
+
+  /* Ayak pedi izleri: pedin bastırdığı sığ çukur + çevresine serpilen ince
+     toz yakası. Temas anında 1,1 s içinde açılır (bacak oturmasıyla aynı
+     ritim), sonra kalıcıdır. Ped yarıçapı araç geometrisinden okunur —
+     yedek araca düşülse bile izler pedlerin ALTINDA kalır. */
+  const pedTex = new THREE.CanvasTexture(pedIziDokusu(256));
+  pedTex.colorSpace = THREE.SRGBColorSpace;
+  pedTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  const pedMat = new THREE.MeshStandardMaterial({
+    map: pedTex, transparent: true, opacity: 0, depthWrite: false,
+    roughness: .98, metalness: 0,
+    polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4,
+  });
+  const pedGrup = new THREE.Group();
+  {
+    const suTemas = 0.09;                          // aracOlcek(0) — temasta gerçek boyut
+    // İz yarıçapı ped yarıçapının ~3,6 katı: gerçek ped izinde bozulan alan
+    // pedin kendisinden belirgin geniştir (dışa itilen ince toz yakası).
+    const rPed = AYAK_YANAL * suTemas, yari = 0.115 * suTemas * 3.6;
+    for (let k = 0; k < 4; k++) {
+      const a = Math.PI / 4 + k * Math.PI / 2;
+      const x = -Math.sin(a) * rPed, z = Math.cos(a) * rPed;
+      const g = new THREE.PlaneGeometry(yari * 2, yari * 2, 6, 6);
+      g.rotateX(-Math.PI / 2);
+      const p = g.attributes.position;
+      for (let i = 0; i < p.count; i++)
+        p.setY(i, araziYukseklik(p.getX(i) + x, p.getZ(i) + z) + ZEMIN_UST * .75);
+      g.computeVertexNormals();
+      const m = new THREE.Mesh(g, pedMat);
+      m.position.set(x, 0, z);
+      m.renderOrder = 3;
+      m.receiveShadow = true;
+      pedGrup.add(m);
+    }
+  }
+  pedGrup.visible = false;
+  sahne.add(pedGrup);
 
   /* ---- Plum: gaz koluyla ölçeklenen sıcak koni + ışık konisi.
      Işık disiplini: doygun sıcak ton, beyaz patlama yok; doku altta görünür kalır. */
@@ -718,6 +1259,7 @@ export async function mountLunarDescent(host, options = {}) {
     console.info('[lunar-descent] craft-effects alevi yok, koni yer tutucu kullanılıyor:', hata?.message || hata);
   }
 
+  olc('fx');
   /* ---- Toz: ~25 m altında plum çarpmasıyla büyüyen radyal süpürme çizgileri.
      Deterministik (seed + sim-zamanı fonksiyonu), kesmeden sonra çöker;
      vakumda balistik — bulut/süspansiyon yok. ---- */
@@ -842,7 +1384,7 @@ export async function mountLunarDescent(host, options = {}) {
       out.bak.set(P.x + .05 * d, P.y - .04 * d, P.z);
       out.fov = 46;
     } else { // surface: sahada sabit, yukarı bakan klasik iniş filmi karesi
-      out.goz.set(0.62, 0.034, 0.8);
+      out.goz.set(YUZEY_KAM.x, 0.034, YUZEY_KAM.z);
       // Bakış, araçla zemin ARASINA: 30 m tablosunda da yer + toz kadrajda kalır
       out.bak.set(P.x, P.y * .6 + 0.012, P.z);
       out.fov = 32;
@@ -921,8 +1463,27 @@ export async function mountLunarDescent(host, options = {}) {
     plumIsik.position.copy(motorDunya);
     plumIsik.intensity = gaz * su * su * 40;
 
+    /* POZLAMA RAMPASI — tek sahne, iki ışık dünyası. Alçak güneşte (11°) düz
+       zeminin geliş açısı sin 11° = 0,19'dur; yörünge irtifasından bakıldığında
+       ise araç sahanın 450 km GÜNEŞ TARAFINDADIR: oradaki yerel güneş yüksekliği
+       11° + menzil/R_ay ≈ 26–50°, yani sahne gerçekten 2–4 kat parlaktır. Yani
+       iniş boyunca sahne KARARIR; kamera da gerçek çekimdeki gibi açılır. İrtifa
+       bu yerel güneş yüksekliğinin (menzille birebir bağlı) vekilidir. Rampa
+       süreklidir (eşik yok) ve yalnız s.y'nin fonksiyonudur — scrub güvenli. */
+    renderer.toneMappingExposure = 0.30 + 1.32 * (1 - purussuz(150, 5000, s.y));
+
     // Toz
     tozGuncelle(s.t);
+
+    /* Yer izleri — sim-zamanının sürekli fonksiyonu (eşik yok, sıfırdan rampa):
+       süpürme izi 25 m'de açılır ve temasta kalıcılaşır; ped izleri oturmayla
+       birlikte belirir. Vakumda süpürülen toz geri oturmaz — iz kalıcıdır. */
+    const izGuc = purussuz(tozBaslangic, (olaylar.temasSim ?? tozBaslangic) + .01, s.t);
+    supurmeMat.opacity = izGuc * .78;
+    supurme.visible = izGuc > .01;
+    const pedGuc = s.temas ? purussuz(0, 1.1, s.oynat - olaylar.temasOynat) : 0;
+    pedMat.opacity = pedGuc * .70;   // bozulan alan okunsun ama "delik" gibi durmasın
+    pedGrup.visible = pedGuc > .01;
 
     // İz — alçaldıkça söner (son inişte kadrajı dikey çizgiyle kesmesin) ve
     // MESAFEYLE PENCERELENİR: araçtan 400 birimden (40 km) geride kalan kuyruk
@@ -1096,13 +1657,25 @@ export async function mountLunarDescent(host, options = {}) {
       if (k.has('iz')) sahne.remove(iz);
       if (k.has('toz')) sahne.remove(toz);
       if (k.has('zemin')) sahne.remove(araziZemin);
-      if (k.has('yakin')) { sahne.remove(yakinZemin); sahne.remove(ortaZemin); sahne.remove(mikroZemin); }
+      if (k.has('yakin')) zeminUnif.uDetayGuc.value = 0; // çok ölçekli detay katmanı kapalı
+      if (k.has('kaya')) sahne.remove(kayaGrup);
+      if (k.has('iziz')) { sahne.remove(supurme); sahne.remove(pedGrup); }
       if (k.has('plum')) {
         plumGrup.removeFromParent(); sahne.remove(plumIsik);
         if (motorFX) motorFX.group.removeFromParent();
       }
     }
   }
+
+  /* Kaynak raporu (doğrulama sözleşmesi §6: ölçülür, tahmin edilmez) */
+  console.info(
+    `[lunar-descent] tepe bütçesi: arazi ${tepeSay.toLocaleString('en')} + kaya ${kayaTepe.toLocaleString('en')} ` +
+    `(${kayaSay} blok) + yıldız 1700 ≈ ${(tepeSay + kayaTepe + 1700).toLocaleString('en')} | ` +
+    `doku: detay 2×512² + bölge 2048² + plum izi 1024² + ped 256² + etek 128² ≈ ` +
+    `${(((2 * 512 * 512 + 2048 * 2048 + 1024 * 1024 + 256 * 256 + 128 * 128) * 4 * 1.34) / 1048576).toFixed(1)} MB (mip dahil) | ` +
+    `anizotropi ${renderer.capabilities.getMaxAnisotropy()}× | kurulum ${(performance.now() - kurulusT0).toFixed(0)} ms ` +
+    `(${Object.entries(zaman).map(([k, v]) => `${k} ${v}`).join(' · ')})`
+  );
 
   /* İlk kare */
   if (dundurulmus) {

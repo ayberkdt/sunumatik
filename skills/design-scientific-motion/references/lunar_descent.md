@@ -37,7 +37,8 @@ demo), `motion-manifest.json`.
   yeniden kullanılır (aesthetic_moon_real.webp + moon_disp_real.webp);
   yüklenemezse en-iyi-aday yerleşimli prosedürel krater dokusuna düşer.
 - Demo: `?f=0..1` deterministik kare (duraklatılmış scrub), `?cam=`,
-  `?export=1`, `?kapat=arac,iz,toz,zemin,yakin,plum` katman anahtarları
+  `?export=1`, `?kapat=arac,iz,toz,zemin,yakin,kaya,iziz,plum` katman anahtarları
+  (`yakin` = çok ölçekli detay katmanını kapatır, `iziz` = yer izleri)
   (sözleşme §6 hata avı).
 
 ## Fizik — analitik gerçeklik düzeyi (ENTEGRE, keyframe değil)
@@ -97,16 +98,72 @@ anlık çarpan HUD'da görünür.
   BÖLGESİ: orijin çevresi ~8 birim yumuşakça h≈0'a bastırılır — temas noktası
   y=0, ayak/gölge/toz mantığı düz zemine güvenmeyi sürdürür. Aynı h(x,z)
   kamera koruması, kaya oturtma ve toz zemin seviyesinde de kullanılır.
-  Doku katmanları: uzak zemin lunaris albedosu (9× tekrar); saha çevresinde
-  KRATERSİZ üç tonlama yaması (yakın 120, orta 34, mikro 11 birim) — tabanları
-  aynı albedodan kırpılır, üstlerine yalnız gren + geometri-altı (< 1 birim)
-  pockmark çizilir; yakın/orta yamalar araziye h(x,z) ile giydirilir (havada
-  duran boyalı krater görüntüsü yok). Saha çevresi + arazi halkasına ~150
-  seeded kaya `h + gömülme payı` ile oturtulur.
+- **Yakın plan çözünürlüğü — çok ölçekli detay (üç şeffaf tonlama yaması
+  KALDIRILDI).** Eski yakın/orta/mikro yamalar en iyi ihtimalle 54 cm/texel
+  veriyordu ve yüzey kamerası bunları ~87 piksele büyütüyordu: "bulanık PNG"
+  şikâyetinin kaynağı buydu. Yerine TEK döşenebilir prosedürel detay dokusu
+  geldi (`detayDokusu`, 512²; R = albedo modülasyonu, G/B = mikro rölyefin
+  yüzey eğimi) ve zemin malzemesine `zeminDetayiEkle` ile enjekte edilir.
+  Doku DÖRT dünya frekansında toplanır:
+
+  | tap | periyot | texel | rol |
+  |---|---|---|---|
+  | A | ≈ 5 m | ≈ 1,0 cm | temas planı greni |
+  | B | ≈ 22 m | ≈ 4,3 cm | ön alan |
+  | C | ≈ 95 m | ≈ 19 cm | orta alan |
+  | D | ≈ 435 m | ≈ 85 cm | ufka kadar |
+
+  Pockmark alanı güç yasalı + kraterleşme maskelidir (bazı yamalar kraterli,
+  bazıları pürüzsüz regolit) ve kenarları iki harmonikle düzensizleştirilir;
+  aynı alan her ölçekte tutarlı kaldığı için kraterler 1,5 cm'den ~17 m'ye
+  kesintisiz sürer. Tekrar deseni İKİ bağımsız doku + dört ayrı döndürme ve
+  kaydırma ile kırılır. **Mesafeye göre detay bedava gelir:** mip zinciri
+  uzakta ortalamayı nötre çeker, yani ince taplar kendiliğinden söner
+  (aliasing/moiré yok), yakında tam açılır. Anizotropi max (16×) — sıyırma
+  açısı asıl kullanım. Eski `bumpMap` KALDIRILDI: three'nin bump türevi ekran
+  uzayındadır, yörünge irtifasında normal sapmasını kontrolsüz büyütüyordu
+  (üstelik aynı yükseklik zaten geometride).
+- **Albedo gerçekçiliği:** ayrı bölge haritası (`bolgeAlbedosu`, 2048²,
+  ±800 km): mare/highland tonlaması, koyu bazalt havzaları, seyrek piroklastik
+  lekeler ve KRATER ALANIYLA aynı seed'i kullanan taze krater ejecta örtüsü +
+  ışın demetleri (ışınlar gerçek krater kenarlarından çıkar).
+- **Kayalar:** rastgele yarı-uzayların kesişimi olan DIŞBÜKEY ÇOK YÜZLÜ
+  (`kayaGeometrisi`) — çarpma kırılmasının gerçek biçim ailesi; üzerine üç
+  oktav yön tabanlı çentik pürüzü, `flatShading` ile keskin kırık yüzeyler.
+  Boy dağılımı güç yasalı (N(>D) ∝ D^-2,1: çok küçük çok, iri nadir),
+  yerleşim krater kenarı / ejecta hattı yoğunluk alanına göre REDDETME
+  ÖRNEKLEMESİYLE kümelenir (düzlükler seyrek, kenarlar kalabalık — tekdüze
+  serpme değil), her blok boyunun %22–77'si kadar gömülüdür ve oturduğu yerde
+  toz halkası + temas karanlığı (etek izi) bırakır. Görünen boya
+  (boy ÷ min(sahaya, yüzey kamerasına uzaklık)) göre dört kalite kademesi:
+  1280 / 320 / 80 / 20 yüz; ~1300 blok tek malzemede 4 çizim çağrısına
+  kaynaklanır. Yüzey kamerasının 5 m'lik dibine iri blok düşmez (kamera
+  platosu), 24 m'ye kadar boy sürekli sınırlanır.
+- **Saha kraterleri + yakın alan dalgalanması:** uzak krater alanı sahanın
+  1400 m çevresini boş bırakıyordu. `sahaKraterleri` (6–90 m çap, 0,15–9
+  birim halkası) ve 7–21 m dalga boylu ±10–28 cm dalgalanma h(x,z)'ye eklenir;
+  ikisi de temas noktasının 11 m çevresinde tam SIFIRDIR — ayak teması, gölge
+  ve toz mantığı düz zemine dayanmayı sürdürür. Arazi örgüsünün ilk halkası
+  150 m yerine 5 m'de başlar: ön alan artık dev üçgen dilimleri değil ~1,6 m
+  örgüdür (~288k tepe).
+- **Yer izleri:** motor plümünün süpürdüğü radyal desen (`plumIziDokusu`,
+  1024², açısal kümelenmiş süpürme çizgileri — eşit dağılım "lens patlaması"
+  gibi okuyordu) 25 m'de açılır, temasta kalıcılaşır; ayak pedi izleri
+  (`pedIziDokusu`) oturmayla birlikte belirir. İkisi de sim-zamanının sürekli
+  fonksiyonudur (scrub/dışa aktarım güvenli), vakumda süpürülen toz geri
+  oturmadığı için iz KALICIDIR.
 - Işık: ~11° elevasyonlu sıcak anahtar güneş (uzun gölgeler; gölge
-  yarı-gölgeli, intensity .62), zayıf dünya-ışığı dolgusu. Plum: gaz koluyla
+  yarı-gölgeli, intensity .62), zayıf gökyüzü dolgusu (mikro rölyefin
+  güneşten kaçan yüzleri jilet siyahı olmasın) + dünya-ışığı. Plum: gaz koluyla
   ölçeklenen iki iç içe koni + nokta ışık — doygun sıcak ton, beyaz patlama
   yok (ışık disiplini).
+- **Pozlama rampası:** `toneMappingExposure` irtifayla sürekli rampalanır
+  (13,7 km'de 0,30 → yüzeyde 1,62). Gerekçe fiziktir: araç frenlemede sahanın
+  450 km GÜNEŞ TARAFINDADIR, oradaki yerel güneş yüksekliği
+  11° + menzil/R_ay ≈ 26–50°, yani sahne iniş boyunca gerçekten 2–4 kat
+  kararır. Tek sabit pozlama ya yüzey karesini karartıyor (ort. 28/255) ya
+  yörünge karesini patlatıyordu (ort. 235/255, std 9,5). Rampayla ölçülen:
+  yüzey 86/255 (std 28), yörünge 150/255 (std 21).
 - Toz: yalnız ~25 m altında, plum çarpma şiddetiyle büyüyen radyal, YATIK
   süpürme çizgileri; tamamen seed + sim-zamanı fonksiyonu (scrub güvenli);
   kesmede yeni parça doğmaz, kalanlar balistik çöker (vakumda süspansiyon
