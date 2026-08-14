@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Kanat Profili Etrafında Akım — aero_airfoil_flow</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+    #app { position: absolute; inset: 0; display: grid;
+      grid-template-columns: 1fr 372px; grid-template-rows: auto 1fr auto; }
+
+    header { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 20px;
+      padding: 13px 20px 11px; border-bottom: 1px solid #171c27; }
+    header h1 { margin: 0; font-size: 14.5px; font-weight: 600; letter-spacing: 0.13em;
+      text-transform: uppercase; color: #c9a35c; white-space: nowrap; }
+    header h1 small { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: 0.05em;
+      text-transform: none; color: #8a90a0; margin-top: 3px; line-height: 1.4; max-width: 40ch; }
+    .ctl { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; flex: 1;
+      justify-content: flex-end; }
+    .grp { display: flex; flex-direction: column; gap: 2px; min-width: 108px; }
+    .grp label { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: #6f7686;
+      display: flex; justify-content: space-between; gap: 8px; }
+    .grp label b { color: #e7ebf2; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .grp input[type=range] { width: 100%; accent-color: #c9a35c; margin: 0; }
+    select, button { background: rgba(16,19,27,.9); color: #dfe3ea; border: 1px solid #2b303d;
+      border-radius: 7px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+    select:hover, button:hover { border-color: #c9a35c; }
+    button.on { background: #c9a35c; color: #0c0e14; border-color: #c9a35c; }
+    .chk { display: flex; gap: 6px; align-items: center; font-size: 12px; cursor: pointer;
+      user-select: none; color: #b9bfcc; }
+
+    #flowwrap { position: relative; overflow: hidden; }
+    #flow { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #busy { position: absolute; left: 16px; top: 14px; font-size: 11px; color: #c9a35c;
+      letter-spacing: .08em; opacity: 0; transition: opacity .12s; }
+    #busy.on { opacity: 1; }
+    #transit { position: absolute; left: 16px; bottom: 14px; z-index: 3;
+      background: rgba(10,13,19,.9); border: 1px solid #232838; border-radius: 10px;
+      padding: 10px 13px; font-size: 11.5px; line-height: 1.55; max-width: 430px; }
+    #transit h3 { margin: 0 0 4px; font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+      color: #c9a35c; font-weight: 600; }
+    #transit b { color: #e7ebf2; font-variant-numeric: tabular-nums; }
+    #transit .dim { color: #6f7686; }
+
+    aside { border-left: 1px solid #171c27; overflow-y: auto; padding: 12px 14px 16px; }
+    aside h2 { margin: 0 0 2px; font-size: 10px; letter-spacing: .15em; text-transform: uppercase;
+      color: #c9a35c; font-weight: 600; }
+    aside .sub { color: #6f7686; font-size: 10.5px; line-height: 1.45; margin-bottom: 6px; }
+    aside section { margin-bottom: 14px; }
+    aside svg { display: block; width: 100%; }
+    dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; font-size: 12px; }
+    dt { color: #8a90a0; }
+    dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; color: #e7ebf2; }
+    dd.dim { color: #6f7686; }
+    dd.warn { color: #e0894a; }
+    .note { margin-top: 8px; padding-top: 8px; border-top: 1px solid #1d2231;
+      color: #98a0b2; font-size: 11px; line-height: 1.5; }
+    .note b { color: #c9a35c; font-weight: 600; }
+
+    footer { grid-column: 1 / -1; display: flex; gap: 7px; justify-content: center;
+      padding: 9px; border-top: 1px solid #171c27; flex-wrap: wrap; }
+    footer a { text-decoration: none; color: #b9bfcc; font-size: 11.5px;
+      background: rgba(16,19,27,.85); border: 1px solid #2b303d; border-radius: 999px;
+      padding: 5px 12px; }
+    footer a:hover { color: #0c0e14; background: #c9a35c; border-color: #c9a35c; }
+    [data-export="true"] footer, [data-export="true"] .ctl { display: none; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Kanat Profili Etrafında Akım
+      <small>Doğrusal şiddetli vorteks panel yöntemi + Thwaites–Michel–Head sınır tabakası.
+        Ekrandaki hiçbir eğri elle çizilmedi.</small></h1>
+    <div class="ctl">
+      <div class="grp"><label>profil <b id="vNaca">2412</b></label>
+        <select id="naca">
+          <option>0006</option><option>0012</option><option>0018</option>
+          <option selected>2412</option><option>4412</option><option>2415</option>
+          <option>6409</option><option>4415</option>
+        </select></div>
+      <div class="grp"><label>hücum açısı α <b id="vA">6,0°</b></label>
+        <input type="range" id="alpha" min="-8" max="20" step="0.5" value="6"></div>
+      <div class="grp"><label>Reynolds <b id="vRe">3,0×10⁶</b></label>
+        <input type="range" id="re" min="4.7" max="7.5" step="0.05" value="6.477"></div>
+      <div class="grp"><label>Mach <b id="vM">0,00</b></label>
+        <input type="range" id="mach" min="0" max="0.85" step="0.01" value="0"></div>
+      <div class="grp"><label>alan</label>
+        <select id="mode">
+          <option value="cp">Cp alanı</option>
+          <option value="hiz">hız büyüklüğü</option>
+          <option value="yok">yalnız akım çizgileri</option>
+        </select></div>
+      <button id="kutta" class="on" title="Kapatınca Γ = 0 dayatılır">Kutta koşulu</button>
+      <label class="chk"><input type="checkbox" id="rake" checked> Zaman tarağı</label>
+    </div>
+  </header>
+
+  <div id="flowwrap">
+    <canvas id="flow"></canvas>
+    <div id="busy">alan çözülüyor…</div>
+    <div id="transit">
+      <h3>Eşit geçiş süresi efsanesi</h3>
+      <div id="transitTxt" class="dim">hesaplanıyor…</div>
+    </div>
+  </div>
+
+  <aside>
+    <section>
+      <h2>Basınç dağılımı</h2>
+      <div class="sub">Cp ekseni TERS — havacılık geleneği: emme yukarıda.</div>
+      <svg id="cpPlot" viewBox="0 0 344 208"></svg>
+    </section>
+    <section>
+      <h2>Cl – α ve ayrılma</h2>
+      <div class="sub">Panel çözümü, ince profil doğrusu ve ayrılma noktasının yürüyüşü.</div>
+      <svg id="polar" viewBox="0 0 344 214"></svg>
+    </section>
+    <section>
+      <h2>Okumalar</h2>
+      <dl id="nums"></dl>
+      <div class="note" id="note"></div>
+    </section>
+  </aside>
+
+  <footer id="presets">
+    <a href="?naca=2412&a=6">2412 · α 6°</a>
+    <a href="?naca=2412&a=16">ayrılma yürüyor</a>
+    <a href="?naca=0012&a=0&mach=0.72">0012 · kritik Mach</a>
+    <a href="?naca=4412&a=2">4412 kambur</a>
+    <a href="?naca=2412&a=8&kutta=0">Kutta KAPALI</a>
+    <a href="?naca=0012&a=10&mod=hiz">hız alanı</a>
+    <a href="?naca=2412&a=6&re=5.7">Re 5×10⁵</a>
+  </footer>
+</div>
+
+<script type="module">
+import { nacaNodes, solveAirfoil, boundaryLayer, velocityGrid, sampleGrid,
+         insideAirfoil, prandtlGlauert, cpCritical, criticalMach, thinAirfoil }
+  from './airfoil-solver.mjs';
+
+/* ---- deterministik açılış parametreleri --------------------------------
+   ?naca=2412&a=6&re=6.477&mach=0&mod=cp&kutta=0&tarak=0&t=3&export=1
+   re  : log10(Re) — 6.477 → 3,0×10⁶
+   t   : verilirse parçacık saati DONDURULUR ve tam t saniyeye ilerletilir
+   DİKKAT: demo kartına `&t=` KOYMA — akım donar.                        */
+const q = new URLSearchParams(location.search);
+const num = (k, d) => (q.has(k) && Number.isFinite(Number(q.get(k))) ? Number(q.get(k)) : d);
+if (q.get('export') === '1') document.documentElement.dataset.export = 'true';
+
+const el = (id) => document.getElementById(id);
+const tr = (v, n = 3) => (v == null || !Number.isFinite(v) ? '—'
+  : v.toLocaleString('tr-TR', { minimumFractionDigits: n, maximumFractionDigits: n }));
+
+/* ================= durum ================= */
+const st = {
+  naca: q.get('naca') || '2412',
+  alpha: num('a', 6),
+  re: Math.pow(10, num('re', 6.477)),
+  mach: num('mach', 0),
+  mode: q.get('mod') || 'cp',
+  kutta: q.get('kutta') !== '0',
+  rake: q.get('tarak') !== '0',
+  sol: null, bl: null, grid: null, polar: null, transit: null,
+};
+
+/* ================= çözüm zinciri ================= */
+// Panel çözümü ucuz (14 ms), alan ızgarası pahalı (≈360 ms). Bu yüzden
+// ikisi AYRI tetiklenir: kaydırıcı sürüklenirken yalnız panel + sınır
+// tabakası + grafikler tazelenir; ızgara kaydırıcı durunca hesaplanır.
+let gridTimer = 0;
+
+function cozPanel() {
+  const nodes = nacaNodes(st.naca, 80);
+  st.sol = solveAirfoil(nodes, st.alpha, { kutta: st.kutta });
+  st.bl = boundaryLayer(st.sol, st.re);
+  cizCp(); cizPolar(); yazSayilar();
+}
+
+function cozAlan() {
+  el('busy').classList.add('on');
+  // Bir kare bekle ki "çözülüyor" yazısı GERÇEKTEN görünsün — hesap
+  // ana iş parçacığını kilitliyor, ondan önce boyanmalı.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    st.grid = velocityGrid(st.sol, { x0: -0.75, x1: 2.05, y0: -0.95, y1: 0.95, nx: 200, ny: 136 });
+    st.transit = olcGecisSuresi();
+    alanTazele();
+    tarakSifirla();
+    // Okumaları YENİDEN yaz: geçiş süresi ölçümü ancak ızgara hazır olunca
+    // yapılabiliyor, oysa yazSayilar() panel çözümüyle birlikte çağrılmıştı —
+    // metin "hesaplanamadı" hâlinde donup kalıyordu.
+    yazSayilar();
+    el('busy').classList.remove('on');
+  }));
+}
+
+function tazele({ alan = true } = {}) {
+  cozPanel();
+  if (!alan) return;
+  clearTimeout(gridTimer);
+  gridTimer = setTimeout(cozAlan, 90);
+}
+
+// Polar: her α için ayrı çözüm gerekir, o yüzden yalnız profil ya da
+// Kutta anahtarı değişince yeniden hesaplanır (27 × 14 ms ≈ 380 ms).
+function cozPolar() {
+  const nodes = nacaNodes(st.naca, 60);
+  const pts = [];
+  for (let a = -8; a <= 20.001; a += 1) {
+    const s = solveAirfoil(nodes, a, { kutta: st.kutta });
+    const b = boundaryLayer(s, st.re);
+    pts.push({ a, cl: s.cl, xSep: b.ust.xSep, cd: b.cd });
+  }
+  st.polar = { pts, thin: thinAirfoil(st.naca) };
+}
+
+/* ================= eşit geçiş süresi ================= */
+//
+// EFSANE: "Üstteki hava, alttakiyle AYNI ANDA firar kenarında buluşmak
+// zorunda olduğu için daha uzun yolu daha hızlı gitmeli; işte kaldırma."
+// Bu cümlenin ikinci yarısı doğrudur (üst yüzeyde akım hızlıdır), ilk
+// yarısı UYDURMADIR ve hiçbir yerden gelmez.
+//
+// Ölçüm: hücum kenarına gelen ayırıcı akım çizgisi bisection ile bulunur;
+// onun hemen üstünden ve hemen altından birer parçacık bırakılır ve
+// x = 1,25'e VARIŞ SÜRELERİ ölçülür. Sonuç: üstteki çok daha ERKEN varır.
+// Aynı anda buluşmazlar — buluşmaları için hiçbir sebep de yoktur.
+
+function izle(y0, { x0 = -0.68, xSon = 1.25, dt = 0.0025, maxAdim = 20000 } = {}) {
+  let x = x0, y = y0, t = 0;
+  const yol = [[x, y]];
+  for (let k = 0; k < maxAdim; k++) {
+    const v = rk4(x, y, dt);
+    if (!v) return { t: null, yol, x, y };
+    x = v[0]; y = v[1]; t += dt;
+    if (k % 8 === 0) yol.push([x, y]);
+    if (x >= xSon) return { t, yol, x, y };
+  }
+  return { t: null, yol, x, y };
+}
+
+// KATI sorgu: cisme giren parçacık ölür. Doldurulmuş iç değerler yalnız
+// resmi düzeltmek için var; onlarla parçacık taşımak, parçacığı kanadın
+// İÇİNDEN geçirmek olurdu.
+function rk4(x, y, h) {
+  const a = sampleGrid(st.grid, x, y, true); if (!a) return null;
+  const b = sampleGrid(st.grid, x + 0.5 * h * a[0], y + 0.5 * h * a[1], true); if (!b) return null;
+  const c = sampleGrid(st.grid, x + 0.5 * h * b[0], y + 0.5 * h * b[1], true); if (!c) return null;
+  const d = sampleGrid(st.grid, x + h * c[0], y + h * c[1], true); if (!d) return null;
+  return [x + (h / 6) * (a[0] + 2 * b[0] + 2 * c[0] + d[0]),
+          y + (h / 6) * (a[1] + 2 * b[1] + 2 * c[1] + d[1])];
+}
+
+function olcGecisSuresi() {
+  // Ayırıcı akım çizgisini bul: x = 0,5'e vardığında profilin üstünde mi
+  // altında mı kaldığına bak. 30 bisection ≈ 10⁻⁹ çözünürlük.
+  const ustMu = (y0) => {
+    const r = izle(y0, { xSon: 0.5, maxAdim: 4000 });
+    return r.y > 0.06;                      // 0,5 veterde üst yüzeyin üstü
+  };
+  let lo = -0.35, hi = 0.35;
+  if (ustMu(lo) || !ustMu(hi)) return null;
+  for (let k = 0; k < 30; k++) { const mid = 0.5 * (lo + hi); if (ustMu(mid)) hi = mid; else lo = mid; }
+  const yAyirici = 0.5 * (lo + hi);
+
+  // AYIRMA MESAFESİ UYARLANIR — sabit değer çalışmadı.
+  //
+  // Ölçülen davranış: üstteki parçacık 0,010 veterle bile sağ kalıyor
+  // (akım onu yüzeyden UZAKLAŞTIRIYOR), alttaki ise ölüyor. Sebep asimetrik:
+  // α = 6°'de durma noktası ALT yüzeydedir, dolayısıyla alt parçacık burnu
+  // yüzeye teğet dönmek zorunda ve ızgara hücresinden (0,014 veter) daha
+  // yakına giriyor; katı sorgu onu haklı olarak öldürüyor.
+  //
+  // Sabit bir 0,05 koymak da yanlış olurdu: o değer bu α ve bu profil için
+  // yeter, başkası için ya boşuna büyük ya da yetersiz kalır. Onun yerine
+  // en küçük çalışan mesafe aranıyor ve KAÇ OLDUĞU ekrana yazılıyor.
+  for (const eps of [0.012, 0.02, 0.03, 0.045, 0.06, 0.08, 0.11, 0.15, 0.20]) {
+    const ust = izle(yAyirici + eps), alt = izle(yAyirici - eps);
+    if (ust.t != null && alt.t != null) {
+      return { yAyirici, eps, ust, alt, fark: (alt.t - ust.t) / alt.t };
+    }
+  }
+  return null;
+}
+
+/* ================= tuval ================= */
+const cv = el('flow'), cx = cv.getContext('2d');
+let W = 0, H = 0, dpr = 1;
+// Dünya → ekran: veter ekranın ~%42'si.
+let sc = 1, ox = 0, oy = 0;
+function olcekle() {
+  const r = cv.getBoundingClientRect();
+  dpr = Math.min(devicePixelRatio || 1, 2);
+  W = Math.max(2, Math.round(r.width)); H = Math.max(2, Math.round(r.height));
+  cv.width = W * dpr; cv.height = H * dpr;
+  cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  sc = Math.min(W * 0.42, H * 1.15);
+  ox = W * 0.30; oy = H * 0.52;
+}
+const SX = (x) => ox + x * sc;
+const SY = (y) => oy - y * sc;
+
+/* ── Renk haritaları ────────────────────────────────────────────────
+   Cp AYRIŞAN ve SIFIRDA NÖTR olmalı: serbest akımda Cp = 0'dır ve alanın
+   çoğu oradadır. İlk denemede sıfır noktası haritanın ortasına değil %75'ine
+   düşüyordu ve bütün ekran ZEYTİN YEŞİLİ oluyordu — hiçbir şey olmayan yer
+   en çok dikkat çeken renkti. Şimdi Cp = 0 sayfanın zemin rengi; renk yalnız
+   bir şey olduğu yerde beliriyor: emme mavi, durma sıcak.                */
+const kir = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+const NOTR = [11, 16, 25];
+function renkCp(v) {
+  if (v < 0) return kir(NOTR, [34, 132, 196], Math.pow(Math.min(1, -v / 3), 0.72));
+  return kir(NOTR, [206, 104, 54], Math.pow(Math.min(1, v), 0.72));
+}
+// Hız için tek yönlü ama SERBEST AKIM (|V| = 1) yine sakin bir tonda kalsın
+// diye durak noktaları eşit aralıklı değil.
+const HIZ = [[0, [8, 12, 22]], [0.35, [15, 34, 52]], [0.53, [16, 44, 58]],
+             [0.75, [150, 130, 66]], [1, [244, 232, 206]]];
+function renkHiz(v) {
+  const t = Math.max(0, Math.min(1, v / 1.9));
+  for (let i = 1; i < HIZ.length; i++) {
+    if (t <= HIZ[i][0]) return kir(HIZ[i - 1][1], HIZ[i][1], (t - HIZ[i - 1][0]) / (HIZ[i][0] - HIZ[i - 1][0]));
+  }
+  return HIZ[HIZ.length - 1][1];
+}
+
+/* ── Alan resmi ve akım çizgileri: ÇÖZÜM BAŞINA BİR KEZ ─────────────
+   İlk sürüm ikisini de HER KAREDE yeniden üretiyordu: alan için ~1 milyon
+   piksellik ara değer, akım çizgileri için 26 × 1400 RK4 adımı. Kare başına
+   yüz milisaniyelerce iş; sayfa canlıyken zar zor dönüyor, dondurulmuş
+   kip ekran görüntüsünde ise kare hiç tamamlanamayıp tuval BOŞ çıkıyordu.
+   İkisi de çözümün fonksiyonu, zamanın değil — bir kez hesaplanıp saklanır.
+   Alan, ızgara çözünürlüğünde bir ara tuvale çizilip ölçeklenerek basılır
+   (iki doğrusal büyütme; alan zaten pürüzsüz olduğu için kayıp yok).      */
+let alanTuval = null, akimYollari = null;
+
+function alanTazele() {
+  const G = st.grid;
+  akimYollari = null; alanTuval = null;
+  if (!G) return;
+
+  if (st.mode !== 'yok') {
+    const c2 = document.createElement('canvas');
+    c2.width = G.nx; c2.height = G.ny;
+    const g2 = c2.getContext('2d');
+    const img = g2.createImageData(G.nx, G.ny);
+    const d = img.data;
+    const b2 = Math.sqrt(Math.max(1 - st.mach * st.mach, 1e-6));
+    for (let iy = 0; iy < G.ny; iy++) {
+      for (let ix = 0; ix < G.nx; ix++) {
+        const k = iy * G.nx + ix;
+        // Görüntü satırları yukarıdan aşağı, ızgara ise +y yukarı.
+        const kk = ((G.ny - 1 - iy) * G.nx + ix) * 4;
+        const V = Math.hypot(G.u[k], G.v[k]);
+        const c = st.mode === 'cp' ? renkCp((1 - V * V) / b2) : renkHiz(V);
+        d[kk] = c[0]; d[kk + 1] = c[1]; d[kk + 2] = c[2]; d[kk + 3] = 255;
+      }
+    }
+    g2.putImageData(img, 0, 0);
+    alanTuval = c2;
+  }
+
+  akimYollari = [];
+  for (let i = 0; i < 26; i++) {
+    let x = -0.74, y = -0.9 + (1.8 * i) / 25;
+    const yol = [[x, y]];
+    for (let k = 0; k < 1400; k++) {
+      const v = rk4(x, y, 0.004);
+      if (!v || v[0] > 2.0) break;
+      x = v[0]; y = v[1];
+      if (k % 2 === 0) yol.push([x, y]);
+    }
+    akimYollari.push(yol);
+  }
+}
+
+function cizAlan() {
+  if (!alanTuval || !st.grid) return;
+  const G = st.grid;
+  cx.imageSmoothingEnabled = true;
+  cx.imageSmoothingQuality = 'high';
+  cx.drawImage(alanTuval, SX(G.x0), SY(G.y1), (G.x1 - G.x0) * sc, (G.y1 - G.y0) * sc);
+}
+
+function cizAkimCizgileri() {
+  if (!akimYollari) return;
+  cx.strokeStyle = 'rgba(226,232,240,.20)';
+  cx.lineWidth = 1;
+  for (const yol of akimYollari) {
+    cx.beginPath();
+    yol.forEach(([x, y], i) => (i ? cx.lineTo(SX(x), SY(y)) : cx.moveTo(SX(x), SY(y))));
+    cx.stroke();
+  }
+}
+
+function cizProfil() {
+  const n = st.sol.nodes;
+  cx.beginPath();
+  cx.moveTo(SX(n[0][0]), SY(n[0][1]));
+  for (let i = 1; i < n.length; i++) cx.lineTo(SX(n[i][0]), SY(n[i][1]));
+  cx.closePath();
+  cx.fillStyle = '#0b0e14'; cx.fill();
+  cx.strokeStyle = '#c9a35c'; cx.lineWidth = 1.6; cx.stroke();
+
+  // Ayrılma ve geçiş işaretleri — sınır tabakasının söylediği yerde.
+  const isaret = (xc, renk, etiket, ust) => {
+    if (xc == null) return;
+    // O x'teki yüzey noktasını bul (üst ya da alt).
+    let best = null, bd = 9;
+    for (let i = 0; i < st.sol.N; i++) {
+      const yy = st.sol.yc[i], xx = st.sol.xc[i];
+      const dogru = ust ? i > st.bl.stagIndex : i <= st.bl.stagIndex;
+      if (!dogru) continue;
+      const dd = Math.abs(xx - xc);
+      if (dd < bd) { bd = dd; best = [xx, yy]; }
+    }
+    if (!best) return;
+    cx.fillStyle = renk;
+    cx.beginPath(); cx.arc(SX(best[0]), SY(best[1]), 3.4, 0, 7); cx.fill();
+    cx.font = '10px "Segoe UI", sans-serif';
+    cx.fillText(etiket, SX(best[0]) + 6, SY(best[1]) + (ust ? -6 : 13));
+  };
+  isaret(st.bl.ust.xTrans, '#5f9ee0', 'geçiş', true);
+  isaret(st.bl.ust.xSep, '#e0894a', 'ayrılma', true);
+  isaret(st.bl.alt.xTrans, '#5f9ee0', 'geçiş', false);
+}
+
+/* ── Zaman tarağı: aynı anda bırakılan dikey parçacık dizisi ──────── */
+let taraklar = [], tarakSaat = 0;
+function tarakSifirla() { taraklar = []; tarakSaat = 0; }
+function tarakEkle() {
+  const p = [];
+  for (let i = 0; i < 46; i++) p.push([-0.70, -0.62 + (1.24 * i) / 45]);
+  taraklar.push({ p, yas: 0 });
+}
+function tarakAdim(dt) {
+  if (!st.grid) return;
+  tarakSaat += dt;
+  if (tarakSaat > 0.85) { tarakSaat = 0; tarakEkle(); }
+  for (const t of taraklar) {
+    t.yas += dt;
+    for (let i = 0; i < t.p.length; i++) {
+      const v = rk4(t.p[i][0], t.p[i][1], dt * 0.62);
+      if (v) t.p[i] = v;
+    }
+  }
+  taraklar = taraklar.filter((t) => t.yas < 7 && t.p.some((q) => q[0] < 2.0));
+}
+function cizTarak() {
+  for (const t of taraklar) {
+    const a = Math.max(0, Math.min(1, (7 - t.yas) / 1.6)) * 0.9;
+    cx.strokeStyle = `rgba(232,236,244,${a})`;   /* boya çizgisi — profilin altını (şampanya) çalmasın */
+    cx.lineWidth = 1.5;
+    cx.beginPath();
+    let kopuk = true;
+    for (const [x, y] of t.p) {
+      if (x > 2.05 || insideAirfoil(st.sol.nodes, x, y)) { kopuk = true; continue; }
+      if (kopuk) { cx.moveTo(SX(x), SY(y)); kopuk = false; } else cx.lineTo(SX(x), SY(y));
+    }
+    cx.stroke();
+  }
+}
+
+function cizGecisIzleri() {
+  const T = st.transit;
+  if (!T) return;
+  for (const [yol, renk] of [[T.ust.yol, '#5f9ee0'], [T.alt.yol, '#e0894a']]) {
+    cx.strokeStyle = renk; cx.lineWidth = 1.8;
+    cx.beginPath();
+    yol.forEach(([x, y], i) => (i ? cx.lineTo(SX(x), SY(y)) : cx.moveTo(SX(x), SY(y))));
+    cx.stroke();
+  }
+}
+
+function cizTuval() {
+  cx.fillStyle = '#05070b'; cx.fillRect(0, 0, W, H);
+  cizAlan();
+  cizAkimCizgileri();
+  cizGecisIzleri();
+  if (st.rake) cizTarak();
+  cizProfil();
+  // Serbest akım oku ve α
+  cx.strokeStyle = '#6f7686'; cx.lineWidth = 1.2;
+  const ax = SX(-0.62), ay = SY(0.80), L = 54, an = -st.sol.alpha;
+  cx.beginPath(); cx.moveTo(ax, ay);
+  cx.lineTo(ax + L * Math.cos(an), ay + L * Math.sin(an)); cx.stroke();
+  cx.fillStyle = '#8a90a0'; cx.font = '11px "Segoe UI", sans-serif';
+  cx.fillText('V∞', ax + L * Math.cos(an) + 6, ay + L * Math.sin(an) + 4);
+}
+
+/* ================= Cp grafiği ================= */
+function cizCp() {
+  const s = st.sol, W2 = 344, H2 = 208, pl = 34, pr = 8, pt = 10, pb = 22;
+  const b2 = Math.sqrt(Math.max(1 - st.mach * st.mach, 1e-6));
+  let lo = -1, hi = 1.05;
+  for (let i = 0; i < s.N; i++) { const c = s.cp[i] / b2; if (c < lo) lo = c; }
+  lo = Math.min(lo, -1) * 1.1;
+  const X = (x) => pl + x * (W2 - pl - pr);
+  const Y = (c) => pt + ((c - lo) / (hi - lo)) * (H2 - pt - pb);   // TERS eksen
+  const ust = [], alt = [];
+  for (let i = 0; i < s.N; i++) {
+    const p = [X(s.xc[i]), Y(s.cp[i] / b2)];
+    (i > st.bl.stagIndex ? ust : alt).push(p);
+  }
+  const yol = (a) => a.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  const eks = [];
+  for (const c of [-3, -2, -1, 0, 1]) {
+    if (c < lo || c > hi) continue;
+    eks.push(`<line x1="${pl}" y1="${Y(c)}" x2="${W2 - pr}" y2="${Y(c)}"
+      stroke="${c === 0 ? '#2e3648' : '#1a2030'}" stroke-width="1"/>
+      <text x="${pl - 5}" y="${Y(c) + 3.5}" fill="#6f7686" font-size="9" text-anchor="end">${c}</text>`);
+  }
+  const mCrit = st.mach > 0.01 ? cpCritical(st.mach) : null;
+  const critLine = (mCrit != null && mCrit > lo && mCrit < hi)
+    ? `<line x1="${pl}" y1="${Y(mCrit)}" x2="${W2 - pr}" y2="${Y(mCrit)}" stroke="#e0894a"
+         stroke-width="1.2" stroke-dasharray="5 3"/>
+       <text x="${W2 - pr - 3}" y="${Y(mCrit) - 4}" fill="#e0894a" font-size="9" text-anchor="end">Cp* (yerel M = 1)</text>` : '';
+  const dikey = (xc, renk, lbl) => (xc == null ? '' :
+    `<line x1="${X(xc)}" y1="${pt}" x2="${X(xc)}" y2="${H2 - pb}" stroke="${renk}"
+       stroke-width="1" stroke-dasharray="3 3" opacity=".75"/>
+     <text x="${X(xc) + 3}" y="${pt + 9}" fill="${renk}" font-size="8.5">${lbl}</text>`);
+
+  el('cpPlot').innerHTML = eks.join('') + critLine +
+    dikey(st.bl.ust.xTrans, '#5f9ee0', 'geçiş') +
+    dikey(st.bl.ust.xSep, '#e0894a', 'ayrılma') +
+    `<path d="${yol(ust)}" fill="none" stroke="#5f9ee0" stroke-width="1.7"/>
+     <path d="${yol(alt)}" fill="none" stroke="#c9a35c" stroke-width="1.7"/>
+     <text x="${pl}" y="${H2 - 6}" fill="#6f7686" font-size="9">x/c = 0</text>
+     <text x="${W2 - pr}" y="${H2 - 6}" fill="#6f7686" font-size="9" text-anchor="end">1</text>
+     <text x="${pl + 6}" y="${H2 - pb - 5}" fill="#5f9ee0" font-size="9">üst yüzey</text>
+     <text x="${pl + 62}" y="${H2 - pb - 5}" fill="#c9a35c" font-size="9">alt yüzey</text>
+     <text x="10" y="${pt + 10}" fill="#6f7686" font-size="9" transform="rotate(-90 10 ${pt + 10})">−Cp</text>`;
+}
+
+/* ================= polar ================= */
+function cizPolar() {
+  if (!st.polar) return;
+  const P = st.polar.pts, W2 = 344, H2 = 214, pl = 32, pr = 34, pt = 10, pb = 24;
+  const aMin = -8, aMax = 20;
+  let clMax = 0.5;
+  for (const p of P) clMax = Math.max(clMax, p.cl);
+  clMax = Math.ceil(clMax * 2) / 2;
+  const X = (a) => pl + ((a - aMin) / (aMax - aMin)) * (W2 - pl - pr);
+  const Y = (c) => H2 - pb - ((c + 0.8) / (clMax + 0.8)) * (H2 - pt - pb);
+  const Ys = (x) => H2 - pb - x * (H2 - pt - pb);        // ayrılma için 0…1
+
+  const grid = [];
+  for (let c = 0; c <= clMax; c += 0.5)
+    grid.push(`<line x1="${pl}" y1="${Y(c)}" x2="${W2 - pr}" y2="${Y(c)}" stroke="#1a2030"/>
+      <text x="${pl - 4}" y="${Y(c) + 3.5}" fill="#6f7686" font-size="9" text-anchor="end">${tr(c, 1)}</text>`);
+  for (const a of [-8, 0, 8, 16])
+    grid.push(`<line x1="${X(a)}" y1="${pt}" x2="${X(a)}" y2="${H2 - pb}" stroke="#1a2030"/>
+      <text x="${X(a)}" y="${H2 - pb + 12}" fill="#6f7686" font-size="9" text-anchor="middle">${a}°</text>`);
+
+  const panelYol = P.map((p, i) => (i ? 'L' : 'M') + X(p.a).toFixed(1) + ' ' + Y(p.cl).toFixed(1)).join(' ');
+  // İnce profil teorisi: Cl = 2π(α − α_L0)
+  const aL0 = st.polar.thin.alphaL0;
+  const thinYol = `M${X(aMin)} ${Y(2 * Math.PI * (aMin - aL0) * Math.PI / 180)} L${X(aMax)} ${Y(2 * Math.PI * (aMax - aL0) * Math.PI / 180)}`;
+  const sepPts = P.filter((p) => p.xSep != null);
+  const sepYol = sepPts.map((p, i) => (i ? 'L' : 'M') + X(p.a).toFixed(1) + ' ' + Ys(p.xSep).toFixed(1)).join(' ');
+
+  const cur = st.sol.cl;
+  el('polar').innerHTML = grid.join('') +
+    `<path d="${thinYol}" fill="none" stroke="#4d5464" stroke-width="1.2" stroke-dasharray="5 4"/>
+     <path d="${sepYol}" fill="none" stroke="#e0894a" stroke-width="1.4" opacity=".9"/>
+     <path d="${panelYol}" fill="none" stroke="#5f9ee0" stroke-width="1.9"/>
+     <circle cx="${X(st.alpha)}" cy="${Y(cur)}" r="4" fill="#c9a35c"/>
+     <text x="${W2 - pr + 3}" y="${Ys(1) + 3}" fill="#e0894a" font-size="8.5">1,0</text>
+     <text x="${W2 - pr + 3}" y="${Ys(0.5) + 3}" fill="#e0894a" font-size="8.5">0,5</text>
+     <text x="${W2 - 4}" y="${pt + 8}" fill="#e0894a" font-size="8.5" text-anchor="end">x_ayrılma</text>
+     <text x="${pl + 4}" y="${pt + 9}" fill="#5f9ee0" font-size="9">panel Cl</text>
+     <text x="${pl + 4}" y="${pt + 20}" fill="#4d5464" font-size="9">2π(α − α₀) ince profil</text>`;
+}
+
+/* ================= sayılar ================= */
+function yazSayilar() {
+  const s = st.sol, b = st.bl;
+  const b2 = Math.sqrt(Math.max(1 - st.mach * st.mach, 1e-6));
+  let cpMin = 9;
+  for (let i = 0; i < s.N; i++) if (s.cp[i] < cpMin) cpMin = s.cp[i];
+  const mCr = criticalMach(cpMin);
+  const asildi = st.mach > 0.01 && mCr != null && st.mach > mCr;
+  const r = [];
+  const row = (k, v, cls) => r.push(`<dt>${k}</dt><dd${cls ? ' class="' + cls + '"' : ''}>${v}</dd>`);
+
+  row('C<sub>l</sub> (Kutta–Jukovski)', `<b>${tr(s.cl / b2)}</b>`);
+  row('C<sub>l</sub> (basınç integrali)', tr(s.clFromCp / b2), 'dim');
+  row('iki yol arasındaki fark', tr(s.clResidual / b2, 4), 'dim');
+  row('C<sub>d</sub> (Squire–Young)', tr(b.cd, 4));
+  row('C<sub>m,c/4</sub>', tr(s.cm4));
+  row('dolaşım Γ', tr(s.circulation));
+  row('α<sub>L0</sub> (ince profil)', tr(st.polar ? st.polar.thin.alphaL0 : null, 2) + '°', 'dim');
+  row('geçiş x/c (üst)', b.ust.xTrans == null ? 'yok' : tr(b.ust.xTrans, 3) + (b.ust.kabarcik ? ' *' : ''));
+  row('ayrılma x/c (üst)', b.ust.xSep == null ? 'yok' : tr(b.ust.xSep, 3),
+      b.ust.xSep != null && b.ust.xSep < 0.8 ? 'warn' : '');
+  row('Cp<sub>min</sub>', tr(cpMin / b2, 3));
+  row('kritik Mach', mCr == null ? '—' : tr(mCr, 3), asildi ? 'warn' : '');
+  row('d\'Alembert kalıntısı', tr(s.cdPressure, 5), 'dim');
+  el('nums').innerHTML = r.join('');
+
+  const n = [];
+  if (!st.kutta) n.push(`<b>Kutta koşulu KAPALI.</b> Dolaşım sıfıra zorlandı:
+    kaldırma yok, arka durma noktası üst yüzeye tırmandı ve akım keskin firar
+    kenarının etrafından dolanıyor. Kaldırmayı yapan şey buydu.`);
+  if (asildi) n.push(`<b>Kritik Mach aşıldı</b> (M = ${tr(st.mach, 2)} > ${tr(mCr, 3)}).
+    Yüzeyde yerel akım süpersonik; Prandtl–Glauert artık geçerli değil ve şok
+    oluşumu bu yöntemle hesaplanamaz. Gösterilen Cp yalnız bir ekstrapolasyondur.`);
+  if (b.ust.kabarcik) n.push(`Üst yüzeyde laminer ayrılma önce geldi; kısa bir
+    <b>ayrılma kabarcığı</b> varsayılıp geçiş orada yapıldı. Kabarcık modellenmez.`);
+  if (b.ust.xSep != null && b.ust.xSep < 0.8) n.push(`Ayrılma veterin
+    <b>%${tr((1 - b.ust.xSep) * 100, 0)}</b>'ini kapladı. Potansiyel akım Cl'i buradan
+    itibaren giderek iyimserdir: bu zincir (Thwaites–Michel–Head, kabarcık modeli yok)
+    yapışmayı FAZLA tahmin eder, dolayısıyla bir C<sub>l,max</sub> iddiası yoktur.`);
+  el('note').innerHTML = n.join('<br><br>') || `Potansiyel akımda sürükleme teoride
+    SIFIRDIR (d'Alembert paradoksu). Yukarıdaki kalıntı ayrıklaştırma hatasıdır;
+    gerçek sürükleme yalnız sınır tabakasından gelir.`;
+
+  const T = st.transit;
+  el('transitTxt').innerHTML = !T ? `<span class="dim">Bu α'da ölçüm yapılamadı: durma noktası
+       alt yüzeyde çok geride kaldığı için alttaki parçacık burnu ızgara hücresinden
+       (0,014 veter) daha yakın dönmek zorunda ve izleme orada kesiliyor. Ölçümün
+       kendisi değil, ÇÖZÜNÜRLÜK yetmiyor — küçük α'ya inince geri gelir.</span>`
+    : `Ayırıcı akım çizgisinin hemen üstünden ve altından birer parçacık bırakıldı.
+       x = 1,25'e varış: <b style="color:#5f9ee0">üst ${tr(T.ust.t, 2)} s</b> ·
+       <b style="color:#e0894a">alt ${tr(T.alt.t, 2)} s</b> →
+       üstteki <b>%${tr(T.fark * 100, 0)}</b> daha erken vardı.
+       <span class="dim">(ayırıcı çizgiden ±${tr(T.eps, 3)} veter uzaktan)</span>
+       <span class="dim">Aynı anda buluşmaları için hiçbir sebep yok; "eşit geçiş süresi"
+       diye bir yasa yoktur. Üst yüzeydeki akım hızlıdır — ama bu, dolaşımın
+       sonucudur, buluşma zorunluluğunun değil.</span>`;
+}
+
+/* ================= arayüz ================= */
+function baglaKontroller() {
+  el('naca').value = st.naca;
+  el('alpha').value = String(st.alpha);
+  el('mach').value = String(st.mach);
+  el('re').value = String(Math.log10(st.re));
+  el('mode').value = st.mode;
+  el('kutta').classList.toggle('on', st.kutta);
+  el('rake').checked = st.rake;
+  etiketler();
+
+  el('naca').onchange = () => { st.naca = el('naca').value; etiketler(); cozPolar(); tazele(); };
+  el('alpha').oninput = () => { st.alpha = Number(el('alpha').value); etiketler(); tazele(); };
+  el('re').oninput = () => { st.re = Math.pow(10, Number(el('re').value)); etiketler(); tazele({ alan: false }); };
+  // Mach yalnız Cp ölçeğini değiştirir, hız alanını değil — ızgarayı yeniden
+  // çözmeye gerek yok, resmi yeniden boyamak yeter.
+  el('mach').oninput = () => { st.mach = Number(el('mach').value); etiketler(); cozPanel(); alanTazele(); };
+  el('mode').onchange = () => { st.mode = el('mode').value; alanTazele(); };
+  el('kutta').onclick = () => { st.kutta = !st.kutta; el('kutta').classList.toggle('on', st.kutta); cozPolar(); tazele(); };
+  el('rake').onchange = () => { st.rake = el('rake').checked; };
+  for (const a of document.querySelectorAll('#presets a')) a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const p = new URLSearchParams(a.getAttribute('href').slice(1));
+    if (p.has('naca')) st.naca = p.get('naca');
+    if (p.has('a')) st.alpha = Number(p.get('a'));
+    if (p.has('mach')) st.mach = Number(p.get('mach'));
+    if (p.has('re')) st.re = Math.pow(10, Number(p.get('re')));
+    if (p.has('mod')) st.mode = p.get('mod');
+    st.kutta = p.get('kutta') !== '0';
+    baglaKontroller(); cozPolar(); tazele();
+  });
+}
+function etiketler() {
+  el('vNaca').textContent = st.naca;
+  el('vA').textContent = tr(st.alpha, 1) + '°';
+  el('vM').textContent = tr(st.mach, 2);
+  const e = Math.floor(Math.log10(st.re));
+  el('vRe').textContent = tr(st.re / Math.pow(10, e), 1) + '×10' +
+    String(e).replace(/[0-9]/g, (d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[+d]);
+}
+
+/* ================= çevrim ================= */
+new ResizeObserver(() => { olcekle(); }).observe(el('flowwrap'));
+olcekle();
+baglaKontroller();
+cozPolar();
+cozPanel();
+cozAlan();
+
+const donmus = q.has('t');
+let onceki = performance.now();
+(function tik(now) {
+  requestAnimationFrame(tik);
+  const dt = Math.min(0.05, (now - onceki) / 1000);
+  onceki = now;
+  if (!donmus && st.rake) tarakAdim(dt);
+  cizTuval();
+})(onceki);
+
+// Donmuş kip: zaman durur, ÇİZİM DURMAZ (bkz. aircraft-blocks — tek kare
+// çizip rAF kurmamak tuvali bayatlatıyor ve headless kare siyah geliyor).
+if (donmus) {
+  const t = num('t', 0), STEP = 1 / 60;
+  const bekle = setInterval(() => {
+    if (!st.grid) return;                  // ızgara hazır olana kadar bekle
+    clearInterval(bekle);
+    for (let s = 0; s < t - 1e-9; s += STEP) tarakAdim(Math.min(STEP, t - s));
+    document.documentElement.dataset.frozenAt = String(t);
+  }, 40);
+}
+
+window.__airfoil = { st, cozPanel, cozAlan, cozPolar };
+</script>
+</body>
+</html>

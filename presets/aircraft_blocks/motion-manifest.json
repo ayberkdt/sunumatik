@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "aircraft-blocks-library",
+      "type": "state-transition",
+      "truthLevel": "analytic",
+      "purpose": "Give the aviation scenes what craft-blocks gave the orbital scenes: a frozen-API library of parametric aircraft whose wings are real airfoil sections rather than boxes, so a downstream scene can cut a wing open, mount a flow solver on it, or place a tip vortex exactly at the tip.",
+      "model": "Every lifting surface is lofted from NACA 4-digit sections (Jacobs, Ward & Pinkerton 1933): half-thickness y_t = 5t(0.2969 sqrt(x) - 0.1260x - 0.3516x^2 + 0.2843x^3 - 0.1036x^4) with the CLOSED trailing-edge coefficient, camber line y_c piecewise in x<p and x>=p, and the surfaces displaced normal to the camber line through theta = atan(dy_c/dx). Points use cosine spacing x = (1-cos beta)/2 so the leading edge is resolved - the same spacing the panel-method preset uses. A wing is a station table {y, xqc, zqc, chord, twist, naca}: xqc is the QUARTER-CHORD locus, so quarter-chord sweep is the definition rather than a later measurement, and twist is positive leading-edge-up. Surfaces are closed meshes; winding is fixed by the SIGN OF THE ENCLOSED VOLUME rather than by hand, so a change of sweep or dihedral sign cannot silently invert the normals. Fuselages are superellipse lofts |y/ry|^n + |z/rz|^n = 1 with separate upper and lower exponents: n = 2 is the pressurised tube of an airliner, n about 1.5 gives the sharp lateral chine of a fighter forebody, and n about 7 on the lower surface alone gives the flat compression surface of a waverider.",
+      "limitations": "These are ARCHETYPES, not models of specific aircraft: the proportions (aspect ratio, sweep, taper) are placed at published class-typical values, but every fuselage detail is a design decision and no builder claims to be any particular aeroplane. The airfoil is the SHAPE only - no builder computes any aerodynamic quantity. Control surfaces are not modelled as separate deflecting bodies. The waverider's leading edge is drawn along the body's own maximum-width line rather than derived from a shock-fitted osculating-cone construction, which is how a real waverider is generated; it looks like one and it explains why one looks like that, but it was not designed by that method.",
+      "reducedMotion": "The turntable is a checkbox and can be switched off; nothing else in the scene moves. With ?t= the scene advances deterministically to that time and then stops advancing while still redrawing.",
+      "exportState": "?export=1 hides the page chrome and keeps both readouts; ?t= freezes the turntable at a stated angle.",
+      "accessibility": "Every number the scene relies on is printed as text: aspect ratio, wing area, span, taper, quarter-chord sweep, leading-edge sweep (as a range when it varies), mean aerodynamic chord, dihedral and tip twist. The section panel prints chord, thickness ratio, camber and local twist. No information is carried by colour alone.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "aircraft-blocks-measured-geometry",
+      "type": "focus",
+      "truthLevel": "analytic",
+      "purpose": "Make the geometry panel an instrument rather than a caption: the reference numbers are integrated from the station table that produced the mesh, so the label and the shape cannot disagree.",
+      "model": "S = 2 integral c dy and the second moment integral c^2 dy are evaluated with the trapezoidal rule over the station table; AR = b^2/S, MAC = (2/S) integral c^2 dy, taper = c_tip/c_root. Quarter-chord sweep is atan(dxqc/dy) from root to tip; leading-edge sweep is reported PER PANEL as well, because an ogival delta has no single sweep angle - this one runs 76 degrees at the root to 56 degrees at the tip and a root-to-tip average would hide that. A REFERENCE TRAPEZOID (the main panel's leading and trailing edge lines extended to the centreline, which is what published reference areas use) is computed only when the builder declares which two stations define the main panel. For the fighter that declaration makes the leading-edge root extension visible as a number: measured planform area exceeds the reference trapezoid by 14.2 percent, and that difference IS the extension.",
+      "limitations": "Areas and lengths are in DESIGN UNITS, not metres - the library normalises every aircraft to the same bounding size, so only the dimensionless numbers (AR, taper, sweep, thickness ratio) are comparable between aircraft. Span and area use the projected convention, so dihedral does not enter them. The reference trapezoid is null wherever a builder did not declare a main panel; an earlier version extrapolated it from whatever the outermost pair of stations happened to be and produced a meaningless 19.5 for a sailplane whose real aspect ratio is 31.3, so the automatic version was removed rather than corrected.",
+      "reducedMotion": "Fully static.",
+      "exportState": "Kept in the export - it is the part of the still that makes it readable.",
+      "accessibility": "A definition list with units; the aircraft's flight regime and the reason for its proportions are stated as sentences beneath it.",
+      "loop": false,
+      "pauseControl": false
+    },
+    {
+      "id": "aircraft-blocks-section-cut",
+      "type": "focus",
+      "truthLevel": "analytic",
+      "purpose": "Show that the wing really is an airfoil: a spanwise slider cuts the wing in 3D and draws the profile at that station, with its thickness and camber measured off the drawn curve.",
+      "model": "The clipping plane's constant is the station's world y, so the plane the panel describes and the plane the renderer cuts with are the same number. The drawn profile is the linear blend of the two neighbouring stations' POINT ARRAYS - which is exactly what the loft does between those stations - rather than a blend of the (m, p, t) parameters followed by a fresh evaluation; the parameter route differs by a few parts in a thousand because of the square-root term in the thickness distribution, and would let the drawing and the mesh drift apart. Maximum thickness and maximum camber are then measured from the blended points, not read from the parameters.",
+      "limitations": "The section is shown in the wing's own chord frame: local twist is printed as a number but the drawing is not rotated by it, so the profile cannot be read as an angle of attack. The waverider has no wing station table at all - its body and wing are one blended loft - and the panel says so instead of drawing nothing.",
+      "reducedMotion": "The slider still works; the result is a static drawing either way.",
+      "exportState": "Whatever station was selected is baked into the export, with its numbers.",
+      "accessibility": "Chord, thickness ratio, camber with its chordwise position, and local twist are printed as numbers under the drawing; the quarter-chord point is marked and labelled.",
+      "loop": false,
+      "pauseControl": false
+    }
+  ]
+}

@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Uçak Blokları — aircraft_blocks</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+    #stage { position: absolute; inset: 0; }
+    header {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 14px 22px; pointer-events: none; gap: 18px;
+    }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.14em;
+      text-transform: uppercase; color: #c9a35c; }
+    header h1 small { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: 0.06em;
+      text-transform: none; color: #8a90a0; margin-top: 3px; max-width: 46ch; line-height: 1.45; }
+    .controls { display: flex; gap: 9px; align-items: center; pointer-events: auto; flex-wrap: wrap;
+      justify-content: flex-end; }
+    select, button, label.chk {
+      background: rgba(16, 19, 27, 0.88); color: #dfe3ea; border: 1px solid #2b303d;
+      border-radius: 8px; padding: 7px 12px; font-size: 12.5px; cursor: pointer;
+    }
+    select:hover, button:hover, label.chk:hover { border-color: #c9a35c; }
+    label.chk { display: flex; gap: 7px; align-items: center; user-select: none; }
+
+    /* ── Ölçüm paneli: referans geometri ───────────────────────────── */
+    #metrics {
+      position: absolute; left: 22px; top: 96px; z-index: 5; width: 268px;
+      background: rgba(10, 13, 19, 0.86); border: 1px solid #232838; border-radius: 12px;
+      padding: 13px 15px 14px; font-size: 12px; line-height: 1.5;
+    }
+    #metrics h2 { margin: 0 0 3px; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase;
+      color: #c9a35c; font-weight: 600; }
+    #metrics .sub { color: #6f7686; font-size: 10.5px; margin-bottom: 9px; line-height: 1.45; }
+    #metrics dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; }
+    #metrics dt { color: #8a90a0; }
+    #metrics dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; color: #e7ebf2; }
+    #metrics dd.dim { color: #6f7686; }
+    #metrics .note { margin-top: 10px; padding-top: 9px; border-top: 1px solid #1d2231;
+      color: #98a0b2; font-size: 11px; line-height: 1.5; }
+    #metrics .note b { color: #c9a35c; font-weight: 600; }
+
+    /* ── Kesit paneli: kanadın GERÇEK profili ──────────────────────── */
+    #section {
+      position: absolute; right: 22px; top: 96px; z-index: 5; width: 330px;
+      background: rgba(10, 13, 19, 0.86); border: 1px solid #232838; border-radius: 12px;
+      padding: 13px 15px 12px; font-size: 12px;
+    }
+    #section h2 { margin: 0 0 3px; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase;
+      color: #c9a35c; font-weight: 600; }
+    #section .sub { color: #6f7686; font-size: 10.5px; margin-bottom: 8px; line-height: 1.45; }
+    #section svg { display: block; width: 100%; height: 108px; }
+    #section .row { display: flex; align-items: center; gap: 9px; margin-top: 6px; }
+    #section input[type=range] { flex: 1; accent-color: #c9a35c; }
+    #section .read { font-variant-numeric: tabular-nums; color: #8a90a0; font-size: 11px;
+      display: flex; justify-content: space-between; margin-top: 5px; }
+    #section .read b { color: #e7ebf2; font-weight: 500; }
+
+    footer {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 5;
+      display: flex; gap: 8px; justify-content: center; padding: 14px; pointer-events: none;
+      flex-wrap: wrap;
+    }
+    footer a {
+      pointer-events: auto; text-decoration: none; color: #b9bfcc; font-size: 12px;
+      background: rgba(16, 19, 27, 0.85); border: 1px solid #2b303d; border-radius: 999px;
+      padding: 6px 14px;
+    }
+    footer a:hover, footer a.on { color: #0c0e14; background: #c9a35c; border-color: #c9a35c; }
+    #hint { position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%); z-index: 4;
+      color: #4d5464; font-size: 11px; letter-spacing: 0.05em; pointer-events: none; }
+    [data-export="true"] header .controls,
+    [data-export="true"] footer,
+    [data-export="true"] #hint { display: none; }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+
+  <header>
+    <h1>Uçak Blokları
+      <small>Kanatlar gerçek NACA 4-haneli kesitten loft edilir; sağdaki profil, ekrandaki
+        meshin o istasyondaki kesitinin ta kendisidir. Soldaki referans geometri
+        istasyon tablosundan integralle ölçülür — yazılmaz.</small></h1>
+    <div class="controls">
+      <select id="kind" title="Hava aracı"></select>
+      <select id="pal" title="Palet"></select>
+      <label class="chk"><input type="checkbox" id="spin" checked> Torna</label>
+      <label class="chk"><input type="checkbox" id="cut"> Kesit düzlemi</label>
+      <button id="fs">Tam ekran</button>
+    </div>
+  </header>
+
+  <section id="metrics">
+    <h2>Referans geometri</h2>
+    <div class="sub">Meshi üreten istasyon tablosundan yamuk kuralıyla.</div>
+    <dl id="mlist"></dl>
+    <div class="note" id="mnote"></div>
+  </section>
+
+  <section id="section">
+    <h2>Kanat kesiti</h2>
+    <div class="sub">Açıklık istasyonu <b id="etaLabel">%40</b> · profil, komşu iki
+      istasyonun NOKTA DİZİLERİ arasında doğrusal karıştırılır — loftun yaptığı işlem
+      tam olarak budur, o yüzden çizim ile mesh ayrışamaz.</div>
+    <svg id="foil" viewBox="0 0 320 108" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="row"><input type="range" id="eta" min="0" max="100" value="40"></div>
+    <div class="read">
+      <span>veter <b id="rChord">—</b></span>
+      <span>t/c <b id="rT">—</b></span>
+      <span>kamburluk <b id="rM">—</b></span>
+      <span>burulma <b id="rTw">—</b></span>
+    </div>
+  </section>
+
+  <div id="hint">sürükle: yörünge · tekerlek: yakınlaş · sağ tık sürükle: kaydır</div>
+
+  <footer id="presets">
+    <a href="?arac=airliner">yolcu uçağı</a>
+    <a href="?arac=fighter">savaş uçağı</a>
+    <a href="?arac=delta&burun=12">ojiv delta</a>
+    <a href="?arac=waverider">waverider</a>
+    <a href="?arac=glider">planör</a>
+    <a href="?arac=flyingwing">uçan kanat</a>
+    <a href="?arac=fighter&kesit=1&eta=0.62">kesit</a>
+  </footer>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
+    import { AIRCRAFT_BUILDERS, AIRCRAFT_ENVELOPE, AIRCRAFT_PALETTE,
+             applyAircraftPalette, nacaSection } from './aircraft-blocks.mjs';
+
+    /* ---- deterministik açılış parametreleri -------------------------------
+       ?arac=fighter&pal=buz&eta=0.62&kesit=1&burun=12&t=4&export=1
+       arac  : airliner|fighter|delta|waverider|glider|flyingwing
+       pal   : palet anahtarı            eta   : 0–1 açıklık istasyonu
+       kesit : 1 → kesit düzlemi açık    burun : delta için burun eğimi (derece)
+       t     : verilirse torna DONDURULUR ve tam t saniyeye ilerletilir
+       export=1 : sayfa kabuğu gizlenir
+       DİKKAT: demo kartına `&t=` KOYMA — sahneyi dondurur (craft-blocks'ta
+       bir kez yaşandı: canlı kart ölü göründü).                            */
+    const q = new URLSearchParams(location.search);
+    const num = (k, d) => (q.has(k) && Number.isFinite(Number(q.get(k))) ? Number(q.get(k)) : d);
+    if (q.get('export') === '1') document.documentElement.dataset.export = 'true';
+
+    /* ── Paletler: deste temalarıyla aynı dil ───────────────────────── */
+    const PALETLER = {
+      obsidyen:  { ad: 'obsidyen–şampanya', p: AIRCRAFT_PALETTE },
+      buz:       { ad: 'buz–bakır',    p: { body: 0xd7dde5, panel: 0x1b2430, accent: 0xb87333, metal: 0x8d95a3 } },
+      grafit:    { ad: 'grafit–kor',   p: { body: 0x2a2d33, panel: 0x14171c, accent: 0xd4552a, metal: 0xa8aeb8 } },
+      mürekkep:  { ad: 'porselen–mürekkep', p: { body: 0xeceef2, panel: 0x232a36, accent: 0x1f4e79, metal: 0x99a1ad } },
+      verdigris: { ad: 'verdigris–arduvaz', p: { body: 0x33403f, panel: 0x151d1d, accent: 0x5fbfa8, metal: 0x93a09f } },
+    };
+
+    /* ================= sahne ================= */
+    const stage = document.querySelector('#stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.06;
+    stage.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x05070b);
+    const camera = new THREE.PerspectiveCamera(34, 1, 0.05, 60);
+    camera.position.set(2.35, -2.75, 1.35);
+    camera.up.set(0, 0, 1);                       // +Z yukarı (blok sözleşmesi)
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 0.85;
+    controls.maxDistance = 12;
+    controls.target.set(0, 0, 0);
+
+    /* ── Işık: tek mantık — bir güneş, bir gök dolgusu, bir kenar ───
+       Denge ölçüldü: gök dolgusu 0,62'de mavi olduğu için ÜST yüzeyleri
+       anahtar ışıktan daha çok boyuyordu, uçak buzlu mavi görünüyordu.
+       Gök 0,34'e indi, güneş 3,20'ye çıktı; kenar ışığı da yalnız SİLUET
+       için, yüzey rengi için değil.                                      */
+    const sun = new THREE.DirectionalLight(0xfff3e0, 3.20);
+    sun.position.set(3.2, -2.4, 4.0);
+    sun.castShadow = true;
+    // Gölge kamerası DAR tutulur: ortografik gölgede sapma (bias) derinlik
+    // aralığıyla ÇARPILIR — geniş bir kamera, gölgeyi metrelerce kaydırır.
+    const sc = sun.shadow.camera;
+    sc.left = -1.85; sc.right = 1.85; sc.top = 1.85; sc.bottom = -1.85;
+    sc.near = 2.0; sc.far = 9.0;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.bias = -0.00035;
+    sun.shadow.normalBias = 0.012;
+    scene.add(sun);
+    scene.add(new THREE.HemisphereLight(0x9fb6d8, 0x0a0d13, 0.34));
+    const rim = new THREE.DirectionalLight(0x9dc4ff, 0.62);
+    rim.position.set(-3.4, 2.2, 1.1);
+    scene.add(rim);
+
+    /* ── Zemin ─────────────────────────────────────────────────────
+       İLK DENEME YANLIŞTI: gölge yakalayıcı (ShadowMaterial) kondu ve
+       gölge HİÇ görünmedi. Sebep aliasing ya da gölge kamerası değildi —
+       tanım gereği görünmezdi: ShadowMaterial arkasındaki rengi KOYULTUR,
+       arkasında ise zaten neredeyse siyah (#05070b) arka plan vardı.
+       %42 koyultulmuş siyah, siyahtır.
+       Doğrusu: zemin GERÇEKTEN aydınlanan bir yüzey olsun (düşük albedo,
+       pürüzlü), gölgenin koyultacağı bir şey bulunsun. Kenarı sert
+       kesmesin diye yarıçapla sönen bir alfa haritası veriliyor.        */
+    function zeminAlfa() {
+      const S = 256, cv = document.createElement('canvas');
+      cv.width = cv.height = S;
+      const c2 = cv.getContext('2d');
+      const grd = c2.createRadialGradient(S / 2, S / 2, S * 0.06, S / 2, S / 2, S * 0.5);
+      grd.addColorStop(0.00, 'rgba(255,255,255,1)');
+      grd.addColorStop(0.55, 'rgba(255,255,255,0.72)');
+      grd.addColorStop(1.00, 'rgba(255,255,255,0)');
+      c2.fillStyle = grd; c2.fillRect(0, 0, S, S);
+      const tex = new THREE.CanvasTexture(cv);
+      tex.colorSpace = THREE.NoColorSpace;
+      return tex;
+    }
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(3.0, 96),
+      new THREE.MeshStandardMaterial({
+        color: 0x11161f, roughness: 0.94, metalness: 0.0,
+        transparent: true, alphaMap: zeminAlfa(), depthWrite: false,
+      })
+    );
+    ground.position.z = -0.46;
+    ground.receiveShadow = true;
+    scene.add(ground);
+    // Zemin halkası: aracın nereye oturduğunu okutan tek dekor öğesi.
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(1.32, 1.335, 96),
+      new THREE.MeshBasicMaterial({ color: 0x1b2331, transparent: true, opacity: 0.85 })
+    );
+    ring.position.z = -0.4585;
+    scene.add(ring);
+
+    /* ── Kesit düzlemi: kanadı gerçekten keser (clipping) ──────────── */
+    const clipPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);
+    renderer.localClippingEnabled = true;
+
+    /* ================= araç ================= */
+    const pivot = new THREE.Group();
+    scene.add(pivot);
+    let current = null, currentKind = null, currentPal = 'obsidyen';
+
+    function kur(kind) {
+      if (current) { pivot.remove(current); current.traverse((o) => { if (o.isMesh) o.geometry.dispose(); }); }
+      const opts = { scale: 2.0, palette: PALETLER[currentPal].p };
+      if (kind === 'delta') opts.droopNose = num('burun', 0);
+      current = AIRCRAFT_BUILDERS[kind]({ ...opts });
+      currentKind = kind;
+      pivot.add(current);
+      cerceveleAraci();
+      uygulaKesit();
+      yazMetrikler();
+      cizKesit();
+    }
+
+    // Araçlar aynı kutuya normalize edilir ama SİLUETLERİ çok farklıdır:
+    // planörün açıklığı 3,8 tasarım birimi, waverider'ınki 0,54. Sabit kamera
+    // mesafesinde planör kadraja sığmıyor, waverider ise kaybolmuş gibi
+    // duruyordu. Mesafe, sınır küresinden hesaplanır — bakış YÖNÜ korunur,
+    // yalnız uzaklık ölçeklenir, böylece kullanıcının çevirdiği açı bozulmaz.
+    const _bb = new THREE.Box3(), _kure = new THREE.Sphere();
+    function cerceveleAraci() {
+      _bb.setFromObject(current);
+      _bb.getBoundingSphere(_kure);
+      const yariFov = (camera.fov * Math.PI) / 360;
+      const d = (_kure.radius / Math.sin(yariFov)) * 0.92;
+      const yon = camera.position.clone().sub(controls.target).normalize();
+      controls.target.set(0, 0, 0);
+      camera.position.copy(yon.multiplyScalar(d));
+      controls.minDistance = d * 0.30;
+      controls.maxDistance = d * 4.0;
+      controls.update();
+    }
+
+    function uygulaKesit() {
+      const on = document.querySelector('#cut').checked;
+      const mat = [];
+      current.traverse((o) => { if (o.isMesh && !mat.includes(o.material)) mat.push(o.material); });
+      for (const mm of mat) mm.clippingPlanes = on ? [clipPlane] : null;
+    }
+
+    /* ================= ölçüm paneli ================= */
+    const nf = (v, n = 2) => (v == null ? '—' : v.toLocaleString('tr-TR',
+      { minimumFractionDigits: n, maximumFractionDigits: n }));
+
+    function yazMetrikler() {
+      const m = current.userData.metrics, notes = current.userData.notes || {};
+      const dl = document.querySelector('#mlist');
+      const rows = [];
+      const push = (k, v, dim) => rows.push(
+        `<dt>${k}</dt><dd${dim ? ' class="dim"' : ''}>${v}</dd>`);
+
+      if (m) {
+        push('açıklık oranı AR', `<b>${nf(m.aspectRatio)}</b>`);
+        if (m.aspectRatioRef != null) push('AR (referans trapez)', nf(m.aspectRatioRef));
+        push('kanat alanı S', nf(m.area, 3) + ' bd²', true);
+        push('açıklık b', nf(m.span, 3) + ' bd', true);
+        push('sivrilme λ', nf(m.taper));
+        push('süpürme Λ<sub>c/4</sub>', nf(m.sweepQC, 1) + '°');
+        const pan = m.sweepLEPanels || [];
+        const benzersiz = [...new Set(pan.map((v) => v.toFixed(0)))];
+        push('hücum kenarı Λ<sub>LE</sub>',
+          benzersiz.length > 1
+            ? `${pan[0].toFixed(0)}° → ${pan[pan.length - 1].toFixed(0)}°`
+            : nf(m.sweepLE, 1) + '°');
+        push('ort. aero. veter MAC', nf(m.mac, 3) + ' bd', true);
+        push('dihedral Γ', nf(m.dihedral, 1) + '°');
+        push('uçta burulma', nf(m.twistTip, 1) + '°');
+      }
+      const env = AIRCRAFT_ENVELOPE[currentKind];
+      if (env) push('tipik Mach', `${nf(env.machRange[0], 2)} – ${nf(env.machRange[1], 2)}`);
+      push('mesh parçası', String(current.userData.parts), true);
+      dl.innerHTML = rows.join('');
+
+      const ekNot = [];
+      if (m && m.aspectRatioRef != null) {
+        const pay = (1 - m.areaRef / m.area) * 100;
+        ekNot.push(`Ölçülen planform ile referans trapez arasındaki
+          <b>%${nf(pay, 1)}</b> fark, kök uzantısının (LERX) alanıdır:
+          yayımlanan AR referans trapezden hesaplanır, kök uzantısı ona girmez.`);
+      }
+      if (notes.why) ekNot.push(notes.why);
+      document.querySelector('#mnote').innerHTML =
+        (notes.regime ? `<b>${notes.regime}</b><br>` : '') + ekNot.join('<br><br>');
+    }
+
+    /* ================= kesit çizimi =================
+       Profil, komşu iki istasyonun NOKTA DİZİLERİ arasında karıştırılır.
+       Parametreleri (m, p, t) karıştırıp sonra profil üretmek DEĞİL — çünkü
+       loft da noktaları karıştırır; parametre karışımı kalınlıkta kareköklü
+       terim yüzünden birkaç binde bir sapar ve çizim ile mesh ayrışır.      */
+    const profCache = new Map();
+    function profil(naca) {
+      const key = typeof naca === 'string' ? naca : JSON.stringify(naca);
+      if (!profCache.has(key)) profCache.set(key, nacaSection(naca, 26));
+      return profCache.get(key);
+    }
+
+    function kesitAt(eta) {
+      const m = current.userData.metrics;
+      if (!m || !m.stations || m.stations.length < 2) return null;
+      const st = m.stations;
+      const yMax = st[st.length - 1].y;
+      const y = eta * yMax;
+      let i = 0;
+      while (i < st.length - 2 && st[i + 1].y < y) i++;
+      const a = st[i], b = st[i + 1];
+      const f = (b.y - a.y) < 1e-9 ? 0 : (y - a.y) / (b.y - a.y);
+      const pa = profil(a.naca), pb = profil(b.naca);
+      const pts = pa.map((p, k) => [p[0] + (pb[k][0] - p[0]) * f, p[1] + (pb[k][1] - p[1]) * f]);
+      return {
+        pts, y,
+        chord: a.chord + (b.chord - a.chord) * f,
+        twist: a.twist + (b.twist - a.twist) * f,
+      };
+    }
+
+    function cizKesit() {
+      const eta = Number(document.querySelector('#eta').value) / 100;
+      document.querySelector('#etaLabel').textContent = '%' + Math.round(eta * 100);
+      const k = kesitAt(eta);
+      const svg = document.querySelector('#foil');
+      if (!k) {
+        // Waverider'da gövde ile kanat AYRI YÜZEY DEĞİL: tek karışık (blended)
+        // loft var, dolayısıyla bir kanat istasyon tablosu da yok. Paneli boş
+        // bırakmak "bozuk" gibi görünüyordu; sebebi yazmak daha dürüst.
+        svg.innerHTML = `<text x="160" y="52" fill="#6f7686" font-size="11" text-anchor="middle">
+            kanat istasyon tablosu yok</text>
+          <text x="160" y="70" fill="#4d5464" font-size="10" text-anchor="middle">
+            gövde ve kanat tek karışık yüzey — ayrı bir kanat kesiti tanımlı değil</text>`;
+        for (const id of ['#rChord', '#rT', '#rM', '#rTw']) document.querySelector(id).textContent = '—';
+        return;
+      }
+
+      // Kalınlık ve kamburluk ÖLÇÜLÜR (karışmış profilden), okunmaz.
+      const N = (k.pts.length - 1) / 2;
+      let tMax = 0, mMax = 0, xT = 0, xM = 0;
+      for (let i = 0; i <= N; i++) {
+        const up = k.pts[N - i], dn = k.pts[N + i];
+        const th = up[1] - dn[1], cm = (up[1] + dn[1]) / 2, xx = (up[0] + dn[0]) / 2;
+        if (th > tMax) { tMax = th; xT = xx; }
+        if (Math.abs(cm) > Math.abs(mMax)) { mMax = cm; xM = xx; }
+      }
+
+      const W = 320, H = 108, pad = 16;
+      const sx = (W - 2 * pad);
+      const yc = H * 0.52;
+      const kx = (x) => pad + x * sx;
+      const ky = (z) => yc - z * sx;
+      const d = k.pts.map((p, i) => (i ? 'L' : 'M') + kx(p[0]).toFixed(2) + ' ' + ky(p[1]).toFixed(2)).join(' ') + ' Z';
+      // Kamburluk çizgisi: üst ve alt yüzeyin ORTA noktaları.
+      const camb = [];
+      for (let i = 0; i <= N; i++) {
+        const up = k.pts[N - i], dn = k.pts[N + i];
+        camb.push([(up[0] + dn[0]) / 2, (up[1] + dn[1]) / 2]);
+      }
+      const dc = camb.map((p, i) => (i ? 'L' : 'M') + kx(p[0]).toFixed(2) + ' ' + ky(p[1]).toFixed(2)).join(' ');
+
+      svg.innerHTML = `
+        <line x1="${kx(0)}" y1="${yc}" x2="${kx(1)}" y2="${yc}" stroke="#242b3a" stroke-width="1" stroke-dasharray="3 3"/>
+        <path d="${d}" fill="rgba(201,163,92,.13)" stroke="#c9a35c" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="${dc}" fill="none" stroke="#5f9ee0" stroke-width="1.1" stroke-dasharray="4 3"/>
+        <circle cx="${kx(0.25)}" cy="${yc}" r="2.6" fill="none" stroke="#8a90a0" stroke-width="1"/>
+        <text x="${kx(0.25)}" y="${yc + 16}" fill="#6f7686" font-size="9" text-anchor="middle">c/4</text>
+        <text x="${kx(0)}" y="${yc - 26}" fill="#6f7686" font-size="9">hücum kenarı</text>
+        <text x="${kx(1)}" y="${yc - 26}" fill="#6f7686" font-size="9" text-anchor="end">firar kenarı</text>`;
+
+      document.querySelector('#rChord').textContent = nf(k.chord, 3) + ' bd';
+      document.querySelector('#rT').textContent = '%' + nf(tMax * 100, 1);
+      document.querySelector('#rM').textContent = '%' + nf(mMax * 100, 1) + ' @ ' + nf(xM, 2) + 'c';
+      document.querySelector('#rTw').textContent = nf(k.twist, 1) + '°';
+
+      // Kesit düzlemini o istasyona taşı: panelin gösterdiği yer ile sahnenin
+      // kestiği yer AYNI olsun. Düzlem normali (0,−1,0) olduğu için
+      // −y + c ≥ 0 ⇒ y ≤ c korunur; c = kesim istasyonunun DÜNYA y'si.
+      // Tasarım biriminden dünyaya geçiş modelScale ile olur (kanat y'de
+      // simetrik olduğundan finalize'ın merkezleme ötelemesi y'de sıfırdır).
+      clipPlane.constant = k.y * (current.userData.modelScale || 1);
+    }
+
+    /* ================= arayüz ================= */
+    const kindSel = document.querySelector('#kind');
+    for (const key of Object.keys(AIRCRAFT_BUILDERS)) {
+      const o = document.createElement('option');
+      o.value = key; o.textContent = AIRCRAFT_ENVELOPE[key]?.label || key;
+      kindSel.appendChild(o);
+    }
+    const palSel = document.querySelector('#pal');
+    for (const [key, v] of Object.entries(PALETLER)) {
+      const o = document.createElement('option');
+      o.value = key; o.textContent = v.ad;
+      palSel.appendChild(o);
+    }
+
+    kindSel.value = AIRCRAFT_BUILDERS[q.get('arac')] ? q.get('arac') : 'airliner';
+    palSel.value = PALETLER[q.get('pal')] ? q.get('pal') : 'obsidyen';
+    currentPal = palSel.value;
+    document.querySelector('#cut').checked = q.get('kesit') === '1';
+    if (q.has('eta')) document.querySelector('#eta').value = String(Math.round(num('eta', 0.4) * 100));
+
+    kindSel.onchange = () => kur(kindSel.value);
+    palSel.onchange = () => {
+      currentPal = palSel.value;
+      // Görünür araç YENİDEN KURULMAZ — malzeme renkleri yerinde tazelenir.
+      if (!applyAircraftPalette(current, PALETLER[currentPal].p)) kur(currentKind);
+    };
+    document.querySelector('#cut').onchange = uygulaKesit;
+    document.querySelector('#eta').oninput = cizKesit;
+    document.querySelector('#fs').onclick = () => {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    };
+    for (const a of document.querySelectorAll('#presets a')) {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        const p = new URLSearchParams(a.getAttribute('href').slice(1));
+        kindSel.value = p.get('arac') || kindSel.value;
+        if (p.has('kesit')) document.querySelector('#cut').checked = p.get('kesit') === '1';
+        if (p.has('eta')) document.querySelector('#eta').value = String(Math.round(Number(p.get('eta')) * 100));
+        kur(kindSel.value);
+      });
+    }
+
+    kur(kindSel.value);
+
+    /* ================= çevrim ================= */
+    function resize() {
+      const w = stage.clientWidth, h = stage.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(stage);
+    resize();
+
+    const donmusMod = q.has('t');
+    let saat = 0;
+    function adim(dt) {
+      saat += dt;
+      if (document.querySelector('#spin').checked) pivot.rotation.z += dt * 0.22;
+    }
+    function ciz() { controls.update(); renderer.render(scene, camera); }
+
+    // NOT: donmuş mod rozeti AŞAĞIDA, donmusMod tanımlandıktan SONRA kurulur.
+    // (Yukarı konduğunda `const donmusMod` henüz TDZ'de olduğu için modül
+    // ReferenceError ile ölüyor ve tuval SİYAH kalıyordu — craft-blocks'ta
+    // bir kez yaşandı, tekrarlanmasın.)
+    //
+    // DONMUŞ KİP ZAMANI DURDURUR, ÇİZİMİ DEĞİL. Tek kare çizip rAF'ı hiç
+    // kurmamak cazip görünüyor ama iki şeyi bozuyor: (1) pencere yeniden
+    // boyutlandığında tuval bayat kalıyor, (2) headless kare yakalamada
+    // tuval katmanı yeniden birleştirilmediği için ekran görüntüsü SİYAH
+    // çıkıyor — bu sayfada tam olarak bu yaşandı, tuval boş geldi. rAF her
+    // zaman döner; donmuş kipte yalnız dt = 0 olur, böylece sahne
+    // deterministik kalır ve kullanıcı yine de yörüngede gezebilir.
+    if (donmusMod) {
+      const t = num('t', 0);
+      const STEP = 1 / 60;
+      for (let s = 0; s < t - 1e-9; s += STEP) adim(Math.min(STEP, t - s));
+      document.documentElement.dataset.frozenAt = String(t);
+      const rozet = document.createElement('div');
+      rozet.textContent = 'donmuş kare · t = ' + t.toFixed(2) + ' s';
+      rozet.style.cssText = 'position:absolute;left:22px;bottom:16px;z-index:6;color:#6f7686;' +
+        'font-size:11px;letter-spacing:.06em;';
+      document.body.appendChild(rozet);
+    }
+
+    let onceki = performance.now();
+    (function tik(now) {
+      requestAnimationFrame(tik);
+      const dt = Math.min(0.05, (now - onceki) / 1000);
+      onceki = now;
+      if (!donmusMod) adim(dt);
+      ciz();
+    })(onceki);
+
+    window.__aircraft = { scene, camera, renderer, current: () => current, kur, adim,
+                          metrics: () => current.userData.metrics };
+  </script>
+</body>
+</html>

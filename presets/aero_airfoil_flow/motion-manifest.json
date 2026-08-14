@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "airfoil-panel-potential-flow",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Solve the flow around an aerofoil rather than illustrate it: every curve, arrow and number on the page comes out of one linear system, so the picture and the coefficients cannot disagree.",
+      "model": "Linear-strength vortex panel method (Kuethe and Chow). The section is a NACA 4-digit profile with cosine point spacing, cut into 160 panels with an unknown vortex strength at each of the 161 nodes varying linearly along each panel. 160 flow-tangency equations at panel midpoints plus the Kutta condition gamma_first + gamma_last = 0 close the system, which is solved by Gauss elimination with partial pivoting. Surface tangential velocity follows from the same influence coefficients, and Cp = 1 - (Vt/Vinf)^2. Lift is computed TWICE by independent routes - Kutta-Joukowski Cl = 2*Gamma/(Vinf*c) with Gamma = 2*pi times the integral of the solved strengths, and a direct integral of surface pressure - and the difference is printed as a residual (about 0.6 percent at 160 panels). Validation against published values: NACA 0012 lift-curve slope comes out 1.10 times 2*pi (thin-airfoil theory plus the expected thickness correction); NACA 2412 zero-lift angle -2.15 degrees against a literature value near -2.1 and against this page's own thin-airfoil integral of -2.08; Cm about the quarter chord -0.055 against a literature value near -0.05; maximum Cp 0.9957 where the stagnation value must be exactly 1; critical Mach for NACA 0012 at zero incidence 0.744 against a literature value near 0.74.",
+      "limitations": "Potential flow: inviscid, incompressible, irrotational, two-dimensional. It cannot produce drag - the small non-zero value printed as the d'Alembert residual is discretisation error and is labelled as such. It cannot produce a shock, a separated wake, or any unsteady behaviour. Compressibility enters only as the Prandtl-Glauert factor, valid for thin bodies in subsonic flow; above the critical Mach number the page says so and states that the displayed Cp is an extrapolation. The Kutta condition is imposed, not derived - which is precisely why it can be switched off.",
+      "reducedMotion": "The dye rakes can be switched off; everything else on the page is static and updates only when a control moves.",
+      "exportState": "?export=1 hides the controls; ?t= advances the dye rakes to a stated time and then stops advancing while continuing to redraw.",
+      "accessibility": "Every result is printed as a number with its name: both lift coefficients and their difference, drag, moment, circulation, zero-lift angle, transition and separation positions, minimum Cp, critical Mach. The pressure plot labels its inverted axis. No conclusion depends on colour.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "airfoil-kutta-switch",
+      "type": "state-transition",
+      "truthLevel": "analytic",
+      "purpose": "Show what the Kutta condition actually does by removing it: the single most direct demonstration available of where lift comes from.",
+      "model": "With the switch off, the closing equation gamma_first + gamma_last = 0 is replaced by a zero-total-circulation constraint, integral of gamma ds = 0. The solution then satisfies flow tangency everywhere but carries no circulation: measured Gamma is 0.000000 and Cl is 0.000000 at 8 degrees incidence, the rear stagnation point climbs onto the upper surface, and the flow turns the sharp trailing edge with a velocity spike (minimum Cp falls to about -66, i.e. a local speed above eight times freestream - the mathematical singularity a sharp edge produces when circulation is not there to remove it). The d'Alembert residual grows by an order of magnitude in this state, which is itself the signature of that singularity.",
+      "limitations": "The zero-circulation state is not a physically realisable steady flow - viscosity destroys it within the first instants of motion by shedding a starting vortex. The page shows the potential-flow solution that WOULD exist without that mechanism; it does not simulate the shedding. The trailing-edge velocity spike is a genuine singularity, so the numbers there are mesh-dependent by nature.",
+      "reducedMotion": "Unaffected - this is a state change, not a motion.",
+      "exportState": "The state is carried by ?kutta=0 and the note explaining it stays in the export because it lives in the readout panel, not in a tooltip.",
+      "accessibility": "The switch's consequence is stated in a sentence in the notes panel, and both the circulation and lift read exactly zero as numbers.",
+      "loop": false,
+      "pauseControl": false
+    },
+    {
+      "id": "airfoil-equal-transit-myth",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Kill the most widespread wrong explanation of lift by measuring it: two particles released on either side of the dividing streamline do NOT arrive together, and the size of the disagreement is put on screen.",
+      "model": "The dividing streamline's upstream height is found by bisection - integrate a tracer forward through the velocity field and ask whether it passed above or below the section, thirty times - and then one tracer is released just above it and one just below. Both are advected by RK4 through the same panel-method velocity field until they reach x = 1.25 chords, and the two arrival times are printed. At 6 degrees on a NACA 2412 the upper particle arrives about 18 percent earlier. With the Kutta condition switched off the same measurement returns a difference of about zero - which is the whole point: equal transit time is what a NO-CIRCULATION flow looks like, and a no-circulation flow has no lift.",
+      "limitations": "The two tracers are released a finite distance from the dividing streamline because the velocity field is stored on a grid whose cells are 0.014 chords; the page searches for the smallest offset at which both tracers survive and PRINTS that offset rather than hiding it. Above roughly 12 degrees the lower tracer must round the nose closer than one grid cell and the measurement becomes unavailable; the page says that this is a resolution limit rather than a physical result. The measurement is of the inviscid velocity field and takes no account of the boundary layer.",
+      "reducedMotion": "The two tracer paths are drawn statically; the animated dye rakes that make the same point continuously can be switched off.",
+      "exportState": "Both times and the offset used are baked into the exported still.",
+      "accessibility": "The result is a sentence with two times and a percentage, not only two coloured lines.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "airfoil-boundary-layer",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Give the page the one thing potential flow cannot: drag, transition and separation - so that stall appears as a consequence rather than as a drawn curve.",
+      "model": "The potential solution's edge velocity feeds a standard integral chain marched from the stagnation point along each surface. Laminar: Thwaites' method, theta^2 = 0.45*nu/Ue^6 times the integral of Ue^5 ds, with the correlations for shape factor and skin friction in lambda = theta^2/nu times dUe/ds. Transition: Michel's criterion, Re_theta greater than 1.174(1 + 22400/Re_s)Re_s^0.46. Turbulent: Head's entrainment method with the Ludwieg-Tillmann skin-friction law, separating at shape factor 2.4. Drag: Squire-Young, Cd = 2(theta_TE/c)(Ue_TE/Vinf)^((H_TE+5)/2), summed over both surfaces. At Re = 3e6 on a NACA 2412 this gives Cd about 0.0035 at zero incidence rising to 0.021 at 16 degrees, with upper-surface separation walking forward from 99 percent chord to 77 percent - the walk IS the stall mechanism.",
+      "limitations": "Integral methods, not a boundary-layer solve: no laminar separation bubble is modelled. When laminar separation is predicted the code assumes a short bubble and transitions there, which is the standard integral-method convention and is flagged on screen when it happens. Because of that assumption the chain over-predicts attachment, so the page states a separation CRITERION and explicitly declines to claim a maximum lift coefficient: measured separation reaches half chord near 21 degrees whereas a real NACA 2412 stalls near 16. Transition is predicted for a smooth surface in low-turbulence flow; roughness, free-stream turbulence and surface waviness all move it forward and none are modelled.",
+      "reducedMotion": "Static.",
+      "exportState": "Transition and separation markers stay on both the section and the pressure plot.",
+      "accessibility": "Transition and separation are printed as x/c numbers as well as marked; the separation figure turns amber and a sentence explains what it means for the validity of the inviscid lift.",
+      "loop": false,
+      "pauseControl": false
+    },
+    {
+      "id": "airfoil-compressibility",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Show where the incompressible answer stops being an answer, using the classical correction and the classical limit on it.",
+      "model": "Prandtl-Glauert scales pressure coefficient by 1/sqrt(1-M^2). The critical pressure coefficient - the value at which local flow first reaches Mach 1 - follows from the isentropic relation Cp* = (2/(gamma M^2))[((1+0.2M^2)/1.2)^3.5 - 1] with gamma = 1.4, and is drawn on the pressure plot as a moving dashed line. The critical Mach number is found by bisecting for the freestream Mach at which the scaled minimum Cp meets Cp*.",
+      "limitations": "Prandtl-Glauert is a thin-body, small-perturbation, subsonic result: it becomes unreliable well before M = 1 and diverges at it. Above the critical Mach number there is a supersonic pocket terminated by a shock, which this method cannot represent at all - the page says so and marks the state rather than continuing to draw a plausible curve.",
+      "reducedMotion": "Static.",
+      "exportState": "The Mach value, the critical Mach and the exceedance warning are all in the export.",
+      "accessibility": "The critical-Mach reading turns amber when exceeded and a sentence states what has stopped being valid.",
+      "loop": false,
+      "pauseControl": false
+    }
+  ]
+}
