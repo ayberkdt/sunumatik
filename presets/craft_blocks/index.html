@@ -452,20 +452,9 @@
       kareIste();
       ciz();
     });
-    // Donmuş modda (?t= · ?export=1 · azaltılmış hareket) sahne zamanı hiç
-    // akmaz; Duraklat sessizce işlevsizdir. Bu SESSİZLİK bir kez gerçek kafa
-    // karışıklığına yol açtı (demo kartına ?t=2 konmuştu: alev donuk, tornalar
-    // duruyor, Duraklat tepkisiz — "bug" gibi okundu). Artık durumu söyler.
-    if (donmusMod) {
-      durButon.disabled = true;
-      durButon.textContent = 'Donmuş kare';
-      durButon.title = sabitT !== null
-        ? `Sabit-zaman modu (?t=${sabitT}): sahne bu ânda dondurulmuştur.`
-        : (disaAktarim ? 'Dışa aktarım modu: sahne son karede dondurulmuştur.'
-                       : 'Sistem "hareketi azalt" ayarı açık: sahne dondurulmuştur.');
-      durButon.style.opacity = '0.55';
-      durButon.style.cursor = 'default';
-    }
+    // NOT: donmuş mod rozeti AŞAĞIDA, donmusMod tanımlandıktan SONRA kurulur.
+    // (Buraya konduğunda `const donmusMod` henüz TDZ'de olduğu için modül
+    //  "Cannot access 'donmusMod' before initialization" ile ölüyordu.)
 
     // Sahne zamanı gerçekten akıyor mu? (duraklatılmış / donmuş modda AKMAZ —
     // bu durumlarda ateşleme ve gaz değişimi deterministik sarma ile gösterilir,
@@ -600,6 +589,21 @@
     // için sahne o âna deterministik sarılıp DONDURULUR.
     const sabitT = sorgu.has('t') ? Math.max(0, parseFloat(sorgu.get('t')) || 0) : null;
     const donmusMod = azaltilmis || disaAktarim || sabitT !== null;
+
+    // Donmuş modda (?t= · ?export=1 · azaltılmış hareket) sahne zamanı hiç
+    // akmaz; Duraklat sessizce işlevsizdir. Bu SESSİZLİK bir kez gerçek kafa
+    // karışıklığına yol açtı (demo kartına ?t=2 sızmıştı: alev donuk, tornalar
+    // duruyor, Duraklat tepkisiz — "bug" gibi okundu). Artık durumu söyler.
+    if (donmusMod) {
+      durButon.disabled = true;
+      durButon.textContent = 'Donmuş kare';
+      durButon.title = sabitT !== null
+        ? `Sabit-zaman modu (?t=${sabitT}): sahne bu ânda dondurulmuştur.`
+        : (disaAktarim ? 'Dışa aktarım modu: sahne son karede dondurulmuştur.'
+                       : 'Sistem "hareketi azalt" ayarı açık: sahne dondurulmuştur.');
+      durButon.style.opacity = '0.55';
+      durButon.style.cursor = 'default';
+    }
 
     function ciz() {
       pivotlar.forEach((pv, i) => { pv.rotation.y = FAZLAR[i] + HIZ * t; });
