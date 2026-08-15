@@ -194,7 +194,13 @@ export function createLBM({ nx = 440, ny = 150, U = 0.06, D = 18, re = 120, soli
   function strouhal() {
     if (gecisler.length < 4) return null;
     const T = (gecisler[gecisler.length - 1] - gecisler[0]) / (gecisler.length - 1);
-    if (!(T > 0)) return null;
+    // MAKUL PERİYOT KAPISI. Çözüm ıraksarsa Cl her adımda işaret değiştirir,
+    // ölçülen periyot 2-3 adıma iner ve St 100'ün üzerinde saçma bir sayı
+    // olarak ekrana basılır. Fiziksel salınım periyodu D/(St·U) mertebesindedir
+    // ve bu ayarlarda birkaç yüz adımdır; 40 adımın altındaki bir periyot
+    // ölçüm değil, gürültüdür.
+    if (!(T > 40)) return null;
+    if (!Number.isFinite(cdSon) || !Number.isFinite(clSon)) return null;
     return (D / U) / T;
   }
 

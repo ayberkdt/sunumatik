@@ -140,7 +140,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <div class="stars" aria-hidden="true"></div>
   <p class="eyebrow">SUNUMATİK</p>
   <h1>Canlı Katalog</h1>
-  <p class="sub">38 preset · 9 kategori · her kart canlı çalışır</p>
+  <p class="sub">39 preset · 9 kategori · her kart canlı çalışır</p>
   <p class="not">Bu deste <b>otomatik üretilir</b> — kütüphaneye eklenen her yeni preset,
      bir sonraki aktarımda kendiliğinden burada belirir.</p>
   <p class="hint">→ ile ilerleyin · <kbd>G</kbd> dizin · <kbd>Esc</kbd> kapat</p>
@@ -361,7 +361,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <p class="num">03</p>
   <h2>Havacılık ve Akışkanlar</h2>
   <p class="sub">Akım gerçekten çözülür: panel yöntemi, sınır tabakası, kafes Boltzmann.</p>
-  <p class="uyeler">Uçak Blokları · Profil Etrafında Akım · Şok ve Genleşme Dalgaları</p>
+  <p class="uyeler">Uçak Blokları · Profil Etrafında Akım · Şok ve Genleşme Dalgaları · Kármán Vorteks Caddesi</p>
 </section>
 
 <section class="slide card" data-tur="kart" data-kat="havacilik" data-embed="../presets/aircraft_blocks/index.html?arac=airliner">
@@ -421,6 +421,26 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <div class="sahne">
     <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
     <iframe title="Şok ve Genleşme Dalgaları önizleme" loading="lazy" data-src="../presets/aero_shock_waves/index.html?m=2&amp;a=4&amp;e=5.7"></iframe>
+  </div>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="havacilik" data-embed="../presets/aero_vortex_street/index.html?re=100">
+  <div class="bilgi">
+    <p class="eyebrow">Havacılık ve Akışkanlar <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Kármán Vorteks Caddesi</h2>
+    <p class="hook">Salınım hiçbir yerde programlanmadı: kafes Boltzmann denklemleri çözülüyor ve cadde kendiliğinden doğuyor.</p>
+    <ul class="feats">
+      <li>ÖLÇÜLEN Strouhal 0,157 · Roshko bağıntısı 0,167 — %6,2 fark, elle konsa bu karşılaştırmanın anlamı olmazdı</li>
+      <li>Re 40&#x27;ta salınım YOK (kritik Re ≈ 47&#x27;nin altı), Re 100&#x27;de tam cadde — geçiş kendiliğinden</li>
+      <li>D2Q9 + TRT çarpışma: Λ = 3/16 sıçratmalı duvarı iki düğümün tam ortasına oturtur</li>
+      <li>Reynolds üst sınırı 120 ölçülmüş bir sınırdır: 140&#x27;ta çözüm 9 000 adımdan önce ıraksıyor</li>
+    </ul>
+    <p class="yol"><code>presets/aero_vortex_street/index.html?re=100</code></p>
+    <a class="ac" href="../presets/aero_vortex_street/index.html?re=100" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Kármán Vorteks Caddesi önizleme" loading="lazy" data-src="../presets/aero_vortex_street/index.html?re=100"></iframe>
   </div>
 </section>
 
@@ -957,10 +977,10 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <button id="geri" aria-label="Önceki">←</button>
   <button id="ileri" aria-label="Sonraki">→</button>
 </div>
-<button id="sayac" title="Dizin (G)">1 / 50</button>
+<button id="sayac" title="Dizin (G)">1 / 51</button>
 <div id="dizin" role="dialog" aria-label="Dizin"></div>
 <script>
-const TOC = [{"i": 0, "ad": "Kapak", "tur": "kapak", "kat": ""}, {"i": 1, "ad": "Yörünge Sahnesi", "tur": "bolum", "kat": "orbital"}, {"i": 2, "ad": "Yörünge Sahnesi", "tur": "kart", "kat": "orbital"}, {"i": 3, "ad": "Araç Blokları", "tur": "kart", "kat": "orbital"}, {"i": 4, "ad": "Ay'a Motorlu İniş", "tur": "kart", "kat": "orbital"}, {"i": 5, "ad": "ML Sahneleri", "tur": "bolum", "kat": "ml"}, {"i": 6, "ad": "Kayıp Yüzeyi", "tur": "kart", "kat": "ml"}, {"i": 7, "ad": "Dikkat Akışı", "tur": "kart", "kat": "ml"}, {"i": 8, "ad": "Mimari Kurucu", "tur": "kart", "kat": "ml"}, {"i": 9, "ad": "Katman Blokları", "tur": "kart", "kat": "ml"}, {"i": 10, "ad": "Evrişimli Görü", "tur": "kart", "kat": "ml"}, {"i": 11, "ad": "Kayıp Fonksiyonları", "tur": "kart", "kat": "ml"}, {"i": 12, "ad": "Sinir Ağı Yürüyüşü", "tur": "kart", "kat": "ml"}, {"i": 13, "ad": "Havacılık ve Akışkanlar", "tur": "bolum", "kat": "havacilik"}, {"i": 14, "ad": "Uçak Blokları", "tur": "kart", "kat": "havacilik"}, {"i": 15, "ad": "Profil Etrafında Akım", "tur": "kart", "kat": "havacilik"}, {"i": 16, "ad": "Şok ve Genleşme Dalgaları", "tur": "kart", "kat": "havacilik"}, {"i": 17, "ad": "Haberleşme", "tur": "bolum", "kat": "haberlesme"}, {"i": 18, "ad": "Anten ve Yer İstasyonu", "tur": "kart", "kat": "haberlesme"}, {"i": 19, "ad": "Bağlantı Bütçesi", "tur": "kart", "kat": "haberlesme"}, {"i": 20, "ad": "Gök Cisimleri ve Fonlar", "tur": "bolum", "kat": "gok"}, {"i": 21, "ad": "Güneş", "tur": "kart", "kat": "gok"}, {"i": 22, "ad": "Ay", "tur": "kart", "kat": "gok"}, {"i": 23, "ad": "Dünya", "tur": "kart", "kat": "gok"}, {"i": 24, "ad": "Gezegenler", "tur": "kart", "kat": "gok"}, {"i": 25, "ad": "Kozmos Fonu", "tur": "kart", "kat": "gok"}, {"i": 26, "ad": "Aurora", "tur": "kart", "kat": "gok"}, {"i": 27, "ad": "JWST Kaşifi", "tur": "kart", "kat": "gok"}, {"i": 28, "ad": "Denklem ve Anlatım", "tur": "bolum", "kat": "anlatim"}, {"i": 29, "ad": "Denklem Kalemi", "tur": "kart", "kat": "anlatim"}, {"i": 30, "ad": "Türetme Adımları", "tur": "kart", "kat": "anlatim"}, {"i": 31, "ad": "Figür Anlatımı", "tur": "kart", "kat": "anlatim"}, {"i": 32, "ad": "Zaman Çizelgesi", "tur": "kart", "kat": "anlatim"}, {"i": 33, "ad": "Veri, Grafik ve Hareket", "tur": "bolum", "kat": "veri"}, {"i": 34, "ad": "Grafik Motoru", "tur": "kart", "kat": "veri"}, {"i": 35, "ad": "Hareket Primitifleri", "tur": "kart", "kat": "veri"}, {"i": 36, "ad": "Tablo Sahnesi", "tur": "kart", "kat": "veri"}, {"i": 37, "ad": "Slayt Geçişleri", "tur": "kart", "kat": "veri"}, {"i": 38, "ad": "Etkileşim Efektleri", "tur": "kart", "kat": "veri"}, {"i": 39, "ad": "Tasarım Sistemi", "tur": "bolum", "kat": "tasarim"}, {"i": 40, "ad": "Kompozisyon Kılavuzu", "tur": "kart", "kat": "tasarim"}, {"i": 41, "ad": "Tipografi Sistemi", "tur": "kart", "kat": "tasarim"}, {"i": 42, "ad": "Palet Galerisi", "tur": "kart", "kat": "tasarim"}, {"i": 43, "ad": "İkon Katmanları", "tur": "bolum", "kat": "ikon"}, {"i": 44, "ad": "Alan İkonları", "tur": "kart", "kat": "ikon"}, {"i": 45, "ad": "Utility İkonlar", "tur": "kart", "kat": "ikon"}, {"i": 46, "ad": "Kahraman Bilim İkonları", "tur": "kart", "kat": "ikon"}, {"i": 47, "ad": "Arşiv", "tur": "bolum", "kat": "arsiv"}, {"i": 48, "ad": "Analitik Ay Yörüngesi", "tur": "kart", "kat": "arsiv"}, {"i": 49, "ad": "Kapanış", "tur": "kapanis", "kat": ""}];
+const TOC = [{"i": 0, "ad": "Kapak", "tur": "kapak", "kat": ""}, {"i": 1, "ad": "Yörünge Sahnesi", "tur": "bolum", "kat": "orbital"}, {"i": 2, "ad": "Yörünge Sahnesi", "tur": "kart", "kat": "orbital"}, {"i": 3, "ad": "Araç Blokları", "tur": "kart", "kat": "orbital"}, {"i": 4, "ad": "Ay'a Motorlu İniş", "tur": "kart", "kat": "orbital"}, {"i": 5, "ad": "ML Sahneleri", "tur": "bolum", "kat": "ml"}, {"i": 6, "ad": "Kayıp Yüzeyi", "tur": "kart", "kat": "ml"}, {"i": 7, "ad": "Dikkat Akışı", "tur": "kart", "kat": "ml"}, {"i": 8, "ad": "Mimari Kurucu", "tur": "kart", "kat": "ml"}, {"i": 9, "ad": "Katman Blokları", "tur": "kart", "kat": "ml"}, {"i": 10, "ad": "Evrişimli Görü", "tur": "kart", "kat": "ml"}, {"i": 11, "ad": "Kayıp Fonksiyonları", "tur": "kart", "kat": "ml"}, {"i": 12, "ad": "Sinir Ağı Yürüyüşü", "tur": "kart", "kat": "ml"}, {"i": 13, "ad": "Havacılık ve Akışkanlar", "tur": "bolum", "kat": "havacilik"}, {"i": 14, "ad": "Uçak Blokları", "tur": "kart", "kat": "havacilik"}, {"i": 15, "ad": "Profil Etrafında Akım", "tur": "kart", "kat": "havacilik"}, {"i": 16, "ad": "Şok ve Genleşme Dalgaları", "tur": "kart", "kat": "havacilik"}, {"i": 17, "ad": "Kármán Vorteks Caddesi", "tur": "kart", "kat": "havacilik"}, {"i": 18, "ad": "Haberleşme", "tur": "bolum", "kat": "haberlesme"}, {"i": 19, "ad": "Anten ve Yer İstasyonu", "tur": "kart", "kat": "haberlesme"}, {"i": 20, "ad": "Bağlantı Bütçesi", "tur": "kart", "kat": "haberlesme"}, {"i": 21, "ad": "Gök Cisimleri ve Fonlar", "tur": "bolum", "kat": "gok"}, {"i": 22, "ad": "Güneş", "tur": "kart", "kat": "gok"}, {"i": 23, "ad": "Ay", "tur": "kart", "kat": "gok"}, {"i": 24, "ad": "Dünya", "tur": "kart", "kat": "gok"}, {"i": 25, "ad": "Gezegenler", "tur": "kart", "kat": "gok"}, {"i": 26, "ad": "Kozmos Fonu", "tur": "kart", "kat": "gok"}, {"i": 27, "ad": "Aurora", "tur": "kart", "kat": "gok"}, {"i": 28, "ad": "JWST Kaşifi", "tur": "kart", "kat": "gok"}, {"i": 29, "ad": "Denklem ve Anlatım", "tur": "bolum", "kat": "anlatim"}, {"i": 30, "ad": "Denklem Kalemi", "tur": "kart", "kat": "anlatim"}, {"i": 31, "ad": "Türetme Adımları", "tur": "kart", "kat": "anlatim"}, {"i": 32, "ad": "Figür Anlatımı", "tur": "kart", "kat": "anlatim"}, {"i": 33, "ad": "Zaman Çizelgesi", "tur": "kart", "kat": "anlatim"}, {"i": 34, "ad": "Veri, Grafik ve Hareket", "tur": "bolum", "kat": "veri"}, {"i": 35, "ad": "Grafik Motoru", "tur": "kart", "kat": "veri"}, {"i": 36, "ad": "Hareket Primitifleri", "tur": "kart", "kat": "veri"}, {"i": 37, "ad": "Tablo Sahnesi", "tur": "kart", "kat": "veri"}, {"i": 38, "ad": "Slayt Geçişleri", "tur": "kart", "kat": "veri"}, {"i": 39, "ad": "Etkileşim Efektleri", "tur": "kart", "kat": "veri"}, {"i": 40, "ad": "Tasarım Sistemi", "tur": "bolum", "kat": "tasarim"}, {"i": 41, "ad": "Kompozisyon Kılavuzu", "tur": "kart", "kat": "tasarim"}, {"i": 42, "ad": "Tipografi Sistemi", "tur": "kart", "kat": "tasarim"}, {"i": 43, "ad": "Palet Galerisi", "tur": "kart", "kat": "tasarim"}, {"i": 44, "ad": "İkon Katmanları", "tur": "bolum", "kat": "ikon"}, {"i": 45, "ad": "Alan İkonları", "tur": "kart", "kat": "ikon"}, {"i": 46, "ad": "Utility İkonlar", "tur": "kart", "kat": "ikon"}, {"i": 47, "ad": "Kahraman Bilim İkonları", "tur": "kart", "kat": "ikon"}, {"i": 48, "ad": "Arşiv", "tur": "bolum", "kat": "arsiv"}, {"i": 49, "ad": "Analitik Ay Yörüngesi", "tur": "kart", "kat": "arsiv"}, {"i": 50, "ad": "Kapanış", "tur": "kapanis", "kat": ""}];
 const slaytlar = [...document.querySelectorAll('.slide')];
 const sayac = document.getElementById('sayac');
 const dizin = document.getElementById('dizin');
