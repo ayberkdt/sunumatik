@@ -425,6 +425,66 @@ function loftBody(stations, mat, { nAround = 28 } = {}) {
 
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 
+
+/* ================================================================== */
+/* EKSEN YARDIMCILARI — çeviriyi TEK YERE hapseder                    */
+/* ================================================================== */
+//
+// three.js'te CylinderGeometry, LatheGeometry ve ConeGeometry'nin ekseni
+// HER ZAMAN +Y'dir. Blok sözleşmesi ise "+X ileri, +Z yukarı" der. Bu
+// çeviriyi her çağrı yerinde elle yazmak tek bir oturumda BEŞ ayrı hataya
+// yol açtı (uçak kuyrukları, Starship burnu, helikopter mili, sonda çanağı,
+// gezgin tekerlekleri) ve hepsini kullanıcı ekran görüntüsüyle buldu.
+//
+// Kural: çıplak `new THREE.CylinderGeometry/LatheGeometry/ConeGeometry`
+// KULLANILMAZ; aşağıdaki adlandırılmış yardımcılar kullanılır. Adında hangi
+// eksen yazıyorsa geometrinin ekseni odur — okuyanın işaret hesabı yapması
+// gerekmez. `scripts/eksen-denetimi.py` kuralı denetler.
+//
+// Kontroller:  R_z(−90°)·(0,1,0) = (1,0,0)   ⇒ eksenX
+//              R_x(+90°)·(0,1,0) = (0,0,1)   ⇒ eksenZ
+
+const eksenX = (geo) => { geo.rotateZ(-Math.PI / 2); return geo; };   // +Y → +X
+const eksenY = (geo) => geo;                                          // +Y (dokunma)
+const eksenZ = (geo) => { geo.rotateX(Math.PI / 2); return geo; };    // +Y → +Z
+
+/* Silindir — ilk yarıçap eksenin POZİTİF ucundadır. */
+function cylY(rPoz, rNeg, h, seg, mat, open = false) {
+  return new THREE.Mesh(new THREE.CylinderGeometry(rPoz, rNeg, h, seg, 1, open), mat);
+}
+function cylZ(rPoz, rNeg, h, seg, mat, open = false) {
+  return new THREE.Mesh(eksenZ(new THREE.CylinderGeometry(rPoz, rNeg, h, seg, 1, open)), mat);
+}
+/* Koni — tepe eksenin POZİTİF ucunda. */
+function coneZ(r, h, seg, mat, open = false) {
+  return new THREE.Mesh(eksenZ(new THREE.ConeGeometry(r, h, seg, 1, open)), mat);
+}
+function coneX(r, h, seg, mat, open = false) {
+  return new THREE.Mesh(eksenX(new THREE.ConeGeometry(r, h, seg, 1, open)), mat);
+}
+
+/**
+ * Lathe — İKİNCİ tuzağı da kapatır.
+ *
+ * Lathe normalleri profilin SIRASINA bağlıdır: y azalarak giden bir profil,
+ * normalleri İÇE bakan bir yüzey üretir ve yüzey ters aydınlanır. Nasel
+ * kaportası, Starship burnu ve sonda çanağı tam bu yüzden siyah çıkmıştı;
+ * üçünde de palet açık renkti ama yüzey kendi gölgesindeydi.
+ *
+ * Burada artık imkânsız: sıra kontrol edilir, gerekirse ÇEVRİLİR. Çağıran
+ * profili hangi sırada verdiğini düşünmek zorunda değil.
+ */
+function latheZ(noktalar, seg, mat) {
+  const p = noktalar.slice();
+  if (p.length > 1 && p[p.length - 1].y < p[0].y) p.reverse();
+  return new THREE.Mesh(eksenZ(new THREE.LatheGeometry(p, seg)), mat);
+}
+function latheX(noktalar, seg, mat) {
+  const p = noktalar.slice();
+  if (p.length > 1 && p[p.length - 1].y < p[0].y) p.reverse();
+  return new THREE.Mesh(eksenX(new THREE.LatheGeometry(p, seg)), mat);
+}
+
 function alignX(geo) { geo.rotateZ(-Math.PI / 2); return geo; }
 function cylX(rTop, rBottom, h, seg, mat, open = false) {
   return new THREE.Mesh(alignX(new THREE.CylinderGeometry(rTop, rBottom, h, seg, 1, open)), mat);

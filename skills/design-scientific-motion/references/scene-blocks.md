@@ -82,3 +82,54 @@ buildCapsule({ scale=1, palette })   // crew capsule + service module
   smooth transition; no camera motion without explanatory value.
 - Verified by SCREENSHOT, not by assertion — headless renders reviewed
   before a block is called done.
+
+
+## Eksen kuralı (2026-08-15) — beş hatanın ardından konuldu
+
+three.js'te `CylinderGeometry`, `LatheGeometry` ve `ConeGeometry`'nin ekseni
+**her zaman +Y**'dir. Blok sözleşmesi ise +X ileri, +Z yukarı der. Bu çeviriyi
+her çağrı yerinde elle yazmak tek bir oturumda **beş** ayrı hataya yol açtı:
+
+| Nerede | Ne oldu |
+|---|---|
+| uçak dikey kuyrukları | beş araçta birden aşağı sarktı |
+| Starship burnu | yarıçap ters yönde büyüdü, kâseye döndü |
+| Mars helikopteri mili | döndürülmediği için yatay durdu |
+| derin uzay sondası çanağı | R_x(−90°) ile aşağı baktı |
+| gezgin tekerlekleri | aks yukarı gidip tabak gibi yattılar |
+
+**Beşini de kullanıcı ekran görüntüsüyle buldu.** Kod hiçbir yerde şikâyet
+etmedi, çünkü ters bir dönüşüm sözdizimsel olarak kusursuzdur.
+
+`LatheGeometry`'de ikinci bir tuzak var: normaller profilin **sırasına**
+bağlıdır. y azalarak giden bir profil, normalleri içe bakan bir yüzey üretir
+ve yüzey ters aydınlanır — nasel kaportası, Starship burnu ve sonda çanağı
+bu yüzden siyah çıkmıştı, üçünde de palet açık renkti.
+
+### Kural
+
+Çıplak kurucu **yasak**. Adlandırılmış eksen yardımcıları kullanılır:
+
+```js
+cylX / cylY / cylZ      // silindir — adında hangi eksen yazıyorsa o
+coneX / coneZ           // koni — tepe eksenin POZİTİF ucunda
+latheZ / latheX         // lathe — profil sırası İÇERİDE düzeltilir
+```
+
+`latheZ`/`latheX` profili gerekirse kendisi çevirir; çağıran sırayı düşünmez.
+Böylece ters normal **üretilemez hâle gelir** — belgelenmiş bir uyarı değil,
+yapısal bir imkânsızlık.
+
+### Denetim
+
+```
+python scripts/eksen-denetimi.py           # özet
+python scripts/eksen-denetimi.py --liste   # satır satır
+```
+
+Yardımcıların kendi gövdeleri muaftır. **Kuralın konduğu andaki envanter:
+65 çıplak kurucu, 11 dosyada.** Bu sayı bilerek sıfırlanmadı: çalıştığı
+doğrulanmış geometriyi toplu hâlde yeniden yazmak, kapatmaya çalıştığımız
+hatanın ta kendisini üretir. Kural **yeni** kod için bağlayıcıdır; mevcut
+çağrı yerleri ancak o dosyaya zaten dokunulduğunda taşınır. Sayının zamanla
+düşmesi beklenir, sıçraması ise yeni kodun kuralı atladığı anlamına gelir.
