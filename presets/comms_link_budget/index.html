@@ -145,46 +145,95 @@ function coz(bantAnahtar = st.bant){
 // uç uca eklenerek gösterilebiliyor. Doğrusal ölçekte bu grafik çizilemezdi:
 // bir çubuk 10²⁸ kat uzun olurdu.
 function cizSelale(){
-  const { lb } = coz();
-  const W=900,H=520,pl=176,pr=92,pt=18,pb=30;
+  const { B, lb } = coz();
+  const W=900,H=520,pl=64,pr=150,pt=54,pb=66;
   const d = lb.dokum;
-  // Kümülatif seviye izlenir; her kalem bir kutu.
   let seviye = 0;
   const kayit = d.map(k=>{ const a=seviye; seviye+=k.dB; return { ...k, a, b:seviye }; });
   const hepsi = kayit.flatMap(k=>[k.a,k.b]).concat([0]);
   const lo=Math.min(...hepsi), hi=Math.max(...hepsi);
-  const pay=(hi-lo)*0.08;
+  const pay=(hi-lo)*0.10;
   const Y=(v)=> pt + ((hi+pay - v)/((hi+pay)-(lo-pay)))*(H-pt-pb);
-  const n=kayit.length;
-  const bw=(W-pl-pr)/n*0.66, adim=(W-pl-pr)/n;
+  const n=kayit.length, adim=(W-pl-pr)/n, bw=adim*0.58;
+  const X=(i)=> pl+i*adim+(adim-bw)/2;
 
-  const parcalar=[];
-  // sıfır çizgisi
-  parcalar.push(`<line x1="${pl-8}" y1="${Y(0)}" x2="${W-pr}" y2="${Y(0)}" stroke="#2e3648" stroke-dasharray="4 4"/>`);
+  const p=[];
+  // ── ızgara: sessiz, seyrek, etiketli
+  const tick=Math.max(50,Math.round((hi-lo)/5/50)*50);
+  for(let v=Math.ceil((lo-pay)/tick)*tick; v<=hi+pay; v+=tick){
+    p.push(`<line x1="${pl-10}" y1="${Y(v)}" x2="${W-pr}" y2="${Y(v)}" stroke="#141a26"/>
+      <text x="${pl-16}" y="${Y(v)+3.5}" fill="#454d5e" font-size="10" text-anchor="end">${v}</text>`);
+  }
+  p.push(`<line x1="${pl-10}" y1="${Y(0)}" x2="${W-pr}" y2="${Y(0)}" stroke="#39435a" stroke-dasharray="5 5"/>`);
+  p.push(`<text x="${pl-16}" y="${Y(0)-6}" fill="#6f7686" font-size="9.5" text-anchor="end">dBW</text>`);
+
+  // ── kümülatif alan: sonucun nereden geçtiğini tek bakışta okutur
+  const cizgi = kayit.map((k,i)=>`${(X(i)+bw/2).toFixed(1)} ${Y(k.b).toFixed(1)}`);
+  const alan = `M${(X(0)+bw/2).toFixed(1)} ${Y(0).toFixed(1)} L` + cizgi.join(' L') +
+    ` L${(X(n-1)+bw/2).toFixed(1)} ${Y(0).toFixed(1)} Z`;
+  p.push(`<path d="${alan}" fill="url(#kum)" opacity="0.35"/>`);
+  p.push(`<path d="M${cizgi.join(' L')}" fill="none" stroke="#3d4a63" stroke-width="1.4"/>`);
+
+  // ── çubuklar
   kayit.forEach((k,i)=>{
-    const x=pl+i*adim+(adim-bw)/2;
-    const y0=Y(Math.max(k.a,k.b)), y1=Y(Math.min(k.a,k.b));
-    const renk = k.tip==='kaynak' ? '#5f9ee0' : '#e0894a';
-    parcalar.push(`<rect x="${x.toFixed(1)}" y="${y0.toFixed(1)}" width="${bw.toFixed(1)}"
-       height="${Math.max(1,(y1-y0)).toFixed(1)}" fill="${renk}" opacity="${k.dB===0?0.25:0.78}" rx="2"/>`);
-    if (i<n-1) parcalar.push(`<line x1="${(x+bw).toFixed(1)}" y1="${Y(k.b).toFixed(1)}"
-       x2="${(x+adim).toFixed(1)}" y2="${Y(k.b).toFixed(1)}" stroke="#39435a" stroke-width="1"/>`);
-    parcalar.push(`<text x="${(x+bw/2).toFixed(1)}" y="${H-pb+12}" fill="#6f7686" font-size="8.5"
-       text-anchor="end" transform="rotate(-40 ${(x+bw/2).toFixed(1)} ${H-pb+12})">${k.ad}</text>`);
-    parcalar.push(`<text x="${(x+bw/2).toFixed(1)}" y="${(Math.min(y0,y1)-4).toFixed(1)}"
-       fill="${renk}" font-size="9" text-anchor="middle">${k.dB>0?'+':''}${tr(k.dB,1)}</text>`);
+    const x=X(i), y0=Y(Math.max(k.a,k.b)), y1=Y(Math.min(k.a,k.b));
+    const h=Math.max(2,y1-y0);
+    const kaynak = k.tip==='kaynak';
+    const renk = kaynak ? '#5f9ee0' : '#e0894a';
+    p.push(`<rect x="${x.toFixed(1)}" y="${y0.toFixed(1)}" width="${bw.toFixed(1)}"
+      height="${h.toFixed(1)}" fill="${renk}" opacity="${Math.abs(k.dB)<0.6?0.28:0.9}" rx="3"/>`);
+    if (i<n-1) p.push(`<line x1="${(x+bw).toFixed(1)}" y1="${Y(k.b).toFixed(1)}"
+      x2="${(x+adim).toFixed(1)}" y2="${Y(k.b).toFixed(1)}" stroke="#2a3245" stroke-width="1"/>`);
+    // değer: büyük kalemlerde çubuğun içinde, küçüklerde üstünde
+    const buyuk = h > 26;
+    p.push(`<text x="${(x+bw/2).toFixed(1)}" y="${(buyuk ? y0+15 : y0-6).toFixed(1)}"
+      fill="${buyuk?'#0b0e14':renk}" font-size="11" font-weight="600" text-anchor="middle">
+      ${k.dB>0?'+':''}${tr(k.dB,1)}</text>`);
+    // etiket: YATAY, iki satır — döndürülmüş etiket okunmuyordu
+    const kel = k.ad.split(' ');
+    const s1 = kel.length>2 ? kel.slice(0,2).join(' ') : kel[0];
+    const s2 = kel.length>2 ? kel.slice(2).join(' ') : kel.slice(1).join(' ');
+    p.push(`<text x="${(x+bw/2).toFixed(1)}" y="${H-pb+16}" fill="#7a8294" font-size="9"
+      text-anchor="middle">${s1}</text>`);
+    if (s2) p.push(`<text x="${(x+bw/2).toFixed(1)}" y="${H-pb+27}" fill="#5a6274" font-size="9"
+      text-anchor="middle">${s2}</text>`);
   });
-  // sonuç sütunu
-  const xs=pl+(n-0.06)*adim;
-  parcalar.push(`<line x1="${xs}" y1="${pt}" x2="${xs}" y2="${H-pb}" stroke="#1d2231"/>`);
-  parcalar.push(`<text x="${pl-14}" y="${Y(lb.CN0)+4}" fill="#c9a35c" font-size="11" text-anchor="end">C/N₀ = ${tr(lb.CN0,1)} dBHz</text>`);
-  parcalar.push(`<line x1="${pl-10}" y1="${Y(lb.CN0)}" x2="${W-pr}" y2="${Y(lb.CN0)}" stroke="#c9a35c" stroke-width="1.2" stroke-dasharray="6 4"/>`);
-  // eksen
-  const tick=Math.max(20,Math.round((hi-lo)/6/10)*10);
-  for(let v=Math.ceil((lo-pay)/tick)*tick; v<=hi+pay; v+=tick)
-    parcalar.push(`<line x1="${pl-8}" y1="${Y(v)}" x2="${W-pr}" y2="${Y(v)}" stroke="#151b27"/>
-      <text x="${pl-14}" y="${Y(v)+3.5}" fill="#4d5464" font-size="9" text-anchor="end">${v}</text>`);
-  el('selale').innerHTML = parcalar.join('');
+
+  // ── başlık şeridi: kaynak / kayıp ayrımı renkle değil YAZIYLA da
+  p.push(`<rect x="${pl-10}" y="${pt-34}" width="12" height="12" fill="#5f9ee0" rx="2"/>
+    <text x="${pl+8}" y="${pt-24}" fill="#8a90a0" font-size="11">kazanç</text>
+    <rect x="${pl+62}" y="${pt-34}" width="12" height="12" fill="#e0894a" rx="2"/>
+    <text x="${pl+80}" y="${pt-24}" fill="#8a90a0" font-size="11">kayıp</text>
+    <text x="${W-pr}" y="${pt-24}" fill="#6f7686" font-size="11" text-anchor="end">
+      ${B.ad} bandı · ${tr(B.fGHz,2)} GHz</text>`);
+
+  // ── sonuç kartı: sayfanın tek büyük sayısı
+  const kx=W-pr+18, marjRenk = lb.marj>=0 ? '#6fbf8f' : '#e0894a';
+  p.push(`<line x1="${W-pr}" y1="${pt-40}" x2="${W-pr}" y2="${H-pb+6}" stroke="#1d2231"/>`);
+  p.push(`<text x="${kx}" y="${pt+6}" fill="#6f7686" font-size="10" letter-spacing="1.4">C/N₀</text>
+    <text x="${kx}" y="${pt+40}" fill="#e7ebf2" font-size="30" font-weight="600">${tr(lb.CN0,1)}</text>
+    <text x="${kx}" y="${pt+58}" fill="#6f7686" font-size="10">dB·Hz</text>`);
+  p.push(`<text x="${kx}" y="${pt+108}" fill="#6f7686" font-size="10" letter-spacing="1.4">MARJ</text>
+    <text x="${kx}" y="${pt+142}" fill="${marjRenk}" font-size="30" font-weight="600">
+      ${lb.marj>0?'+':''}${tr(lb.marj,1)}</text>
+    <text x="${kx}" y="${pt+160}" fill="#6f7686" font-size="10">dB</text>`);
+  p.push(`<text x="${kx}" y="${pt+200}" fill="#6f7686" font-size="10" letter-spacing="1.4">E_b/N₀</text>
+    <text x="${kx}" y="${pt+224}" fill="#b9bfcc" font-size="18">${tr(lb.EbN0,1)} dB</text>
+    <text x="${kx}" y="${pt+244}" fill="#4d5464" font-size="9.5">gereken 2,5 dB</text>`);
+  // marj çubuğu
+  const mw=104, mv=Math.max(-12,Math.min(12,lb.marj));
+  p.push(`<rect x="${kx}" y="${pt+262}" width="${mw}" height="7" fill="#161c28" rx="3.5"/>
+    <rect x="${kx+mw/2}" y="${pt+262}" width="${(Math.abs(mv)/12*mw/2).toFixed(1)}" height="7"
+      fill="${marjRenk}" rx="3.5" transform="${mv<0?`translate(${-(Math.abs(mv)/12*mw/2).toFixed(1)},0)`:''}"/>
+    <line x1="${kx+mw/2}" y1="${pt+258}" x2="${kx+mw/2}" y2="${pt+273}" stroke="#6f7686"/>
+    <text x="${kx}" y="${pt+286}" fill="#4d5464" font-size="9">−12</text>
+    <text x="${kx+mw}" y="${pt+286}" fill="#4d5464" font-size="9" text-anchor="end">+12</text>`);
+
+  el('selale').innerHTML =
+    `<defs><linearGradient id="kum" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5f9ee0" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#5f9ee0" stop-opacity="0"/>
+    </linearGradient></defs>` + p.join('');
 }
 
 /* ================= yağmur eğrisi ================= */
