@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bağlantı Bütçesi ve Bantlar — comms_link_budget</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <style>
+    * { box-sizing:border-box; }
+    html,body { width:100%; height:100%; margin:0; background:#05070b; overflow:hidden;
+      font-family:"Segoe UI",system-ui,sans-serif; color:#dfe3ea; }
+    #app { position:absolute; inset:0; display:grid;
+      grid-template-columns:1fr 380px; grid-template-rows:auto 1fr auto; }
+    header { grid-column:1/-1; display:flex; align-items:flex-start; gap:18px;
+      padding:12px 20px 10px; border-bottom:1px solid #171c27; }
+    header h1 { margin:0; font-size:14.5px; font-weight:600; letter-spacing:.13em;
+      text-transform:uppercase; color:#c9a35c; white-space:nowrap; }
+    header h1 small { display:block; font-size:10.5px; font-weight:400; letter-spacing:.05em;
+      text-transform:none; color:#8a90a0; margin-top:3px; line-height:1.4; max-width:42ch; }
+    .ctl { display:flex; gap:13px; align-items:center; flex-wrap:wrap; flex:1; justify-content:flex-end; }
+    .grp { display:flex; flex-direction:column; gap:2px; min-width:118px; }
+    .grp label { font-size:10px; letter-spacing:.09em; text-transform:uppercase; color:#6f7686;
+      display:flex; justify-content:space-between; gap:8px; }
+    .grp label b { color:#e7ebf2; font-weight:600; font-variant-numeric:tabular-nums; }
+    .grp input[type=range] { width:100%; accent-color:#c9a35c; margin:0; }
+    select { background:rgba(16,19,27,.9); color:#dfe3ea; border:1px solid #2b303d;
+      border-radius:7px; padding:6px 10px; font-size:12px; cursor:pointer; }
+    #ana { position:relative; overflow:hidden; padding:12px 16px 4px; }
+    #ana svg { width:100%; height:100%; display:block; }
+    aside { border-left:1px solid #171c27; overflow-y:auto; padding:12px 14px 16px; }
+    aside h2 { margin:0 0 2px; font-size:10px; letter-spacing:.15em; text-transform:uppercase;
+      color:#c9a35c; font-weight:600; }
+    aside .sub { color:#6f7686; font-size:10.5px; line-height:1.45; margin-bottom:6px; }
+    aside section { margin-bottom:14px; }
+    dl { margin:0; display:grid; grid-template-columns:1fr auto; gap:2px 10px; font-size:12px; }
+    dt { color:#8a90a0; } dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; color:#e7ebf2; }
+    dd.dim { color:#6f7686; } dd.warn { color:#e0894a; } dd.ok { color:#6fbf8f; }
+    table { width:100%; border-collapse:collapse; font-size:11px; font-variant-numeric:tabular-nums; }
+    th { color:#6f7686; font-weight:500; text-align:right; padding:2px 3px; border-bottom:1px solid #1d2231; }
+    th:first-child, td:first-child { text-align:left; }
+    td { padding:2px 3px; text-align:right; }
+    tr.aktif td { color:#c9a35c; font-weight:600; }
+    .note { margin-top:8px; padding-top:8px; border-top:1px solid #1d2231;
+      color:#98a0b2; font-size:11px; line-height:1.5; }
+    .note b { color:#c9a35c; }
+    footer { grid-column:1/-1; display:flex; gap:7px; justify-content:center;
+      padding:8px; border-top:1px solid #171c27; flex-wrap:wrap; }
+    footer a { text-decoration:none; color:#b9bfcc; font-size:11.5px;
+      background:rgba(16,19,27,.85); border:1px solid #2b303d; border-radius:999px; padding:5px 12px; }
+    footer a:hover { color:#0c0e14; background:#c9a35c; border-color:#c9a35c; }
+    [data-export="true"] footer, [data-export="true"] .ctl { display:none; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Bağlantı Bütçesi
+      <small>Her kalem dB. Şelale, kazançları ve kayıpları AYNI eksende toplar —
+        sonuç tek bir sayıya iner: marj.</small></h1>
+    <div class="ctl">
+      <div class="grp"><label>bant <b id="vB">X</b></label><select id="bant"></select></div>
+      <div class="grp"><label>mesafe <b id="vM">—</b></label><select id="mesafe"></select></div>
+      <div class="grp"><label>araç anteni <b id="vDa">3,0 m</b></label>
+        <input type="range" id="dArac" min="0.3" max="6" step="0.1" value="3"></div>
+      <div class="grp"><label>yer anteni <b id="vDy">34 m</b></label>
+        <input type="range" id="dYer" min="3" max="70" step="1" value="34"></div>
+      <div class="grp"><label>verici gücü <b id="vP">100 W</b></label>
+        <input type="range" id="guc" min="5" max="500" step="5" value="100"></div>
+      <div class="grp"><label>veri hızı <b id="vR">2,0 Mbps</b></label>
+        <input type="range" id="hiz" min="3" max="9" step="0.05" value="6.301"></div>
+      <div class="grp"><label>yağmur <b id="vY">0 mm/s</b></label>
+        <input type="range" id="yagmur" min="0" max="60" step="1" value="0"></div>
+    </div>
+  </header>
+
+  <div id="ana"><svg id="selale" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet"></svg></div>
+
+  <aside>
+    <section>
+      <h2>Sonuç</h2>
+      <dl id="nums"></dl>
+      <div class="note" id="note"></div>
+    </section>
+    <section>
+      <h2>Dört bant, aynı bağlantı</h2>
+      <div class="sub">Yalnız frekans değişir; anten çapları, güç ve mesafe sabit.</div>
+      <table id="btbl"></table>
+    </section>
+    <section>
+      <h2>Yağmur sönümlemesi</h2>
+      <div class="sub">ITU-R P.838 özgül sönümleme γ = k·R<sup>α</sup>, eğik yol boyunca.</div>
+      <svg id="yagmurG" viewBox="0 0 350 150"></svg>
+    </section>
+  </aside>
+
+  <footer id="presets">
+    <a href="?b=X&m=marsUzak&r=6.301">Mars en uzak · X · 2 Mbps</a>
+    <a href="?b=Ka&m=marsUzak&r=6.301">aynısı Ka bandında</a>
+    <a href="?b=Ka&m=geo&r=8&y=45">Ka · GEO · sağanak</a>
+    <a href="?b=S&m=voyager&r=1.6">Voyager · S · 40 bps</a>
+    <a href="?b=X&m=ay&r=7.3">Ay · X · 20 Mbps</a>
+  </footer>
+</div>
+
+<script type="module">
+import { BANTLAR, MESAFELER, antenKazanci, linkButcesi, sistemGurultusu,
+         yagmurOzgulDB, havaKutlesi, doppler, gecikmeS, fsplDB }
+  from '../comms_antenna/comms-solver.mjs';
+
+const q = new URLSearchParams(location.search);
+const num=(k,d)=>(q.has(k)&&Number.isFinite(Number(q.get(k)))?Number(q.get(k)):d);
+if (q.get('export')==='1') document.documentElement.dataset.export='true';
+const el=(i)=>document.getElementById(i);
+const tr=(v,n=1)=>(v==null||!Number.isFinite(v)?'—'
+  :v.toLocaleString('tr-TR',{minimumFractionDigits:n,maximumFractionDigits:n}));
+
+const st = {
+  bant: BANTLAR[q.get('b')]?q.get('b'):'X',
+  mesafe: MESAFELER[q.get('m')]?q.get('m'):'marsUzak',
+  dArac: num('da',3), dYer: num('dy',34), guc: num('p',100),
+  logHiz: num('r',6.301), mmSaat: num('y',0), elev: 30,
+};
+const veriHizi = ()=> Math.pow(10, st.logHiz);
+
+function coz(bantAnahtar = st.bant){
+  const B = BANTLAR[bantAnahtar];
+  const arac = antenKazanci({ D:st.dArac, fGHz:B.fGHz, etaAydinlatma:0.75, yuzeyHatasiMm:0.25 });
+  const yer  = antenKazanci({ D:st.dYer,  fGHz:B.fGHz, etaAydinlatma:0.85,
+                              golgeCap:st.dYer*0.08, ayakSayisi:4, ayakGenislik:st.dYer*0.005,
+                              yuzeyHatasiMm:0.5 });
+  const Tsys = sistemGurultusu({ TantenK: 22 + 6*havaKutlesi(st.elev), TlnaK:15, hatKaybiDB:0.2 });
+  const lb = linkButcesi({
+    ptW: st.guc, GtDB: arac.GdB, dM: MESAFELER[st.mesafe].m, fGHz: B.fGHz,
+    GrDB: yer.GdB, TsysK: Tsys, elevDeg: st.elev, mmSaat: st.mmSaat,
+    veriHiziBps: veriHizi(), gerekenEbN0DB: 2.5,
+  });
+  return { B, arac, yer, Tsys, lb };
+}
+
+/* ================= şelale ================= */
+//
+// ŞELALE, dB'nin NEDEN dB olduğunu gösterir: kazançlar ve kayıplar çarpım
+// olarak birleşir, logaritmada ise TOPLANIR. Bu yüzden 282 dB'lik serbest
+// uzay kaybı ile 68 dB'lik anten kazancı aynı eksende, aynı birimle ve
+// uç uca eklenerek gösterilebiliyor. Doğrusal ölçekte bu grafik çizilemezdi:
+// bir çubuk 10²⁸ kat uzun olurdu.
+function cizSelale(){
+  const { lb } = coz();
+  const W=900,H=520,pl=176,pr=92,pt=18,pb=30;
+  const d = lb.dokum;
+  // Kümülatif seviye izlenir; her kalem bir kutu.
+  let seviye = 0;
+  const kayit = d.map(k=>{ const a=seviye; seviye+=k.dB; return { ...k, a, b:seviye }; });
+  const hepsi = kayit.flatMap(k=>[k.a,k.b]).concat([0]);
+  const lo=Math.min(...hepsi), hi=Math.max(...hepsi);
+  const pay=(hi-lo)*0.08;
+  const Y=(v)=> pt + ((hi+pay - v)/((hi+pay)-(lo-pay)))*(H-pt-pb);
+  const n=kayit.length;
+  const bw=(W-pl-pr)/n*0.66, adim=(W-pl-pr)/n;
+
+  const parcalar=[];
+  // sıfır çizgisi
+  parcalar.push(`<line x1="${pl-8}" y1="${Y(0)}" x2="${W-pr}" y2="${Y(0)}" stroke="#2e3648" stroke-dasharray="4 4"/>`);
+  kayit.forEach((k,i)=>{
+    const x=pl+i*adim+(adim-bw)/2;
+    const y0=Y(Math.max(k.a,k.b)), y1=Y(Math.min(k.a,k.b));
+    const renk = k.tip==='kaynak' ? '#5f9ee0' : '#e0894a';
+    parcalar.push(`<rect x="${x.toFixed(1)}" y="${y0.toFixed(1)}" width="${bw.toFixed(1)}"
+       height="${Math.max(1,(y1-y0)).toFixed(1)}" fill="${renk}" opacity="${k.dB===0?0.25:0.78}" rx="2"/>`);
+    if (i<n-1) parcalar.push(`<line x1="${(x+bw).toFixed(1)}" y1="${Y(k.b).toFixed(1)}"
+       x2="${(x+adim).toFixed(1)}" y2="${Y(k.b).toFixed(1)}" stroke="#39435a" stroke-width="1"/>`);
+    parcalar.push(`<text x="${(x+bw/2).toFixed(1)}" y="${H-pb+12}" fill="#6f7686" font-size="8.5"
+       text-anchor="end" transform="rotate(-40 ${(x+bw/2).toFixed(1)} ${H-pb+12})">${k.ad}</text>`);
+    parcalar.push(`<text x="${(x+bw/2).toFixed(1)}" y="${(Math.min(y0,y1)-4).toFixed(1)}"
+       fill="${renk}" font-size="9" text-anchor="middle">${k.dB>0?'+':''}${tr(k.dB,1)}</text>`);
+  });
+  // sonuç sütunu
+  const xs=pl+(n-0.06)*adim;
+  parcalar.push(`<line x1="${xs}" y1="${pt}" x2="${xs}" y2="${H-pb}" stroke="#1d2231"/>`);
+  parcalar.push(`<text x="${pl-14}" y="${Y(lb.CN0)+4}" fill="#c9a35c" font-size="11" text-anchor="end">C/N₀ = ${tr(lb.CN0,1)} dBHz</text>`);
+  parcalar.push(`<line x1="${pl-10}" y1="${Y(lb.CN0)}" x2="${W-pr}" y2="${Y(lb.CN0)}" stroke="#c9a35c" stroke-width="1.2" stroke-dasharray="6 4"/>`);
+  // eksen
+  const tick=Math.max(20,Math.round((hi-lo)/6/10)*10);
+  for(let v=Math.ceil((lo-pay)/tick)*tick; v<=hi+pay; v+=tick)
+    parcalar.push(`<line x1="${pl-8}" y1="${Y(v)}" x2="${W-pr}" y2="${Y(v)}" stroke="#151b27"/>
+      <text x="${pl-14}" y="${Y(v)+3.5}" fill="#4d5464" font-size="9" text-anchor="end">${v}</text>`);
+  el('selale').innerHTML = parcalar.join('');
+}
+
+/* ================= yağmur eğrisi ================= */
+function cizYagmur(){
+  const W=350,H=150,pl=34,pr=8,pt=10,pb=22;
+  const X=(f)=> pl + (Math.log10(f)-Math.log10(1))/(Math.log10(40)-Math.log10(1))*(W-pl-pr);
+  const yMax=12;
+  const Y=(v)=> H-pb - Math.min(v,yMax)/yMax*(H-pt-pb);
+  const yol = 4*havaKutlesi(st.elev);
+  const p=[];
+  for(let i=0;i<=90;i++){
+    const f=Math.pow(10, Math.log10(1)+(i/90)*(Math.log10(40)-Math.log10(1)));
+    const v=yagmurOzgulDB({fGHz:f, mmSaat:Math.max(st.mmSaat,1)})*yol;
+    p.push(`${X(f).toFixed(1)} ${Y(v).toFixed(1)}`);
+  }
+  const izler=Object.keys(BANTLAR).map(k=>{
+    const B=BANTLAR[k];
+    const v=yagmurOzgulDB({fGHz:B.fGHz, mmSaat:Math.max(st.mmSaat,1)})*yol;
+    return `<circle cx="${X(B.fGHz)}" cy="${Y(v)}" r="${k===st.bant?4.5:3}" fill="${B.renk}"/>
+      <text x="${X(B.fGHz)}" y="${H-pb+12}" fill="${B.renk}" font-size="9" text-anchor="middle">${B.ad}</text>`;
+  }).join('');
+  const g=[];
+  for(const v of [0,3,6,9,12]) g.push(`<line x1="${pl}" y1="${Y(v)}" x2="${W-pr}" y2="${Y(v)}" stroke="#1a2030"/>
+    <text x="${pl-4}" y="${Y(v)+3.5}" fill="#6f7686" font-size="9" text-anchor="end">${v}</text>`);
+  el('yagmurG').innerHTML = g.join('') +
+    `<path d="M${p.join(' L')}" fill="none" stroke="#5f9ee0" stroke-width="1.6"/>${izler}
+     <text x="${W-pr}" y="${pt+9}" fill="#6f7686" font-size="9" text-anchor="end">
+       ${tr(Math.max(st.mmSaat,1),0)} mm/saat · dB</text>`;
+}
+
+/* ================= sayılar ================= */
+function yaz(){
+  const { B, arac, yer, Tsys, lb } = coz();
+  const d = MESAFELER[st.mesafe];
+  const r=[], row=(k,v,c)=>r.push(`<dt>${k}</dt><dd${c?' class="'+c+'"':''}>${v}</dd>`);
+  row('araç anteni', `${tr(st.dArac,1)} m · ${tr(arac.GdB,1)} dBi`);
+  row('yer anteni', `${tr(st.dYer,0)} m · ${tr(yer.GdB,1)} dBi`);
+  row('EIRP', tr(lb.EIRP,1)+' dBW');
+  row('serbest uzay kaybı', '−'+tr(lb.FSPL,1)+' dB');
+  row('berrak hava', '−'+tr(lb.hava,2)+' dB','dim');
+  row('yağmur', '−'+tr(lb.yagmur,2)+' dB', lb.yagmur>3?'warn':'dim');
+  row('T<sub>sis</sub> · G/T', `${tr(Tsys,0)} K · ${tr(lb.GT,1)} dB/K`);
+  row('C/N₀', `<b>${tr(lb.CN0,1)} dBHz</b>`);
+  row('E<sub>b</sub>/N₀', tr(lb.EbN0,1)+' dB');
+  row('MARJ', `<b>${lb.marj>0?'+':''}${tr(lb.marj,1)} dB</b>`, lb.marj>=0?'ok':'warn');
+  row('ışık gecikmesi', tr(gecikmeS(d.m)/60,1)+' dk','dim');
+  row('Doppler (7,7 km/s)', tr(doppler(B.fGHz,7700)/1000,0)+' kHz','dim');
+  const B5 = 5e6;
+  row('Shannon sınırı (5 MHz)', tr(lb.shannonBps(B5)/1e6,2)+' Mbps','dim');
+  el('nums').innerHTML = r.join('');
+
+  const n=[];
+  if (lb.marj < 0) n.push(`<b>Marj negatif.</b> Bu hızda bağlantı kapanmıyor. Üç kolu var:
+    veri hızını düşürmek (her yarıya inişte +3 dB), anteni büyütmek (çap iki katı → +6 dB)
+    ya da gücü artırmak (iki katı → +3 dB). Gerçek görevler mesafe arttıkça veri hızını
+    düşürür — bütçenin en ucuz kolu odur.`);
+  if (lb.yagmur > 3) n.push(`<b>Yağmur ${tr(lb.yagmur,1)} dB yiyor.</b> Damla çapı milimetre
+    mertebesindedir; ${tr(B.fGHz,1)} GHz'de dalga boyu ${tr(3e8/(B.fGHz*1e9)*1000,1)} mm, yani
+    dalga ile damla aynı ölçekte ve saçılma güçlü. S bandında dalga boyu 13 cm'dir ve damla
+    dalganın yanında görünmez kalır.`);
+  n.push(B.not);
+  el('note').innerHTML = n.join('<br><br>');
+
+  // Dört bant tablosu
+  const sat = Object.keys(BANTLAR).map(k=>{
+    const c=coz(k);
+    return `<tr class="${k===st.bant?'aktif':''}"><td>${c.B.ad}</td>
+      <td>${tr(c.lb.EIRP,0)}</td><td>${tr(c.lb.FSPL,0)}</td><td>${tr(c.lb.yagmur,1)}</td>
+      <td>${tr(c.lb.CN0,1)}</td><td>${c.lb.marj>0?'+':''}${tr(c.lb.marj,1)}</td></tr>`;
+  }).join('');
+  el('btbl').innerHTML = `<tr><th>bant</th><th>EIRP</th><th>FSPL</th><th>yağmur</th>
+    <th>C/N₀</th><th>marj</th></tr>${sat}`;
+}
+
+function tazele(){ cizSelale(); cizYagmur(); yaz(); }
+
+/* ================= arayüz ================= */
+{
+  const b=el('bant');
+  for(const k of Object.keys(BANTLAR)){ const o=document.createElement('option');
+    o.value=k; o.textContent=`${BANTLAR[k].ad} — ${BANTLAR[k].fGHz} GHz`; b.appendChild(o); }
+  const m=el('mesafe');
+  for(const k of Object.keys(MESAFELER)){ const o=document.createElement('option');
+    o.value=k; o.textContent=MESAFELER[k].ad; m.appendChild(o); }
+}
+function etiket(){
+  el('vB').textContent=BANTLAR[st.bant].ad;
+  el('vM').textContent=MESAFELER[st.mesafe].ad.split(' ')[0];
+  el('vDa').textContent=tr(st.dArac,1)+' m';
+  el('vDy').textContent=tr(st.dYer,0)+' m';
+  el('vP').textContent=tr(st.guc,0)+' W';
+  const R=veriHizi();
+  el('vR').textContent = R>=1e6 ? tr(R/1e6,1)+' Mbps' : R>=1e3 ? tr(R/1e3,0)+' kbps' : tr(R,0)+' bps';
+  el('vY').textContent=tr(st.mmSaat,0)+' mm/s';
+}
+function bagla(){
+  el('bant').value=st.bant; el('mesafe').value=st.mesafe;
+  el('dArac').value=String(st.dArac); el('dYer').value=String(st.dYer);
+  el('guc').value=String(st.guc); el('hiz').value=String(st.logHiz); el('yagmur').value=String(st.mmSaat);
+  etiket();
+  el('bant').onchange=()=>{ st.bant=el('bant').value; etiket(); tazele(); };
+  el('mesafe').onchange=()=>{ st.mesafe=el('mesafe').value; etiket(); tazele(); };
+  el('dArac').oninput=()=>{ st.dArac=Number(el('dArac').value); etiket(); tazele(); };
+  el('dYer').oninput=()=>{ st.dYer=Number(el('dYer').value); etiket(); tazele(); };
+  el('guc').oninput=()=>{ st.guc=Number(el('guc').value); etiket(); tazele(); };
+  el('hiz').oninput=()=>{ st.logHiz=Number(el('hiz').value); etiket(); tazele(); };
+  el('yagmur').oninput=()=>{ st.mmSaat=Number(el('yagmur').value); etiket(); tazele(); };
+  for(const a of document.querySelectorAll('#presets a')) a.addEventListener('click',(e)=>{
+    e.preventDefault();
+    const p=new URLSearchParams(a.getAttribute('href').slice(1));
+    if(p.has('b')) st.bant=p.get('b');
+    if(p.has('m')) st.mesafe=p.get('m');
+    if(p.has('r')) st.logHiz=Number(p.get('r'));
+    st.mmSaat = p.has('y') ? Number(p.get('y')) : 0;
+    bagla(); tazele();
+  });
+}
+bagla(); tazele();
+window.__link = { st, coz, tazele };
+</script>
+</body>
+</html>

@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Anten ve Yer İstasyonu — comms_antenna</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width:100%; height:100%; margin:0; background:#05070b; overflow:hidden;
+      font-family:"Segoe UI",system-ui,sans-serif; color:#dfe3ea; }
+    #stage { position:absolute; inset:0; }
+    header { position:absolute; top:0; left:0; right:0; z-index:5; display:flex;
+      align-items:flex-start; justify-content:space-between; padding:13px 20px; gap:18px; pointer-events:none; }
+    header h1 { margin:0; font-size:14.5px; font-weight:600; letter-spacing:.13em;
+      text-transform:uppercase; color:#c9a35c; }
+    header h1 small { display:block; font-size:10.5px; font-weight:400; letter-spacing:.05em;
+      text-transform:none; color:#8a90a0; margin-top:3px; max-width:46ch; line-height:1.45; }
+    .ctl { display:flex; gap:13px; align-items:center; flex-wrap:wrap; justify-content:flex-end; pointer-events:auto; }
+    .grp { display:flex; flex-direction:column; gap:2px; min-width:112px; }
+    .grp label { font-size:10px; letter-spacing:.09em; text-transform:uppercase; color:#6f7686;
+      display:flex; justify-content:space-between; gap:8px; }
+    .grp label b { color:#e7ebf2; font-weight:600; font-variant-numeric:tabular-nums; }
+    .grp input[type=range] { width:100%; accent-color:#c9a35c; margin:0; }
+    select, button { background:rgba(16,19,27,.9); color:#dfe3ea; border:1px solid #2b303d;
+      border-radius:7px; padding:6px 10px; font-size:12px; cursor:pointer; }
+    select:hover, button:hover { border-color:#c9a35c; }
+    button.on { background:#c9a35c; color:#0c0e14; border-color:#c9a35c; }
+    #panel { position:absolute; left:20px; top:96px; z-index:5; width:296px;
+      background:rgba(10,13,19,.88); border:1px solid #232838; border-radius:12px; padding:13px 15px 14px; }
+    #panel h2 { margin:0 0 3px; font-size:10px; letter-spacing:.15em; text-transform:uppercase;
+      color:#c9a35c; font-weight:600; }
+    #panel .sub { color:#6f7686; font-size:10.5px; margin-bottom:8px; line-height:1.45; }
+    dl { margin:0; display:grid; grid-template-columns:1fr auto; gap:2px 10px; font-size:12px; }
+    dt { color:#8a90a0; } dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; color:#e7ebf2; }
+    dd.dim { color:#6f7686; } dd.warn { color:#e0894a; }
+    .note { margin-top:10px; padding-top:9px; border-top:1px solid #1d2231;
+      color:#98a0b2; font-size:11px; line-height:1.5; }
+    .note b { color:#c9a35c; }
+    #bantlar { position:absolute; right:20px; top:96px; z-index:5; width:262px;
+      background:rgba(10,13,19,.88); border:1px solid #232838; border-radius:12px; padding:12px 14px; }
+    #bantlar table { width:100%; border-collapse:collapse; font-size:11px; font-variant-numeric:tabular-nums; }
+    #bantlar th { color:#6f7686; font-weight:500; text-align:right; padding:2px 3px; border-bottom:1px solid #1d2231; }
+    #bantlar th:first-child, #bantlar td:first-child { text-align:left; }
+    #bantlar td { padding:2px 3px; text-align:right; }
+    #bantlar tr.aktif td { color:#c9a35c; font-weight:600; }
+    footer { position:absolute; bottom:0; left:0; right:0; z-index:5; display:flex; gap:8px;
+      justify-content:center; padding:13px; flex-wrap:wrap; pointer-events:none; }
+    footer a { pointer-events:auto; text-decoration:none; color:#b9bfcc; font-size:12px;
+      background:rgba(16,19,27,.85); border:1px solid #2b303d; border-radius:999px; padding:6px 14px; }
+    footer a:hover { color:#0c0e14; background:#c9a35c; border-color:#c9a35c; }
+    [data-export="true"] .ctl, [data-export="true"] footer { display:none; }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <header>
+    <h1>Anten ve Yer İstasyonu
+      <small>Cassegrain çanak, azimut–elevasyon montajı. Hüzme konisi ekrana
+        çizilirken açısı G = η(πD/λ)² ile aynı λ'dan gelir — banda basınca
+        hem kazanç hem hüzme birlikte değişir.</small></h1>
+    <div class="ctl">
+      <div class="grp"><label>bant <b id="vB">X</b></label>
+        <select id="bant"></select></div>
+      <div class="grp"><label>çap D <b id="vD">34 m</b></label>
+        <input type="range" id="cap" min="3" max="70" step="1" value="34"></div>
+      <div class="grp"><label>yüzey hatası <b id="vE">0,5 mm</b></label>
+        <input type="range" id="hata" min="0.05" max="3" step="0.05" value="0.5"></div>
+      <div class="grp"><label>elevasyon <b id="vEl">38°</b></label>
+        <input type="range" id="elev" min="5" max="88" step="1" value="38"></div>
+      <div class="grp"><label>azimut <b id="vAz">−50°</b></label>
+        <input type="range" id="azim" min="-180" max="180" step="1" value="-50"></div>
+      <button id="huzme" class="on">Hüzme</button>
+      <button id="fs">Tam ekran</button>
+    </div>
+  </header>
+
+  <section id="panel">
+    <h2>Anten</h2>
+    <div class="sub">Verim tek sayı değil, çarpanların çarpımı — ikisi geometriden hesaplanır.</div>
+    <dl id="nums"></dl>
+    <div class="note" id="note"></div>
+  </section>
+
+  <section id="bantlar">
+    <h2>Aynı çanak, dört bant</h2>
+    <table id="btbl"></table>
+  </section>
+
+  <footer id="presets">
+    <a href="?b=S&d=34">S · 34 m</a>
+    <a href="?b=X&d=34">X · 34 m</a>
+    <a href="?b=Ka&d=34">Ka · 34 m</a>
+    <a href="?b=Ka&d=34&e=2.4">Ka · kötü yüzey</a>
+    <a href="?b=X&d=70">X · 70 m dev çanak</a>
+    <a href="?b=X&d=8&el=12">8 m · alçak elevasyon</a>
+  </footer>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
+import { BANTLAR, antenKazanci, dalgaBoyu, berrakHavaZenitDB, havaKutlesi } from './comms-solver.mjs';
+
+/* ?b=X&d=34&e=0.5&el=38&az=34&t=3&export=1 — t sahneyi DONDURUR, karta koyma */
+const q = new URLSearchParams(location.search);
+const num = (k,d)=> (q.has(k)&&Number.isFinite(Number(q.get(k))) ? Number(q.get(k)) : d);
+if (q.get('export')==='1') document.documentElement.dataset.export='true';
+const el = (i)=>document.getElementById(i);
+const tr = (v,n=2)=> (v==null||!Number.isFinite(v) ? '—'
+  : v.toLocaleString('tr-TR',{minimumFractionDigits:n,maximumFractionDigits:n}));
+
+const st = {
+  bant: BANTLAR[q.get('b')] ? q.get('b') : 'X',
+  D: num('d',34), hata: num('e',0.5),
+  elev: num('el',38), azim: num('az',-50), huzme: true,   // −50° ≈ kameranın azimutu
+};
+
+/* ================= sahne ================= */
+const stage = el('stage');
+const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+function degrade(duraklar){
+  const cv=document.createElement('canvas'); cv.width=8; cv.height=512;
+  const g=cv.getContext('2d'); const gr=g.createLinearGradient(0,0,0,512);
+  for(const [t,c] of duraklar) gr.addColorStop(t,c);
+  g.fillStyle=gr; g.fillRect(0,0,8,512);
+  const tex=new THREE.CanvasTexture(cv);
+  tex.mapping=THREE.EquirectangularReflectionMapping; tex.colorSpace=THREE.SRGBColorSpace;
+  return tex;
+}
+scene.background = degrade([[0,'#070b12'],[0.36,'#0d1420'],[0.50,'#18232f'],[0.56,'#0f1722'],[1,'#05070b']]);
+const pmrem = new THREE.PMREMGenerator(renderer); pmrem.compileEquirectangularShader();
+const ort = degrade([[0,'#1a2740'],[0.32,'#33445f'],[0.47,'#717f95'],[0.53,'#8a8f98'],[0.60,'#3a3f49'],[1,'#12151b']]);
+scene.environment = pmrem.fromEquirectangular(ort).texture;
+scene.environmentIntensity = 0.9; ort.dispose();
+
+const camera = new THREE.PerspectiveCamera(36, 1, 0.05, 200);
+camera.up.set(0,0,1);
+camera.position.set(2.9,-3.4,1.9);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.07;
+controls.target.set(0,0,0.45); controls.minDistance = 1.2; controls.maxDistance = 18;
+
+const gunes = new THREE.DirectionalLight(0xfff3e0, 2.2);
+gunes.position.set(3.4,-2.6,4.2); gunes.castShadow = true;
+const sc = gunes.shadow.camera;
+sc.left=-2.2; sc.right=2.2; sc.top=2.2; sc.bottom=-2.2; sc.near=2.2; sc.far=9.5;
+gunes.shadow.mapSize.set(2048,2048); gunes.shadow.bias=-0.00035; gunes.shadow.normalBias=0.012;
+scene.add(gunes);
+const kenar = new THREE.DirectionalLight(0x9dc4ff, 0.4); kenar.position.set(-3.2,2.4,1.0); scene.add(kenar);
+
+const M = {
+  govde: new THREE.MeshStandardMaterial({ color:0xd7dbe2, roughness:0.46, metalness:0.24 }),
+  // Yansıtıcı yüzey RADYO dalgaları için ayna, GÖRÜNÜR ışık için boyalı
+  // alüminyumdur. metalness 0,55 verilince çanağın içi gece göğünü yansıtıp
+  // simsiyah bir kuyu gibi çıkıyordu; gerçek çanaklar açık gri okunur.
+  ayna:  new THREE.MeshStandardMaterial({ color:0xdfe4ec, roughness:0.55, metalness:0.12, side:THREE.DoubleSide }),
+  celik: new THREE.MeshStandardMaterial({ color:0x9aa2ae, roughness:0.30, metalness:0.85 }),
+  koyu:  new THREE.MeshStandardMaterial({ color:0x1b2430, roughness:0.55, metalness:0.35 }),
+  vurgu: new THREE.MeshStandardMaterial({ color:0xc9a35c, roughness:0.32, metalness:0.66 }),
+};
+
+/* zemin */
+function zeminAlfa(){
+  const S2=256, cv=document.createElement('canvas'); cv.width=cv.height=S2;
+  const c=cv.getContext('2d');
+  const g=c.createRadialGradient(S2/2,S2/2,S2*0.06,S2/2,S2/2,S2*0.5);
+  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(.55,'rgba(255,255,255,.7)');
+  g.addColorStop(1,'rgba(255,255,255,0)');
+  c.fillStyle=g; c.fillRect(0,0,S2,S2);
+  const t=new THREE.CanvasTexture(cv); t.colorSpace=THREE.NoColorSpace; return t;
+}
+const zemin = new THREE.Mesh(new THREE.CircleGeometry(3.2,96),
+  new THREE.MeshStandardMaterial({ color:0x1b2330, roughness:0.93, transparent:true,
+    alphaMap:zeminAlfa(), depthWrite:false }));
+zemin.position.z = -0.02; zemin.receiveShadow = true; scene.add(zemin);
+
+/* ================= anten ================= */
+//
+// CASSEGRAIN DÜZENİ. Besleme boynuzu ana çanağın ODAĞINDA değil, TEPESİNDE
+// durur; odağa bir HİPERBOLOİT alt yansıtıcı konur ve ışınları geri, tepedeki
+// beslemeye toplar. Neden zahmet:
+//  · Alıcı elektroniği (kriyojenik LNA dahil) çanağın arkasındaki odaya
+//    girer — odakta asılı kalmaz. Onlarca kilo soğutucuyu on metre yukarıda
+//    tutmak yerine yere yakın tutmak yapıyı hafifletir.
+//  · Boynuz GÖĞE değil YERE bakar. Taşan enerji 290 K'lik toprağı değil,
+//    ~10 K'lik gökyüzünü görür; sistem gürültü sıcaklığı düşer.
+// Bedeli: alt yansıtıcı ve ayakları açıklığın ortasını gölgeler — panelde
+// bunun verim maliyeti sayı olarak yazılıdır.
+const montaj = new THREE.Group();     // azimut ekseni (dünya +Z)
+scene.add(montaj);
+const elGrup = new THREE.Group();     // elevasyon ekseni (yerel +Y)
+elGrup.position.set(0,0,0.62);
+montaj.add(elGrup);
+
+// ÇANAK BOŞLUĞU AYDINLATMASI. Çanağın içbükey yüzü tanımı gereği kendi
+// gölgesindedir: güneş arkadan gelir, kavite karanlık kalır ve ekranda siyah
+// bir kuyu gibi okunur. Ama o kavitenin baktığı şey GÖKYÜZÜ'dür ve antenin
+// gördüğü baskın kaynak odur; boresight yönünden gelen soluk dolgu, sahnenin
+// eksik bıraktığı gerçek kaynağın karşılığıdır.
+//
+// DİKKAT: bu blok elGrup'un TANIMINDAN SONRA durmalı. Işık kurulumunun yanına,
+// dosyanın yukarısına konunca `elGrup` henüz TDZ'de oluyor, modül
+// ReferenceError ile ölüyor ve tuval tamamen SİYAH kalıyordu — craft-blocks
+// ve aircraft-blocks'ta da aynı hata bir kez yaşanmıştı.
+const kavite = new THREE.DirectionalLight(0xbcd2ee, 1.15);
+kavite.position.set(0, 0, 6);        // yerel +Z = boresight
+elGrup.add(kavite);
+elGrup.add(kavite.target);
+
+const R0 = 0.62;                      // çanak yarıçapı (model birimi)
+const FD = 0.38;                      // odak/çap oranı — derin çanak
+let anten = {};
+
+function kurAnten(){
+  for (const o of Object.values(anten)) if (o && o.parent) o.parent.remove(o);
+  anten = {};
+  const f = FD * 2 * R0;
+  // Ana yansıtıcı: z = r²/(4f). Lathe profili + arka kaburgalar.
+  const prof = [];
+  for (let i=0;i<=26;i++){ const r=(i/26)*R0; prof.push(new THREE.Vector2(r, (r*r)/(4*f))); }
+  const ayna = new THREE.Mesh(new THREE.LatheGeometry(prof,72), M.ayna);
+  // Lathe +Y'ye açılır (profil y = r²/4f ile büyür). Boresight yerel +Z
+  // olacaksa R_x(+90°) gerekir: (0,1,0) → (0,0,1). −90° yazınca çanak
+  // AŞAĞI bakıyor, kaburgalar yüzeyden fırlıyor ve ayaklar çanağı kesiyordu.
+  ayna.geometry.rotateX(Math.PI/2);
+  elGrup.add(ayna); anten.ayna = ayna;
+
+  // Arka destek: 16 radyal kaburga + iki çember kuşak
+  const arka = new THREE.Group();
+  for (let i=0;i<16;i++){
+    const a=(i*2*Math.PI)/16;
+    const k=new THREE.Mesh(new THREE.BoxGeometry(R0*0.98,0.012,0.05), M.celik);
+    k.position.set(Math.cos(a)*R0*0.5, Math.sin(a)*R0*0.5, -0.055);
+    k.rotation.z=a; arka.add(k);
+  }
+  for (const [rr,zz] of [[R0*0.55,-0.045],[R0*0.92,-0.03]]){
+    const t=new THREE.Mesh(new THREE.TorusGeometry(rr,0.008,8,48), M.celik);
+    t.position.z=zz; arka.add(t);
+  }
+  elGrup.add(arka); anten.arka = arka;
+
+  // Alt yansıtıcı (hiperboloit) + dört ayak
+  const rs = R0*0.155;
+  const sprof=[];
+  for(let i=0;i<=12;i++){ const r=(i/12)*rs; sprof.push(new THREE.Vector2(r, -(r*r)/(4*f*0.30))); }
+  const alt = new THREE.Mesh(new THREE.LatheGeometry(sprof,44), M.ayna);
+  alt.geometry.rotateX(Math.PI/2);           // dışbükey yüz ana çanağa döner
+  alt.position.z = f*0.92;
+  elGrup.add(alt); anten.alt = alt;
+
+  const ayak = new THREE.Group();
+  for(let i=0;i<4;i++){
+    const a=Math.PI/4+(i*Math.PI)/2;
+    const p0=new THREE.Vector3(Math.cos(a)*R0*0.93, Math.sin(a)*R0*0.93, (R0*0.93)**2/(4*f));
+    const p1=new THREE.Vector3(Math.cos(a)*rs*0.8, Math.sin(a)*rs*0.8, f*0.90);
+    const d=new THREE.Vector3().subVectors(p1,p0); const L=d.length();
+    const s=new THREE.Mesh(new THREE.CylinderGeometry(0.009,0.009,L,8), M.celik);
+    s.position.copy(p0).addScaledVector(d,0.5);
+    s.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize());
+    ayak.add(s);
+  }
+  elGrup.add(ayak); anten.ayak = ayak;
+
+  // Besleme boynuzu: tepede, alt yansıtıcıya bakar (koni + dalga kılavuzu)
+  const boynuz = new THREE.Group();
+  const kon = new THREE.Mesh(new THREE.CylinderGeometry(rs*0.62,0.022,0.16,24,1,true), M.celik);
+  kon.rotation.x = Math.PI/2; kon.position.z = 0.10; boynuz.add(kon);
+  const kilavuz = new THREE.Mesh(new THREE.CylinderGeometry(0.022,0.022,0.10,16), M.vurgu);
+  kilavuz.rotation.x = Math.PI/2; kilavuz.position.z = -0.02; boynuz.add(kilavuz);
+  elGrup.add(boynuz); anten.boynuz = boynuz;
+
+  // Elevasyon yatakları ve karşı ağırlık
+  for (const s of [1,-1]){
+    const y=new THREE.Mesh(new THREE.CylinderGeometry(0.055,0.055,0.07,20), M.koyu);
+    y.rotation.z=Math.PI/2; y.position.set(0,s*0.30,0); elGrup.add(y);
+  }
+  const karsi = new THREE.Mesh(new THREE.BoxGeometry(0.16,0.42,0.14), M.koyu);
+  karsi.position.set(0,0,-0.26); elGrup.add(karsi); anten.karsi = karsi;
+
+  elGrup.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; } });
+}
+
+// Kule ve azimut tablası
+{
+  const kule = new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.24,0.52,28), M.govde);
+  kule.rotation.x = Math.PI/2; kule.position.z = 0.26; montaj.add(kule);
+  const tabla = new THREE.Mesh(new THREE.CylinderGeometry(0.26,0.26,0.05,32), M.koyu);
+  tabla.rotation.x = Math.PI/2; tabla.position.z = 0.545; montaj.add(tabla);
+  const taban = new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.40,0.06,32), M.koyu);
+  taban.rotation.x = Math.PI/2; taban.position.z = 0.03; scene.add(taban);
+  const kapi = new THREE.Mesh(new THREE.BoxGeometry(0.10,0.02,0.18), M.vurgu);
+  kapi.position.set(0.17,0,0.14); montaj.add(kapi);
+  montaj.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; } });
+  taban.receiveShadow = true;
+}
+
+/* ── Hüzme konisi: açısı GERÇEK yarı güç hüzme genişliğidir ──────────
+   Koni yarı açısı θ_3dB/2 olarak çizilir. Ka bandına basınca koninin
+   ekranda incelmesi bir üslup tercihi değil; aynı λ'dan gelen aynı sayı. */
+// İKİ koni çizilir: dolu olan YARI GÜÇ hüzmesi (θ_3dB), soluk olan İLK
+// SIFIR konisi (2·1,22λ/D). Yalnız yarı güç konisi çizilince ekranda ince
+// bir ÇİZGİ görünüyordu — ki bu doğrudur, 34 m'lik bir çanağın X bandındaki
+// hüzmesi 4,4 yay dakikasıdır, yani Ay'ın görünür çapının yedide biri. Ama
+// tek başına "çizim bozuk" gibi duruyordu; ikinci koni ona bir gövde veriyor
+// ve iki açının FARKI da anlatının parçası oluyor.
+let koni = null, koni2 = null;
+function kurKoni(hpbwDeg, sifirDeg){
+  for (const k of [koni, koni2]) if (k){ elGrup.remove(k); k.geometry.dispose(); }
+  const L = 5.2, renk = new THREE.Color(BANTLAR[st.bant].renk);
+  const yap = (aciDeg, opak) => {
+    const r = L * Math.tan((aciDeg/2) * Math.PI/180);
+    const g = new THREE.ConeGeometry(Math.max(r,0.0016), L, 44, 1, true);
+    g.translate(0, L/2, 0); g.rotateX(Math.PI/2);
+    const m2 = new THREE.MeshBasicMaterial({ color:renk, transparent:true, opacity:opak,
+      side:THREE.DoubleSide, depthWrite:false });
+    const mesh = new THREE.Mesh(g, m2);
+    elGrup.add(mesh); mesh.visible = st.huzme;
+    return mesh;
+  };
+  koni2 = yap(sifirDeg, 0.055);
+  koni  = yap(hpbwDeg,  0.30);
+}
+
+/* ================= güncelleme ================= */
+function hesapla(){
+  const B = BANTLAR[st.bant];
+  // Gölgeleme geometriden: alt yansıtıcı çapı ve dört ayak, GERÇEK modelin
+  // oranlarıyla ölçeklenir (model R0 = gerçek D/2).
+  const olcek = st.D / (2*R0);
+  return antenKazanci({
+    D: st.D, fGHz: B.fGHz, etaAydinlatma: 0.85,
+    golgeCap: (R0*0.155*2)*olcek, ayakSayisi: 4, ayakGenislik: 0.018*olcek,
+    yuzeyHatasiMm: st.hata,
+  });
+}
+
+function tazele(){
+  const B = BANTLAR[st.bant], a = hesapla();
+  montaj.rotation.z = (st.azim*Math.PI)/180;
+  // ELEVASYON UFUKTAN ölçülür: 90° → dik yukarı, 0° → yatay.
+  // Boresight yerel +Z olduğu için gereken dönme (90° − elevasyon)'dur.
+  // −elevasyon yazınca çanak 38°'de ARKASINI kameraya dönüyordu.
+  elGrup.rotation.y = ((90 - st.elev) * Math.PI) / 180;
+  kurKoni(a.hpbwDeg, a.ilkSifirDeg);
+
+  const r=[], row=(k,v,c)=>r.push(`<dt>${k}</dt><dd${c?' class="'+c+'"':''}>${v}</dd>`);
+  row('bant · frekans', `${B.ad} · ${tr(B.fGHz,2)} GHz`);
+  row('dalga boyu λ', tr(a.lam*100,2)+' cm');
+  row('kazanç G', `<b>${tr(a.GdB,1)} dBi</b>`);
+  row('hüzme θ<sub>3dB</sub>', `<b>${tr(a.hpbwDeg,3)}°</b> = ${tr(a.hpbwDeg*60,1)}′`);
+  row('ilk sıfır', tr(a.ilkSifirDeg,3)+'°', 'dim');
+  row('açıklık verimi η', tr(a.eta,3));
+  row('— gölgeleme payı', tr(a.etaGolge,3) + ` (%${tr(a.golgeOran*100,1)} kapalı)`, 'dim');
+  row('— yüzey (Ruze)', tr(a.etaYuzey,3), a.etaYuzey<0.75?'warn':'dim');
+  row('berrak hava (zenit)', tr(berrakHavaZenitDB(B.fGHz),3)+' dB', 'dim');
+  row('bu elevasyonda', tr(berrakHavaZenitDB(B.fGHz)*havaKutlesi(st.elev),3)+' dB',
+      st.elev<12?'warn':'dim');
+  el('nums').innerHTML = r.join('');
+
+  const n=[];
+  if (a.etaYuzey < 0.75) n.push(`<b>Yüzey hatası bu bandı yiyor.</b> Ruze bağıntısı
+    η = exp(−(4πε/λ)²) ile gider: ${tr(st.hata,2)} mm rms hata, λ = ${tr(a.lam*1000,1)} mm
+    karşısında verimi <b>${tr(a.etaYuzey*100,0)}%</b>'e indiriyor. Büyük çanakların yüksek
+    frekansa çıkamamasının sebebi budur — panelleri milimetrenin altında tutmak gerekir.`);
+  if (st.elev < 12) n.push(`<b>Alçak elevasyon.</b> Işın atmosferde 1/sin(elevasyon) kadar
+    uzun yol alır; ${st.elev}°'de bu ${tr(havaKutlesi(st.elev),2)} katıdır. Ayrıca anten
+    sıcak toprağı görmeye başlar ve sistem gürültü sıcaklığı yükselir.`);
+  n.push(B.not);
+  el('note').innerHTML = n.join('<br><br>');
+
+  // Bant tablosu: AYNI çanak, dört bant
+  const sat = Object.keys(BANTLAR).map(k=>{
+    const bb=BANTLAR[k];
+    const aa=antenKazanci({ D:st.D, fGHz:bb.fGHz, etaAydinlatma:0.85,
+      golgeCap:(R0*0.155*2)*(st.D/(2*R0)), ayakSayisi:4, ayakGenislik:0.018*(st.D/(2*R0)),
+      yuzeyHatasiMm:st.hata });
+    return `<tr class="${k===st.bant?'aktif':''}"><td>${bb.ad}</td>
+      <td>${tr(bb.fGHz,1)}</td><td>${tr(aa.GdB,1)}</td><td>${tr(aa.hpbwDeg,3)}</td>
+      <td>${tr(aa.etaYuzey,2)}</td></tr>`;
+  }).join('');
+  el('btbl').innerHTML = `<tr><th>bant</th><th>GHz</th><th>dBi</th><th>θ°</th><th>η<sub>yüzey</sub></th></tr>${sat}`;
+  el('vB').textContent = B.ad;
+}
+
+/* ================= arayüz ================= */
+{
+  const s = el('bant');
+  for (const k of Object.keys(BANTLAR)){
+    const o=document.createElement('option'); o.value=k; o.textContent=BANTLAR[k].ad+' — '+BANTLAR[k].fGHz+' GHz';
+    s.appendChild(o);
+  }
+}
+function etiket(){
+  el('vD').textContent = tr(st.D,0)+' m';
+  el('vE').textContent = tr(st.hata,2)+' mm';
+  el('vEl').textContent = tr(st.elev,0)+'°';
+  el('vAz').textContent = tr(st.azim,0)+'°';
+}
+function bagla(){
+  el('bant').value=st.bant; el('cap').value=String(st.D); el('hata').value=String(st.hata);
+  el('elev').value=String(st.elev); el('azim').value=String(st.azim); etiket();
+  el('bant').onchange=()=>{ st.bant=el('bant').value; tazele(); };
+  el('cap').oninput=()=>{ st.D=Number(el('cap').value); etiket(); tazele(); };
+  el('hata').oninput=()=>{ st.hata=Number(el('hata').value); etiket(); tazele(); };
+  el('elev').oninput=()=>{ st.elev=Number(el('elev').value); etiket(); tazele(); };
+  el('azim').oninput=()=>{ st.azim=Number(el('azim').value); etiket(); tazele(); };
+  el('huzme').onclick=()=>{ st.huzme=!st.huzme; el('huzme').classList.toggle('on',st.huzme); for(const k of [koni,koni2]) if(k) k.visible=st.huzme; };
+  el('fs').onclick=()=> document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  for (const a of document.querySelectorAll('#presets a')) a.addEventListener('click',(e)=>{
+    e.preventDefault();
+    const p=new URLSearchParams(a.getAttribute('href').slice(1));
+    if(p.has('b')) st.bant=p.get('b');
+    if(p.has('d')) st.D=Number(p.get('d'));
+    if(p.has('e')) st.hata=Number(p.get('e'));
+    if(p.has('el')) st.elev=Number(p.get('el'));
+    bagla(); tazele();
+  });
+}
+
+function boyut(){
+  const w=stage.clientWidth,h=stage.clientHeight;
+  renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(boyut).observe(stage); boyut();
+kurAnten(); bagla(); tazele();
+
+const donmus = q.has('t');
+let saat=0, onceki=performance.now();
+(function tik(now){
+  requestAnimationFrame(tik);
+  const dt=Math.min(0.05,(now-onceki)/1000); onceki=now;
+  if(!donmus){ saat+=dt; }        // sahne sabit; zaman yalnız kayıt için
+  controls.update();
+  renderer.render(scene,camera);
+})(onceki);
+if (donmus) document.documentElement.dataset.frozenAt = String(num('t',0));
+
+window.__anten = { st, tazele, hesapla };
+</script>
+</body>
+</html>

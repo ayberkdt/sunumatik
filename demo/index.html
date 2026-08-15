@@ -140,7 +140,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <div class="stars" aria-hidden="true"></div>
   <p class="eyebrow">SUNUMATİK</p>
   <h1>Canlı Katalog</h1>
-  <p class="sub">36 preset · 8 kategori · her kart canlı çalışır</p>
+  <p class="sub">38 preset · 9 kategori · her kart canlı çalışır</p>
   <p class="not">Bu deste <b>otomatik üretilir</b> — kütüphaneye eklenen her yeni preset,
      bir sonraki aktarımda kendiliğinden burada belirir.</p>
   <p class="hint">→ ile ilerleyin · <kbd>G</kbd> dizin · <kbd>Esc</kbd> kapat</p>
@@ -424,8 +424,55 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   </div>
 </section>
 
-<section class="slide divider" data-tur="bolum" data-kat="gok">
+<section class="slide divider" data-tur="bolum" data-kat="haberlesme">
   <p class="num">04</p>
+  <h2>Haberleşme</h2>
+  <p class="sub">Anten kazancı, hüzme genişliği ve bağlantı bütçesi — hepsi aynı λ&#x27;dan.</p>
+  <p class="uyeler">Anten ve Yer İstasyonu · Bağlantı Bütçesi</p>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="haberlesme" data-embed="../presets/comms_antenna/index.html?b=X&amp;d=34">
+  <div class="bilgi">
+    <p class="eyebrow">Haberleşme <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Anten ve Yer İstasyonu</h2>
+    <p class="hook">Cassegrain çanak; hüzme konisinin açısı kazancı veren aynı λ&#x27;dan gelir — banda basınca ikisi birlikte değişir.</p>
+    <ul class="feats">
+      <li>Doğrulandı: DSN 34 m X bandı 68,5 dBi (literatür ~68,3), hüzme 4,4 yay dakikası</li>
+      <li>Verim tek sayı değil: gölgeleme ve Ruze yüzey terimi geometriden HESAPLANIR</li>
+      <li>Ruze çöküşü ekranda: 0,5 mm yüzey hatası S&#x27;te %0,2, Ka&#x27;da %36 kayıp</li>
+      <li>Azimut–elevasyon montajı, alt yansıtıcı, dört ayak, besleme boynuzu</li>
+    </ul>
+    <p class="yol"><code>presets/comms_antenna/index.html?b=X&amp;d=34</code></p>
+    <a class="ac" href="../presets/comms_antenna/index.html?b=X&amp;d=34" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Anten ve Yer İstasyonu önizleme" loading="lazy" data-src="../presets/comms_antenna/index.html?b=X&amp;d=34"></iframe>
+  </div>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="haberlesme" data-embed="../presets/comms_link_budget/index.html?b=X&amp;m=marsUzak&amp;r=6.301">
+  <div class="bilgi">
+    <p class="eyebrow">Haberleşme <span class="badge cekirdek">ÇEKİRDEK</span></p>
+    <h2>Bağlantı Bütçesi</h2>
+    <p class="hook">Şelale, 282 dB&#x27;lik serbest uzay kaybı ile 68 dB&#x27;lik anten kazancını aynı eksende toplar; sonuç tek sayı: marj.</p>
+    <ul class="feats">
+      <li>Doğrulandı: GEO 12 GHz 205,1 dB (literatür 205,2) · Mars uzak X bandı 282,5 dB</li>
+      <li>Aynı bağlantı dört bantta: S −13,8 dB marj, X −2,7, Ku +1,3, Ka +6,5</li>
+      <li>Yağmur ITU-R P.838 ile: 25 mm/saatte S 0,03 dB, Ka 8,8 dB</li>
+      <li>Shannon sınırı, ışık gecikmesi ve Doppler aynı çözümden</li>
+    </ul>
+    <p class="yol"><code>presets/comms_link_budget/index.html?b=X&amp;m=marsUzak&amp;r=6.301</code></p>
+    <a class="ac" href="../presets/comms_link_budget/index.html?b=X&amp;m=marsUzak&amp;r=6.301" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Bağlantı Bütçesi önizleme" loading="lazy" data-src="../presets/comms_link_budget/index.html?b=X&amp;m=marsUzak&amp;r=6.301"></iframe>
+  </div>
+</section>
+
+<section class="slide divider" data-tur="bolum" data-kat="gok">
+  <p class="num">05</p>
   <h2>Gök Cisimleri ve Fonlar</h2>
   <p class="sub">Kapak ve kapanışların kahramanları: gerçek dokular, dürüst ışık.</p>
   <p class="uyeler">Güneş · Ay · Dünya · Gezegenler · Kozmos Fonu · Aurora · JWST Kaşifi</p>
@@ -562,7 +609,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
 </section>
 
 <section class="slide divider" data-tur="bolum" data-kat="anlatim">
-  <p class="num">05</p>
+  <p class="num">06</p>
   <h2>Denklem ve Anlatım</h2>
   <p class="sub">Bir elin yazdığı denklemler, adım adım türetmeler, figür üzerinde anlatım.</p>
   <p class="uyeler">Denklem Kalemi · Türetme Adımları · Figür Anlatımı · Zaman Çizelgesi</p>
@@ -641,7 +688,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
 </section>
 
 <section class="slide divider" data-tur="bolum" data-kat="veri">
-  <p class="num">06</p>
+  <p class="num">07</p>
   <h2>Veri, Grafik ve Hareket</h2>
   <p class="sub">Keman grafikleri, morph geçişleri, tablo dolumu, sayfa geçişleri — deste tesisatı.</p>
   <p class="uyeler">Grafik Motoru · Hareket Primitifleri · Tablo Sahnesi · Slayt Geçişleri · Etkileşim Efektleri</p>
@@ -743,7 +790,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
 </section>
 
 <section class="slide divider" data-tur="bolum" data-kat="tasarim">
-  <p class="num">07</p>
+  <p class="num">08</p>
   <h2>Tasarım Sistemi</h2>
   <p class="sub">Kararı göz kararına bırakmayan katman: ölçülmüş renk, kompozisyon kılavuzu, tipografi.</p>
   <p class="uyeler">Kompozisyon Kılavuzu · Tipografi Sistemi · Palet Galerisi</p>
@@ -810,7 +857,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
 </section>
 
 <section class="slide divider" data-tur="bolum" data-kat="ikon">
-  <p class="num">08</p>
+  <p class="num">09</p>
   <h2>İkon Katmanları</h2>
   <p class="sub">Üç katman: kahraman duotone, alan duotone, utility kontur. Katmanlar karışmaz.</p>
   <p class="uyeler">Alan İkonları · Utility İkonlar · Kahraman Bilim İkonları</p>
@@ -872,7 +919,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
 </section>
 
 <section class="slide divider" data-tur="bolum" data-kat="arsiv">
-  <p class="num">09</p>
+  <p class="num">10</p>
   <h2>Arşiv</h2>
   <p class="sub">Yerini daha güçlü bloklara bırakanlar; eski desteler bozulmasın diye korunur.</p>
   <p class="uyeler">Analitik Ay Yörüngesi</p>
@@ -910,10 +957,10 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <button id="geri" aria-label="Önceki">←</button>
   <button id="ileri" aria-label="Sonraki">→</button>
 </div>
-<button id="sayac" title="Dizin (G)">1 / 47</button>
+<button id="sayac" title="Dizin (G)">1 / 50</button>
 <div id="dizin" role="dialog" aria-label="Dizin"></div>
 <script>
-const TOC = [{"i": 0, "ad": "Kapak", "tur": "kapak", "kat": ""}, {"i": 1, "ad": "Yörünge Sahnesi", "tur": "bolum", "kat": "orbital"}, {"i": 2, "ad": "Yörünge Sahnesi", "tur": "kart", "kat": "orbital"}, {"i": 3, "ad": "Araç Blokları", "tur": "kart", "kat": "orbital"}, {"i": 4, "ad": "Ay'a Motorlu İniş", "tur": "kart", "kat": "orbital"}, {"i": 5, "ad": "ML Sahneleri", "tur": "bolum", "kat": "ml"}, {"i": 6, "ad": "Kayıp Yüzeyi", "tur": "kart", "kat": "ml"}, {"i": 7, "ad": "Dikkat Akışı", "tur": "kart", "kat": "ml"}, {"i": 8, "ad": "Mimari Kurucu", "tur": "kart", "kat": "ml"}, {"i": 9, "ad": "Katman Blokları", "tur": "kart", "kat": "ml"}, {"i": 10, "ad": "Evrişimli Görü", "tur": "kart", "kat": "ml"}, {"i": 11, "ad": "Kayıp Fonksiyonları", "tur": "kart", "kat": "ml"}, {"i": 12, "ad": "Sinir Ağı Yürüyüşü", "tur": "kart", "kat": "ml"}, {"i": 13, "ad": "Havacılık ve Akışkanlar", "tur": "bolum", "kat": "havacilik"}, {"i": 14, "ad": "Uçak Blokları", "tur": "kart", "kat": "havacilik"}, {"i": 15, "ad": "Profil Etrafında Akım", "tur": "kart", "kat": "havacilik"}, {"i": 16, "ad": "Şok ve Genleşme Dalgaları", "tur": "kart", "kat": "havacilik"}, {"i": 17, "ad": "Gök Cisimleri ve Fonlar", "tur": "bolum", "kat": "gok"}, {"i": 18, "ad": "Güneş", "tur": "kart", "kat": "gok"}, {"i": 19, "ad": "Ay", "tur": "kart", "kat": "gok"}, {"i": 20, "ad": "Dünya", "tur": "kart", "kat": "gok"}, {"i": 21, "ad": "Gezegenler", "tur": "kart", "kat": "gok"}, {"i": 22, "ad": "Kozmos Fonu", "tur": "kart", "kat": "gok"}, {"i": 23, "ad": "Aurora", "tur": "kart", "kat": "gok"}, {"i": 24, "ad": "JWST Kaşifi", "tur": "kart", "kat": "gok"}, {"i": 25, "ad": "Denklem ve Anlatım", "tur": "bolum", "kat": "anlatim"}, {"i": 26, "ad": "Denklem Kalemi", "tur": "kart", "kat": "anlatim"}, {"i": 27, "ad": "Türetme Adımları", "tur": "kart", "kat": "anlatim"}, {"i": 28, "ad": "Figür Anlatımı", "tur": "kart", "kat": "anlatim"}, {"i": 29, "ad": "Zaman Çizelgesi", "tur": "kart", "kat": "anlatim"}, {"i": 30, "ad": "Veri, Grafik ve Hareket", "tur": "bolum", "kat": "veri"}, {"i": 31, "ad": "Grafik Motoru", "tur": "kart", "kat": "veri"}, {"i": 32, "ad": "Hareket Primitifleri", "tur": "kart", "kat": "veri"}, {"i": 33, "ad": "Tablo Sahnesi", "tur": "kart", "kat": "veri"}, {"i": 34, "ad": "Slayt Geçişleri", "tur": "kart", "kat": "veri"}, {"i": 35, "ad": "Etkileşim Efektleri", "tur": "kart", "kat": "veri"}, {"i": 36, "ad": "Tasarım Sistemi", "tur": "bolum", "kat": "tasarim"}, {"i": 37, "ad": "Kompozisyon Kılavuzu", "tur": "kart", "kat": "tasarim"}, {"i": 38, "ad": "Tipografi Sistemi", "tur": "kart", "kat": "tasarim"}, {"i": 39, "ad": "Palet Galerisi", "tur": "kart", "kat": "tasarim"}, {"i": 40, "ad": "İkon Katmanları", "tur": "bolum", "kat": "ikon"}, {"i": 41, "ad": "Alan İkonları", "tur": "kart", "kat": "ikon"}, {"i": 42, "ad": "Utility İkonlar", "tur": "kart", "kat": "ikon"}, {"i": 43, "ad": "Kahraman Bilim İkonları", "tur": "kart", "kat": "ikon"}, {"i": 44, "ad": "Arşiv", "tur": "bolum", "kat": "arsiv"}, {"i": 45, "ad": "Analitik Ay Yörüngesi", "tur": "kart", "kat": "arsiv"}, {"i": 46, "ad": "Kapanış", "tur": "kapanis", "kat": ""}];
+const TOC = [{"i": 0, "ad": "Kapak", "tur": "kapak", "kat": ""}, {"i": 1, "ad": "Yörünge Sahnesi", "tur": "bolum", "kat": "orbital"}, {"i": 2, "ad": "Yörünge Sahnesi", "tur": "kart", "kat": "orbital"}, {"i": 3, "ad": "Araç Blokları", "tur": "kart", "kat": "orbital"}, {"i": 4, "ad": "Ay'a Motorlu İniş", "tur": "kart", "kat": "orbital"}, {"i": 5, "ad": "ML Sahneleri", "tur": "bolum", "kat": "ml"}, {"i": 6, "ad": "Kayıp Yüzeyi", "tur": "kart", "kat": "ml"}, {"i": 7, "ad": "Dikkat Akışı", "tur": "kart", "kat": "ml"}, {"i": 8, "ad": "Mimari Kurucu", "tur": "kart", "kat": "ml"}, {"i": 9, "ad": "Katman Blokları", "tur": "kart", "kat": "ml"}, {"i": 10, "ad": "Evrişimli Görü", "tur": "kart", "kat": "ml"}, {"i": 11, "ad": "Kayıp Fonksiyonları", "tur": "kart", "kat": "ml"}, {"i": 12, "ad": "Sinir Ağı Yürüyüşü", "tur": "kart", "kat": "ml"}, {"i": 13, "ad": "Havacılık ve Akışkanlar", "tur": "bolum", "kat": "havacilik"}, {"i": 14, "ad": "Uçak Blokları", "tur": "kart", "kat": "havacilik"}, {"i": 15, "ad": "Profil Etrafında Akım", "tur": "kart", "kat": "havacilik"}, {"i": 16, "ad": "Şok ve Genleşme Dalgaları", "tur": "kart", "kat": "havacilik"}, {"i": 17, "ad": "Haberleşme", "tur": "bolum", "kat": "haberlesme"}, {"i": 18, "ad": "Anten ve Yer İstasyonu", "tur": "kart", "kat": "haberlesme"}, {"i": 19, "ad": "Bağlantı Bütçesi", "tur": "kart", "kat": "haberlesme"}, {"i": 20, "ad": "Gök Cisimleri ve Fonlar", "tur": "bolum", "kat": "gok"}, {"i": 21, "ad": "Güneş", "tur": "kart", "kat": "gok"}, {"i": 22, "ad": "Ay", "tur": "kart", "kat": "gok"}, {"i": 23, "ad": "Dünya", "tur": "kart", "kat": "gok"}, {"i": 24, "ad": "Gezegenler", "tur": "kart", "kat": "gok"}, {"i": 25, "ad": "Kozmos Fonu", "tur": "kart", "kat": "gok"}, {"i": 26, "ad": "Aurora", "tur": "kart", "kat": "gok"}, {"i": 27, "ad": "JWST Kaşifi", "tur": "kart", "kat": "gok"}, {"i": 28, "ad": "Denklem ve Anlatım", "tur": "bolum", "kat": "anlatim"}, {"i": 29, "ad": "Denklem Kalemi", "tur": "kart", "kat": "anlatim"}, {"i": 30, "ad": "Türetme Adımları", "tur": "kart", "kat": "anlatim"}, {"i": 31, "ad": "Figür Anlatımı", "tur": "kart", "kat": "anlatim"}, {"i": 32, "ad": "Zaman Çizelgesi", "tur": "kart", "kat": "anlatim"}, {"i": 33, "ad": "Veri, Grafik ve Hareket", "tur": "bolum", "kat": "veri"}, {"i": 34, "ad": "Grafik Motoru", "tur": "kart", "kat": "veri"}, {"i": 35, "ad": "Hareket Primitifleri", "tur": "kart", "kat": "veri"}, {"i": 36, "ad": "Tablo Sahnesi", "tur": "kart", "kat": "veri"}, {"i": 37, "ad": "Slayt Geçişleri", "tur": "kart", "kat": "veri"}, {"i": 38, "ad": "Etkileşim Efektleri", "tur": "kart", "kat": "veri"}, {"i": 39, "ad": "Tasarım Sistemi", "tur": "bolum", "kat": "tasarim"}, {"i": 40, "ad": "Kompozisyon Kılavuzu", "tur": "kart", "kat": "tasarim"}, {"i": 41, "ad": "Tipografi Sistemi", "tur": "kart", "kat": "tasarim"}, {"i": 42, "ad": "Palet Galerisi", "tur": "kart", "kat": "tasarim"}, {"i": 43, "ad": "İkon Katmanları", "tur": "bolum", "kat": "ikon"}, {"i": 44, "ad": "Alan İkonları", "tur": "kart", "kat": "ikon"}, {"i": 45, "ad": "Utility İkonlar", "tur": "kart", "kat": "ikon"}, {"i": 46, "ad": "Kahraman Bilim İkonları", "tur": "kart", "kat": "ikon"}, {"i": 47, "ad": "Arşiv", "tur": "bolum", "kat": "arsiv"}, {"i": 48, "ad": "Analitik Ay Yörüngesi", "tur": "kart", "kat": "arsiv"}, {"i": 49, "ad": "Kapanış", "tur": "kapanis", "kat": ""}];
 const slaytlar = [...document.querySelectorAll('.slide')];
 const sayac = document.getElementById('sayac');
 const dizin = document.getElementById('dizin');
