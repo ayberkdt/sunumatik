@@ -635,8 +635,12 @@ export function buildCapsule({ scale = 1, palette } = {}) {
 // dişler vardır ve iz üstünde ayrık damgalar bırakırlar.
 function tekerlek(m, { r = 0.13, w = 0.10, cita = 18 } = {}) {
   const g = new THREE.Group();
+  // AKS YÖNÜ: CylinderGeometry'nin ekseni zaten +Y'dir ve blok düzeninde
+  // +Y açıklık/aks yönüdür — yani DÖNDÜRMEK GEREKMEZ. rotation.x = π/2
+  // konunca aks +Z'ye (yukarı) gidiyor ve tekerlekler yere serilmiş tabaklar
+  // gibi yatıyordu. Çıtalar XZ düzleminde doğru yerleştirilmiş olduğu için
+  // hata yalnız jantta ve göbekte görünüyordu.
   const jant = new THREE.Mesh(new THREE.CylinderGeometry(r, r, w, 26), m.metal);
-  jant.rotation.x = Math.PI / 2;
   g.add(jant);
   const cg = new THREE.BoxGeometry(0.012, w * 0.94, 0.018);
   for (let i = 0; i < cita; i++) {
@@ -647,7 +651,6 @@ function tekerlek(m, { r = 0.13, w = 0.10, cita = 18 } = {}) {
     g.add(c);
   }
   const gobek = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.34, r * 0.34, w * 1.1, 16), m.body);
-  gobek.rotation.x = Math.PI / 2;
   g.add(gobek);
   return g;
 }
@@ -730,12 +733,14 @@ export function buildStarship({ scale = 1, palette, booster = false } = {}) {
   const R = 0.20;
 
   // Ojiv burun (Lathe) + silindirik gövde
+  // OJİV BURUN: taban (y = 0,56) gövde yarıçapında, uç (y = 0,86) sıfır.
+  // İlk yazımda yarıçap TERS yönde büyüyordu — burun aşağı bakan bir kâse
+  // gibi çıkıyordu. Profil y ARTARAK sıralanır ki lathe normalleri dışa baksın.
   const prof = [];
   for (let i = 0; i <= 12; i++) {
     const t = i / 12;
-    prof.push(new THREE.Vector2(R * Math.sqrt(Math.max(0, 1 - Math.pow(1 - t, 2.1))), 0.56 + t * 0.30));
+    prof.push(new THREE.Vector2(R * Math.sqrt(Math.max(0, 1 - Math.pow(t, 2.1))), 0.56 + t * 0.30));
   }
-  prof.reverse();
   const burun = new THREE.Mesh(new THREE.LatheGeometry(prof, 44), m.body);
   burun.geometry.rotateZ(-Math.PI / 2);
   g.add(burun);
@@ -965,6 +970,7 @@ export function buildMarsHelicopter({ scale = 1, palette } = {}) {
   g.add(alt);
 
   const mil = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.020, 0.40, 12), m.metal);
+  mil.rotation.x = Math.PI / 2;        // eksen +Y → +Z (dik mil); yoksa yatık kalır
   mil.position.z = 0.29;
   g.add(mil);
   const rotorAlt = rotorDisk(m, { R, kanat: 2, kokVeter: 0.085, ucVeter: 0.055, burulma: 14 });
@@ -1032,20 +1038,29 @@ export function buildProbe({ scale = 1, palette } = {}) {
   g.add(raf);
 
   // Yüksek kazançlı çanak +Z'ye bakar (blok sözleşmesi: çanak tarafı +Z).
-  const cn = dishMesh(0.40, 0.11, m.metalDS, 48);
-  cn.rotation.x = -Math.PI / 2;
+  // dishMesh +Y'ye açılır. R_x(θ)·(0,1,0) = (0, cosθ, sinθ); +Z'ye açılması
+  // için θ = +90° gerekir. −90° yazılınca çanak AŞAĞI bakıyordu, oysa blok
+  // sözleşmesi "+Z = çanak tarafı" der.
+  // Derinlik/çap oranı 0,11/0,80 iken çanak düz bir tabak gibi okunuyordu;
+  // gerçek derin uzay çanaklarında f/D ≈ 0,35 civarıdır, yani belirgin bir
+  // kâse. 0,17'ye çıkarıldı.
+  const cn = dishMesh(0.40, 0.17, m.metalDS, 48);
+  cn.rotation.x = Math.PI / 2;
   cn.position.set(0.02, 0, 0.20);
   g.add(cn);
-  const besleme = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.026, 0.16, 12), m.metal);
-  besleme.position.set(0.02, 0, 0.30);
+  const besleme = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.038, 0.20, 14), m.metal);
+  besleme.rotation.x = Math.PI / 2;    // besleme boynuzu çanağın eksenine paralel
+  besleme.position.set(0.02, 0, 0.34);
   g.add(besleme);
   for (let i = 0; i < 3; i++) {
     const a = (i * 2 * Math.PI) / 3;
     g.add(strut(V3(0.02 + Math.cos(a) * 0.32, Math.sin(a) * 0.32, 0.215),
                 V3(0.02, 0, 0.355), 0.006, m.metal, 6));
   }
+  // Alçak kazançlı boynuz: çanağın TERSİNE, −Z'ye bakar (araç yönelimi
+  // kaybolduğunda geniş hüzmeyle bağlantı kurmak için).
   const dusuk = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.09, 14, 1, true), m.metalDS);
-  dusuk.rotation.z = Math.PI;
+  dusuk.rotation.x = -Math.PI / 2;
   dusuk.position.set(-0.05, 0, -0.20);
   g.add(dusuk);
 
@@ -1058,7 +1073,10 @@ export function buildProbe({ scale = 1, palette } = {}) {
     g.add(r);
   }
 
-  const magUc = V3(0.04, 1.05, 0.06);
+  // Manyetometre boomu en uzun eleman OLMALI ama 1,05 iken finalize'ın
+  // normalleştirmesi bütün aracı küçültüyor ve otobüs okunmaz hâle
+  // geliyordu. 0,74 hâlâ en uzun eleman, ama gövdeyi ezmiyor.
+  const magUc = V3(0.04, 0.74, 0.06);
   g.add(strut(V3(0.02, 0.16, 0.03), magUc, 0.008, m.frame, 8));
   for (const t of [0.45, 0.78, 1.0]) {
     const s = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 0.03), m.panel);
