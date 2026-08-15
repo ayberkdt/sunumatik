@@ -624,3 +624,502 @@ export function buildCapsule({ scale = 1, palette } = {}) {
 
   return finalize(g, 'capsule', scale, m);
 }
+
+/* ================================================================== */
+/* Ortak parçalar — ikinci dalga                                      */
+/* ================================================================== */
+
+// Tekerlek: silindir + çevresinde radyal ÇITALAR (grouser).
+// Çıtalar süs değil: gevşek regolitte tekerlek bir tırtıl gibi kazır,
+// düz bir jant kayar. Gezgin tekerleklerinde bu yüzden kesme yönünde
+// dişler vardır ve iz üstünde ayrık damgalar bırakırlar.
+function tekerlek(m, { r = 0.13, w = 0.10, cita = 18 } = {}) {
+  const g = new THREE.Group();
+  const jant = new THREE.Mesh(new THREE.CylinderGeometry(r, r, w, 26), m.metal);
+  jant.rotation.x = Math.PI / 2;
+  g.add(jant);
+  const cg = new THREE.BoxGeometry(0.012, w * 0.94, 0.018);
+  for (let i = 0; i < cita; i++) {
+    const a = (i * 2 * Math.PI) / cita;
+    const c = new THREE.Mesh(cg, m.frame);
+    c.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
+    c.rotation.y = -a;
+    g.add(c);
+  }
+  const gobek = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.34, r * 0.34, w * 1.1, 16), m.body);
+  gobek.rotation.x = Math.PI / 2;
+  g.add(gobek);
+  return g;
+}
+
+// Kanatlı radyoizotop güç kaynağı (RTG): silindir + boyuna kanatlar.
+// Kanatlar ısıyı UZAYA ışıma yoluyla atar; RTG çıkışının yalnız ~%6'sı
+// elektriktir, kalanı atık ısıdır ve konveksiyon olmadığı için tek yol budur.
+function rtg(m, { r = 0.052, len = 0.30, kanat = 8 } = {}) {
+  const g = new THREE.Group();
+  g.add(cylX(r, r, len, 20, m.metal));
+  const kg = new THREE.BoxGeometry(len * 0.92, 0.006, r * 0.85);
+  for (let i = 0; i < kanat; i++) {
+    const a = (i * 2 * Math.PI) / kanat;
+    const k = new THREE.Mesh(kg, m.frame);
+    k.position.set(0, Math.sin(a) * r * 1.3, Math.cos(a) * r * 1.3);
+    k.rotation.x = -a;
+    g.add(k);
+  }
+  return g;
+}
+
+/**
+ * Rotor: N kanatlı, burulmalı. Kanat kesiti ince bir plakadır — Mars'ta
+ * Reynolds sayısı 10⁴ mertebesindedir ve o rejimde kalın profil işe yaramaz.
+ * Tek geometri üretilip bütün kanatlarda paylaşılır.
+ */
+function rotorDisk(m, { R = 0.6, kanat = 2, kokVeter = 0.10, ucVeter = 0.06, burulma = 12 } = {}) {
+  const g = new THREE.Group();
+  const N = 8, pos = [], idx = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const rr = R * (0.14 + 0.86 * t);
+    const c = kokVeter + (ucVeter - kokVeter) * t;
+    const tw = ((burulma * (1 - t)) * Math.PI) / 180;      // kökte çok, uçta az
+    const ct = Math.cos(tw), stw = Math.sin(tw);
+    for (const s of [-0.5, 0.5]) {
+      const dx = s * c;
+      pos.push(dx * ct, rr, dx * stw);
+    }
+  }
+  for (let i = 0; i < N; i++) {
+    const a = i * 2, b = a + 2;
+    idx.push(a, b, a + 1, b, b + 1, a + 1);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  const mat = new THREE.MeshStandardMaterial({ color: m.frame.color, roughness: 0.5,
+    metalness: 0.3, side: THREE.DoubleSide });
+  for (let i = 0; i < kanat; i++) {
+    const b = new THREE.Mesh(geo, mat);
+    b.rotation.z = (i * 2 * Math.PI) / kanat;
+    g.add(b);
+  }
+  g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.034, 0.05, 14), m.metal));
+  return g;
+}
+
+/* ================================================================== */
+/* 6) STARSHIP SINIFI — paslanmaz iki kademeli, gövde flapli            */
+/* ================================================================== */
+//
+// Bu sınıfın iki alışılmadık kararı vardır ve ikisi de geometride görünür:
+//
+// 1. FLAPLER KANAT DEĞİLDİR. Araç atmosfere KARNI ÖNDE, paraşütçü gibi
+//    girer: amaç kaldırma üretmek değil, en büyük sürüklemeyi üretip
+//    enerjiyi yüksekte harcamaktır. Dört flap (2 ön küçük, 2 arka büyük)
+//    bağımsız hareket ederek ağırlık merkezi etrafındaki momenti dengeler —
+//    yani kanat gibi kaldırma değil, paraşütçünün kolları gibi DURUŞ
+//    kontrolü yaparlar. Arka flaplerin büyük olması, motor kütlesinin
+//    ağırlık merkezini arkaya çekmesindendir.
+//
+// 2. İKİ TÜR MOTOR. Deniz seviyesi çanları küçük genişleme oranlıdır
+//    (atmosferde akım ayrılmasın diye), vakum çanları çok büyüktür — vakumda
+//    genişleme oranı ne kadar büyükse özgül itki o kadar yüksektir.
+export function buildStarship({ scale = 1, palette, booster = false } = {}) {
+  const m = makeMats(palette);
+  const g = new THREE.Group();
+  const R = 0.20;
+
+  // Ojiv burun (Lathe) + silindirik gövde
+  const prof = [];
+  for (let i = 0; i <= 12; i++) {
+    const t = i / 12;
+    prof.push(new THREE.Vector2(R * Math.sqrt(Math.max(0, 1 - Math.pow(1 - t, 2.1))), 0.56 + t * 0.30));
+  }
+  prof.reverse();
+  const burun = new THREE.Mesh(new THREE.LatheGeometry(prof, 44), m.body);
+  burun.geometry.rotateZ(-Math.PI / 2);
+  g.add(burun);
+  const govde = cylX(R, R, 1.32, 44, m.body);
+  govde.position.x = -0.10;
+  g.add(govde);
+
+  // Isıl koruma: RÜZGÂR ALTI yüzde altıgen seramik karo alanı. Yalnız BİR
+  // yüz kaplıdır çünkü araç hep aynı yüzü akıma verir; öteki yüz çıplak
+  // paslanmazdır ve ısıyı ışıyarak atar.
+  const karo = new THREE.Mesh(
+    new THREE.CylinderGeometry(R * 1.015, R * 1.015, 1.36, 44, 1, true, Math.PI * 0.60, Math.PI * 0.80),
+    m.panel);
+  karo.geometry.rotateZ(-Math.PI / 2);
+  karo.position.x = -0.10;
+  karo.material.side = THREE.DoubleSide;
+  g.add(karo);
+
+  const flap = (len, w, kal) => {
+    const f = new THREE.Group();
+    f.add(box(len, w, kal, m.body));
+    const kenar = box(len * 0.96, 0.012, kal * 1.5, m.frame);
+    kenar.position.y = w / 2;
+    f.add(kenar);
+    return f;
+  };
+  for (const s of [1, -1]) {
+    const on = flap(0.20, 0.17, 0.030);
+    on.position.set(0.50, s * (R + 0.075), 0.06);
+    on.rotation.x = s * -0.30;
+    g.add(on);
+    const arka = flap(0.30, 0.26, 0.036);
+    arka.position.set(-0.58, s * (R + 0.115), 0.05);
+    arka.rotation.x = s * -0.26;
+    g.add(arka);
+    const mn = cylX(0.030, 0.030, 0.10, 14, m.metal);
+    mn.rotation.z = Math.PI / 2;
+    mn.position.set(-0.58, s * (R + 0.01), 0.05);
+    g.add(mn);
+  }
+
+  // Motorlar: 3 deniz seviyesi (içte, gimballi) + 3 vakum (dışta, sabit)
+  const kic = -0.76;
+  for (let i = 0; i < 3; i++) {
+    const a = (i * 2 * Math.PI) / 3 + Math.PI / 6;
+    const e = engineAssembly(m, { rThroat: 0.030, rExit: 0.052, len: 0.10, mountX: kic, ringR: 0.040 });
+    e.position.set(0, Math.sin(a) * 0.055, Math.cos(a) * 0.055);
+    g.add(e);
+  }
+  for (let i = 0; i < 3; i++) {
+    const a = (i * 2 * Math.PI) / 3;
+    const e = engineAssembly(m, { rThroat: 0.032, rExit: 0.088, len: 0.19, mountX: kic + 0.02, ringR: 0.050 });
+    e.position.set(0, Math.sin(a) * 0.115, Math.cos(a) * 0.115);
+    g.add(e);
+  }
+  const kicHalka = cylX(R, R * 0.97, 0.05, 44, m.metal);
+  kicHalka.position.x = kic + 0.03;
+  g.add(kicHalka);
+
+  const hat = box(1.18, 0.026, 0.020, m.accent);
+  hat.position.set(-0.10, 0, R * 0.99);
+  g.add(hat);
+
+  if (booster) {
+    const BL = 1.9;
+    const bg = cylX(R, R, BL, 44, m.body);
+    bg.position.x = kic - 0.12 - BL / 2;
+    g.add(bg);
+    // Sıcak ayırma halkası: üst kademe motorlarını, alt kademe hâlâ
+    // yanarken ateşlemeye izin veren delikli geçiş parçası.
+    const sicak = cylX(R * 1.02, R * 1.02, 0.10, 44, m.frame, true);
+    sicak.position.x = kic - 0.12;
+    sicak.material.side = THREE.DoubleSide;
+    g.add(sicak);
+    for (let i = 0; i < 4; i++) {
+      const a = (i * Math.PI) / 2 + Math.PI / 4;
+      const izgara = box(0.11, 0.015, 0.13, m.metal);
+      izgara.position.set(kic - 0.34, Math.sin(a) * (R + 0.055), Math.cos(a) * (R + 0.055));
+      izgara.rotation.x = -a;
+      g.add(izgara);
+    }
+    const bKic = kic - 0.12 - BL;
+    for (const [n, rr, re] of [[3, 0.045, 0.030], [10, 0.105, 0.026], [20, 0.160, 0.024]]) {
+      for (let i = 0; i < n; i++) {
+        const a = (i * 2 * Math.PI) / n;
+        const e = engineAssembly(m, { rThroat: re * 0.6, rExit: re, len: 0.055, mountX: bKic, ringR: re * 1.2 });
+        e.position.set(0, Math.sin(a) * rr, Math.cos(a) * rr);
+        g.add(e);
+      }
+    }
+  }
+
+  const root = finalize(g, booster ? 'starship-stack' : 'starship', scale, m);
+  root.userData.notes = {
+    regime: booster ? 'tam yığın · tekrar kullanılabilir' : 'gemi kademesi',
+    why: 'Flapler kanat değildir: araç karnı önde, paraşütçü gibi iner ve flapler kaldırma değil DURUŞ kontrolü yapar. İki tür motorun sebebi genişleme oranıdır — vakumda büyük çan yüksek özgül itki verir, atmosferde ise akım ayrılır.',
+  };
+  return root;
+}
+
+/* ================================================================== */
+/* 7) GEZGİN — rocker-bogie süspansiyonlu altı tekerlekli               */
+/* ================================================================== */
+//
+// ROCKER-BOGIE'DE YAY YOKTUR. Her yanda iki kollu bir mekanizma vardır:
+// ROCKER (ön tekerlek + bogie ekseni) ve BOGIE (orta + arka tekerlek).
+// Gövde, iki rockerın açısının ORTALAMASINI alan bir diferansiyele bağlıdır.
+// Sonuç: bir tekerlek kendi çapına yakın bir kayaya tırmanırken diğer beşi
+// yerde kalır ve gövde eğimin yarısı kadar döner. Yaylı süspansiyon bunu
+// yapamaz — yay, yükü aktarırken tekerleği yerden keser.
+//
+// Tırmanma yeteneği tekerlek çapıyla ölçeklenir; gezgin tekerlekleri bu
+// yüzden gövdeye göre orantısız büyüktür.
+export function buildRover({ scale = 1, palette, arm = true } = {}) {
+  const m = makeMats(palette);
+  const g = new THREE.Group();
+
+  const kasa = box(0.86, 0.44, 0.26, m.body);
+  kasa.position.set(0, 0, 0.04);
+  g.add(kasa);
+  const guverte = box(0.62, 0.40, 0.05, m.panel);
+  guverte.position.set(0.06, 0, 0.19);
+  guverte.rotation.y = -0.06;
+  g.add(guverte);
+
+  const wR = 0.135, wW = 0.095;
+  const N = { rockerP: [0.02, -0.02], bogieP: [-0.22, -0.13],
+              on: [0.44, -0.30], orta: [-0.07, -0.30], arka: [-0.44, -0.30] };
+  for (const s of [1, -1]) {
+    const Y = s * 0.245, Yw = s * 0.31;
+    const P = (k) => V3(N[k][0], Y, N[k][1]);
+    const Pw = (k) => V3(N[k][0], Yw, N[k][1]);
+    g.add(strut(P('rockerP'), Pw('on'), 0.016, m.metal));
+    g.add(strut(P('rockerP'), P('bogieP'), 0.016, m.metal));
+    g.add(strut(P('bogieP'), Pw('orta'), 0.013, m.metal));
+    g.add(strut(P('bogieP'), Pw('arka'), 0.013, m.metal));
+    for (const k of ['on', 'orta', 'arka']) {
+      const t = tekerlek(m, { r: wR, w: wW });
+      t.position.copy(Pw(k));
+      g.add(t);
+    }
+    for (const k of ['rockerP', 'bogieP']) {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.05, 14), m.frame);
+      p.rotation.x = Math.PI / 2;
+      p.position.copy(P(k));
+      g.add(p);
+    }
+  }
+  // Diferansiyel çubuğu: iki rockerı gövdenin ÜSTÜNDEN bağlar; gövdenin
+  // eğimi bu çubuk sayesinde iki yanın ortalaması olur.
+  const dif = box(0.03, 0.52, 0.03, m.metal);
+  dif.position.set(0.02, 0, 0.21);
+  g.add(dif);
+
+  const direk = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.026, 0.42, 14), m.metal);
+  direk.rotation.x = Math.PI / 2;
+  direk.position.set(0.28, 0, 0.42);
+  g.add(direk);
+  const bas = box(0.16, 0.22, 0.10, m.body);
+  bas.position.set(0.30, 0, 0.66);
+  g.add(bas);
+  for (const s of [1, -1]) {
+    const lens = cylX(0.022, 0.026, 0.045, 14, m.dark);
+    lens.position.set(0.39, s * 0.07, 0.66);
+    g.add(lens);
+  }
+  const maske = box(0.02, 0.23, 0.11, m.accent);
+  maske.position.set(0.393, 0, 0.66);
+  g.add(maske);
+
+  // RTG arkada ve YUKARI KANIK: kanıklık ısıyı gövdeden uzağa yöneltir ve
+  // ışıma görüş açısını açar.
+  const r = rtg(m, { r: 0.055, len: 0.30 });
+  r.position.set(-0.56, 0, 0.20);
+  r.rotation.y = -0.42;
+  g.add(r);
+
+  const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.016, 6), m.panel);
+  ant.position.set(-0.18, 0.14, 0.24);
+  ant.rotation.set(Math.PI / 2.4, 0, 0.3);
+  g.add(ant);
+
+  if (arm) {
+    const p0 = V3(0.42, -0.20, -0.05), p1 = V3(0.62, -0.24, -0.16), p2 = V3(0.50, -0.30, -0.30);
+    g.add(strut(p0, p1, 0.020, m.metal));
+    g.add(strut(p1, p2, 0.017, m.metal));
+    const turet = box(0.10, 0.10, 0.08, m.body);
+    turet.position.copy(p2);
+    g.add(turet);
+    for (const p of [p0, p1]) {
+      const j = new THREE.Mesh(new THREE.SphereGeometry(0.026, 12, 10), m.frame);
+      j.position.copy(p);
+      g.add(j);
+    }
+  }
+
+  const root = finalize(g, 'rover', scale, m);
+  root.userData.notes = {
+    regime: 'yüzey gezgini · rocker-bogie',
+    why: 'Yay yoktur: rocker ve bogie kolları, gövdeyi iki yanın ORTALAMASINDA tutan bir diferansiyele bağlıdır. Bir tekerlek kendi çapına yakın bir kayaya tırmanırken diğer beşi yerde kalır. Tırmanma yeteneği tekerlek çapıyla ölçeklendiği için tekerlekler gövdeye göre orantısız büyüktür.',
+  };
+  return root;
+}
+
+/* ================================================================== */
+/* 8) MARS HELİKOPTERİ — eş eksenli, ters dönen çift rotor              */
+/* ================================================================== */
+//
+// NEDEN ROTOR BU KADAR BÜYÜK VE HIZLI: itki ≈ ρ A (ΩR)² ile gider ve Mars
+// yüzeyinde hava yoğunluğu Dünya'nınkinin ~%1,2'sidir. Aynı itkiyi üretmek
+// için ya alanı ya uç hızını büyütmek gerekir — ikisi de yapılmıştır: rotor
+// gövdeye göre devasa, devir ~2400 dev/dk. Ama uç hızı ses hızının altında
+// kalmak ZORUNDA olduğu için bu iki büyütme birbirini sınırlar; aracın
+// boyutunu belirleyen denge budur.
+//
+// EŞ EKSENLİ VE TERS DÖNEN: tek rotor gövdeye tepki torku uygular ve gövde
+// ters yöne döner. Kuyruk rotoru koymak yerine iki rotoru ters çevirmek
+// torku sıfırlar, üstelik kuyruk kolunun kütlesinden de kurtarır.
+export function buildMarsHelicopter({ scale = 1, palette } = {}) {
+  const m = makeMats(palette);
+  const g = new THREE.Group();
+  const R = 0.58;
+
+  g.add(box(0.20, 0.15, 0.17, m.body));
+  const alt = box(0.16, 0.12, 0.05, m.panel);
+  alt.position.z = -0.10;
+  g.add(alt);
+
+  const mil = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.020, 0.40, 12), m.metal);
+  mil.position.z = 0.29;
+  g.add(mil);
+  const rotorAlt = rotorDisk(m, { R, kanat: 2, kokVeter: 0.085, ucVeter: 0.055, burulma: 14 });
+  rotorAlt.position.z = 0.20;
+  rotorAlt.name = 'rotorAlt';
+  g.add(rotorAlt);
+  const rotorUst = rotorDisk(m, { R, kanat: 2, kokVeter: 0.085, ucVeter: 0.055, burulma: 14 });
+  rotorUst.position.z = 0.40;
+  rotorUst.rotation.z = Math.PI / 2;
+  rotorUst.name = 'rotorUst';
+  g.add(rotorUst);
+
+  // Güneş paneli EN ÜSTTE, rotorların üstünde: aşağıda olsaydı rotorların
+  // gölgesi altında kalırdı.
+  const gp = panelWing(0.19, 0.19, 3, 3, m, 0.012);
+  gp.position.z = 0.50;
+  g.add(gp);
+
+  // Dört ayak: uzun ve ince; iniş enerjisini bükülerek yutarlar.
+  for (let i = 0; i < 4; i++) {
+    const a = Math.PI / 4 + (i * Math.PI) / 2;
+    const ust = V3(Math.cos(a) * 0.07, Math.sin(a) * 0.07, -0.09);
+    const yer = V3(Math.cos(a) * 0.20, Math.sin(a) * 0.20, -0.38);
+    g.add(strut(ust, yer, 0.007, m.metal, 8));
+    const pad = new THREE.Mesh(new THREE.SphereGeometry(0.016, 10, 8), m.frame);
+    pad.position.copy(yer);
+    g.add(pad);
+  }
+
+  const kam = cylX(0.016, 0.018, 0.03, 12, m.accent);
+  kam.position.set(0.10, 0, -0.03);
+  g.add(kam);
+
+  const root = finalize(g, 'marshelicopter', scale, m);
+  root.userData.rotors = [rotorAlt, rotorUst];
+  root.userData.notes = {
+    regime: 'gezegen atmosferinde döner kanat · ~2400 dev/dk',
+    why: 'İtki ≈ ρA(ΩR)²; Mars yüzeyinde ρ Dünya’nınkinin ~%1,2’si. Hem alan hem uç hızı büyütülmüştür, ama uç hızı ses hızının altında kalmak zorunda olduğu için ikisi birbirini sınırlar. Rotorlar ters döner: tepki torku kuyruk rotoru olmadan sıfırlanır.',
+  };
+  return root;
+}
+
+/* ================================================================== */
+/* 9) DERİN UZAY SONDASI — büyük çanak, boomlar, RTG                    */
+/* ================================================================== */
+//
+// Bu aracın bütün siluetini üç kısıt belirler:
+//  · ÇANAK BÜYÜK olmalı — alınan güç 1/r² ile düşer, kazanç ise çanak
+//    alanıyla artar. Milyarlarca kilometreden bit taşımanın tek yolu budur.
+//  · RTG UZAKTA olmalı — nötron ve gama akısı bilim aletlerini kirletir;
+//    bu yüzden ayrı bir boomun ucundadır.
+//  · MANYETOMETRE DAHA DA UZAKTA olmalı — aracın kendi elektroniği ve RTG'si
+//    manyetik alan üretir, ölçüm için yerel alandan kaçmak gerekir. Bu yüzden
+//    sondalarda en uzun eleman genellikle manyetometre boomudur.
+export function buildProbe({ scale = 1, palette } = {}) {
+  const m = makeMats(palette);
+  const g = new THREE.Group();
+
+  const bus = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.20, 10), m.body);
+  bus.rotation.z = Math.PI / 2;
+  g.add(bus);
+  const raf = new THREE.Mesh(new THREE.CylinderGeometry(0.175, 0.175, 0.02, 10), m.frame);
+  raf.rotation.z = Math.PI / 2;
+  raf.position.x = -0.11;
+  g.add(raf);
+
+  // Yüksek kazançlı çanak +Z'ye bakar (blok sözleşmesi: çanak tarafı +Z).
+  const cn = dishMesh(0.40, 0.11, m.metalDS, 48);
+  cn.rotation.x = -Math.PI / 2;
+  cn.position.set(0.02, 0, 0.20);
+  g.add(cn);
+  const besleme = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.026, 0.16, 12), m.metal);
+  besleme.position.set(0.02, 0, 0.30);
+  g.add(besleme);
+  for (let i = 0; i < 3; i++) {
+    const a = (i * 2 * Math.PI) / 3;
+    g.add(strut(V3(0.02 + Math.cos(a) * 0.32, Math.sin(a) * 0.32, 0.215),
+                V3(0.02, 0, 0.355), 0.006, m.metal, 6));
+  }
+  const dusuk = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.09, 14, 1, true), m.metalDS);
+  dusuk.rotation.z = Math.PI;
+  dusuk.position.set(-0.05, 0, -0.20);
+  g.add(dusuk);
+
+  const rtgUc = V3(-0.05, -0.62, -0.05);
+  g.add(strut(V3(-0.02, -0.16, -0.02), rtgUc, 0.014, m.metal));
+  for (let i = 0; i < 3; i++) {
+    const r = rtg(m, { r: 0.042, len: 0.20, kanat: 8 });
+    r.rotation.z = Math.PI / 2;
+    r.position.set(rtgUc.x, rtgUc.y - i * 0.21, rtgUc.z);
+    g.add(r);
+  }
+
+  const magUc = V3(0.04, 1.05, 0.06);
+  g.add(strut(V3(0.02, 0.16, 0.03), magUc, 0.008, m.frame, 8));
+  for (const t of [0.45, 0.78, 1.0]) {
+    const s = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 0.03), m.panel);
+    s.position.set(0.02 + (magUc.x - 0.02) * t, 0.16 + (magUc.y - 0.16) * t, 0.03 + (magUc.z - 0.03) * t);
+    g.add(s);
+  }
+
+  const plat = box(0.16, 0.14, 0.10, m.body);
+  plat.position.set(0.16, 0.20, -0.10);
+  g.add(plat);
+  for (const [dy, r0] of [[0.05, 0.020], [-0.03, 0.026]]) {
+    const tup = cylX(r0, r0 * 1.1, 0.14, 12, m.dark);
+    tup.position.set(0.26, 0.20 + dy, -0.10);
+    g.add(tup);
+  }
+  const vurgu = box(0.015, 0.15, 0.11, m.accent);
+  vurgu.position.set(0.335, 0.20, -0.10);
+  g.add(vurgu);
+
+  for (const s of [1, -1]) {
+    const q = thrusterQuad(m, 0.9);
+    q.position.set(-0.12, s * 0.17, 0.02);
+    g.add(q);
+  }
+
+  const root = finalize(g, 'probe', scale, m);
+  root.userData.notes = {
+    regime: 'derin uzay sondası',
+    why: 'Silueti üç kısıt belirler: alınan güç 1/r² düştüğü için çanak büyük olmalı; RTG’nin nötron ve gama akısı aletleri kirlettiği için ayrı bir boomun ucunda olmalı; manyetometre aracın kendi alanından kaçmak zorunda olduğu için en uzun eleman odur.',
+  };
+  return root;
+}
+
+/* ================================================================== */
+/* Kayıt                                                               */
+/* ================================================================== */
+
+export const CRAFT_BUILDERS = Object.freeze({
+  orbiter: buildOrbiter,
+  lander: buildLander,
+  rocket: buildRocket,
+  cubesat: buildCubesat,
+  capsule: buildCapsule,
+  starship: buildStarship,
+  rover: buildRover,
+  marshelicopter: buildMarsHelicopter,
+  probe: buildProbe,
+});
+
+export const CRAFT_LABELS = Object.freeze({
+  orbiter: 'yörünge aracı', lander: 'iniş aracı', rocket: 'roket',
+  cubesat: 'cubesat', capsule: 'kapsül', starship: 'starship sınıfı',
+  rover: 'gezgin', marshelicopter: 'mars helikopteri', probe: 'derin uzay sondası',
+});
+
+/** İsimle kur; bilinmeyen ad basit bir yer tutucuya düşer. */
+export function buildCraft(kind, opts = {}) {
+  const fn = CRAFT_BUILDERS[kind];
+  if (fn) return fn(opts);
+  const m = makeMats(opts.palette);
+  const g = new THREE.Group();
+  g.add(box(1, 0.3, 0.3, m.body));
+  return finalize(g, 'placeholder', opts.scale || 1, m);
+}

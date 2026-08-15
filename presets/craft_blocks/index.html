@@ -84,6 +84,11 @@
       <option value="orbiter">Yörünge Aracı</option>
       <option value="capsule">Kapsül + SM</option>
       <option value="cubesat">CubeSat</option>
+      <option value="starship">Starship (gemi)</option>
+      <option value="stack">Starship (yığın)</option>
+      <option value="rover">Gezgin</option>
+      <option value="heli">Mars Helikopteri</option>
+      <option value="probe">Derin Uzay Sondası</option>
     </select>
     <select id="fxTip" title="Motor tipi">
       <option value="atmosfer">Atmosfer</option>
@@ -98,7 +103,8 @@
   <script type="module">
     import * as THREE from 'three';
     import {
-      buildOrbiter, buildLander, buildRocket, buildCubesat, buildCapsule, CRAFT_PALETTE,
+      buildOrbiter, buildLander, buildRocket, buildCubesat, buildCapsule,
+      buildStarship, buildRover, buildMarsHelicopter, buildProbe, CRAFT_PALETTE,
       applyCraftPalette,
     } from './craft-blocks.mjs';
 
@@ -139,9 +145,19 @@
       { id: 'rocket',  ad: 'Roket (2 kademe)', yap: (p) => buildRocket({ stages: 2, palette: p }), yon: 'x-up' },
       { id: 'lander',  ad: 'İniş Aracı', yap: (p) => buildLander({ palette: p }), yon: 'x-up' },
       { id: 'capsule', ad: 'Kapsül + SM', yap: (p) => buildCapsule({ palette: p }), yon: 'x-up' },
+      // ── ikinci dalga ──
+      { id: 'starship', ad: 'Starship (gemi)', yap: (p) => buildStarship({ palette: p }), yon: 'x-up' },
+      { id: 'stack',    ad: 'Starship (yığın)', yap: (p) => buildStarship({ palette: p, booster: true }), yon: 'x-up' },
+      { id: 'rover',    ad: 'Gezgin', yap: (p) => buildRover({ palette: p }), yon: 'z-up' },
+      { id: 'heli',     ad: 'Mars Helikopteri', yap: (p) => buildMarsHelicopter({ palette: p }), yon: 'z-up' },
+      { id: 'probe',    ad: 'Derin Uzay Sondası', yap: (p) => buildProbe({ palette: p }), yon: 'z-up' },
     ];
-    const ARALIK = 1.55;
-    const FAZLAR = [0.9, 5.7, 0.4, 2.3, 4.1];   // başlangıç açıları (deterministik)
+    const ARALIK = 1.78;   // sondanın manyetometre boomu komşusuna değmesin diye açıldı
+    // Sıra, araç SAYISINDAN ortalanır. Eskiden sabit (i − 2) yazılıydı; beş
+    // araç varken doğruydu, onuncu blok eklenince sıra kadrajın dışına taştı.
+    const KX = (i) => (i - (TANIMLAR.length - 1) / 2) * ARALIK;
+    const YARIM = ((TANIMLAR.length - 1) / 2) * ARALIK;
+    const FAZLAR = [0.9, 5.7, 0.4, 2.3, 4.1, 1.6, 3.4, 5.1, 2.8, 0.2];  // başlangıç açıları (deterministik)
     const HIZ = 0.22;                            // rad/s — yavaş dönme sehpası
 
     /* ---------- sahne ---------- */
@@ -172,7 +188,7 @@
         new THREE.CylinderGeometry(0.52, 0.58, 0.05, 48),
         new THREE.MeshStandardMaterial({ color: 0x0e1015, roughness: 0.6, metalness: 0.35 }),
       );
-      kaide.position.set((i - 2) * ARALIK, 0.025, 0);
+      kaide.position.set(KX(i), 0.025, 0);
       kaide.receiveShadow = true;
       kaide.castShadow = true;
       scene.add(kaide);
@@ -184,7 +200,7 @@
     anahtar.position.set(4.5, 7, 5.5);
     anahtar.castShadow = true;
     anahtar.shadow.mapSize.set(2048, 2048);
-    anahtar.shadow.camera.left = -6; anahtar.shadow.camera.right = 6;
+    anahtar.shadow.camera.left = -(YARIM + 1.6); anahtar.shadow.camera.right = YARIM + 1.6;
     anahtar.shadow.camera.top = 5; anahtar.shadow.camera.bottom = -3;
     anahtar.shadow.camera.near = 2; anahtar.shadow.camera.far = 20;
     anahtar.shadow.bias = -0.0004;
@@ -278,7 +294,7 @@
         let pivot = pivotlar[i];
         if (!pivot) {
           pivot = new THREE.Group();
-          pivot.position.set((i - 2) * ARALIK, 0, 0);
+          pivot.position.set(KX(i), 0, 0);
           scene.add(pivot);
           pivotlar[i] = pivot;
         }
@@ -358,9 +374,14 @@
     function odakKadraji(hedefId) {
       const i = TANIMLAR.findIndex((t) => t.id === hedefId);
       if (i < 0) {
-        return { poz: new THREE.Vector3(0, 2.0, 6.3), hedef: new THREE.Vector3(0, 0.66, 0) };
+        // Genel bakış mesafesi sıranın yarı genişliğinden hesaplanır.
+        // YATAY yarı görüş açısı: tan(hfov/2) = tan(vfov/2)·en-boy.
+        // (İlk yazımda çarpan tanjantın İÇİNE girmişti ve sıra kadraja sığmıyordu.)
+        const tanH = Math.tan((camera.fov * Math.PI) / 360) * camera.aspect;
+        const uzak = Math.max(6.3, ((YARIM + 1.30) / tanH) * 1.16);
+        return { poz: new THREE.Vector3(0, 0.32 * uzak, uzak), hedef: new THREE.Vector3(0, 0.66, 0) };
       }
-      const merkez = new THREE.Vector3((i - 2) * ARALIK, pivotlar[i].position.y + 0.05, 0);
+      const merkez = new THREE.Vector3(KX(i), pivotlar[i].position.y + 0.05, 0);
       if (fx && hedefId === fxAracId) {
         merkez.y -= fxKaldirma() * 0.45;         // alevi de kadraja al
         return { poz: new THREE.Vector3(merkez.x + 1.3, merkez.y + 0.7, 2.2), hedef: merkez };

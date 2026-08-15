@@ -199,3 +199,27 @@ hiç yeniden inşa edilmez (webgl-scene-contract §2).
   `?t=` sabit-zaman modu sahneyi o âna sarıp DONDURUR (headless doğrulama);
   dışa aktarım / azaltılmış harekette tablo t=2.0 sn orta-yanmadır.
   Yumuşak bağımlılık: import başarısız olursa vitrin ateşlemesiz çalışır.
+
+
+## İkinci dalga (2026-08-15) — dört yeni blok
+
+`CRAFT_BUILDERS` / `CRAFT_LABELS` / `buildCraft(kind, opts)` kaydı da bu
+dalgada eklendi; sahneler artık isimle araç kurabiliyor.
+
+| Blok | Ne | Geometride görünen fizik |
+|---|---|---|
+| `buildStarship({booster})` | Paslanmaz gemi; `booster: true` ile tam yığın | Flapler KANAT DEĞİL: araç karnı önde, paraşütçü gibi iner; flapler kaldırma değil DURUŞ kontrolü yapar. Arka flapler büyüktür çünkü motor kütlesi ağırlık merkezini arkaya çeker. İki tür motor: vakum çanı büyük (yüksek genişleme oranı = yüksek özgül itki), deniz seviyesi çanı küçük (atmosferde akım ayrılmasın diye). Isıl karo YALNIZ bir yüzde — araç hep aynı yüzü akıma verir. |
+| `buildRover({arm})` | Altı tekerlekli, rocker-bogie | **Yay yoktur.** Rocker (ön tekerlek + bogie ekseni) ve bogie (orta + arka), gövdeyi iki yanın ORTALAMASINDA tutan bir diferansiyele bağlıdır: bir tekerlek kendi çapına yakın bir kayaya tırmanırken diğer beşi yerde kalır. Tırmanma yeteneği tekerlek çapıyla ölçeklendiği için tekerlekler orantısız büyüktür. Çıtalar (grouser) gevşek regolitte kazır. RTG yukarı kanıktır: ışıma görüş açısını açar. |
+| `buildMarsHelicopter()` | Eş eksenli, ters dönen çift rotor | İtki ≈ ρA(ΩR)², Mars'ta ρ Dünya'nınkinin ~%1,2'si. Hem alan hem uç hızı büyütülmüş (rotor devasa, ~2400 dev/dk) ama uç hızı ses hızının altında kalmak ZORUNDA olduğu için ikisi birbirini sınırlar — aracın boyutunu belirleyen denge budur. Ters dönme, kuyruk rotoru olmadan tepki torkunu sıfırlar. Güneş paneli en üstte, yoksa rotor gölgesinde kalır. |
+| `buildProbe()` | Büyük çanak, RTG boomu, manyetometre boomu | Silueti üç kısıt belirler: alınan güç 1/r² düştüğü için çanak büyük; RTG'nin nötron/gama akısı aletleri kirlettiği için ayrı boomda; manyetometre aracın KENDİ alanından kaçmak zorunda olduğu için en uzun eleman odur. |
+
+`buildMarsHelicopter` → `userData.rotors` (iki rotor, sahne ters yönde
+döndürebilsin diye). Her yeni blok `userData.notes = { regime, why }` taşır.
+
+### Vitrin sayfasında bulunan hata
+
+Sıra yerleşimi `(i − 2) * ARALIK` diye SABİT yazılmıştı — beş araç varken
+doğruydu, onuncu blok eklenince sıra kadrajın dışına taştı. Artık araç
+sayısından türetiliyor (`KX(i)`), genel bakış mesafesi de sıranın yarı
+genişliğinden hesaplanıyor. Bu hesapta ikinci bir hata daha çıktı: yatay
+yarı görüş açısı **tan(vfov/2)·en-boy**'dur, `tan(vfov/2 · en-boy)` değil.
