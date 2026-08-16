@@ -13,6 +13,7 @@ and a matching family of ML scenes. Quality over count. Every block obeys
 
 | Block | Status | What it is |
 |---|---|---|
+| `cinematic_space` | **wave 2** | Cinematic spatial-journey SHELL (composes, never forks): exterior hero (cosmos sky + buildMoonMesh Moon + buildOrbiter in φ³ station-keeping idle with seeded RCS puffs) → canopy threshold (two-pass render; the Moon in the cockpit window IS the world pass) → data-driven chapter console → window-masked pass-through hand-off to orbital_stage, or the signature dive: sphere-to-terrain handoff behind a full-regolith frame, arriving at a buildRover documentary vista on a terrain DERIVED from lunar_descent's published recipe. One deterministic rail (wheel = slider = goTo API = same rail); every motion a pure function of (t, seed). Design doc: docs/cinematic-space-plan.md |
 | `orbital_stage` | **wave 1** | THE core stage: central body (Earth/Moon, real textures), unit system, deterministic timeline (play/scrub/warp), trajectory tracks from Kepler elements, state arrays (data-driven!) or RK4 propagation with impulsive burns; fading trails, apsis markers, burn events with plume + ΔV arrow + pre/post orbit ghosts; camera director (chase/orbit/body/free with smooth transitions); telemetry HUD (t, alt, |v|, ΔV) in deck typography |
 | `craft_blocks` | **wave 1** | Parametric aesthetic craft LIBRARY (no mount): orbiter, lander, 2-stage rocket, cubesat, capsule — pure builders returning THREE.Group, shared material language |
 | `lunar_descent` | **wave 1** | Powered descent to the lunar surface: braking + vertical phases integrated against lunar gravity, throttle-scaled plume, touchdown dust, alt/vy/fuel HUD, chase/side/surface cameras |
@@ -108,9 +109,16 @@ bu yüzden siyah çıkmıştı, üçünde de palet açık renkti.
 
 ### Kural
 
-Çıplak kurucu **yasak**. Adlandırılmış eksen yardımcıları kullanılır:
+Çıplak kurucu **yasak**. Adlandırılmış eksen yardımcıları kullanılır;
+tek kaynakları **`presets/core/geometry-axis.mjs`** (önce craft/aircraft
+içinde iki kopya yaşadılar; ayrışmasınlar diye core'a taşındılar —
+`presets/core/`, `moon_advanced/vendor/` gibi paylaşılan ALTYAPIDIR ve
+bloklar ona sert bağımlı olabilir; blok-bloka sert bağımlılık yasağı
+altyapıyı kapsamaz):
 
 ```js
+import { cylX, coneZ, latheZ } from '../core/geometry-axis.mjs';
+
 cylX / cylY / cylZ      // silindir — adında hangi eksen yazıyorsa o
 coneX / coneZ           // koni — tepe eksenin POZİTİF ucunda
 latheZ / latheX         // lathe — profil sırası İÇERİDE düzeltilir

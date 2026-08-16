@@ -297,9 +297,17 @@ bagla();
    Kare başına birden çok LBM adımı atılır: fiziksel salınım periyodu binlerce
    adımdır, kare başına tek adım atarsak cadde ekranda dakikalar sonra doğar. */
 const ADIM = 6;
+/* ?t= sahneyi export için SERT dondurur (Sürdür bile işlemez). Azaltılmış
+   hareket ise yumuşak duraklatır: sim aynı deterministik kareye önden entegre
+   edilir, cadde OLUŞMUŞ hâliyle görünür, kullanıcı Sürdür ile akışı kendisi
+   başlatabilir. */
 const donmus = q.has('t');
-if (donmus){ const T=num('t',12000); for(let k=0;k<T;k++) sim.adim();
-             document.documentElement.dataset.frozenAt=String(T); }
+const azHareket = matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (donmus || azHareket){
+  const T=num('t',12000); for(let k=0;k<T;k++) sim.adim();
+  document.documentElement.dataset.frozenAt=String(T);
+  if (!donmus){ st.calisiyor=false; el('dur').textContent='Sürdür'; el('dur').classList.add('on'); }
+}
 let sayac=0;
 (function tik(){
   requestAnimationFrame(tik);

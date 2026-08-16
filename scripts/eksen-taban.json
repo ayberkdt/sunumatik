@@ -1,0 +1,13 @@
+{
+  "presets/aircraft_blocks/aircraft-blocks.mjs": 5,
+  "presets/comms_antenna/index.html": 10,
+  "presets/craft_blocks/craft-blocks.mjs": 25,
+  "presets/craft_blocks/craft-effects.mjs": 1,
+  "presets/craft_blocks/index.html": 1,
+  "presets/lunar_descent/lunar-descent.mjs": 4,
+  "presets/ml_layer_blocks/index.html": 1,
+  "presets/ml_layer_blocks/ml-layer-blocks.mjs": 4,
+  "presets/ml_net_builder/net-builder.mjs": 1,
+  "presets/moon_advanced/lunaris-moon.mjs": 9,
+  "presets/orbital_stage/orbital-stage.mjs": 4
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "lunaris-trajectory-playback",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Fly a spacecraft along a precomputed 1200-sample lunar trajectory with a fading historical trail and predicted future path, to give the deck a cinematic orbital context slide.",
+      "model": "Playback of the local Lunaris prototype's trajectory data (orbit-data.json); spacecraft attitude slews by quaternion slerp, burn plume and bloom are visual effects; the Moon uses real NASA-derived textures with displacement relief.",
+      "limitations": "Not a mission ephemeris and not a propagation: samples are replayed as authored, burns are illustrative, and the gravity texture mode visualizes a field texture rather than integrating it. Never present as high-fidelity dynamics.",
+      "reducedMotion": "Playback freezes at the configured exportProgress with trail and caption visible; auto-rotation stops; the caption keeps reporting the sample index as text.",
+      "exportState": "?export=1 or html[data-export=\"true\"] freezes progress at exportProgress, hides the seeded star field and controls for a deterministic frame.",
+      "accessibility": "Space toggles play/pause, R restarts, Escape pauses; controls are native buttons with labels; telemetry (sample index, phase) is rendered as text; pauses automatically when the document is hidden.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

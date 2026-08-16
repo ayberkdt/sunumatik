@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "antenna-geometry-view",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Relate dish geometry to link performance: band, diameter, efficiency, elevation, and azimuth controls rebuild the 3D antenna and recompute gain, beamwidth, EIRP, and path terms from closed-form relations.",
+      "model": "Gain from aperture efficiency with feed-shadow and strut blockage terms; free-space path loss, clear-air zenith attenuation with air-mass scaling, specific rain attenuation, system noise temperature, Doppler, and light-time from the standard link-budget relations in comms-solver.mjs (band plan frozen in BANTLAR).",
+      "limitations": "Pattern and beam cone are geometric illustrations of the computed beamwidth, not a solved radiation pattern; atmospheric terms use simplified fits, not ITU-R interpolation tables; the ground scene is decorative.",
+      "reducedMotion": "The scene has no autonomous animation to reduce: nothing moves unless the user drags the camera or changes a control, so behavior is identical.",
+      "exportState": "?export=1 hides controls and footer; ?t=N marks the frame via html[data-frozen-at]; the render is deterministic for identical URL parameters.",
+      "accessibility": "Native sliders and selects drive every parameter; all computed quantities are shown as text in the numbers panel, so the 3D view carries no information of its own; camera drag is optional.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

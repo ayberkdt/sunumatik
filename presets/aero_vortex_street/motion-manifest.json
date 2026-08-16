@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "vortex-street-lbm",
+      "type": "simulation",
+      "truthLevel": "numerical",
+      "purpose": "Show that the Kármán vortex street is an emergent instability, not an authored animation: the fluid equations are integrated live and the street appears on its own past the critical Reynolds number (~47).",
+      "model": "Lattice-Boltzmann D2Q9 with a two-relaxation-time (TRT) collision operator on a 380x130 grid; cylinder, square, and flat-plate obstacles via bounce-back; Cd and Cl(t) from momentum exchange; the Strouhal number is measured from Cl(t) zero crossings and compared against Roshko's empirical St-Re relation.",
+      "limitations": "2D incompressible regime at low lattice Mach (~0.1); Reynolds capped at 120 because grid resolution measurably degrades the St comparison above it (stated on the slide); no turbulence model, so the 3D wake transition (~Re 190) is out of reach.",
+      "solver": "TRT LBM, 6 lattice steps per rendered frame; deterministic initial condition (no random seed involved); ?t=N pre-integrates exactly N steps for a reproducible frozen frame.",
+      "reducedMotion": "The simulation pre-integrates to the default frozen frame (t=12000) and starts paused; the developed street, all measured numbers, and both charts remain readable, and the Sürdür button lets the user opt into live flow.",
+      "exportState": "?export=1 hides controls and footer; combine with ?t=N for the deterministic frozen frame (html[data-frozen-at] reports N).",
+      "accessibility": "Native range/select/button controls; Duraklat/Sürdür pauses the loop; every quantity shown in the field view (Re, St, Cd, tau, Mach) is also reported as text in the measured panel.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

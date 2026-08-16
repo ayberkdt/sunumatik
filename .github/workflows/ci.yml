@@ -1,0 +1,70 @@
+# Sunumatik CI — depo değişmezlerini her push/PR'da denetler.
+#
+# Buradaki her adım yerel olarak da aynen çalışır; CI yalnız "kimse
+# çalıştırmayı unutmasın" güvencesidir:
+#   node scripts/build-registry.mjs --check     envanter taramayla eşleşiyor mu
+#   node scripts/validate-invariants.mjs        manifest'ler, demo yolları, doküman sayıları
+#   python scripts/eksen-denetimi.py            çıplak geometri kurucusu ratchet'i
+#   motion-manifest şema denetimi               her manifest tek tek
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  invariants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Sözdizimi — bütün betikler derlenir
+        shell: bash
+        run: |
+          set -e
+          for f in scripts/*.mjs skills/*/scripts/*.mjs; do
+            node --check "$f"
+          done
+          python -m py_compile scripts/*.py
+
+      - name: Envanter taramayla eşleşiyor (registry bayat değil)
+        run: node scripts/build-registry.mjs --check
+
+      - name: Depo değişmezleri (manifest varlığı, demo yolları, doküman sayıları)
+        run: node scripts/validate-invariants.mjs
+
+      - name: Demo üreteci deterministik (üret ve karşılaştır, tarih hariç)
+        shell: bash
+        run: |
+          set -e
+          cp demo/index.html /tmp/demo-committed.html
+          python scripts/build-demo.py
+          strip_date() { sed -E 's/[0-9]{2}\.[0-9]{2}\.[0-9]{4}//g' "$1"; }
+          if ! diff <(strip_date /tmp/demo-committed.html) <(strip_date demo/index.html); then
+            echo "demo/index.html üreticiden sapmış — elle düzenlenmiş olabilir." >&2
+            echo "python scripts/build-demo.py çalıştırıp commit edin." >&2
+            exit 1
+          fi
+          git checkout -- demo/index.html
+
+      - name: Eksen ratchet'i (çıplak geometri kurucuları tabanı aşamaz)
+        run: python scripts/eksen-denetimi.py
+
+      - name: motion-manifest şemaları
+        shell: bash
+        run: |
+          set -e
+          for f in presets/*/motion-manifest.json; do
+            echo "== $f"
+            node skills/design-scientific-motion/scripts/validate-motion-manifest.mjs "$f"
+          done
+
+      - name: Palet kütüphanesi kontrast denetimi
+        run: node skills/design-space-science-deck/scripts/validate-palette-library.mjs presets/color_themes/palette-library.json
+
+      - name: İkon kullanımı (demo)
+        run: node skills/create-scientific-visuals/scripts/validate-icon-usage.mjs demo/index.html

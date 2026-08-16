@@ -7,7 +7,9 @@ import process from 'node:process';
 import { pathToFileURL } from 'node:url';
 
 function usage(code = 0) {
-  console.log('Usage: node export-deck.mjs <deck.html> <output-dir> [--pdf <deck.pdf>] [--slide-selector <css>] [--browser-executable <path>]');
+  console.log('Usage: node export-deck.mjs <deck.html> <output-dir> [--pdf <deck.pdf>] [--slide-selector <css>] [--server-root <dir>] [--browser-executable <path>]');
+  console.log('  --server-root  HTTP kökü. Verilmezse deste kendi klasörünün dışına çıkan');
+  console.log('                 (../) varlık yollarına göre otomatik seçilir.');
   process.exit(code);
 }
 const args = process.argv.slice(2);
@@ -25,9 +27,39 @@ const valueAfter = (flag, fallback = null) => {
 const pdfValue = valueAfter('--pdf');
 const pdfFile = pdfValue ? path.resolve(pdfValue) : null;
 const slideSelector = valueAfter('--slide-selector', '[data-slide], .slide, .reveal .slides > section');
+const serverRootValue = valueAfter('--server-root');
 const browserExecutable = valueAfter('--browser-executable');
 if (!fs.existsSync(source) || path.extname(source).toLowerCase() !== '.html') throw new Error('Input must be an existing HTML file.');
 fs.mkdirSync(outputDir, { recursive: true });
+
+/* HTTP kökü. Deste kendi klasörünün dışındaki varlıkları (`../presets/...`)
+   kullanabilir; kök deste klasörü olursa bu istekler 404 döner ve export sessizce
+   boş sahnelerle çıkar. Kök, destedeki en derin `../` zincirini kapsayacak kadar
+   yukarı taşınır. */
+function escapeDepth(html) {
+  let deepest = 0;
+  for (const match of html.matchAll(/(?:src|href|data-src|data-embed|data-[a-z-]*-src)\s*=\s*["']((?:\.\.\/)+)/gi)) {
+    deepest = Math.max(deepest, match[1].length / 3);
+  }
+  for (const match of html.matchAll(/(?:from|import)\s*["']((?:\.\.\/)+)/gi)) {
+    deepest = Math.max(deepest, match[1].length / 3);
+  }
+  for (const match of html.matchAll(/url\(\s*["']?((?:\.\.\/)+)/gi)) {
+    deepest = Math.max(deepest, match[1].length / 3);
+  }
+  return deepest;
+}
+const deckDirectory = path.dirname(source);
+let root;
+if (serverRootValue) {
+  root = path.resolve(serverRootValue);
+  if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) throw new Error(`--server-root is not a directory: ${root}`);
+  if (deckDirectory !== root && !deckDirectory.startsWith(root + path.sep)) throw new Error('--server-root must contain the deck file.');
+} else {
+  const depth = escapeDepth(fs.readFileSync(source, 'utf8'));
+  root = path.resolve(deckDirectory, ...Array.from({ length: depth }, () => '..'));
+  if (depth) console.error(`Server root lifted ${depth} level(s) for out-of-folder assets: ${root}`);
+}
 
 let chromium;
 try {
@@ -41,12 +73,13 @@ try {
   process.exit(2);
 }
 
-const root = path.dirname(source);
 const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.woff2': 'font/woff2' };
+const missing = new Set();
 const server = http.createServer((request, response) => {
   const requested = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
   const candidate = path.resolve(root, `.${requested}`);
   if (!(candidate === root || candidate.startsWith(root + path.sep)) || !fs.existsSync(candidate) || fs.statSync(candidate).isDirectory()) {
+    missing.add(requested);
     response.writeHead(404).end('Not found'); return;
   }
   response.writeHead(200, { 'Content-Type': types[path.extname(candidate).toLowerCase()] || 'application/octet-stream' });
@@ -93,8 +126,16 @@ try {
     await printPage.pdf({ path: pdfFile, width: '16in', height: '9in', printBackground: true, margin: { top: 0, right: 0, bottom: 0, left: 0 } });
     await printPage.close();
   }
-  console.log(JSON.stringify({ slides: count, slideSelector, outputDir, pdf: pdfFile }, null, 2));
+  console.log(JSON.stringify({ slides: count, slideSelector, serverRoot: root, outputDir, pdf: pdfFile, missingAssets: [...missing] }, null, 2));
 } finally {
   await browser.close();
   await new Promise(resolve => server.close(resolve));
+}
+/* Eksik varlık sessiz kalmamalı: boş bir sahne ekran görüntüsünde "koyu ama
+   düzgün" görünür, kırıklığı ancak sunumda fark edilir. */
+if (missing.size) {
+  console.error(`${missing.size} varlık sunucudan 404 döndü — export eksik:`);
+  for (const item of missing) console.error(`  ${item}`);
+  console.error('Kök yanlışsa --server-root ile açıkça verin.');
+  process.exit(1);
 }

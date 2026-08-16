@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "link-budget-sweep",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Make the link budget legible as a running sum: each slider change recomputes the waterfall from EIRP through losses to received margin, so the user sees which term dominates at each distance and band.",
+      "model": "Standard link-budget chain: antenna gains from aperture relations, free-space path loss, clear-air and rain attenuation, system noise temperature, Eb/N0 against the required rate; distances from the frozen MESAFELER table (LEO through deep space).",
+      "limitations": "Atmospheric terms are simplified fits rather than ITU-R tables; modulation is abstracted into a required Eb/N0, so coding gain and implementation loss are not itemized.",
+      "reducedMotion": "There is no autonomous animation: the chart only re-renders when the user changes an input, so behavior is identical under reduced motion.",
+      "exportState": "?export=1 hides controls and footer; the SVG chart is deterministic for identical URL parameters.",
+      "accessibility": "Native sliders and selects; every bar in the waterfall is labeled with its dB value as text; the margin verdict is stated in a sentence, not only by color.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

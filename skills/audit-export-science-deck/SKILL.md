@@ -31,4 +31,6 @@ Wait for `document.fonts.ready`, math rendering, images, and animations to settl
 
 Use `scripts/audit-deck.mjs` for static HTML checks. It recognizes `[data-slide]`, `.slide`, and Reveal.js section decks. Use `scripts/export-deck.mjs` when Playwright is available in the current project; override `--slide-selector` for a custom runtime and use `--browser-executable` when the project deliberately relies on an installed Chromium-family browser. Do not install dependencies silently during every export.
 
+The exporter serves the deck over HTTP. A deck that reaches outside its own folder (`../presets/...`, the repository demo among them) needs an HTTP root above that folder: the exporter lifts the root automatically from the deepest `../` chain in the deck, and `--server-root <dir>` overrides that when the deck resolves assets through JavaScript the scan cannot see. Every 404 the server returns is listed in the JSON result and exits the process non-zero — a missing scene screenshots as a plausible dark panel, so silence here is the failure mode to prevent.
+
 Return the audit report, blocking issues, warnings, generated files, dimensions, sizes, and reproduction commands. Do not declare success while blocking issues remain.

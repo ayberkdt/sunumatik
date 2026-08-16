@@ -169,6 +169,63 @@ function segmentRanges(length, count) {
   ]).filter(([start, end]) => end - start > 1);
 }
 
+/* ============================================================== */
+/* AY KURULUMU — dışa açık (cinematic_space ve diğer sahneler için) */
+/* ============================================================== */
+/* mountLunaris'in kendi Ay'ı da BU iki fonksiyondan geçer; davranış
+   birebir aynıdır (geriye uyumlu faktörleme, cinematic-space-plan.md §17-R1).
+   Amaç: başka bir sahne aynı Ay'ı kendi THREE.Scene'ine, kendi kadrajıyla
+   koyabilsin — doku kopyalamadan, mount'un DOM/kontrol yükünü almadan. */
+
+/** Lunaris doku üçlüsünü yükler ve mount ile AYNI ayarları uygular.
+    assetBaseUrl: moon_react_source/public/lunaris klasörüne göreli yol. */
+export async function loadMoonTextures({ assetBaseUrl, manager } = {}) {
+  const base = assetBaseUrl || '../moon_react_source/public/lunaris';
+  const loader = new THREE.TextureLoader(manager);
+  const [gravityMap, aestheticMap, displacementMap] = await Promise.all([
+    loader.loadAsync(`${base}/textures/gravity_moon_real.webp`),
+    loader.loadAsync(`${base}/textures/aesthetic_moon_real.webp`),
+    loader.loadAsync(`${base}/textures/moon_disp_real.webp`),
+  ]);
+  gravityMap.colorSpace = THREE.SRGBColorSpace;
+  aestheticMap.colorSpace = THREE.SRGBColorSpace;
+  gravityMap.anisotropy = 8;
+  aestheticMap.anisotropy = 8;
+  displacementMap.anisotropy = 4;
+  return { gravityMap, aestheticMap, displacementMap };
+}
+
+/** Ay küresi + sinematik halo. Dokular loadMoonTextures'tan gelir.
+    Dönen group yarıçapı 1 birimdir; ölçek/konum çağıranındır.
+    setTextureMode('aesthetic'|'gravity') mount'taki anahtarla aynı işi yapar. */
+export function buildMoonMesh({
+  gravityMap, aestheticMap, displacementMap,
+  textureMode = 'aesthetic', relief = .03, cinematic = true,
+} = {}) {
+  const group = new THREE.Group();
+  const material = new THREE.MeshStandardMaterial({
+    map: textureMode === 'aesthetic' ? aestheticMap : gravityMap,
+    displacementMap, displacementScale: relief,
+    roughness: textureMode === 'aesthetic' ? .72 : .9, metalness: .08,
+  });
+  const moon = new THREE.Mesh(new THREE.SphereGeometry(1, 192, 128), material);
+  group.add(moon);
+  const haloMaterial = new THREE.MeshBasicMaterial({
+    color: textureMode === 'aesthetic' ? '#a0c0d0' : '#00e5ff',
+    transparent: true, opacity: .055, side: THREE.BackSide, depthWrite: false,
+  });
+  const halo = new THREE.Mesh(new THREE.SphereGeometry(1.065, 96, 64), haloMaterial);
+  halo.visible = cinematic;
+  group.add(halo);
+  const setTextureMode = mode => {
+    material.map = mode === 'aesthetic' ? aestheticMap : gravityMap;
+    material.roughness = mode === 'aesthetic' ? .72 : .9;
+    material.needsUpdate = true;
+    haloMaterial.color.set(mode === 'aesthetic' ? '#a0c0d0' : '#00e5ff');
+  };
+  return { group, moon, material, halo, haloMaterial, setTextureMode };
+}
+
 function makeFatLine(color, width, opacity, resolution) {
   const material = new LineMaterial({
     color, linewidth: width, transparent: true, opacity,
@@ -293,21 +350,12 @@ export async function mountLunaris(container, options = {}) {
   manager.onProgress = (_, loaded, totalItems) => {
     loadingEl.textContent = `Loading lunar assets · ${Math.round((loaded / totalItems) * 100)}%`;
   };
-  const loader = new THREE.TextureLoader(manager);
-  const [gravityMap, aestheticMap, displacementMap] = await Promise.all([
-    loader.loadAsync(`${assetBaseUrl}/textures/gravity_moon_real.webp`),
-    loader.loadAsync(`${assetBaseUrl}/textures/aesthetic_moon_real.webp`),
-    loader.loadAsync(`${assetBaseUrl}/textures/moon_disp_real.webp`),
-  ]).catch(error => {
-    loadingEl.textContent = `Textures could not load: ${error.message}`;
-    loadingEl.classList.add('lunaris-preset__loading--error');
-    throw error;
-  });
-  gravityMap.colorSpace = THREE.SRGBColorSpace;
-  aestheticMap.colorSpace = THREE.SRGBColorSpace;
-  gravityMap.anisotropy = 8;
-  aestheticMap.anisotropy = 8;
-  displacementMap.anisotropy = 4;
+  const { gravityMap, aestheticMap, displacementMap } =
+    await loadMoonTextures({ assetBaseUrl, manager }).catch(error => {
+      loadingEl.textContent = `Textures could not load: ${error.message}`;
+      loadingEl.classList.add('lunaris-preset__loading--error');
+      throw error;
+    });
   loadingEl.remove();
 
   /* -- renderer, scene, camera -- */
@@ -333,22 +381,13 @@ export async function mountLunaris(container, options = {}) {
   stars.visible = state.showStars && !exportMode;
   scene.add(stars);
 
-  /* -- moon -- */
-  const moonGroup = new THREE.Group();
-  const moonMaterial = new THREE.MeshStandardMaterial({
-    map: state.textureMode === 'aesthetic' ? aestheticMap : gravityMap,
-    displacementMap, displacementScale: state.relief,
-    roughness: state.textureMode === 'aesthetic' ? .72 : .9, metalness: .08,
+  /* -- moon -- (kurulum dışa açık buildMoonMesh'ten; davranış birebir) */
+  const moonParts = buildMoonMesh({
+    gravityMap, aestheticMap, displacementMap,
+    textureMode: state.textureMode, relief: state.relief, cinematic,
   });
-  const moon = new THREE.Mesh(new THREE.SphereGeometry(1, 192, 128), moonMaterial);
-  moonGroup.add(moon);
-  const haloMaterial = new THREE.MeshBasicMaterial({
-    color: state.textureMode === 'aesthetic' ? '#a0c0d0' : '#00e5ff',
-    transparent: true, opacity: .055, side: THREE.BackSide, depthWrite: false,
-  });
-  const halo = new THREE.Mesh(new THREE.SphereGeometry(1.065, 96, 64), haloMaterial);
-  halo.visible = cinematic;
-  moonGroup.add(halo);
+  const moonGroup = moonParts.group;
+  const moonMaterial = moonParts.material;
   scene.add(moonGroup);
   let moonSpin = .34;
 
@@ -530,10 +569,7 @@ export async function mountLunaris(container, options = {}) {
   };
   const setTextureMode = mode => {
     state.textureMode = mode;
-    moonMaterial.map = mode === 'aesthetic' ? aestheticMap : gravityMap;
-    moonMaterial.roughness = mode === 'aesthetic' ? .72 : .9;
-    moonMaterial.needsUpdate = true;
-    haloMaterial.color.set(mode === 'aesthetic' ? '#a0c0d0' : '#00e5ff');
+    moonParts.setTextureMode(mode);   // map + roughness + halo rengi — buildMoonMesh ile tek kaynak
     figure.querySelectorAll('[data-mode]').forEach(button =>
       button.classList.toggle('is-active', button.dataset.mode === mode));
     renderOnce();
