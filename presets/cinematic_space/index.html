@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sinematik Uzay Sahnesi — cinematic_space</title>
+<link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+<script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+<link rel="stylesheet" href="../moon_react_source/components/moon_react_source.css">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; background: #04050a; color: #cfd6e4;
+    font: 15px/1.5 ui-sans-serif, system-ui, sans-serif; }
+  #app { display: flex; flex-direction: column; height: 100%; }
+  header { display: flex; align-items: baseline; gap: 14px; padding: 10px 18px;
+    border-bottom: 1px solid #141a26; }
+  h1 { margin: 0; font-size: 17px; font-weight: 650; color: #e8ecf4; }
+  h1 small { display: block; font-size: 12px; font-weight: 400; color: #7d8697;
+    max-width: 72ch; }
+  #host { flex: 1; min-height: 0; position: relative; }
+
+  /* preset iskeleti — sahne 16:9 yazarlanır, kaba letterbox'lanır */
+  .cine-space { position: absolute; inset: 0; margin: 0; overflow: hidden;
+    outline: none; background: #04050a; display: flex;
+    align-items: center; justify-content: center; }
+  .cine-space:focus-visible { box-shadow: inset 0 0 0 2px #5f9ee0; }
+  .cine-space__stage { position: relative; overflow: hidden; }
+  .cine-space__sky { position: absolute; inset: -3%; }
+  .cine-space__sky figure { margin: 0; width: 100%; height: 100%; }
+  .cine-space__sky .lunaris-preset__canvas { width: 100%; height: 100%; display: block; }
+  .cine-space__sky canvas { width: 100% !important; height: 100% !important; display: block; }
+  .cine-space__canvas { position: absolute; inset: 0; }
+  .cine-space__canvas canvas { width: 100% !important; height: 100% !important; display: block; }
+  .cine-space__ctl { position: absolute; left: 16px; bottom: 14px; display: flex;
+    gap: 12px; align-items: center; background: rgba(10,13,20,.78);
+    border: 1px solid #1c2434; border-radius: 12px; padding: 8px 14px; z-index: 5; }
+  .cine-space__ctl button { background: #131a28; color: #cfd6e4; border: 1px solid #273147;
+    border-radius: 8px; padding: 5px 14px; font: inherit; cursor: pointer; }
+  .cine-space__ctl button:hover { border-color: #5f9ee0; color: #eaf1fb; }
+  .cine-space__ctl label { display: flex; gap: 8px; align-items: center;
+    font-size: 13px; color: #8d96a8; }
+  .cine-space__ctl input[type=range] { width: 220px; accent-color: #5f9ee0; }
+  .cine-space__vinyet { position: absolute; inset: 0; pointer-events: none; z-index: 3;
+    opacity: 0; transition: opacity 1.2s ease;
+    background: radial-gradient(ellipse 78% 68% at 50% 46%, transparent 62%, rgba(2,4,8,.55) 100%); }
+  .cine-space__filtre[hidden], .cine-space__gezgin[hidden] { display: none; }
+  .cine-space__gezgin { position: absolute; right: 16px; top: 14px; z-index: 6;
+    display: flex; gap: 6px; align-items: center;
+    background: rgba(10,13,20,.82); border: 1px solid #1c2434; border-radius: 10px;
+    padding: 6px 10px; }
+  .cine-space__gezgin span { font: 600 9.5px/1 ui-sans-serif, system-ui;
+    letter-spacing: .28em; color: #7d8aa6; margin-right: 4px; }
+  .cine-space__gezgin button { background: #0e1420; color: #aab6cc; border: 1px solid #1d2739;
+    border-radius: 7px; padding: 4px 12px; font: 500 12.5px ui-sans-serif, system-ui; cursor: pointer; }
+  .cine-space__gezgin button[aria-pressed="true"] { border-color: #c9a35c; color: #e8d9b0;
+    background: #191c14; }
+  .cine-space__gezgin button:focus-visible { outline: 2px solid #5f9ee0; outline-offset: 1px; }
+  .cine-space__filtre { position: absolute; right: 16px; top: 14px; z-index: 6;
+    display: flex; gap: 6px; align-items: center;
+    background: rgba(10,13,20,.82); border: 1px solid #1c2434; border-radius: 10px;
+    padding: 6px 10px; }
+  .cine-space__filtre span { font: 600 9.5px/1 ui-sans-serif, system-ui;
+    letter-spacing: .28em; color: #7d8aa6; margin-right: 4px; }
+  .cine-space__filtre button { background: #0e1420; color: #aab6cc; border: 1px solid #1d2739;
+    border-radius: 7px; padding: 4px 12px; font: 500 12.5px ui-sans-serif, system-ui; cursor: pointer; }
+  .cine-space__filtre button[aria-pressed="true"] { border-color: #c9a35c; color: #e8d9b0;
+    background: #191c14; }
+  .cine-space__filtre button:focus-visible { outline: 2px solid #5f9ee0; outline-offset: 1px; }
+  .cine-space__truth { position: absolute; right: 16px; bottom: 14px; max-width: 46ch;
+    font-size: 11.5px; line-height: 1.45; color: #77809290; color: #7780a2;
+    background: rgba(6,8,13,.66); border-radius: 10px; padding: 7px 11px; z-index: 5; }
+  .cine-space__truth strong { color: #a9b4c9; }
+  [data-export="true"] .cine-space__ctl, [data-export="true"] footer { display: none; }
+  /* bölüm açıkken kabuk kromu çekilir — hedef preset kendi dilini taşır */
+  .cine-space[data-bolum] .cine-space__ctl,
+  .cine-space[data-bolum] .cine-space__truth { display: none; }
+
+  footer { display: flex; gap: 14px; flex-wrap: wrap; padding: 8px 18px;
+    border-top: 1px solid #141a26; font-size: 12.5px; }
+  footer a { color: #5f9ee0; text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Sinematik Uzay Sahnesi
+      <small>Kompozisyon: cosmos gök kubbesi + Lunaris Ay'ı + craft-blocks orbiter.
+        Tekerlek/sürgü kamera rayını sarar: dış idle → araca yaklaşma → kanopi eşiği →
+        gözlem güvertesi (pencereden görünen Ay aynı sahnenin kendisidir — kopya değil).
+        Enter araca girer, Esc dışarı çıkar; işaretçi paralaksı küçük ikincil offsettir.</small>
+    </h1>
+  </header>
+  <div id="host"></div>
+  <footer id="presets">
+    <a href="?p=0">dış idle</a>
+    <a href="?p=0.15">yeniden kadraj</a>
+    <a href="?p=0.5">kanopi dolar</a>
+    <a href="?p=0.62">eşik</a>
+    <a href="?durum=cockpit">kokpit</a>
+    <a href="?durum=rover">gezgin vista</a>
+    <a href="?seed=7">farklı tohum</a>
+    <a href="?export=1&t=12">dış export</a>
+    <a href="?export=1&t=12&p=0.9">kokpit export</a>
+    <a href="?export=1&t=12&durum=rover">vista export</a>
+  </footer>
+</div>
+<script type="module">
+import { mountCinematicSpace } from './cinematic-space.mjs';
+const cine = await mountCinematicSpace(document.getElementById('host'));
+window.__cine = cine;   // konsol/denetim erişimi
+</script>
+</body>
+</html>

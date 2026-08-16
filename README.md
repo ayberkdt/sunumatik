@@ -1,6 +1,8 @@
 # Sunumatik
 
-**Bilim sunumları için preset kütüphanesi** — gerçek fizikten türetilmiş WebGL gök cismi sahneleri, bildirimsel grafik motoru, hareket/geçiş presetleri, renk temaları ve bunları üreten 17 yapay zekâ becerisi. Tamamı bağımsız HTML/CSS/JS: derleme adımı yok, internet bağımlılığı yok, `file://` dışında her yerel sunucuda çalışır.
+**Bilim sunumları için preset kütüphanesi** — gerçek fizikten türetilmiş WebGL gök cismi sahneleri, sayısal akışkan/yörünge/ML simülasyonları, bildirimsel grafik motoru, hareket/geçiş presetleri, renk temaları ve bunları üreten 18 yapay zekâ becerisi. Tamamı bağımsız HTML/CSS/JS: derleme adımı yok, internet bağımlılığı yok, `file://` dışında her yerel sunucuda çalışır.
+
+Envanter elle sayılmaz: `presets/registry.json` taramayla üretilir (`node scripts/build-registry.mjs`) ve `node scripts/validate-invariants.mjs` bu dosyadaki ve dokümanlardaki sayı/yol iddialarını denetler.
 
 <p align="center">
   <img src="docs/media/sun.jpg" alt="Sol — prosedürel aktif Güneş: korona ışın demetleri, patlama kurdeleleri ve akışkan püskürmeler" width="820">
@@ -19,8 +21,13 @@
 demo\sunumu-baslat.cmd
 ```
 
+Sinematik uzay yolculuğunu (dış uzay → kanopi → güverte → bölüm konsolu)
+doğrudan açmak için: `demo\sinematik-baslat.cmd` — aynı sunucu, farklı
+açılış sayfası.
+
 Yerel sunucu açılır ve tüm preset'leri kullanan örnek deste yüklenir
-(`http://localhost:8781/demo/index.html`). Tarayıcılar `file://` altında ES
+(`http://localhost:8790/demo/index.html`; 8790 doluysa 8795/8798'e kayar —
+açılan adresi kullanın). Tarayıcılar `file://` altında ES
 modüllerini engellediği için yerel sunucu şarttır — herhangi bir statik
 sunucu (`python -m http.server`) yeterlidir.
 
@@ -55,17 +62,30 @@ ayrımını açık tutar.
 | [`cosmos_advanced/`](presets/cosmos_advanced) | Derin uzay fonu: tohumlu yıldız alanı (gerçekçi kadir dağılımı, kara-cisim renkleri, sintilasyon), **gerçek ESO GigaGalaxy Samanyolu panoraması** (prosedürel yedekli), opsiyonel bulutsu, deterministik meteorlar; dikdörtgen dekor modülüyle gömülür. |
 | [`jwst_explorer/`](presets/jwst_explorer) | 10 resmi James Webb / Hubble görüntüsü üstünde etkileşimli keşif: yaylı pan/zoom, yayın metinlerinden ilgi noktaları, Webb↔Hubble / NIRCam↔MIRI tek-kameralı karşılaştırma perdesi. Krediler gömülü. |
 
-### Sahne blokları — birleştirilebilir 3B sistem (1. dalga)
+### Sahne blokları — birleştirilebilir 3B sistem
 
-Manim ayarında, blok blok kurulabilir sahneler; program ve donmuş API `skills/design-scientific-motion/references/scene-blocks.md` içinde.
+Manim ayarında, blok blok kurulabilir sahneler; program ve donmuş API (eksen sözleşmesi dahil) `skills/design-scientific-motion/references/scene-blocks.md` içinde.
 
 | Klasör | İçerik |
 |---|---|
+| [`cinematic_space/`](presets/cinematic_space) | **Sinematik uzamsal yolculuk kabuğu**: sunum tek ve sürekli bir dünyada geçer — dış uzay kompozisyonu (Ay + tutunan orbiter) → kanopi eşiği → gözlem güvertesi → veri güdümlü bölüm konsolu → pencere-maskeli `orbital_stage` teslimi ya da küre→arazi teslimli dalışla `buildRover` vistası. Kompozisyon, kopya değil: gök cosmos'tan, Ay `buildMoonMesh`'ten, araçlar craft-blocks'tan. Tüm hareket `(t, seed)`'in saf fonksiyonu; `goTo/back/setProgress/advance` API'si. |
 | [`orbital_stage/`](presets/orbital_stage) | **Yörünge ver → animasyon al**: Kepler elemanları, durum vektörü dizisi (gerçek görev verisi) ya da RK4 + impulsif yakışlar; yakış hayaletleri, kamera yönetmeni, telemetri HUD. Demo: LEO→GEO Hohmann (ΔV 2,43+1,47 km/s) + Ay'a hiperbolik varış ve yakalama. |
-| [`craft_blocks/`](presets/craft_blocks) | Estetik parametrik araç kütüphanesi: orbiter, iniş aracı, 2 kademeli roket, CubeSat, kapsül — donmuş eksen/palet sözleşmesiyle tüm bloklar bununla birleşir. |
+| [`craft_blocks/`](presets/craft_blocks) | Estetik parametrik araç kütüphanesi: orbiter, iniş aracı, 2 kademeli roket, CubeSat, kapsül + 2. dalga: Starship, gezgin (rover), Mars helikopteri, derin uzay sondası — donmuş eksen/palet sözleşmesiyle tüm bloklar birleşir. `craft-effects.mjs` sinematik ateşleme sistemi (mach elmaslı alevler, ateşleme flaşı). |
+| [`aircraft_blocks/`](presets/aircraft_blocks) | Parametrik uçak kütüphanesi: gerçek turbofan (burulmalı fan kanatçıkları, statör, çekirdek kesiti) dahil. |
 | [`lunar_descent/`](presets/lunar_descent) | Gerçek entegre üç fazlı Ay inişi (temas 0,90 m/s, ΔV 2,08 km/s), gaz kelebeği plums, toz, klasik yüzey kamerası. |
+
+### Sayısal simülasyon sahneleri
+
+| Klasör | İçerik |
+|---|---|
+| [`aero_vortex_street/`](presets/aero_vortex_street) | **Kármán vorteks caddesi, kafes Boltzmann (D2Q9, TRT) ile canlı çözülür** — salınım hiçbir yerde programlanmadı; Strouhal, Cl(t) sıfır geçişlerinden ölçülür ve Roshko bağıntısıyla karşılaştırılır. |
+| [`aero_airfoil_flow/`](presets/aero_airfoil_flow) | Kanat profili etrafında GERÇEKTEN çözülen akım: vorteks panel yöntemi (Kutta koşulu kapatılabilir — kaldırmanın nereden geldiğini gösterir), Thwaites→Michel→Head sınır tabakası (stall ayrılmadan doğar), Prandtl–Glauert düzeltmesi. |
+| [`aero_shock_waves/`](presets/aero_shock_waves) | Süpersonik dalga sistemi: eğik şok bağıntıları, Prandtl–Meyer yelpazesi, Mach konisi, şok elmasları — hiçbir açı elle konmaz. |
 | [`ml_loss_landscape/`](presets/ml_loss_landscape) | Analitik kayıp yüzeyinde gerçek gradyanla SGD / momentum / Adam yarışı — SGD sığ tuzağa takılır, farkı canlı okursunuz. |
 | [`ml_attention_flow/`](presets/ml_attention_flow) | Gerçek softmax(QKᵀ/√d) dikkat yayları, Türkçe cümle, katman/kafa/sorgu değiştirme. |
+| [`ml_loss_functions/`](presets/ml_loss_functions) · [`ml_conv_vision/`](presets/ml_conv_vision) · [`ml_layer_blocks/`](presets/ml_layer_blocks) · [`ml_net_builder/`](presets/ml_net_builder) | Kayıp fonksiyonları · evrişimli görü · katman blokları · mimari kurucu. |
+| [`comms_antenna/`](presets/comms_antenna) · [`comms_link_budget/`](presets/comms_link_budget) | Anten/yer istasyonu geometrisi ve kazanç · bağlantı bütçesi şelalesi (FSPL, yağmur, gürültü sıcaklığı, Eb/N0). |
+| [`aurora/`](presets/aurora) | Emisyon çizgisi tabanlı aurora: 630 nm sönümleme fiziği (O(1D) τ≈110 s), Kp 0–9 morfolojisi. |
 
 ### Bileşenler ve hareket
 
@@ -73,7 +93,8 @@ Manim ayarında, blok blok kurulabilir sahneler; program ve donmuş API `skills/
 |---|---|
 | [`charts_icons/chart-preset/`](presets/charts_icons/chart-preset) | **Bildirimsel grafik motoru**: spec ver → animasyonlu SVG al. Çizgi/sütun/saçılım + **keman (violin: Gauss KDE, çeyrekler, medyan, merkezden büyüme)**, belirsizlik bantları, etiketli eşikler, epistemik çizgi stilleri, **morphTo() veri geçişi, kademeli nokta doğuşu, tek atımlık sheen süpürmesi**. |
 | [`motion_core/`](presets/motion_core) | Açılma/reveal, hover etkileşimleri, FLIP morph, premium slayt geçişleri (işaret bırakan zoom dahil), tablo hareketi (satır/sütun kaskadı, satır flaşı, sütun vurgusu, **hücre dolgusu: tr-TR sayaç, veri çubuğu, ısı rampası**), **primitives mikro-hareket seti** (ışıltı süpürmesi, kademeli fade-in-blur metin, telemetri çözülmesi, başlık morfu, yaylı sayaç + odometre, spot/eğim/mıknatıs, kenar kuyruğu, parıltı, sonsuz şerit). |
-| [`color_themes/`](presets/color_themes) | **17 palet** (CSS token'ları; her biri renk-teorisi harmonisini bildirir, genişletilmişlerde 6 veri rengi + sıralı/ıraksak rampalar + renk körlüğü notları), kart preset'leri (stat/tanım/ikon, aksan çubuğu sistemi, giriş kaskadı), tablo preset'leri, 10 uzay motifi SVG kiti. |
+| [`color_themes/`](presets/color_themes) | **37 palet** (CSS token'ları; her biri renk-teorisi harmonisini bildirir, genişletilmişlerde 6 veri rengi + sıralı/ıraksak rampalar + renk körlüğü notları), kart preset'leri (stat/tanım/ikon, aksan çubuğu sistemi, giriş kaskadı), tablo preset'leri, 10 uzay motifi SVG kiti, **tipografi sistemi** (7 açık lisanslı aile, Türkçe glif desteği üç yolla doğrulandı, 6 görüntü muamelesi). |
+| [`composition/`](presets/composition) | **Kompozisyon kılavuzu**: 14 ilke + kılavuz katmanı + `olcCompozisyon()` sayısal ölçüm; üçler çizgisi/grid çakışması ve altın oran 16:9'da dürüstçe ele alınır. |
 | [`figure_callouts/`](presets/figure_callouts) | Figür üzerinde adım adım anlatım: kutu/daire/ok işaretleri, spot ışığı, büyüteç merceği, iddia satırları. |
 | [`equation_steps/`](presets/equation_steps) · [`equation_pen/`](presets/equation_pen) · [`equation_theme/`](presets/equation_theme) | Denklemi terim terim anlatan adımlayıcı · kalemle yazma efekti · dizgi teması. |
 | [`timeline_tree/`](presets/timeline_tree) · [`neural_network/`](presets/neural_network) | Kronoloji ağacı · sinir ağı ileri-geçiş animasyonu. |
@@ -85,7 +106,7 @@ Manim ayarında, blok blok kurulabilir sahneler; program ve donmuş API `skills/
 
 ### `skills/` — üretim talimatları
 
-Bu kütüphaneyi üreten ve kullanan 17 yapay zekâ becerisi (SKILL.md +
+Bu kütüphaneyi üreten ve kullanan 18 yapay zekâ becerisi (SKILL.md +
 references + scripts). Bir yapay zekâ ajanına (ör. Claude Code)
 `.agents/skills/` altına kopyalanarak verilir; ajan deste kurarken bu
 kuralları uygular. Öne çıkanlar:
@@ -104,9 +125,12 @@ Beceri dokümanlarındaki `/presets/...` yolları bu deponun köküne göredir.
 
 ## demo/
 
-[`demo/index.html`](demo/index.html) — tüm preset'leri bir arada kullanan
-15 slaytlık örnek deste. [`demo/sol-tek-basina.html`](demo/sol-tek-basina.html)
-— tek sahneyi gömmenin asgari şablonu.
+[`demo/index.html`](demo/index.html) — her preset'i canlı gömen, kategori
+dizinli **canlı katalog** (G tuşu dizini açar; slayt sayısı envanterle
+birlikte büyür). [`demo/ornek-deste.html`](demo/ornek-deste.html) —
+preset'lerin birlikte çalıştığı 20 slaytlık örnek deste.
+[`demo/sol-tek-basina.html`](demo/sol-tek-basina.html) — tek sahneyi
+gömmenin asgari şablonu.
 
 ## Teknik notlar
 

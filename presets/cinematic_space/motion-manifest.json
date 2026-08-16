@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "cine-station-keeping-idle",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "Communicate that the spacecraft is actively holding position: layered low-frequency micro-drift PLUS a visible causal correction cycle — the craft slowly falls away over ~12 s, then the aft engine fires (craft-effects vacuum FX plus a warm burn light licking the hull) and eases it back with a small overshoot. Seeded RCS puffs punctuate attitude trims; the breathing camera counter-drifts.",
+      "model": "Micro layer: sum of seeded sinusoids with irrational (phi-cubed) frequency ratios and a two-tone amplitude envelope. Correction cycle: 17-23 s seeded period; drift phase accelerates smoothly to 4.5-8% of craft length, burn phase (18% of the cycle) drives the engine-FX throttle with a sine-power envelope while position recovers, settle phase damps a 5% overshoot. Every value including burn timing is a pure function of (t, seed).",
+      "limitations": "Not attitude dynamics: no inertia integration or control law — the cycle is choreographed to READ as station-keeping, and the vacuum plume is craft-effects' stylized model. The Moon spins at a declared cinematic rate (~1.1 deg/s, full turn ~5 min; the real Moon takes 27.3 days) and the craft-Moon scale is cinematic — both stated in the caption. The cockpit 'gravity filter' swaps the Moon to the Lunaris gravity-map texture; it is an instrument-style view of a real asset, not a live measurement.",
+      "reducedMotion": "The scene pre-integrates to the default tableau (t=12) and starts paused; the Sürdür button lets the user opt into live motion; pointer parallax stays off.",
+      "exportState": "?export=1 hides controls; ?t=N sets the frozen tableau (root carries data-frozen-at); the frame is deterministic for identical seed, p, and t.",
+      "accessibility": "Native button and slider controls; Space toggles pause; the caption states the real/illustrative split (real NASA-derived Moon texture, realistic star statistics, representational positions) as text.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "cine-pointer-parallax",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Give the composition physical depth on pointer movement: a sub-degree secondary camera yaw/pitch plus a tiny dolly makes near layers shift more than far ones.",
+      "model": "Pointer position maps to a critically damped camera offset (max 0.6 deg yaw, 0.4 deg pitch, 0.03 unit dolly); layer separation follows from real perspective projection, not per-layer tuning, so the Moon can never shift more than the nearby craft. The DOM sky layer receives only the rotation-equivalent pixel shift because the star dome is at infinity.",
+      "limitations": "Interactive by nature and therefore not part of the deterministic export path; disabled entirely in export and reduced-motion modes. Device-orientation input is not wired yet.",
+      "reducedMotion": "Fully disabled.",
+      "exportState": "Fully disabled; the exported camera is the pure keyframe rail plus deterministic breathing.",
+      "accessibility": "Purely decorative depth cue; no information is carried by the parallax; keyboard users lose nothing.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "cine-exterior-rail",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "One deterministic camera rail across the whole journey: wide exterior, reframe on the spacecraft, gentle approach, canopy threshold, and cockpit settle. Wheel, slider, keyboard (Enter/Escape), and the goTo API all drive the same rail — there is no separate 'transition mode' to desynchronize.",
+      "model": "Keyframed position/look/fov interpolation with smoothstep easing (smoothstep-squared for approach and narrative goTo); camera state is a pure function of progress p; goTo advances p with simulation time, so advance(dt) reproduces the same frames; secondary layers (breathing, parallax) are additive and cannot advance the rail. FOV evolution stays within 42-47 degrees.",
+      "limitations": "Chapter destinations (orbital stage, lunar surface) are not yet on the rail — they arrive in later phases. The rail is a composed camera path, not a physical trajectory.",
+      "reducedMotion": "No autonomous rail motion; goTo becomes a short dark-veil cut to the target tableau; the slider remains scrubable (a scrub is a user action, not an animation).",
+      "exportState": "?p=X (or ?durum=cockpit) freezes the rail at that progress for the export frame.",
+      "accessibility": "The progress slider is a native range input with a label; Enter enters the craft, Escape returns; the same states are reachable by API for deck runners.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "cine-chapter-passthrough",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Chapter selection is spatial navigation, not page switching: the destination scene opens clipped to the cockpit window's REAL screen rectangle and the window grows to fill the stage; returning plays the same mask in reverse (pull-out as rewind).",
+      "model": "The window aperture's four corners are projected through the live camera to screen space and drive a clip-path inset animation (1.4 s out, 1.2 s back); destinations are mounted in-process during cockpit idle with setActive(false) (active scene: full render / next: prepared, paused / closed: paused), so selection triggers only the mask and a camera hand-off — the orbital destination receives stage.camera.transitionTo('orbit').",
+      "limitations": "The mask is the screen-space counterpart of the geometric threshold, not a 3D camera flight through the window; destination content truthfulness belongs to the destination preset's own manifest (orbital_stage). Chapter types without a registered builder appear honestly disabled on the console.",
+      "reducedMotion": "No mask travel: a short veil cut lands directly in the destination (and back).",
+      "exportState": "Chapters do not open in export mode; the export frame is always a rail tableau. Destination presets export through their own contracts.",
+      "accessibility": "The console is a native-button panel: one Tab stop, Arrow keys rove, Enter uses a two-step arm-confirm, Escape disarms or returns; state changes are published through the statechange event for deck runners.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "cine-surface-dive",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "The signature dive (grammar C): from the observation deck, out through the window, down to the Moon, arriving at a low three-quarter documentary shot beside the rover — one continuous camera journey with a hidden representation handoff.",
+      "model": "Two rails in two coordinate systems: rail A flies the WORLD scene from the seat to 8 km above the textured Lunaris sphere looking nadir; at q=0.55 — when the screen holds nothing but regolith — rail B takes over in a dedicated surface scene (nadir at 3.4 km) and descends to the vista. The surface terrain DERIVES lunar_descent's published recipe (spherical sagitta at the real 1737.4 km radius, power-law crater field with raised rims and ejecta, 3-octave value-noise regolith, mare ridges aimed at the vista horizon, seeded deformed-icosahedron rocks) in a compact single-material form — a derivation, not a copy: lunar_descent's four-tap detail shader and region albedo remain theirs. The rover is craft-blocks buildRover rotated from the block contract's +Z-up into the scene's +Y-up, grounded by a measured bounding box, carrying a slow-pulsing status beacon; after arrival the camera keeps a very slow documentary arc around the vista (the real-camera reinterpretation of Ken Burns), all pure functions of (t, seed).",
+      "limitations": "Units are honest (1 unit = 100 m, real lunar radius for horizon curvature) but the rover is drawn at 4.5 m (real rovers ~3 m; declared cinematic exaggeration); the descent path is a composed camera rail, not a propagated trajectory; the sphere-to-terrain handoff means the terrain's local relief does not correspond feature-by-feature to the sphere texture beneath the dive point.",
+      "reducedMotion": "No travel: a short veil cut lands directly on the rover vista tableau (and back).",
+      "exportState": "?durum=rover renders the vista tableau; the surface scene is built before the first frame, so ?export=1&t=12&durum=rover is a deterministic frame.",
+      "accessibility": "Escape returns at any point during or after the dive; the sequence carries no information that is not restated by the chapter label and caption text.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "cine-canopy-threshold",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Make 'I entered the spacecraft' a spatial event rather than a page change: the camera threads through a physical canopy patch on the craft's nose, and while its frame fills the screen the interior shell takes over.",
+      "model": "Geometry-assisted mask (two-pass render): the world scene (Moon, sky, craft) is always drawn first; from p=0.60 the cockpit shell is drawn over it with a fresh depth pass, and the exterior craft hides at p=0.625, so the overlap in which both representations exist is never readable. The Moon seen through the cockpit window IS the world pass - continuity is structural, not synchronized. Craft idle motion ramps to zero across p 0.30-0.50 so the threaded canopy stands still.",
+      "limitations": "The interior is human-scale while the exterior craft is a unit-scale model; the scale jump is hidden by the threshold masking, and the cockpit belongs to the same craft by material language (shared palette, shared sun direction), not by literal interior geometry of buildOrbiter.",
+      "reducedMotion": "The threshold is never traveled: a short veil cut lands directly on the cockpit tableau.",
+      "exportState": "?p beyond 0.62 exports the interior with the deterministic world pass behind the window.",
+      "accessibility": "The transition carries no information; both end states are directly reachable by keyboard and API.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

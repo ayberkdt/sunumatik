@@ -1,48 +1,53 @@
 # Sunum Kütüphanesi — Preset Kataloğu
 
-> GitHub yayını: **https://github.com/ayberkdt/sunumatik** — preset'ler
-> `presets/sun_advanced`, `presets/moon_advanced` gibi temiz adlarla, beceriler
-> `skills/` altında, örnek deste `demo/` içinde (yollar o yapıya göre uyarlanmış
-> ayrı bir kopyadır; buradaki çalışma ağacı değişmedi).
-> GitHub'a bağlı yerel kopya: `Masaüstü\Custom Yetenekler\sunumatik`.
+> Depo: **https://github.com/ayberkdt/sunumatik** — preset'ler `presets/`,
+> beceriler `skills/`, örnek desteler `demo/` altında. Bu katalogdaki bütün
+> yollar deponun köküne göredir. Envanter sayıları elle yazılmaz:
+> `presets/registry.json` taramayla üretilir ve
+> `scripts/validate-invariants.mjs` katalogdaki sayı/yol iddialarını ona
+> karşı denetler.
 
-Bütün özellikler bu klasörün içinde, **`.agents\skills\`** altında saklanır
-(adı nokta ile başladığı için gözden kaçabilir; Explorer'da görünür durumdadır).
-Her beceri kendi klasöründe yaşar: `SKILL.md` (kullanım talimatı),
-`references/` (kural ve rehberler), `assets/` (kopyalanabilir CSS/JS/SVG),
-`scripts/` (doğrulayıcılar). Yeni bir sunum yaptırırken bu dosyaları ben
-otomatik okurum; elle kullanmak istersen aşağıdaki yollar doğrudan bağlanabilir.
+Beceriler `skills/` altında saklanır. Her beceri kendi klasöründe yaşar:
+`SKILL.md` (kullanım talimatı), `references/` (kural ve rehberler),
+`assets/` (kopyalanabilir CSS/JS/SVG), `scripts/` (doğrulayıcılar).
+Bir yapay zekâ ajanına vermek için klasörler ajanın beceri dizinine
+kopyalanır (dizin adı ajana göre değişir); ajan deste kurarken bu
+kuralları uygular.
 
-Önizlemeler için yerel sunucu gerekir: `preset-test\sunumu-baslat.cmd` çift
-tıkla (port 8781) — örnek deste dahil her şey oradan açılır.
+Önizlemeler için yerel sunucu gerekir: `demo\sunumu-baslat.cmd` çift
+tıkla (port 8790; doluysa 8795/8798'e kayar — tarayıcıda AÇILAN adresi
+kullanın) — örnek deste dahil her şey oradan açılır.
 
-## Test destesi
+## Desteler
 
 | Ne | Yol |
 |---|---|
-| Tüm preset'leri kullanan **20 slaytlık** örnek deste (Kozmos · JWST Explorer · alan ikonları · veri animasyonları · Primitives dahil) | [preset-test/index.html](preset-test/index.html) → `http://localhost:8781/preset-test/index.html` |
-| Sol'u kendi sayfana koymanın hazır şablonu (3 bağlantı: import map + CSS + mountSol) | [preset-test/sol-tek-basina.html](preset-test/sol-tek-basina.html) → `http://localhost:8781/preset-test/sol-tek-basina.html` |
+| **Canlı katalog** — her preset'i canlı gömen gezilebilir deste (G ile dizin; slayt sayısı envanterle birlikte büyür, `build-demo.py` üretir) | [demo/index.html](demo/index.html) → `http://localhost:8790/demo/index.html` |
+| Preset'lerin birlikte çalıştığı **20 slaytlık** örnek deste (Kozmos · JWST Explorer · alan ikonları · veri animasyonları · Primitives dahil) | [demo/ornek-deste.html](demo/ornek-deste.html) → `http://localhost:8790/demo/ornek-deste.html` |
+| Sol'u kendi sayfana koymanın hazır şablonu (3 bağlantı: import map + CSS + mountSol) | [demo/sol-tek-basina.html](demo/sol-tek-basina.html) → `http://localhost:8790/demo/sol-tek-basina.html` |
+| **Sinematik uzay yolculuğu** — dış uzay → kanopi → güverte → bölüm konsolu; `demo\sinematik-baslat.cmd` çift tıklamayla doğrudan açılır | [presets/cinematic_space/index.html](presets/cinematic_space/index.html) → `http://localhost:8790/presets/cinematic_space/index.html` |
 
 ## Renk temaları — `design-space-science-deck`
 
 | Varlık | Yol |
 |---|---|
-| **17 palet**, CSS değişkenleri (`[data-palette="..."]`) — her palet renk-teorisi harmonisini bildirir; genişletilmiş olanlarda 6 veri rengi + sıralı/ıraksak rampalar + renk körlüğü notu | [palette-library.css](presets/color_themes/palette-library.css) |
-| 2026 harmoni reçeteleri (tamamlayıcı/yarık-tamamlayıcı/analog/üçlü/tek renk) + premium disiplin kuralları | [color-composition.md](.agents/skills/design-space-science-deck/references/color-composition.md) |
+| **37 palet**, CSS değişkenleri (`[data-palette="..."]`) — her palet renk-teorisi harmonisini bildirir; genişletilmiş olanlarda 6 veri rengi + sıralı/ıraksak rampalar + renk körlüğü notu | [palette-library.css](presets/color_themes/palette-library.css) |
+| 2026 harmoni reçeteleri (tamamlayıcı/yarık-tamamlayıcı/analog/üçlü/tek renk) + premium disiplin kuralları | [color-composition.md](skills/design-space-science-deck/references/color-composition.md) |
 | Palet verisi + kontrast kuralları | [palette-library.json](presets/color_themes/palette-library.json) |
 | Palet önizleme (`?palette=graphite-ember` gibi) | [palette-preview.html](presets/color_themes/palette-preview.html) |
-| 15 tema profili (Graphite Ember, Porcelain Ink, Obsidian Champagne, Verdigris Slate dahil) | `.agents/skills/design-space-science-deck/references/theme-*.md` |
+| 15 tema profili (Graphite Ember, Porcelain Ink, Obsidian Champagne, Verdigris Slate dahil) | `skills/design-space-science-deck/references/theme-*.md` |
 | Tablo preset'leri (data/karşılaştırma/matris/spec) | [table-presets.css](presets/color_themes/components/table-presets.css) |
 | **Kart preset'leri** — stat/tanım/ikon kartları, aksan çubuğu sistemi, `.kws` anahtar satırları, giriş kaskadı | [card-presets.css](presets/color_themes/components/card-presets.css) · [önizleme](presets/color_themes/components/component-preview.html) |
-| **Hizalama disiplini** — 12 kolon grid, boşluk ölçeği, optik düzeltmeler, sık hata tablosu | [alignment-and-grid.md](.agents/skills/design-space-science-deck/references/alignment-and-grid.md) |
+| **Hizalama disiplini** — 12 kolon grid, boşluk ölçeği, optik düzeltmeler, sık hata tablosu | [alignment-and-grid.md](skills/design-space-science-deck/references/alignment-and-grid.md) |
 | Uzay motifleri SVG kiti (10 motif) + önizleme | [space-motifs/](presets/color_themes/space-motifs/motif-preview.html) |
 
 ## Sahne blokları — birleştirilebilir 3B sunum sistemi (`design-scientific-motion`)
 
-> Manim ayarında, blok blok kurulabilir sahneler. Program ve donmuş API: [scene-blocks.md](.agents/skills/design-scientific-motion/references/scene-blocks.md)
+> Manim ayarında, blok blok kurulabilir sahneler. Program ve donmuş API: [scene-blocks.md](skills/design-scientific-motion/references/scene-blocks.md)
 
 | Kategori · Blok | Ne yapar |
 |---|---|
+| **SİNEMATİK** · [cinematic-space](presets/cinematic_space/index.html) | Uzamsal yolculuk kabuğu: dış uzay → kanopi eşiği → gözlem güvertesi → bölüm konsolu → orbital teslimi / gezgin dalışı. Cosmos + Lunaris Ay'ı + craft-blocks kompozisyonu; deterministik ray, `goTo/back` API'si |
 | **ORBITAL** · [orbital-stage](presets/orbital_stage/index.html) | Yörünge ver → animasyon al: Kepler elemanları, durum vektörü dizisi (gerçek görev verisi) ya da RK4 + impulsif yakışlar; yakış hayaletleri, kamera yönetmeni, telemetri HUD. Demo: LEO→GEO Hohmann + Ay'a hiperbolik varış |
 | **ORBITAL** · [craft-blocks](presets/craft_blocks/index.html) | Estetik parametrik araç kütüphanesi: orbiter, iniş aracı, 2 kademeli roket, CubeSat, kapsül — tüm bloklar bununla birleşir |
 | **ORBITAL** · [lunar-descent](presets/lunar_descent/index.html) | Gerçek entegre üç fazlı Ay inişi: temas 0,90 m/s, ΔV 2,08 km/s; gaz kelebeği plums, toz, yüzey kamerası |
@@ -83,7 +88,7 @@ tıkla (port 8781) — örnek deste dahil her şey oradan açılır.
 | Grafik teması: eksen/grid/6 seri rengi/belirsizlik bandı/tooltip | [chart-theme.css](presets/charts_icons/chart-theme.css) |
 | **Grafik motoru** — spec ver, animasyonlu SVG grafik al (çizgi/sütun/saçılım + bant + eşik + fit stilleri) | [chart-preset/](presets/charts_icons/chart-preset/index.html) |
 | 23 bilim ikonu (SVG sprite) + önizleme | [icons/](presets/charts_icons/icons/icons-preview.html) |
-| İkon kullanım denetimi — eksik `#i-` atfı (görünmez boş kutu) + katman karışımı | `node .agents/skills/create-scientific-visuals/scripts/validate-icon-usage.mjs preset-test/index.html` |
+| İkon kullanım denetimi — eksik `#i-` atfı (görünmez boş kutu) + katman karışımı | `node skills/create-scientific-visuals/scripts/validate-icon-usage.mjs demo/index.html` |
 | **224 ikonluk ALAN seti** (duotone, bilim setiyle aynı el) — matematik 28 · sinyal & kontrol 30 · fizik 24 · **astrodinamik 30** · **GNC 26** · **itki 26** · roket & uydu 30 · ML 18 · gökcisimleri 12; aile çipli canlı filtreli önizleme, TR+EN manifest. Bilimsel iddia taşır: odakta birincil cisim, kapanmayan hiperbol, gerçek nav-ball prograde/retrograde işaretçileri | [domain-icons/](presets/charts_icons/domain-icons/preview.html) |
 | **168 ikonluk yardımcı kütüphane** (Lucide/Tabler/Phosphor; ISC/MIT) — oklar, grafikler, durum, zaman, uzay/bilim; TR+EN aranabilir manifest, sprite, canlı filtreli önizleme, lisans metinleri | [icon-library/](presets/charts_icons/icon-library/preview.html) |
 
@@ -112,13 +117,14 @@ scriptlerinden önce import map gerekir:
 ```
 
 Sol'un herhangi bir sayfada tam tarifi
-[sol-tek-basina.html](preset-test/sol-tek-basina.html) içinde çalışır halde
+[sol-tek-basina.html](demo/sol-tek-basina.html) içinde çalışır halde
 durur: import map + lunaris CSS + `mountSol(container)` — sayfayı taşırsan
 sadece üç yolu güncelle. Şartlar: HTTP üzerinden sunulmalı (file:// olmaz)
-ve `.agents\skills\...\assets\` ağacı olduğu gibi kalmalı (Sol, Lunaris'in
-vendor ve CSS dosyalarını komşu klasörden kullanır).
+ve `presets/` altındaki kardeş klasör yapısı olduğu gibi kalmalı (Sol,
+three.js'i `presets/moon_advanced/vendor/` içinden, ortak CSS'i
+`presets/moon_react_source/` içinden kullanır).
 
 En sağlam yol: bana "yeni sunum yap, şu paleti ve şu preset'leri kullan"
 demek — bağlama işini `build-html-science-deck` becerisi kurallarına göre ben
-yaparım. Örnek entegrasyonların tamamı [preset-test/index.html](preset-test/index.html)
+yaparım. Örnek entegrasyonların tamamı [demo/index.html](demo/index.html)
 içinde çalışır halde duruyor.

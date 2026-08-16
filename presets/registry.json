@@ -1,0 +1,336 @@
+{
+  "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
+  "counts": {
+    "presets": 37,
+    "presetsWithIndex": 30,
+    "animatedPresets": 27,
+    "skills": 18,
+    "demoSlides": 53,
+    "demoCards": 40,
+    "demoSections": 11,
+    "demoCoverSections": 10,
+    "ornekDesteSlides": 20
+  },
+  "demo": {
+    "slides": 53,
+    "cards": 40,
+    "sections": 11,
+    "coverSections": 10,
+    "referencedPresets": [
+      "aero_airfoil_flow",
+      "aero_shock_waves",
+      "aero_vortex_street",
+      "aircraft_blocks",
+      "aurora",
+      "charts_icons",
+      "cinematic_space",
+      "color_themes",
+      "comms_antenna",
+      "comms_link_budget",
+      "composition",
+      "cosmos_advanced",
+      "craft_blocks",
+      "earth_advanced",
+      "equation_pen",
+      "equation_steps",
+      "figure_callouts",
+      "jwst_explorer",
+      "lunar_descent",
+      "lunar_orbit",
+      "ml_attention_flow",
+      "ml_conv_vision",
+      "ml_layer_blocks",
+      "ml_loss_functions",
+      "ml_loss_landscape",
+      "ml_net_builder",
+      "moon_advanced",
+      "motion_core",
+      "neural_network",
+      "orbital_stage",
+      "planets_advanced",
+      "sun_advanced",
+      "timeline_tree"
+    ]
+  },
+  "skills": [
+    "apply-design-tactics",
+    "audit-export-science-deck",
+    "build-html-science-deck",
+    "convert-science-presentation",
+    "craft-scientific-storytelling",
+    "create-scientific-visuals",
+    "design-scientific-motion",
+    "design-space-science-deck",
+    "distill-scientific-insights",
+    "enforce-slide-copy-density",
+    "import-figma-science-deck",
+    "orchestrate-science-presentation",
+    "structure-scientific-narrative",
+    "typeset-tex-equations",
+    "verify-scientific-evidence",
+    "write-assertive-slide-copy",
+    "write-english-slide-copy",
+    "write-turkish-slide-copy"
+  ],
+  "presets": [
+    {
+      "name": "aero_airfoil_flow",
+      "title": "Kanat Profili Etrafında Akım — aero_airfoil_flow",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "aero_shock_waves",
+      "title": "Şok ve Genleşme Dalgaları — aero_shock_waves",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "aero_vortex_street",
+      "title": "Kármán Vorteks Caddesi — aero_vortex_street",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "aircraft_blocks",
+      "title": "Uçak Blokları — aircraft_blocks",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "aurora",
+      "title": "Aurora Preset — emisyon çizgileri, yükseklik, aktivite",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "charts_icons",
+      "title": null,
+      "hasIndex": false,
+      "animated": false,
+      "hasMotionManifest": false
+    },
+    {
+      "name": "cinematic_space",
+      "title": "Sinematik Uzay Sahnesi — cinematic_space",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "color_themes",
+      "title": null,
+      "hasIndex": false,
+      "animated": true,
+      "hasMotionManifest": false
+    },
+    {
+      "name": "comms_antenna",
+      "title": "Anten ve Yer İstasyonu — comms_antenna",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "comms_link_budget",
+      "title": "Bağlantı Bütçesi ve Bantlar — comms_link_budget",
+      "hasIndex": true,
+      "animated": false,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "composition",
+      "title": null,
+      "hasIndex": false,
+      "animated": false,
+      "hasMotionManifest": false
+    },
+    {
+      "name": "core",
+      "title": null,
+      "hasIndex": false,
+      "animated": false,
+      "hasMotionManifest": false
+    },
+    {
+      "name": "cosmos_advanced",
+      "title": "Cosmos Vanilla Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "craft_blocks",
+      "title": "Araç Blokları — craft_blocks",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "deck_starter",
+      "title": "Bilim Sunumu Başlangıcı",
+      "hasIndex": true,
+      "animated": false,
+      "hasMotionManifest": false
+    },
+    {
+      "name": "earth_advanced",
+      "title": "Terra Vanilla Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "equation_pen",
+      "title": "Equation Writing Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "equation_steps",
+      "title": "Equation Steps Preset — terim terim türetme",
+      "hasIndex": true,
+      "animated": false,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "equation_theme",
+      "title": null,
+      "hasIndex": false,
+      "animated": false,
+      "hasMotionManifest": false
+    },
+    {
+      "name": "figure_callouts",
+      "title": "Figure Callout Preset — figür üzerinde adım adım anlatım",
+      "hasIndex": true,
+      "animated": false,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "jwst_explorer",
+      "title": "JWST Explorer Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "lunar_descent",
+      "title": "Ay'a Motorlu İniş — Lunar Descent Preseti",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "lunar_orbit",
+      "title": "Analytic Lunar Orbit Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "ml_attention_flow",
+      "title": "Dikkat Akışı Preseti",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "ml_conv_vision",
+      "title": "Evrişimli Görü Preseti",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "ml_layer_blocks",
+      "title": "Katman Blokları — ml_layer_blocks",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "ml_loss_functions",
+      "title": "Kayıp Fonksiyonları Preseti",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "ml_loss_landscape",
+      "title": "ML Loss Landscape Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "ml_net_builder",
+      "title": "Mimari Kurucu — ml_net_builder",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "moon_advanced",
+      "title": "Lunaris Vanilla Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "moon_react_source",
+      "title": null,
+      "hasIndex": false,
+      "animated": false,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "motion_core",
+      "title": null,
+      "hasIndex": false,
+      "animated": true,
+      "hasMotionManifest": false
+    },
+    {
+      "name": "neural_network",
+      "title": "Neural Network Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "orbital_stage",
+      "title": "Yörünge Sahnesi — orbital_stage",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "planets_advanced",
+      "title": "Planetae Vanilla Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "sun_advanced",
+      "title": "Sol Vanilla Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "timeline_tree",
+      "title": "Chronology Timeline Preset",
+      "hasIndex": true,
+      "animated": false,
+      "hasMotionManifest": true
+    }
+  ]
+}
