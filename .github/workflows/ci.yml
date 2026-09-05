@@ -51,6 +51,9 @@ jobs:
           fi
           git checkout -- demo/index.html
 
+      - name: Astrodinamik çözücüler (US76, tırmanış, CW, Lambert, CR3BP… bağımsız sayısal denetim)
+        run: node scripts/validate-astro.mjs
+
       - name: Eksen ratchet'i (çıplak geometri kurucuları tabanı aşamaz)
         run: python scripts/eksen-denetimi.py
 

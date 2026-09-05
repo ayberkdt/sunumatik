@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fırlatma ve Tırmanış — launch_ascent</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    :root {
+      --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a;
+      --color-accent: #d9b877; --color-accent-ink: #14100a; --color-data-1: #8fb8dd; --color-data-2: #d78f6c;
+      --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; }
+    .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); }
+    .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 90px; text-align: right; font-variant-numeric: tabular-nums; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink);
+      font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 8px; align-items: center; cursor: default; }
+    label.field input { width: 64px; background: var(--color-canvas); color: var(--color-ink); border: 1px solid var(--color-rule); border-radius: 5px; padding: 3px 6px; font: 500 12.5px var(--font-mono); }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; }
+    .caption strong { color: var(--color-ink); font-weight: 600; }
+    .caption .nums { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--color-ink); }
+    .kbd-help { margin-left: auto; font-size: 11.5px; color: var(--color-muted); letter-spacing: .03em; }
+    kbd { border: 1px solid var(--color-rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font: 11px var(--font-mono); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Fırlatma ve Tırmanış<small>launch_ascent · yerçekimi dönüşü, US76 atmosferi, hesaplanan Max-Q, kademe ayrılması, kapalı-döngü 2. kademe</small></h1>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row">
+      <button id="playBtn" aria-pressed="false" title="Boşluk">Oynat</button>
+      <input id="scrub" type="range" min="0" max="600" step="0.25" value="0" aria-label="Zaman çizelgesi">
+      <span class="time" id="timeOut">—</span>
+    </div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Kamera">
+        <span>Kamera</span>
+        <button data-cam="auto" aria-pressed="true" title="0">Yönetmen</button>
+        <button data-cam="pad" title="1">Kule</button>
+        <button data-cam="chase" title="2">Takip</button>
+        <button data-cam="wide" title="3">Geniş</button>
+        <button data-cam="free" title="4">Serbest</button>
+      </div>
+      <div class="group" role="group" aria-label="Zaman">
+        <span>Zaman</span>
+        <button data-warp="1">1×</button>
+        <button data-warp="2" aria-pressed="true">2×</button>
+        <button data-warp="4">4×</button>
+        <button data-warp="8">8×</button>
+      </div>
+      <div class="group" role="group" aria-label="Senaryo">
+        <span>Senaryo</span>
+        <label class="field">hedef irtifa <input id="inAlt" type="number" min="150" max="600" step="10" value="200"> km</label>
+        <label class="field">pitch kick <input id="inKick" type="number" min="1" max="8" step="0.2" value="3.2">°</label>
+        <label class="field">yük <input id="inPay" type="number" min="1" max="22" step="1" value="15"> t</label>
+        <button id="applyBtn">Uygula</button>
+      </div>
+      <span class="kbd-help"><kbd>Boşluk</kbd> oynat · <kbd>←</kbd><kbd>→</kbd> ±5 s · <kbd>0</kbd>–<kbd>4</kbd> kamera</span>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+
+  <script type="module">
+    import { mountLaunchAscent } from './launch-ascent.mjs';
+
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const qT = params.has('t') ? Number(params.get('t')) : null;
+    const qCam = params.get('cam');
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const exportMode = document.documentElement.dataset.export === 'true';
+    const deterministic = qT != null || reduced || exportMode;
+    const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 });
+    const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+    const asc = await mountLaunchAscent(document.querySelector('#host'), {
+      seed: 7, warp: Number(params.get('warp')) || 2, autoplay: !deterministic, camera: qCam || 'auto',
+      profile: { targetAlt: (Number(params.get('alt')) || 200) * 1000 },
+    });
+    window.__launchAscent = asc;
+
+    const scrub = document.querySelector('#scrub'), timeOut = document.querySelector('#timeOut'), playBtn = document.querySelector('#playBtn');
+    const caption = document.querySelector('#caption');
+
+    function writeCaption() {
+      const s = asc.sim, L = s.losses;
+      const meco = s.events.find(e => e.id === 'meco'), seco = s.events.find(e => e.id === 'seco');
+      caption.innerHTML = s.ok
+        ? `<strong>Max-Q hesaplanır, yazılmaz:</strong> q(t) = ½ρv² US76 yoğunluğu ve hava-göreli hızdan entegre edilir; tepe `
+          + `<span class="nums">${nf1.format(s.maxQ.q / 1000)} kPa</span>, T+${nf0.format(s.maxQ.t)} s, ${nf1.format(s.maxQ.alt / 1000)} km, Mach ${nf1.format(s.maxQ.mach)}. `
+          + `MECO T+${nf0.format(meco.t)} s (${nf0.format(meco.v)} m/s, ${nf0.format(meco.alt / 1000)} km); SECO T+${nf0.format(seco.t)} s → `
+          + `<span class="nums">${nf0.format(s.orbit.hp / 1000)} × ${nf0.format(s.orbit.ha / 1000)} km</span>, e = ${s.orbit.e.toFixed(4)}. `
+          + `Kayıplar: yerçekimi <span class="nums">${nf0.format(L.gravity)}</span> · sürükleme <span class="nums">${nf0.format(L.drag)}</span> · yönlendirme <span class="nums">${nf0.format(L.steering)}</span> m/s; `
+          + `ideal ΔV <span class="nums">${nf0.format(L.ideal)}</span> m/s. 2B nokta-kütle, RK4 0,05 s; 2. kademe kılavuzu sadeleştirilmiş kapalı döngüdür (PEG değil).`
+        : `<strong>Yörüngeye ulaşılamadı:</strong> bu senaryoda 2. kademe yakıtı dairesel hıza varmadan bitti. Yükü azaltın ya da hedef irtifayı düşürün — sahne uydurmaz, sonucu gösterir.`;
+      scrub.max = String(Math.ceil(asc.timeline.duration));
+    }
+    writeCaption();
+
+    function syncUi() {
+      const tl = asc.timeline;
+      playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat';
+      playBtn.setAttribute('aria-pressed', String(tl.playing));
+      if (document.activeElement !== scrub) scrub.value = String(tl.t);
+      timeOut.textContent = `T+${Math.floor(tl.t / 60)}:${String(Math.floor(tl.t % 60)).padStart(2, '0')}`;
+      document.querySelectorAll('[data-cam]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cam === asc.camera.current)));
+      document.querySelectorAll('[data-warp]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.warp) === tl.warp)));
+    }
+    setInterval(syncUi, 150);
+    playBtn.addEventListener('click', () => { const tl = asc.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { asc.timeline.scrub(Number(scrub.value)); syncUi(); });
+    document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => { asc.camera.transitionTo(b.dataset.cam, { duration: 1400 }); syncUi(); }));
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { asc.timeline.setWarp(Number(b.dataset.warp)); syncUi(); }));
+    document.querySelector('#applyBtn').addEventListener('click', () => {
+      asc.setScenario(
+        { payload: Number(document.querySelector('#inPay').value) * 1000 },
+        { targetAlt: Number(document.querySelector('#inAlt').value) * 1000, pitchKick: Number(document.querySelector('#inKick').value) });
+      writeCaption(); asc.timeline.play(); syncUi();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLButtonElement) return;
+      const tl = asc.timeline;
+      if (event.code === 'Space') { event.preventDefault(); tl.playing ? tl.pause() : tl.play(); }
+      else if (event.key === 'ArrowLeft') tl.scrub(tl.t - (event.shiftKey ? 30 : 5));
+      else if (event.key === 'ArrowRight') tl.scrub(tl.t + (event.shiftKey ? 30 : 5));
+      else if ('01234'.includes(event.key) && event.key.length === 1) asc.camera.transitionTo(['auto', 'pad', 'chase', 'wide', 'free'][Number(event.key)], { duration: 1000 });
+      syncUi();
+    });
+
+    /* deterministik kurulum: ?t=&cam= (başsız yakalama) — tablo Max-Q ânı */
+    if (deterministic) {
+      asc.timeline.pause();
+      if (qCam) asc.camera.transitionTo(qCam, { duration: 0 });
+      asc.timeline.scrub(qT != null ? qT : asc.tableau);
+      asc.advance(0); asc.advance(0);
+      asc.setActive(false);
+      document.title += ' · hazır';
+    }
+    syncUi();
+    setTimeout(() => console.info(`launch-ascent advance(): ${asc.stats.advanceMs.toFixed(2)} ms`), 6000);
+  </script>
+</body>
+</html>

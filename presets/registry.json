@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 37,
-    "presetsWithIndex": 30,
-    "animatedPresets": 27,
+    "presets": 38,
+    "presetsWithIndex": 31,
+    "animatedPresets": 28,
     "skills": 18,
-    "demoSlides": 53,
-    "demoCards": 40,
+    "demoSlides": 54,
+    "demoCards": 41,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 53,
-    "cards": 40,
+    "slides": 54,
+    "cards": 41,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -35,6 +35,7 @@
       "equation_steps",
       "figure_callouts",
       "jwst_explorer",
+      "launch_ascent",
       "lunar_descent",
       "lunar_orbit",
       "ml_attention_flow",
@@ -216,6 +217,13 @@
     {
       "name": "jwst_explorer",
       "title": "JWST Explorer Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "launch_ascent",
+      "title": "Fırlatma ve Tırmanış — launch_ascent",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

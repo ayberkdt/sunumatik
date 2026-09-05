@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "ascent-simulation",
+      "type": "simulation",
+      "truthLevel": "numerical",
+      "purpose": "Bir fırlatma aracının rampadan dairesel yörüngeye tırmanışını fizikçe dürüst göstermek: dikey kalkış, pitch kick, yerçekimi dönüşü, hesaplanan Max-Q, MECO, kademe ayrılması, kapak atma, kapalı-döngü 2. kademe ve SECO — her olayın zamanı yörüngeden türetilir.",
+      "model": "2B Dünya-merkezli eylemsiz düzlemde nokta-kütle. Yerçekimi μ/r² (μ = 3,986004418e14 m³/s²). Atmosfer: ABD Standart Atmosferi 1976 (presets/core/astro-atmosphere.mjs; 0–86 km yedi katman, üstü 186,9 K izotermal üstel uzatma) Dünya ile döner: v_hava = v − ω_e r cos φ (φ = rampa enlemi, varsayılan 28,5°; rampa doğuya ω_e R cos φ başlangıç hızı taşır). Sürükleme D = ½ρv_hava²·C_D(M)·A; C_D(M) sıfır hücum açılı ince gövde için parçalı-doğrusal transonik tepeli eğri (0,30 → 0,58 @M1,05 → 0,22 @M8). İtki T = ṁ g₀ Isp(p), Isp(p) = Isp_vak − (Isp_vak − Isp_ds) p/p₀. Yönlendirme: dikey (8 s) → pitch kick (3,2°, 10 s rampa) → yerçekimi dönüşü (itki hava-göreli hıza hizalı, α = 0) → MECO/ayrılma/SES gecikmeleri → 2. kademede kritik sönümlü irtifa-hız geri beslemeli pitch kılavuzu (a_v = ω²Δh − 2ωḣ, ω = 3/T_go, sinθ = (a_v + g_eff)/a_T) → SECO: v_yatay ≥ √(μ/r). Entegrasyon RK4, dt = 0,05 s; örnekleme 0,25 s. Kayıplar entegre: yerçekimi ∫g sinγ dt, sürükleme ∫D/m dt, yönlendirme ∫(T/m)(1 − cos α) dt. Varsayılan araç: 'iki kademeli orta sınıf' (549 t, 1. kademe 7,6/8,2 MN, Isp 283/312 s; 2. kademe 934 kN, Isp 348 s; yük 15 t) — kamuya açık Falcon 9 sınıfı yuvarlatılmış değerler, gerçek aracın verisi değildir. Sonuç (varsayılan): Max-Q 36,4 kPa @ T+64 s, 11,0 km, M 1,52; MECO T+153 s @ 83 km, 3,14 km/s; SECO T+518 s → 187 × 213 km.",
+      "solver": "Sabit adımlı RK4 (0,05 s), olaylar adım sınırında; kademe yakıtı bitişinde adım kırpılır. Atılan kademe yalnız yerçekimiyle (Euler, 2 s) balistik olarak izlenir. Kaynak: presets/launch_ascent/ascent-model.mjs; bağımsız sayısal denetim scripts/validate-astro.mjs (US76 katman değerleri, Max-Q tepe koşulu, yörünge enerjisi, kütle bütçesi).",
+      "limitations": "Düzlemsel 2B: fırlatma azimutu 90° kabulü, Dünya dönmesi düzlem içi bileşen olarak alınır; yerçekimi nokta-kütle (J2 yok); rüzgâr yok; C_D ve Isp(p) ders-kitabı sınıfı yaklaşımlar; 2. kademe kılavuzu PEG/optimal değil (hedef irtifayı ~%5 aşıp geri toplar, yönlendirme kaybı gerçek araçtan yüksek çıkar); kapak atma q eşiği (1 kPa) sadeleştirmedir (gerçekte ısı akısı ölçütü). Sahnede araç boyu görünürlük için abartılır (irtifayla 4 → 12 km, HUD notunda ilan), zaman sıkıştırma HUD'da yazılıdır; gökyüzü rengi kamera irtifasının tek-renkli fonksiyonudur (saçılma hacmi çözülmez). Kademe ayrılması geometrisi illüstratiftir: atılan kademe için tam roket geometrisi kullanılıp solar. Görev telemetrisi değildir.",
+      "reducedMotion": "Otomatik oynatma yok; zaman çizelgesi hesaplanan Max-Q ânında (tableau) donar, takip kamerasıyla; kaydırıcı ve HUD çalışır.",
+      "exportState": "?t=<saniye>&cam=<pad|chase|wide> ile deterministik kare: her görsel durum sim zamanı t'nin saf fonksiyonudur, plüm durumu 90 kare 1/60 s ile deterministik hazırlanır, yıldız alanı tohumludur. Varsayılan export tablosu Max-Q ânıdır.",
+      "accessibility": "Oynat/duraklat, kaydırıcı, kamera ve zaman düğmeleri yerli öğelerdir (Boşluk, ok tuşları, 0–4); HUD metin tabanlıdır (T+, irtifa, menzil, |v|, γ, q, Mach, T/W, kütle, ivme, faz); olay çizelgesi metin etiketlidir; altyazı Max-Q, MECO, SECO ve kayıp bütçesini düzyazı olarak verir.",
+      "loop": false,
+      "pauseControl": true,
+      "durationMs": 380000
+    },
+    {
+      "id": "ascent-event-rail",
+      "type": "reveal",
+      "truthLevel": "numerical",
+      "purpose": "Kalkış, pitch kick, Mach 1, Max-Q, MECO, ayrılma, kapak, SES ve SECO'yu doğrusal zaman rayında göstermek; işaretler geçildikçe dolar.",
+      "model": "Her işaretin zamanı simülasyonun olay listesinden gelir; Max-Q, q(t) dizisinin argmax'ıdır ve 'türetilmiş' renk koduyla ayrışır. Ray SECO+30 s'ye kadar doğrusaldır; etiketler piksel çakışmasına göre üst/alt şeritlere greedy dağıtılır (eksen doğrusal kalır).",
+      "solver": "ascent-model.mjs olay listesi (liftoff, pitchkick, mach1, maxq, meco, separation, fairing, ses, seco).",
+      "limitations": "Şerit dağıtımı yalnız okunurluk içindir; etiket konumu zamanı değiştirmez.",
+      "reducedMotion": "Ray statik; geçilen işaretler dolu görünür.",
+      "exportState": "?t= ile dolu/boş işaretler deterministik.",
+      "accessibility": "Etiketler metindir; altyazı aynı olay zamanlarını düzyazıda tekrarlar.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "ascent-q-chart",
+      "type": "trace",
+      "truthLevel": "numerical",
+      "purpose": "q(t) = ½ρv² eğrisini canlı imleçle göstermek: Max-Q'nun neden bir tepe olduğu (yoğunluk düşerken hız artıyor) okunur.",
+      "model": "Eğri simülasyon örneklerinden (0,25 s) çizilir; tepe noktası ve etiketi (T+, irtifa, Mach) argmax'tan; x ekseni MECO×1,15'e kadar.",
+      "solver": "ascent-model.mjs örnek dizisi; SVG yol.",
+      "limitations": "Eğri normalize (y ekseni tepe = 1); mutlak değer başlıkta.",
+      "reducedMotion": "Eğri statik; imleç tablodaki t'de durur.",
+      "exportState": "İmleç konumu t'nin fonksiyonudur.",
+      "accessibility": "Tepe değeri, zamanı ve irtifası HUD ve altyazıda metin olarak verilir.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "ascent-camera-director",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Anlatım kamerası: kule (ilk 28 s, kalkış ölçeği), takip (yerçekimi dönüşü ve ayrılma), geniş (2. kademe: ark ve Dünya kavisi); yumuşak geçişler, kullanıcı seçimi yönetmeni ezer.",
+      "reducedMotion": "Kamera geçiş animasyonu oynamaz; seçilen mod anında kadrajlanır.",
+      "exportState": "?cam= ile mod seçilir; kadraj t ve modun deterministik fonksiyonudur.",
+      "accessibility": "Kamera modları düğme ve 0–4 tuşlarıyla seçilir; bilgi kamera hareketiyle değil HUD ve altyazıyla taşınır.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}
