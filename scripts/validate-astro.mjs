@@ -218,6 +218,43 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('groundtrack', 'bir ISS turunda tam bir boylam sarımı (1 kırılma)', brk === 1, `${brk}`);
 }
 
+/* ───────────────────────── Lambert + efemeris + porkchop */
+{
+  const L = await mod('presets/core/astro-lambert.mjs');
+  /* Lambert uç-nokta artığı: v1 ile Kepler yayılımı r2'ye varmalı */
+  const jd1 = L.julianDay(2020, 7, 30), jd2 = L.julianDay(2021, 2, 18);
+  const t = L.evaluateTransfer('earth', 'mars', jd1, jd2);
+  const prop = L.propagateKepler(t.r1, t.lambert.v1, t.tof * L.DAY);
+  const resid = Math.hypot(...prop.r.map((x, i) => x - t.r2[i]));
+  check('lambert', 'Lambert uç-nokta artığı < 1 km (Dünya→Mars 2020-07-30 → 2021-02-18)', resid < 1, `${resid.toExponential(2)} km`);
+  check('lambert', 'v2, yayılımın varış hızıyla örtüşür (< 1e-6 km/s)', Math.hypot(...prop.v.map((x, i) => x - t.lambert.v2[i])) < 1e-6);
+  check('lambert', 'Perseverance benzeri geçiş: C3 12–16 km²/s², Tip I', t.c3 > 12 && t.c3 < 16 && t.type === 'I', `C3 ${t.c3.toFixed(2)}`);
+  /* Hohmann limiti: eş-düzlem dairesel, Δθ → π (π − 0,02) */
+  const r1 = [L.AU, 0, 0], r2n = 1.523679 * L.AU, th = Math.PI - .02, r2 = [r2n * Math.cos(th), r2n * Math.sin(th), 0];
+  const aH = (L.AU + r2n) / 2, tH = Math.PI * Math.sqrt(aH ** 3 / L.MU_SUN);
+  const lam = L.lambert(r1, r2, tH * (th / Math.PI));
+  const vpH = Math.sqrt(L.MU_SUN * (2 / L.AU - 1 / aH));
+  check('lambert', 'Hohmann limiti: Δθ→π için v1 ≈ kapalı biçim (±0,3 %)', lam && rel(Math.hypot(...lam.v1), vpH, .003), lam ? `${Math.hypot(...lam.v1).toFixed(4)} vs ${vpH.toFixed(4)} km/s` : 'null');
+  check('lambert', 'Δθ = π tam tekilliği null döner (A = 0)', L.lambert(r1, [-r2n, 0, 0], tH) === null);
+  /* kısa/uzun yol: retrograd çözüm de var ve farklı */
+  const lamR = L.lambert(t.r1, t.r2, t.tof * L.DAY, L.MU_SUN, 'retrograde');
+  check('lambert', 'retrograd (uzun yol) çözümü mevcut ve Δθ > π', !!lamR && lamR.dtheta > Math.PI);
+  /* efemeris: Dünya J2000 ~0,983 AU (günberi 3 Ocak), ekliptik z ≈ 0; Mars periyodu ~687 gün */
+  const e0 = L.planetState('earth', L.J2000);
+  check('ephemeris', 'Dünya J2000 |r| = 0,983 AU (±0,002)', near(Math.hypot(...e0.r) / L.AU, .9833, .002), (Math.hypot(...e0.r) / L.AU).toFixed(4));
+  check('ephemeris', 'Dünya J2000 ekliptik z ≈ 0 (< 1e-4 AU)', Math.abs(e0.r[2]) / L.AU < 1e-4);
+  check('ephemeris', 'Dünya hızı ≈ 30,3 km/s (günberi civarı)', near(Math.hypot(...e0.v), 30.29, .05), Math.hypot(...e0.v).toFixed(3));
+  const mA = L.planetState('mars', L.J2000), mB = L.planetState('mars', L.J2000 + 686.98);
+  const ang = Math.acos((mA.r[0] * mB.r[0] + mA.r[1] * mB.r[1] + mA.r[2] * mB.r[2]) / (Math.hypot(...mA.r) * Math.hypot(...mB.r)));
+  check('ephemeris', 'Mars 686,98 gün sonra aynı yere döner (< 0,5°)', ang < .5 * Math.PI / 180, `${(ang * 180 / Math.PI).toFixed(3)}°`);
+  /* porkchop: 2020 penceresi minimumu Temmuz 2020 ±20 gün, C3 < 15 */
+  const g = L.porkchopGrid('earth', 'mars', L.julianDay(2020, 6, 1), L.julianDay(2020, 10, 1), L.julianDay(2020, 11, 1), L.julianDay(2021, 10, 1), 40, 40);
+  check('porkchop', '2020 Mars penceresi minimumu: C3 < 15, kalkış 2020-07-25 ±20 gün', g.min && g.min.c3 < 15 && Math.abs(g.min.jdDep - L.julianDay(2020, 7, 25)) < 20, g.min ? `${g.min.c3.toFixed(2)} @ ${L.fmtJd(g.min.jdDep)}` : 'yok');
+  check('porkchop', 'ızgarada NaN hücre yok (Lambert her hücrede yakınsadı)', Array.from(g.c3).every(Number.isFinite));
+  /* simetri/limit: aynı gezegene aynı gün → null (tof 0) */
+  check('porkchop', 'tof ≤ 0 → null', L.evaluateTransfer('earth', 'mars', jd2, jd1) === null);
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

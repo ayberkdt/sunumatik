@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "porkchop-surface",
+      "type": "parameter-sweep",
+      "truthLevel": "numerical",
+      "purpose": "Gezegenler arası fırlatma penceresinin anatomisini göstermek: kalkış × varış tarih ızgarasında C3 / v∞ varış / ΔV toplam yüzeyi, kontur çizgileri, TOF eş-eğrileri, ızgara minimumu ve imleçle seçilen transferin sayısal özeti.",
+      "model": "Her hücre için kaynak ve hedef gezegenin heliosantrik J2000 ekliptik durumu JPL 'Keplerian Elements for Approximate Positions of the Major Planets' (Standish, Tablo 1, 1800–2050) elemanlarından hesaplanır; Lambert problemi evrensel değişkenlerle (Curtis Alg. 5.2, köşelenmiş Newton) prograd ve retrograd yönler için çözülür ve C3'ü küçük olan alınır; v∞ = v_transfer − v_gezegen; C3 = |v∞_kalkış|²; ΔV kalkış = √(C3 + 2μ/r_p) − √(μ/r_p) (200 km park), ΔV tutunma = √(v∞² + 2μ/r_p) − √(μ/r_p) (300 km dairesel). Konturlar marching squares ile ızgaradan; ısı haritası logaritmik normalize edilmiş metriktir. Kaynak: presets/core/astro-lambert.mjs; denetim scripts/validate-astro.mjs (uç-nokta artığı < 1 km, Hohmann limiti, 2020 Mars penceresi minimumu ≈ 2020-07-17 / C3 13,2 km²/s², efemeris kontrolleri).",
+      "solver": "Lambert: Stumpff C/S, F(z) = (y/C)^{3/2} S + A√y − √μΔt, köşeleme + Newton, |F| < 1e−11·√μΔt; tek tur. Efemeris: Kepler denklemi Newton (1e−13). Transfer yayı: evrensel-değişken Kepler yayılımı (120 nokta).",
+      "limitations": "Yaklaşık efemeris (~10⁻⁴ AU, birkaç yay dakikası); yama-konik varsayımı (kalkış/varış küre sınırı ihmal, gezegen çekimi yalnız v∞→ΔV dönüşümünde); tek-tur Lambert (çok-tur çözümler yok); iki gezegen düzlemi farkı Lambert'te tam ele alınır ama fırlatma azimutu / deklinasyon kısıtları yok; gerçek görev tasarımı DE4xx efemerisi ve n-cisim yayılımı ister. Izgara çözünürlüğü minimumu ±(aralık/n) hassasiyetle bulur.",
+      "reducedMotion": "Sahne zaten statiktir (animasyon yok); imleç etkileşimi isteğe bağlıdır; ızgara minimumu varsayılan seçimdir.",
+      "exportState": "?win=&n=&metric= ile deterministik yüzey: aynı girdiler aynı ızgara; seçili nokta = minimum.",
+      "accessibility": "Cisim seçiciler, tarih girişleri, ızgara boyutu ve metrik düğmeleri yerli öğelerdir; seçili transferin tüm sayıları HUD'da metindir; altyazı yöntemi ve minimumu düzyazı verir; renk rampasına ek olarak kontur etiketleri sayı taşır.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "porkchop-transfer-geometry",
+      "type": "trace",
+      "truthLevel": "numerical",
+      "purpose": "Seçili transferin heliosantrik geometrisi: kaynak/hedef yörüngeleri, kalkış ve varış anlarındaki gezegen konumları, Kepler yayılımıyla çizilen transfer yayı, v∞ okları.",
+      "model": "Yörüngeler efemeristen bir periyot boyunca; yay r1, v1'den evrensel-değişken yayılımı; oklar v∞ vektörlerinin ekliptik izdüşümü (9 px per km/s).",
+      "solver": "propagateKepler (Curtis Alg. 3.4).",
+      "limitations": "Üstten izdüşüm (ekliptik düzlemi dışı bileşen çizilmez); gezegen boyutları sembolik.",
+      "reducedMotion": "Statik.",
+      "exportState": "Seçime bağlı deterministik.",
+      "accessibility": "Aynı büyüklükler HUD'da metin.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

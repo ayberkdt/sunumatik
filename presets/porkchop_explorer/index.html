@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Porkchop / Fırlatma Penceresi — porkchop_explorer</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .windows { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+    .windows button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .windows button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; }
+    label.field input, label.field select { background: var(--color-canvas); color: var(--color-ink); border: 1px solid var(--color-rule); border-radius: 5px; padding: 3px 6px; font: 500 12px var(--font-mono); }
+    label.field input[type="date"] { width: 132px; } label.field input[type="number"] { width: 56px; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; }
+    .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Porkchop / Fırlatma Penceresi<small>porkchop_explorer · her hücre bir Lambert çözümü, gezegenler JPL yaklaşık elemanlarından, transfer yayı Kepler yayılımı</small></h1>
+    <div class="windows" role="group" aria-label="Hazır pencereler">
+      <button data-win="mars2026" aria-pressed="true">Mars 2026</button><button data-win="mars2020">Mars 2020 (Perseverance)</button>
+      <button data-win="venus2026">Venüs 2026</button><button data-win="jupiter2027">Jüpiter 2027</button><button data-win="marsret">Mars → Dünya 2028</button>
+    </div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Cisimler">
+        <span>Cisimler</span>
+        <label class="field">kaynak <select id="origin"><option value="mercury">Merkür</option><option value="venus">Venüs</option><option value="earth" selected>Dünya</option><option value="mars">Mars</option><option value="jupiter">Jüpiter</option><option value="saturn">Satürn</option></select></label>
+        <label class="field">hedef <select id="target"><option value="mercury">Merkür</option><option value="venus">Venüs</option><option value="earth">Dünya</option><option value="mars" selected>Mars</option><option value="jupiter">Jüpiter</option><option value="saturn">Satürn</option></select></label>
+      </div>
+      <div class="group" role="group" aria-label="Tarih aralıkları">
+        <span>Kalkış</span><label class="field"><input type="date" id="dep0" value="2026-09-01"></label><label class="field">→ <input type="date" id="dep1" value="2027-03-01"></label>
+        <span>Varış</span><label class="field"><input type="date" id="arr0" value="2027-04-01"></label><label class="field">→ <input type="date" id="arr1" value="2028-03-01"></label>
+        <label class="field">ızgara <input type="number" id="nGrid" min="20" max="120" step="10" value="60"></label>
+        <button id="computeBtn">Hesapla</button>
+      </div>
+      <div class="group" role="group" aria-label="Metrik"><span>Yüzey</span><button data-metric="c3" aria-pressed="true">C3</button><button data-metric="vinfArr">v∞ varış</button><button data-metric="dvTotal">ΔV toplam</button></div>
+      <button id="minBtn">Minimuma git</button>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountPorkchop } from './porkchop.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const $ = id => document.querySelector('#' + id);
+    const WINDOWS = {
+      mars2026: { origin: 'earth', target: 'mars', depStart: '2026-09-01', depEnd: '2027-03-01', arrStart: '2027-04-01', arrEnd: '2028-03-01' },
+      mars2020: { origin: 'earth', target: 'mars', depStart: '2020-06-01', depEnd: '2020-10-01', arrStart: '2020-11-01', arrEnd: '2021-10-01' },
+      venus2026: { origin: 'earth', target: 'venus', depStart: '2026-04-01', depEnd: '2026-09-01', arrStart: '2026-08-01', arrEnd: '2027-03-01' },
+      jupiter2027: { origin: 'earth', target: 'jupiter', depStart: '2027-01-01', depEnd: '2027-12-01', arrStart: '2028-06-01', arrEnd: '2031-06-01' },
+      marsret: { origin: 'mars', target: 'earth', depStart: '2028-06-01', depEnd: '2029-01-01', arrStart: '2029-01-01', arrEnd: '2029-12-01' },
+    };
+    const win = WINDOWS[params.get('win')] || WINDOWS.mars2026;
+    const pc = await mountPorkchop($('host'), { ...win, n: Number(params.get('n')) || 60, metric: params.get('metric') || 'c3' });
+    window.__porkchop = pc;
+    const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    function showState() { const s = pc.state; $('origin').value = s.origin; $('target').value = s.target; const f = jd => new Date((jd - 2440587.5) * 86400000).toISOString().slice(0, 10); $('dep0').value = f(s.depStart); $('dep1').value = f(s.depEnd); $('arr0').value = f(s.arrStart); $('arr1').value = f(s.arrEnd); $('nGrid').value = String(s.n); }
+    function writeCaption() {
+      const g = pc.grid, m = g.min, P = pc.PLANETS;
+      $('caption').innerHTML = m
+        ? `<strong>Yüzey hesaplanır, çizilmez:</strong> ${g.nDep}×${g.nArr} hücrenin her biri için ${P[g.origin].label} ve ${P[g.target].label} konumları JPL yaklaşık Kepler elemanlarından (Standish, 1800–2050) alınır, Lambert problemi evrensel değişkenlerle çözülür (kısa ve uzun yol; küçük C3 seçilir), `
+          + `v∞ = v_transfer − v_gezegen. Izgara minimumu: kalkış <span class="nums">${pc.select && new Date((m.jdDep - 2440587.5) * 864e5).toISOString().slice(0, 10)}</span>, varış <span class="nums">${new Date((m.jdArr - 2440587.5) * 864e5).toISOString().slice(0, 10)}</span>, `
+          + `TOF <span class="nums">${Math.round(m.tof)} gün</span>, C3 <span class="nums">${nf2.format(m.c3)} km²/s²</span>, v∞ varış <span class="nums">${nf2.format(m.vinfArr)} km/s</span>; ΔV kalkış (200 km park) <span class="nums">${nf2.format(m.dvDep)}</span> + tutunma (300 km dairesel) <span class="nums">${nf2.format(m.dvArr)} km/s</span>. `
+          + `Kesikli çizgiler TOF eş-eğrileri. Yaklaşık efemeris (~10⁻⁴ AU): görev tasarımı için DE4xx gerekir; burada pencere ANATOMİSİ gösterilir.`
+        : `<strong>Bu aralıkta çözüm yok</strong> — tarih aralıklarını genişletin.`;
+    }
+    showState(); writeCaption();
+    $('computeBtn').addEventListener('click', () => { pc.setBodies($('origin').value, $('target').value); pc.setRange({ depStart: $('dep0').value, depEnd: $('dep1').value, arrStart: $('arr0').value, arrEnd: $('arr1').value }); pc.setResolution(Number($('nGrid').value)); writeCaption(); document.querySelectorAll('[data-win]').forEach(b => b.setAttribute('aria-pressed', 'false')); });
+    document.querySelectorAll('[data-win]').forEach(b => b.addEventListener('click', () => { const w = WINDOWS[b.dataset.win]; pc.setBodies(w.origin, w.target); pc.setRange(w); showState(); writeCaption(); document.querySelectorAll('[data-win]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    document.querySelectorAll('[data-metric]').forEach(b => b.addEventListener('click', () => { pc.setMetric(b.dataset.metric); document.querySelectorAll('[data-metric]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    $('minBtn').addEventListener('click', () => pc.selectMin());
+    document.querySelectorAll('[data-win]').forEach(b => b.setAttribute('aria-pressed', String(WINDOWS[b.dataset.win] === win)));
+    document.title += ' · hazır';
+  </script>
+</body>
+</html>
