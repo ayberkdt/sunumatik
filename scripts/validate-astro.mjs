@@ -255,6 +255,40 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('porkchop', 'tof ≤ 0 → null', L.evaluateTransfer('earth', 'mars', jd2, jd1) === null);
 }
 
+/* ───────────────────────── Takımyıldızı kapsaması */
+{
+  const C = await mod('presets/constellation_coverage/constellation-model.mjs');
+  const gps = C.buildConstellation(C.CONSTELLATION_PRESETS.gps);
+  check('constellation', 'GPS: T = P·S = 24', gps.T === 24 && gps.sats.length === 24);
+  check('constellation', 'GPS: düzlem RAAN aralığı 60° (Delta 360°/6)', near(gps.sats[4].raan - gps.sats[0].raan, Math.PI / 3, 1e-12));
+  check('constellation', 'GPS ayak izi λ ≈ 71,2° (20 200 km, ε = 5°)', near(C.footprintAngle(20200, 5) * 180 / Math.PI, 71.2, .3), `${(gps.lambda * 180 / Math.PI).toFixed(2)}°`);
+  check('constellation', 'Iridium ayak izi λ ≈ 19,9° (780 km, ε = 8,2°)', near(C.footprintAngle(780, 8.2) * 180 / Math.PI, 19.9, .3));
+  check('constellation', 'ε = 0 limiti: λ = acos(R/(R+h)) (ufuk)', near(C.footprintAngle(1000, 0), Math.acos(C.R_E / (C.R_E + 1000)), 1e-12));
+  const irid = C.buildConstellation(C.CONSTELLATION_PRESETS.iridium);
+  check('constellation', 'Iridium (Star 86,4°: 66/6/2): düzlem aralığı 30° (180°/6)', near(irid.sats[11].raan - irid.sats[0].raan, Math.PI / 6, 1e-12));
+  const grid = C.makeGrid(128, 64);
+  const covI = C.coverageAt(irid, grid, 0);
+  check('constellation', 'Iridium anlık küresel kapsama ≥ 99 %', covI.fraction >= .99, `${(covI.fraction * 100).toFixed(2)} %`);
+  /* ağırlıklar: Σ cos(lat) ≈ küre alanı ile tutarlı (ızgara ağırlığı normalize) */
+  let wsum = 0; for (let g = 0; g < grid.N; g++) wsum += grid.w[g];
+  check('constellation', 'ızgara cos(lat) ağırlıkları toplamı = (2/π)·N (±0,5 %)', rel(wsum, 2 / Math.PI * grid.N, .005));
+  /* GEO halkası: 3 uydu ekvatoru kapsar, kutupları kapsamaz (λ = 76,3° < 90°) */
+  const geo = C.buildConstellation(C.CONSTELLATION_PRESETS.geoRing);
+  const covG = C.coverageAt(geo, grid, 0);
+  const polarUncovered = Array.from({ length: grid.N }, (_, g) => g).filter(g => Math.abs(grid.lat[g]) > 80 * Math.PI / 180).every(g => covG.count[g] === 0);
+  check('constellation', 'GEO halkası: |lat| > 80° kapsanmaz, ekvator tam kapsanır', polarUncovered && Array.from({ length: grid.N }, (_, g) => g).filter(g => Math.abs(grid.lat[g]) < 5 * Math.PI / 180).every(g => covG.count[g] >= 1));
+  /* görünürlük: alt-uydu noktasının tam altındaki istasyon ε = 90° görür */
+  const pos = C.positionsAt(gps, 0, 0);
+  const la = Math.asin(pos.ecefU[2]) * 180 / Math.PI, lo = Math.atan2(pos.ecefU[1], pos.ecefU[0]) * 180 / Math.PI;
+  const vis = C.visibleFrom(gps, la, lo, 0, 0);
+  check('constellation', 'alt-uydu noktasındaki istasyon o uyduyu ε ≈ 90° ile görür', vis.some(v => v.k === 0 && near(v.elev, Math.PI / 2, 1e-6)));
+  /* zaman taraması: GPS sürekli kapsama 100 %, seyrek kutupsal < 100 % ve boşluk > 0 */
+  const scanG = C.revisitScan(gps, { dt: 300, nLon: 48, nLat: 24 });
+  const scanM = C.revisitScan(C.buildConstellation(C.CONSTELLATION_PRESETS.molniyaLike), { dt: 120, nLon: 48, nLat: 24 });
+  check('constellation', 'GPS zaman taraması: sürekli kapsama 100 %, boşluk yok', scanG.continuousFraction > .999 && scanG.maxGap === 0);
+  check('constellation', 'seyrek kutupsal: kapsama < 60 % ve en uzun boşluk > 10 dk', scanM.meanFraction < .6 && scanM.maxGap > 600, `${(scanM.meanFraction * 100).toFixed(0)} %, ${(scanM.maxGap / 60).toFixed(0)} dk`);
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

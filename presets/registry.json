@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 41,
-    "presetsWithIndex": 34,
-    "animatedPresets": 30,
+    "presets": 42,
+    "presetsWithIndex": 35,
+    "animatedPresets": 31,
     "skills": 18,
-    "demoSlides": 57,
-    "demoCards": 44,
+    "demoSlides": 58,
+    "demoCards": 45,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 57,
-    "cards": 44,
+    "slides": 58,
+    "cards": 45,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -28,6 +28,7 @@
       "comms_antenna",
       "comms_link_budget",
       "composition",
+      "constellation_coverage",
       "cosmos_advanced",
       "craft_blocks",
       "earth_advanced",
@@ -153,6 +154,13 @@
       "hasIndex": false,
       "animated": false,
       "hasMotionManifest": false
+    },
+    {
+      "name": "constellation_coverage",
+      "title": "Takımyıldızı Kapsaması — constellation_coverage",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
     },
     {
       "name": "core",

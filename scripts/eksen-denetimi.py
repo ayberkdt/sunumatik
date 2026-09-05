@@ -77,7 +77,7 @@ KURUCULAR = {
 #  presets/core/geometry-axis.mjs içinden dışa açılıyor.)
 YARDIMCI_IMZA = re.compile(
     r"^\s*(?:export\s+)?(?:function|const)\s+"
-    r"(cylX|cylY|cylZ|coneX|coneZ|latheZ|latheX|eksenX|eksenY|eksenZ)\b")
+    r"(cylX|cylY|cylZ|coneX|coneZ|coneGeoX|coneGeoZ|cylGeoX|latheZ|latheX|eksenX|eksenY|eksenZ)\b")
 
 # Bu dosyalar tarama dışı: satıcı (vendor) kodu bize ait değil.
 DISARIDA = ("vendor", "node_modules", ".git", "moon_react_source")

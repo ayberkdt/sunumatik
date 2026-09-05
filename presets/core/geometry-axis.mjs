@@ -38,6 +38,12 @@ export function cylZ(rPoz, rNeg, h, seg, mat, open = false) {
   return new THREE.Mesh(eksenZ(new THREE.CylinderGeometry(rPoz, rNeg, h, seg, 1, open)), mat);
 }
 
+/* GEOMETRİ düzeyinde yardımcılar (InstancedMesh gibi Mesh istemeyen tüketiciler için):
+   aynı eksen çevirisi, Mesh yerine BufferGeometry döner. Tepe/pozitif uç kuralı aynıdır. */
+export function coneGeoX(r, h, seg, open = false) { return eksenX(new THREE.ConeGeometry(r, h, seg, 1, open)); }
+export function coneGeoZ(r, h, seg, open = false) { return eksenZ(new THREE.ConeGeometry(r, h, seg, 1, open)); }
+export function cylGeoX(rPoz, rNeg, h, seg, open = false) { return eksenX(new THREE.CylinderGeometry(rPoz, rNeg, h, seg, 1, open)); }
+
 /* Koni — tepe eksenin POZİTİF ucunda. */
 export function coneX(r, h, seg, mat, open = false) {
   return new THREE.Mesh(eksenX(new THREE.ConeGeometry(r, h, seg, 1, open)), mat);

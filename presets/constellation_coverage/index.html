@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Takımyıldızı Kapsaması — constellation_coverage</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .presets { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+    .presets button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .presets button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; }
+    label.field input[type="range"] { width: 84px; accent-color: var(--color-accent); margin: 0; }
+    label.field input[type="number"] { width: 60px; background: var(--color-canvas); color: var(--color-ink); border: 1px solid var(--color-rule); border-radius: 5px; padding: 3px 6px; font: 500 12px var(--font-mono); }
+    label.field output { font: 500 12px var(--font-mono); min-width: 54px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; }
+    .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Takımyıldızı Kapsaması<small>constellation_coverage · Walker Delta/Star, kapsama konileri, ayak izleri, katlılık, yeniden ziyaret</small></h1>
+    <div class="presets" role="group" aria-label="Presetler">
+      <button data-preset="gps" aria-pressed="true">GPS</button><button data-preset="galileo">Galileo</button><button data-preset="iridium">Iridium</button>
+      <button data-preset="leoShell">LEO kabuğu</button><button data-preset="molniyaLike">Seyrek kutupsal</button><button data-preset="geoRing">GEO halkası</button>
+    </div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Walker parametreleri">
+        <span>Walker</span>
+        <button id="kindBtn" aria-pressed="false">Delta 360°</button>
+        <label class="field">P <input id="pP" type="range" min="1" max="36" step="1" value="6"><output id="oP">6</output></label>
+        <label class="field">S <input id="pS" type="range" min="1" max="24" step="1" value="4"><output id="oS">4</output></label>
+        <label class="field">F <input id="pF" type="range" min="0" max="35" step="1" value="1"><output id="oF">1</output></label>
+        <label class="field">i <input id="pI" type="range" min="0" max="120" step="0.5" value="55"><output id="oI">55°</output></label>
+        <label class="field">h <input id="pH" type="range" min="300" max="36000" step="50" value="20200"><output id="oH">20200 km</output></label>
+        <label class="field">ε <input id="pE" type="range" min="0" max="40" step="0.5" value="5"><output id="oE">5°</output></label>
+      </div>
+      <div class="group" role="group" aria-label="Yer istasyonu"><span>İstasyon</span><label class="field">lat <input id="sLat" type="number" value="39.9" step="0.1" min="-90" max="90"></label><label class="field">lon <input id="sLon" type="number" value="32.9" step="0.1" min="-180" max="180"></label></div>
+      <div class="group" role="group" aria-label="Zaman"><span>Zaman</span><button id="playBtn" aria-pressed="true">Duraklat</button><button data-warp="10">10×</button><button data-warp="60" aria-pressed="true">60×</button><button data-warp="300">300×</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountConstellation } from './constellation.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id);
+    const cc = await mountConstellation($('host'), { preset: params.get('preset') || 'gps', warp: Number(params.get('warp')) || 60, autoplay: !deterministic, t: params.has('t') ? Number(params.get('t')) : undefined, station: { lat: 39.9, lon: 32.9 } });
+    window.__constellation = cc;
+    const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const F = { P: $('pP'), S: $('pS'), F: $('pF'), I: $('pI'), H: $('pH'), E: $('pE') };
+    const outs = () => { $('oP').textContent = F.P.value; $('oS').textContent = F.S.value; $('oF').textContent = F.F.value; $('oI').textContent = `${F.I.value}°`; $('oH').textContent = `${F.H.value} km`; $('oE').textContent = `${F.E.value}°`; };
+    function showCfg() { const c = cc.config; F.P.value = c.planes; F.S.value = c.perPlane; F.F.value = c.phasing; F.I.value = c.inc; F.H.value = c.alt; F.E.value = c.minElev; $('kindBtn').textContent = c.kind === 'star' ? 'Star 180°' : 'Delta 360°'; $('kindBtn').setAttribute('aria-pressed', String(c.kind === 'star')); F.F.max = String(Math.max(0, Number(F.P.value) - 1)); outs(); }
+    function applyCfg() { cc.setConfig({ planes: Number(F.P.value), perPlane: Number(F.S.value), phasing: Number(F.F.value), inc: Number(F.I.value), alt: Number(F.H.value), minElev: Number(F.E.value) }); showCfg(); writeCaption(); document.querySelectorAll('[data-preset]').forEach(b => b.setAttribute('aria-pressed', 'false')); }
+    for (const f of Object.values(F)) { f.addEventListener('input', outs); f.addEventListener('change', applyCfg); }
+    $('kindBtn').addEventListener('click', () => { cc.setConfig({ kind: cc.config.kind === 'star' ? 'delta' : 'star' }); showCfg(); writeCaption(); });
+    document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => { cc.setPreset(b.dataset.preset); showCfg(); writeCaption(); document.querySelectorAll('[data-preset]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    document.querySelectorAll('[data-preset]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.preset === (params.get('preset') || 'gps'))));
+    for (const id of ['sLat', 'sLon']) $(id).addEventListener('change', () => cc.setStation(Number($('sLat').value), Number($('sLon').value)));
+    $('playBtn').addEventListener('click', () => { const tl = cc.timeline; tl.playing ? tl.pause() : tl.play(); $('playBtn').textContent = tl.playing ? 'Duraklat' : 'Oynat'; $('playBtn').setAttribute('aria-pressed', String(tl.playing)); });
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { cc.timeline.setWarp(Number(b.dataset.warp)); document.querySelectorAll('[data-warp]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    function writeCaption() {
+      const con = cc.constellation, c = cc.config;
+      $('caption').innerHTML = `<strong>Geometri parametreden gelir:</strong> Walker ${c.kind === 'star' ? 'Star' : 'Delta'} ${nf1.format(c.inc)}°: ${con.T}/${con.P}/${c.phasing} — düzlem RAAN'ları ${c.kind === 'star' ? '180' : '360'}°/P aralıkla, düzlem-içi fazlar 360°/S, düzlemler arası kayma F·360°/T. `
+        + `Ayak izi merkez açısı λ = acos(R/(R+h)·cos ε) − ε = <span class="nums">${nf1.format(con.lambda * 180 / Math.PI)}°</span>; bir yer noktası, alt-uydu noktasına merkez açısı ≤ λ ise kapsanır. `
+        + `Boyama: kırmızı kapsanmıyor, mavi 1–2 uydu, altın 3+. Zaman taraması ${c.kind === 'star' ? 'Star' : 'Delta'} düzeninin sürüklenmesini ω_e ile izler (J2 yok, küresel Dünya, tek ε eşiği).`;
+    }
+    showCfg(); writeCaption();
+    if (deterministic) { cc.timeline.pause(); cc.setActive(false); $('playBtn').textContent = 'Oynat'; document.title += ' · hazır'; }
+    else document.title += ' · hazır';
+  </script>
+</body>
+</html>

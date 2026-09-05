@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "constellation-coverage",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Bir Walker takımyıldızının kapsama geometrisini göstermek: uydular ve yörünge düzlemleri parametreden üretilir, her uydunun kapsama konisi ve yüzey ayak izi çizilir, yüzey örtüşen kapsama katlılığına göre boyanır (kapsanmayan bölgeler görünür), anlık ve zaman-taramalı istatistikler okunur.",
+      "model": "Walker Delta / Star, i:T/P/F: P düzlem, düzlem başına S uydu (T = P·S), faz F; Ω_k = k·(ΔΩ/P) (Delta ΔΩ = 360°, Star 180°), u_kj = j·360°/S + k·F·360°/T; dairesel iki-cisim yörüngeler (μ = 398600,4418), Dünya ω_e = 7,2921159e−5 rad/s ile döner, kapsama Dünya-sabit cos(lat) ağırlıklı 256×128 ızgarada değerlendirilir. Ayak izi λ = acos(R/(R+h)·cos ε) − ε (küresel Dünya, ε minimum yükseklik açısı); nokta kapsanır ⇔ merkez açı ≤ λ. Yer istasyonundan yükseklik açısı tan ε = (cos c − R/(R+h))/sin c. Zaman taraması: ≥ 6 saat (ya da bir periyot) boyunca 120–240 s adımlarla kaba ızgarada kapsama; en uzun boşluk, ortalama/en düşük kapsama, sürekli kapsanan alan oranı. Presetler: GPS 55°:24/6/1, Galileo 56°:24/3/1, Iridium Star 86,4°:66/6/2, LEO kabuğu 53°:288/24/1, seyrek kutupsal, GEO halkası. Kaynak presets/constellation_coverage/constellation-model.mjs; denetim scripts/validate-astro.mjs (T = P·S, RAAN aralığı, λ GPS 71,2° / Iridium 19,9°, ε = 0 limiti, Iridium ≥ 99 % kapsama, GEO kutup boşluğu, ε = 90° görünürlük, tarama tutarlılığı).",
+      "limitations": "J2 yok (düzlemler sabit, gerçek takımyıldızlarda düğüm kayması ve bakım manevraları vardır); küresel Dünya; tek ε eşiği (anten deseni, arazi, link bütçesi yok); dairesel yörünge; ızgara çözünürlüğü kapsama oranını ±0,5 % hassasiyetle verir; büyük takımyıldızlarda (T > 200) boyama her 4. karede ve tarama daha kaba ızgarada güncellenir; uydu boyu ve koni saydamlığı görünürlük içindir. Gerçek takımyıldız efemerisi değildir (preset sayıları kamuya açık nominal tasarım değerleridir).",
+      "reducedMotion": "Otomatik oynatma yok; t = 1800 s'de donmuş kare (uydular, koniler, boyama, harita); istatistikler hesaplanır ve okunur.",
+      "exportState": "?preset=&t=<saniye> deterministik kare: konumlar u₀ + n·t'nin saf fonksiyonu, boyama ızgaradan, yıldızlar tohumlu.",
+      "accessibility": "Preset düğmeleri, Walker kaydırıcıları (P, S, F, i, h, ε), Delta/Star anahtarı, istasyon lat/lon girişleri yerli öğelerdir; tüm istatistikler yan panelde metindir; harita lejantı metinlidir; altyazı formülleri düzyazıyla verir.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "constellation-map",
+      "type": "trace",
+      "truthLevel": "analytic",
+      "purpose": "Eşdikdörtgen haritada aynı boyama, alt-uydu noktaları, küresel küçük-çember ayak izleri ve yer istasyonu.",
+      "model": "Ayak izi çemberi: küre üzerinde alt-uydu noktasından λ uzaklıktaki noktalar (küresel trigonometri), sarım kesilir; T > 120 için çemberler gizlenir (okunurluk).",
+      "limitations": "Eşdikdörtgen izdüşüm kutuplarda gerilir.",
+      "reducedMotion": "Statik.",
+      "exportState": "t'nin fonksiyonu.",
+      "accessibility": "İstatistikler metin.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}
