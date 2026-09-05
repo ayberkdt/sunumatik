@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Randevu ve Kenetlenme — rendezvous_docking</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    :root {
+      --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a;
+      --color-accent: #d9b877; --color-accent-ink: #14100a; --color-data-1: #8fb8dd; --color-data-2: #d78f6c;
+      --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 8px; margin-left: auto; }
+    .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12.5px/1 var(--font-body); letter-spacing: .03em; padding: 9px 14px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-selected="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; }
+    .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); }
+    .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 80px; text-align: right; font-variant-numeric: tabular-nums; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; }
+    label.field input { width: 58px; background: var(--color-canvas); color: var(--color-ink); border: 1px solid var(--color-rule); border-radius: 5px; padding: 3px 6px; font: 500 12.5px var(--font-mono); }
+    #customRow[hidden] { display: none; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; }
+    .caption strong { color: var(--color-ink); font-weight: 600; }
+    .caption .nums { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--color-ink); }
+    .kbd-help { margin-left: auto; font-size: 11.5px; color: var(--color-muted); letter-spacing: .03em; }
+    kbd { border: 1px solid var(--color-rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font: 11px var(--font-mono); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Randevu ve Kenetlenme<small>rendezvous_docking · Clohessy–Wiltshire, LVLH, R-bar / V-bar, KOS, koridor, glideslope</small></h1>
+    <div class="tabs" role="tablist" aria-label="Senaryolar">
+      <button role="tab" data-sc="vbar" aria-selected="true">V-bar yaklaşması</button>
+      <button role="tab" data-sc="rbar" aria-selected="false">R-bar yaklaşması</button>
+      <button role="tab" data-sc="push" aria-selected="false">"İleri it" hatası</button>
+      <button role="tab" data-sc="custom" aria-selected="false">Özel durum</button>
+    </div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row">
+      <button id="playBtn" aria-pressed="false" title="Boşluk">Oynat</button>
+      <input id="scrub" type="range" min="0" max="4400" step="1" value="0" aria-label="Zaman çizelgesi">
+      <span class="time" id="timeOut">—</span>
+    </div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Kamera">
+        <span>Kamera</span>
+        <button data-cam="overview" aria-pressed="true" title="1">Genel</button>
+        <button data-cam="dock" title="2">Kenetlenme</button>
+        <button data-cam="chase" title="3">Takip</button>
+        <button data-cam="free" title="4">Serbest</button>
+      </div>
+      <div class="group" role="group" aria-label="Zaman">
+        <span>Zaman</span>
+        <button data-warp="10">10×</button>
+        <button data-warp="30" aria-pressed="true">30×</button>
+        <button data-warp="120">120×</button>
+      </div>
+      <div class="group" id="customRow" hidden>
+        <span>Göreli durum</span>
+        <label class="field">x <input id="cx" type="number" value="100" step="10"> m</label>
+        <label class="field">y <input id="cy" type="number" value="-800" step="10"> m</label>
+        <label class="field">z <input id="cz" type="number" value="50" step="10"> m</label>
+        <label class="field">ẋ <input id="cvx" type="number" value="0" step="0.05"></label>
+        <label class="field">ẏ <input id="cvy" type="number" value="-0.1" step="0.05"></label>
+        <label class="field">ż <input id="cvz" type="number" value="0" step="0.05"> m/s</label>
+        <button id="applyBtn">Uygula</button>
+      </div>
+      <span class="kbd-help"><kbd>Boşluk</kbd> oynat · <kbd>←</kbd><kbd>→</kbd> ±60 s · <kbd>1</kbd>–<kbd>4</kbd> kamera</span>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountRendezvous } from './rendezvous-docking.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const qT = params.has('t') ? Number(params.get('t')) : null, qCam = params.get('cam'), qSc = params.get('sc') || 'vbar';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = qT != null || reduced || document.documentElement.dataset.export === 'true';
+    const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const rdv = await mountRendezvous(document.querySelector('#host'), { scenario: qSc, seed: 5, warp: Number(params.get('warp')) || 30, autoplay: !deterministic, camera: qCam || 'overview' });
+    window.__rendezvous = rdv;
+    const scrub = document.querySelector('#scrub'), timeOut = document.querySelector('#timeOut'), playBtn = document.querySelector('#playBtn'), caption = document.querySelector('#caption');
+
+    const CAPTIONS = {
+      vbar: s => `<strong>V-bar yaklaşması:</strong> −3 km'de bekleme V-bar üzerinde doğaldır (x = 0, v = 0 → CW ivmesi 0). Hop, CW iki-impuls hedeflemesidir: `
+        + `Φ_rv⁻¹(r_f − Φ_rr r₀) ile <span class="nums">ΔV₁ = ΔV₂ = ${nf1.format(s.events.find(e => e.id === 'hop-1').dv * 100)} cm/s</span>, 0,4 periyotta −250 m'e (KOS kenarı); `
+        + `iz, doğrusal hızla değil CW ile kavislenir. Son 250 m Hablani glideslope'udur: düz çizgi, üstel yavaşlayan kapanma (0,50 → 0,05 m/s), gereken itki = kinematik ivme − CW doğal ivme. `
+        + `Toplam ΔV <span class="nums">${nf2.format(s.dvTotal)} m/s</span> (impulsif ${nf2.format(s.dvImpulsive)} + sürekli ${nf2.format(s.dvContinuous)}). Koridor ±10°, KOS 200 m, 400 km dairesel referans.`,
+      rbar: s => `<strong>R-bar yaklaşması (alttan):</strong> R-bar'da beklemek serbest değildir — yerçekimi gradyanı 3n²x ile aracı iter, sürekli <span class="nums">a_x = −3n²x = ${(3 * s.n * s.n * 1500 * 1000).toFixed(2)} mm/s²</span> itki gerekir. `
+        + `Glideslope boyunca CW'nin radyal terimi doğal fren gibi çalışır: sürekli itki bütçesi <span class="nums">${nf2.format(s.dvContinuous)} m/s</span>, impulsif ${nf2.format(s.dvImpulsive)} m/s. Temas 5 cm/s. Nadir portu, koridor ±10°.`,
+      push: s => `<strong>Sezgi-karşıtı ders:</strong> −500 m'de duran araç hedefe doğru <span class="nums">+0,30 m/s</span> itilince önce yükselir (ẍ = 2nẏ), yörüngesi büyür, yavaşlar ve ${nf1.format(Math.abs(s.samples[s.samples.length - 1].state[1]) / 1000)} km GERİYE sürüklenir — `
+        + `serbest CW, itki yok. Randevu, "hedefe doğru gitmek" değil yörünge enerjisini yönetmektir.`,
+      custom: s => `<strong>Özel göreli durum:</strong> verilen [x,y,z,ẋ,ẏ,ż] serbest CW ile ${nf1.format(s.duration / s.period)} periyot yayılır. Sürüklenmesiz koşul ẏ₀ = −2n x₀; sekülar iz-boyu sürüklenme −(6n x₀ + 3ẏ₀) = `
+        + `<span class="nums">${nf2.format(-(6 * s.n * s.samples[0].state[0] + 3 * s.samples[0].state[4]))} m/s</span>. Doğrusal model: |r| ≪ yörünge yarıçapı, referans dairesel.`,
+    };
+    function writeCaption() { caption.innerHTML = CAPTIONS[rdv.sim.id](rdv.sim); scrub.max = String(Math.ceil(rdv.timeline.duration)); document.querySelector('#customRow').hidden = rdv.sim.id !== 'custom'; }
+    writeCaption();
+    function syncUi() {
+      const tl = rdv.timeline;
+      playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing));
+      if (document.activeElement !== scrub) scrub.value = String(tl.t);
+      timeOut.textContent = `${Math.floor(tl.t / 60)}:${String(Math.floor(tl.t % 60)).padStart(2, '0')}`;
+      document.querySelectorAll('[data-cam]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cam === rdv.camera.current)));
+      document.querySelectorAll('[data-warp]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.warp) === tl.warp)));
+      document.querySelectorAll('[data-sc]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sc === rdv.sim.id)));
+    }
+    setInterval(syncUi, 150);
+    playBtn.addEventListener('click', () => { const tl = rdv.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { rdv.timeline.scrub(Number(scrub.value)); syncUi(); });
+    document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => { rdv.camera.transitionTo(b.dataset.cam, { duration: 1400 }); syncUi(); }));
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { rdv.timeline.setWarp(Number(b.dataset.warp)); syncUi(); }));
+    const customState = () => ['cx', 'cy', 'cz', 'cvx', 'cvy', 'cvz'].map(id => Number(document.querySelector('#' + id).value));
+    document.querySelectorAll('[data-sc]').forEach(b => b.addEventListener('click', () => { rdv.setScenario(b.dataset.sc, b.dataset.sc === 'custom' ? { state: customState() } : undefined); writeCaption(); rdv.timeline.play(); syncUi(); }));
+    document.querySelector('#applyBtn').addEventListener('click', () => { rdv.setScenario('custom', { state: customState() }); writeCaption(); rdv.timeline.play(); syncUi(); });
+    document.addEventListener('keydown', event => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLButtonElement) return;
+      const tl = rdv.timeline;
+      if (event.code === 'Space') { event.preventDefault(); tl.playing ? tl.pause() : tl.play(); }
+      else if (event.key === 'ArrowLeft') tl.scrub(tl.t - (event.shiftKey ? 600 : 60));
+      else if (event.key === 'ArrowRight') tl.scrub(tl.t + (event.shiftKey ? 600 : 60));
+      else if ('1234'.includes(event.key) && event.key.length === 1) rdv.camera.transitionTo(['overview', 'dock', 'chase', 'free'][Number(event.key) - 1], { duration: 1000 });
+      syncUi();
+    });
+    if (deterministic) {
+      rdv.timeline.pause(); if (qCam) rdv.camera.transitionTo(qCam, { duration: 0 });
+      rdv.timeline.scrub(qT != null ? qT : rdv.tableau); rdv.advance(0); rdv.advance(0); rdv.setActive(false); document.title += ' · hazır';
+    }
+    syncUi();
+    setTimeout(() => console.info(`rendezvous advance(): ${rdv.stats.advanceMs.toFixed(2)} ms`), 6000);
+  </script>
+</body>
+</html>

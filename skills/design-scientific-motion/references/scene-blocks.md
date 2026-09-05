@@ -18,7 +18,7 @@ and a matching family of ML scenes. Quality over count. Every block obeys
 | `craft_blocks` | **wave 1** | Parametric aesthetic craft LIBRARY (no mount): orbiter, lander, 2-stage rocket, cubesat, capsule — pure builders returning THREE.Group, shared material language |
 | `lunar_descent` | **wave 1** | Powered descent to the lunar surface: braking + vertical phases integrated against lunar gravity, throttle-scaled plume, touchdown dust, alt/vy/fuel HUD, chase/side/surface cameras |
 | `launch_ascent` | **wave 2** | REAL integrated ascent: US76 atmosphere (co-rotating), C_D(M) drag, pressure-dependent Isp, vertical → pitch kick → gravity turn (α = 0) → closed-loop 2nd-stage pitch → SECO; Max-Q/MECO/SECO DERIVED from the trajectory, q(t) chart + event rail, loss budget, pad/chase/wide director, craft_blocks rocket + plume. Solver pure (`ascent-model.mjs`), validated by `scripts/validate-astro.mjs` |
-| `rendezvous-docking-preset` | wave 2 | Chaser/target relative motion (CW equations), approach corridor, docking axis alignment |
+| `rendezvous_docking` | **wave 2** | Clohessy–Wiltshire relative motion in target-centred LVLH: V-bar / R-bar approaches, hold points (V-bar natural, R-bar thrusted), CW two-impulse hop (Φ_rv⁻¹ targeting), KOS, ±10° corridor, Hablani glideslope, LOS/closing-rate HUD, contact; the "push toward target" lesson. Shared solver `core/astro-relative.mjs` |
 | `groundtrack-3d-preset` | wave 2 | Rotating body + 3D orbit + unwrapping 2D ground track, side by side |
 | `porkchop-preset` | wave 2 | Departure/arrival ΔV contour surface with window highlight |
 | `constellation-coverage-preset` | wave 2 | Walker constellations, coverage cones painting the surface |

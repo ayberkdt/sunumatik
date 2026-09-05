@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "rendezvous-relative-motion",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Randevu mekaniğini göreli çerçevede açıklamak: V-bar ve R-bar yaklaşma geometrisi, bekleme noktaları, CW iki-impuls hop, keep-out küresi, yaklaşma koridoru, glideslope kapanma profili, kenetlenme ekseni hizası ve temas — ve 'hedefe doğru it' hatasının neden geriye sürüklediği.",
+      "model": "Hill / Clohessy–Wiltshire denklemleri, hedef merkezli LVLH çerçevesi (x radyal dışa, y iz boyu, z çapraz-iz), dairesel referans yörünge 400 km (n = 1,131 mrad/s): ẍ − 3n²x − 2nẏ = a_x, ÿ + 2nẋ = a_y, z̈ + n²z = a_z. Serbest segmentler kapalı biçim STM Φ(t) ile yayılır (presets/core/astro-relative.mjs); hop, CW iki-impuls hedeflemesidir: v₀⁺ = Φ_rv⁻¹(r_f − Φ_rr r₀), varışta durdurma impulsu. Bekleme V-bar üzerinde doğaldır (x = 0, v = 0); R-bar beklemesi sürekli itki ister (a_x = −3n²x) ve bu itki HUD'da mm/s² olarak okunur. Son yaklaşma Hablani glideslope'udur: düz çizgi, ρ̇ = aρ + ρ̇_T (0,50 → 0,05 m/s), gereken itki = kinematik ivme − CW doğal ivme; sürekli ΔV ∫|a|dt ile entegre edilir. Koridor ±10° yarı-açı, KOS 200 m; LOS açısı ve koridor-içi durumu göreli konumdan geometrik olarak hesaplanır. Senaryolar: vbar (−3 km → hop 0,4 periyot → −250 m → glideslope), rbar (−1,5 km itkili bekleme → glideslope), push (+0,30 m/s ileri impuls, 1,5 periyot serbest), custom (kullanıcı [x,y,z,ẋ,ẏ,ż], serbest).",
+      "limitations": "Doğrusallaştırılmış model: |r| ≪ yörünge yarıçapı ve dairesel referans varsayımı; J2, sürükleme, diferansiyel sürükleme yok; impulslar anlık; itki yönelim dinamiği ve ADCS modellenmez (aracın kenetlenme ekseni yaklaşma eksenine sabit hizalanır — hiza hatası LOS açısı olarak geometriden okunur, gerçek bir kontrolcü değildir); glideslope ideal zorlanmış harekettir (sensör gürültüsü, navigasyon hatası yok). Araç boyları görünürlük için abartılır (hedef ≈120 m, kapsül ≈45 m) ve port/kapak yüzleri orijine oturtulur; zaman sıkıştırma HUD'da ilan edilir. Görev prosedürü değildir.",
+      "reducedMotion": "Otomatik oynatma yok; zaman çizelgesi glideslope'un 10. dakikasında (tableau) donar; kaydırıcı, HUD ve 2B çizim çalışır.",
+      "exportState": "?sc=<vbar|rbar|push|custom>&t=<saniye>&cam=<overview|dock|chase> deterministik kare; her görsel durum sim zamanının saf fonksiyonudur, izler instanceCount ile ilerler, impuls okları olay zamanından rampalanır.",
+      "accessibility": "Senaryo sekmeleri, oynat/duraklat, kaydırıcı, kamera ve zaman düğmeleri yerli öğelerdir (Boşluk, ok tuşları, 1–4); HUD metin tabanlıdır (t, ρ, ρ̇, R/V/H, LOS açısı, koridor durumu, itki, ΣΔV, faz); altyazı her senaryonun fizik özetini ve ΔV bütçesini düzyazı verir.",
+      "loop": false,
+      "pauseControl": true,
+      "durationMs": 150000
+    },
+    {
+      "id": "rendezvous-inplane-plot",
+      "type": "trace",
+      "truthLevel": "analytic",
+      "purpose": "Klasik V-bar × R-bar düzlem-içi çizimi: iz, KOS çemberi, koridor sınırları, bekleme noktaları ve canlı araç noktası — 3B sahnenin ders-kitabı izdüşümü.",
+      "model": "Simülasyon örneklerinin (x, y) bileşenleri; koridor çizgileri eksen etrafında ±yarı-açı döndürülerek çizilir; ölçek senaryonun uzamına göre otomatik.",
+      "limitations": "Yalnız düzlem-içi (z gösterilmez); ölçek etiketi tam sayıya yuvarlanır.",
+      "reducedMotion": "Çizim statik; nokta tablodaki t'de durur.",
+      "exportState": "Nokta ve uçulan iz t'nin fonksiyonudur.",
+      "accessibility": "Aynı büyüklükler HUD'da metin olarak verilir.",
+      "loop": false,
+      "pauseControl": true
+    },
+    {
+      "id": "rendezvous-camera-director",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Üç anlatım kamerası: genel (tüm geometri, Dünya ufku altta), kenetlenme (portun dışından yaklaşan araca), takip (aracın arkasından hedefe); yumuşak geçiş.",
+      "reducedMotion": "Geçiş animasyonu oynamaz.",
+      "exportState": "?cam= ile seçilir; kadraj t ve modun deterministik fonksiyonu.",
+      "accessibility": "Düğme ve 1–4 tuşları; bilgi HUD/altyazıda.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}
