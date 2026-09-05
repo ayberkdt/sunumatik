@@ -178,6 +178,46 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('rendezvous', 'push sürüklenme hızı = −3ẏ₀ = −0,90 m/s', near(drift, -.9, 1e-6), `${drift.toFixed(3)} m/s`);
 }
 
+/* ───────────────────────── Yörünge + yer izi */
+{
+  const O = await mod('presets/core/astro-orbit.mjs');
+  const T_SID = 86164.0905;
+  /* GEO: alt-uydu noktası sabit */
+  const geo = O.ORBIT_PRESETS.geo;
+  check('groundtrack', 'GEO periyodu = yıldızıl gün (±1 s)', near(O.periodOf(geo.a), T_SID, 1), O.periodOf(geo.a).toFixed(1));
+  const gtGeo = O.groundTrack(geo, { tEnd: 2 * T_SID, dt: 600 });
+  const lonSpread = Math.max(...gtGeo.map(s => s.lon)) - Math.min(...gtGeo.map(s => s.lon));
+  check('groundtrack', 'GEO yer izi sabit (boylam yayılımı < 0,01°)', lonSpread < .01 * Math.PI / 180 && gtGeo.every(s => Math.abs(s.lat) < 1e-9), `${(lonSpread * 180 / Math.PI).toFixed(4)}°`);
+  /* Kutupsal: enlem ±90'a ulaşır; ISS: max enlem = i */
+  const pol = O.groundTrack(O.ORBIT_PRESETS.polar, { tEnd: O.periodOf(O.ORBIT_PRESETS.polar.a), dt: 1 });
+  check('groundtrack', 'kutupsal yörünge izi ±90° enleme ulaşır (1 s örnekleme, ±0,1°)', Math.max(...pol.map(s => s.lat)) > 89.9 * Math.PI / 180 && Math.min(...pol.map(s => s.lat)) < -89.9 * Math.PI / 180, `${(Math.max(...pol.map(s => s.lat)) * 180 / Math.PI).toFixed(2)}°`);
+  const iss = O.ORBIT_PRESETS.iss;
+  const gtIss = O.groundTrack(iss, { tEnd: O.periodOf(iss.a), dt: 2 });
+  check('groundtrack', 'ISS izinin en yüksek enlemi = eğiklik (51,64°)', near(Math.max(...gtIss.map(s => s.lat)), iss.i, .1 * Math.PI / 180), `${(Math.max(...gtIss.map(s => s.lat)) * 180 / Math.PI).toFixed(2)}°`);
+  /* tur başına boylam kayması = −ω_e T: ekvator geçişleri arasındaki fark */
+  const T = O.periodOf(iss.a);
+  const s0 = O.groundTrack({ ...iss, e: 0, M0: -.5 }, { tEnd: 2.2 * T, dt: T / 2000 });   // M0 < 0: düğüm geçişleri dizinin içinde
+  const asc = []; for (let k = 1; k < s0.length; k++) if (s0[k - 1].lat < 0 && s0[k].lat >= 0) asc.push(s0[k].lon);
+  const shift = O.wrapLon(asc[1] - asc[0]);
+  check('groundtrack', 'ardışık yükselen düğüm boylam farkı = −ω_e·T', near(shift, -O.OMEGA_E * T, .05 * Math.PI / 180), `${(shift * 180 / Math.PI).toFixed(2)}° vs ${(-O.OMEGA_E * T * 180 / Math.PI).toFixed(2)}°`);
+  /* Kepler: durum enerjisi ve açısal momentum korunur; vis-viva */
+  const st = O.stateAt(O.ORBIT_PRESETS.molniya, 12345);
+  const r = Math.hypot(...st.r), v2 = st.v[0] ** 2 + st.v[1] ** 2 + st.v[2] ** 2;
+  check('groundtrack', 'Molniya durumunda vis-viva: v² = μ(2/r − 1/a)', rel(v2, O.MU * (2 / r - 1 / O.ORBIT_PRESETS.molniya.a), 1e-9));
+  const h = [st.r[1] * st.v[2] - st.r[2] * st.v[1], st.r[2] * st.v[0] - st.r[0] * st.v[2], st.r[0] * st.v[1] - st.r[1] * st.v[0]];
+  const hm = Math.hypot(...h); const iRec = Math.acos(h[2] / hm);
+  check('groundtrack', 'açısal momentumdan eğiklik geri kazanılır (63,4°)', near(iRec, O.ORBIT_PRESETS.molniya.i, 1e-9));
+  /* J2: SSO için Ω̇ ≈ +0,9856°/gün (Güneş-eşzamanlı tanımı) */
+  const rates = O.j2Rates(O.ORBIT_PRESETS.sso);
+  check('groundtrack', 'SSO (700 km, 98,2°) J2 düğüm oranı ≈ +0,986°/gün (±0,03)', near(rates.raanDot * 86400 * 180 / Math.PI, .9856, .03), `${(rates.raanDot * 86400 * 180 / Math.PI).toFixed(3)}°/gün`);
+  /* Molniya: kritik eğiklikte ω̇ ≈ 0 */
+  const rm = O.j2Rates(O.ORBIT_PRESETS.molniya);
+  check('groundtrack', 'Molniya 63,4° kritik eğiklikte ω̇ ≈ 0', Math.abs(rm.argpDot * 86400 * 180 / Math.PI) < .01, `${(rm.argpDot * 86400 * 180 / Math.PI).toFixed(4)}°/gün`);
+  /* boylam sarımı: kırılma bayrağı yalnız sıçramalarda */
+  const brk = gtIss.filter(s => s.brk).length;
+  check('groundtrack', 'bir ISS turunda tam bir boylam sarımı (1 kırılma)', brk === 1, `${brk}`);
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>3B Yörünge + 2B Yer İzi — ground_track_3d</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .presets { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+    .presets button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .presets button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; }
+    .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); }
+    .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 100px; text-align: right; font-variant-numeric: tabular-nums; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field, label.toggle { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 6px 10px; }
+    label.field input[type="range"] { width: 90px; accent-color: var(--color-accent); margin: 0; }
+    label.field output { font: 500 12px var(--font-mono); min-width: 52px; text-align: right; color: var(--color-ink); }
+    label.toggle { display: inline-flex; gap: 6px; align-items: center; } label.toggle input { accent-color: var(--color-accent); margin: 0; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; }
+    .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    .kbd-help { margin-left: auto; font-size: 11.5px; color: var(--color-muted); letter-spacing: .03em; }
+    kbd { border: 1px solid var(--color-rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font: 11px var(--font-mono); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>3B Yörünge + 2B Yer İzi<small>ground_track_3d · aynı yörünge iki görünümde: eylemsiz yörünge, dönen Dünya, alt-uydu noktası, açılmış yer izi</small></h1>
+    <div class="presets" role="group" aria-label="Yörünge presetleri">
+      <button data-preset="iss" aria-pressed="true">ISS</button><button data-preset="sso">SSO</button><button data-preset="polar">Kutupsal</button>
+      <button data-preset="molniya">Molniya</button><button data-preset="gps">GPS</button><button data-preset="geo">GEO</button><button data-preset="tundra">Tundra</button>
+    </div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row">
+      <button id="playBtn" aria-pressed="false" title="Boşluk">Oynat</button>
+      <input id="scrub" type="range" min="0" max="10000" step="1" value="0" aria-label="Zaman çizelgesi">
+      <span class="time" id="timeOut">—</span>
+    </div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Elemanlar">
+        <span>Elemanlar</span>
+        <label class="field">irtifa <input id="eAlt" type="range" min="200" max="36000" step="10" value="420"><output id="oAlt">420 km</output></label>
+        <label class="field">e <input id="eEcc" type="range" min="0" max="0.8" step="0.005" value="0"><output id="oEcc">0,000</output></label>
+        <label class="field">i <input id="eInc" type="range" min="0" max="180" step="0.5" value="51.6"><output id="oInc">51,6°</output></label>
+        <label class="field">Ω <input id="eRaan" type="range" min="0" max="360" step="1" value="46"><output id="oRaan">46°</output></label>
+        <label class="field">ω <input id="eArgp" type="range" min="0" max="360" step="1" value="0"><output id="oArgp">0°</output></label>
+        <label class="field">tur <input id="eRevs" type="range" min="1" max="16" step="1" value="3"><output id="oRevs">3</output></label>
+        <label class="toggle"><input type="checkbox" id="eJ2"> J2 seküler</label>
+      </div>
+      <div class="group" role="group" aria-label="Kamera"><span>Kamera</span><button data-cam="orbit" aria-pressed="true">Yörünge</button><button data-cam="pole">Kutup</button><button data-cam="free">Serbest</button></div>
+      <div class="group" role="group" aria-label="Zaman"><span>Zaman</span><button data-warp="30">30×</button><button data-warp="60" aria-pressed="true">60×</button><button data-warp="300">300×</button><button data-warp="1200">1200×</button></div>
+      <span class="kbd-help"><kbd>Boşluk</kbd> oynat · <kbd>←</kbd><kbd>→</kbd> ±5 dk</span>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountGroundTrack } from './ground-track.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const qT = params.has('t') ? Number(params.get('t')) : null, qCam = params.get('cam'), qPreset = params.get('preset') || 'iss';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = qT != null || reduced || document.documentElement.dataset.export === 'true';
+    const R_E = 6378.137, rad = Math.PI / 180;
+    const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf3 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
+    const gt = await mountGroundTrack(document.querySelector('#host'), { preset: qPreset, seed: 3, warp: Number(params.get('warp')) || 60, autoplay: !deterministic, camera: qCam || 'orbit', j2: params.get('j2') === '1', revs: Number(params.get('revs')) || 3 });
+    window.__groundTrack = gt;
+    const $ = id => document.querySelector('#' + id);
+    const scrub = $('scrub'), timeOut = $('timeOut'), playBtn = $('playBtn'), caption = $('caption');
+    const fields = { alt: $('eAlt'), ecc: $('eEcc'), inc: $('eInc'), raan: $('eRaan'), argp: $('eArgp'), revs: $('eRevs'), j2: $('eJ2') };
+    function showFields() {
+      const el = gt.elements;
+      fields.alt.value = String(Math.round(el.a - R_E)); fields.ecc.value = String(el.e); fields.inc.value = String(+(el.i / rad).toFixed(1));
+      fields.raan.value = String(Math.round(((el.raan / rad) % 360 + 360) % 360)); fields.argp.value = String(Math.round(((el.argp / rad) % 360 + 360) % 360)); fields.revs.value = String(gt.info.revs);
+      $('oAlt').textContent = `${fields.alt.value} km`; $('oEcc').textContent = nf3.format(Number(fields.ecc.value)); $('oInc').textContent = `${nf1.format(Number(fields.inc.value))}°`;
+      $('oRaan').textContent = `${fields.raan.value}°`; $('oArgp').textContent = `${fields.argp.value}°`; $('oRevs').textContent = fields.revs.value;
+    }
+    function applyFields() {
+      const a = R_E + Number(fields.alt.value), e = Number(fields.ecc.value);
+      /* enberi Dünya içine girmesin: e tavanı */
+      const eMax = Math.max(0, 1 - (R_E + 150) / a);
+      const el = { a, e: Math.min(e, eMax), i: Number(fields.inc.value) * rad, raan: Number(fields.raan.value) * rad, argp: Number(fields.argp.value) * rad, M0: 0 };
+      gt.setElements(el, { revs: Number(fields.revs.value), j2: fields.j2.checked }); showFields(); writeCaption(); scrub.max = String(Math.ceil(gt.timeline.duration)); gt.timeline.play(); syncUi();
+      document.querySelectorAll('[data-preset]').forEach(b => b.setAttribute('aria-pressed', 'false'));
+    }
+    for (const f of Object.values(fields)) f.addEventListener('change', applyFields);
+    for (const f of ['alt', 'ecc', 'inc', 'raan', 'argp', 'revs']) fields[f].addEventListener('input', () => { const v = fields[f].value; ({ alt: () => $('oAlt').textContent = `${v} km`, ecc: () => $('oEcc').textContent = nf3.format(Number(v)), inc: () => $('oInc').textContent = `${nf1.format(Number(v))}°`, raan: () => $('oRaan').textContent = `${v}°`, argp: () => $('oArgp').textContent = `${v}°`, revs: () => $('oRevs').textContent = v })[f](); });
+    document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => { gt.setPreset(b.dataset.preset, { j2: fields.j2.checked }); showFields(); writeCaption(); scrub.max = String(Math.ceil(gt.timeline.duration)); gt.timeline.play(); document.querySelectorAll('[data-preset]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); syncUi(); }));
+
+    function writeCaption() {
+      const el = gt.elements, I = gt.info, deg = x => x / rad;
+      const geo = Math.abs(I.lonShiftPerRev) < .02 && el.i < .02;
+      caption.innerHTML = `<strong>Yer izi bir dönüşümdür, çizim değil:</strong> uydu ECI'de Kepler ile ilerler, Dünya θ = θ₀ + ω_e t ile döner; alt-uydu noktası lat = asin(z/r), lon = atan2(y,x) − θ. `
+        + `Periyot <span class="nums">${nf1.format(I.period / 60)} dk</span> → her turda iz <span class="nums">${nf1.format(deg(I.lonShiftPerRev))}°</span> batıya kayar (= −ω_e·T${fields.j2.checked ? ' + Ω̇·T' : ''}); `
+        + `en yüksek enlem = eğiklik = <span class="nums">${nf1.format(deg(I.maxLat))}°</span>${el.i > Math.PI / 2 ? ' (retrograd: iz doğudan batıya)' : ''}. `
+        + (geo ? `GEO: T = yıldızıl gün, kayma ≈ 0 → alt-uydu noktası sabit.` : el.e > .3 ? `Yüksek e: iz enötede yavaşlar, uydu tepe noktasında "asılı" kalır (Molniya/Tundra mantığı).` : `Küresel Dünya, jeosantrik enlem; ${fields.j2.checked ? 'J2 seküler ortalama elemanlar (kısa-periyot terimleri yok)' : 'iki-cisim'}.`);
+    }
+    showFields(); writeCaption(); scrub.max = String(Math.ceil(gt.timeline.duration));
+    function syncUi() {
+      const tl = gt.timeline; playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing));
+      if (document.activeElement !== scrub) scrub.value = String(tl.t);
+      timeOut.textContent = `${Math.floor(tl.t / 3600)} sa ${String(Math.floor((tl.t % 3600) / 60)).padStart(2, '0')} dk`;
+      document.querySelectorAll('[data-cam]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cam === gt.camera.current)));
+      document.querySelectorAll('[data-warp]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.warp) === tl.warp)));
+    }
+    setInterval(syncUi, 150);
+    playBtn.addEventListener('click', () => { const tl = gt.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { gt.timeline.scrub(Number(scrub.value)); syncUi(); });
+    document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => { gt.camera.transitionTo(b.dataset.cam); syncUi(); }));
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { gt.timeline.setWarp(Number(b.dataset.warp)); syncUi(); }));
+    document.addEventListener('keydown', event => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLButtonElement) return;
+      const tl = gt.timeline;
+      if (event.code === 'Space') { event.preventDefault(); tl.playing ? tl.pause() : tl.play(); }
+      else if (event.key === 'ArrowLeft') tl.scrub(tl.t - (event.shiftKey ? 3600 : 300));
+      else if (event.key === 'ArrowRight') tl.scrub(tl.t + (event.shiftKey ? 3600 : 300));
+      syncUi();
+    });
+    if (deterministic) { gt.timeline.pause(); if (qCam) gt.camera.mode(qCam); gt.timeline.scrub(qT != null ? qT : gt.tableau); gt.advance(0); gt.advance(0); gt.setActive(false); document.title += ' · hazır'; }
+    syncUi();
+    setTimeout(() => console.info(`ground-track advance(): ${gt.stats.advanceMs.toFixed(2)} ms`), 6000);
+  </script>
+</body>
+</html>

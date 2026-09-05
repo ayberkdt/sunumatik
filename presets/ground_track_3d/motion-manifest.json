@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "groundtrack-synchronized-views",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Aynı yörüngeyi iki eşzamanlı görünümde göstermek: dönen Dünya etrafında eylemsiz yörünge + alt-uydu noktası + nadir çizgisi + küre üstüne işlenen iz (3B) ve açılmış eşdikdörtgen haritada yer izi (2B) — eğiklik, RAAN, irtifa ve dış-merkezlik değişince izin NEDEN değiştiğini okutmak.",
+      "model": "İki-cisim Kepler yayılımı (μ = 398600,4418 km³/s²; Kepler denklemi Newton), elemanlar (a, e, i, Ω, ω, M0); isteğe bağlı J2 SEKÜLER ortalama-eleman oranları Ω̇ = −(3/2)nJ2(R/p)²cos i, ω̇ = (3/4)nJ2(R/p)²(5cos²i − 1), Ṁ = n[1 + (3/4)J2(R/p)²√(1−e²)(3cos²i − 1)]. ECI → ECEF: z ekseni etrafında θ = θ₀ + ω_e t (ω_e = 7,2921159e−5 rad/s yıldızıl). Alt-uydu noktası: lat = asin(z/r) (jeosantrik, küresel Dünya), lon = atan2(y,x) − θ, [−180°, 180°]'e sarılır; ardışık örneklerde |Δlon| > 180° ise çizgi kesilir. Tur başına kayma −ω_e·T (+Ω̇·T), en yüksek enlem = i. Presetler: ISS, SSO, kutupsal, Molniya, GPS, GEO, Tundra (presets/core/astro-orbit.mjs).",
+      "limitations": "Küresel Dünya (jeodezik enlem, basıklık yok); J2 yalnız seküler (kısa-periyot oskülasyon yok); sürükleme, üçüncü cisim, SRP yok; θ₀ keyfi (epoch/GMST bağlanmamıştır — gerçek geçiş tahmini için TLE/SGP4 gerekir); uydu boyu görünürlük için abartılır; zaman sıkıştırma HUD'da ilan edilir.",
+      "reducedMotion": "Otomatik oynatma yok; zaman çizelgesi sürenin %45'inde (tableau) donar; kaydırıcı, HUD, harita çalışır.",
+      "exportState": "?preset=&t=&cam=&j2=&revs= ile deterministik kare: uydu konumu, Dünya dönmesi, iz ilerlemesi ve harita t'nin saf fonksiyonudur; yıldızlar tohumludur.",
+      "accessibility": "Preset düğmeleri, kaydırıcılar (irtifa, e, i, Ω, ω, tur) ve J2 anahtarı yerli öğelerdir; HUD metin tabanlıdır (t, enlem, boylam, irtifa, |v|, tur); harita altı bilgi satırı periyot, tur başına kayma, en yüksek enlem ve J2 oranlarını metin verir; altyazı dönüşümü düzyazıyla anlatır.",
+      "loop": false,
+      "pauseControl": true,
+      "durationMs": 280000
+    },
+    {
+      "id": "groundtrack-map",
+      "type": "trace",
+      "truthLevel": "analytic",
+      "purpose": "Eşdikdörtgen haritada yer izi: tam iz soluk, uçulan iz parlak, anlık nokta + artı imleç; boylam sarımı temiz kesilir.",
+      "model": "Aynı yörünge örnekleri (lat, lon); harita arka planı earth_advanced'ın gün dokusu (NASA türevi), 30° ızgara.",
+      "limitations": "Eşdikdörtgen izdüşüm kutuplarda gerilir (kutupsal izler dikey görünür).",
+      "reducedMotion": "Statik; nokta tablodaki t'de.",
+      "exportState": "t'nin fonksiyonu.",
+      "accessibility": "Aynı büyüklükler HUD'da metin.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

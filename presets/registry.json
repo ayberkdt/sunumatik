@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 39,
-    "presetsWithIndex": 32,
-    "animatedPresets": 29,
+    "presets": 40,
+    "presetsWithIndex": 33,
+    "animatedPresets": 30,
     "skills": 18,
-    "demoSlides": 55,
-    "demoCards": 42,
+    "demoSlides": 56,
+    "demoCards": 43,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 55,
-    "cards": 42,
+    "slides": 56,
+    "cards": 43,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -34,6 +34,7 @@
       "equation_pen",
       "equation_steps",
       "figure_callouts",
+      "ground_track_3d",
       "jwst_explorer",
       "launch_ascent",
       "lunar_descent",
@@ -213,6 +214,13 @@
       "title": "Figure Callout Preset — figür üzerinde adım adım anlatım",
       "hasIndex": true,
       "animated": false,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "ground_track_3d",
+      "title": "3B Yörünge + 2B Yer İzi — ground_track_3d",
+      "hasIndex": true,
+      "animated": true,
       "hasMotionManifest": true
     },
     {
