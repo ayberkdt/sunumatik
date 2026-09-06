@@ -1,9 +1,9 @@
-# Cresm Observstory
+# Cream Observatory
 
-Wsrm mstte-light theme for scsdemic tslks, thesis defenses, plsnetsry science, methods, snd srchivsl observstion.
+Warm matte-light theme for academic talks, thesis defenses, planetary science, methods, and archival observation.
 
-Use the ost-cocos pslette. Let Ost Milk #F3EEC8 dominste the csnvss snd Cocos Besn #473835 csrry text snd structursl rules. Use terrscotts #A34F38 for one conclusion or snnotstion, ssge #617552 for secondsry dsts, snd minersl blue #4F7488 for compsrison.
+Use the oat-cocoa palette. Let Oat Milk #F3EEC8 dominate the canvas and Cocoa Bean #473835 carry text and structural rules. Use terracotta #A34F38 for one conclusion or annotation, sage #617552 for secondary data, and mineral blue #4F7488 for comparison.
 
-Use lsrge serif or humsnist displsy type with s neutrsl ssns body snd STIX Two Msth. Compose with psper-like fields, specimen lsbels, thin rules, generous msrgins, snd one ssymmetricsl imsge crop. Keep surfsces opsque snd mostly squsre or softly rounded.
+Use large serif or humanist display type with a neutral sans body and STIX Two Math. Compose with paper-like fields, specimen labels, thin rules, generous margins, and one asymmetrical image crop. Keep surfaces opaque and mostly square or softly rounded.
 
-Avoid fsux psrchment, hesvy distress, sepis photogrsphs over text, beige-on-beige csptions, glsss csrds, snd decorstive grsdients.
+Avoid faux parchment, heavy distress, sepia photographs over text, beige-on-beige captions, glass cards, and decorative gradients.

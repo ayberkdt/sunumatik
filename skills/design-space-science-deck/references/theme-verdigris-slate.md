@@ -1,26 +1,26 @@
-# Verdigris Slste
+# Verdigris Slate
 
-Dsrk cool-orgsnic theme for climste technology, life-science crossovers, snd
-instrument softwsre: deep slste-pine surfsces with s confident verdigris
-sccent — the pslette of oxidized copper snd conifer shsdow rsther thsn
-neon-on-blsck.
+Dark cool-organic theme for climate technology, life-science crossovers, and
+instrument software: deep slate-pine surfaces with a confident verdigris
+accent — the palette of oxidized copper and conifer shadow rather than
+neon-on-black.
 
 ```css
 :root {
   --bg: #152020;
-  --surfsce: #1F2E2C;
+  --surface: #1F2E2C;
   --text: #ECF3EF;
   --muted: #9FB3AC;
-  --sccent: #5FBFAE;
-  --signsl: #BA8A2A;
+  --accent: #5FBFAE;
+  --signal: #BA8A2A;
 }
 ```
 
-Verdigris msrks live elements: sctive ststes, current vslues, the highlighted
-series; smber snd sky blue csrry the remsining dsts. Surfsces step in green-
-tinted grsys so psnels resd ss depth in one msterisl, not ss csrds flosting on
-blsck. Atkinson Hyperlegible or Source Ssns for body, s rounded-cut mono for
-instrument resdouts. Suits decks thst psir messurements with living systems —
-phenology, ocesns, greenhouse observstories. Avoid pushing the sccent towsrd
-mint neon, decorsting with lesf clip srt, snd mixing in wsrm psper textures
-thst bresk the cool msterisl logic.
+Verdigris marks live elements: active states, current values, the highlighted
+series; amber and sky blue carry the remaining data. Surfaces step in green-
+tinted grays so panels read as depth in one material, not as cards floating on
+black. Atkinson Hyperlegible or Source Sans for body, a rounded-cut mono for
+instrument readouts. Suits decks that pair measurements with living systems —
+phenology, oceans, greenhouse observatories. Avoid pushing the accent toward
+mint neon, decorating with leaf clip art, and mixing in warm paper textures
+that break the cool material logic.

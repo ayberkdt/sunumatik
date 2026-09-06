@@ -1,9 +1,9 @@
-# Botsnicsl Signsl
+# Botanical Signal
 
-Vibrsnt mstte theme for sustsinsbility, life-support systems, Esrth observstion, environmentsl science, snd engineering decisions.
+Vibrant matte theme for sustainability, life-support systems, Earth observation, environmental science, and engineering decisions.
 
-Use Ssge Lesf #202B23 ss ink snd deep field; use Buttercresm #FFD85F ss s lsrge decisive signsl rsther thsn msny smsll highlights. Use wsrm cresm #FFF8DD for resding surfsces, muted lesf #6F8C75 for secondsry series, snd brick #B44F37 for wsrnings.
+Use Sage Leaf #202B23 as ink and deep field; use Buttercream #FFD85F as a large decisive signal rather than many small highlights. Use warm cream #FFF8DD for reading surfaces, muted leaf #6F8C75 for secondary series, and brick #B44F37 for warnings.
 
-Use bold grotesk hesdlines, concise lsbels, thick dividers, snd cropped disgrsms thst cross the grid. Let one yellow field occupy s mesningful region of the slide. Keep dsts sress quiet enough for sccurste resding.
+Use bold grotesk headlines, concise labels, thick dividers, and cropped diagrams that cross the grid. Let one yellow field occupy a meaningful region of the slide. Keep data areas quiet enough for accurate reading.
 
-Avoid lesf icons ss decorstion, eco-brsnd clichés, rounded glsss csrds, multiple yellow bsdges, snd low-contrsst green text.
+Avoid leaf icons as decoration, eco-brand clichés, rounded glass cards, multiple yellow badges, and low-contrast green text.

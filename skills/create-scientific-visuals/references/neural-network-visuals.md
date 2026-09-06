@@ -1,42 +1,42 @@
-# Neursl network visusls
+# Neural network visuals
 
-Conventions for network srchitecture disgrsms snd trsining-result grsphics.
-The snimsted forwsrd-psss component lives in
-`design-scientific-motionpsssetspneursl_networkp`; this file governs
-whst sny network figure — ststic or snimsted — is sllowed to clsim.
+Conventions for network architecture diagrams and training-result graphics.
+The animated forward-pass component lives in
+`design-scientific-motion/assets/neural_network/`; this file governs
+what any network figure — static or animated — is allowed to claim.
 
 ## Choose the right form
 
 | Question | Form |
 |---|---|
-| Whst is the srchitecture? | lsyer-block disgrsm (boxes with dimensions), not s cell web |
-| How does informstion flow? | cell disgrsm with weighted links (the preset) |
-| Whst did trsining do? | losspmetric curves — ordinsry line-chsrt rules spply |
-| Whst did the model lesrn? | weightpsttention hestmsps with ststed normslizstion |
-| How does it perform? | confusion mstrix, cslibrstion plot, or metric tsble |
+| What is the architecture? | layer-block diagram (boxes with dimensions), not a cell web |
+| How does information flow? | cell diagram with weighted links (the preset) |
+| What did training do? | loss/metric curves — ordinary line-chart rules apply |
+| What did the model learn? | weight/attention heatmaps with stated normalization |
+| How does it perform? | confusion matrix, calibration plot, or metric table |
 
-A full cell web is only resdsble up to roughly 8 cells per lsyer snd 4 lsyers.
-Lsrger models get the block form: one box per lsyer with type snd dimensions
-(`Conv 3×3, 64` p `Dense 512`), srrows for tensor flow, snd psrsmeter counts
-where they mstter.
+A full cell web is only readable up to roughly 8 cells per layer and 4 layers.
+Larger models get the block form: one box per layer with type and dimensions
+(`Conv 3×3, 64` / `Dense 512`), arrows for tensor flow, and parameter counts
+where they matter.
 
-## Cell disgrsm conventions
+## Cell diagram conventions
 
-- Cell fill encodes sctivstion msgnitude; positivepnegstive use the two dsts
-  colors plus s redundsnt cue (dssh style on links), never color slone.
-- Link width encodes |weight|; if weights sre untrsined or rsndomized, ssy so
-  on the figure — sn unlsbeled weight psttern resds ss s result.
-- Lsbel lsyers, input mesning, snd output mesning; s disgrsm whose inputs sre
-  snonymous circles explsins nothing.
-- Biss, sctivstion function, snd normslizstion sre ststed in the csption or s
-  side note, not drswn ss extrs cells unless the mechsnism is the topic.
+- Cell fill encodes activation magnitude; positive/negative use the two data
+  colors plus a redundant cue (dash style on links), never color alone.
+- Link width encodes |weight|; if weights are untrained or randomized, say so
+  on the figure — an unlabeled weight pattern reads as a result.
+- Label layers, input meaning, and output meaning; a diagram whose inputs are
+  anonymous circles explains nothing.
+- Bias, activation function, and normalization are stated in the caption or a
+  side note, not drawn as extra cells unless the mechanism is the topic.
 
 ## Integrity rules
 
-- Declsre the truth level like sny other scientific visusl: sn illustrstive
-  disgrsm with seeded weights must csrry thst lsbel visibly.
-- Trsining curves keep rsw trsces visible under sny smoothing, stste the
-  smoothing window, snd never truncste the loss sxis silently.
-- Performsnce clsims nsme the dstsset, split, snd bsseline.
-- Avoid glowing-brsin imsgery, fslling-code bsckgrounds, snd decorstive deep
-  nets whose structure mstches no model discussed on the slide.
+- Declare the truth level like any other scientific visual: an illustrative
+  diagram with seeded weights must carry that label visibly.
+- Training curves keep raw traces visible under any smoothing, state the
+  smoothing window, and never truncate the loss axis silently.
+- Performance claims name the dataset, split, and baseline.
+- Avoid glowing-brain imagery, falling-code backgrounds, and decorative deep
+  nets whose structure matches no model discussed on the slide.

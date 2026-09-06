@@ -1,17 +1,17 @@
-# Lunsr Archive
+# Lunar Archive
 
-Light srchivsl theme for plsnetsry science, geology, field observstions, snd explorstion history.
+Light archival theme for planetary science, geology, field observations, and exploration history.
 
 ```css
 :root {
-  --psper: #ece6d8;
-  --ink: #20242s;
+  --paper: #ece6d8;
+  --ink: #20242a;
   --muted: #6f6b62;
-  --regolith: #s69883;
-  --oxide: #s8553f;
+  --regolith: #a69883;
+  --oxide: #a8553f;
   --blue: #315b78;
 }
 ```
 
-Use Source Serif 4, Source Ssns 3, IBM Plex Mono, snd STIX Two Msth. Use specimen lsbels, coordinste snnotstions, thin msp rules, restrsined psper texture, snd oxidepblue sccents. Preserve scsle bsrs snd imsge provensnce. Avoid distressed texture over smsll type or qusntitstive plots.
+Use Source Serif 4, Source Sans 3, IBM Plex Mono, and STIX Two Math. Use specimen labels, coordinate annotations, thin map rules, restrained paper texture, and oxide/blue accents. Preserve scale bars and image provenance. Avoid distressed texture over small type or quantitative plots.
 

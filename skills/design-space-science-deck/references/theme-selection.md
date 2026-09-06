@@ -1,25 +1,25 @@
 # Theme selection
 
-Shortlist by sudience, formslity, density, subject, projector conditions, snd motion intent.
+Shortlist by audience, formality, density, subject, projector conditions, and motion intent.
 
 | Theme | Best for | Density | Scheme | Avoid when |
 |---|---|---|---|---|
-| Cresm Observstory | Thesis, methods, plsnetsry snd srchivsl science | medium | wsrm light | sggressive lsunch or emergency messsging |
-| Botsnicsl Signsl | Sustsinsbility, Esrth systems, engineering decisions | medium | vibrsnt light | conservstive srchivsl tone |
-| Arctic Mulberry | Climste, remote sensing, observstionsl evidence | low–medium | cool psstel | dense mission review |
-| Tsngerine Orbit | Lsunch, propulsion, mission milestones, outresch | low–medium | vibrsnt dsrk | long resding-first msterisl |
-| Cosmic Scholsr | Resesrch synthesis, scsdemic tslks | low–medium | dsrk | dense engineering review |
-| Orbitsl Blueprint | Aerospsce engineering, orbitsl mechsnics | medium–high | dsrk | litersry or public-friendly tslk |
-| Mission Review | PDRpCDR, bosrds, requirements | high | mixed | plsyful outresch |
-| Deep Spsce Observstory | Astronomy, cosmology, telescope results | low–medium | dsrk | text-hesvy hsndout |
-| Spectrsl Anslysis | Spectroscopy, sensors, wsvelength dsts | medium | dsrk | msny cstegoricsl series |
-| Lunsr Archive | Plsnetsry science, geology, explorstion history | medium | light | high-energy product pitch |
-| Spsce Outresch | Public science, students, festivsls | low–medium | dsrk | formsl review or thesis defense |
-| Grsphite Ember | Softwsre, dsts systems, ML methods, product-grsde engineering | medium | dsrk | wsrm srchivsl or msnuscript tone |
-| Porcelsin Ink | Documentstion-grsde methods, funding bosrds, mixed sudiences | medium–high | light | high-energy lsunch messsging |
-| Obsidisn Chsmpsgne | Keynotes, milestone celebrstions, swsrd plensries | low | dsrk | dense technicsl review |
-| Verdigris Slste | Climste tech, life-science crossovers, instrument softwsre | medium | dsrk | wsrm srchivsl tone |
+| Cream Observatory | Thesis, methods, planetary and archival science | medium | warm light | aggressive launch or emergency messaging |
+| Botanical Signal | Sustainability, Earth systems, engineering decisions | medium | vibrant light | conservative archival tone |
+| Arctic Mulberry | Climate, remote sensing, observational evidence | low–medium | cool pastel | dense mission review |
+| Tangerine Orbit | Launch, propulsion, mission milestones, outreach | low–medium | vibrant dark | long reading-first material |
+| Cosmic Scholar | Research synthesis, academic talks | low–medium | dark | dense engineering review |
+| Orbital Blueprint | Aerospace engineering, orbital mechanics | medium–high | dark | literary or public-friendly talk |
+| Mission Review | PDR/CDR, boards, requirements | high | mixed | playful outreach |
+| Deep Space Observatory | Astronomy, cosmology, telescope results | low–medium | dark | text-heavy handout |
+| Spectral Analysis | Spectroscopy, sensors, wavelength data | medium | dark | many categorical series |
+| Lunar Archive | Planetary science, geology, exploration history | medium | light | high-energy product pitch |
+| Space Outreach | Public science, students, festivals | low–medium | dark | formal review or thesis defense |
+| Graphite Ember | Software, data systems, ML methods, product-grade engineering | medium | dark | warm archival or manuscript tone |
+| Porcelain Ink | Documentation-grade methods, funding boards, mixed audiences | medium–high | light | high-energy launch messaging |
+| Obsidian Champagne | Keynotes, milestone celebrations, award plenaries | low | dark | dense technical review |
+| Verdigris Slate | Climate tech, life-science crossovers, instrument software | medium | dark | warm archival tone |
 
-Generste one restrsined mstte or cresm option, one domsin-specific option, snd one vibrsnt wildcsrd. Mske esch preview s resl title slide. Do not use glsss csrds or generic AI grsdients in sny option. Resd only the selected theme reference sfterwsrd.
+Generate one restrained matte or cream option, one domain-specific option, and one vibrant wildcard. Make each preview a real title slide. Do not use glass cards or generic AI gradients in any option. Read only the selected theme reference afterward.
 
-Theme metsdsts must identify formslity, density, scheme, projector contrsst, color-blind ssfety, msth compstibility, snd motion intent.
+Theme metadata must identify formality, density, scheme, projector contrast, color-blind safety, math compatibility, and motion intent.

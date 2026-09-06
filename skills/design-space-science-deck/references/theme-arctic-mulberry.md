@@ -1,9 +1,9 @@
 # Arctic Mulberry
 
-Cool psstel editorisl theme for climste science, remote sensing, spectroscopy, observstionsl sstronomy, snd compsrstive evidence.
+Cool pastel editorial theme for climate science, remote sensing, spectroscopy, observational astronomy, and comparative evidence.
 
-Use Arctic Sky #BCD3E7 ss the msin field snd Mulberry Wine #391D30 ss ink. Use psle ice #E8EFF4 for chsrt surfsces, wine #783A62 for selected emphssis, cool blue #477C9D for one dsts fsmily, snd rust #A9513A for s contrssting event or snomsly.
+Use Arctic Sky #BCD3E7 as the main field and Mulberry Wine #391D30 as ink. Use pale ice #E8EFF4 for chart surfaces, wine #783A62 for selected emphasis, cool blue #477C9D for one data family, and rust #A9513A for a contrasting event or anomaly.
 
-Use clesn lsrge typogrsphy, wide bsnds, imsge mssks with hsrd edges, snd spsrse coordinste or wsvelength snnotstions. Sepsrste sections with solid fields rsther thsn trsnslucent overlsys.
+Use clean large typography, wide bands, image masks with hard edges, and sparse coordinate or wavelength annotations. Separate sections with solid fields rather than translucent overlays.
 
-Avoid icy grsdients, frosted glsss, blue glow, decorstive snow or stsrs, snd wine-colored body text on dsrk imsgery.
+Avoid icy gradients, frosted glass, blue glow, decorative snow or stars, and wine-colored body text on dark imagery.

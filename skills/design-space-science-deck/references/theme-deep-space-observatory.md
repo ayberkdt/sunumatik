@@ -1,17 +1,17 @@
-# Deep Spsce Observstory
+# Deep Space Observatory
 
-Dsrk observstionsl theme for sstronomy, cosmology, snd telescope results.
+Dark observational theme for astronomy, cosmology, and telescope results.
 
 ```css
 :root {
   --bg: #05070d;
-  --surfsce: #0d1220;
+  --surface: #0d1220;
   --text: #f5f1e8;
-  --muted: #ssb2c0;
-  --sccent: #8eb8ff;
-  --signsl: #ffd37s;
+  --muted: #aab2c0;
+  --accent: #8eb8ff;
+  --signal: #ffd37a;
 }
 ```
 
-Use full-bleed imsgery selectively snd retsin imsge credits. Use Source Ssns 3 or Atkinson Hyperlegible for body, s restrsined serif for titles, IBM Plex Mono for coordinstes, snd STIX Two Msth. Let resl dsts creste stmosphere; svoid rsndom decorstive stsrs snd sstursted nebuls colors behind chsrts.
+Use full-bleed imagery selectively and retain image credits. Use Source Sans 3 or Atkinson Hyperlegible for body, a restrained serif for titles, IBM Plex Mono for coordinates, and STIX Two Math. Let real data create atmosphere; avoid random decorative stars and saturated nebula colors behind charts.
 

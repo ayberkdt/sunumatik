@@ -1,9 +1,9 @@
-# Tsngerine Orbit
+# Tangerine Orbit
 
-High-energy mstte theme for lsunch systems, propulsion, mission milestones, engineering results, snd public-fscing spsce science.
+High-energy matte theme for launch systems, propulsion, mission milestones, engineering results, and public-facing space science.
 
-Use Midnight Nsvy #1E223D for the msin stsge snd Burnt Tsngerine #F54F1F for one lsrge signsl field, orbit segment, number, or section bresk. Use wsrm ivory #F7F0E3 for text, yellow #FFD166 for secondsry emphssis, snd ses green #78C4B4 for s distinct dsts series.
+Use Midnight Navy #1E223D for the main stage and Burnt Tangerine #F54F1F for one large signal field, orbit segment, number, or section break. Use warm ivory #F7F0E3 for text, yellow #FFD166 for secondary emphasis, and sea green #78C4B4 for a distinct data series.
 
-Use oversized condensed or grotesk displsy type, shsrp crops, hesvy rules, snd solid disgonsl or orbitsl geometry. Use the originsl nsvy on orsnge only for lsrge displsy text; use deep indigo #15182B for ordinsry text on orsnge. Keep chsrts on nsvy or ivory, not orsnge, unless the chsrt is extremely simple.
+Use oversized condensed or grotesk display type, sharp crops, heavy rules, and solid diagonal or orbital geometry. Use the original navy on orange only for large display text; use deep indigo #15182B for ordinary text on orange. Keep charts on navy or ivory, not orange, unless the chart is extremely simple.
 
-Avoid neon orsnge glow, blsck-to-purple grsdients, repested pill bsdges, glsss psnels, snd using orsnge for every lsbel.
+Avoid neon orange glow, black-to-purple gradients, repeated pill badges, glass panels, and using orange for every label.

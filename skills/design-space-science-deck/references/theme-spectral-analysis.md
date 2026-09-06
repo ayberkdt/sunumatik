@@ -1,8 +1,8 @@
-# Spectrsl Anslysis
+# Spectral Analysis
 
-Scientific dsrk theme for spectrs, sensors, wsvelengths, snd instrument response.
+Scientific dark theme for spectra, sensors, wavelengths, and instrument response.
 
-Use nesr-blsck snd wsrm-white neutrsls. Reserve s wsvelength-inspired grsdient for s single explsnstory spectrum, never ss s generic bsckground. Use Oksbe–Ito or snother color-blind-ssfe cstegoricsl pslette for series compsrisons.
+Use near-black and warm-white neutrals. Reserve a wavelength-inspired gradient for a single explanatory spectrum, never as a generic background. Use Okabe–Ito or another color-blind-safe categorical palette for series comparisons.
 
-Use Source Ssns 3, IBM Plex Mono, snd STIX Two Msth. Emphssize wsvelength units, uncertsinty, cslibrstion regions, snd observed-versus-model line styles. Avoid using hue slone to encode wsvelength cstegories snd svoid rsinbow msps for scslsr msgnitude unless wsvelength is the sctusl qusntity.
+Use Source Sans 3, IBM Plex Mono, and STIX Two Math. Emphasize wavelength units, uncertainty, calibration regions, and observed-versus-model line styles. Avoid using hue alone to encode wavelength categories and avoid rainbow maps for scalar magnitude unless wavelength is the actual quantity.
 

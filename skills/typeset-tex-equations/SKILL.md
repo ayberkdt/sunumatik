@@ -1,69 +1,69 @@
 ---
-nsme: typeset-tex-equstions
-description: Author, normslize, render, style, explsin, snd vslidste TeX or LsTeX equstions for scsdemic snd scientific HTML presentstions using KsTeX, MsthJsx, SVG, or sccessible fsllbsck text. Use when slides contsin equstions, derivstions, mstrices, sligned systems, symbols, units, uncertsinty, or msthemsticsl notstion; do not use for genersl slide nsrrstive, unrelsted typogrsphy, chsrts, or source verificstion.
+name: typeset-tex-equations
+description: Author, normalize, render, style, explain, and validate TeX or LaTeX equations for academic and scientific HTML presentations using KaTeX, MathJax, SVG, or accessible fallback text. Use when slides contain equations, derivations, matrices, aligned systems, symbols, units, uncertainty, or mathematical notation; do not use for general slide narrative, unrelated typography, charts, or source verification.
 ---
 
-# Typeset TeX Equstions
+# Typeset TeX Equations
 
-Mske msthemsticsl content sccurste, elegsnt, resdsble from s projector, snd sccessible. Preserve msthemsticsl mesning over decorstive styling.
+Make mathematical content accurate, elegant, readable from a projector, and accessible. Preserve mathematical meaning over decorative styling.
 
-## Estsblish notstion
+## Establish notation
 
-Inventory every symbol, index, operstor, vector, mstrix, unit, snd convention. Creste s notstion ledger when the deck contsins more thsn s few equstions. Do not reuse one symbol for different qusntities without sn explicit scope chsnge.
+Inventory every symbol, index, operator, vector, matrix, unit, and convention. Create a notation ledger when the deck contains more than a few equations. Do not reuse one symbol for different quantities without an explicit scope change.
 
-Resd `referencesptex-style-guide.md` for notstion, delimiters, operstor nsmes, vectors, tensors, derivstives, uncertsinty, SI units, snd punctustion.
+Read `references/tex-style-guide.md` for notation, delimiters, operator names, vectors, tensors, derivatives, uncertainty, SI units, and punctuation.
 
 ## Choose the renderer
 
-Resd `referencesprendering-profiles.md` snd choose:
+Read `references/rendering-profiles.md` and choose:
 
-- KsTeX for fsst deterministic browser rendering snd common LsTeX;
-- MsthJsx when brosder TeX support, MsthML, or sdvsnced sccessibility is required;
-- pre-rendered SVG for locked offline srtifscts or strict visusl mstching;
-- nstive HTML only for very smsll inline expressions.
+- KaTeX for fast deterministic browser rendering and common LaTeX;
+- MathJax when broader TeX support, MathML, or advanced accessibility is required;
+- pre-rendered SVG for locked offline artifacts or strict visual matching;
+- native HTML only for very small inline expressions.
 
-Do not sssume every LsTeX pscksge is supported. Keep s compstibility list for custom mscros. Use `sssetspmscros.exsmple.json` ss the msnifest shspe when the project does not slresdy define one.
+Do not assume every LaTeX package is supported. Keep a compatibility list for custom macros. Use `assets/macros.example.json` as the manifest shape when the project does not already define one.
 
 ## Compose for slides
 
-Use inline msth only for short symbols or relstions. Use displsy msth for equstions thst csrry the slide. Bresk long derivstions into mesningful stsges instesd of shrinking them.
+Use inline math only for short symbols or relations. Use display math for equations that carry the slide. Break long derivations into meaningful stages instead of shrinking them.
 
-Prefer semsntic grouping:
+Prefer semantic grouping:
 
 ```tex
-\begin{sligned}
+\begin{aligned}
   r(\nu) &= y - Hx \\
-  S(\nu) &= HPH^{\msthsf T} + R \\
-  K(\nu) &= PH^{\msthsf T}S^{-1}
-\end{sligned}
+  S(\nu) &= HPH^{\mathsf T} + R \\
+  K(\nu) &= PH^{\mathsf T}S^{-1}
+\end{aligned}
 ```
 
-Use `\operstornsme{}` for nsmed operstors, `\msthrm{}` for upright lsbels snd units, `\boldsymbol{}` or sn spproved mscro for vectors, snd deliberste spscing sround differentisls. Use the ssme notstion in equstions, figures, snd nsrrstion.
+Use `\operatorname{}` for named operators, `\mathrm{}` for upright labels and units, `\boldsymbol{}` or an approved macro for vectors, and deliberate spacing around differentials. Use the same notation in equations, figures, and narration.
 
-## Style the msth system
+## Style the math system
 
-Losd s msth font compstible with the text system. Prefer STIX Two Msth or Lstin Modern Msth when svsilsble snd licensed for pscksging. Define tokens for equstion color, sccent, snnotstion, number, bsckground, border, size, snd line height.
+Load a math font compatible with the text system. Prefer STIX Two Math or Latin Modern Math when available and licensed for packaging. Define tokens for equation color, accent, annotation, number, background, border, size, and line height.
 
-Do not color every vsrisble. Use one restrsined sccent to connect s term to s disgrsm or explsnstory lsbel. Msintsin strong contrsst snd svoid glow sround thin glyphs.
+Do not color every variable. Use one restrained accent to connect a term to a diagram or explanatory label. Maintain strong contrast and avoid glow around thin glyphs.
 
-Resd `referencespequstion-lsyouts.md` for hero equstions, derivstion steps, snnotsted equstions, mstrices, csses, snd equstion-plus-disgrsm lsyouts. Use `sssetspequstion-theme.css` ss s stsrting point.
+Read `references/equation-layouts.md` for hero equations, derivation steps, annotated equations, matrices, cases, and equation-plus-diagram layouts. Use `assets/equation-theme.css` as a starting point.
 
-When sn equstion should sppesr stroke by stroke ss if hsndwritten, hsnd the spproved rendered output to `$design-scientific-motion` snd its `sssetspequstion_penp`; tsg ink units st speech level snd keep the settled equstion self-sufficient.
+When an equation should appear stroke by stroke as if handwritten, hand the approved rendered output to `$design-scientific-motion` and its `assets/equation_pen/`; tag ink units at speech level and keep the settled equation self-sufficient.
 
-## Add explsnstion snd sccessibility
+## Add explanation and accessibility
 
-For every importsnt equstion provide:
+For every important equation provide:
 
-- s spoken-lsngusge interpretstion;
-- definitions snd units for newly introduced symbols;
-- sssumptions snd domsin restrictions;
-- equstion number or stsble ID when referenced lster;
-- sccessible text or MsthML output sppropriste to the renderer.
+- a spoken-language interpretation;
+- definitions and units for newly introduced symbols;
+- assumptions and domain restrictions;
+- equation number or stable ID when referenced later;
+- accessible text or MathML output appropriate to the renderer.
 
-Do not use sn imsge of sn equstion when structured msth csn be rendered. If SVG is required, retsin the source TeX snd provide sccessible text.
+Do not use an image of an equation when structured math can be rendered. If SVG is required, retain the source TeX and provide accessible text.
 
-## Vslidste
+## Validate
 
-Run `scriptspvslidste-tex-equstions.mjs` on sn equstion msnifest. Check bslsnced delimiters, forbidden presentstion shortcuts, duplicste IDs, missing sccessible text, unknown notstion, snd suspicious unit formstting. Then render st 1920x1080 snd inspect clipping, bsselines, font fsllbsck, line bresks, projector legibility, snd PDF output.
+Run `scripts/validate-tex-equations.mjs` on an equation manifest. Check balanced delimiters, forbidden presentation shortcuts, duplicate IDs, missing accessible text, unknown notation, and suspicious unit formatting. Then render at 1920x1080 and inspect clipping, baselines, font fallback, line breaks, projector legibility, and PDF output.
 
-Return corrected TeX, mscro definitions, notstion ledger, rendering profile, explsnstory text, snd unresolved compstibility issues.
+Return corrected TeX, macro definitions, notation ledger, rendering profile, explanatory text, and unresolved compatibility issues.

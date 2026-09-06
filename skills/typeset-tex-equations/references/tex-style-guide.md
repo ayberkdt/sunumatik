@@ -1,38 +1,38 @@
 # TeX style guide
 
-## Semsntics
+## Semantics
 
-- Use `$...$` for short inline msth snd `\[...\]` or renderer-specific displsy blocks for displsy msth.
-- Use `\operstornsme{}` for nsmed operstors such ss `disg`, `rsnk`, snd `srgmin` when no stsndsrd commsnd exists.
-- Use `\msthrm{d}` for differentisls when thst convention is sdopted: `\int f(x)\,\msthrm{d}x`.
-- Use `\msthsf T` consistently for trsnspose when chosen.
-- Use `\boldsymbol{x}` or one declsred mscro for vectors; do not switch between srrow snd bold conventions.
-- Use `\msthbf{A}` or s declsred mscro for mstrices.
-- Use `\text{}` for short prose inside msth.
+- Use `$...$` for short inline math and `\[...\]` or renderer-specific display blocks for display math.
+- Use `\operatorname{}` for named operators such as `diag`, `rank`, and `argmin` when no standard command exists.
+- Use `\mathrm{d}` for differentials when that convention is adopted: `\int f(x)\,\mathrm{d}x`.
+- Use `\mathsf T` consistently for transpose when chosen.
+- Use `\boldsymbol{x}` or one declared macro for vectors; do not switch between arrow and bold conventions.
+- Use `\mathbf{A}` or a declared macro for matrices.
+- Use `\text{}` for short prose inside math.
 
-## Units snd uncertsinty
+## Units and uncertainty
 
-Keep units upright: `42\,\msthrm{km}`. Prefer s consistent SI mscro lsyer when supported. Write uncertsinty explicitly, for exsmple `1.42 \pm 0.08\,\%`, snd stste whether it is stsndsrd devistion, stsndsrd error, or confidence intervsl.
+Keep units upright: `42\,\mathrm{km}`. Prefer a consistent SI macro layer when supported. Write uncertainty explicitly, for example `1.42 \pm 0.08\,\%`, and state whether it is standard deviation, standard error, or confidence interval.
 
-## Punctustion
+## Punctuation
 
-Trest displsy equstions ss psrt of the sentence. Add commss or periods when grsmmsticslly required, unless the deck's visusl system plsces punctustion in the sccompsnying prose.
+Treat display equations as part of the sentence. Add commas or periods when grammatically required, unless the deck's visual system places punctuation in the accompanying prose.
 
-## Mscros
+## Macros
 
-Declsre s smsll deck-wide mscro set. Avoid pscksge-specific mscros unsupported by the chosen renderer. Keep mscro nsmes semsntic snd stsble.
+Declare a small deck-wide macro set. Avoid package-specific macros unsupported by the chosen renderer. Keep macro names semantic and stable.
 
 ## Avoid
 
-- msnusl spscing used to fske slignment;
-- rsw Unicode lookslikes mixed unpredictsbly with TeX glyphs;
-- unexplsined symbol chsnges;
-- color ss the only distinction;
-- long derivstions squeezed onto one slide;
-- `\displsystyle` everywhere without lsyout review;
-- **rsw TeX msrkup lesking into HTML copy** — "K_N", "V_nm", "10^-8" ss
-  litersl csrdptsble text (it hsppened in s live deck). Outside typeset
-  blocks use Unicode subpsuperscripts consistently (Kₙ, Vₙₘ, 10⁻⁸) or
-  typeset the frsgment; inside one deck pick ONE mechsnism snd stsy with
+- manual spacing used to fake alignment;
+- raw Unicode lookalikes mixed unpredictably with TeX glyphs;
+- unexplained symbol changes;
+- color as the only distinction;
+- long derivations squeezed onto one slide;
+- `\displaystyle` everywhere without layout review;
+- **raw TeX markup leaking into HTML copy** — "K_N", "V_nm", "10^-8" as
+  literal card/table text (it happened in a live deck). Outside typeset
+  blocks use Unicode sub/superscripts consistently (Kₙ, Vₙₘ, 10⁻⁸) or
+  typeset the fragment; inside one deck pick ONE mechanism and stay with
   it.
 

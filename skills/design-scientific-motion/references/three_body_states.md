@@ -66,18 +66,15 @@ gösterim parametresi; Pisagor döngüsü fiziksel değildir; birimsiz sistem.
 
 ## Hareket
 
-İz, iki KALICI tuvalde tutulur (renk gövdesi, τ; beyaz-sıcak çekirdek, 0,16 τ):
-her karede tuvaller `destination-out` ile e^(−dt/τ) soldurulur ve yalnız o
-karenin yeni parçası çizilir — parça boyunca alfa gradyanı (eski uç bir önceki
-solmuş parçayla aynı alfada) iz boyunca sürekli e^(−yaş/τ) verir, basamak ya
-da boncuk kalmaz. Işıma (bloom) vuruşta değil birleştirmede: renk tuvali iki
-bulanık kopya (dar + geniş) ve keskin gövde olarak toplamsal bindirilir, üstüne
-sıcak çekirdek. Böylece binlerce parça yeniden çizilmez; kare başına ~1,5 ms
-(20 pano). Zaman kaydırma baştan yeniden
-entegre edip izi aynı kuralla kurar (deterministik). Her panonun zaman
-çarpanı `k` görsel tempoya normalize edilir: ortalama cisim hızı pano
-kesri/saniye cinsinden ~0,17 olacak şekilde (0,3–2,4 aralığında), yani
-figure-8 ile bumblebee aynı tempoda izlenir. `tb.advance(dt)` kare kare sürer.
+İz YAŞA BAĞLI solar ve sabit SANİYE sürer (`tail`, varsayılan 5,5 s gerçek
+zaman; pano zamanında tail·speed·k, sinemada 1,35×): en eski uç ilk andan
+itibaren silinir, büyüme ile silinme dengelenince uzunluk kararlı kalır — GIF
+davranışı. Her karede iz geçmiş tamponunun TÜM alt adım noktalarıyla (yakın geçişlerdeki
+hızlı dönüşler kırılmaz), yaşa göre 16 kovaya bölünerek en eskiden başa doğru
+OPAK, sönükleştirilmiş renkle çizilir
+(w = (1 − yaş/T)^0,6 — uzun süre parlak, sonda belirgin biter; baş %7'de cisme özgü sıcak-beyaza karışır; kova başına tek yol, 960 vuruş). Opak vuruşlar üst üste bindiğinde boncuk bırakmaz;
+ışıma (bloom) birleştirmede iki bulanık kopya + keskin gövde olarak toplamsal
+biner. Hayalet iz kalmaz (kalıcı tuvalin 8-bit alfa takılması yok).
 
 Giriş: panolar sırayla belirir (1,2 s). Sonra sürekli entegrasyon: hız
 `speed` birim/s (varsayılan 0,8 → figure-8 periyodu ≈ 8 s, bumblebee ≈ 80 s).

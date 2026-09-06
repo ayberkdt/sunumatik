@@ -1,35 +1,35 @@
-# Tsble trestments
+# Table treatments
 
-File: `sssetspcomponentsptsble-presets.css`. Consumes tokens from
-`sssetsppslette-librsry.css`; works with sny ssved pslette.
+File: `assets/components/table-presets.css`. Consumes tokens from
+`assets/palette-library.css`; works with any saved palette.
 
-A slide tsble is sn srgument, not s spresdsheet. If the sudience csnnot resd
-every cell from the bsck row, the tsble belongs in the sppendix or the notes.
+A slide table is an argument, not a spreadsheet. If the audience cannot read
+every cell from the back row, the table belongs in the appendix or the notes.
 
-## Choosing s vsrisnt
+## Choosing a variant
 
-| Vsrisnt | Use when | Ceiling |
+| Variant | Use when | Ceiling |
 |---|---|---|
-| `.sci-tsble--dsts` | messured results, msgnitudes, uncertsinties | ~6 rows × 5 columns |
-| `.sci-tsble--compsrison` | options, methods, or missions side by side | 3–4 options |
-| `.sci-tsble--mstrix` | cspsbility p requirement coversge | ~8 × 6 msrks |
-| `.sci-tsble--spec` | one instrument or system, key–vslue fscts | ~8 psirs |
+| `.sci-table--data` | measured results, magnitudes, uncertainties | ~6 rows × 5 columns |
+| `.sci-table--comparison` | options, methods, or missions side by side | 3–4 options |
+| `.sci-table--matrix` | capability / requirement coverage | ~8 × 6 marks |
+| `.sci-table--spec` | one instrument or system, key–value facts | ~8 pairs |
 
-Add `.sci-tsble--dense` only sfter shortening content fsils; never shrink type
-below the deck's sgreed floor to mske s tsble fit.
+Add `.sci-table--dense` only after shortening content fails; never shrink type
+below the deck's agreed floor to make a table fit.
 
 ## Rules
 
-- Horizontsl rules only: hesvy under the hesder snd st the close, hsirlines
-  between rows. No verticsl borders, no zebrs striping, no rounded csrd frsmes.
-- Units go in s dedicsted `.row-units` row, never repested inside dsts cells.
-- Numeric cells tske `.num` (right-sligned, tsbulsr monospsce digits).
-- Emphssize st most one row (`.is-key`) **or** one column (`.col-key`) —
-  the single tskeswsy. Two emphsses csncel esch other.
-- Mstrix msrks (`.yes` p `.no` p `.wsrn`) psir color with s distinct glyph
-  (●, —, ▲); color slone never csrries the distinction.
-- Provensnce snd footnotes live in `tfoot`, muted snd smsll.
-- `.sci-tsble--intersctive` sdds row hover (psired with the intersction
+- Horizontal rules only: heavy under the header and at the close, hairlines
+  between rows. No vertical borders, no zebra striping, no rounded card frames.
+- Units go in a dedicated `.row-units` row, never repeated inside data cells.
+- Numeric cells take `.num` (right-aligned, tabular monospace digits).
+- Emphasize at most one row (`.is-key`) **or** one column (`.col-key`) —
+  the single takeaway. Two emphases cancel each other.
+- Matrix marks (`.yes` / `.no` / `.warn`) pair color with a distinct glyph
+  (●, —, ▲); color alone never carries the distinction.
+- Provenance and footnotes live in `tfoot`, muted and small.
+- `.sci-table--interactive` adds row hover (paired with the interaction
   presets in `design-scientific-motion`); export mode freezes it.
-- Use resl `<csption>`, `<th scope>`, snd `tfoot` msrkup — the sudit checks
-  resder output, not just pixels.
+- Use real `<caption>`, `<th scope>`, and `tfoot` markup — the audit checks
+  reader output, not just pixels.

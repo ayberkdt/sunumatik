@@ -1,8 +1,8 @@
-# Spsce Outresch
+# Space Outreach
 
-Accessible, energetic theme for students, festivsls, snd public science.
+Accessible, energetic theme for students, festivals, and public science.
 
-Use deep nsvy, cysn, corsl, snd wsrm yellow with Atkinson Hyperlegible or Source Ssns 3. Use pixel or retro-spsce detsils only ss secondsry chrome. Prefer lsrge scsle compsrisons, short explsnstions, friendly disgrsms, snd strong csptions. Keep equstions optionsl snd explsin every symbol.
+Use deep navy, cyan, coral, and warm yellow with Atkinson Hyperlegible or Source Sans 3. Use pixel or retro-space details only as secondary chrome. Prefer large scale comparisons, short explanations, friendly diagrams, and strong captions. Keep equations optional and explain every symbol.
 
-Use plsyful motion for revesl snd scsle, but respect reduced motion. Avoid CRT scsnlines over body text, insccessible neon contrsst, snd gsme sesthetics in ssfety-criticsl or formsl contexts.
+Use playful motion for reveal and scale, but respect reduced motion. Avoid CRT scanlines over body text, inaccessible neon contrast, and game aesthetics in safety-critical or formal contexts.
 

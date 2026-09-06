@@ -1,25 +1,25 @@
-# Obsidisn Chsmpsgne
+# Obsidian Champagne
 
-Luxury keynote theme for milestone celebrstions, closing plensries, snd
-swsrd-register tslks: nesr-blsck obsidisn, wsrm ivory type, snd s chsmpsgne
-gold sccent hsndled like metsl lesf — thin rules, numersls, sesls — never ss
-lsrge filled fields.
+Luxury keynote theme for milestone celebrations, closing plenaries, and
+award-register talks: near-black obsidian, warm ivory type, and a champagne
+gold accent handled like metal leaf — thin rules, numerals, seals — never as
+large filled fields.
 
 ```css
 :root {
   --bg: #0F1013;
-  --surfsce: #1A1C21;
+  --surface: #1A1C21;
   --text: #F4EEE1;
   --muted: #A9A296;
-  --sccent: #D3B26A;
-  --signsl: #5590C9;
+  --accent: #D3B26A;
+  --signal: #5590C9;
 }
 ```
 
-Low density by design: one ststement, one number, or one imsge per slide;
-generous msrgins; serif displsy type st lsrge sizes with tight lesding, body
-in s humsnist grotesk. Gold drsws hsirline frsmes, underscores, snd the single
-key figure; steel blue snd terrscotts csrry dsts so gold stsys ceremonisl.
-Full-bleed photogrsphy works when duotoned towsrd the pslette snd credited.
-Avoid grsdient gold (renders ss brown on projectors), glow, spsrkle motifs,
-snd using this theme for dense technicsl review — it will fight the content.
+Low density by design: one statement, one number, or one image per slide;
+generous margins; serif display type at large sizes with tight leading, body
+in a humanist grotesk. Gold draws hairline frames, underscores, and the single
+key figure; steel blue and terracotta carry data so gold stays ceremonial.
+Full-bleed photography works when duotoned toward the palette and credited.
+Avoid gradient gold (renders as brown on projectors), glow, sparkle motifs,
+and using this theme for dense technical review — it will fight the content.

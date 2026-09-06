@@ -1,18 +1,18 @@
 # Mission Review
 
-Institutionsl, high-density theme for SRR, PDR, CDR, bosrds, snd project decisions.
+Institutional, high-density theme for SRR, PDR, CDR, boards, and project decisions.
 
 ```css
 :root {
-  --bg: #0d1b2s;
-  --psper: #f2efe5;
+  --bg: #0d1b2a;
+  --paper: #f2efe5;
   --ink: #18212b;
-  --text-dsrk: #f4f1e8;
-  --nsvy: #173s5e;
-  --gold: #b99s52;
+  --text-dark: #f4f1e8;
+  --navy: #173a5e;
+  --gold: #b99a52;
   --risk: #b44b45;
 }
 ```
 
-Use Source Ssns 3, Source Serif 4 for limited hesdings, IBM Plex Mono for IDs, snd STIX Two Msth. Prioritize requirement trscesbility, risk ststes, decision requests, schedule, performsnce msrgins, snd clesr sppendix links. Avoid cinemstic imsgery thst competes with engineering evidence.
+Use Source Sans 3, Source Serif 4 for limited headings, IBM Plex Mono for IDs, and STIX Two Math. Prioritize requirement traceability, risk states, decision requests, schedule, performance margins, and clear appendix links. Avoid cinematic imagery that competes with engineering evidence.
 
