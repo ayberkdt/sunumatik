@@ -6,6 +6,7 @@
   <title>Düşük İtkili Transfer Laboratuvarı — low_thrust_transfer</title>
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../core/lab-scene.css">
   <style>
     :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
       --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
@@ -29,17 +30,17 @@
     html[data-export="true"] footer { display: none; }
   </style>
 </head>
-<body>
-  <header>
+<body class="lab">
+  <header data-lab-reveal>
     <h1>Düşük İtkili Transfer Laboratuvarı<small>low_thrust_transfer · sürekli teğetsel itki spirali (RK4, değişken kütle) · Edelbaum analitik ΔV · Hohmann karşılaştırması · gölge görev çevrimi</small></h1>
     <div class="tabs" role="group" aria-label="Senaryolar" id="tabs"></div>
   </header>
   <div class="stage-area" id="host"></div>
-  <footer>
+  <footer data-lab-reveal>
     <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="1000" step="1" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
     <div class="control-row">
       <div class="group"><span>Araç</span><label class="field">itki <input id="thrust" type="range" min="-3" max="1" step="0.1" value="-0.22"><output id="oThrust">0,60 N</output></label><label class="field">Isp <input id="isp" type="range" min="800" max="5000" step="100" value="1800"><output id="oIsp">1800 s</output></label><label class="field">Δi <input id="di" type="range" min="0" max="60" step="1" value="0"><output id="oDi">0°</output></label><button id="shadowBtn" aria-pressed="false">gölgede itki yok</button></div>
-      <div class="group" role="group" aria-label="Hız"><span>Hız</span><button data-warp="86400">1 gün/s</button><button data-warp="172800" aria-pressed="true">2 gün/s</button><button data-warp="864000">10 gün/s</button></div>
+      <div class="group" role="group" aria-label="Hız"><span>Hız</span><button data-warp="86400">1 gün/s</button><button data-warp="172800" aria-pressed="true">2 gün/s</button><button data-warp="864000">10 gün/s</button><button id="replayBtn">Girişi tekrar oynat</button></div>
     </div>
     <p class="caption" id="caption"></p>
   </footer>
@@ -76,6 +77,7 @@
     playBtn.addEventListener('click', () => { const tl = lt.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
     scrub.addEventListener('input', () => { lt.timeline.pause(); lt.timeline.scrub(Number(scrub.value) / 1000 * lt.timeline.duration); syncUi(); });
     (function tick() { syncUi(); requestAnimationFrame(tick); })();
+    $('replayBtn').addEventListener('click', () => lt.replay());
     resetFrom(scId); writeCaption(); syncUi();
     if (deterministic) { lt.timeline.pause(); lt.setActive(false); }
     document.title += ' · hazır';
