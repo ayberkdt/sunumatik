@@ -10,6 +10,8 @@
    Sahne: ECI (X = x, Y = z, Z = −y); 1 birim = R_E. */
 
 import * as THREE from 'three';
+import { atmosphereShell, glowSprite, sunGlow } from '../core/lab-three.mjs';
+import { backdrop, glow, rgba } from '../core/lab-scene.mjs';
 import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
 import { Line2 } from '../moon_advanced/vendor/lines/Line2.js';
 import { LineGeometry } from '../moon_advanced/vendor/lines/LineGeometry.js';
@@ -32,7 +34,7 @@ export async function mountConjunction(host, options = {}) {
     <style>
       .cj{position:relative;margin:0;width:100%;height:100%;overflow:hidden;display:grid;grid-template-columns:minmax(0,10fr) minmax(0,10fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr);
         background:var(--color-canvas,#0b0c10);font-family:var(--font-body,'Inter','Segoe UI',system-ui,sans-serif);color:var(--color-ink,#e9e4d8);}
-      .cj__3d{grid-row:1/3;position:relative;min-width:0;min-height:0;} .cj__3d canvas{display:block;width:100%;height:100%;}
+      .cj__3d{grid-row:1/3;position:relative;min-width:0;min-height:0;} .cj__3d canvas{position:absolute;inset:0;display:block;width:100%;height:100%;}
       .cj__plane,.cj__lower{position:relative;min-width:0;min-height:0;border-left:1px solid var(--color-rule,#3a3c42);} .cj__lower{border-top:1px solid var(--color-rule,#3a3c42);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
       .cj canvas.p{position:absolute;inset:0;width:100%;height:100%;display:block;}
       .cj__cell{position:relative;min-width:0;min-height:0;} .cj__cell + .cj__cell{border-left:1px solid var(--color-rule,#3a3c42);}
@@ -72,11 +74,16 @@ export async function mountConjunction(host, options = {}) {
   { const loader = new THREE.TextureLoader(); const url = rel => new URL(rel, import.meta.url).href;
     try { const day = await loader.loadAsync(url('../earth_advanced/textures/earth_atmos_2048.jpg')); day.colorSpace = THREE.SRGBColorSpace; scene.add(new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshPhongMaterial({ map: day, specular: new THREE.Color('#2a3138'), shininess: 10 }))); }
     catch (e) { scene.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), new THREE.MeshStandardMaterial({ color: '#274668', roughness: .85 }))); } }
+  scene.add(atmosphereShell(THREE, 1, '#6fb4ff', 1.4)); sunGlow(THREE, scene, new THREE.Vector3(60, 30, 40), { dist: 300, size: 46 });
   const mats = []; const lineMat = (color, width, opacity) => { const m = new LineMaterial({ color: new THREE.Color(color).getHex(), linewidth: width, transparent: true, opacity, depthTest: true }); mats.push(m); return m; };
   const mkLine = (pts, mat) => { const g = new LineGeometry(); g.setPositions(pts); return new Line2(g, mat); };
   const orbP = mkLine([0, 0, 0, 0, 0, 0], lineMat(P.data1, 1.6, .8)), orbS = mkLine([0, 0, 0, 0, 0, 0], lineMat(P.data2, 1.6, .8)); scene.add(orbP, orbS);
   const satP = new THREE.Mesh(new THREE.SphereGeometry(.035, 12, 10), new THREE.MeshBasicMaterial({ color: P.data1 })), satS = new THREE.Mesh(new THREE.SphereGeometry(.035, 12, 10), new THREE.MeshBasicMaterial({ color: P.data2 })); scene.add(satP, satS);
   const tcaMark = new THREE.Mesh(new THREE.SphereGeometry(.05, 12, 10), new THREE.MeshBasicMaterial({ color: P.accent, transparent: true, opacity: .8 })); scene.add(tcaMark);
+  { const gP = glowSprite(THREE, P.data1, .8); gP.scale.setScalar(.3); satP.add(gP); const gS = glowSprite(THREE, P.data2, .8); gS.scale.setScalar(.3); satS.add(gS); const gT = glowSprite(THREE, P.accent, .6); gT.scale.setScalar(.5); tcaMark.add(gT); }
+  /* karşılaşma düzlemi (v_rel ⊥) ve 3σ birleşik elipsi TCA'da — büyütülmüş (gerçek ölçekte görünmez), çarpanı etiket söyler */
+  const encPlane = new THREE.Mesh(new THREE.CircleGeometry(.5, 48), new THREE.MeshBasicMaterial({ color: '#8fb8dd', transparent: true, opacity: .07, side: THREE.DoubleSide, depthWrite: false })); scene.add(encPlane);
+  const encRing = mkLine([0, 0, 0, 0, 0, 0], lineMat(P.data1, 1.4, .8)); scene.add(encRing); let encMag = 1;
   const labels = []; const addLabel = (text, color) => { const el = document.createElement('div'); el.className = 'cj__label'; el.textContent = text; el.style.color = color; labelLayer.appendChild(el); const o = { el, pos: new THREE.Vector3() }; labels.push(o); return o; };
   const lP = addLabel('birincil', P.data1), lS = addLabel('ikincil', P.data2), lT = addLabel('TCA', P.accent);
   const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.dampingFactor = .08;
@@ -90,6 +97,9 @@ export async function mountConjunction(host, options = {}) {
     const orbitPts = el => { const pts = []; const T = TAU * Math.sqrt(el.a ** 3 / 398600.4418); for (let k = 0; k <= 200; k++) { toScene(stateAt(el, k / 200 * T).r, _v); pts.push(_v.x, _v.y, _v.z); } return pts; };
     orbP.geometry.setPositions(orbitPts(A.primary)); orbS.geometry.setPositions(orbitPts(A.secondary));
     toScene(A.tca.rP, _v); tcaMark.position.copy(_v); lT.pos.copy(_v).add(new THREE.Vector3(0, .12, 0));
+    { const { e1, e2, e3 } = A.geo.basis, g = A.geo.ellipse, c = Math.cos(g.angle), sn = Math.sin(g.angle); const u = [c * e2[0] + sn * e3[0], c * e2[1] + sn * e3[1], c * e2[2] + sn * e3[2]], v = [-sn * e2[0] + c * e3[0], -sn * e2[1] + c * e3[1], -sn * e2[2] + c * e3[2]];
+      const r3 = 3 * g.s1 / 1000; encMag = Math.pow(10, Math.ceil(Math.log10(.32 * R_E / r3))); const pts = [], q = new THREE.Vector3(); for (let k = 0; k <= 96; k++) { const th = TAU * k / 96, a = 3 * g.s1 * Math.cos(th) * encMag / 1000, b = 3 * g.s2 * Math.sin(th) * encMag / 1000; toScene([A.tca.rP[0] + a * u[0] + b * v[0], A.tca.rP[1] + a * u[1] + b * v[1], A.tca.rP[2] + a * u[2] + b * v[2]], q); pts.push(q.x, q.y, q.z); } encRing.geometry.setPositions(pts);
+      const n = new THREE.Vector3(); toScene(e1, n).normalize(); encPlane.position.copy(tcaMark.position); encPlane.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), n); lT.el.textContent = `TCA · 3σ elipsi ×${encMag >= 1e6 ? encMag.toExponential(0) : nf0.format(encMag)}`; }
     timeline.duration = A.series[A.series.length - 1].t - A.series[0].t; timeline.t = Math.min(timeline.t, timeline.duration);
     const d = 5.6; camera.position.copy(_v).normalize().multiplyScalar(d).add(new THREE.Vector3(.8, 1.4, .6)); controls.target.copy(_v).multiplyScalar(.5); controls.update();
     H.miss.textContent = `${nf1.format(A.tca.miss * 1000)} m (R ${nf0.format(cfg.miss[0])} / T ${nf0.format(cfg.miss[1])} / N ${nf0.format(cfg.miss[2])})`; H.vrel.textContent = `${nf3.format(A.vRelMag)} km/s`;
@@ -100,18 +110,19 @@ export async function mountConjunction(host, options = {}) {
   let dpr = 1;
   function drawPlane() {
     const cv = plots.plane, ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = P.canvas; ctx.fillRect(0, 0, W, Hh);
+    backdrop(ctx, W, Hh, { canvas: P.canvas });
     const g = A.geo, ext = Math.max(3 * g.ellipse.s1, Math.hypot(...g.missPlane) * 1.3, cfg.rHb * 4) * 1.1;
     const sc = Math.min(W, Hh) / 2 / ext * .86, cx = W * .5, cy = Hh * .52, X = x => cx + x * sc, Y = y => cy - y * sc;
     ctx.fillStyle = P.muted; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText('KARŞILAŞMA DÜZLEMİ (v_rel ⊥): birleşik kovaryans 1σ/2σ/3σ · ıska vektörü · sert-gövde dairesi', 12, 16);
     ctx.strokeStyle = P.rule; ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.moveTo(cx, 0); ctx.lineTo(cx, Hh); ctx.stroke();
     ctx.fillStyle = P.muted; ctx.font = '10px ui-monospace, monospace'; ctx.fillText('ê₂ (r_rel × v_rel yönü) →', W - 150, cy - 5); ctx.fillText('ê₃ ↑', cx + 5, 30);
     /* elipsler (ikincil merkezde: birincil, orijinde) */
-    for (const k of [3, 2, 1]) { ctx.beginPath(); ctx.ellipse(X(0), Y(0), g.ellipse.s1 * k * sc, g.ellipse.s2 * k * sc, -g.ellipse.angle, 0, TAU); ctx.fillStyle = `rgba(143,184,221,${.05 + .04 * (4 - k)})`; ctx.fill(); ctx.strokeStyle = `rgba(143,184,221,${.35 + .2 * (4 - k) / 3})`; ctx.lineWidth = 1; ctx.stroke(); ctx.fillStyle = 'rgba(143,184,221,.9)'; ctx.font = '10px ui-monospace, monospace'; ctx.fillText(`${k}σ`, X(g.ellipse.s1 * k * Math.cos(g.ellipse.angle)) + 4, Y(g.ellipse.s1 * k * Math.sin(g.ellipse.angle)) - 4); }
+    { /* olasılık yoğunluğu: Gauss — elips çerçevesinde radyal gradyan (1σ'da e^−½, 3σ'da ~0) */ ctx.save(); ctx.translate(X(0), Y(0)); ctx.rotate(-g.ellipse.angle); ctx.scale(Math.max(1e-6, g.ellipse.s1 * sc), Math.max(1e-6, g.ellipse.s2 * sc)); const gd = ctx.createRadialGradient(0, 0, 0, 0, 0, 3.2); gd.addColorStop(0, 'rgba(143,184,221,.62)'); gd.addColorStop(.3, 'rgba(143,184,221,.36)'); gd.addColorStop(.62, 'rgba(143,184,221,.12)'); gd.addColorStop(1, 'rgba(143,184,221,0)'); ctx.fillStyle = gd; ctx.beginPath(); ctx.arc(0, 0, 3.2, 0, TAU); ctx.fill(); ctx.restore(); }
+    for (const k of [3, 2, 1]) { ctx.beginPath(); ctx.ellipse(X(0), Y(0), g.ellipse.s1 * k * sc, g.ellipse.s2 * k * sc, -g.ellipse.angle, 0, TAU); ctx.strokeStyle = `rgba(143,184,221,${.35 + .2 * (4 - k) / 3})`; ctx.lineWidth = 1; ctx.stroke(); ctx.fillStyle = 'rgba(143,184,221,.9)'; ctx.font = '10px ui-monospace, monospace'; ctx.fillText(`${k}σ`, X(g.ellipse.s1 * k * Math.cos(g.ellipse.angle)) + 4, Y(g.ellipse.s1 * k * Math.sin(g.ellipse.angle)) - 4); }
     /* ıska vektörü + sert gövde */
     const [mx, my] = g.missPlane;
     ctx.strokeStyle = P.accent; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(mx), Y(my)); ctx.stroke();
-    ctx.fillStyle = 'rgba(215,143,108,.35)'; ctx.beginPath(); ctx.arc(X(mx), Y(my), Math.max(2, cfg.rHb * sc), 0, TAU); ctx.fill(); ctx.strokeStyle = P.data2; ctx.stroke();
+    glow(ctx, X(mx), Y(my), Math.max(14, cfg.rHb * sc * 2.2), P.data2, .5); ctx.fillStyle = 'rgba(215,143,108,.45)'; ctx.beginPath(); ctx.arc(X(mx), Y(my), Math.max(2, cfg.rHb * sc), 0, TAU); ctx.fill(); ctx.strokeStyle = P.data2; ctx.stroke();
     ctx.fillStyle = P.accent; ctx.font = '600 10.5px ui-monospace, monospace'; ctx.fillText(`ıska ${nf0.format(Math.hypot(mx, my))} m · d_M = ${nf2.format(g.dM)}`, X(mx) + 8, Y(my) - 8);
     ctx.fillStyle = P.data2; ctx.font = '10px ui-monospace, monospace'; ctx.fillText(`R_HB ${cfg.rHb} m`, X(mx) + 8, Y(my) + 14);
     ctx.fillStyle = P.data1; ctx.beginPath(); ctx.arc(X(0), Y(0), 3, 0, TAU); ctx.fill(); ctx.fillStyle = P.muted; ctx.font = '10px Inter, sans-serif'; ctx.fillText('birincil (belirsizlik birleşik: C = C_P + C_S)', X(0) + 8, Y(0) + 14);
@@ -119,7 +130,7 @@ export async function mountConjunction(host, options = {}) {
   }
   function drawRange() {
     const cv = plots.range, ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = P.canvas; ctx.fillRect(0, 0, W, Hh);
+    backdrop(ctx, W, Hh, { canvas: P.canvas });
     const pad = { l: 46, r: 10, t: 20, b: 16 }, pw = W - pad.l - pad.r, ph = Hh - pad.t - pad.b, S = A.series, t0 = S[0].t, t1 = S[S.length - 1].t, rMax = Math.max(...S.map(s => s.range));
     const X = t => pad.l + (t - t0) / (t1 - t0) * pw, Y = r => pad.t + ph - r / rMax * ph;
     ctx.fillStyle = P.muted; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText('menzil |r_rel|(t), TCA ± 15 dk — minimum altın oranla bulunur', pad.l, 13);
@@ -130,7 +141,7 @@ export async function mountConjunction(host, options = {}) {
   }
   function drawDilution() {
     const cv = plots.dilution, ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = P.canvas; ctx.fillRect(0, 0, W, Hh);
+    backdrop(ctx, W, Hh, { canvas: P.canvas });
     const pad = { l: 46, r: 10, t: 20, b: 18 }, pw = W - pad.l - pad.r, ph = Hh - pad.t - pad.b, pts = A.dilution.points;
     const lp = pts.map(p => Math.log10(Math.max(1e-12, p.pc))), lo = Math.min(...lp), hi = Math.max(...lp, Math.log10(cfg.threshold));
     const X = k => pad.l + (Math.log10(k) + 1) / 2 * pw, Y = l => pad.t + ph - (l - lo) / Math.max(1e-9, hi - lo) * ph;

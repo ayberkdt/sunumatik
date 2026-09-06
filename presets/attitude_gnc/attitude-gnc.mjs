@@ -13,6 +13,8 @@
    Gövde eksenleri: +X gövde ileri (craft-blocks sözleşmesi), +Z gövde yukarı/çanak; boresight = +Z (çanak). */
 
 import * as THREE from 'three';
+import { starfield as starfield3, sunGlow, addEarth } from '../core/lab-three.mjs';
+import { backdrop } from '../core/lab-scene.mjs';
 import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
 import { Line2 } from '../moon_advanced/vendor/lines/Line2.js';
 import { LineGeometry } from '../moon_advanced/vendor/lines/LineGeometry.js';
@@ -34,7 +36,7 @@ export async function mountAttitude(host, options = {}) {
     <style>
       .gnc{position:relative;margin:0;width:100%;height:100%;overflow:hidden;display:grid;grid-template-columns:minmax(0,11fr) minmax(0,9fr);
         background:var(--color-canvas,#0b0c10);font-family:var(--font-body,'Inter','Segoe UI',system-ui,sans-serif);color:var(--color-ink,#e9e4d8);}
-      .gnc__3d{position:relative;min-width:0;} .gnc__3d canvas{display:block;width:100%;height:100%;}
+      .gnc__3d{position:relative;min-width:0;min-height:0;} .gnc__3d canvas{position:absolute;inset:0;display:block;width:100%;height:100%;}
       .gnc__labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
       .gnc__label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11px;letter-spacing:.06em;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.9);}
       .gnc__side{min-width:0;border-left:1px solid var(--color-rule,#3a3c42);display:grid;grid-template-rows:auto minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);}
@@ -81,6 +83,9 @@ export async function mountAttitude(host, options = {}) {
   const camera = new THREE.PerspectiveCamera(36, 1, .05, 100); camera.position.set(3.2, 2.1, 3.6); camera.lookAt(0, 0, 0);
   scene.add(new THREE.DirectionalLight('#fff4e6', 2.2).translateX(4).translateY(5).translateZ(3)); scene.add(new THREE.HemisphereLight('#8fa8c4', '#2a2418', .55)); scene.add(new THREE.AmbientLight('#3a404c', .5));
   const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.dampingFactor = .08;
+  /* bağlam: yıldız alanı, Güneş ışıması (ışık yönünde) ve nadirde Dünya ufku (ölçek temsilî) — yönelim neyle ilişkili görülsün */
+  starfield3(THREE, scene, { seed: 5, n: 900, r0: 42, r1: 60, size: .6, opacity: .6 }); sunGlow(THREE, scene, new THREE.Vector3(4, 5, 3), { dist: 70, size: 16 });
+  { const eg = new THREE.Group(); scene.add(eg); await addEarth(THREE, eg, { radius: 16, baseUrl: import.meta.url, atmosphere: '#6fb4ff', atmoStrength: 1.1, segments: 96 }); eg.position.set(0, -16 - 2.3, 0); eg.rotation.set(-1.05, .7, 0); /* ufuk dalımı ≈ 36°: karenin alt kenarında Dünya yayı; orta enlemler yukarı */ }
   /* eylemsiz çerçeve: sahne X = eylemsiz x, sahne Y = eylemsiz z (yukarı), sahne Z = −eylemsiz y (sağ-elli) */
   const toScene = v => new THREE.Vector3(v[0], v[2], -v[1]);
   const lineMat = (color, width, opacity) => new LineMaterial({ color: new THREE.Color(color).getHex(), linewidth: width, transparent: true, opacity, depthTest: true });
@@ -139,7 +144,7 @@ export async function mountAttitude(host, options = {}) {
   let dpr = 1;
   function drawPlot(cv, series, opts) {
     const ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = P.canvas; ctx.fillRect(0, 0, W, Hh);
+    backdrop(ctx, W, Hh, { canvas: P.canvas });
     const pad = { l: 40, r: 10, t: 18, b: 14 }, pw = W - pad.l - pad.r, ph = Hh - pad.t - pad.b;
     let lo = Infinity, hi = -Infinity; for (const s of series) for (const v of s.data) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
     if (opts.symmetric) { const m = Math.max(Math.abs(lo), Math.abs(hi), 1e-6); lo = -m; hi = m; } if (hi - lo < 1e-9) { hi = lo + 1; } if (opts.zero) lo = Math.min(lo, 0);

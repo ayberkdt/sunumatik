@@ -16,6 +16,7 @@
    Tümü 2B tuval (THREE yok). Deterministik: aynı girdiler aynı yüzey. */
 
 import { porkchopGrid, evaluateTransfer, planetState, propagateKepler, julianDay, fmtJd, PLANETS, AU, DAY, MU_SUN } from '../core/astro-lambert.mjs';
+import { backdrop, starfield, planet, sun, glow } from '../core/lab-scene.mjs';
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const parseDate = s => { const [y, m, d] = s.split('-').map(Number); return julianDay(y, m, d); };
@@ -195,7 +196,7 @@ export async function mountPorkchop(host, options = {}) {
   const gctx = geoCanvas.getContext('2d');
   function drawGeo() {
     gctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    gctx.fillStyle = palette.canvas; gctx.fillRect(0, 0, geoW, geoH);
+    backdrop(gctx, geoW, geoH, { canvas: palette.canvas }); starfield(gctx, geoW, geoH, { seed: 19, n: 110, alpha: .45 });
     if (!selected || !selected.transfer) { gctx.fillStyle = palette.muted; gctx.font = '12px Inter, sans-serif'; gctx.fillText('Bu hücrede Lambert çözümü yok.', 16, 28); return; }
     const T = selected.transfer;
     const aMax = Math.max(PLANETS[state.origin].el[0], PLANETS[state.target].el[0]) * (1 + Math.max(PLANETS[state.origin].el[1], PLANETS[state.target].el[1])) * 1.12;
@@ -218,7 +219,7 @@ export async function mountPorkchop(host, options = {}) {
     for (let k = 0; k <= 60; k++) { const s = planetState(state.target, selected.jdDep + T.tof * k / 60); const [x, y] = P(s.r); k ? gctx.lineTo(x, y) : gctx.moveTo(x, y); }
     gctx.stroke(); gctx.setLineDash([]);
     /* Güneş, gezegenler (kalkış ve varış anları) */
-    const dotAt = (r, color, rad, label, dy = -8) => { const [x, y] = P(r); gctx.fillStyle = color; gctx.beginPath(); gctx.arc(x, y, rad, 0, Math.PI * 2); gctx.fill(); if (label) { gctx.fillStyle = palette.ink; gctx.font = '11px Inter, sans-serif'; gctx.fillText(label, x + 8, y + dy + 4); } };
+    const dotAt = (r, color, rad, label, dy = -8) => { const [x, y] = P(r); if (color === '#ffd27a') sun(gctx, x, y, rad + 1, { corona: 5 }); else { const [sx, sy] = P([0, 0, 0]); planet(gctx, x, y, rad + 1.5, { color, sunDir: [sx - x, sy - y], atmosphere: color === PLANETS.earth?.color ? '#6fb4ff' : null }); } if (label) { gctx.fillStyle = palette.ink; gctx.font = '11px Inter, sans-serif'; gctx.fillText(label, x + 8, y + dy + 4); } };
     dotAt([0, 0, 0], '#ffd27a', 6, 'Güneş');
     dotAt(T.r1, PLANETS[state.origin].color, 4.5, `${PLANETS[state.origin].label} · kalkış`);
     dotAt(planetState(state.origin, selected.jdArr).r, PLANETS[state.origin].color, 3, `${PLANETS[state.origin].label} · varışta`, 8);

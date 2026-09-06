@@ -12,6 +12,8 @@
    Sahne: LVLH (x radyal, y iz boyu, z çapraz) → (X = y, Y = x, Z = −z); 1 birim = ölçek(senaryo). */
 
 import * as THREE from 'three';
+import { glowSprite, sunGlow, addEarth } from '../core/lab-three.mjs';
+import { backdrop, starfield, glow } from '../core/lab-scene.mjs';
 import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
 import { Line2 } from '../moon_advanced/vendor/lines/Line2.js';
 import { LineGeometry } from '../moon_advanced/vendor/lines/LineGeometry.js';
@@ -37,7 +39,7 @@ export async function mountFormation(host, options = {}) {
     <style>
       .ff{position:relative;margin:0;width:100%;height:100%;overflow:hidden;display:grid;grid-template-columns:minmax(0,12fr) minmax(0,8fr);
         background:var(--color-canvas,#0b0c10);font-family:var(--font-body,'Inter','Segoe UI',system-ui,sans-serif);color:var(--color-ink,#e9e4d8);}
-      .ff__3d{position:relative;min-width:0;} .ff__3d canvas{display:block;width:100%;height:100%;}
+      .ff__3d{position:relative;min-width:0;min-height:0;} .ff__3d canvas{position:absolute;inset:0;display:block;width:100%;height:100%;}
       .ff__labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
       .ff__label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11px;letter-spacing:.06em;color:var(--color-muted,#9a938a);text-shadow:0 1px 4px rgba(0,0,0,.9);}
       .ff__label.axis{color:var(--color-ink,#e9e4d8);font-weight:600;letter-spacing:.1em;}
@@ -87,6 +89,10 @@ export async function mountFormation(host, options = {}) {
   { const m = new THREE.Matrix4().makeBasis(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, 1, 0)); chief.quaternion.setFromRotationMatrix(m); }
   const deputyGroup = new THREE.Group(); scene.add(deputyGroup);
   const traceGroup = new THREE.Group(); scene.add(traceGroup);
+  /* Dünya: −R (nadir) yönünde ufuk — LVLH'nin neye göre tanımlandığı görülsün (ölçek temsilî: gerçek uzaklık a ≈ 6 800 km sahneye sığmaz) */
+  const EARTH_R = 40; /* ufuk dalımı acos(R/(R+h)) ≈ 53°: kamera −41° bakarken ufuk karenin altına düşer */ const earthGroup = new THREE.Group(); scene.add(earthGroup); await addEarth(THREE, earthGroup, { radius: EARTH_R, baseUrl: import.meta.url, atmosphere: '#6fb4ff', atmoStrength: 1.1, segments: 128 });
+  sunGlow(THREE, scene, sunDir, { dist: 1500, size: 240, opacity: .85 });
+  const chiefGlow = glowSprite(THREE, palette.ink, .55); chiefGlow.scale.setScalar(1.8); chief.add(chiefGlow);
   const sepGroup = new THREE.Group(); scene.add(sepGroup);
 
   let form = null, U = 1 / 100, sceneExtent = 10, traces = [], depMeshes = [], sepLines = [], stats = null, traceMats = [];
@@ -98,18 +104,19 @@ export async function mountFormation(host, options = {}) {
     form = buildFormation(id, opts);
     const ext = form.deputies.reduce((m, d) => { const tr = trace(form, d, 0, form.span, 200); return Math.max(m, ...tr.map(s => Math.max(Math.abs(s[0]), Math.abs(s[1]), Math.abs(s[2])))); }, 1);
     U = 10 / ext; sceneExtent = 10 * 1.15;                              // en uzak nokta 10 birim
+    earthGroup.position.set(0, -EARTH_R - sceneExtent * 1.05, 0); earthGroup.rotation.set(-1.05, .7, 0);   // kutup yerine orta enlemler yukarı baksın
     clear(frame); clear(deputyGroup); clear(traceGroup); clear(sepGroup); for (const l of labels) l.el.remove(); labels.length = 0; traces = []; depMeshes = []; sepLines = [];
     const L = sceneExtent * 1.2;
     frame.add(mkLine([-L, 0, 0, L, 0, 0], axisMat), mkLine([0, -L, 0, 0, L, 0], axisMat), mkLine([0, 0, -L, 0, 0, L], axisMat));
     addLabel('+V (iz boyu)', 'axis', new THREE.Vector3(L, .5, 0)); addLabel('−V', 'axis', new THREE.Vector3(-L, .5, 0));
-    addLabel('+R (zenit)', 'axis', new THREE.Vector3(.6, L, 0)); addLabel('−R (Dünya)', 'axis', new THREE.Vector3(.6, -L, 0)); addLabel('H (çapraz-iz)', 'axis', new THREE.Vector3(.6, .5, L));
+    addLabel('+R (zenit)', 'axis', new THREE.Vector3(.6, L, 0)); addLabel('−R (Dünya)', 'axis', new THREE.Vector3(.6, -L, 0)); addLabel('H (çapraz-iz)', 'axis', new THREE.Vector3(.6, .5, L)); addLabel('Dünya · nadir (ölçek temsilî)', '', new THREE.Vector3(0, -sceneExtent * .62, sceneExtent * .55));
     const scaleBar = Math.pow(10, Math.floor(Math.log10(ext))); addLabel(`ölçek: ${nf0.format(scaleBar)} m`, '', new THREE.Vector3(scaleBar * U / 2, -.8, 0)); frame.add(mkLine([0, -.5, 0, scaleBar * U, -.5, 0], lineMat(palette.accent, 2, .8)));
     const chiefScale = Math.max(.35, Math.min(1.2, sceneExtent * .06)); chief.scale.setScalar(chiefScale);
     for (const d of form.deputies) {
       const tr = trace(form, d, 0, Math.min(form.span, form.period * (Math.abs(d.drift) > 1e-9 ? form.span / form.period : 1)), 600);
       const flat = []; const v = new THREE.Vector3(); for (const s of tr) { toScene(s, v); flat.push(v.x, v.y, v.z); }
       const mat = lineMat(d.color, 1.6, .55); traceMats.push(mat); traceGroup.add(mkLine(flat, mat)); traces.push(tr);
-      const m = craft.buildCubesat({ units: 3, palette: { accent: new THREE.Color(d.color).getHex() } }); m.scale.setScalar(chiefScale * .55); deputyGroup.add(m); depMeshes.push(m);
+      const m = craft.buildCubesat({ units: 3, palette: { accent: new THREE.Color(d.color).getHex() } }); m.scale.setScalar(chiefScale * .55); const gs = glowSprite(THREE, d.color, .7); gs.scale.setScalar(2.4); m.add(gs); deputyGroup.add(m); depMeshes.push(m);
       const sl = mkLine([0, 0, 0, 0, 0, 0], lineMat(d.color, 1, .35)); sepGroup.add(sl); sepLines.push(sl);
     }
     stats = separationStats(form);
@@ -133,12 +140,13 @@ export async function mountFormation(host, options = {}) {
     const pick = { xy: s => [s[1], s[0]], zy: s => [s[1], s[2]], zx: s => [s[2], s[0]] };
     for (const cv of views) {
       const key = cv.dataset.view, ctx = cv.getContext('2d'), W = cv.clientWidth, H = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.fillStyle = palette.canvas; ctx.fillRect(0, 0, W, H);
+      backdrop(ctx, W, H, { canvas: palette.canvas }); starfield(ctx, W, H, { seed: 31, n: 40, alpha: .35 });
       const sc = (Math.min(W, H) / 2 - 10) / ext, cx = W / 2, cy = H / 2, X = v => cx + v * sc, Y = v => cy - v * sc;
+      if (key !== 'zy') { const gE = ctx.createLinearGradient(0, H * .72, 0, H); gE.addColorStop(0, 'rgba(60,110,170,0)'); gE.addColorStop(1, 'rgba(60,110,170,.32)'); ctx.fillStyle = gE; ctx.fillRect(0, H * .72, W, H * .28); }
       ctx.strokeStyle = palette.rule; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
       ctx.fillStyle = palette.muted; ctx.font = '9.5px Inter, sans-serif'; ctx.textAlign = 'right'; ctx.fillText(titles[key][0], W - 4, cy - 3); ctx.textAlign = 'left'; ctx.fillText(titles[key][1], cx + 3, 10);
       form.deputies.forEach((d, i) => { ctx.strokeStyle = d.color; ctx.globalAlpha = .45; ctx.lineWidth = 1; ctx.beginPath(); traces[i].forEach((s, k) => { const [a, b] = pick[key](s); k ? ctx.lineTo(X(a), Y(b)) : ctx.moveTo(X(a), Y(b)); }); ctx.stroke(); ctx.globalAlpha = 1;
-        const [a, b] = pick[key](S[i]); ctx.fillStyle = d.color; ctx.beginPath(); ctx.arc(X(a), Y(b), 3.5, 0, Math.PI * 2); ctx.fill(); });
+        const [a, b] = pick[key](S[i]); glow(ctx, X(a), Y(b), 9, d.color, .5); ctx.fillStyle = d.color; ctx.beginPath(); ctx.arc(X(a), Y(b), 3.5, 0, Math.PI * 2); ctx.fill(); });
       ctx.fillStyle = palette.ink; ctx.fillRect(cx - 2.5, cy - 2.5, 5, 5);
     }
   }

@@ -198,7 +198,7 @@ Manim ayarında, blok blok kurulabilir sahneler; program ve donmuş API (eksen s
 
 ### Astrodinamik ve GNC laboratuvarları — 2. dalga (24 preset)
 
-Her biri saf bir model modülü (`*-model.mjs` ya da `presets/core/astro-*.mjs`), sahne, deterministik URL (`?t=` / `export=1`), `motion-manifest.json` ve `skills/design-scientific-motion/references/<ad>.md` ile gelir; hepsi `node scripts/validate-astro.mjs` ile bağımsız sayısal denetimden geçer (CI adımı). Hiçbir sayı elle yerleştirilmez; model, varsayım ve sınırlar sahnede yazılıdır. Ortak sunum katmanı `presets/core/lab-scene.{css,mjs}`: kahraman HUD, giriş kaskadı (`Entrance`), tuval yardımcıları, tipografi.
+Her biri saf bir model modülü (`*-model.mjs` ya da `presets/core/astro-*.mjs`), sahne, deterministik URL (`?t=` / `export=1`), `motion-manifest.json` ve `skills/design-scientific-motion/references/<ad>.md` ile gelir; hepsi `node scripts/validate-astro.mjs` ile bağımsız sayısal denetimden geçer (CI adımı). Hiçbir sayı elle yerleştirilmez; model, varsayım ve sınırlar sahnede yazılıdır. Ortak sunum katmanı `presets/core/lab-scene.{css,mjs}`: kahraman HUD, giriş kaskadı (`Entrance`), tuval yardımcıları, tipografi; sahne görselleri (gezegen diski ve terminatör, Güneş koronası, yıldız alanı, hız/ısı ile renklenen çizgiler, gölge bandı) ve three.js için `presets/core/lab-three.mjs` (fresnel atmosfer, kamera-ölçekli ışıma noktaları, uzak Güneş ışıması, dokulu Dünya). Her görsel öğe bir fenomeni kodlar: terminatör Güneş yönünden, plazma kılıfı ısı akısından, hiperbol rengi hızdan türer.
 
 | Klasör | İçerik |
 |---|---|
@@ -302,7 +302,7 @@ node scripts/check-syntax.mjs && node scripts/check-imports.mjs && node scripts/
 
 ```
 presets/
-  core/                 astro-*.mjs ortak çözücüler (US76, RK4, Lambert, CR3BP…) + lab-scene.{css,mjs} sunum katmanı
+  core/                 astro-*.mjs ortak çözücüler (US76, RK4, Lambert, CR3BP…) + lab-scene.{css,mjs} (2B sahne: gezegen diski, terminatör, Güneş, yıldız alanı, ısı/hız rampaları) + lab-three.mjs (three.js: fresnel atmosfer, ışıma noktaları, uzak Güneş, dokulu Dünya)
   <preset>/             index.html · <ad>.mjs sahne · <ad>-model.mjs saf model · motion-manifest.json
   moon_advanced/vendor/ three.js ve eklentileri (tek kopya; importmap "three" buraya bağlanır)
   color_themes/         palet kütüphanesi, tipografi, kart/tablo bileşenleri

@@ -5,7 +5,7 @@
    (bütçe çizgisi, pencere) ve HUD. Model: launch-window-model.mjs (küresel trigonometri, Vallado 6.4). */
 
 import { analyze, SITES, TARGETS } from './launch-window-model.mjs';
-import { palette, backdrop, polyline, marker, label, title, tag, arrow, Entrance, reveal, staticMode, rgba } from '../core/lab-scene.mjs';
+import { palette, backdrop, polyline, marker, label, title, tag, arrow, Entrance, reveal, staticMode, rgba, starfield, glow, band } from '../core/lab-scene.mjs';
 
 export async function mountLaunchWindow(host, options = {}) {
   if (!host) throw new Error('mountLaunchWindow bir kap ister');
@@ -64,17 +64,20 @@ export async function mountLaunchWindow(host, options = {}) {
     const f = frame(plots.compass, `${A.site.label}: azimut pusulası — sektör: menzil güvenliği · mavi: eylemsiz β · altın: dönme-düzeltmeli (roketin uçtuğu) β · turuncu ok: Dünya dönmesi`), { ctx, W, Hh } = f;
     const cx = W / 2, cy = Hh / 2 + 6, R0 = Math.min(W, Hh) / 2 - 40, ang = a => (a - 90) * Math.PI / 180, pt = (a, r) => [cx + r * Math.cos(ang(a)), cy + r * Math.sin(ang(a))];
     const pA = entrance.progress('arrows'), pSec = entrance.progress('sector');
+    /* gökyüzü diski: sahadan yukarı bakış — merkezde açık, ufukta koyu; yıldızlar */ starfield(ctx, W, Hh, { seed: 9, n: 100, alpha: .4 }); { const gS = ctx.createRadialGradient(cx, cy, 0, cx, cy, R0); gS.addColorStop(0, 'rgba(70,105,160,.26)'); gS.addColorStop(.7, 'rgba(50,80,130,.12)'); gS.addColorStop(1, 'rgba(30,50,90,.02)'); ctx.fillStyle = gS; ctx.beginPath(); ctx.arc(cx, cy, R0, 0, Math.PI * 2); ctx.fill(); }
+    /* hedef düzlemin yer izi: uçulan azimut boyunca geniş yumuşak şerit (sahadan iki yöne) */ if (A.az.feasible) { ctx.save(); ctx.globalAlpha = .13 * pA; ctx.strokeStyle = P.accent; ctx.lineWidth = 16; ctx.lineCap = 'round'; const [ax, ay] = pt(A.az.rotAsc.beta, R0), [bx, by] = pt(A.az.rotAsc.beta + 180, R0); ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(ax, ay); ctx.stroke(); ctx.restore(); }
     ctx.fillStyle = `rgba(143,211,154,${.12 * pSec})`; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R0, ang(A.site.azMin), ang(A.site.azMin) + (ang(A.site.azMax) - ang(A.site.azMin) + (ang(A.site.azMax) < ang(A.site.azMin) ? Math.PI * 2 : 0)) * pSec); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.beginPath(); ctx.arc(cx, cy, R0, 0, Math.PI * 2); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,.08)'; for (let a = 0; a < 360; a += 30) { const [x, y] = pt(a, R0); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke(); ctx.fillStyle = P.muted; ctx.font = '10px ui-monospace, monospace'; ctx.textAlign = 'center'; const [lx, ly] = pt(a, R0 + 14); ctx.fillText(a === 0 ? 'K' : a === 90 ? 'D' : a === 180 ? 'G' : a === 270 ? 'B' : `${a}°`, lx, ly + 4); }
     ctx.textAlign = 'left';
     const arrowAt = (a, r, color, w, text) => { const [x, y] = pt(a, r * pA); arrow(ctx, cx, cy, x, y, color, { width: w, head: 9, alpha: pA }); if (text && pA > .8) label(ctx, text, x + 6, y + 4, P, { mono: false, size: 11, color, weight: 600 }); };
     if (A.az.feasible) { arrowAt(A.az.betaAsc, R0 * .78, P.data1, 1.5, `β_i↑ ${nf1.format(A.az.betaAsc)}°`); arrowAt(A.az.betaDesc, R0 * .78, P.data1, 1.5, `β_i↓ ${nf1.format(A.az.betaDesc)}°`); arrowAt(A.az.rotAsc.beta, R0 * .95, P.accent, 2.4, `β↑ ${nf1.format(A.az.rotAsc.beta)}°`); arrowAt(A.az.rotDesc.beta, R0 * .95, P.accent, 2.4, `β↓ ${nf1.format(A.az.rotDesc.beta)}°`); arrowAt(90, R0 * .3, P.data2, 2, `ω_e R cos φ = ${nf0.format(A.az.vEq * 1000)} m/s`); }
     else { ctx.fillStyle = P.data2; ctx.font = '600 12px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(`i = ${A.target.inc}° < φ = ${nf1.format(A.site.lat)}°: doğrudan çıkış yok (dogleg / düzlem değişimi)`, cx, cy); ctx.textAlign = 'left'; }
-    ctx.fillStyle = P.ink; ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI * 2); ctx.fill();
+    glow(ctx, cx, cy, 16, P.ink, .5); ctx.fillStyle = P.ink; ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI * 2); ctx.fill(); label(ctx, A.site.label, cx + 8, cy - 8, P, { mono: false, size: 10.5, weight: 600, color: P.ink });
   }
   function drawDay() {
     const f = frame(plots.day, `gün çizelgesi (UTC) — iki fırsat: çıkan ↑ ve inen ↓ düğüm geçişi; bant: ±${nf1.format(A.half / 60)} dk pencere (${nf0.format(A.dvBudget * 1000)} m/s bütçe)`), { ctx, W, Hh } = f;
     const pad = 40, pw = W - 2 * pad, y = Hh / 2 + 6, X = h => pad + h / 24 * pw;
+    { /* 24 saat şeridi: gece (koyu) – gündüz (açık) döngüsü (yerel öğle ≈ 12:00 + boylam düzeltmesi, gösterim) */ const noon = ((12 - A.site.lon / 15) % 24 + 24) % 24, gD = ctx.createLinearGradient(pad, 0, pad + pw, 0); for (let h = 0; h <= 24; h += 1) { const d = Math.cos((h - noon) / 24 * Math.PI * 2); gD.addColorStop(h / 24, `rgba(120,160,220,${.04 + .14 * Math.max(0, d)})`); } ctx.fillStyle = gD; ctx.fillRect(pad, y - 14, pw, 28); }
     ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(pad + pw, y); ctx.stroke(); ctx.fillStyle = P.muted; ctx.font = '9.5px ui-monospace, monospace'; ctx.textAlign = 'center'; for (let h = 0; h <= 24; h += 3) { ctx.beginPath(); ctx.moveTo(X(h), y - 4); ctx.lineTo(X(h), y + 4); ctx.stroke(); ctx.fillText(`${String(h).padStart(2, '0')}:00`, X(h), y + 18); }
     if (A.opp.feasible) for (const [o, lab, ok] of [[A.opp.asc, '↑', A.ascAllowed], [A.opp.desc, '↓', A.descAllowed]]) { const w = Math.max(2, A.half / 3600 * 2 / 24 * pw); ctx.fillStyle = ok ? 'rgba(217,184,119,.35)' : 'rgba(215,143,108,.35)'; ctx.fillRect(X(o.utcHours) - w / 2, y - 12, w, 24); ctx.fillStyle = ok ? P.accent : P.data2; ctx.beginPath(); ctx.arc(X(o.utcHours), y, 4, 0, Math.PI * 2); ctx.fill(); ctx.font = '600 10.5px Inter, sans-serif'; ctx.fillText(`${lab} ${fmtH(o.utcHours)}`, X(o.utcHours), y - 18); }
     ctx.textAlign = 'left';
@@ -85,6 +88,7 @@ export async function mountLaunchWindow(host, options = {}) {
     ctx.fillStyle = 'rgba(217,184,119,.12)'; ctx.fillRect(X(-A.half), pad.t, X(A.half) - X(-A.half), ph);
     ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.fillStyle = P.muted; ctx.font = '9.5px ui-monospace, monospace'; ctx.textAlign = 'right'; for (let q = 0; q <= 4; q++) { const v = dvMax * q / 4; ctx.beginPath(); ctx.moveTo(pad.l, Y(v)); ctx.lineTo(pad.l + pw, Y(v)); ctx.stroke(); ctx.fillText(`${nf0.format(v * 1000)} m/s`, pad.l - 4, Y(v) + 3); } ctx.textAlign = 'center'; for (let m = -60; m <= 60; m += 20) ctx.fillText(`${m} dk`, X(m * 60), Hh - 6); ctx.textAlign = 'left';
     ctx.strokeStyle = P.data2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(pad.l, Y(A.dvBudget)); ctx.lineTo(pad.l + pw, Y(A.dvBudget)); ctx.stroke(); ctx.setLineDash([]);
+    band(ctx, A.curve.map(c => [X(c.dt), Y(c.dv)]), [[X(-3600), Y(0)], [X(3600), Y(0)]], P.ink, .07);
     polyline(ctx, A.curve.map(c => [X(c.dt), Y(c.dv)]), { progress: entrance.progress('curve'), color: P.ink, width: 1.7 });
     ctx.fillStyle = P.accent; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText(`pencere ±${nf1.format(A.half / 60)} dk · i = ${A.target.inc}°, V = ${nf2.format(A.v)} km/s`, X(A.half) + 6, pad.t + 14);
   }

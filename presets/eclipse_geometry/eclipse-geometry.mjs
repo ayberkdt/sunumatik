@@ -13,6 +13,8 @@
    Sahne: ECI (X = x, Y = z, Z = −y); 1 birim = R_E. */
 
 import * as THREE from 'three';
+import { atmosphereShell, glowSprite, sunGlow } from '../core/lab-three.mjs';
+import { backdrop } from '../core/lab-scene.mjs';
 import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
 import { Line2 } from '../moon_advanced/vendor/lines/Line2.js';
 import { LineGeometry } from '../moon_advanced/vendor/lines/LineGeometry.js';
@@ -37,7 +39,7 @@ export async function mountEclipse(host, options = {}) {
     <style>
       .ecl{position:relative;margin:0;width:100%;height:100%;overflow:hidden;display:grid;grid-template-columns:minmax(0,11fr) minmax(0,9fr);
         background:var(--color-canvas,#0b0c10);font-family:var(--font-body,'Inter','Segoe UI',system-ui,sans-serif);color:var(--color-ink,#e9e4d8);}
-      .ecl__3d{position:relative;min-width:0;} .ecl__3d canvas{display:block;width:100%;height:100%;}
+      .ecl__3d{position:relative;min-width:0;min-height:0;} .ecl__3d canvas{position:absolute;inset:0;display:block;width:100%;height:100%;}
       .ecl__labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
       .ecl__label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11px;letter-spacing:.06em;color:var(--color-muted,#9a938a);text-shadow:0 1px 4px rgba(0,0,0,.9);}
       .ecl__side{min-width:0;border-left:1px solid var(--color-rule,#3a3c42);display:grid;grid-template-rows:auto minmax(0,1fr) minmax(0,1fr);}
@@ -82,6 +84,7 @@ export async function mountEclipse(host, options = {}) {
   { const loader = new THREE.TextureLoader(); const url = rel => new URL(rel, import.meta.url).href;
     try { const day = await loader.loadAsync(url('../earth_advanced/textures/earth_atmos_2048.jpg')); day.colorSpace = THREE.SRGBColorSpace; earth.add(new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshPhongMaterial({ map: day, specular: new THREE.Color('#2a3138'), shininess: 10 }))); }
     catch (e) { earth.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), new THREE.MeshStandardMaterial({ color: '#274668', roughness: .85 }))); } }
+  scene.add(atmosphereShell(THREE, 1, '#6fb4ff', 1.5)); const sunSprite = sunGlow(THREE, scene, new THREE.Vector3(1, 0, 0), { dist: 110, size: 46 });
   const mats = []; const lineMat = (color, width, opacity) => { const m = new LineMaterial({ color: new THREE.Color(color).getHex(), linewidth: width, transparent: true, opacity, depthTest: true }); mats.push(m); return m; };
   const mkLine = (pts, mat) => { const g = new LineGeometry(); g.setPositions(pts); return new Line2(g, mat); };
   const labels = []; const addLabel = (text, pos, color = P.muted) => { const el = document.createElement('div'); el.className = 'ecl__label'; el.textContent = text; el.style.color = color; labelLayer.appendChild(el); labels.push({ el, pos }); return el; };
@@ -97,10 +100,10 @@ export async function mountEclipse(host, options = {}) {
   shadowGroup.add(umbraMesh, penMesh);
   const sunArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 3.4, 0xffd27a, .28, .16); scene.add(sunArrow);
   const orbitLine = mkLine([0, 0, 0, 0, 0, 0], lineMat(P.data1, 1.6, .8)); scene.add(orbitLine);
-  const sat = new THREE.Mesh(new THREE.SphereGeometry(.045, 14, 10), new THREE.MeshBasicMaterial({ color: P.accent })); scene.add(sat);
+  const sat = new THREE.Mesh(new THREE.SphereGeometry(.045, 14, 10), new THREE.MeshBasicMaterial({ color: P.accent })); scene.add(sat); const satGlow = glowSprite(THREE, P.accent, .85); satGlow.scale.setScalar(.34); sat.add(satGlow);
   const station = new THREE.Mesh(new THREE.SphereGeometry(.02, 10, 8), new THREE.MeshBasicMaterial({ color: GREEN })); earth.add(station);
   const stLine = mkLine([0, 0, 0, 0, 0, 0], lineMat(GREEN, 1.4, .9)); scene.add(stLine);
-  const relay = new THREE.Mesh(new THREE.SphereGeometry(.05, 12, 10), new THREE.MeshBasicMaterial({ color: P.data2 })); scene.add(relay);
+  const relay = new THREE.Mesh(new THREE.SphereGeometry(.05, 12, 10), new THREE.MeshBasicMaterial({ color: P.data2 })); scene.add(relay); { const g = glowSprite(THREE, P.data2, .7); g.scale.setScalar(.4); relay.add(g); }
   const relayLine = mkLine([0, 0, 0, 0, 0, 0], lineMat(P.data2, 1.3, .9)); scene.add(relayLine);
   const relayOrbit = mkLine([0, 0, 0, 0, 0, 0], lineMat(P.data2, 1, .3)); scene.add(relayOrbit);
   const starLine = mkLine([0, 0, 0, 0, 0, 0], lineMat(P.ink, 1.2, .8)); scene.add(starLine);
@@ -116,7 +119,7 @@ export async function mountEclipse(host, options = {}) {
     A = analyze({ el, dayOfYear: cfg.dayOfYear, revs: cfg.revs, station: cfg.station, relay: cfg.relayPreset ? { el: ORBIT_PRESETS[cfg.relayPreset] } : null, star: cfg.star, hAtm: cfg.hAtm, theta0: cfg.theta0 });
     timeline.duration = A.tEnd; timeline.t = Math.min(timeline.t, A.tEnd);
     /* Güneş yönü sahnede, koniler −ŝ boyunca */
-    toScene(A.sunDir, _s).normalize(); sun.position.copy(_s).multiplyScalar(60); sunArrow.setDirection(_s); sunArrow.position.copy(_s).multiplyScalar(1.15);
+    toScene(A.sunDir, _s).normalize(); sun.position.copy(_s).multiplyScalar(60); sunArrow.setDirection(_s); sunArrow.position.copy(_s).multiplyScalar(1.15); sunSprite.position.copy(_s).multiplyScalar(110);
     shadowGroup.quaternion.setFromUnitVectors(new THREE.Vector3(1, 0, 0), _s);       // cyl +X ucu (Dünya) → ŝ yönü; gövde −ŝ'ye uzanır
     /* yörünge çizgisi */
     const pts = []; for (let k = 0; k <= 240; k++) { const s = stateAt(el, k / 240 * A.period); toScene(s.r, _p); pts.push(_p.x, _p.y, _p.z); } orbitLine.geometry.setPositions(pts);
@@ -130,7 +133,7 @@ export async function mountEclipse(host, options = {}) {
   let dpr = 1;
   function drawBands() {
     const cv = plots.bands, ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = P.canvas; ctx.fillRect(0, 0, W, Hh);
+    backdrop(ctx, W, Hh, { canvas: P.canvas });
     const rows = [['Güneş / gölge', s => s.nu >= .999999 ? '#d9b877' : s.nu <= 1e-6 ? '#1a1c24' : '#6a6050'], ['istasyon görür', s => s.visible ? GREEN : 'rgba(255,255,255,.06)'], ['sensör hedefi açık', s => s.starBlocked ? '#5a2c22' : 'rgba(143,184,221,.55)'], ['röle bağlantısı', s => s.relayBlocked ? '#5a2c22' : 'rgba(215,143,108,.6)']].filter((r, i) => i === 0 || (i === 1 && A.station) || (i === 2 && A.star) || (i === 3 && A.relayEl));
     const pad = { l: 118, r: 12, t: 22, b: 16 }, rowH = (Hh - pad.t - pad.b) / rows.length, W2 = W - pad.l - pad.r;
     ctx.fillStyle = P.muted; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText('OLAY BANTLARI — geometriden türetilmiş (elle zaman yok)', pad.l, 13);
@@ -142,7 +145,7 @@ export async function mountEclipse(host, options = {}) {
   }
   function drawCurves() {
     const cv = plots.curves, ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = P.canvas; ctx.fillRect(0, 0, W, Hh);
+    backdrop(ctx, W, Hh, { canvas: P.canvas });
     const pad = { l: 44, r: 12, t: 20, b: 16 }, pw = W - pad.l - pad.r, ph = Hh - pad.t - pad.b;
     const X = t => pad.l + t / A.tEnd * pw;
     ctx.fillStyle = P.muted; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText('gölge fonksiyonu ν (altın) · istasyon yükseklik açısı ε (yeşil, −90…90°)', pad.l, 13);
@@ -159,7 +162,7 @@ export async function mountEclipse(host, options = {}) {
     const s = A.samples[lo]; const el = A.el;
     earth.rotation.y = A.theta0 + OMEGA_E * t;
     const st = stateAt(el, t); toScene(st.r, _p); sat.position.copy(_p);
-    const sh = shadowFunction(st.r, A.sunDir); sat.material.color.set(sh.nu >= .999999 ? P.accent : sh.nu <= 1e-6 ? '#4a4f5a' : '#a08a60');
+    const sh = shadowFunction(st.r, A.sunDir); sat.material.color.set(sh.nu >= .999999 ? P.accent : sh.nu <= 1e-6 ? '#4a4f5a' : '#a08a60'); satGlow.material.color.copy(sat.material.color); satGlow.material.opacity = .25 + .6 * sh.nu;
     /* istasyon çizgisi (dünya-yerel → dünya) */
     if (A.station) { _q.copy(station.position); earth.localToWorld(_q); stLine.geometry.setPositions([_q.x, _q.y, _q.z, _p.x, _p.y, _p.z]); stLine.material.color.set(s.visible ? GREEN : P.data2); stLine.material.opacity = s.visible ? .9 : .35; }
     if (A.relayEl) { const rr = stateAt(A.relayEl, t); toScene(rr.r, _q); relay.position.copy(_q); relayLine.geometry.setPositions([_p.x, _p.y, _p.z, _q.x, _q.y, _q.z]); relayLine.material.color.set(s.relayBlocked ? P.data2 : GREEN); relayLine.material.opacity = s.relayBlocked ? .45 : .9; }

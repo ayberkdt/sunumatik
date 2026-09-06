@@ -121,3 +121,53 @@ export function settle() { document.documentElement.classList.add('lab-settled')
 
 /** Zaman dilimlerini basit "ne kadar ilerledi" bandı için: 0..1 ilerlemeye göre alfa zarfı (attack/decay). */
 export const envelope = (t, attack = .15, release = .25) => t < attack ? ease.smooth(t / attack) : t > 1 - release ? ease.smooth((1 - t) / release) : 1;
+
+/* ── sahne görselleri (2B tuval): gezegen diski (terminatör, limb, atmosfer), Güneş, yıldız alanı, ışıma, renkli çizgi,
+   bölge dolgusu, renk rampaları. Hepsi mat/fiziksel gerekçeli: gece tarafı Güneş yönünden türer, korona radyal söner,
+   ısı/hız rampaları büyüklüğü kodlar — dekor değil. */
+export const mulberry = seed => () => { let t = (seed += 0x6D2B79F5); t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+export const hexRGB = hex => { const h = hex.replace('#', ''); const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+/** hex'i k kadar aç (k>0) / koyult (k<0), hex döner. */
+export const tint = (hex, k) => { const c = hexRGB(hex).map(v => Math.max(0, Math.min(255, Math.round(k >= 0 ? v + (255 - v) * k : v * (1 + k))))); return '#' + c.map(v => v.toString(16).padStart(2, '0')).join(''); };
+/** Renk rampası: stops [[t, hex], …] → t ↦ 'rgb(...)'. */
+export const ramp = stops => t => { t = clamp01(t); let i = 0; while (i < stops.length - 2 && t > stops[i + 1][0]) i++; const [t0, c0] = stops[i], [t1, c1] = stops[i + 1], f = clamp01((t - t0) / Math.max(1e-9, t1 - t0)); const a = hexRGB(c0), b = hexRGB(c1); return `rgb(${Math.round(a[0] + (b[0] - a[0]) * f)},${Math.round(a[1] + (b[1] - a[1]) * f)},${Math.round(a[2] + (b[2] - a[2]) * f)})`; };
+export const heat = ramp([[0, '#2c5aa0'], [.35, '#d9b877'], [.7, '#ff9a3c'], [1, '#fff4e0']]);      // ısı akısı: mavi → amber → turuncu → beyaz
+export const speed = ramp([[0, '#6b5030'], [.5, '#d9b877'], [1, '#fff3d6']]);                        // hız: sönük amber → amber → beyaz-sıcak
+export const cold = ramp([[0, '#1c3450'], [.5, '#5fa8d8'], [1, '#e8f4ff']]);                         // sıcaklık/yoğunluk: lacivert → mavi → beyaz
+/** Tohumlu yıldız alanı (küçük, mat; kadir dağılımı ~ r²). */
+export function starfield(ctx, W, H, { seed = 7, n = 160, alpha = .6 } = {}) {
+  const rnd = mulberry(seed); ctx.save();
+  for (let i = 0; i < n; i++) { const x = rnd() * W, y = rnd() * H, u = rnd(), r = .35 + u * u * 1.1, tone = rnd(); ctx.globalAlpha = alpha * (.25 + u * .75); ctx.fillStyle = tone < .15 ? '#cfd8ff' : tone < .3 ? '#ffe5c2' : '#ffffff'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+}
+/** Yumuşak ışıma noktası (kamera uzaklığından bağımsız okunurluk için). */
+export function glow(ctx, x, y, r, color, alpha = .5) { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgba(color, alpha)); g.addColorStop(.4, rgba(color, alpha * .35)); g.addColorStop(1, rgba(color, 0)); ctx.save(); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+/** Gezegen diski: Güneş yönüne kaymış aydınlık, gece tarafı, aydınlık limb, opsiyonel atmosfer ışıması. sunDir ekran vektörü (Güneş'e doğru). */
+export function planet(ctx, x, y, r, { color = '#3d6fa8', sunDir = [-1, -.3], atmosphere = null, night = .85, alpha = 1, rings = null } = {}) {
+  const L = Math.hypot(sunDir[0], sunDir[1]) || 1, sx = sunDir[0] / L, sy = sunDir[1] / L;
+  ctx.save(); ctx.globalAlpha = alpha;
+  if (atmosphere) { const g = ctx.createRadialGradient(x, y, r * .92, x, y, r * 1.4); g.addColorStop(0, rgba(atmosphere, .5)); g.addColorStop(.45, rgba(atmosphere, .14)); g.addColorStop(1, rgba(atmosphere, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 1.4, 0, Math.PI * 2); ctx.fill(); }
+  if (rings) { ctx.save(); ctx.translate(x, y); ctx.scale(1, rings.tilt ?? .32); ctx.lineWidth = r * (rings.width ?? .5); ctx.strokeStyle = rgba(rings.color ?? tint(color, .3), .35); ctx.beginPath(); ctx.arc(0, 0, r * (rings.inner ?? 1.35) + ctx.lineWidth / 2, Math.PI, Math.PI * 2); ctx.stroke(); ctx.restore(); }
+  const g = ctx.createRadialGradient(x + sx * r * .45, y + sy * r * .45, r * .04, x, y, r); g.addColorStop(0, tint(color, .45)); g.addColorStop(.55, color); g.addColorStop(1, tint(color, -.4)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip(); const n = ctx.createRadialGradient(x - sx * r * .95, y - sy * r * .95, r * .1, x - sx * r * .3, y - sy * r * .3, r * 1.3); n.addColorStop(0, `rgba(3,5,10,${night})`); n.addColorStop(.5, `rgba(3,5,10,${night * .75})`); n.addColorStop(1, 'rgba(3,5,10,0)'); ctx.fillStyle = n; ctx.fillRect(x - r, y - r, 2 * r, 2 * r); ctx.restore();
+  const ang = Math.atan2(sy, sx), lw = Math.max(1, r * .05); ctx.lineWidth = lw; ctx.strokeStyle = rgba(tint(color, .55), .55); ctx.beginPath(); ctx.arc(x, y, r - lw / 2, ang - 1.25, ang + 1.25); ctx.stroke();
+  if (rings) { ctx.save(); ctx.translate(x, y); ctx.scale(1, rings.tilt ?? .32); ctx.lineWidth = r * (rings.width ?? .5); ctx.strokeStyle = rgba(rings.color ?? tint(color, .3), .5); ctx.beginPath(); ctx.arc(0, 0, r * (rings.inner ?? 1.35) + ctx.lineWidth / 2, 0, Math.PI); ctx.stroke(); ctx.restore(); }
+  ctx.restore();
+}
+/** Güneş: beyaz-sarı çekirdek + radyal sönen korona. */
+export function sun(ctx, x, y, r, { color = '#ffd98a', corona = 4.5, alpha = 1 } = {}) {
+  ctx.save(); ctx.globalAlpha = alpha; const c = ctx.createRadialGradient(x, y, r * .6, x, y, r * corona); c.addColorStop(0, rgba(color, .55)); c.addColorStop(.25, rgba(color, .18)); c.addColorStop(1, rgba(color, 0)); ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, r * corona, 0, Math.PI * 2); ctx.fill();
+  const g = ctx.createRadialGradient(x - r * .2, y - r * .2, 0, x, y, r); g.addColorStop(0, '#fffaf0'); g.addColorStop(.6, tint(color, .25)); g.addColorStop(1, color); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+}
+/** Parça parça renkli çizgi: colorAt(u, i) → css renk; progress ile kısmi. */
+export function colorLine(ctx, pts, colorAt, { progress = 1, width = 2, alpha = 1, cap = 'round' } = {}) {
+  if (!pts || pts.length < 2) return; const n = Math.floor((pts.length - 1) * clamp01(progress)); ctx.save(); ctx.globalAlpha = alpha; ctx.lineCap = cap; ctx.lineJoin = 'round'; ctx.lineWidth = width;
+  for (let i = 0; i < n; i++) { ctx.strokeStyle = colorAt(i / (pts.length - 1), i); ctx.beginPath(); ctx.moveTo(pts[i][0], pts[i][1]); ctx.lineTo(pts[i + 1][0], pts[i + 1][1]); ctx.stroke(); }
+  ctx.restore();
+}
+/** İki çizgi arasındaki bölge dolgusu (koridor, belirsizlik bandı, gölge kesiti). */
+export function band(ctx, a, b, color, alpha = .15) { if (!a?.length || !b?.length) return; ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(a[0][0], a[0][1]); for (const q of a) ctx.lineTo(q[0], q[1]); for (let i = b.length - 1; i >= 0; i--) ctx.lineTo(b[i][0], b[i][1]); ctx.closePath(); ctx.fill(); ctx.restore(); }
+/** Silindirik gölge bandı: gezegenin Güneş karşıtı yönünde uzanan koyu şerit (ekran koordinatı; dir Güneş'e doğru). */
+export function shadowBand(ctx, x, y, r, len, dir = [1, 0], { alpha = .5 } = {}) {
+  const L = Math.hypot(dir[0], dir[1]) || 1, dx = -dir[0] / L, dy = -dir[1] / L; ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(dy, dx)); const g = ctx.createLinearGradient(0, 0, len, 0); g.addColorStop(0, `rgba(0,0,0,${alpha})`); g.addColorStop(.6, `rgba(0,0,0,${alpha * .5})`); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, -r, len, 2 * r); ctx.restore();
+}

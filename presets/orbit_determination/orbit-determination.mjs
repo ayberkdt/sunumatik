@@ -10,7 +10,7 @@
         od.run · od.setScenario(id, ov) · od.timeline · od.dispose() */
 
 import { runOd, SCENARIOS, STATIONS, R_E } from './od-model.mjs';
-import { palette, backdrop, polyline, marker, label, title, tag, comet, Entrance, reveal, staticMode, rgba } from '../core/lab-scene.mjs';
+import { palette, backdrop, polyline, marker, label, title, tag, comet, Entrance, reveal, staticMode, rgba, starfield, planet, glow } from '../core/lab-scene.mjs';
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
@@ -80,17 +80,17 @@ export async function mountOd(host, options = {}) {
   function drawOrbit(k) {
     const cv = plots.orbit, ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); backdrop(ctx, W, Hh, { canvas: P.canvas, grid: 44, gridAlpha: .03 * entrance.progress('frame') }); const pO = entrance.progress('orbit'), pM = entrance.progress('marks');
     const S = run.samples, ext = Math.max(...S.filter((_, i) => i % 20 === 0).map(s => Math.hypot(s.truth[0], s.truth[1]))) * 1.08, sc = Math.min(W, Hh) / 2 / ext * .92, X = x => W / 2 + x * sc, Y = y => Hh / 2 - y * sc;
-    ctx.save(); ctx.globalAlpha = pO; const eg = ctx.createRadialGradient(X(0) - R_E * sc * .3, Y(0) - R_E * sc * .3, R_E * sc * .2, X(0), Y(0), R_E * sc); eg.addColorStop(0, '#4a7fb8'); eg.addColorStop(1, '#1f3f66'); ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(X(0), Y(0), R_E * sc, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.stroke(); ctx.restore();
+    starfield(ctx, W, Hh, { seed: 6, n: 130, alpha: .45 * pO }); planet(ctx, X(0), Y(0), R_E * sc, { color: '#3d6fa8', sunDir: [1, -.3], atmosphere: '#6fb4ff', alpha: pO });
     const truthPts = []; for (let i = 0; i < S.length; i += 2) truthPts.push([X(S[i].truth[0]), Y(S[i].truth[1])]); polyline(ctx, truthPts, { progress: pO, color: 'rgba(255,255,255,.22)', width: 1 });
     /* kestirim izi (hata abartılı çizilmez; gerçek ölçek) — son turu kuyruk gibi */
     const estPts = []; for (let i = 0; i <= k; i += 2) estPts.push([X(S[i].est[0]), Y(S[i].est[1])]); if (pO >= 1 && estPts.length > 1) comet(ctx, estPts, estPts.length - 1, { len: 220, color: P.accent, width: 1.6 });
     const s = S[k], t = s.t, sts = run.stationsEci(t);
-    for (const st of sts) { const vis = run.meas.some(m => m.k === k && m.station === st.label); marker(ctx, X(st.R[0]), Y(st.R[1]), 3.5, vis ? P.data1 : P.muted, { alpha: pM, ring: vis }); if (pM > .8) label(ctx, st.label, X(st.R[0]) + 7, Y(st.R[1]) - 6, P, { mono: false, size: 11, color: vis ? P.data1 : P.muted }); if (vis) { ctx.save(); ctx.strokeStyle = rgba(P.data1, .8); ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(X(st.R[0]), Y(st.R[1])); ctx.lineTo(X(s.truth[0]), Y(s.truth[1])); ctx.stroke(); ctx.restore(); } }
+    for (const st of sts) { const vis = run.meas.some(m => m.k === k && m.station === st.label); marker(ctx, X(st.R[0]), Y(st.R[1]), 3.5, vis ? P.data1 : P.muted, { alpha: pM, ring: vis }); if (pM > .8) label(ctx, st.label, X(st.R[0]) + 7, Y(st.R[1]) - 6, P, { mono: false, size: 11, color: vis ? P.data1 : P.muted }); if (vis) { /* ölçüm huzmesi: istasyondan uyduya sönen koni + görüş çizgisi */ const sx = X(st.R[0]), sy = Y(st.R[1]), tx = X(s.truth[0]), ty = Y(s.truth[1]), dx = tx - sx, dy = ty - sy, Ln = Math.hypot(dx, dy) || 1, nx = -dy / Ln * 7, ny = dx / Ln * 7; const gB = ctx.createLinearGradient(sx, sy, tx, ty); gB.addColorStop(0, rgba(P.data1, .38)); gB.addColorStop(1, rgba(P.data1, .03)); ctx.save(); ctx.fillStyle = gB; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(tx + nx, ty + ny); ctx.lineTo(tx - nx, ty - ny); ctx.closePath(); ctx.fill(); ctx.strokeStyle = rgba(P.data1, .8); ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(tx, ty); ctx.stroke(); ctx.restore(); glow(ctx, sx, sy, 11, P.data1, .5); } }
     /* kovaryans elipsi (x–y bloğu, 3σ) — ölçekte görünmezse büyütülüp yazılır */
     const a = s.Prr[0][0], b = s.Prr[0][1], c = s.Prr[1][1], tr = a + c, det = a * c - b * b, l1 = tr / 2 + Math.sqrt(Math.max(0, tr * tr / 4 - det)), l2 = tr / 2 - Math.sqrt(Math.max(0, tr * tr / 4 - det)), ang = Math.atan2(l1 - a, b || 1e-30);
     const semi1 = 3 * Math.sqrt(Math.max(l1, 0)), semi2 = 3 * Math.sqrt(Math.max(l2, 0)); let mag = 1; while (semi1 * sc * mag < 14 && mag < 1e6) mag *= 10;
     ctx.save(); ctx.translate(X(s.est[0]), Y(s.est[1])); ctx.rotate(-ang); ctx.strokeStyle = P.accent; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(0, 0, Math.max(1, semi1 * sc * mag), Math.max(1, semi2 * sc * mag), 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
-    marker(ctx, X(s.truth[0]), Y(s.truth[1]), 3.2, P.ink, { alpha: pM, ringAlpha: .5 }); marker(ctx, X(s.est[0]), Y(s.est[1]), 2.4, P.accent, { alpha: pM, ring: false });
+    glow(ctx, X(s.truth[0]), Y(s.truth[1]), 13, P.accent, .5 * pM); marker(ctx, X(s.truth[0]), Y(s.truth[1]), 3.2, P.ink, { alpha: pM, ringAlpha: .5 }); marker(ctx, X(s.est[0]), Y(s.est[1]), 2.4, P.accent, { alpha: pM, ring: false });
     title(ctx, `ECI x–y (üstten) · 3σ elipsi ${mag > 1 ? '×' + nf0.format(mag) + ' büyütülmüş' : 'gerçek ölçek'}`, 12, Hh - 12, P);
   }
   function frame(cv, text) { const ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); backdrop(ctx, W, Hh, { canvas: P.canvas }); title(ctx, text, 12, 15, P); const pad = { l: 58, r: 12, t: 24, b: 18 }; return { ctx, W, Hh, pad, pw: W - pad.l - pad.r, ph: Hh - pad.t - pad.b }; }

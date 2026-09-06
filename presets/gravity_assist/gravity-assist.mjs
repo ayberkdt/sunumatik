@@ -12,6 +12,9 @@
    2B tuval, THREE gerekmez. */
 
 import { solveFlyby, hyperbolaPath, heliocentricPath, helioOrbitPoints, BODIES, AU } from './flyby-model.mjs';
+import { palette, backdrop, starfield, planet, sun, glow, colorLine, speed } from '../core/lab-scene.mjs';
+const BODY_COLOR = { jupiter: '#d9b877', earth: '#5f8fc4', mars: '#d78f6c', venus: '#e6c58a', saturn: '#e0d2a8', neptune: '#7fa0e0', uranus: '#9fd0d8', mercury: '#b9b0a3' };
+const bodyLook = id => ({ color: BODY_COLOR[id] || '#e0d2a8', atmosphere: id === 'earth' ? '#6fb4ff' : id === 'venus' ? '#f0d9a0' : id === 'jupiter' ? '#e8c890' : null, rings: id === 'saturn' ? { tilt: .3 } : null });
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
@@ -46,8 +49,7 @@ export async function mountGravityAssist(host, options = {}) {
   host.appendChild(figure);
   const cvR = figure.querySelector('.ga__rel canvas'), cvH = figure.querySelector('.ga__helio canvas'), cvB = figure.querySelector('.ga__bp canvas');
   const H = {}; for (const el of figure.querySelectorAll('[data-h]')) H[el.dataset.h] = el;
-  const css = getComputedStyle(figure); const tok = (n, fb) => (css.getPropertyValue(n) || '').trim() || fb;
-  const P = { ink: tok('--color-ink', '#e9e4d8'), muted: tok('--color-muted', '#9a938a'), accent: tok('--color-accent', '#d9b877'), data1: tok('--color-data-1', '#8fb8dd'), data2: tok('--color-data-2', '#d78f6c'), rule: tok('--color-rule', '#3a3c42'), canvas: tok('--color-canvas', '#0b0c10'), surface: tok('--color-surface', '#15161a') };
+  const P = palette(figure);
   const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), nf3 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }), nf4 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
 
   let cfg = { body: options.body ?? 'jupiter', vinf: options.vinf ?? 6, alpha: options.alpha ?? 120, rpRatio: options.rpRatio ?? 6, theta: options.theta ?? 0 };
@@ -76,13 +78,13 @@ export async function mountGravityAssist(host, options = {}) {
   /* A) gezegen-göreli: düzlem S–B̂ (hiperbol düzlemi); ekran x = S yönü, y = B̂ yönü */
   function drawRel() {
     const ctx = cvR.getContext('2d'); const [W, Hh] = sz.rel; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = P.canvas; ctx.fillRect(0, 0, W, Hh);
+    backdrop(ctx, W, Hh, { canvas: P.canvas }); starfield(ctx, W, Hh, { seed: 21, n: 140, alpha: .5 });
     const proj = r => [r[0] * fb.S[0] + r[1] * fb.S[1] + r[2] * fb.S[2], r[0] * fb.Bhat[0] + r[1] * fb.Bhat[1] + r[2] * fb.Bhat[2]];
     const ext = Math.max(2.4 * fb.b, 9 * fb.rp, 4 * fb.body.R);   // enberi bölgesi okunur kalsın; yol tuval dışına taşabilir
     const sc = Math.min(W, Hh) / 2 / ext * .92, cx = W / 2, cy = Hh / 2, X = v => cx + v * sc, Y = v => cy - v * sc;
     ctx.fillStyle = P.muted; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText(`GEZEGEN-GÖRELİ çerçeve (hiperbol düzlemi: yatay = S = v∞_in yönü, düşey = B̂) · ${fb.body.label}`, 14, 18);
     /* SOI (varsa görünür) */
-    ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.arc(X(0), Y(0), fb.soi * sc, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(X(0), Y(0), fb.soi * sc, 0, Math.PI * 2); ctx.fillStyle = 'rgba(95,196,212,.045)'; ctx.fill(); ctx.strokeStyle = 'rgba(95,196,212,.28)'; ctx.setLineDash([4, 5]); ctx.stroke(); ctx.setLineDash([]);
     /* B-düzlemi çizgisi (S'ye dik, merkezden) */
     ctx.strokeStyle = 'rgba(217,184,119,.45)'; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(X(0), 0); ctx.lineTo(X(0), Hh); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = P.accent; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText('B-düzlemi (S ⊥)', X(0) + 6, 34);
@@ -97,11 +99,10 @@ export async function mountGravityAssist(host, options = {}) {
     ctx.strokeStyle = P.accent; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(X(center[0]), Y(center[1]), 28, 0, -Math.atan2(-so[1], so[0]) * 0 + Math.atan2(so[1], so[0]) * -1, so[1] < 0); ctx.stroke();
     ctx.fillStyle = P.accent; ctx.font = '600 11px ui-monospace, monospace'; ctx.fillText(`δ = ${nf1.format(fb.delta * 180 / Math.PI)}°`, X(center[0]) + 34, Y(center[1]) + 24);
     /* hiperbol */
-    ctx.strokeStyle = 'rgba(233,228,216,.35)'; ctx.lineWidth = 1; ctx.beginPath(); path.forEach((p, k) => { const q = proj(p.r); k ? ctx.lineTo(X(q[0]), Y(q[1])) : ctx.moveTo(X(q[0]), Y(q[1])); }); ctx.stroke();
     const n = curIndex();
-    ctx.strokeStyle = P.ink; ctx.lineWidth = 2; ctx.beginPath(); for (let k = 0; k <= n; k++) { const q = proj(path[k].r); k ? ctx.lineTo(X(q[0]), Y(q[1])) : ctx.moveTo(X(q[0]), Y(q[1])); } ctx.stroke();
+    { /* hiperbol hızla renklenir: enberide beyaz-sıcak (v_rel en büyük), asimptotlarda sönük amber */ const pts = path.map(p => { const q = proj(p.r); return [X(q[0]), Y(q[1])]; }); const vLo = Math.min(...path.map(p => p.speed)), vHi = Math.max(...path.map(p => p.speed)); const col = (u, i) => speed((path[i].speed - vLo) / Math.max(1e-9, vHi - vLo)); colorLine(ctx, pts, col, { width: 1.2, alpha: .35 }); colorLine(ctx, pts.slice(0, n + 1), col, { width: 2.6 }); }
     /* gezegen */
-    const rpx = Math.max(6, fb.body.R * sc); ctx.fillStyle = cfg.body === 'jupiter' ? '#d9b877' : cfg.body === 'earth' ? '#5f8fc4' : cfg.body === 'mars' ? '#d78f6c' : cfg.body === 'venus' ? '#e6c58a' : '#e0d2a8'; ctx.beginPath(); ctx.arc(X(0), Y(0), rpx, 0, Math.PI * 2); ctx.fill();
+    const rpx = Math.max(7, fb.body.R * sc); planet(ctx, X(0), Y(0), rpx, { ...bodyLook(cfg.body), sunDir: [-1, .35] });
     /* enberi + B vektörü */
     const per = proj([fb.Phat[0] * fb.rp, fb.Phat[1] * fb.rp, fb.Phat[2] * fb.rp]);
     ctx.fillStyle = P.data2; ctx.beginPath(); ctx.arc(X(per[0]), Y(per[1]), 3.5, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = P.muted; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText(`enberi r_p = ${nf1.format(fb.rp / fb.body.R)} R`, X(per[0]) + 10, Y(per[1]) + 16);
@@ -112,25 +113,25 @@ export async function mountGravityAssist(host, options = {}) {
     const pin = proj(path[0].r); arrow(ctx, X(pin[0]), Y(pin[1]), X(pin[0] + L), Y(pin[1]), P.data1, 'v∞_in');
     const pout = proj(path[path.length - 1].r); arrow(ctx, X(pout[0]), Y(pout[1]), X(pout[0] + so[0] * L), Y(pout[1] + so[1] * L), P.data1, 'v∞_out');
     /* araç */
-    const c = proj(path[n].r); ctx.fillStyle = P.accent; ctx.beginPath(); ctx.arc(X(c[0]), Y(c[1]), 5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = P.canvas; ctx.lineWidth = 1.5; ctx.stroke();
+    const c = proj(path[n].r); glow(ctx, X(c[0]), Y(c[1]), 18, P.accent, .55); ctx.fillStyle = P.accent; ctx.beginPath(); ctx.arc(X(c[0]), Y(c[1]), 5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = P.canvas; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.fillStyle = P.ink; ctx.font = '600 11px ui-monospace, monospace'; ctx.fillText(`araç: r = ${nf0.format(path[n].dist)} km · v_rel = ${nf2.format(path[n].speed)} km/s · t = ${timeline.t >= 0 ? '+' : '−'}${nf1.format(Math.abs(timeline.t) / 3600)} sa`, 14, Hh - 30);
     ctx.fillStyle = P.muted; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText(`|v∞| korunur: ${nf2.format(fb.vinf)} km/s giriş = ${nf2.format(Math.hypot(...fb.vinfOut))} km/s çıkış · e = 1 + r_p v∞²/μ · δ = 2 asin(1/e) · b = r_p √(1 + 2μ/(r_p v∞²))`, 14, Hh - 12);
   }
   /* B) heliosantrik */
   function drawHelio() {
     const ctx = cvH.getContext('2d'); const [W, Hh] = sz.helio; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = P.canvas; ctx.fillRect(0, 0, W, Hh);
+    backdrop(ctx, W, Hh, { canvas: P.canvas }); starfield(ctx, W, Hh, { seed: 21, n: 140, alpha: .5 });
     const ap = fb.body.a; const ra = Math.min(12 * AU, Math.max(ap * 1.25, fb.before.e < 1 ? fb.before.ra : ap * 1.25, fb.after.e < 1 ? fb.after.ra : ap * 2.2));
     const sc = Math.min(W, Hh) / 2 / ra * .9, cx = W * .38, cy = Hh / 2, X = v => cx + v * sc, Y = v => cy - v * sc;
     ctx.fillStyle = P.muted; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText('HELİOSANTRİK çerçeve: önce (mavi) / sonra (altın) yörüngeler; gezegen dairesel', 14, 18);
     ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(X(0), Y(0), ap * sc, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = '#ffd27a'; ctx.beginPath(); ctx.arc(X(0), Y(0), 5, 0, Math.PI * 2); ctx.fill();
+    sun(ctx, X(0), Y(0), 7, { corona: 5 });
     const drawOrb = (o, color) => { ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.beginPath(); let first = true; for (const p of o.pts) { const x = X(p[0]), y = Y(p[1]); if (Math.abs(x - cx) > W * 3 || Math.abs(y - cy) > Hh * 3) { first = true; continue; } first ? ctx.moveTo(x, y) : ctx.lineTo(x, y); first = false; } ctx.stroke(); };
     drawOrb(orbBefore, 'rgba(143,184,221,.8)'); drawOrb(orbAfter, 'rgba(217,184,119,.9)');
     /* gezegen ve heliosantrik yama yolu */
     const n = curIndex(); const hp = hpath[n];
-    ctx.fillStyle = P.data2; ctx.beginPath(); ctx.arc(X(hp.planet[0]), Y(hp.planet[1]), 4, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = P.accent; ctx.beginPath(); ctx.arc(X(hp.r[0]), Y(hp.r[1]), 3.5, 0, Math.PI * 2); ctx.fill();
+    planet(ctx, X(hp.planet[0]), Y(hp.planet[1]), 6.5, { ...bodyLook(cfg.body), sunDir: [X(0) - X(hp.planet[0]), Y(0) - Y(hp.planet[1])] });
+    glow(ctx, X(hp.r[0]), Y(hp.r[1]), 12, P.accent, .5); ctx.fillStyle = P.accent; ctx.beginPath(); ctx.arc(X(hp.r[0]), Y(hp.r[1]), 3.5, 0, Math.PI * 2); ctx.fill();
     /* hız üçgenleri (sağ üst): V_p + v∞_in = V_in ; V_p + v∞_out = V_out */
     const ox = W * .74, oy = Hh * .68, ks = Math.min(W * .3, Hh * .42) / Math.max(Math.hypot(...fb.Vin), Math.hypot(...fb.Vout), fb.vinf + Math.hypot(...fb.Vp));
     const V = v => [ox + v[0] * ks, oy - v[1] * ks];
@@ -146,12 +147,12 @@ export async function mountGravityAssist(host, options = {}) {
   /* C) B-düzlemi */
   function drawBplane() {
     const ctx = cvB.getContext('2d'); const [W, Hh] = sz.bp; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = P.canvas; ctx.fillRect(0, 0, W, Hh);
+    backdrop(ctx, W, Hh, { canvas: P.canvas }); starfield(ctx, W, Hh, { seed: 21, n: 140, alpha: .5 });
     const ext = Math.max(fb.b, fb.bImpact) * 1.35, sc = Math.min(W, Hh) / 2 / ext * .9, cx = W / 2, cy = Hh / 2;
     ctx.fillStyle = P.muted; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText('B-DÜZLEMİ (S boyunca bakış): T̂ →, R̂ ↓', 12, 16);
     ctx.strokeStyle = P.rule; ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.moveTo(cx, 0); ctx.lineTo(cx, Hh); ctx.stroke();
-    ctx.fillStyle = 'rgba(215,143,108,.18)'; ctx.beginPath(); ctx.arc(cx, cy, fb.bImpact * sc, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = P.data2; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = '#c9c2b4'; ctx.beginPath(); ctx.arc(cx, cy, Math.max(3, fb.body.R * sc), 0, Math.PI * 2); ctx.fill();
+    { const gI = ctx.createRadialGradient(cx, cy, 0, cx, cy, fb.bImpact * sc); gI.addColorStop(0, 'rgba(215,143,108,.34)'); gI.addColorStop(1, 'rgba(215,143,108,.07)'); ctx.fillStyle = gI; ctx.beginPath(); ctx.arc(cx, cy, fb.bImpact * sc, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = P.data2; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]); }
+    planet(ctx, cx, cy, Math.max(4, fb.body.R * sc), { ...bodyLook(cfg.body), sunDir: [-1, -.4] });
     ctx.fillStyle = P.data2; ctx.font = '10px Inter, sans-serif'; ctx.fillText(`çarpma dairesi b = R√(1+2μ/(Rv∞²)) = ${nf0.format(fb.bImpact)} km`, cx + fb.bImpact * sc * .3, cy + fb.bImpact * sc + 14);
     /* B vektörü: T̂ sağa, R̂ aşağı (klasik) */
     arrow(ctx, cx, cy, cx + fb.BT * sc, cy + fb.BR * sc, P.accent, `B (${nf0.format(fb.BT)}, ${nf0.format(fb.BR)})`, 2);

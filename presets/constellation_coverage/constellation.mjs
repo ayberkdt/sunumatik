@@ -14,6 +14,7 @@
    Sahne: ECI, X = x, Y = z, Z = −y; 1 birim = R_E. */
 
 import * as THREE from 'three';
+import { atmosphereShell, sunGlow } from '../core/lab-three.mjs';
 import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
 import { Line2 } from '../moon_advanced/vendor/lines/Line2.js';
 import { LineGeometry } from '../moon_advanced/vendor/lines/LineGeometry.js';
@@ -36,7 +37,7 @@ export async function mountConstellation(host, options = {}) {
     <style>
       .cons{position:relative;margin:0;width:100%;height:100%;overflow:hidden;display:grid;grid-template-columns:minmax(0,12fr) minmax(0,8fr);
         background:var(--color-canvas,#0b0c10);font-family:var(--font-body,'Inter','Segoe UI',system-ui,sans-serif);color:var(--color-ink,#e9e4d8);}
-      .cons__3d{position:relative;min-width:0;} .cons__3d canvas{display:block;width:100%;height:100%;}
+      .cons__3d{position:relative;min-width:0;min-height:0;} .cons__3d canvas{position:absolute;inset:0;display:block;width:100%;height:100%;}
       .cons__side{min-width:0;border-left:1px solid var(--color-rule,#3a3c42);display:flex;flex-direction:column;}
       .cons__map{position:relative;} .cons__map canvas{display:block;width:100%;}
       .cons__stats{padding:12px 16px;font-size:12px;line-height:1.5;color:var(--color-muted,#9a938a);overflow:auto;}
@@ -92,6 +93,7 @@ export async function mountConstellation(host, options = {}) {
     try { const day = await loader.loadAsync(url('../earth_advanced/textures/earth_atmos_2048.jpg')); day.colorSpace = THREE.SRGBColorSpace; day.anisotropy = 8; dayImage = day.image;
       earth.add(new THREE.Mesh(new THREE.SphereGeometry(1, 128, 96), new THREE.MeshPhongMaterial({ map: day, specular: new THREE.Color('#2a3138'), shininess: 10 }))); }
     catch (error) { console.warn('constellation: doku yok —', error.message); earth.add(new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshStandardMaterial({ color: '#274668', roughness: .85 }))); } }
+  scene.add(atmosphereShell(THREE, 1, '#6fb4ff', 1.4)); sunGlow(THREE, scene, sunDir, { dist: 300, size: 46 });
   /* kapsama boyaması: CanvasTexture, Dünya'nın çocuğu (ECEF ızgarası) */
   const NLON = 256, NLAT = 128;
   const covCanvas = document.createElement('canvas'); covCanvas.width = NLON; covCanvas.height = NLAT;

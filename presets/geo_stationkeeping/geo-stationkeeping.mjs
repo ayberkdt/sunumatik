@@ -7,7 +7,7 @@
    API: const gk = await mountGeoSk(host, { lonDeg, years, m0 }); gk.set({...}) · gk.model · gk.dispose() */
 
 import { eastAccel, lonAccel, dvEastWestPerYear, equilibria, librationPeriodYears, driftTrajectory, northSouth, srpEccentricity, budget, COEFF, V_GEO } from './geo-sk-model.mjs';
-import { palette, backdrop, polyline, marker, label, title, tag, arrow, Entrance, reveal, staticMode, rgba } from '../core/lab-scene.mjs';
+import { palette, backdrop, polyline, marker, label, title, tag, arrow, Entrance, reveal, staticMode, rgba, starfield, planet, glow, band } from '../core/lab-scene.mjs';
 
 export async function mountGeoSk(host, options = {}) {
   if (!host) throw new Error('mountGeoSk bir kap ister');
@@ -69,8 +69,8 @@ export async function mountGeoSk(host, options = {}) {
     ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.fillStyle = P.muted; ctx.font = '9.5px ui-monospace, monospace'; ctx.textAlign = 'center'; for (let lon = -180; lon <= 180; lon += 30) { ctx.beginPath(); ctx.moveTo(X(lon), pad.t); ctx.lineTo(X(lon), pad.t + ph); ctx.stroke(); ctx.fillText(`${Math.abs(lon)}${lon < 0 ? 'B' : lon > 0 ? 'D' : ''}`, X(lon), Hh - 6); }
     ctx.textAlign = 'right'; for (let q = 0; q <= 4; q++) ctx.fillText(nf2.format(dvMax * q / 4), pad.l - 4, Ydv(dvMax * q / 4) + 3); ctx.textAlign = 'left';
     ctx.strokeStyle = 'rgba(143,184,221,.3)'; ctx.beginPath(); ctx.moveTo(pad.l, Yla(0)); ctx.lineTo(pad.l + pw, Yla(0)); ctx.stroke();
-    const pC = entrance.progress('curves'); polyline(ctx, la.map((v, k) => [X(-180 + 360 * k / (n - 1)), Yla(v)]), { progress: pC, color: P.data1, width: 1.2 }); polyline(ctx, dv.map((v, k) => [X(-180 + 360 * k / (n - 1)), Ydv(v)]), { progress: pC, color: P.ink, width: 1.7 });
-    for (const e of eq) { ctx.fillStyle = e.stable ? '#8fd39a' : P.data2; ctx.strokeStyle = ctx.fillStyle; ctx.beginPath(); ctx.arc(X(e.lonDeg), Yla(0), 5, 0, Math.PI * 2); e.stable ? ctx.fill() : ctx.stroke(); ctx.font = '600 10px Inter, sans-serif'; ctx.fillText(`${nf1.format(Math.abs(e.lonDeg))}°${e.lonDeg >= 0 ? 'D' : 'B'} ${e.stable ? 'kararlı' : 'kararsız'}`, X(e.lonDeg) + 7, Yla(0) - 8); }
+    const pC = entrance.progress('curves'); band(ctx, dv.map((v, k) => [X(-180 + 360 * k / (n - 1)), Ydv(v)]), [[X(-180), Ydv(0)], [X(180), Ydv(0)]], P.ink, .06 * pC); polyline(ctx, la.map((v, k) => [X(-180 + 360 * k / (n - 1)), Yla(v)]), { progress: pC, color: P.data1, width: 1.2 }); polyline(ctx, dv.map((v, k) => [X(-180 + 360 * k / (n - 1)), Ydv(v)]), { progress: pC, color: P.ink, width: 1.7 });
+    for (const e of eq) { glow(ctx, X(e.lonDeg), Yla(0), 16, e.stable ? '#8fd39a' : P.data2, .5); ctx.fillStyle = e.stable ? '#8fd39a' : P.data2; ctx.strokeStyle = ctx.fillStyle; ctx.beginPath(); ctx.arc(X(e.lonDeg), Yla(0), 5, 0, Math.PI * 2); e.stable ? ctx.fill() : ctx.stroke(); ctx.font = '600 10px Inter, sans-serif'; ctx.fillText(`${nf1.format(Math.abs(e.lonDeg))}°${e.lonDeg >= 0 ? 'D' : 'B'} ${e.stable ? 'kararlı' : 'kararsız'}`, X(e.lonDeg) + 7, Yla(0) - 8); }
     const x = X(cfg.lonDeg); ctx.strokeStyle = P.accent; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + ph); ctx.stroke(); ctx.fillStyle = P.accent; ctx.beginPath(); ctx.arc(x, Ydv(dvEastWestPerYear(cfg.lonDeg)), 4.5, 0, Math.PI * 2); ctx.fill();
     const dir = lonAccel(cfg.lonDeg * Math.PI / 180) > 0 ? 1 : -1; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText(`istasyon ${nf1.format(Math.abs(cfg.lonDeg))}°${cfg.lonDeg >= 0 ? 'D' : 'B'} → ${dir > 0 ? 'doğuya' : 'batıya'} sürüklenir · ${nf2.format(M.ewPerYear)} m/s/yıl`, x + (dir > 0 ? 8 : -8), pad.t + 28); if (dir < 0) { ctx.textAlign = 'right'; ctx.fillText('', x, 0); ctx.textAlign = 'left'; }
   }
@@ -80,6 +80,13 @@ export async function mountGeoSk(host, options = {}) {
     ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.fillStyle = P.muted; ctx.font = '9.5px ui-monospace, monospace'; ctx.textAlign = 'right'; for (let q = 0; q <= 3; q++) { const v = lo + (hi - lo) * q / 3; ctx.beginPath(); ctx.moveTo(pad.l, Y(v)); ctx.lineTo(pad.l + pw, Y(v)); ctx.stroke(); ctx.fillText(`${nf0.format(v)}°`, pad.l - 4, Y(v) + 3); } ctx.textAlign = 'center'; for (let y = 0; y <= T / 31557600; y += 2) ctx.fillText(`${y} yıl`, X(y * 31557600), Hh - 6); ctx.textAlign = 'left';
     for (const e of eq) if (e.lonDeg > lo && e.lonDeg < hi) { ctx.strokeStyle = e.stable ? 'rgba(143,211,154,.5)' : 'rgba(215,143,108,.5)'; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(pad.l, Y(e.lonDeg)); ctx.lineTo(pad.l + pw, Y(e.lonDeg)); ctx.stroke(); ctx.setLineDash([]); }
     polyline(ctx, drift.map(d => [X(d.t), Y(d.lonDeg)]), { progress: entrance.progress('curves'), color: P.accent, width: 1.6 });
+    /* kutuptan bakış: Dünya + GEO halkası, denge noktaları ve istasyonun anlık boylamı (sürüklenme izini okutur) */
+    { const R0 = Math.min(ph * .42, 90), cx = pad.l + pw - R0 - 16, cy = pad.t + ph / 2 + 4; if (R0 > 34) { ctx.save(); ctx.globalAlpha = .92; const gB = ctx.createRadialGradient(cx, cy, 0, cx, cy, R0 * 1.3); gB.addColorStop(0, 'rgba(0,0,0,.6)'); gB.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = gB; ctx.beginPath(); ctx.arc(cx, cy, R0 * 1.3, 0, Math.PI * 2); ctx.fill(); ctx.restore(); starfield(ctx, W, Hh, { seed: 8, n: 0 });
+      const ang = lon => (-lon - 90) * Math.PI / 180, PT = (lon, r) => [cx + r * Math.cos(ang(lon)), cy + r * Math.sin(ang(lon))];
+      ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(cx, cy, R0, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+      planet(ctx, cx, cy, R0 * .36, { color: '#3d6fa8', sunDir: [1, -.2], atmosphere: '#6fb4ff' });
+      for (const e of eq) { const [ex, ey] = PT(e.lonDeg, R0); glow(ctx, ex, ey, 10, e.stable ? '#8fd39a' : P.data2, .5); ctx.fillStyle = e.stable ? '#8fd39a' : P.data2; ctx.strokeStyle = ctx.fillStyle; ctx.beginPath(); ctx.arc(ex, ey, 3, 0, Math.PI * 2); e.stable ? ctx.fill() : ctx.stroke(); }
+      const dNow = drift[Math.floor((drift.length - 1) * entrance.progress('curves'))], [sx, sy] = PT(dNow.lonDeg, R0); glow(ctx, sx, sy, 12, P.accent, .6); marker(ctx, sx, sy, 3.5, P.accent, { ringAlpha: .5 }); label(ctx, 'kutuptan · GEO halkası', cx, cy + R0 + 12, P, { align: 'center', mono: false, size: 9.5 }); } }
   }
   function drawInc() {
     const f = frame(plots.inc, `eğiklik vektörü (i cosΩ, i sinΩ) [°] — 1 yıl Ay + Güneş (RK4): Δi ${nf3.format(ns.diPerYear)}°/yıl → ΔV_KG ${nf1.format(ns.dvPerYear)} m/s/yıl`), { ctx, pad, pw, ph, W, Hh } = f;
@@ -87,7 +94,7 @@ export async function mountGeoSk(host, options = {}) {
     ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.moveTo(pad.l, cy); ctx.lineTo(pad.l + pw, cy); ctx.moveTo(cx, pad.t); ctx.lineTo(cx, pad.t + ph); ctx.stroke();
     ctx.strokeStyle = 'rgba(255,255,255,.1)'; for (const r of [.25, .5, .75, 1]) { ctx.beginPath(); ctx.arc(cx, cy, r * sc, 0, Math.PI * 2); ctx.stroke(); ctx.fillStyle = P.muted; ctx.font = '9px ui-monospace, monospace'; ctx.fillText(`${r}°`, X(r) + 2, cy - 2); }
     polyline(ctx, tr.map(p => [X(p.ix), Y(p.iy)]), { progress: entrance.progress('curves'), color: P.data1, width: 1.6 });
-    const l = tr[tr.length - 1]; ctx.fillStyle = P.accent; ctx.beginPath(); ctx.arc(X(l.ix), Y(l.iy), 4, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = P.muted; ctx.font = '10px Inter, sans-serif'; ctx.fillText('sürüklenme yönü ≈ ekliptik kutbuna (Ω ≈ 90°); tutma: yılda Δi kadar ters düğüm manevrası', pad.l, Hh - 6);
+    const l = tr[tr.length - 1]; glow(ctx, X(l.ix), Y(l.iy), 14, P.accent, .55); ctx.fillStyle = P.accent; ctx.beginPath(); ctx.arc(X(l.ix), Y(l.iy), 4, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = P.muted; ctx.font = '10px Inter, sans-serif'; ctx.fillText('sürüklenme yönü ≈ ekliptik kutbuna (Ω ≈ 90°); tutma: yılda Δi kadar ters düğüm manevrası', pad.l, Hh - 6);
   }
   function drawEcc() {
     const f = frame(plots.ecc, `eksantriklik vektörü (e cos ϖ, e sin ϖ) — SRP, A/m 0,04, 1 yıl: e_max ${srp.eMax.toExponential(2)} (doğal çember; kontrol DB manevralarıyla birleştirilir)`), { ctx, pad, pw, ph, Hh } = f;

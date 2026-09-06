@@ -31,7 +31,7 @@ export async function mountHalo(host, options = {}) {
     <style>
       .hm{position:relative;margin:0;width:100%;height:100%;overflow:hidden;display:grid;grid-template-columns:minmax(0,12fr) minmax(0,8fr);
         background:var(--color-canvas,#0b0c10);font-family:var(--font-body,'Inter','Segoe UI',system-ui,sans-serif);color:var(--color-ink,#e9e4d8);}
-      .hm__3d{position:relative;min-width:0;} .hm__3d canvas{display:block;width:100%;height:100%;}
+      .hm__3d{position:relative;min-width:0;min-height:0;} .hm__3d canvas{position:absolute;inset:0;display:block;width:100%;height:100%;}
       .hm__labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
       .hm__label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11px;letter-spacing:.06em;color:var(--color-muted,#9a938a);text-shadow:0 1px 4px rgba(0,0,0,.9);}
       .hm__label.pt{color:var(--color-accent,#d9b877);font-weight:600;letter-spacing:.1em;} .hm__label.body{color:var(--color-ink,#e9e4d8);font-weight:600;}

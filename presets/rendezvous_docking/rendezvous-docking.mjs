@@ -16,6 +16,7 @@
    1 sahne birimi = 100 m. Araç ölçekleri görünürlük için abartılır (HUD notunda ilan). */
 
 import * as THREE from 'three';
+import { sunGlow, glowSprite } from '../core/lab-three.mjs';
 import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
 import { Line2 } from '../moon_advanced/vendor/lines/Line2.js';
 import { LineGeometry } from '../moon_advanced/vendor/lines/LineGeometry.js';
@@ -112,7 +113,7 @@ export async function mountRendezvous(host, options = {}) {
   scene.background = new THREE.Color(tok('--color-canvas', '#07080c'));
   const camera = new THREE.PerspectiveCamera(40, 1, .05, 400000);
   const sunDir = new THREE.Vector3(.75, .3, .55).normalize();   // yandan: Dünya'nın görünen üst yüzü sıyırma ışığında kalır, sahne fonu okunur
-  const sun = new THREE.DirectionalLight('#fff4e6', 2.3); sun.position.copy(sunDir).multiplyScalar(500); scene.add(sun);
+  const sun = new THREE.DirectionalLight('#fff4e6', 2.3); sun.position.copy(sunDir).multiplyScalar(500); scene.add(sun); sunGlow(THREE, scene, sunDir, { dist: 200000, size: 30000, opacity: .8 });
   scene.add(new THREE.HemisphereLight('#8fa8c4', '#2a2418', .5));
   scene.add(new THREE.AmbientLight('#3a404c', .5));
   {

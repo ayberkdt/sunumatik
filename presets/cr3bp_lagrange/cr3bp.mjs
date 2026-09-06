@@ -12,6 +12,7 @@
    2B tuval, THREE gerekmez. Birimler boyutsuz (uzunluk = birincil–ikincil mesafesi, zaman: 2π = 1 devir). */
 
 import { SYSTEMS, lagrangePoints, omega, jacobi, propagate, lyapunovFamily, zeroVelocityCurves, rotatingToInertial } from '../core/astro-cr3bp.mjs';
+import { backdrop, starfield, planet, sun, glow } from '../core/lab-scene.mjs';
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
@@ -109,7 +110,7 @@ export async function mountCr3bp(host, options = {}) {
     /* Lyapunov aileleri (soluk) + seçili (parlak) */
     for (const L of ['L1', 'L2']) for (const o of families[L]) { ctx.strokeStyle = o === lyap.orbit ? P.accent : 'rgba(143,184,221,.28)'; ctx.lineWidth = o === lyap.orbit ? 1.8 : .8; ctx.beginPath(); o.states.forEach((st, k) => k ? ctx.lineTo(X(st[0]), Y(st[1])) : ctx.moveTo(X(st[0]), Y(st[1]))); ctx.stroke(); }
     /* cisimler */
-    const body = (x, rKm, color, label) => { const r = Math.max(4, rKm / sys.L * s); ctx.fillStyle = color; ctx.beginPath(); ctx.arc(X(x), Y(0), r, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = P.ink; ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(label, X(x), Y(0) + r + 14); };
+    const body = (x, rKm, color, label) => { const r = Math.max(5, rKm / sys.L * s); if (color === '#ffd27a') sun(ctx, X(x), Y(0), r, { corona: 4 }); else planet(ctx, X(x), Y(0), r, { color, sunDir: sysId === 'earthMoon' ? [-1, -.35] : [-(X(x) - X(-mu)), 0], atmosphere: color === '#5f8fc4' ? '#6fb4ff' : null }); ctx.fillStyle = P.ink; ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(label, X(x), Y(0) + r + 14); };
     body(-mu, sys.rPrimary, sysId === 'earthMoon' ? '#5f8fc4' : '#ffd27a', sys.primary); body(1 - mu, sys.rSecondary, sysId === 'earthMoon' ? '#b9b2a6' : '#5f8fc4', sys.secondary);
     /* baricentr + ikincil yörünge çemberi */
     ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(X(0), Y(0), s * (1 - mu) + 0, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
@@ -121,7 +122,7 @@ export async function mountCr3bp(host, options = {}) {
     if (traj) { let n = 0; while (n < traj.times.length - 1 && traj.times[n + 1] <= timeline.t) n++;
       ctx.strokeStyle = 'rgba(233,228,216,.22)'; ctx.lineWidth = 1; ctx.beginPath(); traj.states.forEach((st, k) => k ? ctx.lineTo(X(st[0]), Y(st[1])) : ctx.moveTo(X(st[0]), Y(st[1]))); ctx.stroke();
       ctx.strokeStyle = P.ink; ctx.lineWidth = 1.8; ctx.beginPath(); for (let k = 0; k <= n; k++) { const st = traj.states[k]; k ? ctx.lineTo(X(st[0]), Y(st[1])) : ctx.moveTo(X(st[0]), Y(st[1])); } ctx.stroke();
-      const cur = traj.states[n]; ctx.fillStyle = P.accent; ctx.beginPath(); ctx.arc(X(cur[0]), Y(cur[1]), 4.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = P.canvas; ctx.lineWidth = 1.5; ctx.stroke();
+      const cur = traj.states[n]; glow(ctx, X(cur[0]), Y(cur[1]), 16, P.accent, .55); ctx.fillStyle = P.accent; ctx.beginPath(); ctx.arc(X(cur[0]), Y(cur[1]), 4.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = P.canvas; ctx.lineWidth = 1.5; ctx.stroke();
       const Cn = jacobi(mu, cur);
       H.t.textContent = `${nf3.format(timeline.t)} TU · ${(timeline.t / (2 * Math.PI) * sys.T / 86400).toFixed(1)} gün`; H.C.textContent = nf4.format(Cn); H.dC.textContent = Math.abs(Cn - C0).toExponential(1);
       H.pos.textContent = `(${nf3.format(cur[0])}, ${nf3.format(cur[1])})`; H.v.textContent = nf3.format(Math.hypot(cur[3], cur[4], cur[5])); }
@@ -131,16 +132,15 @@ export async function mountCr3bp(host, options = {}) {
   }
   function drawInertial() {
     const ctx = cvI.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = P.canvas; ctx.fillRect(0, 0, Wi, Hi);
+    backdrop(ctx, Wi, Hi, { canvas: P.canvas }); starfield(ctx, Wi, Hi, { seed: 13, n: 90, alpha: .45 });
     const s2 = Math.min(Wi, Hi) / 2 / 1.7, XI = x => Wi / 2 + x * s2, YI = y => Hi / 2 - y * s2;
     ctx.fillStyle = P.muted; ctx.font = '10.5px Inter, sans-serif'; ctx.textAlign = 'left'; ctx.fillText('EYLEMSİZ (baricentrik) çerçeve: aynı yörünge, θ = t ile geri döndürülmüş', 12, 16);
     ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.arc(XI(0), YI(0), s2 * (1 - mu), 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.arc(XI(0), YI(0), s2 * mu, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
     if (traj) { let n = 0; while (n < traj.times.length - 1 && traj.times[n + 1] <= timeline.t) n++;
       ctx.strokeStyle = P.ink; ctx.lineWidth = 1.4; ctx.beginPath(); for (let k = 0; k <= n; k += 2) { const p = rotatingToInertial(traj.states[k], traj.times[k]); k ? ctx.lineTo(XI(p[0]), YI(p[1])) : ctx.moveTo(XI(p[0]), YI(p[1])); } ctx.stroke();
       const t = timeline.t, sec = [(1 - mu) * Math.cos(t), (1 - mu) * Math.sin(t)], pri = [-mu * Math.cos(t), -mu * Math.sin(t)];
-      ctx.fillStyle = '#5f8fc4'; ctx.beginPath(); ctx.arc(XI(pri[0]), YI(pri[1]), 6, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#b9b2a6'; ctx.beginPath(); ctx.arc(XI(sec[0]), YI(sec[1]), 4, 0, Math.PI * 2); ctx.fill();
-      const cur = rotatingToInertial(traj.states[n], traj.times[n]); ctx.fillStyle = P.accent; ctx.beginPath(); ctx.arc(XI(cur[0]), YI(cur[1]), 4, 0, Math.PI * 2); ctx.fill();
+      if (sysId === 'earthMoon') { planet(ctx, XI(pri[0]), YI(pri[1]), 7, { color: '#5f8fc4', sunDir: [-1, -.35], atmosphere: '#6fb4ff' }); planet(ctx, XI(sec[0]), YI(sec[1]), 4.5, { color: '#b9b2a6', sunDir: [-1, -.35] }); } else { sun(ctx, XI(pri[0]), YI(pri[1]), 7, { corona: 4 }); planet(ctx, XI(sec[0]), YI(sec[1]), 5, { color: '#5f8fc4', sunDir: [XI(pri[0]) - XI(sec[0]), YI(pri[1]) - YI(sec[1])], atmosphere: '#6fb4ff' }); }
+      const cur = rotatingToInertial(traj.states[n], traj.times[n]); glow(ctx, XI(cur[0]), YI(cur[1]), 14, P.accent, .55); ctx.fillStyle = P.accent; ctx.beginPath(); ctx.arc(XI(cur[0]), YI(cur[1]), 4, 0, Math.PI * 2); ctx.fill();
       /* seçili Lyapunov yörüngesi de eylemsizde: (kapalı değil — ikincil ile birlikte döner) */
       if (lyap.orbit) { ctx.strokeStyle = 'rgba(217,184,119,.5)'; ctx.lineWidth = 1; ctx.beginPath(); lyap.orbit.states.forEach((st, k) => { const p = rotatingToInertial(st, lyap.orbit.times[k]); k ? ctx.lineTo(XI(p[0]), YI(p[1])) : ctx.moveTo(XI(p[0]), YI(p[1])); }); ctx.stroke(); }
     }

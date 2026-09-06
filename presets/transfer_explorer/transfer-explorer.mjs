@@ -10,7 +10,7 @@
         tx.set({...}) · tx.solution · tx.sweep · tx.timeline{playing,u,play,pause,scrub} · tx.replay() · tx.dispose() */
 
 import { solveTransfer, hohmann, tofSweep, PRESETS, CENTRAL } from './transfer-model.mjs';
-import { palette, backdrop, polyline, marker, arrow, tag, label, title, comet, Entrance, Tween, reveal, staticMode, rgba } from '../core/lab-scene.mjs';
+import { palette, backdrop, polyline, marker, arrow, tag, label, title, comet, Entrance, Tween, reveal, staticMode, rgba, starfield, planet, sun, glow, colorLine, speed } from '../core/lab-scene.mjs';
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
@@ -84,14 +84,14 @@ export async function mountTransfer(host, options = {}) {
   let dpr = 1;
   function drawGeo() {
     const cv = plots.geo, ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const g = geo.value; backdrop(ctx, W, Hh, { canvas: P.canvas, grid: 44, gridAlpha: .035 * entrance.progress('frame') });
+    const g = geo.value; backdrop(ctx, W, Hh, { canvas: P.canvas, grid: 44, gridAlpha: .035 * entrance.progress('frame') }); starfield(ctx, W, Hh, { seed: 5, n: 150, alpha: .5 * entrance.progress('frame') });
     const r1 = g ? g.r1 : cfg.r1, r2 = g ? g.r2 : cfg.r2;
     let ext = Math.max(r1, r2); if (g) for (let i = 0; i < g.arc.length; i += 3) ext = Math.max(ext, Math.hypot(g.arc[i], g.arc[i + 1])); ext *= 1.12;
     const sc = Math.min(W, Hh) / 2 / ext * .9, cx = W / 2, cy = Hh / 2, X = x => cx + x * sc, Y = y => cy - y * sc;
     const pO = entrance.progress('orbits');
     for (const [r, c] of [[r1, P.data1], [r2, P.data2]]) { ctx.save(); ctx.globalAlpha = .5 * pO; ctx.strokeStyle = c; ctx.lineWidth = 1.1; ctx.beginPath(); ctx.arc(X(0), Y(0), r * sc, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pO); ctx.stroke(); ctx.restore(); }
-    const bodyR = cfg.central === 'sun' ? 8 : Math.max(5, 6378 * sc), bodyC = cfg.central === 'sun' ? '#f0c060' : '#3d6fa8';
-    ctx.save(); ctx.globalAlpha = pO; ctx.fillStyle = bodyC; ctx.beginPath(); ctx.arc(X(0), Y(0), bodyR, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = rgba(bodyC, .35); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(X(0), Y(0), bodyR + 5, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    const bodyR = cfg.central === 'sun' ? 9 : Math.max(5, 6378 * sc);
+    if (cfg.central === 'sun') sun(ctx, X(0), Y(0), bodyR, { alpha: pO, corona: 5 }); else planet(ctx, X(0), Y(0), bodyR, { color: '#3d6fa8', sunDir: [1, .2], atmosphere: '#6fb4ff', alpha: pO });
     label(ctx, CENTRAL[cfg.central].label, X(0) + bodyR + 9, Y(0) + 4, P, { mono: false, size: 11, color: P.muted });
     if (!g) { label(ctx, 'Bu TOF için tek-tur Lambert çözümü yok (Δθ = 180° tekilliği ya da çok kısa TOF).', 16, Hh / 2, P, { mono: false, size: 12.5, color: P.data2 }); return; }
     const pts = []; for (let i = 0; i < g.arc.length; i += 3) pts.push([X(g.arc[i]), Y(g.arc[i + 1])]);
@@ -100,7 +100,8 @@ export async function mountTransfer(host, options = {}) {
     const ra = Math.max(Math.min(r1, r2) * sc * .35, bodyR + 16);
     ctx.save(); ctx.globalAlpha = pArc; ctx.strokeStyle = P.accent; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(X(0), Y(0), ra, 0, -g.dtheta * pArc, true); ctx.stroke(); ctx.restore();
     const lbA = g.dtheta / 2; if (pArc > .6) tag(ctx, `Δθ = ${nf1.format(g.dtheta * 180 / Math.PI)}°`, X(0) + (ra + 10) * Math.cos(lbA), Y(0) - (ra + 10) * Math.sin(lbA), P, { color: P.accent, mono: true, anchor: Math.cos(lbA) < 0 ? 'right' : 'left' });
-    polyline(ctx, pts, { progress: pArc, color: P.accent, width: 2.3 });
+    { /* yay hızla renklenir (vis-viva): periapsiste beyaz-sıcak, apoapsiste sönük */ const mu = CENTRAL[cfg.central].mu, a = sol ? sol.a : null, vs = []; for (let i = 0; i < g.arc.length; i += 3) { const r = Math.hypot(g.arc[i], g.arc[i + 1]); vs.push(a ? Math.sqrt(Math.max(0, mu * (2 / r - 1 / a))) : 1); } const vLo = Math.min(...vs), vHi = Math.max(...vs);
+      polyline(ctx, pts, { progress: pArc, color: P.accent, width: 5, alpha: .16 }); colorLine(ctx, pts, (u, i) => speed((vs[i] - vLo) / Math.max(1e-9, vHi - vLo)), { progress: pArc, width: 2.4 }); }
     if (pV > 0) {
       const kv = Math.min(W, Hh) * .14 / Math.max(Math.hypot(...g.v1), Math.hypot(...g.Vc1), 1e-9), a = pV;
       const A = (x0, y0, v, k, color, text, w = 1.6) => { const x1 = x0 + v[0] * k * a, y1 = y0 - v[1] * k * a; arrow(ctx, x0, y0, x1, y1, color, { width: w, alpha: a }); if (text && pV > .7) label(ctx, text, x1 + 6, y1 - 4, P, { size: 10.5, color }); };
@@ -112,7 +113,7 @@ export async function mountTransfer(host, options = {}) {
     marker(ctx, X(g.R1[0]), Y(g.R1[1]), 4.5, P.data1, { alpha: pO }); marker(ctx, X(g.R2[0]), Y(g.R2[1]), 4.5, P.data2, { alpha: pO });
     if (pO > .8) { label(ctx, 'r1 · kalkış', X(g.R1[0]) + 8, Y(g.R1[1]) + 16, P, { mono: false, size: 11 }); label(ctx, 'r2 · varış', X(g.R2[0]) + 8, Y(g.R2[1]) + 16, P, { mono: false, size: 11 }); }
     const pC = entrance.progress('craft');
-    if (pC > 0 && pArc >= 1) { const head = timeline.u * (pts.length - 1); comet(ctx, pts, head, { len: 34, color: P.ink, width: 2.4 }); const i = Math.floor(head), f = head - i, p0 = pts[Math.min(i, pts.length - 1)], p1 = pts[Math.min(i + 1, pts.length - 1)]; const hx = p0[0] + (p1[0] - p0[0]) * f, hy = p0[1] + (p1[1] - p0[1]) * f; marker(ctx, hx, hy, 3.5 * pC, P.ink, { ringAlpha: .5, alpha: pC }); }
+    if (pC > 0 && pArc >= 1) { const head = timeline.u * (pts.length - 1); comet(ctx, pts, head, { len: 34, color: P.ink, width: 2.4 }); const i = Math.floor(head), f = head - i, p0 = pts[Math.min(i, pts.length - 1)], p1 = pts[Math.min(i + 1, pts.length - 1)]; const hx = p0[0] + (p1[0] - p0[0]) * f, hy = p0[1] + (p1[1] - p0[1]) * f; glow(ctx, hx, hy, 14, P.accent, .5 * pC); marker(ctx, hx, hy, 3.5 * pC, P.ink, { ringAlpha: .5, alpha: pC }); }
   }
   function drawSweep() {
     const cv = plots.sweep, ctx = cv.getContext('2d'), W2 = cv.clientWidth, H2 = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);

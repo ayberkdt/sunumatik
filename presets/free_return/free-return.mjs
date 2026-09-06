@@ -7,7 +7,7 @@
    API: const fr = await mountFreeReturn(host, { dvKmS, theta0, h0 }); fr.set({...}) · fr.sim · fr.scan · fr.dispose() */
 
 import { simulate, scan, SYS, MU, L, R_EARTH, R_MOON, TU } from './free-return-model.mjs';
-import { palette, backdrop, polyline, marker, label, title, tag, comet, Entrance, reveal, staticMode, rgba } from '../core/lab-scene.mjs';
+import { palette, backdrop, polyline, marker, label, title, tag, comet, Entrance, reveal, staticMode, rgba, starfield, planet, glow } from '../core/lab-scene.mjs';
 
 export async function mountFreeReturn(host, options = {}) {
   if (!host) throw new Error('mountFreeReturn bir kap ister');
@@ -66,30 +66,31 @@ export async function mountFreeReturn(host, options = {}) {
   /* zaman → örnek indeksi (araç konumu) */
   const idxAt = u => { const T = S.times[S.times.length - 1] * u; let lo = 0, hi = S.times.length - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (S.times[m] < T) lo = m + 1; else hi = m; } return lo; };
   function drawRot() {
-    const f = frame(plots.rot, 'dönen çerçeve · Dünya–Ay doğrultusu sabit', 40), { ctx, W, Hh } = f; const pB = entrance.progress('bodies'), pP = entrance.progress('path'), pM = entrance.progress('marks');
+    const f = frame(plots.rot, 'dönen çerçeve · Dünya–Ay doğrultusu sabit · Güneş çerçeveyle döner', 40), { ctx, W, Hh } = f; starfield(ctx, W, Hh, { seed: 11, n: 120, alpha: .45 }); const pB = entrance.progress('bodies'), pP = entrance.progress('path'), pM = entrance.progress('marks');
     let xmin = -MU - .05, xmax = 1 - MU + .05, ymin = -.15, ymax = .15; for (const st of S.states) { xmin = Math.min(xmin, st[0]); xmax = Math.max(xmax, st[0]); ymin = Math.min(ymin, st[1]); ymax = Math.max(ymax, st[1]); }
     const mx = (xmin + xmax) / 2, my = (ymin + ymax) / 2, sc = Math.min((W - 40) / (xmax - xmin), (Hh - 60) / (ymax - ymin)), X = x => W / 2 + (x - mx) * sc, Y = y => Hh / 2 + 10 - (y - my) * sc;
     ctx.save(); ctx.globalAlpha = pB; ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.setLineDash([2, 6]); ctx.beginPath(); ctx.arc(X(-MU), Y(0), 1 * sc, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle = '#3d6fa8'; ctx.beginPath(); ctx.arc(X(-MU), Y(0), Math.max(4, R_EARTH * sc), 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = rgba('#3d6fa8', .4); ctx.beginPath(); ctx.arc(X(-MU), Y(0), Math.max(4, R_EARTH * sc) + 5, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = '#a9a49b'; ctx.beginPath(); ctx.arc(X(1 - MU), Y(0), Math.max(3, R_MOON * sc), 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    ctx.restore();
+    { /* Güneş yönü dönen çerçevede −1 rad/TU döner (Ay ayı boyunca terminatör kayar) */ const tS = S.times[idxAt(timeline.u)], a = 1.2 - tS, sd = [Math.cos(a), -Math.sin(a)]; planet(ctx, X(-MU), Y(0), Math.max(6, R_EARTH * sc), { color: '#3d6fa8', sunDir: sd, atmosphere: '#6fb4ff', alpha: pB }); planet(ctx, X(1 - MU), Y(0), Math.max(4.5, R_MOON * sc), { color: '#a9a49b', sunDir: sd, alpha: pB }); }
     const pts = S.states.map(s => [X(s[0]), Y(s[1])]); polyline(ctx, pts, { progress: pP, color: P.accent, width: 1.8 });
     if (pM > 0 && S.perilune) { const s = S.states[S.perilune.i]; marker(ctx, X(s[0]), Y(s[1]), 4 * pM, P.data2, { alpha: pM }); if (pM > .8) tag(ctx, `perilune ${nf0.format(S.perilune.altKm)} km`, X(s[0]) + (X(s[0]) > W * .6 ? -10 : 10), Y(s[1]) - 14, P, { color: P.data2, mono: true, anchor: X(s[0]) > W * .6 ? 'right' : 'left' }); }
     if (pM > 0 && S.returnPerigee) { const s = S.states[S.returnPerigee.i]; marker(ctx, X(s[0]), Y(s[1]), 5 * pM, P.green, { hollow: true, alpha: pM }); }
     label(ctx, 'Dünya', X(-MU) + 10, Y(0) + 16, P, { mono: false, size: 11, color: P.muted }); label(ctx, 'Ay', X(1 - MU) + 8, Y(0) + 16, P, { mono: false, size: 11, color: P.muted });
-    const pC = entrance.progress('craft'); if (pC > 0) { const k = idxAt(timeline.u); comet(ctx, pts, k, { len: 60, color: P.ink, width: 2.2 }); marker(ctx, pts[k][0], pts[k][1], 3.5 * pC, P.ink, { ringAlpha: .5, alpha: pC }); }
+    const pC = entrance.progress('craft'); if (pC > 0) { const k = idxAt(timeline.u); comet(ctx, pts, k, { len: 60, color: P.ink, width: 2.2 }); glow(ctx, pts[k][0], pts[k][1], 12, P.accent, .5 * pC); marker(ctx, pts[k][0], pts[k][1], 3.5 * pC, P.ink, { ringAlpha: .5, alpha: pC }); }
   }
   function drawIn() {
-    const f = frame(plots.in, 'eylemsiz çerçeve · Dünya merkezli, Ay yörüngesinde ilerler', 40), { ctx, W, Hh } = f; const pB = entrance.progress('bodies'), pP = entrance.progress('path');
+    const f = frame(plots.in, 'eylemsiz çerçeve · Dünya merkezli, Ay yörüngesinde ilerler', 40), { ctx, W, Hh } = f; starfield(ctx, W, Hh, { seed: 12, n: 120, alpha: .45 }); const pB = entrance.progress('bodies'), pP = entrance.progress('path');
     const pts = S.inertial.map((p, i) => { const s = S.states[i]; const t = S.times[i]; const ex = -MU * Math.cos(t), ey = -MU * Math.sin(t); return [p[0] - ex, p[1] - ey]; });   // Dünya-merkezli
     let xmin = -.1, xmax = .1, ymin = -.1, ymax = .1; for (const p of pts) { xmin = Math.min(xmin, p[0]); xmax = Math.max(xmax, p[0]); ymin = Math.min(ymin, p[1]); ymax = Math.max(ymax, p[1]); } const kIdx = idxAt(timeline.u), tM = S.times[kIdx]; for (const t of [0, tM, S.times[S.perilune ? S.perilune.i : 0]]) { xmin = Math.min(xmin, Math.cos(t)); xmax = Math.max(xmax, Math.cos(t)); ymin = Math.min(ymin, Math.sin(t)); ymax = Math.max(ymax, Math.sin(t)); }
     const mx = (xmin + xmax) / 2, my = (ymin + ymax) / 2, sc0 = Math.min((W - 40) / (xmax - xmin), (Hh - 60) / (ymax - ymin)), sc = sc0 / .8, X = x => W / 2 + (x - mx) * sc0, Y = y => Hh / 2 + 10 - (y - my) * sc0;
-    ctx.save(); ctx.globalAlpha = pB; ctx.fillStyle = '#3d6fa8'; ctx.beginPath(); ctx.arc(X(0), Y(0), Math.max(4, R_EARTH * sc * .8), 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.setLineDash([2, 6]); ctx.beginPath(); ctx.arc(X(0), Y(0), sc * .8, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.globalAlpha = pB; ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.setLineDash([2, 6]); ctx.beginPath(); ctx.arc(X(0), Y(0), sc * .8, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    planet(ctx, X(0), Y(0), Math.max(6, R_EARTH * sc * .8), { color: '#3d6fa8', sunDir: [Math.cos(1.2), -Math.sin(1.2)], atmosphere: '#6fb4ff', alpha: pB });
     const spts = pts.map(p => [X(p[0]), Y(p[1])]); polyline(ctx, spts, { progress: pP, color: P.accent, width: 1.6 });
     const moonAt = t => [Math.cos(t), Math.sin(t)]; const k = idxAt(timeline.u), tNow = S.times[k], mNow = moonAt(tNow);
     /* Ay: kalkıştan şimdiye kadar süpürdüğü yay + anlık konum; araç kuyruklu iz */
     ctx.save(); ctx.globalAlpha = pB; ctx.strokeStyle = rgba('#a9a49b', .45); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(0), Y(0), sc * .8, -0, -tNow, true); ctx.stroke(); ctx.restore();
-    marker(ctx, X(mNow[0]), Y(mNow[1]), 5, '#a9a49b', { alpha: pB }); label(ctx, 'Ay', X(mNow[0]) + 8, Y(mNow[1]) + 14, P, { mono: false, size: 11 });
-    if (entrance.progress('craft') > 0) { comet(ctx, spts, k, { len: 60, color: P.ink, width: 2 }); marker(ctx, spts[k][0], spts[k][1], 3.5, P.ink, { ringAlpha: .5 }); }
+    planet(ctx, X(mNow[0]), Y(mNow[1]), Math.max(5, R_MOON * sc * .8), { color: '#a9a49b', sunDir: [Math.cos(1.2), -Math.sin(1.2)], alpha: pB }); label(ctx, 'Ay', X(mNow[0]) + 8, Y(mNow[1]) + 14, P, { mono: false, size: 11 });
+    if (entrance.progress('craft') > 0) { comet(ctx, spts, k, { len: 60, color: P.ink, width: 2 }); glow(ctx, spts[k][0], spts[k][1], 12, P.accent, .5); marker(ctx, spts[k][0], spts[k][1], 3.5, P.ink, { ringAlpha: .5 }); }
     if (S.perilune) { const mp = moonAt(S.times[S.perilune.i]); marker(ctx, X(mp[0]), Y(mp[1]), 4, '#a9a49b', { hollow: true, alpha: pB * .7 }); }
   }
   function drawMap() {

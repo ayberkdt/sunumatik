@@ -11,6 +11,8 @@
    Sahne: ECI (X = x, Y = z, Z = −y); 1 birim = R_E. */
 
 import * as THREE from 'three';
+import { atmosphereShell, glowSprite, sunGlow } from '../core/lab-three.mjs';
+import { backdrop } from '../core/lab-scene.mjs';
 import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
 import { Line2 } from '../moon_advanced/vendor/lines/Line2.js';
 import { LineGeometry } from '../moon_advanced/vendor/lines/LineGeometry.js';
@@ -33,7 +35,7 @@ export async function mountPerturbations(host, options = {}) {
     <style>
       .opert{position:relative;margin:0;width:100%;height:100%;overflow:hidden;display:grid;grid-template-columns:minmax(0,11fr) minmax(0,9fr);
         background:var(--color-canvas,#0b0c10);font-family:var(--font-body,'Inter','Segoe UI',system-ui,sans-serif);color:var(--color-ink,#e9e4d8);}
-      .opert__3d{position:relative;min-width:0;} .opert__3d canvas{display:block;width:100%;height:100%;}
+      .opert__3d{position:relative;min-width:0;min-height:0;} .opert__3d canvas{position:absolute;inset:0;display:block;width:100%;height:100%;}
       .opert__labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
       .opert__label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11px;letter-spacing:.06em;color:var(--color-muted,#9a938a);text-shadow:0 1px 4px rgba(0,0,0,.9);}
       .opert__side{min-width:0;border-left:1px solid var(--color-rule,#3a3c42);display:grid;grid-template-rows:auto repeat(4,minmax(0,1fr));}
@@ -81,13 +83,14 @@ export async function mountPerturbations(host, options = {}) {
   { const loader = new THREE.TextureLoader(); const url = rel => new URL(rel, import.meta.url).href;
     try { const day = await loader.loadAsync(url('../earth_advanced/textures/earth_atmos_2048.jpg')); day.colorSpace = THREE.SRGBColorSpace; earth.add(new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshPhongMaterial({ map: day, specular: new THREE.Color('#2a3138'), shininess: 10 }))); }
     catch (e) { earth.add(new THREE.Mesh(new THREE.SphereGeometry(1, 64, 48), new THREE.MeshStandardMaterial({ color: '#274668', roughness: .85 }))); } }
+  scene.add(atmosphereShell(THREE, 1, '#6fb4ff', 1.5)); sunGlow(THREE, scene, new THREE.Vector3(60, 30, 40), { dist: 300, size: 46 });
   const mats = []; const lineMat = (color, width, opacity) => { const m = new LineMaterial({ color: new THREE.Color(color).getHex(), linewidth: width, transparent: true, opacity, depthTest: true }); mats.push(m); return m; };
   const mkLine = (pts, mat) => { const g = new LineGeometry(); g.setPositions(pts); return new Line2(g, mat); };
   { const pts = []; for (let k = 0; k <= 128; k++) { const a = k / 128 * Math.PI * 2; pts.push(Math.cos(a) * 1.003, 0, Math.sin(a) * 1.003); } scene.add(mkLine(pts, lineMat(P.muted, 1, .3))); scene.add(mkLine([0, -1.3, 0, 0, 1.3, 0], lineMat(P.muted, 1, .3))); }
   const labels = []; const addLabel = (text, pos, color = P.muted) => { const el = document.createElement('div'); el.className = 'opert__label'; el.textContent = text; el.style.color = color; labelLayer.appendChild(el); labels.push({ el, pos }); return el; };
   addLabel('kutup ekseni', new THREE.Vector3(0, 1.42, 0)); addLabel('ekvator', new THREE.Vector3(1.15, 0, .1));
   const fanGroup = new THREE.Group(); scene.add(fanGroup);
-  const sat = new THREE.Mesh(new THREE.SphereGeometry(.03, 12, 10), new THREE.MeshBasicMaterial({ color: P.accent })); scene.add(sat);
+  const sat = new THREE.Mesh(new THREE.SphereGeometry(.03, 12, 10), new THREE.MeshBasicMaterial({ color: P.accent })); scene.add(sat); { const g = glowSprite(THREE, P.accent, .85); g.scale.setScalar(.26); sat.add(g); }
   let curOrbit = null, curNode = null, node0 = null, orbit0 = null;
   const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.dampingFactor = .08;
 
@@ -119,7 +122,7 @@ export async function mountPerturbations(host, options = {}) {
   let dpr = 1;
   function drawPlot(cv, curves, title, fmt) {
     const ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = P.canvas; ctx.fillRect(0, 0, W, Hh);
+    backdrop(ctx, W, Hh, { canvas: P.canvas });
     const pad = { l: 56, r: 12, t: 18, b: 14 }, pw = W - pad.l - pad.r, ph = Hh - pad.t - pad.b;
     let lo = Infinity, hi = -Infinity; for (const c of curves) for (const v of c.data) { if (Number.isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } } if (hi - lo < 1e-9) { hi += 1e-9 + Math.abs(hi) * 1e-6; lo -= 1e-9; }
     const T = series.t, tEnd = T[T.length - 1];

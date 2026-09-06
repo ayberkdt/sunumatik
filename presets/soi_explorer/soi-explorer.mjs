@@ -38,7 +38,7 @@ export async function mountSoi(host, options = {}) {
   figure.innerHTML = `
     <style>
       .soi{position:relative;margin:0;width:100%;height:100%;overflow:hidden;display:grid;grid-template-columns:minmax(0,12fr) minmax(0,8fr);background:var(--color-canvas,#0b0c10);color:var(--color-ink,#e9e4d8);}
-      .soi__3d{position:relative;min-width:0;} .soi__3d canvas{display:block;width:100%;height:100%;}
+      .soi__3d{position:relative;min-width:0;min-height:0;} .soi__3d canvas{position:absolute;inset:0;display:block;width:100%;height:100%;}
       .soi__labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
       .soi__label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-family:var(--font-body);font-size:11.5px;letter-spacing:.05em;color:var(--color-muted,#9a938a);text-shadow:0 1px 4px rgba(0,0,0,.95);}
       .soi__label.body{color:var(--color-ink,#e9e4d8);font-weight:600;} .soi__label.shell{color:#9fd0d8;font-weight:600;letter-spacing:.1em;text-transform:uppercase;font-size:10.5px;} .soi__label.hand{color:var(--color-accent,#d9b877);font-weight:600;}

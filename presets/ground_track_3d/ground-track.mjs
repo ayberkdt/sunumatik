@@ -19,6 +19,7 @@
    rotation.y = θ0 + ω_e t (ECEF→ECI dönmesi). */
 
 import * as THREE from 'three';
+import { sunGlow, glowSprite } from '../core/lab-three.mjs';
 import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
 import { Line2 } from '../moon_advanced/vendor/lines/Line2.js';
 import { LineGeometry } from '../moon_advanced/vendor/lines/LineGeometry.js';
@@ -49,7 +50,7 @@ export async function mountGroundTrack(host, options = {}) {
     <style>
       .gtrack{position:relative;margin:0;width:100%;height:100%;overflow:hidden;display:grid;grid-template-columns:minmax(0,11fr) minmax(0,9fr);
         background:var(--color-canvas,#0b0c10);font-family:var(--font-body,'Inter','Segoe UI',system-ui,sans-serif);color:var(--color-ink,#e9e4d8);}
-      .gtrack__3d{position:relative;min-width:0;} .gtrack__3d canvas{display:block;width:100%;height:100%;}
+      .gtrack__3d{position:relative;min-width:0;min-height:0;} .gtrack__3d canvas{position:absolute;inset:0;display:block;width:100%;height:100%;}
       .gtrack__map{position:relative;min-width:0;border-left:1px solid var(--color-rule,#3a3c42);display:flex;flex-direction:column;}
       .gtrack__map canvas{display:block;width:100%;flex:0 0 auto;}
       .gtrack__mapinfo{padding:10px 14px;font-size:12px;color:var(--color-muted,#9a938a);line-height:1.5;}
@@ -87,7 +88,7 @@ export async function mountGroundTrack(host, options = {}) {
   const scene = new THREE.Scene(); scene.background = new THREE.Color(tok('--color-canvas', '#07080c'));
   const camera = new THREE.PerspectiveCamera(38, 1, .01, 600);
   const sunDir = new THREE.Vector3(1.6, .6, .9).normalize();
-  const sun = new THREE.DirectionalLight('#fff4e6', 2.2); sun.position.copy(sunDir).multiplyScalar(80); scene.add(sun);
+  const sun = new THREE.DirectionalLight('#fff4e6', 2.2); sun.position.copy(sunDir).multiplyScalar(80); scene.add(sun); sunGlow(THREE, scene, sunDir, { dist: 300, size: 46 });
   scene.add(new THREE.HemisphereLight('#93a7bd', '#1c1e24', .5)); scene.add(new THREE.AmbientLight('#3c4250', .5));
   { const rand = mulberry32(seed), n = reducedMotion ? 700 : 1600, pos = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) { const r = 200 + rand() * 150, th = rand() * TAU, ph = Math.acos(2 * rand() - 1); pos[i * 3] = r * Math.sin(ph) * Math.cos(th); pos[i * 3 + 1] = r * Math.sin(ph) * Math.sin(th); pos[i * 3 + 2] = r * Math.cos(ph); }
@@ -122,7 +123,7 @@ export async function mountGroundTrack(host, options = {}) {
   const nadirLine = mkLine([0, 0, 0, 0, 0, 0], mats.nadir); scene.add(nadirLine);
   const subPoint = new THREE.Mesh(new THREE.SphereGeometry(.012, 16, 12), new THREE.MeshBasicMaterial({ color: palette.accent })); scene.add(subPoint);
   const buildCubesat = await loadCraft();
-  const sat = buildCubesat({ units: 3 }); scene.add(sat);
+  const sat = buildCubesat({ units: 3 }); scene.add(sat); { const g = glowSprite(THREE, palette.accent, .7); g.scale.setScalar(.12); sat.add(g); }
 
   /* -------- durum */
   let el, revs, j2, track = [], trackTimes = [], theta0 = options.theta0 ?? .6, info = {};

@@ -8,7 +8,7 @@
    API: const ed = await mountDispersion(host, { scenario, n, seed, sigmas }); ed.set({...}) · ed.result · ed.dispose() */
 
 import { runDispersion, SCENARIOS, PARAMS } from './dispersion-model.mjs';
-import { palette, backdrop, polyline, marker, label, title, tag, arrow, Entrance, reveal, staticMode, rgba } from '../core/lab-scene.mjs';
+import { palette, backdrop, polyline, marker, label, title, tag, arrow, Entrance, reveal, staticMode, rgba, starfield, glow, band } from '../core/lab-scene.mjs';
 
 export async function mountDispersion(host, options = {}) {
   if (!host) throw new Error('mountDispersion bir kap ister');
@@ -67,11 +67,17 @@ export async function mountDispersion(host, options = {}) {
   function drawFan() {
     const f = frame(plots.fan, ''), { ctx, pad, pw, ph, Hh } = f; const pF = entrance.progress('fan'), pM = entrance.progress('marks'); const trajs = R.runs.filter(r => r.samples); const sMax = Math.max(R.nominal.s, ...R.runs.map(r => r.s)) * 1.05, hMax = 125;
     const X = s => pad.l + s / sMax * pw, Y = h => pad.t + ph - h / hMax * ph;
+    /* gökyüzü: uzaydan (üst) atmosfere (alt) gradyan; katmanlar; Kármán çizgisi; yer */
+    { ctx.save(); ctx.beginPath(); ctx.rect(pad.l, pad.t, pw, ph); ctx.clip(); const gS = ctx.createLinearGradient(0, Y(hMax), 0, Y(0)); gS.addColorStop(0, 'rgba(6,8,16,0)'); gS.addColorStop(.55, 'rgba(20,40,80,.35)'); gS.addColorStop(.85, 'rgba(60,110,170,.55)'); gS.addColorStop(1, 'rgba(120,170,220,.7)'); ctx.fillStyle = gS; ctx.fillRect(pad.l, pad.t, pw, ph); starfield(ctx, pw, Y(80) - pad.t, { seed: 4, n: 60, alpha: .4 }); ctx.restore();
+      for (const [h0, h1, name] of [[0, 12, 'troposfer'], [12, 50, 'stratosfer'], [50, 85, 'mezosfer'], [85, 125, 'termosfer']]) { ctx.fillStyle = 'rgba(255,255,255,.025)'; if (name === 'stratosfer' || name === 'termosfer') ctx.fillRect(pad.l, Y(h1), pw, Y(h0) - Y(h1)); label(ctx, `${name} · ${h1} km`, pad.l + pw - 6, Y(h1) + 11, P, { align: 'right', mono: false, size: 9.5, color: 'rgba(255,255,255,.35)' }); }
+      ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.setLineDash([3, 5]); ctx.beginPath(); ctx.moveTo(pad.l, Y(100)); ctx.lineTo(pad.l + pw, Y(100)); ctx.stroke(); ctx.setLineDash([]); label(ctx, 'Kármán çizgisi 100 km', pad.l + 6, Y(100) - 4, P, { mono: false, size: 9.5, color: 'rgba(255,255,255,.4)' });
+      const gG = ctx.createLinearGradient(0, Y(0) - 6, 0, Y(0) + 8); gG.addColorStop(0, 'rgba(80,70,50,0)'); gG.addColorStop(1, 'rgba(120,100,70,.5)'); ctx.fillStyle = gG; ctx.fillRect(pad.l, Y(0) - 6, pw, 14); }
     ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.fillStyle = P.muted; ctx.font = '9.5px ui-monospace, monospace'; ctx.textAlign = 'right'; for (const h of [0, 25, 50, 75, 100, 120]) { ctx.beginPath(); ctx.moveTo(pad.l, Y(h)); ctx.lineTo(pad.l + pw, Y(h)); ctx.stroke(); ctx.fillText(`${h} km`, pad.l - 4, Y(h) + 3); } ctx.textAlign = 'center'; const step = sMax > 3000 ? 500 : sMax > 1200 ? 250 : 100; for (let s = 0; s <= sMax; s += step) ctx.fillText(`${s}`, X(s), Hh - 5); ctx.textAlign = 'left'; ctx.fillText('menzil (km)', pad.l + pw - 70, Hh - 5);
     /* kaskad: yörüngeler sırayla çizilir (her biri kısmi ilerlemeyle), nominal en son ve kalın */
     trajs.forEach((r, j) => { const pr = Math.min(1, Math.max(0, pF * (trajs.length + 6) / trajs.length - j / trajs.length * 1.0)); if (pr <= 0) return; polyline(ctx, r.samples.map(p => [X(p.s / 1000), Y(p.h / 1000)]), { progress: pr, color: r.outcome === 'landed' ? P.data1 : P.data2, alpha: r.outcome === 'landed' ? .32 : .85, width: 1 }); });
     polyline(ctx, R.nominal.samples.map(p => [X(p.s / 1000), Y(p.h / 1000)]), { progress: pF, color: P.accent, width: 2.2 });
-    if (pM > 0) { ctx.save(); ctx.globalAlpha = pM; for (const r of R.runs) if (r.outcome === 'landed') { ctx.fillStyle = rgba(P.data1, .6); ctx.fillRect(X(r.s) - 1, Y(10) - 1, 2, 2); } ctx.restore(); marker(ctx, X(R.nominal.s), Y(10), 4 * pM, P.accent, { alpha: pM }); }
+    if (pM > 0) { const st = R.stats.s; if (st) { /* iniş bölgesi: p05–p95 bandı ve ±3σ sınırları yerde */ ctx.save(); ctx.globalAlpha = pM; const gz = ctx.createLinearGradient(0, Y(14), 0, Y(0)); gz.addColorStop(0, rgba(P.data1, 0)); gz.addColorStop(1, rgba(P.data1, .35)); ctx.fillStyle = gz; ctx.fillRect(X(st.p05), Y(14), X(st.p95) - X(st.p05), Y(0) - Y(14)); ctx.strokeStyle = rgba(P.data1, .7); ctx.setLineDash([2, 3]); for (const v of [st.mean - 3 * st.std, st.mean + 3 * st.std]) { ctx.beginPath(); ctx.moveTo(X(v), Y(18)); ctx.lineTo(X(v), Y(0)); ctx.stroke(); } ctx.setLineDash([]); ctx.restore(); label(ctx, `p05–p95 · ±3σ ${nf0.format(3 * st.std)} km`, X(st.p95) + 6, Y(6), P, { size: 9.5, color: P.data1 }); }
+      ctx.save(); ctx.globalAlpha = pM; for (const r of R.runs) if (r.outcome === 'landed') { ctx.fillStyle = rgba(P.data1, .7); ctx.fillRect(X(r.s) - 1, Y(10) - 1, 2, 2); } ctx.restore(); glow(ctx, X(R.nominal.s), Y(10), 14, P.accent, .55 * pM); marker(ctx, X(R.nominal.s), Y(10), 4 * pM, P.accent, { alpha: pM }); }
     title(ctx, `yükseklik–menzil · ${trajs.length} örnek yörünge · iniş noktaları 10 km'de`, pad.l, Hh - 26, P);
   }
   function drawHist() {

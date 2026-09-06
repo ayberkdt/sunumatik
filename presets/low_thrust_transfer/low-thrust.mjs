@@ -7,7 +7,7 @@
    API: const lt = await mountLowThrust(host, { scenario, overrides, warp, autoplay, t }); lt.set(ov) · lt.run · lt.timeline · lt.dispose() */
 
 import { simulateSpiral, SCENARIOS, VEHICLES, R_E } from './low-thrust-model.mjs';
-import { palette, backdrop, polyline, marker, label, title, tag, Entrance, reveal, staticMode, rgba } from '../core/lab-scene.mjs';
+import { palette, backdrop, polyline, marker, label, title, tag, arrow, Entrance, reveal, staticMode, rgba, starfield, planet, glow, shadowBand } from '../core/lab-scene.mjs';
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
@@ -70,11 +70,13 @@ export async function mountLowThrust(host, options = {}) {
   const idxAt = t => { const S = run.samples; let lo = 0, hi = S.length - 1; while (lo < hi) { const mid = (lo + hi) >> 1; if (S[mid].t < t) lo = mid + 1; else hi = mid; } return lo; };
   let dpr = 1;
   function drawSpiral(k) {
-    const cv = plots.spiral, ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); backdrop(ctx, W, Hh, { canvas: P.canvas, grid: 44, gridAlpha: .03 * entrance.progress('frame') });
+    const cv = plots.spiral, ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); backdrop(ctx, W, Hh, { canvas: P.canvas, grid: 44, gridAlpha: .03 * entrance.progress('frame') }); starfield(ctx, W, Hh, { seed: 3, n: 150, alpha: .5 * entrance.progress('frame') });
     const ext = Math.max(run.r0, run.r1) * 1.1, sc = Math.min(W, Hh) / 2 / ext * .94, X = x => W / 2 + x * sc, Y = y => Hh / 2 - y * sc; const pO = entrance.progress('orbits'), pS = entrance.progress('spiral');
-    if (SCENARIOS[scId].shadow || ov.shadow) { ctx.fillStyle = 'rgba(255,255,255,.05)'; ctx.fillRect(X(-ext), Y(R_E), ext * sc, 2 * R_E * sc); ctx.fillStyle = P.muted; ctx.font = '10px Inter, sans-serif'; ctx.fillText('gölge (silindirik) — itki kapalı', X(-ext) + 6, Y(R_E) - 4); }
+    /* Güneş sağdan: ışıma + silindirik gölge bandı (itki kapalı bölge) */
+    glow(ctx, W + 40, Hh / 2, Math.min(W, Hh) * .42, '#ffd98a', .11 * pO); label(ctx, 'Güneş →', W - 60, Hh / 2 - 8, P, { mono: false, size: 10.5, color: '#ffd98a' });
+    if (SCENARIOS[scId].shadow || ov.shadow) { shadowBand(ctx, X(0), Y(0), Math.max(5, R_E * sc), ext * sc, [1, 0], { alpha: .6 }); label(ctx, 'gölge (silindirik) — itki kapalı', X(-ext) + 6, Y(R_E) - 6, P, { mono: false, size: 10 }); }
     for (const [r, c] of [[run.r0, P.data1], [run.r1, P.data2]]) { ctx.save(); ctx.strokeStyle = c; ctx.globalAlpha = .55 * pO; ctx.setLineDash([4, 5]); ctx.lineWidth = 1.1; ctx.beginPath(); ctx.arc(X(0), Y(0), r * sc, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pO); ctx.stroke(); ctx.restore(); }
-    ctx.save(); ctx.globalAlpha = pO; ctx.fillStyle = '#3d6fa8'; ctx.beginPath(); ctx.arc(X(0), Y(0), Math.max(3, R_E * sc), 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = rgba('#3d6fa8', .4); ctx.beginPath(); ctx.arc(X(0), Y(0), Math.max(3, R_E * sc) + 5, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    planet(ctx, X(0), Y(0), Math.max(5, R_E * sc), { color: '#3d6fa8', sunDir: [1, 0], atmosphere: '#6fb4ff', alpha: pO });
     const S = run.samples, Pth = run.path, nP = Pth.length / 4, tNow = S[k].t;
     /* yoğun iz: geçmiş turlar düşük alfa (binlerce tur bir halka gibi dolar — fiziksel gerçek), son ~1 tur parlak */
     let iEnd = 0; { let lo = 0, hi = nP - 1; while (lo < hi) { const mid = (lo + hi) >> 1; if (Pth[mid * 4] < tNow) lo = mid + 1; else hi = mid; } iEnd = lo; } iEnd = Math.round(iEnd * pS);   // giriş: spiral zamanla çizilir
@@ -82,9 +84,11 @@ export async function mountLowThrust(host, options = {}) {
     const revSteps = Math.max(2, Math.round(2 * Math.PI * Math.sqrt(S[k].a ** 3 / 398600.4418) / (run.tof / nP)));   // yaklaşık son tur uzunluğu (iz noktası sayısı)
     const iBright = Math.max(0, iEnd - revSteps);
     const seg = (i0, i1, st, alpha, colorOn, colorOff) => { ctx.globalAlpha = alpha; let on = -1; ctx.beginPath(); for (let i = i0; i <= i1; i += st) { const o = Pth[i * 4 + 3]; if (o !== on) { if (on >= 0) ctx.stroke(); ctx.beginPath(); ctx.strokeStyle = o ? colorOn : colorOff; on = o; ctx.moveTo(X(Pth[i * 4 + 1]), Y(Pth[i * 4 + 2])); } else ctx.lineTo(X(Pth[i * 4 + 1]), Y(Pth[i * 4 + 2])); } ctx.stroke(); };
-    if (iBright > 0) seg(0, iBright, stride, .18, P.accent, 'rgba(255,255,255,.6)');
+    if (iBright > 0) seg(0, iBright, stride, .07, P.accent, 'rgba(255,255,255,.4)');
     seg(iBright, iEnd, 1, .95, P.accent, 'rgba(255,255,255,.55)');
-    ctx.globalAlpha = 1; marker(ctx, X(Pth[iEnd * 4 + 1]), Y(Pth[iEnd * 4 + 2]), 4, P.ink, { ringAlpha: .5 });
+    ctx.globalAlpha = 1; { const hx = X(Pth[iEnd * 4 + 1]), hy = Y(Pth[iEnd * 4 + 2]), j = Math.max(0, iEnd - 3), tx = hx - X(Pth[j * 4 + 1]), ty = hy - Y(Pth[j * 4 + 2]), L = Math.hypot(tx, ty) || 1, on = Pth[iEnd * 4 + 3];
+      /* araç: ışıma; itki açıksa teğetsel itki oku ve ters yönde egzoz izi */
+      glow(ctx, hx, hy, 15, on ? P.accent : P.ink, .55); if (on) { arrow(ctx, hx, hy, hx + tx / L * 24, hy + ty / L * 24, P.accent, { width: 1.8, head: 6 }); ctx.save(); ctx.globalAlpha = .6; ctx.strokeStyle = '#9fd0ff'; ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx - tx / L * 13, hy - ty / L * 13); ctx.stroke(); ctx.restore(); } marker(ctx, hx, hy, 4, P.ink, { ringAlpha: .5 }); }
     if (pO > .9) { label(ctx, `r₀ · ${nf0.format(run.r0 - R_E)} km`, X(0) + run.r0 * sc * .707 + 6, Y(0) - run.r0 * sc * .707 - 6, P, { mono: false, size: 11, color: P.data1 }); label(ctx, `hedef · ${nf0.format(run.r1 - R_E)} km`, X(0) + run.r1 * sc * .707 + 6, Y(0) - run.r1 * sc * .707 - 6, P, { mono: false, size: 11, color: P.data2 }); }
     title(ctx, 'üstten (ECI) · soluk: geçmiş turlar · parlak: son tur', 12, Hh - 12, P);
   }

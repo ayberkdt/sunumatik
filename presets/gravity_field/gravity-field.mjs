@@ -12,6 +12,7 @@
    Sahne: ECEF (X = x, Y = z, Z = −y); 1 birim = R. */
 
 import * as THREE from 'three';
+import { starfield as starfield3, atmosphereShell, sunGlow } from '../core/lab-three.mjs';
 import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
 import { buildCoefficients, surfaceGrid, degreeSpectrum, propagateNodeDrift, loadCoefficients, R } from './gravity-model.mjs';
 import { j2Rates } from '../core/astro-orbit.mjs';
@@ -28,7 +29,7 @@ export async function mountGravityField(host, options = {}) {
     <style>
       .grav{position:relative;margin:0;width:100%;height:100%;overflow:hidden;display:grid;grid-template-columns:minmax(0,11fr) minmax(0,9fr);
         background:var(--color-canvas,#0b0c10);font-family:var(--font-body,'Inter','Segoe UI',system-ui,sans-serif);color:var(--color-ink,#e9e4d8);}
-      .grav__3d{position:relative;min-width:0;} .grav__3d canvas{display:block;width:100%;height:100%;}
+      .grav__3d{position:relative;min-width:0;min-height:0;} .grav__3d canvas{position:absolute;inset:0;display:block;width:100%;height:100%;}
       .grav__side{min-width:0;border-left:1px solid var(--color-rule,#3a3c42);display:grid;grid-template-rows:auto auto minmax(0,1fr);}
       .grav__map{position:relative;} .grav__map canvas{display:block;width:100%;}
       .grav__hud{padding:10px 14px;border-bottom:1px solid var(--color-rule,#3a3c42);font-size:12px;color:var(--color-muted,#9a938a);}
@@ -65,6 +66,7 @@ export async function mountGravityField(host, options = {}) {
   const camera = new THREE.PerspectiveCamera(36, 1, .01, 100); camera.position.set(2.6, 1.7, 3.1);
   scene.add(new THREE.DirectionalLight('#fff4e6', 1.6).translateX(4).translateY(3).translateZ(5)); scene.add(new THREE.HemisphereLight('#8fa8c4', '#2a2418', .6)); scene.add(new THREE.AmbientLight('#3a404c', .6));
   const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.dampingFactor = .08; controls.autoRotate = !reducedMotion; controls.autoRotateSpeed = .35;
+  starfield3(THREE, scene, { seed: 3, n: 900, r0: 40, r1: 60, size: .6, opacity: .55 }); scene.add(atmosphereShell(THREE, 1, '#8fb8dd', .8, 1.03)); sunGlow(THREE, scene, new THREE.Vector3(4, 3, 5), { dist: 70, size: 14 });
   /* küre: yer değiştirme için yeterli çözünürlük; doku CanvasTexture */
   const NLON = 180, NLAT = 90;
   const geo = new THREE.SphereGeometry(1, 180, 90); const basePos = geo.attributes.position.array.slice();
