@@ -54,6 +54,9 @@ jobs:
       - name: Sözdizimi bekçisi (tüm .mjs ve index.html modül blokları derlenir — kesme işareti hatası sınıfı)
         run: node scripts/check-syntax.mjs
 
+      - name: Import bekçisi (göreli ES-modül yolları ve importmap hedefleri var olmalı)
+        run: node scripts/check-imports.mjs
+
       - name: Astrodinamik çözücüler (US76, tırmanış, CW, Lambert, CR3BP… bağımsız sayısal denetim)
         run: node scripts/validate-astro.mjs
 
