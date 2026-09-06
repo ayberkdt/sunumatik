@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lambert Transfer Kâşifi — transfer_explorer</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 160px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 70px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Lambert Transfer Kâşifi<small>transfer_explorer · r1, r2, TOF, kısa/uzun yol → transfer yayı, v1/v2, ΔV; TOF taraması ve Hohmann limiti — paylaşılan Lambert çözücüsü</small></h1>
+    <div class="tabs" role="group" aria-label="Presetler"><button data-p="leoGeo" aria-pressed="true">LEO → GEO</button><button data-p="leoGeoPhased">LEO → GEO 150°</button><button data-p="earthMars">Dünya → Mars</button><button data-p="earthMars2">Dünya → Mars 120°</button><button data-p="earthJupiter">Dünya → Jüpiter</button><button data-p="earthVenus">Dünya → Venüs</button></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Transfer"><span>Transfer</span><label class="field">TOF <input id="tof" type="range" min="0" max="1000" step="1" value="500"><output id="oTof">—</output></label><label class="field">Δθ <input id="dth" type="range" min="10" max="350" step="1" value="180"><output id="oDth">180°</output></label><button data-dir="prograde" aria-pressed="true">kısa yol</button><button data-dir="retrograde">uzun yol</button><button id="bestBtn">Tarama minimumuna git</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountTransfer } from './transfer-explorer.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const $ = id => document.querySelector('#' + id);
+    let presetId = params.get('p') || 'leoGeo';
+    const tx = await mountTransfer($('host'), { preset: presetId, tof: params.has('tof') ? Number(params.get('tof')) * 3600 : undefined, dth: params.has('dth') ? Number(params.get('dth')) : undefined, direction: params.get('dir') || undefined });
+    window.__transfer = tx;
+    const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf3 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    const fmtT = s => s >= 3 * 86400 ? `${nf1.format(s / 86400)} gün` : `${nf1.format(s / 3600)} sa`;
+    const tofFromSlider = v => { const [a, b] = tx.config.tofRange; return a * Math.pow(b / a, v / 1000); };
+    const sliderFromTof = t => { const [a, b] = tx.config.tofRange; return Math.round(Math.log(t / a) / Math.log(b / a) * 1000); };
+    const show = () => { $('tof').value = String(sliderFromTof(tx.config.tof)); $('oTof').textContent = fmtT(tx.config.tof); $('dth').value = String(tx.config.dth); $('oDth').textContent = `${tx.config.dth}°`; document.querySelectorAll('[data-dir]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.dir === tx.config.direction))); };
+    $('tof').addEventListener('input', () => { tx.set({ tof: tofFromSlider(Number($('tof').value)) }); $('oTof').textContent = fmtT(tx.config.tof); writeCaption(); });
+    $('dth').addEventListener('input', () => { tx.set({ dth: Number($('dth').value) }); $('oDth').textContent = `${$('dth').value}°`; writeCaption(); });
+    document.querySelectorAll('[data-dir]').forEach(b => b.addEventListener('click', () => { tx.set({ direction: b.dataset.dir }); show(); writeCaption(); }));
+    document.querySelectorAll('[data-p]').forEach(b => b.addEventListener('click', () => { presetId = b.dataset.p; tx.setPreset(presetId); show(); writeCaption(); document.querySelectorAll('[data-p]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    document.querySelectorAll('[data-p]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.p === presetId)));
+    $('bestBtn').addEventListener('click', () => { const b = tx.sweep.best; if (b) { tx.set({ tof: b.tof, direction: b.way === 'short' ? 'prograde' : 'retrograde' }); show(); writeCaption(); } });
+    function writeCaption() {
+      const s = tx.solution, h = tx.hohmann, c = tx.config;
+      $('caption').innerHTML = `<strong>Lambert çözücüsü paylaşılır (porkchop ile aynı):</strong> r1 ve r2 verilir, Δθ = ${c.dth}° ve TOF = ${fmtT(c.tof)} için evrensel-değişken Lambert v1, v2'yi bulur; yay Kepler yayılımıdır (uç-nokta artığı ~10⁻⁶ km). `
+        + (s ? `ΔV₁ = |v1 − v_c1| = <span class="nums">${nf3.format(s.dv1)}</span>, ΔV₂ = |v_c2 − v2| = <span class="nums">${nf3.format(s.dv2)}</span>, toplam <span class="nums">${nf3.format(s.dvTotal)} km/s</span>; transfer a = ${nf3.format(s.a / tx.central[c.central].unit)} ${tx.central[c.central].unitLabel}, e = ${nf3.format(s.e)}. ` : 'Bu TOF için tek-tur çözüm yok. ')
+        + `Hohmann (Δθ → 180°, eş-düzlem dairesel) kapalı biçim: <span class="nums">${nf3.format(h.dvTotal)} km/s @ ${fmtT(h.tof)}</span> — tarama eğrisinin minimumu Δθ = 180°'de Hohmann'a iner (denetimde ±0,3 %); Δθ ≠ 180° için minimum daha yüksektir. Kalkış/varış dairesel; çok-tur Lambert yok; düzlem-dışı bileşen yok.`;
+    }
+    show(); writeCaption();
+    document.title += ' · hazır';
+  </script>
+</body>
+</html>

@@ -546,6 +546,32 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('gravity', 'C̄20 tek: kutupta N < 0, ekvatorda N > 0 (yassılık), oran −2', eq.N > 0 && po.N < 0 && near(po.N / eq.N, -2, 1e-6));
 }
 
+/* ───────────────────────── transfer (Lambert kâşifi) */
+{
+  const T = await mod('presets/transfer_explorer/transfer-model.mjs');
+  const muE = T.CENTRAL.earth.mu, muS = T.CENTRAL.sun.mu, AU = T.CENTRAL.sun.unit;
+  const h = T.hohmann(muE, 6678.137, 42164.17);
+  check('transfer', 'Hohmann LEO→GEO kapalı biçim 3,89 km/s, 5,27 sa', near(h.dvTotal, 3.893, .005) && near(h.tof / 3600, 5.27, .02), `${h.dvTotal.toFixed(4)} km/s, ${(h.tof / 3600).toFixed(3)} sa`);
+  const s180 = T.solveTransfer({ central: 'earth', r1: 6678.137, r2: 42164.17, dth: 180, tof: h.tof });
+  check('transfer', 'Δθ = 180° (kaydırılmış) Lambert = Hohmann (1e−4 bağıl)', !!s180 && rel(s180.dv1, h.dv1, 1e-4) && rel(s180.dv2, h.dv2, 1e-4), s180 ? `${s180.dv1.toFixed(5)}/${s180.dv2.toFixed(5)} vs ${h.dv1.toFixed(5)}/${h.dv2.toFixed(5)}` : 'null');
+  check('transfer', 'Hohmann transfer elipsi: a = (r1+r2)/2, r_p = r1, r_a = r2', !!s180 && rel(s180.a, h.a, 1e-4) && rel(s180.rp, 6678.137, 1e-3) && rel(s180.ra, 42164.17, 1e-3), s180 ? `a ${s180.a.toFixed(1)} rp ${s180.rp.toFixed(1)} ra ${s180.ra.toFixed(1)}` : 'null');
+  const sM = T.solveTransfer({ central: 'sun', r1: AU, r2: 1.523679 * AU, dth: 120, tof: 180 * 86400 });
+  const end = sM.arc[sM.arc.length - 1], err = Math.hypot(end[0] - sM.R2[0], end[1] - sM.R2[1], end[2] - sM.R2[2]);
+  check('transfer', 'Kepler yayı uç noktası r2\'ye oturur (< 1e−3 km)', err < 1e-3, `${err.toExponential(2)} km`);
+  const eps1 = Math.hypot(...sM.v1) ** 2 / 2 - muS / AU, eps2 = Math.hypot(...sM.v2) ** 2 / 2 - muS / (1.523679 * AU);
+  check('transfer', 'Transfer yayında özgül enerji korunur (v1 ↔ v2)', rel(eps1, eps2, 1e-9), `${eps1.toExponential(6)} vs ${eps2.toExponential(6)}`);
+  check('transfer', 'Transfer a = −μ/2ε ile tutarlı', rel(sM.a, -muS / (2 * eps1), 1e-9), `${(sM.a / AU).toFixed(6)} AU`);
+  const sw = T.tofSweep({ central: 'sun', r1: AU, r2: 1.523679 * AU, dth: 180 }, [80 * 86400, 600 * 86400], 120), hm = T.hohmann(muS, AU, 1.523679 * AU);
+  check('transfer', 'TOF taraması minimumu (Δθ = 180°) Hohmann\'ın %0,3 içinde ve Hohmann TOF\'una yakın', sw.best && rel(sw.best.dv, hm.dvTotal, 3e-3) && rel(sw.best.tof, hm.tof, .05), `${sw.best.dv.toFixed(4)} @ ${(sw.best.tof / 86400).toFixed(1)} gün vs ${hm.dvTotal.toFixed(4)} @ ${(hm.tof / 86400).toFixed(1)} gün`);
+  check('transfer', 'Tarama boş çözüm üretmez (kısa yol, tüm TOF)', sw.points.every(p => Number.isFinite(p.short)), `${sw.points.filter(p => !Number.isFinite(p.short)).length} NaN`);
+  const sShort = T.solveTransfer({ central: 'sun', r1: AU, r2: 1.523679 * AU, dth: 120, tof: 180 * 86400, direction: 'prograde' }), sLong = T.solveTransfer({ central: 'sun', r1: AU, r2: 1.523679 * AU, dth: 120, tof: 180 * 86400, direction: 'retrograde' });
+  check('transfer', 'Kısa yol Δθ = 120°, uzun yol Δθ = 240°; uzun yol daha pahalı', !!sShort && !!sLong && near(sShort.dtheta * 180 / Math.PI, 120, 1e-6) && near(sLong.dtheta * 180 / Math.PI, 240, 1e-6) && sLong.dvTotal > sShort.dvTotal, `${sShort?.dvTotal.toFixed(3)} vs ${sLong?.dvTotal.toFixed(3)} km/s`);
+  const sV = T.solveTransfer({ central: 'sun', r1: AU, r2: .723332 * AU, dth: 180, tof: T.hohmann(muS, AU, .723332 * AU).tof });
+  check('transfer', 'İçe transfer (Venüs): kalkışta yavaşlama (|v1| < v_c1), a < r1', !!sV && Math.hypot(...sV.v1) < Math.hypot(...sV.Vc1) && sV.a < AU, sV ? `|v1| ${Math.hypot(...sV.v1).toFixed(3)} < v_c1 ${Math.hypot(...sV.Vc1).toFixed(3)}` : 'null');
+  const sFast = T.solveTransfer({ central: 'earth', r1: 6678.137, r2: 42164.17, dth: 150, tof: 2 * 3600 });
+  check('transfer', 'Kısa TOF (2 sa, Δθ = 150°) çözümü Hohmann\'dan pahalı ve daha enerjik (a büyük ya da hiperbolik)', !!sFast && sFast.dvTotal > h.dvTotal && (sFast.a < 0 || sFast.a > h.a), sFast ? `${sFast.dvTotal.toFixed(3)} km/s, a ${sFast.a.toFixed(0)} km` : 'null');
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

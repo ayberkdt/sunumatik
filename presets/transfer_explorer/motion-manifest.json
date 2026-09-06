@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "transfer-lambert-explorer",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Lambert probleminin anatomisini göstermek: iki konum ve uçuş süresinden transfer yayının, kalkış/varış hızlarının ve dairesel yörüngelerden ΔV bütçesinin çıkışı; kısa/uzun yol farkı; TOF taraması boyunca ΔV eğrisinin minimumu ve Δθ → 180° limitinde Hohmann'a inişi.",
+      "model": "core/astro-lambert.mjs evrensel-değişken Lambert (Curtis Alg. 5.2, Stumpff C/S, Newton+bisection, tek tur) — r1 = r1·x̂, r2 = r2·(cos Δθ, sin Δθ, 0); v_c teğet dairesel; ΔV₁ = |v1 − v_c1|, ΔV₂ = |v_c2 − v2|; transfer yayı Kepler yayılımıyla (Curtis Alg. 3.4) çizilir ve uç noktası r2'ye ~1e−7 km oturur; a, e Lambert v1'den (h = r1×v1); Hohmann kapalı biçim ΔV = |v_p − v_c1| + |v_c2 − v_a|, TOF = π√(a_t³/μ); tarama: log-aralıklı TOF için kısa ve uzun yol çözümleri; Δθ = 180° tam tekilliği (A → 0, düzlem belirsiz) 0,01° kaydırılarak eş-düzlem çözülür. Denetim scripts/validate-astro.mjs (Hohmann eşleşmesi, yay uç artığı, tarama minimumu, simetri).",
+      "limitations": "Kalkış/varış yörüngeleri dairesel ve eş-düzlem (eğiklik değişimi yok); çok-tur Lambert çözümleri yok; ΔV sonsuz-küçük itki (impulsif); gezegen efemerisi yok — porkchop_explorer tarih-tabanlı versiyondur; hiperbolik kaçış/yakalama (v∞ → park yörüngesi) burada modellenmez.",
+      "reducedMotion": "Sahne zaten statiktir: kaydırıcı değişimlerinde anında yeniden çizim, geçiş animasyonu yok.",
+      "exportState": "?p=&tof=<saat>&dth=&dir= deterministik; export=1 alt bilgiyi gizler.",
+      "accessibility": "TOF/Δθ kaydırıcıları, kısa/uzun yol ve preset düğmeleri yerli öğelerdir; HUD tüm sayısal sonuçları (ΔV'ler, a, e, r_p/r_a, Hohmann, tarama minimumu) metin olarak verir; altyazı yöntemi ve varsayımları düzyazı anlatır; tuvaller aria-label taşır.",
+      "loop": false,
+      "pauseControl": false
+    }
+  ]
+}
