@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 42,
-    "presetsWithIndex": 35,
-    "animatedPresets": 31,
+    "presets": 43,
+    "presetsWithIndex": 36,
+    "animatedPresets": 32,
     "skills": 18,
-    "demoSlides": 58,
-    "demoCards": 45,
+    "demoSlides": 59,
+    "demoCards": 46,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 58,
-    "cards": 45,
+    "slides": 59,
+    "cards": 46,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -52,6 +52,7 @@
       "orbital_stage",
       "planets_advanced",
       "porkchop_explorer",
+      "reentry_corridor",
       "rendezvous_docking",
       "sun_advanced",
       "timeline_tree"
@@ -349,6 +350,13 @@
       "title": "Porkchop / Fırlatma Penceresi — porkchop_explorer",
       "hasIndex": true,
       "animated": false,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "reentry_corridor",
+      "title": "Giriş Koridoru — reentry_corridor",
+      "hasIndex": true,
+      "animated": true,
       "hasMotionManifest": true
     },
     {

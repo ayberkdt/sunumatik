@@ -289,6 +289,40 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('constellation', 'seyrek kutupsal: kapsama < 60 % ve en uzun boşluk > 10 dk', scanM.meanFraction < .6 && scanM.maxGap > 600, `${(scanM.meanFraction * 100).toFixed(0)} %, ${(scanM.maxGap / 60).toFixed(0)} dk`);
 }
 
+/* ───────────────────────── Atmosferik giriş / koridor */
+{
+  const R = await mod('presets/reentry_corridor/reentry-model.mjs');
+  const { atmosphere, G0 } = await mod('presets/core/astro-atmosphere.mjs');
+  const s = R.simulateEntry(R.VEHICLES.capsule, { vEntry: 7800, gammaEntry: -6, bank: 0 });
+  check('reentry', 'LEO −6° kapsül girişi 10 km\'ye iner', s.outcome === 'landed');
+  /* tepe yavaşlama: n = D/m/g0 tanımıyla örnekte tutarlı */
+  const pk = s.samples.find(x => x.t === s.peakG.t);
+  const nCalc = Math.hypot(1, s.vehicle.ld) * .5 * atmosphere(pk.h).rho * pk.v * pk.v * s.vehicle.cd * s.vehicle.area / s.vehicle.m / G0;
+  check('reentry', 'tepe g, ½ρv²C_D A/m tanımıyla örtüşür', rel(pk.n, nCalc, 1e-6), `${pk.n.toFixed(2)} g @ ${(pk.h / 1e3).toFixed(0)} km`);
+  /* Sutton–Graves: q̇ ∝ v³ √ρ — örnekte doğrula */
+  const pq = s.samples.find(x => x.t === s.peakQ.t);
+  check('reentry', 'Sutton–Graves q̇ = k√(ρ/r_n)v³ örnekte tutarlı', rel(pq.q, R.K_SG * Math.sqrt(atmosphere(pq.h).rho / s.vehicle.rn) * pq.v ** 3, 1e-9));
+  check('reentry', 'tepe ısınma tepe yavaşlamadan ÖNCE gelir (v³ ağırlığı)', s.peakQ.t < s.peakG.t, `${s.peakQ.t.toFixed(0)} s < ${s.peakG.t.toFixed(0)} s`);
+  /* enerji: hız kaybı sürüklemeden — atmosfersiz limit: ρ → 0 üstü (300 km'de) dış kuvvet yok, Kepler enerjisi korunur */
+  const hi = R.simulateEntry(R.VEHICLES.capsule, { hEntry: 300e3, vEntry: 7800, gammaEntry: -1, hEnd: 150e3, dt: .5 });
+  const e0 = hi.samples[0], e1 = hi.samples[Math.min(hi.samples.length - 1, 200)];
+  const E0 = e0.v * e0.v / 2 - R.MU / (R.R_E + e0.h), E1 = e1.v * e1.v / 2 - R.MU / (R.R_E + e1.h);
+  check('reentry', 'atmosfer dışında (≥150 km) özgül enerji korunur (< 0,05 %)', rel(E1, E0, 5e-4), `${((E1 - E0) / Math.abs(E0) * 100).toExponential(2)} %`);
+  /* koridor: Ay dönüşü kapsülü ≈ Apollo (−7,7°…−5,3°, ~2,4°) — model sınırları içinde */
+  const c = R.findCorridor(R.VEHICLES.capsule, { vEntry: 11000, nMax: 10 });
+  check('reentry', 'Ay dönüşü koridoru: aşma −5,5…−4,3°, altında-kalma −8…−6,5°, genişlik 1,5–3,5° (Apollo ≈ 2,4°)', c.gammaOvershoot > -5.5 && c.gammaOvershoot < -4.3 && c.gammaUndershoot > -8 && c.gammaUndershoot < -6.5 && c.width > 1.5 && c.width < 3.5, `[${c.gammaUndershoot.toFixed(2)}, ${c.gammaOvershoot.toFixed(2)}] → ${c.width.toFixed(2)}°`);
+  check('reentry', 'aşma sınırından sığ giriş (kaldırma aşağı) yakalanmaz', R.simulateEntry(R.VEHICLES.capsule, { vEntry: 11000, gammaEntry: c.gammaOvershoot + .3, bank: 180 }).outcome !== 'landed');
+  check('reentry', 'altında-kalma sınırından dik giriş (kaldırma yukarı) n_max\'ı aşar', R.simulateEntry(R.VEHICLES.capsule, { vEntry: 11000, gammaEntry: c.gammaUndershoot - .3, bank: 0 }).peakG.n > 10);
+  /* daha yüksek L/D → daha geniş koridor; balistik (L/D 0) en dar */
+  const cb = R.findCorridor(R.VEHICLES.ballistic, { vEntry: 11000, nMax: 10 });
+  check('reentry', 'kaldırma koridoru genişletir: balistik (L/D 0) < kapsül (L/D 0,3)', (isNaN(cb.width) ? 0 : cb.width) < c.width, `${isNaN(cb.width) ? 'yok' : cb.width.toFixed(2)}° < ${c.width.toFixed(2)}°`);
+  /* balistik: aşma ve altında-kalma aynı yatışla (L/D = 0 → σ etkisiz) — iki sınır arası dar */
+  check('reentry', 'balistik sonda koridoru dar (< 0,5°)', !isNaN(cb.width) && cb.width < .5, `${cb.width.toFixed(2)}°`);
+  /* eş-yavaşlama eğrisi: kapalı biçim v = √(2 n g₀ β/ρ) → o (h,v)'de gerçekten n g */
+  const p = R.isoDecelCurve(s.beta, 5)[20];
+  check('reentry', 'eş-yavaşlama eğrisi: n = ½ρv²/β/g₀ = 5 g', near(.5 * atmosphere(p.h).rho * p.v * p.v / s.beta / G0, 5, 1e-9));
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

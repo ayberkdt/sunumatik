@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Giriş Koridoru — reentry_corridor</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .presets { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+    .presets button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .presets button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; }
+    .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); }
+    .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 70px; text-align: right; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; }
+    label.field input[type="range"] { width: 100px; accent-color: var(--color-accent); margin: 0; }
+    label.field output { font: 500 12px var(--font-mono); min-width: 58px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; }
+    .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Giriş Koridoru<small>reentry_corridor · giriş arayüzü, yavaşlama, Sutton–Graves ısınma, aşma / altında-kalma sınırları — koridor NEDEN var?</small></h1>
+    <div class="presets" role="group" aria-label="Araçlar">
+      <button data-veh="capsule" aria-pressed="true">Kapsül (Ay dönüşü)</button><button data-veh="capsuleLeo">Kapsül (LEO)</button><button data-veh="lifting">Kaldırmalı gövde</button><button data-veh="ballistic">Balistik sonda</button>
+    </div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="600" step="0.5" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Giriş koşulları">
+        <span>Giriş</span>
+        <label class="field">v_E <input id="eV" type="range" min="6000" max="12500" step="100" value="11000"><output id="oV">11000 m/s</output></label>
+        <label class="field">γ_E <input id="eG" type="range" min="-20" max="-0.5" step="0.05" value="-6.2"><output id="oG">−6,20°</output></label>
+        <label class="field">yatış σ <input id="eB" type="range" min="0" max="180" step="5" value="60"><output id="oB">60°</output></label>
+        <label class="field">n_max <input id="eN" type="range" min="3" max="25" step="0.5" value="10"><output id="oN">10 g</output></label>
+        <label class="field">q̇_max <input id="eQ" type="range" min="0.5" max="12" step="0.5" value="5"><output id="oQ">5 MW/m²</output></label>
+      </div>
+      <div class="group" role="group" aria-label="Zaman"><span>Zaman</span><button data-warp="1">1×</button><button data-warp="4" aria-pressed="true">4×</button><button data-warp="10">10×</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountReentry } from './reentry.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const qT = params.has('t') ? Number(params.get('t')) : null;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = qT != null || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id);
+    const veh = params.get('veh') || 'capsule';
+    const re = await mountReentry($('host'), { vehicle: veh, entry: { vEntry: Number(params.get('v')) || 11000, gammaEntry: params.has('gamma') ? Number(params.get('gamma')) : -6.2, bank: params.has('bank') ? Number(params.get('bank')) : 60 }, warp: Number(params.get('warp')) || 4, autoplay: !deterministic });
+    window.__reentry = re;
+    const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 });
+    const F = { V: $('eV'), G: $('eG'), B: $('eB'), N: $('eN'), Q: $('eQ') };
+    const outs = () => { $('oV').textContent = `${F.V.value} m/s`; $('oG').textContent = `${nf2.format(Number(F.G.value))}°`; $('oB').textContent = `${F.B.value}°`; $('oN').textContent = `${F.N.value} g`; $('oQ').textContent = `${F.Q.value} MW/m²`; };
+    const showEntry = () => { const e = re.entry; F.V.value = e.vEntry; F.G.value = e.gammaEntry; F.B.value = e.bank; F.N.value = e.nMax; F.Q.value = e.qMax / 1e6; outs(); };
+    const apply = () => { re.setEntry({ vEntry: Number(F.V.value), gammaEntry: Number(F.G.value), bank: Number(F.B.value), nMax: Number(F.N.value), qMax: Number(F.Q.value) * 1e6 }); writeCaption(); re.timeline.play(); syncUi(); };
+    for (const f of Object.values(F)) { f.addEventListener('input', outs); f.addEventListener('change', apply); }
+    document.querySelectorAll('[data-veh]').forEach(b => b.addEventListener('click', () => { re.setVehicle(b.dataset.veh); const v = b.dataset.veh === 'capsule' ? 11000 : 7800; re.setEntry({ vEntry: v, gammaEntry: b.dataset.veh === 'capsule' ? -6.2 : b.dataset.veh === 'lifting' ? -1.5 : -3, bank: b.dataset.veh === 'ballistic' ? 0 : 60 }); showEntry(); writeCaption(); re.timeline.play(); document.querySelectorAll('[data-veh]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); syncUi(); }));
+    document.querySelectorAll('[data-veh]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.veh === veh)));
+    function writeCaption() {
+      const s = re.sim, c = re.corridor, e = re.entry, V = re.vehicles[re.vehicleId];
+      $('caption').innerHTML = `<strong>Koridor bulunur, çizilmez:</strong> ${V.label} (β = ${nf0.format(s.beta)} kg/m², L/D ${V.ld}, r_n ${V.rn} m), v_E ${nf0.format(e.vEntry)} m/s, arayüz 120 km. `
+        + `Sığ girişler yakalanmaz (skip / yörüngede), dik girişler n_max ${e.nMax} g ya da q̇_max ${e.qMax / 1e6} MW/m² tavanını aşar. `
+        + (Number.isFinite(c.width) ? `Kaldırma aşağıyla aşma sınırı <span class="nums">${nf2.format(c.gammaOvershoot)}°</span>, kaldırma yukarıyla altında-kalma sınırı <span class="nums">${nf2.format(c.gammaUndershoot)}°</span> → koridor <span class="nums">${nf2.format(c.width)}°</span>. ` : `Bu limitlerle koridor yok (limitleri gevşetin ya da L/D'yi artırın). `)
+        + `Nominal γ_E ${nf2.format(e.gammaEntry)}°, σ ${e.bank}°: ${s.outcome === 'landed' ? `tepe ${nf1.format(s.peakG.n)} g @ ${nf0.format(s.peakG.h / 1e3)} km, tepe q̇ ${nf2.format(s.peakQ.q / 1e6)} MW/m², Q ${nf0.format(s.heatLoad / 1e6)} MJ/m², menzil ${nf0.format(s.downrange / 1e3)} km` : s.outcome === 'skip' ? 'atmosferden çıkar (skip)' : 'yakalanamaz'}. `
+        + `Model: düzlemsel, US76, Sutton–Graves konvektif (radyatif yok), sabit yatış — kılavuz yok.`;
+    }
+    showEntry(); writeCaption();
+    const scrub = $('scrub'), timeOut = $('timeOut'), playBtn = $('playBtn');
+    function syncUi() { const tl = re.timeline; scrub.max = String(Math.ceil(tl.duration)); playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(tl.t); timeOut.textContent = `${nf0.format(tl.t)} s`; document.querySelectorAll('[data-warp]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.warp) === tl.warp))); }
+    setInterval(syncUi, 150);
+    playBtn.addEventListener('click', () => { const tl = re.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { re.timeline.pause(); re.timeline.scrub(Number(scrub.value)); syncUi(); });
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { re.timeline.setWarp(Number(b.dataset.warp)); syncUi(); }));
+    document.addEventListener('keydown', ev => { if (ev.target instanceof HTMLInputElement || ev.target instanceof HTMLButtonElement) return; const tl = re.timeline; if (ev.code === 'Space') { ev.preventDefault(); tl.playing ? tl.pause() : tl.play(); } else if (ev.key === 'ArrowLeft') tl.scrub(tl.t - 10); else if (ev.key === 'ArrowRight') tl.scrub(tl.t + 10); syncUi(); });
+    if (deterministic) { re.timeline.pause(); re.timeline.scrub(qT != null ? qT : re.tableau); re.setActive(false); document.title += ' · hazır'; } else document.title += ' · hazır';
+    syncUi();
+  </script>
+</body>
+</html>

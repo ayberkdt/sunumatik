@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "reentry-trajectory",
+      "type": "simulation",
+      "truthLevel": "numerical",
+      "purpose": "Atmosferik girişi ve giriş koridorunun neden var olduğunu göstermek: giriş arayüzünden itibaren irtifa, hız, uçuş yolu açısı, yoğunluk, sürükleme, yavaşlama, dinamik basınç, ısı akısı ve ısı yükü; sığ girişin atmosferden sekmesi, dik girişin g/ısı tavanını aşması; aşma ve altında-kalma sınırları.",
+      "model": "Düzlemsel, küresel dönmeyen Dünya, nokta-kütle: v̇ = −D/m − g sinγ; γ̇ = (L cosσ)/(mv) − (g/v − v/r) cosγ; ḣ = v sinγ; ṡ = (R/r) v cosγ; D = ½ρv²C_D A, L = (L/D)·D, g = μ/r². Atmosfer: US76 (presets/core/astro-atmosphere.mjs) + 86 km üstü izotermal üstel uzatma (120 km'de ρ ~ 1e−8 kg/m³). Isınma: Sutton–Graves durma-noktası konvektif akısı q̇ = 1,7415e−4 √(ρ/r_n) v³ (W/m²), Q = ∫q̇dt. Yavaşlama n = √(1 + (L/D)²)·D/m/g₀. Koridor: γ_E taraması + bisection — aşma sınırı = tam kaldırma AŞAĞI (σ = 180°) ile yakalanan en sığ γ, altında-kalma sınırı = tam kaldırma YUKARI (σ = 0°) ile n ≤ n_max ve q̇ ≤ q̇_max kalan en dik γ. (h, v) düzleminde eş-yavaşlama v = √(2ng₀β/ρ(h)) ve eş-ısı-akısı v = (q̇/(k√(ρ/r_n)))^{1/3} eğrileri kapalı biçimden. Araç presetleri: Apollo sınıfı kapsül (β 353 kg/m², L/D 0,3, r_n 4,7 m), LEO kapsülü, Shuttle sınıfı kaldırmalı gövde (L/D 1,1), balistik sonda (L/D 0) — kamuya açık yuvarlatılmış değerler. Varsayılan: Ay dönüşü 11 km/s → koridor [−7,13°, −4,86°] (Apollo ≈ [−7,7°, −5,3°]).",
+      "solver": "RK4, dt = 0,25 s (v > 1 km/s) / 0,5 s; bitiş h ≤ 10 km ya da atmosferden çıkış (ḣ > 0, h > arayüz). Koridor: 31 noktalı tarama × 2 yatış + 22 adımlı bisection (~300 ms). Kaynak presets/reentry_corridor/reentry-model.mjs; denetim scripts/validate-astro.mjs (tanım tutarlılığı, enerji korunumu atmosfer dışında, tepe q̇ < tepe g, Apollo koridoru aralığı, L/D ile genişleme).",
+      "limitations": "Düzlemsel ve dönmeyen Dünya (Coriolis, enlem etkisi yok); sabit yatış açısı (kılavuz/kaldırma modülasyonu yok — gerçek araçlar koridor içinde yatışı değiştirir); sabit C_D ve L/D (Mach/açı bağımlılığı yok); yalnız konvektif ısınma (Ay dönüşü hızlarında radyatif ısınma önemlidir ve MODELLENMEZ); Sutton–Graves katsayısı Dünya havası içindir; 86 km üstü atmosfer uzatması basitleştirilmiş; paraşüt/terminal faz yok (10 km'de kesilir). Sertifikasyon/görev tasarımı aracı değildir.",
+      "reducedMotion": "Otomatik oynatma yok; tepe yavaşlama ânında (tableau) donmuş kare; kaydırıcı ve HUD çalışır.",
+      "exportState": "?veh=&v=&gamma=&bank=&t= ile deterministik kare; tüm eğriler girdilerin saf fonksiyonudur.",
+      "accessibility": "Araç düğmeleri, v_E/γ_E/σ/n_max/q̇_max kaydırıcıları, oynat ve zaman kaydırıcısı yerli öğelerdir; HUD metin tabanlıdır; koridor sınırları ve sonuç HUD'da ve altyazıda sayı olarak verilir; olay rayı metin etiketlidir.",
+      "loop": false,
+      "pauseControl": true,
+      "durationMs": 120000
+    },
+    {
+      "id": "reentry-corridor-bar",
+      "type": "comparison",
+      "truthLevel": "numerical",
+      "purpose": "γ_E ekseninde tarama sonuçlarını iki satırda göstermek (kaldırma aşağı: yakalanır mı; kaldırma yukarı: limit içinde mi) ve koridor bandını çıkarmak — koridorun iki bağımsız kısıtın kesişimi olduğu okunur.",
+      "model": "findCorridor taraması (−30°…−0,2°, 31 nokta) ve bisection sınırları.",
+      "solver": "reentry-model.mjs findCorridor.",
+      "limitations": "Tarama çözünürlüğü 1°; sınırlar bisection ile 1e−5° hassasiyette.",
+      "reducedMotion": "Statik.",
+      "exportState": "Girdilerin fonksiyonu.",
+      "accessibility": "Sınırlar ve genişlik metin olarak HUD ve altyazıda.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}
