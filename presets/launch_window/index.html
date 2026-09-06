@@ -6,6 +6,7 @@
   <title>Fırlatma Penceresi ve Azimut — launch_window</title>
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../core/lab-scene.css">
   <style>
     :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
       --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
@@ -27,16 +28,16 @@
     html[data-export="true"] footer { display: none; }
   </style>
 </head>
-<body>
-  <header>
+<body class="lab">
+  <header data-lab-reveal>
     <h1>Fırlatma Penceresi ve Azimut<small>launch_window · küresel trigonometri: sin β = cos i / cos φ · Dünya dönme düzeltmesi · yerel yıldız zamanı → günde iki fırsat · gecikme → düzlem değişimi ΔV → pencere genişliği</small></h1>
     <div class="tabs" role="group" aria-label="Hedef" id="targets"></div>
   </header>
   <div class="stage-area" id="host"></div>
-  <footer>
+  <footer data-lab-reveal>
     <div class="control-row">
       <div class="group" role="group" aria-label="Saha" id="sites"><span>Saha</span></div>
-      <div class="group"><label class="field">Ω hedef <input id="raan" type="range" min="0" max="359" step="1" value="0"><output id="oR">0°</output></label><label class="field">gün <input id="doy" type="range" min="1" max="365" step="1" value="80"><output id="oD">80</output></label><label class="field">ΔV bütçesi <input id="dv" type="range" min="10" max="500" step="10" value="100"><output id="oDv">100 m/s</output></label></div>
+      <div class="group"><label class="field">Ω hedef <input id="raan" type="range" min="0" max="359" step="1" value="0"><output id="oR">0°</output></label><label class="field">gün <input id="doy" type="range" min="1" max="365" step="1" value="80"><output id="oD">80</output></label><label class="field">ΔV bütçesi <input id="dv" type="range" min="10" max="500" step="10" value="100"><output id="oDv">100 m/s</output></label><button id="replayBtn">Girişi tekrar oynat</button></div>
     </div>
     <p class="caption" id="caption"></p>
   </footer>
@@ -61,6 +62,7 @@
         + `Hedef düzlem (Ω = ${lw.config.raan}°) sahanın üstünden günde iki kez geçer: LST = Ω + λ_u ⇒ UTC <span class="nums">${fmtH(A.opp.asc.utcHours)}</span> (↑) ve <span class="nums">${fmtH(A.opp.desc.utcHours)}</span> (↓); menzil güvenliği sektörü (${A.site.azMin}°–${A.site.azMax}°) ${A.ascAllowed && A.descAllowed ? 'ikisine de izin verir' : A.ascAllowed ? 'yalnız çıkan geçişe izin verir' : A.descAllowed ? 'yalnız inen geçişe izin verir' : 'İKİSİNİ DE YASAKLAR'}. `
         + `Kalkış Δt gecikirse düğüm ω_e Δt kadar kayar; düzlem açısı cos θ = cos²i + sin²i cos ΔΩ, düzeltme ΔV = 2V sin(θ/2): ${nf0.format(A.dvBudget * 1000)} m/s bütçeyle pencere <span class="nums">±${nf1.format(A.half / 60)} dk</span> (5 dk gecikme ≈ ${nf0.format((A.curve.find(c => Math.abs(c.dt - 300) < 40) ?? A.curve[65]).dv * 1000)} m/s). Sınırlar: GMST yaklaşık doğrusal, küresel Dünya, anlık yörüngeye giriş (tırmanış süresi ve kazanılan yer boylamı ihmal), yükseklik/faz hedefi yok.`;
     }
+    $('replayBtn').addEventListener('click', () => lw.replay());
     sync(); writeCaption();
     document.title += ' · hazır';
   </script>
