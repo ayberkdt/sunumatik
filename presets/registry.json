@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 44,
-    "presetsWithIndex": 37,
-    "animatedPresets": 33,
+    "presets": 45,
+    "presetsWithIndex": 38,
+    "animatedPresets": 34,
     "skills": 18,
-    "demoSlides": 60,
-    "demoCards": 47,
+    "demoSlides": 61,
+    "demoCards": 48,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 60,
-    "cards": 47,
+    "slides": 61,
+    "cards": 48,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -30,6 +30,7 @@
       "composition",
       "constellation_coverage",
       "cosmos_advanced",
+      "cr3bp_lagrange",
       "craft_blocks",
       "earth_advanced",
       "equation_pen",
@@ -174,6 +175,13 @@
     {
       "name": "cosmos_advanced",
       "title": "Cosmos Vanilla Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "cr3bp_lagrange",
+      "title": "CR3BP ve Lagrange Noktaları — cr3bp_lagrange",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

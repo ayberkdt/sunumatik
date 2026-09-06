@@ -346,6 +346,34 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('formation', 'ihlal deputy sürüklenme hızı = −3·δẏ = −0,15 m/s', near(dr.deputies[1].drift, -.15, 1e-12));
 }
 
+/* ───────────────────────── CR3BP */
+{
+  const C = await mod('presets/core/astro-cr3bp.mjs');
+  const mu = C.SYSTEMS.earthMoon.mu, L = C.lagrangePoints(mu);
+  check('cr3bp', 'Dünya–Ay L1 = 0,836915 (literatür ±1e−5)', near(L.L1.x, .836915, 1e-5), L.L1.x.toFixed(6));
+  check('cr3bp', 'Dünya–Ay L2 = 1,155682, L3 = −1,005063', near(L.L2.x, 1.155682, 1e-5) && near(L.L3.x, -1.005063, 1e-5));
+  check('cr3bp', 'L1–L5 gradyan artıkları ‖∇Ω‖ < 1e−12', Object.values(L).every(p => p.residual < 1e-12));
+  check('cr3bp', 'L4 eşkenar üçgen: birincil ve ikinciliye uzaklık 1', near(Math.hypot(L.L4.x + mu, L.L4.y), 1, 1e-12) && near(Math.hypot(L.L4.x - 1 + mu, L.L4.y), 1, 1e-12));
+  check('cr3bp', 'Jacobi sıralaması C(L1) > C(L2) > C(L3) > C(L4) = C(L5)', L.L1.C > L.L2.C && L.L2.C > L.L3.C && L.L3.C > L.L4.C && near(L.L4.C, L.L5.C, 1e-12));
+  const SE = C.lagrangePoints(C.SYSTEMS.sunEarth.mu);
+  check('cr3bp', 'Güneş–Dünya L1 ≈ 1,49 milyon km, L2 ≈ 1,50 milyon km', near((1 - C.SYSTEMS.sunEarth.mu - SE.L1.x) * 149597870.7, 1.4915e6, 3e3) && near((SE.L2.x - 1 + C.SYSTEMS.sunEarth.mu) * 149597870.7, 1.5015e6, 3e3));
+  /* Jacobi korunumu */
+  const s0 = [.5, 0, 0, 0, .8, 0]; const pr = C.propagate(mu, s0, 20, 1e-3);
+  const dC = Math.max(...pr.states.map(s => Math.abs(C.jacobi(mu, s) - C.jacobi(mu, s0))));
+  check('cr3bp', 'Jacobi sabiti 20 TU boyunca < 1e−10 sapar', dC < 1e-10, dC.toExponential(2));
+  /* Lyapunov: kapanma ve simetri */
+  const o = C.lyapunovOrbit(mu, 'L1', .008, { dt: 1e-3 });   // küçük genlik: doğrusal tahmin yeterli; büyük genlik sürekliliğe bırakılır
+  const last = o.states[o.states.length - 1];
+  check('cr3bp', 'L1 Lyapunov (Ax 0,008) yakınsadı ve bir periyotta kapanır (< 1e−6)', o.converged && Math.hypot(last[0] - o.x0, last[1], last[3], last[4] - o.ydot0) < 1e-6, `${o.iterations} adım, artık ${Math.hypot(last[0] - o.x0, last[1], last[3], last[4] - o.ydot0).toExponential(1)}`);
+  check('cr3bp', 'Lyapunov yörüngesi x eksenine simetrik (y → −y)', near(Math.max(...o.states.map(s => s[1])), -Math.min(...o.states.map(s => s[1])), 1e-4));
+  const fam = C.lyapunovFamily(mu, 'L2', [.005, .01, .02, .04, .07], { dt: 2e-3 });
+  check('cr3bp', 'L2 Lyapunov ailesi süreklilikle 5/5 yakınsar; periyot genlikle artar', fam.length === 5 && fam.every((f, i) => i === 0 || f.period > fam[i - 1].period));
+  /* sıfır-hız eğrisi: C = C(L1)'de boyun L1'de kapanır: L1'de 2Ω = C, hemen yanında (y) 2Ω > C */
+  /* L1 bir eyer: x boyunca Ω minimum (boyun), y boyunca maksimum → C = C(L1)'de x-komşuları erişilebilir (2Ω > C), y-komşuları yasak (2Ω < C) */
+  check('cr3bp', 'L1 eyer noktası: C(L1) seviyesinde x-komşuları erişilebilir, y-komşuları yasak', near(2 * C.omega(mu, L.L1.x, 0), L.L1.C, 1e-12) && 2 * C.omega(mu, L.L1.x + .05, 0) > L.L1.C && 2 * C.omega(mu, L.L1.x - .05, 0) > L.L1.C && 2 * C.omega(mu, L.L1.x, .05) < L.L1.C);
+  check('cr3bp', 'eylemsiz dönüşüm uzunluk korur', near(Math.hypot(...C.rotatingToInertial([.3, .4, 0], 1.234).slice(0, 2)), .5, 1e-12));
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

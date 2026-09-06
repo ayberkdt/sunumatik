@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CR3BP ve Lagrange Noktaları — cr3bp_lagrange</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; } .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); } .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 120px; text-align: right; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; }
+    label.field input[type="range"] { width: 120px; accent-color: var(--color-accent); margin: 0; } label.field input[type="number"] { width: 68px; background: var(--color-canvas); color: var(--color-ink); border: 1px solid var(--color-rule); border-radius: 5px; padding: 3px 6px; font: 500 12px var(--font-mono); }
+    label.field output { font: 500 12px var(--font-mono); min-width: 60px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CR3BP ve Lagrange Noktaları<small>cr3bp_lagrange · dönen çerçeve, ∇Ω = 0'dan çözülen L1–L5, Jacobi sabiti, sıfır-hız eğrileri, Lyapunov aileleri, eylemsiz karşılaştırma</small></h1>
+    <div class="tabs" role="group" aria-label="Sistem"><button data-sys="earthMoon" aria-pressed="true">Dünya–Ay</button><button data-sys="sunEarth">Güneş–Dünya</button><button data-sys="sunJupiter">Güneş–Jüpiter</button></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="100" step="0.01" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Sıfır-hız eğrisi"><span>Jacobi C (ZVC)</span><label class="field"><input id="cJ" type="range" min="2.90" max="3.40" step="0.0005" value="3.18"><output id="oJ">3,1800</output></label><button id="cL1">C(L1)</button><button id="cL2">C(L2)</button><button id="cL3">C(L3)</button><button id="cL4">C(L4)</button></div>
+      <div class="group" role="group" aria-label="Lyapunov"><span>Lyapunov</span><button data-L="L1" aria-pressed="true">L1</button><button data-L="L2">L2</button><label class="field">Ax <input id="ax" type="range" min="0.004" max="0.09" step="0.001" value="0.025"><output id="oAx">0,025</output></label></div>
+      <div class="group" role="group" aria-label="Test parçacığı"><span>Parçacık</span><label class="field">x₀ <input id="px" type="number" step="0.01" value="0.83"></label><label class="field">y₀ <input id="py" type="number" step="0.01" value="0"></label><label class="field">ẋ₀ <input id="pvx" type="number" step="0.01" value="0"></label><label class="field">ẏ₀ <input id="pvy" type="number" step="0.01" value="0.12"></label><button id="launchBtn">Yayınla</button></div>
+      <div class="group" role="group" aria-label="Görünüm"><span>Görünüm</span><button data-view="full" aria-pressed="true">Tüm sistem</button><button data-view="secondary">İkincil yakın plan</button></div>
+      <div class="group" role="group" aria-label="Zaman"><span>Zaman</span><button data-warp="0.1">0,1</button><button data-warp="0.25" aria-pressed="true">0,25</button><button data-warp="1">1</button><span style="text-transform:none;letter-spacing:0">TU/s</span></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountCr3bp } from './cr3bp.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id);
+    const cr = await mountCr3bp($('host'), { view: params.get('view') || 'full', system: params.get('sys') || 'earthMoon', warp: Number(params.get('warp')) || .25, autoplay: !deterministic, lyapunov: { L: params.get('L') || 'L1', Ax: Number(params.get('ax')) || .025 } });
+    window.__cr3bp = cr;
+    if (params.has('t')) cr.timeline.scrub(Number(params.get('t')));
+    const nf4 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }), nf3 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }), nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 });
+    let Lsel = params.get('L') || 'L1';
+    function syncJ() { $('cJ').value = String(cr.jacobiZvc); $('oJ').textContent = nf4.format(cr.jacobiZvc); }
+    function writeCaption() {
+      const L = cr.lagrange, s = cr.system, o = cr.lyapunov, mu = cr.mu;
+      $('caption').innerHTML = `<strong>Lagrange noktaları çözülür, yerleştirilmez:</strong> ∇Ω = 0 — eş-doğrusal L1/L2/L3 Newton ile (artık ‖∇Ω‖ < 1e−12), L4/L5 = (½−μ, ±√3/2). ${s.label}: L1 ${s.secondary}'${s.secondary === 'Ay' ? 'dan' : 'dan'} <span class="nums">${nf0.format(Math.abs(L.L1.x - (1 - mu)) * s.L)} km</span>, L2 <span class="nums">${nf0.format((L.L2.x - (1 - mu)) * s.L)} km</span>. `
+        + `Jacobi C = 2Ω − v² korunur (HUD'da |C − C₀| ~ 1e−12); C azaldıkça yasak bölge önce L1 boynundan (C₁ = ${nf4.format(L.L1.C)}), sonra L2 (${nf4.format(L.L2.C)}), L3 (${nf4.format(L.L3.C)}) ve en son L4/L5 (${nf4.format(L.L4.C)}) çevresinde açılır — kaydırıcıyla izleyin. `
+        + (o ? `Seçili Lyapunov (${o.L}, Ax = ${o.Ax}): diferansiyel düzeltme ${o.iterations} adımda yakınsadı, T = <span class="nums">${nf3.format(o.period)} TU</span> = ${(o.period / (2 * Math.PI) * s.T / 86400).toFixed(1)} gün, C = ${nf4.format(o.C)}; kararsızdır — sağdaki eylemsiz görünümde kapalı değildir. ` : '')
+        + `Halo aileleri bu sürümde yok (3B düzeltici gerekir); dt = 1e−3 RK4.`;
+    }
+    syncJ(); writeCaption();
+    $('cJ').addEventListener('input', () => { cr.setJacobi(Number($('cJ').value)); $('oJ').textContent = nf4.format(Number($('cJ').value)); });
+    for (const k of ['L1', 'L2', 'L3', 'L4']) $('c' + k).addEventListener('click', () => { cr.setJacobi(cr.lagrange[k].C); syncJ(); });
+    document.querySelectorAll('[data-L]').forEach(b => b.addEventListener('click', () => { Lsel = b.dataset.L; cr.setLyapunov(Lsel, Number($('ax').value)); syncJ(); writeCaption(); document.querySelectorAll('[data-L]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); cr.timeline.play(); }));
+    $('ax').addEventListener('input', () => { $('oAx').textContent = nf3.format(Number($('ax').value)); });
+    $('ax').addEventListener('change', () => { cr.setLyapunov(Lsel, Number($('ax').value)); syncJ(); writeCaption(); cr.timeline.play(); });
+    $('launchBtn').addEventListener('click', () => { cr.setParticle([Number($('px').value), Number($('py').value), 0, Number($('pvx').value), Number($('pvy').value), 0], 8 * Math.PI); syncJ(); cr.timeline.play(); });
+    document.querySelectorAll('[data-sys]').forEach(b => b.addEventListener('click', () => { cr.setSystem(b.dataset.sys); syncJ(); writeCaption(); document.querySelectorAll('[data-sys]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); cr.timeline.play(); }));
+    document.querySelectorAll('[data-sys]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.sys === (params.get('sys') || 'earthMoon'))));
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { cr.timeline.setWarp(Number(b.dataset.warp)); document.querySelectorAll('[data-warp]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => { cr.setView(b.dataset.view); document.querySelectorAll('[data-view]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    if (params.get('view')) { cr.setView(params.get('view')); document.querySelectorAll('[data-view]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.view === params.get('view')))); }
+    const scrub = $('scrub'), playBtn = $('playBtn'), timeOut = $('timeOut');
+    function syncUi() { const tl = cr.timeline; scrub.max = String(tl.duration); playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(tl.t); timeOut.textContent = `${nf3.format(tl.t)} TU`; }
+    setInterval(syncUi, 150);
+    playBtn.addEventListener('click', () => { const tl = cr.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { cr.timeline.pause(); cr.timeline.scrub(Number(scrub.value)); syncUi(); });
+    if (deterministic) { cr.timeline.pause(); cr.setActive(false); }
+    document.title += ' · hazır'; syncUi();
+  </script>
+</body>
+</html>
