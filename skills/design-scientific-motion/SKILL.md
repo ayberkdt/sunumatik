@@ -64,6 +64,18 @@ For COMPOSABLE 3D scene blocks — the manim-grade program — read `references/
 - `references/ml_loss_landscape.md` + `/presets/ml_loss_landscape/`: real optimizer integration (SGD/momentum/Adam) on an analytic loss surface.
 - `references/ml_attention_flow.md` + `/presets/ml_attention_flow/`: real softmax attention arcs over a Turkish token strip with layer/head/query switching.
 
+Astrodynamics and GNC laboratories (wave 2, 21 presets). Each ships a PURE model module (`*-model.mjs`, or a shared core in `/presets/core/astro-{atmosphere,orbit,relative,lambert,cr3bp}.mjs`), a scene, deterministic URL state (`?t=`, `export=1`), a motion manifest and a reference doc; every number is computed and independently checked by `node scripts/validate-astro.mjs` (CI). Read the matching reference before using or extending one:
+
+- Launch & ascent: `references/launch_ascent.md` (US76 + gravity turn + closed-loop stage-2 guidance, event rail, losses).
+- Proximity operations: `references/rendezvous_docking.md` (Clohessy–Wiltshire targeting, KOS, corridor), `references/formation_flight.md` (PCO/GCO/leader–follower).
+- Orbits & perturbations: `references/ground_track_3d.md`, `references/orbit_perturbations.md` (J2/drag/SRP/third body vs analytic rates), `references/eclipse_geometry.md`, `references/gravity_field.md` (real low-degree EGM96, synthetic higher degrees flagged), `references/geo_stationkeeping.md` (east–west from real C̄22/S̄22, north–south from Moon+Sun propagation).
+- Transfers & mission design: `references/transfer_explorer.md` (Lambert + Hohmann limit), `references/porkchop_explorer.md`, `references/gravity_assist.md` (B-plane), `references/tisserand_graph.md` (multi-flyby sequences, no phasing), `references/low_thrust_transfer.md` (spiral ↔ Edelbaum), `references/constellation_coverage.md`.
+- Three-body: `references/cr3bp_lagrange.md` (L1–L5 solved, Jacobi, zero-velocity curves, Lyapunov families), `references/halo_manifolds.md` (Richardson + STM halo families, monodromy, stable/unstable manifolds, manifold transfer to Earth).
+- Entry: `references/reentry_corridor.md` (corridor by bisection, Sutton–Graves), `references/entry_dispersion.md` (Monte Carlo, sensitivities, RSS vs MC).
+- GNC & estimation: `references/attitude_gnc.md` (Euler + reaction wheels + quaternion PD), `references/orbit_determination.md` (EKF on range/range-rate, NEES/NIS consistency), `references/conjunction_covariance.md` (TCA, encounter-plane Pc, dilution).
+
+Never hard-code a "scientific-looking" number in these scenes; derive it from the model, state the model and its limits in the caption, and add a check to `scripts/validate-astro.mjs` when you extend a solver.
+
 Before creating a NEW WebGL scene or editing any existing one, read `references/webgl-scene-contract.md` — the general quality law (physical grounding, continuity laws, GLSL safety, light discipline, procedural distributions, determinism, embedding). Every rule in it was paid for with a live debugging round.
 
 For the other planets, read `references/planetae-preset.md` and use `/presets/planets_advanced/`: Mercury through Neptune in one switchable scene with CC BY photographic textures, real axial tilts (retrograde Venus/Uranus emerge from them), Saturn/Uranus rings, per-planet atmospheres, and a NASA fact-sheet data panel. Sizes are not comparable between planets.
