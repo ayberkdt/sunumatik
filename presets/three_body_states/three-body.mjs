@@ -42,7 +42,7 @@ export async function mountThreeBody(host, options = {}) {
     /* görsel hız normalizasyonu: ortalama cisim hızı (pano-kesri / zaman birimi) → hedef tempo */
     let k = 1;
     if (orbit) { let sum = 0, n = 0; const dt = entry.T / (orbit.pts[0].length - 1); for (let b = 0; b < 3; b++) for (let i = 1; i < orbit.pts[b].length; i++) { sum += Math.hypot(orbit.pts[b][i][0] - orbit.pts[b][i - 1][0], orbit.pts[b][i][1] - orbit.pts[b][i - 1][1]) / dt; n++; } const meanNorm = (sum / n) * (.43 / half); k = clamp(.17 / Math.max(1e-6, meanNorm), .3, 2.4); }
-    const tau = entry.chaotic ? 4.5 : clamp(entry.T * .30, 1.6, 9);   // iz ömrü (pano zamanı)
+    const tau = entry.chaotic ? 4 : clamp(entry.T * .22, 1.2, 6);   // iz ömrü (pano zamanı)
     return { entry, m, orbit, half, cx, cy, k, tau, st: Float64Array.from(entry.state()), t: 0, prev: null, seg: [] };
   });
   const resetPanel = p => { p.st = Float64Array.from(p.entry.state()); p.t = 0; p.prev = null; p.seg = []; };
@@ -74,9 +74,9 @@ export async function mountThreeBody(host, options = {}) {
       for (let b = 0; b < 3; b++) {
         const start = p.prev ? p.prev : p.seg[0];
         tctx.beginPath(); tctx.moveTo(X(p, start[2 * b]), Y(p, start[2 * b + 1])); for (const s of p.seg) tctx.lineTo(X(p, s[2 * b]), Y(p, s[2 * b + 1]));
-        tctx.strokeStyle = rgba(b, .10); tctx.lineWidth = 5.5; tctx.stroke();     // yumuşak hale
-        tctx.strokeStyle = rgba(b, .55); tctx.lineWidth = 2.2; tctx.stroke();     // orta
-        tctx.strokeStyle = 'rgba(255,255,255,.55)'; tctx.lineWidth = .9; tctx.stroke();   // sıcak çekirdek çizgisi
+        tctx.strokeStyle = rgba(b, .08); tctx.lineWidth = 5.5; tctx.stroke();     // yumuşak hale
+        tctx.strokeStyle = rgba(b, .5); tctx.lineWidth = 1.7; tctx.stroke();      // orta (renk burada)
+        tctx.strokeStyle = 'rgba(255,255,255,.22)'; tctx.lineWidth = .8; tctx.stroke();   // ince sıcak çekirdek
       }
       p.prev = p.seg[p.seg.length - 1]; p.seg = [];
     }
