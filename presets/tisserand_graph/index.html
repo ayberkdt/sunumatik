@@ -6,6 +6,7 @@
   <title>Tisserand Grafiği — tisserand_graph</title>
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../core/lab-scene.css">
   <style>
     :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
       --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
@@ -27,15 +28,15 @@
     html[data-export="true"] footer { display: none; }
   </style>
 </head>
-<body>
-  <header>
+<body class="lab">
+  <header data-lab-reveal>
     <h1>Tisserand Grafiği<small>tisserand_graph · gezegen sabit-v∞ eğrileri (r_a, r_p) · kütleçekim yardımı = eğri boyunca kayış (|Δα| ≤ δ_max) · çoklu geçiş dizisi planlayıcı (fazlama yok)</small></h1>
     <div class="tabs" role="group" aria-label="Diziler" id="tabs"></div>
   </header>
   <div class="stage-area" id="host"></div>
-  <footer>
+  <footer data-lab-reveal>
     <div class="control-row">
-      <div class="group"><span>Kalkış</span><label class="field">v∞₀ <input id="vinf0" type="range" min="2" max="12" step="0.1" value="3.6"><output id="oV">3,6 km/s</output></label><label class="field">h_min <input id="hmin" type="range" min="100" max="5000" step="100" value="300"><output id="oH">300 km</output></label></div>
+      <div class="group"><span>Kalkış</span><label class="field">v∞₀ <input id="vinf0" type="range" min="2" max="12" step="0.1" value="3.6"><output id="oV">3,6 km/s</output></label><label class="field">h_min <input id="hmin" type="range" min="100" max="5000" step="100" value="300"><output id="oH">300 km</output></label><button id="replayBtn">Girişi tekrar oynat</button></div>
     </div>
     <p class="caption" id="caption"></p>
   </footer>
@@ -58,6 +59,7 @@
         + `${S.label}: kalkış v∞₀ = <span class="nums">${nf1.format(first.vinf)} km/s</span> (C3 = ${nf1.format(first.vinf ** 2)} km²/s²)` + (p.feasible ? `, varış ${tg.planets[p.final.planet].label} v∞ = <span class="nums">${nf2.format(p.final.vinf)} km/s</span>; geçişler: ${L.slice(1).map(l => `${tg.planets[l.from].label} |Δα| ${nf1.format(l.used * 180 / Math.PI)}° / δ_max ${nf1.format(l.delta * 180 / Math.PI)}°`).join(', ')}. ` : `; dizi bu v∞₀/h_min ile erişilemez (${tg.planets[last.from].label} geçişinde δ_max aşılıyor). `)
         + `Açgözlü seçim: dışa giderken bir sonraki v∞ büyütülür, Dünya–Dünya bacağında rezonans periyodu hedeflenir, hedefte v∞ küçültülür. Sınırlar: eş-düzlem dairesel gezegenler, fazlama/efemeris yok (tarihler ve gerçek uygunluk için porkchop_explorer), tek geçiş sapması (derin uzay manevrası yok), Tisserand ilişkisi yaklaşık (üç-cisim düzeltmeleri yok).`;
     }
+    $('replayBtn').addEventListener('click', () => tg.replay());
     sync(); writeCaption();
     document.title += ' · hazır';
   </script>
