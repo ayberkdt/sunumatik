@@ -1,0 +1,57 @@
+/* lab-scene.css — 2. dalga astrodinamik / GNC laboratuvarlarının ortak sunum estetiği.
+   Palet token'larını (--color-*) tüketir; yerel yazı karakterlerini (color_themes/typefaces, OFL) yükler.
+   Kurallar: mat yüzeyler, tek aksan yeri, düz dikey gradyan; giriş kaskadı [data-lab-reveal] ile, reduced-motion
+   ve export'ta son durum. Kartlar card-presets.css ile aynı dil (hairline, radius 12, lift hover yok). */
+
+@font-face { font-family: "Space Grotesk Deck"; src: url("../color_themes/typefaces/space-grotesk/space-grotesk.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
+@font-face { font-family: "Source Sans 3 Deck"; src: url("../color_themes/typefaces/source-sans-3/source-sans-3.woff2") format("woff2"); font-weight: 200 900; font-display: swap; }
+@font-face { font-family: "JetBrains Mono Deck"; src: url("../color_themes/typefaces/jetbrains-mono/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+
+:root {
+  --font-display: "Space Grotesk Deck", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Source Sans 3 Deck", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Deck", ui-monospace, Consolas, monospace;
+  --lab-ease: cubic-bezier(.22, .8, .24, 1);
+  --lab-rule: color-mix(in srgb, var(--color-rule, #3a3c42) 70%, transparent);
+  --lab-panel: linear-gradient(180deg, color-mix(in srgb, var(--color-surface, #15161a) 92%, #fff 0%) 0%, var(--color-surface, #15161a) 100%);
+}
+
+/* ── sayfa iskeleti ─────────────────────────────────────────────────────── */
+body.lab { font-family: var(--font-body); font-size: 15px; -webkit-font-smoothing: antialiased; }
+body.lab header { padding: 14px 28px 12px; gap: 24px; border-bottom: 1px solid var(--lab-rule); background: linear-gradient(180deg, color-mix(in srgb, var(--color-surface, #15161a) 60%, transparent), transparent); }
+body.lab header h1 { font-family: var(--font-display); font-size: 17px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; line-height: 1.1; }
+body.lab header h1 small { font-family: var(--font-body); font-size: 12.5px; letter-spacing: .02em; text-transform: none; color: var(--color-muted); margin-top: 4px; font-weight: 400; max-width: 78ch; line-height: 1.35; }
+body.lab header h1 small b { color: var(--color-accent); font-weight: 600; }
+body.lab .tabs button, body.lab .control-row button, body.lab .scrub-row button, body.lab label.field { font-family: var(--font-body); font-size: 13px; letter-spacing: .01em; border-color: var(--lab-rule); transition: border-color 180ms var(--lab-ease), background-color 180ms var(--lab-ease), color 180ms var(--lab-ease); }
+body.lab .tabs button:hover, body.lab .control-row button:hover, body.lab .scrub-row button:hover { border-color: var(--color-muted); color: var(--color-ink); }
+body.lab button:focus-visible, body.lab input:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+body.lab footer { padding: 12px 28px 16px; gap: 10px; border-top: 1px solid var(--lab-rule); background: var(--lab-panel); }
+body.lab .caption { font-size: 14.5px; line-height: 1.5; max-width: 170ch; color: var(--color-muted); }
+body.lab .caption strong { color: var(--color-ink); font-family: var(--font-display); font-weight: 600; letter-spacing: .01em; }
+body.lab .caption .nums { font-family: var(--font-mono); font-size: 13px; color: var(--color-ink); font-variant-numeric: tabular-nums; }
+body.lab label.field output, body.lab .scrub-row .time { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ── HUD: hero okuma + ikincil satırlar ─────────────────────────────────── */
+.lab-hud { font-family: var(--font-body); color: var(--color-muted); font-size: 12.5px; }
+.lab-hud__hero { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 14px; padding: 4px 0 10px; border-bottom: 1px solid var(--lab-rule); margin-bottom: 8px; }
+.lab-hud__hero > div { min-width: 0; }
+.lab-hud__hero .k { display: block; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--color-muted); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lab-hud__hero .v { display: block; font-family: var(--font-mono); font-size: 21px; font-weight: 500; letter-spacing: -.01em; color: var(--color-ink); font-variant-numeric: tabular-nums; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lab-hud__hero .v.hi { color: var(--color-accent); } .lab-hud__hero .v.bad { color: var(--color-data-2); } .lab-hud__hero .v.ok { color: #8fd39a; }
+.lab-hud__hero .u { font-family: var(--font-body); font-size: 12px; color: var(--color-muted); margin-left: 5px; letter-spacing: 0; }
+.lab-hud dl { margin: 0; display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 2px 12px; }
+.lab-hud dt { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; align-self: baseline; white-space: nowrap; }
+.lab-hud dd { margin: 0; text-align: right; font-family: var(--font-mono); font-size: 12px; color: var(--color-ink); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lab-hud dd.hi { color: var(--color-accent); } .lab-hud dd.bad { color: var(--color-data-2); } .lab-hud dd.ok { color: #8fd39a; }
+.lab-legend { margin-top: 8px; font-size: 11.5px; letter-spacing: .02em; color: var(--color-muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.lab-legend i { display: inline-block; width: 16px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.lab-top { position: absolute; top: 12px; left: 14px; padding: 7px 11px; border: 1px solid var(--lab-rule); border-radius: 9px; font-family: var(--font-body); font-size: 11.5px; letter-spacing: .04em; color: var(--color-accent); background: color-mix(in srgb, var(--color-surface, #15161a) 88%, transparent); pointer-events: none; max-width: 72%; }
+
+/* ── giriş kaskadı ──────────────────────────────────────────────────────── */
+html.js [data-lab-reveal] { opacity: 0; transform: translateY(10px); animation: labReveal 520ms var(--lab-ease) forwards; animation-delay: calc(var(--lab-i, 0) * 90ms + 120ms); }
+html.js [data-lab-reveal="fade"] { transform: none; }
+@keyframes labReveal { to { opacity: 1; transform: none; } }
+html[data-export="true"] [data-lab-reveal], html.lab-settled [data-lab-reveal] { animation: none !important; opacity: 1 !important; transform: none !important; }
+@media (prefers-reduced-motion: reduce) { [data-lab-reveal] { animation: none !important; opacity: 1 !important; transform: none !important; } }
+.lab-pulse { animation: labPulse 1.6s var(--lab-ease) infinite; } @keyframes labPulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .lab-pulse { animation: none; } }

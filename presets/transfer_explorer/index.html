@@ -6,6 +6,7 @@
   <title>Lambert Transfer Kâşifi — transfer_explorer</title>
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../core/lab-scene.css">
   <style>
     :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
       --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
@@ -27,15 +28,16 @@
     html[data-export="true"] footer { display: none; }
   </style>
 </head>
-<body>
-  <header>
+<body class="lab">
+  <header data-lab-reveal>
     <h1>Lambert Transfer Kâşifi<small>transfer_explorer · r1, r2, TOF, kısa/uzun yol → transfer yayı, v1/v2, ΔV; TOF taraması ve Hohmann limiti — paylaşılan Lambert çözücüsü</small></h1>
     <div class="tabs" role="group" aria-label="Presetler"><button data-p="leoGeo" aria-pressed="true">LEO → GEO</button><button data-p="leoGeoPhased">LEO → GEO 150°</button><button data-p="earthMars">Dünya → Mars</button><button data-p="earthMars2">Dünya → Mars 120°</button><button data-p="earthJupiter">Dünya → Jüpiter</button><button data-p="earthVenus">Dünya → Venüs</button></div>
   </header>
   <div class="stage-area" id="host"></div>
-  <footer>
+  <footer data-lab-reveal>
     <div class="control-row">
       <div class="group" role="group" aria-label="Transfer"><span>Transfer</span><label class="field">TOF <input id="tof" type="range" min="0" max="1000" step="1" value="500"><output id="oTof">—</output></label><label class="field">Δθ <input id="dth" type="range" min="10" max="350" step="1" value="180"><output id="oDth">180°</output></label><button data-dir="prograde" aria-pressed="true">kısa yol</button><button data-dir="retrograde">uzun yol</button><button id="bestBtn">Tarama minimumuna git</button></div>
+      <div class="group" role="group" aria-label="Hareket"><span>Hareket</span><button id="playBtn" aria-pressed="true">Duraklat</button><button id="replayBtn">Girişi tekrar oynat</button></div>
     </div>
     <p class="caption" id="caption"></p>
   </footer>
@@ -45,7 +47,8 @@
     if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
     const $ = id => document.querySelector('#' + id);
     let presetId = params.get('p') || 'leoGeo';
-    const tx = await mountTransfer($('host'), { preset: presetId, tof: params.has('tof') ? Number(params.get('tof')) * 3600 : undefined, dth: params.has('dth') ? Number(params.get('dth')) : undefined, direction: params.get('dir') || undefined });
+    const deterministic = params.has('u') || params.get('export') === '1';
+    const tx = await mountTransfer($('host'), { preset: presetId, tof: params.has('tof') ? Number(params.get('tof')) * 3600 : undefined, dth: params.has('dth') ? Number(params.get('dth')) : undefined, direction: params.get('dir') || undefined, u: params.has('u') ? Number(params.get('u')) : undefined, autoplay: !deterministic });
     window.__transfer = tx;
     const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf3 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
     const fmtT = s => s >= 3 * 86400 ? `${nf1.format(s / 86400)} gün` : `${nf1.format(s / 3600)} sa`;
@@ -64,6 +67,9 @@
         + (s ? `ΔV₁ = |v1 − v_c1| = <span class="nums">${nf3.format(s.dv1)}</span>, ΔV₂ = |v_c2 − v2| = <span class="nums">${nf3.format(s.dv2)}</span>, toplam <span class="nums">${nf3.format(s.dvTotal)} km/s</span>; transfer a = ${nf3.format(s.a / tx.central[c.central].unit)} ${tx.central[c.central].unitLabel}, e = ${nf3.format(s.e)}. ` : 'Bu TOF için tek-tur çözüm yok. ')
         + `Hohmann (Δθ → 180°, eş-düzlem dairesel) kapalı biçim: <span class="nums">${nf3.format(h.dvTotal)} km/s @ ${fmtT(h.tof)}</span> — tarama eğrisinin minimumu Δθ = 180°'de Hohmann'a iner (denetimde ±0,3 %); Δθ ≠ 180° için minimum daha yüksektir. Kalkış/varış dairesel; çok-tur Lambert yok; düzlem-dışı bileşen yok.`;
     }
+    $('playBtn').addEventListener('click', () => { const tl = tx.timeline; tl.playing ? tl.pause() : tl.play(); $('playBtn').textContent = tl.playing ? 'Duraklat' : 'Oynat'; $('playBtn').setAttribute('aria-pressed', String(tl.playing)); });
+    $('replayBtn').addEventListener('click', () => tx.replay());
+    if (deterministic) { $('playBtn').textContent = 'Oynat'; $('playBtn').setAttribute('aria-pressed', 'false'); }
     show(); writeCaption();
     document.title += ' · hazır';
   </script>
