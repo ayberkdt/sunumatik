@@ -74,9 +74,9 @@ export async function mountThreeBody(host, options = {}) {
       for (let b = 0; b < 3; b++) {
         const start = p.prev ? p.prev : p.seg[0];
         tctx.beginPath(); tctx.moveTo(X(p, start[2 * b]), Y(p, start[2 * b + 1])); for (const s of p.seg) tctx.lineTo(X(p, s[2 * b]), Y(p, s[2 * b + 1]));
-        tctx.strokeStyle = rgba(b, .08); tctx.lineWidth = 5.5; tctx.stroke();     // yumuşak hale
-        tctx.strokeStyle = rgba(b, .5); tctx.lineWidth = 1.7; tctx.stroke();      // orta (renk burada)
-        tctx.strokeStyle = 'rgba(255,255,255,.22)'; tctx.lineWidth = .8; tctx.stroke();   // ince sıcak çekirdek
+        tctx.strokeStyle = rgba(b, .07); tctx.lineWidth = 4.5; tctx.stroke();     // yumuşak hale
+        tctx.strokeStyle = rgba(b, .62); tctx.lineWidth = 1.4; tctx.stroke();     // orta (renk burada)
+        tctx.strokeStyle = 'rgba(255,255,255,.10)'; tctx.lineWidth = .7; tctx.stroke();   // ince sıcak çekirdek
       }
       p.prev = p.seg[p.seg.length - 1]; p.seg = [];
     }
