@@ -6,6 +6,7 @@
   <title>Giriş Koridoru — reentry_corridor</title>
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../core/lab-scene.css">
   <style>
     :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
       --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
@@ -36,15 +37,15 @@
     html[data-export="true"] footer { display: none; }
   </style>
 </head>
-<body>
-  <header>
+<body class="lab">
+  <header data-lab-reveal>
     <h1>Giriş Koridoru<small>reentry_corridor · giriş arayüzü, yavaşlama, Sutton–Graves ısınma, aşma / altında-kalma sınırları — koridor NEDEN var?</small></h1>
     <div class="presets" role="group" aria-label="Araçlar">
       <button data-veh="capsule" aria-pressed="true">Kapsül (Ay dönüşü)</button><button data-veh="capsuleLeo">Kapsül (LEO)</button><button data-veh="lifting">Kaldırmalı gövde</button><button data-veh="ballistic">Balistik sonda</button>
     </div>
   </header>
   <div class="stage-area" id="host"></div>
-  <footer>
+  <footer data-lab-reveal>
     <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="600" step="0.5" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
     <div class="control-row">
       <div class="group" role="group" aria-label="Giriş koşulları">
