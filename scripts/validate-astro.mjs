@@ -323,6 +323,29 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('reentry', 'eş-yavaşlama eğrisi: n = ½ρv²/β/g₀ = 5 g', near(.5 * atmosphere(p.h).rho * p.v * p.v / s.beta / G0, 5, 1e-9));
 }
 
+/* ───────────────────────── Formasyon uçuşu */
+{
+  const F = await mod('presets/formation_flight/formation-model.mjs');
+  const pco = F.buildFormation('pco', { count: 3, rho: 1000 });
+  check('formation', 'PCO: 3 deputy, hepsi sürüklenmesiz', pco.deputies.length === 3 && pco.deputies.every(d => Math.abs(d.drift) < 1e-9));
+  const st = F.separationStats(pco, 30);
+  check('formation', 'PCO: şefe uzaklık |r| ∈ [ρ, ρ√5/2] (|r|² = ρ²(1 + sin²/4))', st.chief.every(c => c.min >= 500 * .999 && c.max <= 1118.1), st.chief.map(c => `${c.min.toFixed(0)}–${c.max.toFixed(0)}`).join(' '));
+  /* y–z izdüşümü yarıçapı ρ: t taramasında sabit */
+  const tr = F.trace(pco, pco.deputies[0], 0, pco.period, 60);
+  check('formation', 'PCO y–z izdüşüm yarıçapı sabit = ρ (±1e−6)', tr.every(s => near(Math.hypot(s[1], s[2]), 1000, 1e-6)));
+  check('formation', 'PCO bir periyot sonra kapanır', tr[0].every((v, k) => near(v, tr[60][k], 1e-6)));
+  const gco = F.buildFormation('gco', { count: 1, rho: 1000 });
+  const trg = F.trace(gco, gco.deputies[0], 0, gco.period, 60);
+  check('formation', 'GCO: şefe uzaklık sabit = ρ (küresel formasyon)', trg.every(s => near(Math.hypot(s[0], s[1], s[2]), 1000, 1e-6)));
+  const lf = F.buildFormation('leaderFollower', { separation: 220e3 });
+  const sl = F.separationStats(lf, 60);
+  check('formation', 'lider–takipçi: ayrım tam sabit 220 km', near(sl.chief[0].min, 220e3, 1e-6) && near(sl.chief[0].max, 220e3, 1e-6));
+  const dr = F.buildFormation('drift', { rho: 1000, delta: .05 });
+  const sd = F.statesAt(dr, dr.period);
+  check('formation', 'sürüklenme ihlali: +5 cm/s → bir periyotta −3·δẏ·T ≈ −0,85 km geriye', near(sd[1][1] - sd[0][1], -3 * .05 * dr.period, 1e-3), `${((sd[1][1] - sd[0][1]) / 1000).toFixed(3)} km`);
+  check('formation', 'ihlal deputy sürüklenme hızı = −3·δẏ = −0,15 m/s', near(dr.deputies[1].drift, -.15, 1e-12));
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

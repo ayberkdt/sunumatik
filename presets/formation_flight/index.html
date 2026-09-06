@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Formasyon Uçuşu — formation_flight</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+    .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-selected="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; } .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); }
+    .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 80px; text-align: right; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; }
+    label.field input[type="range"] { width: 90px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 56px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Formasyon Uçuşu<small>formation_flight · şef/deputy, LVLH, Clohessy–Wiltshire kapalı göreli yörüngeler, sürüklenmesiz koşul, ayrım HUD'u</small></h1>
+    <div class="tabs" role="tablist"><button role="tab" data-sc="pco" aria-selected="true">PCO</button><button role="tab" data-sc="gco">GCO</button><button role="tab" data-sc="inPlane">Düzlem-içi elips</button><button role="tab" data-sc="leaderFollower">Lider–takipçi</button><button role="tab" data-sc="drift">Sürüklenme ihlali</button></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="10000" step="1" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Parametreler"><span>Formasyon</span>
+        <label class="field">deputy <input id="pN" type="range" min="1" max="6" step="1" value="3"><output id="oN">3</output></label>
+        <label class="field">ρ <input id="pR" type="range" min="100" max="5000" step="50" value="1000"><output id="oR">1000 m</output></label>
+        <label class="field">irtifa <input id="pA" type="range" min="300" max="2000" step="50" value="500"><output id="oA">500 km</output></label>
+        <label class="field">tur <input id="pO" type="range" min="1" max="6" step="1" value="2"><output id="oO">2</output></label></div>
+      <div class="group" role="group" aria-label="Kamera"><span>Kamera</span><button data-cam="overview" aria-pressed="true">Genel</button><button data-cam="along">İz boyu</button><button data-cam="top">Üstten</button><button data-cam="free">Serbest</button></div>
+      <div class="group" role="group" aria-label="Zaman"><span>Zaman</span><button data-warp="20">20×</button><button data-warp="60" aria-pressed="true">60×</button><button data-warp="240">240×</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountFormation } from './formation-flight.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id);
+    const sc0 = params.get('sc') || 'pco';
+    const ff = await mountFormation($('host'), { scenario: sc0, warp: Number(params.get('warp')) || 60, autoplay: !deterministic, t: params.has('t') ? Number(params.get('t')) : undefined, camera: params.get('cam') || 'overview' });
+    window.__formation = ff;
+    const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let scId = sc0;
+    const F = { N: $('pN'), R: $('pR'), A: $('pA'), O: $('pO') };
+    const outs = () => { $('oN').textContent = F.N.value; $('oR').textContent = `${F.R.value} m`; $('oA').textContent = `${F.A.value} km`; $('oO').textContent = F.O.value; };
+    const opts = () => ({ count: Number(F.N.value), rho: Number(F.R.value), xAmp: Number(F.R.value) / 2, altitude: Number(F.A.value) * 1000, orbits: Number(F.O.value) });
+    const apply = () => { ff.setScenario(scId, opts()); writeCaption(); ff.timeline.play(); syncUi(); };
+    for (const f of Object.values(F)) { f.addEventListener('input', outs); f.addEventListener('change', apply); }
+    document.querySelectorAll('[data-sc]').forEach(b => b.addEventListener('click', () => { scId = b.dataset.sc; apply(); document.querySelectorAll('[data-sc]').forEach(x => x.setAttribute('aria-selected', String(x === b))); }));
+    document.querySelectorAll('[data-sc]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sc === sc0)));
+    const CAP = {
+      pco: f => `<strong>PCO:</strong> x = (ρ/2) sin(nt+α), y = ρ cos(nt+α), z = ρ sin(nt+α) — y–z izdüşümünde ρ yarıçaplı daire, düzlem-içi 2:1 elips; ẏ₀ = −2n x₀ olduğundan iz KAPALIDIR: bir periyot sonra aynı yer. Deputy'ler 360°/N fazlı.`,
+      gco: f => `<strong>GCO:</strong> z genliği (√3/2)·ρ ile deputy şefin etrafında 3B daire çizer (|r| sabit ρ). Formasyon uçuşunun 'küre' geometrisi.`,
+      inPlane: f => `<strong>Düzlem-içi elips:</strong> radyal genlik a, iz-boyu genlik 2a — CW'nin karakteristik 2:1 elipsi; z = 0. Ayrım periyodik, sürüklenme yok.`,
+      leaderFollower: f => `<strong>Lider–takipçi (GRACE tarzı):</strong> aynı yörünge, iz boyunca ${(Math.abs(f.deputies[0].state0[1]) / 1000).toFixed(0)} km geride; x = 0, v = 0 → CW ivmesi 0, ayrım sabittir. Gerçek GRACE'te ayrım J2 ve diferansiyel sürükleme ile yavaşça değişir — burada modellenmez.`,
+      drift: f => `<strong>Sürüklenmesiz koşul ihlali:</strong> ẏ₀'a ±5 cm/s eklenince sekülar iz-boyu sürüklenme −3·δẏ = <span class="nums">${nf2.format(f.deputies[1].drift)} m/s</span> doğar: bir periyotta <span class="nums">${nf1.format(Math.abs(f.deputies[1].drift) * f.period / 1000)} km</span>. Küçük hız hatası formasyonu dağıtır.`,
+    };
+    function writeCaption() { $('caption').innerHTML = (CAP[ff.form.id] || (() => ''))(ff.form) + ` Doğrusal CW: |r| ≪ a, dairesel referans (${(ff.form.altitude / 1000).toFixed(0)} km), J2/sürükleme yok.`; }
+    const scrub = $('scrub'), timeOut = $('timeOut'), playBtn = $('playBtn');
+    function syncUi() { const tl = ff.timeline; scrub.max = String(Math.ceil(tl.duration)); playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(tl.t); timeOut.textContent = `${Math.floor(tl.t / 60)} dk · ${nf2.format(tl.t / ff.form.period)} T`; document.querySelectorAll('[data-cam]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cam === ff.camera.current))); document.querySelectorAll('[data-warp]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.warp) === tl.warp))); }
+    setInterval(syncUi, 150);
+    playBtn.addEventListener('click', () => { const tl = ff.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { ff.timeline.pause(); ff.timeline.scrub(Number(scrub.value)); syncUi(); });
+    document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => { ff.camera.transitionTo(b.dataset.cam); syncUi(); }));
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { ff.timeline.setWarp(Number(b.dataset.warp)); syncUi(); }));
+    outs(); writeCaption();
+    if (deterministic) { ff.timeline.pause(); ff.setActive(false); document.title += ' · hazır'; } else document.title += ' · hazır';
+    syncUi();
+  </script>
+</body>
+</html>
