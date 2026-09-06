@@ -29,7 +29,7 @@ Envanter elle sayılmaz: `presets/registry.json` taramayla üretilir (`node scri
 
 ## Laboratuvar galerisi
 
-Astrodinamik ve GNC laboratuvarları: her biri saf bir model modülü, üstünde bir sahne. Görüntüler `?export=1` deterministik karesinden alınmıştır — sunumda göreceğiniz kare budur.
+Astrodinamik ve GNC laboratuvarları: her biri saf bir model modülü, üstünde bir sahne. Görüntüler `?export=1` deterministik karesinden alınmıştır — sunumda göreceğiniz kare budur. Her görsel ilgili sayfaya bağlıdır (yerel sunucuda açın).
 
 <p align="center">
   <img src="docs/media/lab-soi_explorer.jpg" alt="Etki Küresi Kâşifi — Dünya etki küresi ve Hill küresi gerçek ölçekte, Mars'a kalkış hiperbolü, gün işaretleri, Laplace oran paneli ve Güneş çerçevesi paneli" width="820">
@@ -37,30 +37,30 @@ Astrodinamik ve GNC laboratuvarları: her biri saf bir model modülü, üstünde
 
 | | | |
 |:---:|:---:|:---:|
-| ![Üç-cisim durumları — 20 periyodik çözüm](docs/media/lab-three_body_states.jpg) | ![Giriş koridoru — katmanlı atmosfer, hipersonik akış yakın planı, plazma kılıfı](docs/media/lab-reentry_corridor.jpg) | ![Halo yörüngeleri ve değişmez manifoldlar](docs/media/lab-halo_manifolds.jpg) |
+| [![Üç-cisim durumları — 20 periyodik çözüm](docs/media/lab-three_body_states.jpg)](presets/three_body_states/index.html) | [![Giriş koridoru — katmanlı atmosfer, hipersonik akış yakın planı, plazma kılıfı](docs/media/lab-reentry_corridor.jpg)](presets/reentry_corridor/index.html) | [![Halo yörüngeleri ve değişmez manifoldlar](docs/media/lab-halo_manifolds.jpg)](presets/halo_manifolds/index.html) |
 | **Üç-cisim durumları** — figure-8, kelebekler, Lagrange, kaotik Pisagor | **Giriş koridoru** — yay şoku, kızaran kalkan, ablasyon | **Halo + manifoldlar** — kararlı/kararsız demetler |
-| ![Etki küresi — Dünya kamerası, kalkış hiperbolü ve sonda](docs/media/lab-soi_explorer_earth.jpg) | ![Formasyon uçuşu — LVLH, gerçek ölçekli Dünya nadirde](docs/media/lab-formation_flight.jpg) | ![Aurora — çok perdeli, ışınlı, kar örtüsü](docs/media/lab-aurora.jpg) |
+| [![Etki küresi — Dünya kamerası, kalkış hiperbolü ve sonda](docs/media/lab-soi_explorer_earth.jpg)](presets/soi_explorer/index.html) | [![Formasyon uçuşu — LVLH, gerçek ölçekli Dünya nadirde](docs/media/lab-formation_flight.jpg)](presets/formation_flight/index.html) | [![Aurora — çok perdeli, ışınlı, kar örtüsü](docs/media/lab-aurora.jpg)](presets/aurora/index.html) |
 | **Etki küresi** — park yörüngesinden v∞ hedefli hiperbol | **Formasyon** — CW göreli yörüngeler, nadirde Dünya | **Aurora** — emisyon çizgilerinden renk, beş perde |
-| ![Ay serbest dönüş yörüngesi](docs/media/lab-free_return.jpg) | ![CR3BP ve Lagrange noktaları](docs/media/lab-cr3bp_lagrange.jpg) | ![Kütleçekim yardımı ve B-düzlemi](docs/media/lab-gravity_assist.jpg) |
+| [![Ay serbest dönüş yörüngesi](docs/media/lab-free_return.jpg)](presets/free_return/index.html) | [![CR3BP ve Lagrange noktaları](docs/media/lab-cr3bp_lagrange.jpg)](presets/cr3bp_lagrange/index.html) | [![Kütleçekim yardımı ve B-düzlemi](docs/media/lab-gravity_assist.jpg)](presets/gravity_assist/index.html) |
 | **Serbest dönüş** — Apollo 13'ün "8" figürü | **CR3BP** — L1–L5, sıfır-hız eğrileri | **Kütleçekim yardımı** — B-düzlemi hedefleme |
-| ![Porkchop kâşifi](docs/media/lab-porkchop_explorer.jpg) | ![Fırlatma ve tırmanış](docs/media/lab-launch_ascent.jpg) | ![Takımyıldız kapsama](docs/media/lab-constellation_coverage.jpg) |
+| [![Porkchop kâşifi](docs/media/lab-porkchop_explorer.jpg)](presets/porkchop_explorer/index.html) | [![Fırlatma ve tırmanış](docs/media/lab-launch_ascent.jpg)](presets/launch_ascent/index.html) | [![Takımyıldız kapsama](docs/media/lab-constellation_coverage.jpg)](presets/constellation_coverage/index.html) |
 | **Porkchop** — Lambert C3 / ΔV haritası | **Fırlatma** — yerçekimi dönüşü, max-q, MECO | **Kapsama** — Walker takımyıldızları |
-| ![Tisserand grafiği](docs/media/lab-tisserand_graph.jpg) | ![Lambert transfer kâşifi](docs/media/lab-transfer_explorer.jpg) | ![Fırlatma penceresi ve azimut](docs/media/lab-launch_window.jpg) |
+| [![Tisserand grafiği](docs/media/lab-tisserand_graph.jpg)](presets/tisserand_graph/index.html) | [![Lambert transfer kâşifi](docs/media/lab-transfer_explorer.jpg)](presets/transfer_explorer/index.html) | [![Fırlatma penceresi ve azimut](docs/media/lab-launch_window.jpg)](presets/launch_window/index.html) |
 | **Tisserand** — çoklu geçiş planlayıcı | **Transfer** — Lambert yayı, TOF taraması | **Fırlatma penceresi** — azimut, LST, dogleg |
-| ![Düşük itkili transfer](docs/media/lab-low_thrust_transfer.jpg) | ![Yörünge belirleme, EKF](docs/media/lab-orbit_determination.jpg) | ![Randevu ve kenetlenme](docs/media/lab-rendezvous_docking.jpg) |
+| [![Düşük itkili transfer](docs/media/lab-low_thrust_transfer.jpg)](presets/low_thrust_transfer/index.html) | [![Yörünge belirleme, EKF](docs/media/lab-orbit_determination.jpg)](presets/orbit_determination/index.html) | [![Randevu ve kenetlenme](docs/media/lab-rendezvous_docking.jpg)](presets/rendezvous_docking/index.html) |
 | **Düşük itki** — spiral, Edelbaum | **Yörünge belirleme** — EKF, NEES/NIS | **Randevu** — CW yaklaşmaları, KOS |
-| ![3B yörünge ve yer izi](docs/media/lab-ground_track_3d.jpg) | ![Yönelim ve GNC](docs/media/lab-attitude_gnc.jpg) | ![Tutulma ve görüş geometrisi](docs/media/lab-eclipse_geometry.jpg) |
+| [![3B yörünge ve yer izi](docs/media/lab-ground_track_3d.jpg)](presets/ground_track_3d/index.html) | [![Yönelim ve GNC](docs/media/lab-attitude_gnc.jpg)](presets/attitude_gnc/index.html) | [![Tutulma ve görüş geometrisi](docs/media/lab-eclipse_geometry.jpg)](presets/eclipse_geometry/index.html) |
 | **Yer izi** — J2 düğüm kayması | **Yönelim** — tepki tekerlekleri, kuaterniyon PD | **Tutulma** — umbra/penumbra, β açısı |
-| ![Küresel harmonik yerçekimi alanı](docs/media/lab-gravity_field.jpg) | ![Giriş dağılımı Monte Carlo](docs/media/lab-entry_dispersion.jpg) | ![GEO istasyon tutma bütçesi](docs/media/lab-geo_stationkeeping.jpg) |
+| [![Küresel harmonik yerçekimi alanı](docs/media/lab-gravity_field.jpg)](presets/gravity_field/index.html) | [![Giriş dağılımı Monte Carlo](docs/media/lab-entry_dispersion.jpg)](presets/entry_dispersion/index.html) | [![GEO istasyon tutma bütçesi](docs/media/lab-geo_stationkeeping.jpg)](presets/geo_stationkeeping/index.html) |
 | **Yerçekimi alanı** — jeoit, anomali | **Giriş dağılımı** — 3σ menzil, duyarlılık | **GEO** — doğu–batı/kuzey–güney bütçesi |
 
 Sayısal simülasyon ve sinematik sahneler:
 
 | | | |
 |:---:|:---:|:---:|
-| ![Kármán vorteks caddesi, kafes Boltzmann](docs/media/lab-aero_vortex_street.jpg) | ![Kanat profili etrafında panel yöntemi akımı](docs/media/lab-aero_airfoil_flow.jpg) | ![Süpersonik şok dalgaları](docs/media/lab-aero_shock_waves.jpg) |
+| [![Kármán vorteks caddesi, kafes Boltzmann](docs/media/lab-aero_vortex_street.jpg)](presets/aero_vortex_street/index.html) | [![Kanat profili etrafında panel yöntemi akımı](docs/media/lab-aero_airfoil_flow.jpg)](presets/aero_airfoil_flow/index.html) | [![Süpersonik şok dalgaları](docs/media/lab-aero_shock_waves.jpg)](presets/aero_shock_waves/index.html) |
 | **Vorteks caddesi** — D2Q9 canlı çözüm | **Kanat profili** — Kutta koşulu, sınır tabakası | **Şok dalgaları** — eğik şok, Prandtl–Meyer |
-| ![Kayıp yüzeyinde optimizasyon yarışı](docs/media/lab-ml_loss_landscape.jpg) | ![Sinematik uzay yolculuğu kabuğu](docs/media/lab-cinematic_space.jpg) | ![Üç fazlı Ay inişi](docs/media/lab-lunar_descent.jpg) |
+| [![Kayıp yüzeyinde optimizasyon yarışı](docs/media/lab-ml_loss_landscape.jpg)](presets/ml_loss_landscape/index.html) | [![Sinematik uzay yolculuğu kabuğu](docs/media/lab-cinematic_space.jpg)](presets/cinematic_space/index.html) | [![Üç fazlı Ay inişi](docs/media/lab-lunar_descent.jpg)](presets/lunar_descent/index.html) |
 | **Kayıp yüzeyi** — SGD / momentum / Adam | **Sinematik uzay** — dış uzay → güverte → konsol | **Ay inişi** — entegre üç faz, toz ve plum |
 
 ## Hızlı başlangıç
@@ -82,7 +82,7 @@ sunucu (`python -m http.server`) yeterlidir.
 İlk beş dakika için önerilen rota:
 
 1. `http://localhost:8790/demo/index.html` — canlı katalog; **G** dizini açar, ok tuşları slayt değiştirir.
-2. `http://localhost:8790/presets/soi_explorer/index.html` — bir laboratuvarı tek başına aç; sekmeler, kaydırıcılar ve kameralar canlı.
+2. `http://localhost:8790/presets/three_body_states/index.html` — [Üç-Cisim Durumları](presets/three_body_states/index.html): 20 periyodik çözüm canlı, tam ekran izlemelik; `http://localhost:8790/presets/soi_explorer/index.html` — bir laboratuvarı tek başına aç; sekmeler, kaydırıcılar ve kameralar canlı.
 3. Aynı adrese `?export=1&t=2.5` ekle — deterministik kare; sunum çıktısı bu kareyi kullanır.
 4. `node scripts/validate-astro.mjs` — sahnelerin dayandığı sayıların bağımsız denetimi.
 

@@ -45,7 +45,16 @@ gösterim parametresi; Pisagor döngüsü fiziksel değildir; birimsiz sistem.
 
 ## Hareket
 
+İz, KALICI bir tuvalde tutulur: her karede tuval `destination-out` ile
+e^(−dt/τ) soldurulur ve yalnız o karenin yeni parçası toplamsal çizilir (üç
+vuruş: geniş hale, orta, sıcak çekirdek). Böylece binlerce parça yeniden
+çizilmez; kare başına ~1,5 ms (20 pano). Zaman kaydırma baştan yeniden
+entegre edip izi aynı kuralla kurar (deterministik). Her panonun zaman
+çarpanı `k` görsel tempoya normalize edilir: ortalama cisim hızı pano
+kesri/saniye cinsinden ~0,17 olacak şekilde (0,3–2,4 aralığında), yani
+figure-8 ile bumblebee aynı tempoda izlenir. `tb.advance(dt)` kare kare sürer.
+
 Giriş: panolar sırayla belirir (1,2 s). Sonra sürekli entegrasyon: hız
 `speed` birim/s (varsayılan 0,8 → figure-8 periyodu ≈ 8 s, bumblebee ≈ 80 s).
 Izler toplamsal karışımla çizilir (ışık kaynağı), dekor ışıması yok.
-Statik/azaltılmış hareket: t = 4,5 tablosu.
+Statik/azaltılmış hareket: t = 6 tablosu.
