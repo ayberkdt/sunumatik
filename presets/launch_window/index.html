@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fırlatma Penceresi ve Azimut — launch_window</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; max-width: 60%; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 11.5px/1 var(--font-body); padding: 7px 10px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 130px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 64px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Fırlatma Penceresi ve Azimut<small>launch_window · küresel trigonometri: sin β = cos i / cos φ · Dünya dönme düzeltmesi · yerel yıldız zamanı → günde iki fırsat · gecikme → düzlem değişimi ΔV → pencere genişliği</small></h1>
+    <div class="tabs" role="group" aria-label="Hedef" id="targets"></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Saha" id="sites"><span>Saha</span></div>
+      <div class="group"><label class="field">Ω hedef <input id="raan" type="range" min="0" max="359" step="1" value="0"><output id="oR">0°</output></label><label class="field">gün <input id="doy" type="range" min="1" max="365" step="1" value="80"><output id="oD">80</output></label><label class="field">ΔV bütçesi <input id="dv" type="range" min="10" max="500" step="10" value="100"><output id="oDv">100 m/s</output></label></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountLaunchWindow } from './launch-window.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const $ = id => document.querySelector('#' + id);
+    const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const lw = await mountLaunchWindow($('host'), { site: params.get('site') || 'ksc', target: params.get('target') || 'iss', raan: Number(params.get('raan')) || 0, doy: Number(params.get('doy')) || 80, dvBudget: (Number(params.get('dv')) || 100) / 1000 });
+    window.__launchWindow = lw;
+    for (const [id, t] of Object.entries(lw.targets)) { const b = document.createElement('button'); b.dataset.t = id; b.textContent = t.label; b.addEventListener('click', () => { lw.set({ target: id }); sync(); writeCaption(); }); $('targets').appendChild(b); }
+    for (const [id, s] of Object.entries(lw.sites)) { const b = document.createElement('button'); b.dataset.site = id; b.textContent = s.label; b.addEventListener('click', () => { lw.set({ site: id }); sync(); writeCaption(); }); $('sites').appendChild(b); }
+    function sync() { const c = lw.config; document.querySelectorAll('[data-t]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === c.target))); document.querySelectorAll('[data-site]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.site === c.site))); $('raan').value = String(c.raan); $('oR').textContent = `${c.raan}°`; $('doy').value = String(c.doy); $('oD').textContent = String(c.doy); $('dv').value = String(Math.round(c.dvBudget * 1000)); $('oDv').textContent = `${Math.round(c.dvBudget * 1000)} m/s`; }
+    $('raan').addEventListener('input', () => { lw.set({ raan: Number($('raan').value) }); sync(); writeCaption(); });
+    $('doy').addEventListener('input', () => { lw.set({ doy: Number($('doy').value) }); sync(); writeCaption(); });
+    $('dv').addEventListener('input', () => { lw.set({ dvBudget: Number($('dv').value) / 1000 }); sync(); writeCaption(); });
+    function writeCaption() {
+      const A = lw.analysis, fmtH = h => { const hh = Math.floor(h), mm = Math.round((h - hh) * 60); return `${String(hh % 24).padStart(2, '0')}:${String(mm % 60).padStart(2, '0')}`; };
+      if (!A.az.feasible) { $('caption').innerHTML = `<strong>Doğrudan çıkış yok:</strong> ${A.site.label} enlemi ${nf1.format(A.site.lat)}°, hedef eğiklik ${A.target.inc}° — bir yörüngenin eğikliği fırlatma sahasının enleminden küçük olamaz (sin β = cos i / cos φ > 1). Çözüm: dogleg (uçuş sırasında düzlem değişimi) ya da yörüngede düzlem manevrası (2V sin(Δi/2) — burada ${nf0.format(2 * A.v * Math.sin((A.site.lat - A.target.inc) * Math.PI / 360) * 1000)} m/s). Ekvatora yakın sahaların (Kourou) avantajı budur.`; return; }
+      $('caption').innerHTML = `<strong>Azimut geometriden, pencere düzlemden gelir:</strong> ${A.site.label} (φ = ${nf1.format(A.site.lat)}°) → ${A.target.label}: eylemsiz azimut sin β = cos i / cos φ ⇒ <span class="nums">${nf1.format(A.az.betaAsc)}° (çıkan) / ${nf1.format(A.az.betaDesc)}° (inen)</span>; Dünya dönmesi (ω_e R cos φ = ${nf0.format(A.az.vEq * 1000)} m/s doğuya) roketin uçması gereken azimutu ${nf1.format(A.az.rotAsc.beta)}°/${nf1.format(A.az.rotDesc.beta)}°'ye çevirir ve <span class="nums">${nf0.format(A.az.rotAsc.saving * 1000)} m/s</span> tasarruf sağlar. `
+        + `Hedef düzlem (Ω = ${lw.config.raan}°) sahanın üstünden günde iki kez geçer: LST = Ω + λ_u ⇒ UTC <span class="nums">${fmtH(A.opp.asc.utcHours)}</span> (↑) ve <span class="nums">${fmtH(A.opp.desc.utcHours)}</span> (↓); menzil güvenliği sektörü (${A.site.azMin}°–${A.site.azMax}°) ${A.ascAllowed && A.descAllowed ? 'ikisine de izin verir' : A.ascAllowed ? 'yalnız çıkan geçişe izin verir' : A.descAllowed ? 'yalnız inen geçişe izin verir' : 'İKİSİNİ DE YASAKLAR'}. `
+        + `Kalkış Δt gecikirse düğüm ω_e Δt kadar kayar; düzlem açısı cos θ = cos²i + sin²i cos ΔΩ, düzeltme ΔV = 2V sin(θ/2): ${nf0.format(A.dvBudget * 1000)} m/s bütçeyle pencere <span class="nums">±${nf1.format(A.half / 60)} dk</span> (5 dk gecikme ≈ ${nf0.format((A.curve.find(c => Math.abs(c.dt - 300) < 40) ?? A.curve[65]).dv * 1000)} m/s). Sınırlar: GMST yaklaşık doğrusal, küresel Dünya, anlık yörüngeye giriş (tırmanış süresi ve kazanılan yer boylamı ihmal), yükseklik/faz hedefi yok.`;
+    }
+    sync(); writeCaption();
+    document.title += ' · hazır';
+  </script>
+</body>
+</html>

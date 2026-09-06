@@ -712,6 +712,22 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   const b = M.budget({ lonDeg: 42, years: 15, m0: 3000, ns }); check('geosk', '15 yıl bütçesi: KG baskın (> %90), toplam 600–850 m/s; elektrikli yakıt kimyasalın < 1/3', b.nsPerYear / b.totalPerYear > .9 && b.lifetimeDv > 600 && b.lifetimeDv < 850 && b.propEp < b.propChem / 3, `${b.lifetimeDv.toFixed(0)} m/s, kim ${b.propChem.toFixed(0)} / ep ${b.propEp.toFixed(0)} kg`);
 }
 
+/* ───────────────────────── launchwindow (azimut ve pencere) */
+{
+  const M = await mod('presets/launch_window/launch-window-model.mjs');
+  const az = M.azimuths(28.5, 51.6, 7.8);
+  check('launchwindow', 'KSC (28,5°) → i 51,6°: eylemsiz azimut 44,9° / 135,1° (Vallado örneği)', az.feasible && near(az.betaAsc, 44.98, .1) && near(az.betaDesc, 135.02, .1), `${az.betaAsc.toFixed(2)} / ${az.betaDesc.toFixed(2)}`);
+  check('launchwindow', 'Dönme düzeltmesi azimutu küçültür (çıkan) ve ~280 m/s tasarruf sağlar; ekvatordan doğuya 465 m/s', az.rotAsc.beta < az.betaAsc && az.rotAsc.saving * 1000 > 250 && az.rotAsc.saving * 1000 < 320 && near(M.azimuths(0, 0, 7.8).rotAsc.saving * 1000, 465, 2), `${az.rotAsc.beta.toFixed(2)}°, ${(az.rotAsc.saving * 1000).toFixed(0)} m/s`);
+  check('launchwindow', 'i < φ ise doğrudan çıkış yok (dogleg), i = φ sınırda tam doğuya (β = 90°)', !M.azimuths(28.5, 10, 7.8).feasible && near(M.azimuths(28.5, 28.5, 7.8).betaAsc, 90, 1e-6));
+  check('launchwindow', 'Kutupsal hedefte (i 90°) azimut 0°/180° ve düğüm uzaklığı λ_u = 0', near(M.azimuths(28.5, 90, 7.8).betaAsc, 0, 1e-9) && near(M.azimuths(28.5, 90, 7.8).lambdaAsc, 0, 1e-9));
+  const A = M.analyze({ site: 'ksc', target: 'iss', raan: 0, doy: 80, dvBudget: .1 });
+  check('launchwindow', 'Günde iki fırsat, aralarında 24 sa − 2λ_u/ω_e uyumlu (LST farkı 180° − 2λ_u)', Math.abs(((A.opp.desc.lst - A.opp.asc.lst) + 360) % 360 - (180 - 2 * A.az.lambdaAsc)) < 1e-6);
+  check('launchwindow', 'Ω artınca fırlatma UTC\u2019si aynı oranda kayar (Ω + 15° → +1 sa)', near(((M.analyze({ site: 'ksc', target: 'iss', raan: 15, doy: 80 }).opp.asc.utcHours - A.opp.asc.utcHours) + 24) % 24, 1, 1e-6));
+  check('launchwindow', '100 m/s bütçeyle ISS penceresi ±3–5 dk; 5 dk gecikme ≈ 130 m/s', A.half / 60 > 3 && A.half / 60 < 5 && near(M.planePenalty(51.6, 300, A.v).dv * 1000, 131, 5), `±${(A.half / 60).toFixed(2)} dk`);
+  check('launchwindow', 'Düzlem cezası: Δt = 0 → 0; i = 0 → gecikme cezasız (düğüm anlamsız); i büyüdükçe ceza büyür', M.planePenalty(51.6, 0, 7.66).dv === 0 && M.planePenalty(0, 600, 7.66).dv < 1e-12 && M.planePenalty(90, 600, 7.66).dv > M.planePenalty(51.6, 600, 7.66).dv);
+  check('launchwindow', 'KSC menzil güvenliği (35°–120°): ISS çıkan geçiş izinli, inen (137°) yasak; Vandenberg SSO inen geçiş izinli', A.ascAllowed && !A.descAllowed && M.analyze({ site: 'vandenberg', target: 'sso' }).descAllowed);
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

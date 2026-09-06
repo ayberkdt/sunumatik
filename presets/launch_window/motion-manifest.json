@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "launch-window-azimuth",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Fırlatma azimutunun ve penceresinin nereden geldiğini göstermek: hedef düzlem ile saha enlemi azimutu belirler, Dünya dönmesi hem azimutu hem gereken hızı değiştirir, düzlem sahanın üstünden günde iki kez geçer ve her dakika gecikme düzlem değişimi ΔV'ye dönüşür — pencere bir bütçe kararıdır.",
+      "model": "Küresel trigonometri (Vallado 6.4): sin β_i = cos i / cos φ (çıkan β, inen 180° − β; |·| > 1 ise çözüm yok → dogleg), sin λ_u = tan φ / tan i, LST = Ω + λ_u (çıkan) / Ω + 180° − λ_u (inen), UTC = (LST − GMST₀ − L)/ω_e (GMST₀ ≈ 280,46° + 0,9856°·(gün−1), doğrusal yaklaşım); dönme düzeltmesi v_rel = V_bo(sin β_i, cos β_i) − (ω_e R cos φ, 0) → β = atan2(doğu, kuzey), tasarruf V_bo − |v_rel|; gecikme Δt → ΔΩ = ω_e Δt, cos θ = cos²i + sin²i cos ΔΩ, ΔV = 2V sin(θ/2), pencere yarı-genişliği bisection; menzil güvenliği azimut sektörü. Denetim scripts/validate-astro.mjs 'launchwindow' (KSC→ISS 44,98°/135,02°, düzeltme ~280 m/s, ekvator 465 m/s, i < φ, kutupsal, iki fırsat aralığı, Ω → UTC kayması, pencere ±3–5 dk, ceza limitleri, sektör kararları).",
+      "limitations": "Anlık yörüngeye giriş (tırmanış süresi, kazanılan boylam ve yanma sonu konumu ihmal); küresel Dünya; GMST doğrusal yaklaşım (dakika düzeyi hata); yükseklik/faz (randevu) kısıtı yok; dogleg maliyeti yalnız yörüngede düzlem değişimi eşdeğeri olarak verilir; menzil güvenliği sektörleri kabaca gerçek sahalardan, Sinop kavramsal.",
+      "reducedMotion": "Sahne statiktir.",
+      "exportState": "?site=&target=&raan=&doy=&dv= deterministik; export=1 alt bilgiyi gizler.",
+      "accessibility": "Hedef/saha düğmeleri, Ω/gün/bütçe kaydırıcıları yerli öğelerdir; HUD tüm sonuçları metin verir (yasak sektör ve dogleg vurgulu); tuvaller aria-label taşır; altyazı formülleri ve sınırları düzyazı anlatır.",
+      "loop": false,
+      "pauseControl": false
+    }
+  ]
+}

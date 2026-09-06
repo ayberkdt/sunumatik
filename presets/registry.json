@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 58,
-    "presetsWithIndex": 51,
+    "presets": 59,
+    "presetsWithIndex": 52,
     "animatedPresets": 43,
     "skills": 18,
-    "demoSlides": 74,
-    "demoCards": 61,
+    "demoSlides": 75,
+    "demoCards": 62,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 74,
-    "cards": 61,
+    "slides": 75,
+    "cards": 62,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -48,6 +48,7 @@
       "halo_manifolds",
       "jwst_explorer",
       "launch_ascent",
+      "launch_window",
       "low_thrust_transfer",
       "lunar_descent",
       "lunar_orbit",
@@ -331,6 +332,13 @@
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true
+    },
+    {
+      "name": "launch_window",
+      "title": "Fırlatma Penceresi ve Azimut — launch_window",
+      "hasIndex": true,
+      "animated": false,
+      "hasMotionManifest": false
     },
     {
       "name": "low_thrust_transfer",
