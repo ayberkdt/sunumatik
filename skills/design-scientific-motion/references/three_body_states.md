@@ -80,3 +80,5 @@ Giriş: panolar sırayla belirir (1,2 s). Sonra sürekli entegrasyon: hız
 `speed` birim/s (varsayılan 0,8 → figure-8 periyodu ≈ 8 s, bumblebee ≈ 80 s).
 Izler toplamsal karışımla çizilir (ışık kaynağı), dekor ışıması yok.
 Statik/azaltılmış hareket: t = 6 tablosu.
+
+Performans: geçmiş tamponu yol/dönüş ölçütüyle seyreltilir (~7 000 nokta/kare), ışıma ½ ve ¼ çözünürlükte bulanıklaştırılır, cisim ışımaları sprite; kalite yöneticisi kare süresi 14 ms'i aşınca geniş ışımayı, 20 ms'i aşınca tüm ışımayı kapatır (`tb.perf.level`), düşünce geri açar. `tb.perf` fizik/iz/çizim sürelerini verir.
