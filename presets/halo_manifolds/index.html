@@ -6,6 +6,7 @@
   <title>Halo Yörüngeleri ve Değişmez Manifoldlar — halo_manifolds</title>
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../core/lab-scene.css">
   <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
   <style>
     :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
@@ -30,19 +31,19 @@
     html[data-export="true"] footer { display: none; }
   </style>
 </head>
-<body>
-  <header>
+<body class="lab">
+  <header data-lab-reveal>
     <h1>Halo Yörüngeleri ve Değişmez Manifoldlar<small>halo_manifolds · CR3BP dönen çerçeve · Richardson 3. mertebe tahmin + 6×6 STM düzeltmesi · Az sürekliliğiyle aile · monodromi özvektörlerinden kararlı/kararsız manifold demetleri</small></h1>
     <div class="tabs" role="group" aria-label="Sistem"><button data-sys="earthMoon" aria-pressed="true">Dünya–Ay</button><button data-sys="sunEarth">Güneş–Dünya</button></div>
   </header>
   <div class="stage-area" id="host"></div>
-  <footer>
+  <footer data-lab-reveal>
     <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="1000" step="1" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
     <div class="control-row">
       <div class="group" role="group" aria-label="Nokta"><span>Nokta</span><button data-l="L1" aria-pressed="true">L1</button><button data-l="L2">L2</button><button id="northBtn" aria-pressed="true">kuzey</button></div>
       <div class="group"><label class="field">Az <input id="az" type="range" min="0" max="1000" step="1" value="550"><output id="oAz">—</output></label><label class="field">manifold süresi <input id="tEnd" type="range" min="1" max="8" step="0.5" value="5"><output id="oT">—</output></label></div>
       <div class="group" role="group" aria-label="Manifold"><span>Göster</span><button data-show="uPlus" aria-pressed="true">Wᵘ+</button><button data-show="uMinus" aria-pressed="true">Wᵘ−</button><button data-show="sPlus" aria-pressed="true">Wˢ+</button><button data-show="sMinus" aria-pressed="true">Wˢ−</button><button data-show="family" aria-pressed="true">aile</button><button data-show="lyap" aria-pressed="true">Lyapunov</button></div>
-      <div class="group" role="group" aria-label="Kamera"><span>Kamera</span><button data-cam="overview" aria-pressed="true">Sistem</button><button data-cam="lpoint">L noktası</button><button data-cam="top">Üstten</button><button data-cam="side">Yandan</button><button data-cam="free">Serbest</button></div>
+      <div class="group" role="group" aria-label="Kamera"><span>Kamera</span><button data-cam="overview" aria-pressed="true">Sistem</button><button data-cam="lpoint">L noktası</button><button data-cam="top">Üstten</button><button data-cam="side">Yandan</button><button data-cam="free">Serbest</button><button id="replayBtn">Girişi tekrar oynat</button></div>
     </div>
     <p class="caption" id="caption"></p>
   </footer>
@@ -86,6 +87,7 @@
     $('tEnd').addEventListener('change', () => { hm.set({ tEnd: Number($('tEnd').value) }); syncUi(); writeCaption(); });
     document.querySelectorAll('[data-show]').forEach(b => b.addEventListener('click', () => { hm.show(b.dataset.show, !hm.visible[b.dataset.show]); syncUi(); }));
     document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => { hm.camera.transitionTo(b.dataset.cam); syncUi(); }));
+    $('replayBtn').addEventListener('click', () => hm.replay());
     (function tick() { syncUi(); requestAnimationFrame(tick); })();
     syncUi(); writeCaption();
     if (deterministic) { hm.timeline.pause(); hm.setActive(false); }
