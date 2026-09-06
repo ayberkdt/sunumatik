@@ -53,6 +53,7 @@ export async function mountHalo(host, options = {}) {
         <dt>Düzeltici</dt><dd data-h="corr">—</dd><dt>Richardson → düzeltilmiş</dt><dd data-h="rich">—</dd>
         <dt>Manifold</dt><dd data-h="mf">—</dd><dt>ε büyümesi (1 T)</dt><dd data-h="grow">—</dd>
         <dt>Lyapunov (aynı L)</dt><dd data-h="ly">—</dd><dt>t</dt><dd data-h="t">—</dd>
+        <dt>Wˢ en yakın yaklaşma</dt><dd data-h="tx" class="hi">—</dd><dt>ΔV ekleme · TOF</dt><dd data-h="txdv">—</dd>
       </dl><div class="hm__legend" data-legend></div></div>
       <div class="hm__views"><canvas data-view="xy" aria-label="x–y izdüşümü (üstten)"></canvas><canvas data-view="xz" aria-label="x–z izdüşümü (yandan)"></canvas></div>
     </div>`;
@@ -89,10 +90,10 @@ export async function mountHalo(host, options = {}) {
   const marker = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), new THREE.MeshStandardMaterial({ color: P.accent, emissive: P.accent, emissiveIntensity: .8, roughness: .5 })); scene.add(marker);
   const show = { uPlus: true, uMinus: true, sPlus: true, sMinus: true, family: true, lyap: true, ...(options.manifolds || {}) };
 
-  let cfg = { system: options.system ?? 'earthMoon', L: options.L ?? 'L1', AzKm: options.AzKm ?? null, northern: options.northern ?? true, tEnd: options.tEnd ?? 4, nMan: options.nManifold ?? 12 };
+  let cfg = { system: options.system ?? 'earthMoon', L: options.L ?? 'L1', AzKm: options.AzKm ?? null, northern: options.northern ?? true, tEnd: options.tEnd ?? 5, nMan: options.nManifold ?? 12 };
   let model = null, focus = new THREE.Vector3(), extent = 1;
   const timeline = { t: 0, duration: 1, playing: false, warp: options.warp ?? .35, play() { this.playing = true; ensureLoop(); }, pause() { this.playing = false; }, scrub(t) { this.t = clamp(t, 0, this.duration); render(0); } };
-  const cam = { current: options.camera ?? 'overview' }; const camPos = new THREE.Vector3();
+  const cam = { current: options.camera ?? ((options.system ?? 'earthMoon') === 'earthMoon' ? 'overview' : 'lpoint') }; const camPos = new THREE.Vector3();
 
   function clear(g) { while (g.children.length) { const c = g.children.pop(); c.geometry?.dispose?.(); } }
   function flat(states) { const out = []; const v = new THREE.Vector3(); for (const s of states) { toScene(s, v); out.push(v.x, v.y, v.z); } return out; }
@@ -115,7 +116,7 @@ export async function mountHalo(host, options = {}) {
     for (const o of model.family) if (Math.abs(Math.abs(o.z0) - Math.abs(orbit.z0)) > 1e-6) groups.family.add(mkLine(flat(o.states), famMat));
     groups.halo.add(mkLine(flat(orbit.states), lineMat(COL.halo, 2.4, 1)));
     if (model.lyap) groups.lyap.add(mkLine(flat(model.lyap.states), lineMat(COL.lyap, 1.3, .75)));
-    for (const k of ['uPlus', 'uMinus', 'sPlus', 'sMinus']) { const mat = lineMat(COL[k], 1, .32); for (const tr of model.manifolds[k]) if (tr.states.length > 2) groups[k].add(mkLine(flat(tr.states), mat)); }
+    for (const k of ['uPlus', 'uMinus', 'sPlus', 'sMinus']) { const mat = lineMat(COL[k], 1, .32); model.manifolds[k].forEach((tr, i) => { if (tr.states.length > 2) groups[k].add(mkLine(flat(tr.states), (model.transfer.best && model.transfer.best.branch === k && model.transfer.best.index === i) ? lineMat('#8fd39a', 2, .95) : mat)); }); }
     /* odak ve ölçek */
     marker.scale.setScalar(Math.max(.002, extent * .03));
     timeline.duration = orbit.period; if (timeline.t > timeline.duration) timeline.t = 0;
@@ -132,7 +133,8 @@ export async function mountHalo(host, options = {}) {
     const g = orbit.guess; H.rich.textContent = g && g.gamma != null ? `Δx₀ ${nf0.format(toKm(Math.abs(orbit.x0 - g.x0)))} km · Δẏ₀ ${((Math.abs(orbit.ydot0 - g.ydot0) / Math.abs(g.ydot0)) * 100).toFixed(1)} %` : 'aile sürekliliği';
     H.mf.textContent = `${mo.n}×4 · ε ${nf0.format(toKm(mo.eps))} km · ${nf1.format(toDays(mo.tEnd))} gün`; H.grow.textContent = growth ? `×${growth.ratio >= 1e4 ? growth.ratio.toExponential(2) : nf1.format(growth.ratio)} (λ_u ${mono.lambdaU >= 1e4 ? mono.lambdaU.toExponential(2) : nf1.format(mono.lambdaU)})` : '—';
     H.ly.textContent = lyap ? `Ax ${nf0.format(toKm(lyap.Ax))} km · T ${nf2.format(toDays(lyap.period))} g` : '—';
-    legendEl.innerHTML = `<i style="background:${COL.halo}"></i>seçili halo <i style="background:${COL.family}"></i>aile <i style="background:${COL.lyap}"></i>Lyapunov <i style="background:${COL.uPlus}"></i>kararsız W<sup>u</sup> (ileri) <i style="background:${COL.sPlus}"></i>kararlı W<sup>s</sup> (geri)`;
+    const tx = model.transfer.best; H.tx.textContent = tx ? `${tx.body} h = ${nf0.format(tx.hKm)} km (${tx.branch === 'sPlus' ? 'Wˢ+' : 'Wˢ−'} #${tx.index}${tx.impact ? ', ÇARPMA' : ''}${model.transfer.impactors ? ', ' + model.transfer.impactors + ' üye çarpıyor' : ''})` : '—'; H.txdv.textContent = tx ? `${nf2.format(tx.dvKmS)} km/s (v_in ${nf2.format(tx.vInKmS)}, v_c ${nf2.format(tx.vcKmS)}) · ${nf1.format(tx.tofDays)} gün` : '—';
+    legendEl.innerHTML = `<i style="background:${COL.halo}"></i>seçili halo <i style="background:${COL.family}"></i>aile <i style="background:${COL.lyap}"></i>Lyapunov <i style="background:${COL.uPlus}"></i>kararsız W<sup>u</sup> (ileri) <i style="background:${COL.sPlus}"></i>kararlı W<sup>s</sup> (geri) <i style="background:#8fd39a"></i>en yakın yaklaşma yörüngesi`;
     topEl.textContent = `${sys.label} CR3BP · dönen çerçeve · ${cfg.L} halo, Az ${nf0.format(toKm(orbit.Az))} km · Richardson + STM düzeltmesi · manifoldlar Φ(T) özvektörlerinden`;
   }
   function stateAt(t) { const { states, times } = model.orbit; const T = model.orbit.period; let tt = ((t % T) + T) % T; let i = 0; while (i < times.length - 2 && times[i + 1] < tt) i++; const f = (tt - times[i]) / Math.max(1e-12, times[i + 1] - times[i]); return states[i].map((v, k) => v + (states[i + 1][k] - v) * f); }
@@ -148,6 +150,7 @@ export async function mountHalo(host, options = {}) {
       for (const k of ['uPlus', 'uMinus', 'sPlus', 'sMinus']) if (show[k]) for (const tr of model.manifolds[k]) poly(tr.states, COL[k], .8, .35);
       if (show.family) for (const o of model.family) poly(o.states, COL.family, .8, .3);
       if (show.lyap && model.lyap) poly(model.lyap.states, COL.lyap, 1, .8);
+      const tb = model.transfer.best; if (tb && show[tb.branch]) poly(model.manifolds[tb.branch][tb.index].states, '#8fd39a', 1.6, .95);
       poly(model.orbit.states, COL.halo, 2, 1);
       const secX = 1 - model.mu; if (X(secX) < W + 20) { ctx.fillStyle = '#a9a49b'; ctx.beginPath(); ctx.arc(X(secX), Y(0), Math.max(2, model.sys.rSecondary / model.sys.L * sc), 0, Math.PI * 2); ctx.fill(); }
       ctx.fillStyle = P.accent; ctx.beginPath(); ctx.arc(X(Lx), Y(0), 3, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(X(s[ax]), Y(s[ay]), 4, 0, Math.PI * 2); ctx.fill();

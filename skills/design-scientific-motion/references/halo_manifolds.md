@@ -36,7 +36,10 @@ Saf çekirdek (`core/astro-cr3bp.mjs`): `richardsonHalo(mu, L, Az, {northern})`,
   yarım tur x'in öte ucunda bitmeli, yarım periyot tahminin 0,25–1 katı içinde.
 - Aile: Az = γ·(0,08…1,4) listesi, süreklilik ilk başarısızlıkta durur (NRHO ucu ve ailenin katlanması yok).
 - Monodromi: güç yinelemesi (Φ ve Φ⁻¹) — yalnız baskın gerçek özçift; merkez altuzayı hesaplanmaz.
-- Manifold: ε = 50 km (doğrusal bölge), kesme yarıçapı 2,2 birim ya da cisme çarpma.
+- Manifold: ε = 50 km (doğrusal bölge), cisme yakınlıkla küçülen adımlı RK4, kesme yarıçapı 2,2 birim ya da cisim yüzeyi.
+- Transfer (`manifoldTransfer`): kararlı demetin Dünya'ya en yakın geçen çarpmayan üyesi; ΔV = |v_in − v_c t̂| dairesel park
+  yörüngesinden tek-itkili ekleme ALT SINIRI (park yörüngesi manifold düzleminde varsayılır); Güneş–Dünya L2'de ~4 000 km
+  yükseklikte ~2,5 km/s, Dünya–Ay L1'de en yakın geçiş ~260 000 km (LEO'ya inmez — bilinen sonuç). HUD ve yeşil çizgi.
 - Denetim: `scripts/validate-astro.mjs` "halo" grubu — Güneş–Dünya L2 literatür değeri (x₀ 1,00833, T 180 gün),
   periyodiklik, Jacobi, simetri, Richardson yakınlığı, güney aynası, aile monotonluğu, çatallanma limiti, det Φ = 1,
   λ_uλ_s = 1, özvektör artığı, iz kimliği, ε büyümesi ≈ λ_u, kararlı/kararsız manifold davranışı.

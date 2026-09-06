@@ -202,7 +202,7 @@ KARTLAR = [
          feats=["Richardson (1980) 3. mertebe açılım → z₀ sabit, (x₀, ẏ₀) sönümlü Newton (y = 0'da ẋ = ż = 0); Az sürekliliği ve adım yarılamalı aile",
                 "Güneş–Dünya L2 halo Az 110 000 km: x₀ = 1,00833, T = 180 gün literatürle denetimde; periyodiklik 1e−8, Jacobi 1e−12",
                 "Monodromi Φ(T): det = 1, λ_u·λ_s = 1, özvektör artığı; manifold sapması ε = 50 km bir periyotta ×λ_u büyür (ölçülür)",
-                "3B dönen çerçeve + x–y / x–z izdüşümleri; kararsız (ileri) ve kararlı (zaman-tersleme, geri) demetler; Lyapunov karşılaştırması; ?sys=&L=&az=&t= deterministik"]),
+                "Kararlı demetten Dünya'ya transfer: en yakın çarpmayan geçiş, park yörüngesinden ΔV alt sınırı ve varış süresi (SE L2: ~4 000 km, ~2,5 km/s); 3B dönen çerçeve + x–y / x–z izdüşümleri; ?sys=&L=&az=&t= deterministik"]),
     dict(src="transfer-explorer-preset", repo="transfer_explorer", kat="orbital",
          ad="Lambert Transfer Kâşifi", status="cekirdek",
          embed="../presets/transfer_explorer/index.html",

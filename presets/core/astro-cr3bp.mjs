@@ -329,13 +329,28 @@ export function monodromy(mu, orbit, { dt = 2e-3 } = {}) {
   return { Phi, lambdaU, lambdaS, vU: u.vec, vS: s.vec, nu: (lambdaU + 1 / lambdaU) / 2, trace, det: det6(Phi), closure: Math.hypot(...r.states[r.states.length - 1].map((v, i) => v - s0[i])) };
 }
 
+/** Cisme yakınlıkla küçülen adımlı RK4 (STM yok): h = dt·clamp((r_min/0,02)^1,5, 1e−4, 1). Manifoldlar Dünya/Ay'a
+ *  yaklaşınca sabit adım Jacobi'yi bozuyordu (SE birimlerinde r ~ 7e−5); yakın geçişte adım 1e−4'e kadar iner. */
+export function propagateAdaptive(mu, s0, tEnd, dt = 2e-3, { hMinFactor = 1e-4, refDist = .02 } = {}) {
+  let s = s0.slice(), t = 0; const states = [s.slice()], times = [0];
+  const f = st => deriv(mu, st);
+  while (t < tEnd - 1e-12) {
+    const rmin = Math.min(Math.hypot(s[0] + mu, s[1], s[2]), Math.hypot(s[0] - 1 + mu, s[1], s[2]));
+    const h = Math.min(tEnd - t, dt * Math.min(1, Math.max(hMinFactor, Math.pow(rmin / refDist, 1.5))));
+    const k1 = f(s), s2 = s.map((v, i) => v + .5 * h * k1[i]), k2 = f(s2), s3 = s.map((v, i) => v + .5 * h * k2[i]), k3 = f(s3), s4 = s.map((v, i) => v + h * k3[i]), k4 = f(s4);
+    s = s.map((v, i) => v + h / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i])); t += h;
+    states.push(s.slice()); times.push(t);
+  }
+  return { states, times };
+}
+
 /** Zaman-tersleme simetrisi: (x, y, z, ẋ, ẏ, ż) → (x, −y, z, −ẋ, ẏ, −ż). */
 const mirror = s => [s[0], -s[1], s[2], -s[3], s[4], -s[5]];
 
 /** Değişmez manifold demeti. branch 'unstable' (ileri) | 'stable' (geri); sign ±1 (iki kol).
  *  n nokta yörünge boyunca; her noktada v_k = Φ(t_k,0)·v, konum kısmı birim norm; sapma ε (boyutsuz).
  *  Döner [{ t0, states, times, branch, sign }] (kararlı kol zaman sırasına göre: uzaktan yörüngeye gelir). */
-export function manifold(mu, orbit, mono, { branch = 'unstable', sign = 1, n = 24, eps = 1e-4, tEnd = 6, dt = 2e-3, stopRadius = 2.2 } = {}) {
+export function manifold(mu, orbit, mono, { branch = 'unstable', sign = 1, n = 24, eps = 1e-4, tEnd = 6, dt = 2e-3, stopRadius = 2.2, stopRadii = [0.005, 0.002] } = {}) {
   const v0 = branch === 'unstable' ? mono.vU : mono.vS; if (!v0) return [];
   const s0 = [orbit.x0, 0, orbit.z0 ?? 0, 0, orbit.ydot0, 0];
   const out = [];
@@ -356,10 +371,10 @@ export function manifold(mu, orbit, mono, { branch = 'unstable', sign = 1, n = 2
     const pn = Math.hypot(vk[0], vk[1], vk[2]) || 1; const dv = vk.map(x => x / pn * eps * sign);
     let st = sk.map((x, i) => x + dv[i]);
     if (branch === 'stable') st = mirror(st);
-    const r = propagate(mu, st, tEnd, dt);
+    const r = propagateAdaptive(mu, st, tEnd, dt);
     let states = r.states, times = r.times;
     let cut = states.length;
-    for (let i = 0; i < states.length; i++) { const s = states[i]; if (Math.hypot(s[0], s[1], s[2]) > stopRadius || Math.hypot(s[0] + mu, s[1], s[2]) < 0.005 || Math.hypot(s[0] - 1 + mu, s[1], s[2]) < 0.002) { cut = i + 1; break; } }
+    for (let i = 0; i < states.length; i++) { const s = states[i]; if (Math.hypot(s[0], s[1], s[2]) > stopRadius || Math.hypot(s[0] + mu, s[1], s[2]) < stopRadii[0] || Math.hypot(s[0] - 1 + mu, s[1], s[2]) < stopRadii[1]) { cut = i + 1; break; } }
     states = states.slice(0, cut); times = times.slice(0, cut);
     if (branch === 'stable') { states = states.map(mirror).reverse(); times = times.map(t => -t).reverse(); }
     out.push({ t0: tk, states, times, branch, sign });
