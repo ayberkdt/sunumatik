@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "conjunction-assessment",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Yakın geçiş değerlendirmesinde belirsizlik geometrisini göstermek: TCA ve ıska vektörü, karşılaşma düzlemi, birleşik kovaryans elipsleri, Mahalanobis uzaklığı, 2B çarpışma olasılığı ve seyrelme eğrisi — 'iki nokta neredeyse çarpışıyor' değil, 'olasılık nereden geliyor'.",
+      "model": "İki nesne iki-cisim Kepler yörüngelerinde (presets/core/astro-orbit.mjs); ikincil yörünge, nominal zamanda birincile göre verilen ıska (RTN, m) ve kesişme açısıyla kurulur (rv → elemanlar), TCA menzil minimizasyonuyla BULUNUR (kaba tarama + altın oran). Karşılaşma çerçevesi: ê₁ = v̂_rel, ê₂ = (r_rel × v_rel)/|·|, ê₃ = ê₁ × ê₂; TCA'da r_rel ⊥ v_rel. Kovaryanslar RTN köşegen σ² (m²) → ECI (C = Σ σᵢ² eᵢeᵢᵀ), C = C_P + C_S (bağımsız hatalar), düzleme izdüşüm C₂ = P C Pᵀ; d_M = √(δᵀC₂⁻¹δ); elipsler C₂ özayrışımından. P_c = ∬_{|x−δ|≤R_HB} N(x; 0, C₂) dx, kutupsal ızgara (radyal çözünürlük σ_min/8, 48–600 halka × 96 açı). Seyrelme: P_c(k) for C₂·k². Denetim scripts/validate-astro.mjs (r_rel ⊥ v_rel, TCA minimumu, P_c limitleri πR²/(2π√|C|), → 1, → 0, izotropik d_M, RTN→ECI iz korunumu, seyrelme tepesi, yakın ıska → büyük P_c).",
+      "solver": "Altın oran TCA (60 adım), analitik kovaryans cebiri, sayısal 2B integral.",
+      "limitations": "Kısa karşılaşma varsayımı (göreli hareket doğrusal, kovaryans TCA'da sabit — GEO gibi yavaş geçişlerde geçersiz); Gauss belirsizlik; yalnız konum kovaryansı (hız korelasyonu yok); kovaryans yayılımı yok (TCA'daki değer girdi olarak verilir); Kepler (pertürbasyon yok); nesne şekli dairesel sert gövde. Gerçek CDM işleme için operasyonel araçlar gerekir; burada yöntem anatomisi gösterilir.",
+      "reducedMotion": "Otomatik oynatma yok; TCA ânında donmuş kare; düzlem çizimi ve HUD statik okunur.",
+      "exportState": "?sc=&t=<s> deterministik.",
+      "accessibility": "Senaryo düğmeleri, ıska/kovaryans/R_HB girişleri ve zaman kaydırıcısı yerli öğelerdir; HUD tüm büyüklükleri metin verir (menzil, ıska, |v_rel|, d_M, σ, P_c, seyrelme tepesi, karar); altyazı yöntemi düzyazı anlatır.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "conjunction-encounter-plane",
+      "type": "comparison",
+      "truthLevel": "analytic",
+      "purpose": "Karşılaşma düzlemi çizimi: 1σ/2σ/3σ birleşik elipsler, ıska vektörü, sert-gövde dairesi — P_c'nin geometrisi.",
+      "model": "C₂ özayrışımı; ölçek çubuğu.",
+      "limitations": "2B izdüşüm.",
+      "reducedMotion": "Statik.",
+      "exportState": "Girdilerin fonksiyonu.",
+      "accessibility": "Sayılar HUD'da.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

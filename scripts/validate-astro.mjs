@@ -495,6 +495,31 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('eclipse', 'GEO ekinoks tutulması: penumbra toplamı 2–8 dk (sonlu Güneş diski; giriş+çıkış ≈ 2×2 dk)', (() => { const g = E.analyze({ el: O.ORBIT_PRESETS.geo, dayOfYear: 80, revs: 1, dt: 20 }); return (g.stats.penumbraFrac - g.stats.umbraFrac) * g.period / 60 > 2 && (g.stats.penumbraFrac - g.stats.umbraFrac) * g.period / 60 < 8; })());
 }
 
+/* ───────────────────────── Yakın geçiş / kovaryans */
+{
+  const C = await mod('presets/conjunction_covariance/conjunction-model.mjs');
+  const A = C.analyzeConjunction({ miss: [120, 300, -80], crossAngle: 40, tTca: 3600 });
+  check('conjunction', 'TCA\'da r_rel ⊥ v_rel (düzlem-dışı bileşen < 1 mm)', Math.abs(A.geo.outOfPlane) < 1e-3, `${A.geo.outOfPlane.toExponential(1)} m`);
+  check('conjunction', 'TCA, nominal zamana yakın (±60 s) ve menzil minimumu (komşular büyük)', Math.abs(A.tca.tTca - 3600) < 60 && A.series.every(s => s.range >= A.tca.miss * 1000 - 1e-3), `${A.tca.tTca.toFixed(1)} s, ${(A.tca.miss * 1000).toFixed(1)} m`);
+  /* P_c limitleri */
+  const iso = [1e6, 0, 0, 1e6];
+  check('conjunction', 'P_c küçük sert gövde limiti: ≈ πR²/(2π|C|^½) (±0,1 %)', rel(C.collisionProbability(iso, [0, 0], 5), Math.PI * 25 / (2 * Math.PI * 1e6), 1e-3));
+  check('conjunction', 'P_c → 1 sert gövde kovaryansı kaplayınca; → 0 kovaryans devasa olunca (seyrelme)', Math.abs(C.collisionProbability([1e4, 0, 0, 1e4], [0, 0], 5000) - 1) < 1e-3 && C.collisionProbability([1e12, 0, 0, 1e12], [300, 0], 20) < 1e-8);
+  /* Mahalanobis izotropik: ıska/σ */
+  const g0 = C.encounterGeometry(A.tca, [100, 100, 100], [0, 0, 0]);
+  check('conjunction', 'izotropik kovaryansta d_M = ıska/σ', near(g0.dM, Math.hypot(...g0.missPlane) / (100 * Math.SQRT2) * Math.SQRT2, 1e-9) && near(g0.ellipse.s1, 100, 1e-9) && near(g0.ellipse.s2, 100, 1e-9));
+  /* kovaryans dönüşümü iz korur (RTN → ECI) */
+  const B = C.rtnBasis(A.tca.rP, A.tca.vP), CE = C.covRtnToEci([50, 400, 60], B);
+  check('conjunction', 'RTN → ECI kovaryans dönüşümü izi korur (σ_R² + σ_T² + σ_N²)', near(CE[0] + CE[4] + CE[8], 50 * 50 + 400 * 400 + 60 * 60, 1e-6));
+  check('conjunction', 'birleşik kovaryans = C_P + C_S (simetrik, pozitif tanımlı)', A.geo.det > 0 && near(A.geo.C2[1], A.geo.C2[2], 1e-9));
+  /* seyrelme: tepe var, uçlarda küçük */
+  const dil = A.dilution; check('conjunction', 'seyrelme eğrisi: tepe P_c uçlardan büyük', dil.peak.pc > dil.points[0].pc && dil.peak.pc > dil.points[dil.points.length - 1].pc, `tepe k = ${dil.peak.k.toFixed(2)}`);
+  /* daha yakın ıska → daha büyük P_c (aynı kovaryans) */
+  const A2 = C.analyzeConjunction({ miss: [30, 60, -20], crossAngle: 40, tTca: 3600 });
+  check('conjunction', 'yakın ıska → daha büyük P_c', A2.pc > A.pc, `${A2.pc.toExponential(2)} > ${A.pc.toExponential(2)}`);
+  const e = C.eig2(4, 1, 2); check('conjunction', 'eig2: özdeğerler iz ve determinantı sağlar', near(e.l1 + e.l2, 6, 1e-12) && near(e.l1 * e.l2, 7, 1e-12));
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Yakın Geçiş ve Kovaryans — conjunction_covariance</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; } .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); } .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 90px; text-align: right; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 8px; } label.field input[type="number"] { width: 62px; background: var(--color-canvas); color: var(--color-ink); border: 1px solid var(--color-rule); border-radius: 5px; padding: 3px 6px; font: 500 12px var(--font-mono); }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Yakın Geçiş ve Kovaryans<small>conjunction_covariance · TCA, karşılaşma düzlemi, birleşik kovaryans elipsleri, Mahalanobis, 2B çarpışma olasılığı ve seyrelme</small></h1>
+    <div class="tabs" role="group" aria-label="Senaryolar"><button data-sc="nominal" aria-pressed="true">Nominal</button><button data-sc="close">Yakın ıska</button><button data-sc="uncertain">Belirsiz ikincil</button><button data-sc="headon">Kafa kafaya</button></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="1800" step="1" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Iska"><span>Iska (RTN, m)</span><label class="field">R <input id="mR" type="number" value="120"></label><label class="field">T <input id="mT" type="number" value="300"></label><label class="field">N <input id="mN" type="number" value="-80"></label><label class="field">kesişme <input id="ang" type="number" value="40" step="5">°</label></div>
+      <div class="group" role="group" aria-label="Kovaryans"><span>σ birincil</span><label class="field"><input id="pR" type="number" value="50"></label><label class="field"><input id="pT" type="number" value="400"></label><label class="field"><input id="pN" type="number" value="60"></label><span>σ ikincil</span><label class="field"><input id="sR" type="number" value="120"></label><label class="field"><input id="sT" type="number" value="900"></label><label class="field"><input id="sN" type="number" value="150"></label><label class="field">R_HB <input id="rhb" type="number" value="20"> m</label><button id="applyBtn">Hesapla</button></div>
+      <div class="group" role="group" aria-label="Zaman"><span>Zaman</span><button data-warp="5">5×</button><button data-warp="20" aria-pressed="true">20×</button><button data-warp="60">60×</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountConjunction } from './conjunction.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id);
+    const SC = { nominal: { miss: [120, 300, -80], crossAngle: 40, sigP: [50, 400, 60], sigS: [120, 900, 150], rHb: 20 }, close: { miss: [30, 60, -20], crossAngle: 40, sigP: [50, 400, 60], sigS: [120, 900, 150], rHb: 20 }, uncertain: { miss: [120, 300, -80], crossAngle: 40, sigP: [50, 400, 60], sigS: [800, 6000, 900], rHb: 20 }, headon: { miss: [80, 150, 40], crossAngle: 170, sigP: [50, 400, 60], sigS: [120, 900, 150], rHb: 20 } };
+    const sc0 = params.get('sc') || 'nominal';
+    const cj = await mountConjunction($('host'), { ...SC[sc0], warp: Number(params.get('warp')) || 20, autoplay: !deterministic, t: params.has('t') ? Number(params.get('t')) : undefined });
+    window.__conjunction = cj;
+    if (params.has('t')) cj.timeline.scrub(Number(params.get('t')));
+    const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const show = () => { const c = cj.config; $('mR').value = c.miss[0]; $('mT').value = c.miss[1]; $('mN').value = c.miss[2]; $('ang').value = c.crossAngle; $('pR').value = c.sigP[0]; $('pT').value = c.sigP[1]; $('pN').value = c.sigP[2]; $('sR').value = c.sigS[0]; $('sT').value = c.sigS[1]; $('sN').value = c.sigS[2]; $('rhb').value = c.rHb; };
+    const apply = () => { cj.set({ miss: [Number($('mR').value), Number($('mT').value), Number($('mN').value)], crossAngle: Number($('ang').value), sigP: [Number($('pR').value), Number($('pT').value), Number($('pN').value)], sigS: [Number($('sR').value), Number($('sT').value), Number($('sN').value)], rHb: Number($('rhb').value) }); writeCaption(); cj.timeline.play(); document.querySelectorAll('[data-sc]').forEach(x => x.setAttribute('aria-pressed', 'false')); };
+    $('applyBtn').addEventListener('click', apply);
+    document.querySelectorAll('[data-sc]').forEach(b => b.addEventListener('click', () => { cj.set(SC[b.dataset.sc]); show(); writeCaption(); cj.timeline.play(); document.querySelectorAll('[data-sc]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    document.querySelectorAll('[data-sc]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.sc === sc0)));
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { cj.timeline.setWarp(Number(b.dataset.warp)); document.querySelectorAll('[data-warp]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    function writeCaption() {
+      const A = cj.analysis, g = A.geo;
+      $('caption').innerHTML = `<strong>Belirsizlik geometrisi asıl içerik:</strong> TCA menzil minimizasyonuyla bulundu (<span class="nums">${nf1.format(A.tca.miss * 1000)} m</span>, |v_rel| ${nf2.format(A.vRelMag)} km/s, kesişme ${cj.config.crossAngle}°). Her nesnenin RTN kovaryansı ECI'ye döndürülüp toplanır (bağımsız hatalar) ve v_rel'e dik karşılaşma düzlemine izdüşürülür: birleşik elips <span class="nums">${nf0.format(g.ellipse.s1)} × ${nf0.format(g.ellipse.s2)} m</span> (1σ), Mahalanobis <span class="nums">${nf2.format(g.dM)}</span>. `
+        + `P_c = ∬ N(x; 0, C₂) dx sert-gövde dairesi (R_HB ${cj.config.rHb} m) üzerinde: <span class="nums">${A.pc.toExponential(2)}</span>. Seyrelme eğrisi: kovaryans k ile ölçeklenince P_c tepe yapar (k = ${nf2.format(A.dilution.peak.k)}, ${A.dilution.peak.pc.toExponential(2)}) sonra düşer — büyük belirsizlikte küçük P_c "güvenli" demek değildir. Kısa-karşılaşma, Gauss, Kepler; kovaryans yayılımı yok.`;
+    }
+    show(); writeCaption();
+    const scrub = $('scrub'), playBtn = $('playBtn'), timeOut = $('timeOut');
+    function syncUi() { const tl = cj.timeline; scrub.max = String(tl.duration); playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(tl.t); const dtca = tl.t - tl.duration / 2; timeOut.textContent = `TCA ${dtca >= 0 ? '+' : '−'}${nf0.format(Math.abs(dtca))} s`; }
+    setInterval(syncUi, 150);
+    playBtn.addEventListener('click', () => { const tl = cj.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { cj.timeline.pause(); cj.timeline.scrub(Number(scrub.value)); syncUi(); });
+    if (deterministic) { cj.timeline.pause(); cj.setActive(false); }
+    document.title += ' · hazır'; syncUi();
+  </script>
+</body>
+</html>

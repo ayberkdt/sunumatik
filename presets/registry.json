@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 49,
-    "presetsWithIndex": 42,
-    "animatedPresets": 38,
+    "presets": 50,
+    "presetsWithIndex": 43,
+    "animatedPresets": 39,
     "skills": 18,
-    "demoSlides": 65,
-    "demoCards": 52,
+    "demoSlides": 66,
+    "demoCards": 53,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 65,
-    "cards": 52,
+    "slides": 66,
+    "cards": 53,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -29,6 +29,7 @@
       "comms_antenna",
       "comms_link_budget",
       "composition",
+      "conjunction_covariance",
       "constellation_coverage",
       "cosmos_advanced",
       "cr3bp_lagrange",
@@ -168,6 +169,13 @@
       "hasIndex": false,
       "animated": false,
       "hasMotionManifest": false
+    },
+    {
+      "name": "conjunction_covariance",
+      "title": "Yakın Geçiş ve Kovaryans — conjunction_covariance",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
     },
     {
       "name": "constellation_coverage",
