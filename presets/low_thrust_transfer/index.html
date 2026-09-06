@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Düşük İtkili Transfer Laboratuvarı — low_thrust_transfer</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; max-width: 60%; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 11.5px/1 var(--font-body); padding: 7px 10px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; } .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); }
+    .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 130px; text-align: right; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 130px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 64px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Düşük İtkili Transfer Laboratuvarı<small>low_thrust_transfer · sürekli teğetsel itki spirali (RK4, değişken kütle) · Edelbaum analitik ΔV · Hohmann karşılaştırması · gölge görev çevrimi</small></h1>
+    <div class="tabs" role="group" aria-label="Senaryolar" id="tabs"></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="1000" step="1" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
+    <div class="control-row">
+      <div class="group"><span>Araç</span><label class="field">itki <input id="thrust" type="range" min="-3" max="1" step="0.1" value="-0.22"><output id="oThrust">0,60 N</output></label><label class="field">Isp <input id="isp" type="range" min="800" max="5000" step="100" value="1800"><output id="oIsp">1800 s</output></label><label class="field">Δi <input id="di" type="range" min="0" max="60" step="1" value="0"><output id="oDi">0°</output></label><button id="shadowBtn" aria-pressed="false">gölgede itki yok</button></div>
+      <div class="group" role="group" aria-label="Hız"><span>Hız</span><button data-warp="86400">1 gün/s</button><button data-warp="172800" aria-pressed="true">2 gün/s</button><button data-warp="864000">10 gün/s</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountLowThrust } from './low-thrust.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id);
+    const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), nf3 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    let scId = params.get('s') || 'gtoLikeLeoGeo';
+    const lt = await mountLowThrust($('host'), { scenario: scId, warp: Number(params.get('warp')) || 172800, autoplay: !deterministic, t: params.has('t') ? Number(params.get('t')) * 86400 : undefined });
+    window.__lowThrust = lt;
+    const ctl = { thrust: null, isp: null, di: null, shadow: null };
+    const tabs = $('tabs'); for (const [id, sc] of Object.entries(lt.scenarios)) { const b = document.createElement('button'); b.dataset.s = id; b.textContent = sc.label; b.setAttribute('aria-pressed', String(id === scId)); b.addEventListener('click', () => { scId = id; resetFrom(id); apply(); }); tabs.appendChild(b); }
+    function resetFrom(id) { const sc = lt.scenarios[id], V = lt.vehicles[sc.vehicle]; ctl.thrust = V.thrust; ctl.isp = V.isp; ctl.di = sc.di; ctl.shadow = sc.shadow; sync(); }
+    function sync() { $('thrust').value = String(Math.log10(ctl.thrust)); $('oThrust').textContent = `${ctl.thrust >= .01 ? nf2.format(ctl.thrust) : ctl.thrust.toExponential(1)} N`; $('isp').value = String(ctl.isp); $('oIsp').textContent = `${ctl.isp} s`; $('di').value = String(ctl.di); $('oDi').textContent = `${ctl.di}°`; $('shadowBtn').setAttribute('aria-pressed', String(ctl.shadow)); document.querySelectorAll('[data-s]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === scId))); }
+    function apply() { const sc = lt.scenarios[scId], V = lt.vehicles[sc.vehicle]; const custom = (ctl.thrust === V.thrust && ctl.isp === V.isp) ? V : { ...V, label: V.label + ' (ayarlı)', thrust: ctl.thrust, isp: ctl.isp }; lt.set(scId, { vehicle: custom, di: ctl.di, shadow: ctl.shadow }); writeCaption(); if (!deterministic) lt.timeline.play(); syncUi(); }
+    $('thrust').addEventListener('change', () => { ctl.thrust = 10 ** Number($('thrust').value); apply(); }); $('thrust').addEventListener('input', () => { const v = 10 ** Number($('thrust').value); $('oThrust').textContent = `${v >= .01 ? nf2.format(v) : v.toExponential(1)} N`; });
+    $('isp').addEventListener('change', () => { ctl.isp = Number($('isp').value); apply(); }); $('isp').addEventListener('input', () => { $('oIsp').textContent = `${$('isp').value} s`; });
+    $('di').addEventListener('change', () => { ctl.di = Number($('di').value); apply(); }); $('di').addEventListener('input', () => { $('oDi').textContent = `${$('di').value}°`; });
+    $('shadowBtn').addEventListener('click', () => { ctl.shadow = !ctl.shadow; apply(); });
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { lt.timeline.warp = Number(b.dataset.warp); syncUi(); }));
+    const scrub = $('scrub'), timeOut = $('timeOut'), playBtn = $('playBtn');
+    function syncUi() { const tl = lt.timeline; playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(Math.round(tl.t / tl.duration * 1000)); timeOut.textContent = `${nf1.format(tl.t / 86400)} / ${nf1.format(tl.duration / 86400)} gün`; document.querySelectorAll('[data-warp]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.warp) === tl.warp))); }
+    function writeCaption() {
+      const r = lt.run, V = r.vehicle, ratio = r.dvTotal / r.edelbaum;
+      $('caption').innerHTML = `<strong>Düşük itki ΔV'yi impulsif transferin çok üstüne çıkarır ama yakıtı çok altına indirir:</strong> ${V.thrust >= .01 ? nf2.format(V.thrust) : V.thrust.toExponential(1)} N itki, ${nf0.format(V.m0)} kg araçta a_T = ${(V.thrust / V.m0).toExponential(1)} m/s² (T/W = ${r.thrustToWeight.toExponential(1)}); sürekli teğetsel itkiyle spiral ${nf0.format(r.revs)} turda ${nf1.format(r.tof / 86400)} günde ${r.reached ? 'hedefe ulaşır' : 'HEDEFE ULAŞMAZ (süre sınırı)'}. `
+        + `Sayısal ΔV <span class="nums">${nf3.format(r.dvTotal)} km/s</span>, Edelbaum analitik <span class="nums">${nf3.format(r.edelbaum)} km/s</span> (oran ${nf3.format(ratio)}${r.dutyCycle < .999 ? '; gölge kesintileri ΔV\'yi biraz düşürür, süreyi uzatır ve tek yanlı itki eksantriklik biriktirir: görev çevrimi %' + nf0.format(r.dutyCycle * 100) : ''}), Hohmann <span class="nums">${nf3.format(r.hohmann.dv)} km/s</span> ${nf1.format(r.hohmann.tof / 3600)} saatte. `
+        + `Yakıt: elektrikli (Isp ${V.isp} s) <span class="nums">${nf1.format(r.mp)} kg</span>, aynı Hohmann'ı kimyasalla (Isp 320 s) yapmak <span class="nums">${nf1.format(r.hohmannProp.mp)} kg</span>. e_max = ${r.eMax.toExponential(1)} (spiral ≈ dairesel varsayımı ${r.eMax < .02 ? 'geçerli' : 'ZORLANIYOR — itki yüksek'}). `
+        + `Sınırlar: düzlemsel simülasyon + Edelbaum yaw kanunu (eğiklik analitik pay), J2/sürükleme yok, silindirik gölge, sabit itki/Isp, güç-kısıtı yok.`;
+    }
+    playBtn.addEventListener('click', () => { const tl = lt.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { lt.timeline.pause(); lt.timeline.scrub(Number(scrub.value) / 1000 * lt.timeline.duration); syncUi(); });
+    (function tick() { syncUi(); requestAnimationFrame(tick); })();
+    resetFrom(scId); writeCaption(); syncUi();
+    if (deterministic) { lt.timeline.pause(); lt.setActive(false); }
+    document.title += ' · hazır';
+  </script>
+</body>
+</html>

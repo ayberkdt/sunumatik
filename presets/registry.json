@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 54,
-    "presetsWithIndex": 47,
-    "animatedPresets": 42,
+    "presets": 55,
+    "presetsWithIndex": 48,
+    "animatedPresets": 43,
     "skills": 18,
-    "demoSlides": 70,
-    "demoCards": 57,
+    "demoSlides": 71,
+    "demoCards": 58,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 70,
-    "cards": 57,
+    "slides": 71,
+    "cards": 58,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -46,6 +46,7 @@
       "halo_manifolds",
       "jwst_explorer",
       "launch_ascent",
+      "low_thrust_transfer",
       "lunar_descent",
       "lunar_orbit",
       "ml_attention_flow",
@@ -310,6 +311,13 @@
     {
       "name": "launch_ascent",
       "title": "Fırlatma ve Tırmanış — launch_ascent",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "low_thrust_transfer",
+      "title": "Düşük İtkili Transfer Laboratuvarı — low_thrust_transfer",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

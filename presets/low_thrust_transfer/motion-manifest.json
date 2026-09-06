@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "lowthrust-spiral",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Düşük itkili (elektrikli) transferin ödünleşimini göstermek: sürekli teğetsel itki spirali ΔV'yi Hohmann'ın üstüne çıkarır ama yüksek Isp yakıtı kat kat azaltır; Edelbaum analitik limitiyle sayısal spiralin örtüşmesi, eğiklik değişiminin maliyeti, gölge kesintilerinin süre ve eksantriklik etkisi, T/W ile sürenin ölçeklenmesi.",
+      "model": "Düzlemsel iki-cisim + teğetsel itki: r̈ = −μ r/r³ + (T/m) v̂ (dışa) ya da −v̂ (içe); ṁ = −T/(g₀ Isp); RK4, adım = periyot/200 (5–600 s, yörünge büyüdükçe büyür); ΔV = ∫(T/m)dt; hedef yarı-büyük eksende durur. Eğiklik: Edelbaum yaw kanunu tan β(t) = v₀ sin β₀ / (v₀ cos β₀ − ΔV), β₀ = atan2(sin(πΔi/2), v₀/v₁ − cos(πΔi/2)); düzlem-içi ivme a_T cos β, eğiklik payı ΔV ile orantılı analitik dağıtılır. Analitik: Edelbaum ΔV = √(v₀² + v₁² − 2v₀v₁cos(πΔi/2)) (eş-düzlemde |v₀ − v₁|), Hohmann kapalı biçim, Tsiolkovsky yakıt. Gölge: silindirik Dünya gölgesi (Güneş +x), itki kapalı. Denetim scripts/validate-astro.mjs 'lowthrust' (Edelbaum değerleri, spiral ↔ Edelbaum ±0,5 %, e_max, süre sınırları, Tsiolkovsky tutarlılığı, T/W, gölge, eğiklik, içe spiral).",
+      "limitations": "Düzlemsel simülasyon (eğiklik Edelbaum kanunuyla analitik pay — 3B integrasyon yok); J2, sürükleme, üçüncü cisim yok; sabit itki ve Isp (güç/güneş uzaklığı bağımlılığı yok); silindirik gölge (penumbra yok); Güneş yönü sabit (mevsimsel gölge süresi değişmez); tek teğetsel/yaw kanunu (optimal kontrol çözülmez); yüksek T/W'de spiral ≈ dairesel varsayımı zorlanır (e_max HUD'da).",
+      "reducedMotion": "Zaman imleci transferin %60'ında durur; spiral ve grafikler statik.",
+      "exportState": "?s=<senaryo>&t=<gün>&warp= deterministik; export=1 alt bilgiyi gizler.",
+      "accessibility": "Senaryo, itki, Isp, Δi, gölge ve hız denetimleri yerli öğelerdir; HUD tüm karşılaştırmayı (sayısal, Edelbaum, Hohmann, süre, tur, yakıt, e_max, T/W, görev çevrimi) metin verir; tuvaller aria-label taşır; altyazı ödünleşimi düzyazı anlatır ve varsayımın zorlandığı durumu adlandırır.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

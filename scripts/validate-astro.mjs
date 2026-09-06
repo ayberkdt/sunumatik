@@ -639,6 +639,25 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('od', 'Deterministik: aynı tohum aynı sonuç', M.runOd('leoOne').stats.rmsPosFinal === R.leoOne.stats.rmsPosFinal);
 }
 
+/* ───────────────────────── lowthrust (Edelbaum, spiral) */
+{
+  const M = await mod('presets/low_thrust_transfer/low-thrust-model.mjs');
+  const r0 = 6678.137, r1 = 42164.17;
+  check('lowthrust', 'Edelbaum eş-düzlem = |v₀ − v₁| (LEO→GEO 4,651 km/s)', near(M.edelbaumDv(r0, r1, 0), Math.abs(M.vCirc(r0) - M.vCirc(r1)), 1e-12) && near(M.edelbaumDv(r0, r1, 0), 4.651, 2e-3), M.edelbaumDv(r0, r1, 0).toFixed(4));
+  check('lowthrust', 'Edelbaum Δi = 28,5° LEO→GEO ≈ 5,95 km/s (literatür 5,9–6,0)', near(M.edelbaumDv(r0, r1, 28.5), 5.95, .05), M.edelbaumDv(r0, r1, 28.5).toFixed(3));
+  check('lowthrust', 'Edelbaum Δi monoton artar; Δi = 0 limitinde eş-düzlem', M.edelbaumDv(r0, r1, 10) > M.edelbaumDv(r0, r1, 0) && M.edelbaumDv(r0, r1, 40) > M.edelbaumDv(r0, r1, 10));
+  const hoh = M.hohmann(r0, r1); check('lowthrust', 'Hohmann LEO→GEO 3,893 km/s, 5,27 sa (transfer grubuyla aynı)', near(hoh.dv, 3.893, 3e-3) && near(hoh.tof / 3600, 5.27, .02));
+  const sim = M.simulateSpiral({ r0, r1, di: 0, vehicle: 'hallGeo' });
+  check('lowthrust', 'Sayısal spiral ΔV Edelbaum limitine ±0,5 % (T/W ≈ 1e−5)', sim.reached && rel(sim.dvTotal, sim.edelbaum, 5e-3), `${sim.dvTotal.toFixed(4)} vs ${sim.edelbaum.toFixed(4)}`);
+  check('lowthrust', 'Spiral yaklaşık dairesel kalır: e_max < 0,01; hedef yarı-büyük eksene ulaşır', sim.eMax < .01 && near(sim.samples[sim.samples.length - 1].a, r1, 5), `e_max ${sim.eMax.toExponential(1)}, a_son ${sim.samples[sim.samples.length - 1].a.toFixed(1)}`);
+  check('lowthrust', 'Süre ΔV/a₁ ile ΔV/a₀ arasında (kütle azaldıkça ivme büyür)', sim.tof < sim.dvTotal / sim.aT0 && sim.tof > sim.dvTotal / sim.aT1, `${(sim.tof / 86400).toFixed(1)} gün`);
+  check('lowthrust', 'Yakıt Tsiolkovsky ile tutarlı (±0,5 %)', rel(sim.mp, M.propellant(sim.vehicle.m0, sim.dvTotal, sim.vehicle.isp).mp, 5e-3), `${sim.mp.toFixed(1)} vs ${M.propellant(sim.vehicle.m0, sim.dvTotal, sim.vehicle.isp).mp.toFixed(1)} kg`);
+  const cargo = M.simulateSpiral({ r0, r1, di: 0, vehicle: 'cargo' }); check('lowthrust', 'Daha yüksek T/W: aynı ΔV (±1 %), daha kısa süre, daha büyük e_max', rel(cargo.dvTotal, sim.dvTotal, 1e-2) && cargo.tof < sim.tof && cargo.eMax > sim.eMax, `cargo ${(cargo.tof / 86400).toFixed(0)} g vs ${(sim.tof / 86400).toFixed(0)} g`);
+  const sh = M.simulateSpiral({ r0, r1, di: 0, vehicle: 'hallGeo', shadow: true }); check('lowthrust', 'Gölge: görev çevrimi < 0,95, süre uzar, ΔV Edelbaum ±3 %', sh.dutyCycle < .95 && sh.tof > sim.tof && rel(sh.dvTotal, sh.edelbaum, .03), `duty ${sh.dutyCycle.toFixed(2)}, ${(sh.tof / 86400).toFixed(0)} g, ΔV ${sh.dvTotal.toFixed(3)}`);
+  const inc = M.simulateSpiral({ r0, r1, di: 28.5, vehicle: 'hallGeo' }); check('lowthrust', 'Eğiklik değişimli spiral: ΔV = Edelbaum(Δi) ±0,5 %, eğiklik hedefe ulaşır', inc.reached && rel(inc.dvTotal, inc.edelbaum, 5e-3) && near(inc.samples[inc.samples.length - 1].inc, 28.5, .1), `${inc.dvTotal.toFixed(3)} vs ${inc.edelbaum.toFixed(3)}, i ${inc.samples[inc.samples.length - 1].inc.toFixed(2)}°`);
+  const down = M.simulateSpiral({ r0: r1, r1: r0, di: 0, vehicle: 'hallGeo' }); check('lowthrust', 'İçe spiral (GEO→LEO) da Edelbaum ±0,5 %', down.reached && rel(down.dvTotal, down.edelbaum, 5e-3), down.dvTotal.toFixed(3));
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));
