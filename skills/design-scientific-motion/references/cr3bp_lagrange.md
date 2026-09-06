@@ -30,6 +30,6 @@ Saf kullanım: `lagrangePoints(mu)`, `jacobi(mu, s)`, `propagate(mu, s0, tEnd, d
 
 ## Dürüstlük
 
-Düzlemsel gösterim; halo/Lissajous aileleri yok (ilan edilir); dairesel
+Düzlemsel gösterim; halo aileleri `halo_manifolds` presetinde, Lissajous yok; dairesel
 birincil yörünge, ek pertürbasyon yok. Dünya–Ay L1 = 0,836915 (literatür),
 Güneş–Dünya L1 ≈ 1,49 milyon km — bağımsız doğrulamada.

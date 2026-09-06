@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "halo-manifold-bundle",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Halo yörüngelerinin nereden geldiğini (Lyapunov ailesinden çatallanan 3B periyodik yörüngeler) ve niçin 'yol' olduklarını (monodromi kararsızlığı → kararlı/kararsız manifold tüpleri) göstermek: aile, seçilen halo, Lyapunov karşılaştırması, manifold demetleri ve λ_u ile ölçülen sapma büyümesi.",
+      "model": "CR3BP dönen çerçeve (core/astro-cr3bp.mjs): Richardson (1980) 3. mertebe analitik açılım (c_n, λ, k, a_ij, b_ij, d_ij, s_i, l_i, Δ; Ax = √(−(l₂Az²+Δ)/l₁)) başlangıcı; z₀ sabit tutulup (x₀, ẏ₀) 6×6 STM ile y = 0 geçişinde ẋ = ż = 0 olana dek sönümlü Newton'la düzeltilir; aile Az sürekliliği (doğrusal dış-değerleme, adım yarılama); monodromi Φ(T) RK4 varyasyonel denklemlerle, kararsız/kararlı özvektörler güç yinelemesi (Φ, Φ⁻¹); manifold: yörünge boyunca Φ(t_k,0)·v yönünde ±ε = 50 km sapma, kararsız ileri, kararlı zaman-tersleme simetrisiyle (x,−y,z,−ẋ,ẏ,−ż) geri yayılım. Denetim scripts/validate-astro.mjs 'halo' grubu (Güneş–Dünya L2 literatür x₀/T, periyodiklik, Jacobi, simetri, det Φ = 1, λ_uλ_s = 1, ε büyümesi ≈ λ_u).",
+      "limitations": "CR3BP (Ay eksantrikliği, Güneş pertürbasyonu, efemeris yok); aile sürekliliği ilk başarısızlıkta durur — NRHO ucu ve ailenin katlanma noktaları yok; tek-atışlı düzeltme (çok-atışlı değil); yalnız baskın gerçek özçift (merkez altuzayı yok); manifoldlar kesme yarıçapı 2,2 birim ya da cisme çarpma ile kesilir; aile/manifold hesabı ~2 s (etkileşim gecikmeli).",
+      "reducedMotion": "Araç imi durur (t = 0,3 T tablosu), kamera geçişi yok; manifold ve aile çizgileri statiktir.",
+      "exportState": "?sys=&L=&az=&south=&tEnd=&cam=&t= deterministik; export=1 alt bilgiyi gizler.",
+      "accessibility": "Sistem/nokta/kuzey-güney düğmeleri, Az ve manifold süresi kaydırıcıları, gösterim anahtarları ve kamera düğmeleri yerli öğelerdir; HUD tüm sayısal sonuçları metin verir; izdüşüm tuvalleri aria-label taşır; altyazı yöntemi, sayıları ve sınırları düzyazı anlatır.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

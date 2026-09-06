@@ -572,6 +572,42 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('transfer', 'Kısa TOF (2 sa, Δθ = 150°) çözümü Hohmann\'dan pahalı ve daha enerjik (a büyük ya da hiperbolik)', !!sFast && sFast.dvTotal > h.dvTotal && (sFast.a < 0 || sFast.a > h.a), sFast ? `${sFast.dvTotal.toFixed(3)} km/s, a ${sFast.a.toFixed(0)} km` : 'null');
 }
 
+/* ───────────────────────── halo (Richardson + STM düzeltmesi, monodromi, manifoldlar) */
+{
+  const C = await mod('presets/core/astro-cr3bp.mjs');
+  const M = await mod('presets/halo_manifolds/halo-model.mjs');
+  const mu = C.SYSTEMS.earthMoon.mu, se = C.SYSTEMS.sunEarth.mu, AU = C.SYSTEMS.sunEarth.L;
+  const h = C.haloOrbit(se, 'L2', 110000 / AU);
+  check('halo', 'Güneş–Dünya L2 halo (Az 110 000 km): x₀ ≈ 1,00833, T ≈ 180 gün (literatür ±0,5 %)', !!h && h.converged && near(h.x0, 1.00833, 5e-5) && rel(h.period / (2 * Math.PI) * 365.256, 180, 5e-3), h ? `x0 ${h.x0.toFixed(6)}, T ${(h.period / (2 * Math.PI) * 365.256).toFixed(1)} gün` : 'null');
+  const o = C.haloOrbit(mu, 'L1', 0.1);
+  check('halo', 'Dünya–Ay L1 halo (Az 0,1) yakınsar (< 10 yineleme, artık < 1e−9)', !!o && o.converged && o.iterations < 10 && o.residual < 1e-9, o ? `${o.iterations} yin., ${o.residual.toExponential(1)}` : 'null');
+  const e = o.states[o.states.length - 1]; const clos = Math.hypot(e[0] - o.x0, e[1], e[2] - o.z0, e[3], e[4] - o.ydot0, e[5]);
+  check('halo', 'Periyodiklik: tam turda durum kapanışı < 1e−6', clos < 1e-6, clos.toExponential(2));
+  const Cs = o.states.map(st => C.jacobi(mu, st)); check('halo', 'Halo boyunca Jacobi korunur (< 1e−9)', Math.max(...Cs) - Math.min(...Cs) < 1e-9, (Math.max(...Cs) - Math.min(...Cs)).toExponential(2));
+  const half = o.states[Math.floor(o.states.length / 2)]; check('halo', 'Simetri: T/2\'de y ≈ 0, ẋ ≈ ż ≈ 0 (x–z düzlemine dik geçiş)', Math.abs(half[1]) < 2e-3 && Math.abs(half[3]) < 2e-3 && Math.abs(half[5]) < 2e-3, `y ${half[1].toExponential(1)}, ẋ ${half[3].toExponential(1)}, ż ${half[5].toExponential(1)}`);
+  const g = o.guess; check('halo', 'Richardson tahmini düzeltilmişe yakın (Δx₀ < 1 %, Δẏ₀ < 10 %)', Math.abs(o.x0 - g.x0) < .01 && Math.abs(o.ydot0 - g.ydot0) / Math.abs(g.ydot0) < .1, `Δx0 ${Math.abs(o.x0 - g.x0).toExponential(1)}, Δẏ0 ${(Math.abs(o.ydot0 - g.ydot0) / Math.abs(g.ydot0) * 100).toFixed(1)} %`);
+  const south = C.haloOrbit(mu, 'L1', 0.1, { northern: false }); check('halo', 'Güney halo = kuzeyin z aynası (x₀, ẏ₀, T aynı; z₀ ters)', !!south && south.converged && near(south.x0, o.x0, 1e-9) && near(south.period, o.period, 1e-9) && near(south.z0, -o.z0, 1e-12));
+  const fam = C.haloFamily(mu, 'L1', M.familyAzList(mu, 'L1'));
+  const azs = fam.map(f => Math.abs(f.z0)); check('halo', 'L1 ailesi ≥ 10 üye, Az monoton artar, periyot sürekli (adım < 25 %; NRHO yönünde hızla kısalır)', fam.length >= 10 && azs.every((a, i) => !i || a > azs[i - 1]) && fam.every((f, i) => !i || Math.abs(f.period - fam[i - 1].period) / fam[i - 1].period < .25), `${fam.length} üye, Az ${azs[0].toFixed(3)}–${azs[azs.length - 1].toFixed(3)}`);
+  check('halo', 'Az → küçük limitinde halo periyodu Lyapunov çatallanma periyoduna yaklaşır (±3 %)', (() => { const small = C.haloOrbit(mu, 'L1', .006); const ly = C.lyapunovFamily(mu, 'L1', [.004, .008, .012, .016]); const lb = ly.reduce((b, x) => Math.abs(x.Ax - small.Ax) < Math.abs(b.Ax - small.Ax) ? x : b, ly[0]); return small.converged && rel(small.period, lb.period, .03); })());
+  const mono = C.monodromy(mu, o);
+  check('halo', 'Monodromi simplektik: det Φ = 1 (±1e−4), λ_u·λ_s = 1 (±1e−3)', near(mono.det, 1, 1e-4) && rel(mono.lambdaU * mono.lambdaS, 1, 1e-3), `det ${mono.det.toFixed(6)}, λuλs ${(mono.lambdaU * mono.lambdaS).toFixed(5)}`);
+  check('halo', 'Kararsız özdeğer λ_u ≫ 1 (Dünya–Ay L1 halo: 10²–10³ mertebesi)', mono.lambdaU > 50 && mono.lambdaU < 5e3, mono.lambdaU.toExponential(3));
+  check('halo', 'Özvektör: Φ v_u = λ_u v_u (artık < 1e−6)', (() => { const w = mono.Phi.map(r => r.reduce((a, x, j) => a + x * mono.vU[j], 0)); return Math.hypot(...w.map((x, i) => x - mono.lambdaU * mono.vU[i])) / Math.hypot(...w) < 1e-6; })());
+  check('halo', 'İz: tr Φ = 2 + λ_u + 1/λ_u + 2cos θ ⇒ |tr Φ − 2 − λ_u − 1/λ_u| ≤ 2', Math.abs(mono.trace - 2 - mono.lambdaU - 1 / mono.lambdaU) <= 2 + 1e-6, `tr ${mono.trace.toFixed(3)}`);
+  const m = M.buildHalo({ system: 'earthMoon', L: 'L1', Az: 0.1, manifold: { n: 6, tEnd: 3 } });
+  check('halo', 'Manifold ε büyümesi bir periyotta λ_u ile uyumlu (0,5–2 kat)', !!m.growth && m.growth.ratio > .5 * m.mono.lambdaU && m.growth.ratio < 2 * m.mono.lambdaU, `×${m.growth.ratio.toFixed(0)} vs λu ${m.mono.lambdaU.toFixed(0)}`);
+  const sTr = m.manifolds.sPlus[0], sEnd = sTr.states[sTr.states.length - 1], sT = sTr.times;
+  check('halo', 'Kararlı manifold yörüngeye yaklaşır (son nokta ε içinde, zaman negatiften 0\'a)', Math.hypot(sEnd[0] - m.orbit.x0, sEnd[1], sEnd[2] - m.orbit.z0) < 2 * m.manifoldOpts.eps && sT[0] < 0 && Math.abs(sT[sT.length - 1]) < 1e-9, `d ${Math.hypot(sEnd[0] - m.orbit.x0, sEnd[1], sEnd[2] - m.orbit.z0).toExponential(1)}`);
+  const uTr = m.manifolds.uPlus[0]; const uFar = uTr.states[uTr.states.length - 1];
+  check('halo', 'Kararsız manifold uzaklaşır (son nokta > 100 ε) ve Jacobi C korunur (< 1e−6)', Math.hypot(uFar[0] - m.orbit.x0, uFar[1], uFar[2] - m.orbit.z0) > 100 * m.manifoldOpts.eps && Math.abs(C.jacobi(mu, uFar) - C.jacobi(mu, uTr.states[0])) < 1e-6, `ΔC ${Math.abs(C.jacobi(mu, uFar) - C.jacobi(mu, uTr.states[0])).toExponential(1)}`);
+  check('halo', 'Lyapunov ailesi (süreklilik) periyodu Ax ile monoton artar, L1 (Dünya–Ay)', (() => { const ly = C.lyapunovFamily(mu, 'L1', [.004, .008, .012, .018, .025, .035, .05, .07, .09]); return ly.length >= 8 && ly.every((x, i) => !i || x.period > ly[i - 1].period); })());
+  for (const [sid, Ln] of [['sunEarth', 'L1'], ['sunEarth', 'L2'], ['sunJupiter', 'L1'], ['earthMoon', 'L2']]) {
+    const mus = C.SYSTEMS[sid].mu, gam = Math.abs(C.lagrangePoints(mus)[Ln].x - (1 - mus)), ly = C.lyapunovFamily(mus, Ln, [.03, .05, .08, .12, .17, .23, .33, .46].map(f => f * gam), { dt: 2e-3 });
+    check('halo', `${sid} ${Ln} Lyapunov ailesi (γ-göreli Ax listesi) ≥ 7 üye, periyot monoton artar, ilk üye doğrusal periyoda ±3 % (sahte-yörünge kilitlenmesi yok)`, ly.length >= 7 && ly.every((x, i) => !i || x.period > ly[i - 1].period) && (() => { const H = C.hessOmega(mus, C.lagrangePoints(mus)[Ln].x, 0, 0), b1 = 4 - H[0][0] - H[1][1], c1 = H[0][0] * H[1][1], w = Math.sqrt(-(-b1 - Math.sqrt(b1 * b1 - 4 * c1)) / 2); return rel(ly[0].period, 2 * Math.PI / w, .03); })(), `${ly.length} üye, T ${ly.map(o => o.period.toFixed(2)).join(' ')}`);
+  }
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

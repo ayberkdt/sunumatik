@@ -66,7 +66,7 @@
       $('caption').innerHTML = `<strong>Lagrange noktaları çözülür, yerleştirilmez:</strong> ∇Ω = 0 — eş-doğrusal L1/L2/L3 Newton ile (artık ‖∇Ω‖ < 1e−12), L4/L5 = (½−μ, ±√3/2). ${s.label}: L1 ${s.secondary}'${s.secondary === 'Ay' ? 'dan' : 'dan'} <span class="nums">${nf0.format(Math.abs(L.L1.x - (1 - mu)) * s.L)} km</span>, L2 <span class="nums">${nf0.format((L.L2.x - (1 - mu)) * s.L)} km</span>. `
         + `Jacobi C = 2Ω − v² korunur (HUD'da |C − C₀| ~ 1e−12); C azaldıkça yasak bölge önce L1 boynundan (C₁ = ${nf4.format(L.L1.C)}), sonra L2 (${nf4.format(L.L2.C)}), L3 (${nf4.format(L.L3.C)}) ve en son L4/L5 (${nf4.format(L.L4.C)}) çevresinde açılır — kaydırıcıyla izleyin. `
         + (o ? `Seçili Lyapunov (${o.L}, Ax = ${o.Ax}): diferansiyel düzeltme ${o.iterations} adımda yakınsadı, T = <span class="nums">${nf3.format(o.period)} TU</span> = ${(o.period / (2 * Math.PI) * s.T / 86400).toFixed(1)} gün, C = ${nf4.format(o.C)}; kararsızdır — sağdaki eylemsiz görünümde kapalı değildir. ` : '')
-        + `Halo aileleri bu sürümde yok (3B düzeltici gerekir); dt = 1e−3 RK4.`;
+        + `Halo aileleri ve değişmez manifoldlar halo_manifolds presetinde (Richardson + 6×6 STM); dt = 1e−3 RK4.`;
     }
     syncJ(); writeCaption();
     $('cJ').addEventListener('input', () => { cr.setJacobi(Number($('cJ').value)); $('oJ').textContent = nf4.format(Number($('cJ').value)); });

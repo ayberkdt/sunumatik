@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 52,
-    "presetsWithIndex": 45,
-    "animatedPresets": 40,
+    "presets": 53,
+    "presetsWithIndex": 46,
+    "animatedPresets": 41,
     "skills": 18,
-    "demoSlides": 68,
-    "demoCards": 55,
+    "demoSlides": 69,
+    "demoCards": 56,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 68,
-    "cards": 55,
+    "slides": 69,
+    "cards": 56,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -43,6 +43,7 @@
       "gravity_assist",
       "gravity_field",
       "ground_track_3d",
+      "halo_manifolds",
       "jwst_explorer",
       "launch_ascent",
       "lunar_descent",
@@ -287,6 +288,13 @@
     {
       "name": "ground_track_3d",
       "title": "3B Yörünge + 2B Yer İzi — ground_track_3d",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "halo_manifolds",
+      "title": "Halo Yörüngeleri ve Değişmez Manifoldlar — halo_manifolds",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

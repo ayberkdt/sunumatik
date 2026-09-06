@@ -63,8 +63,10 @@ export async function mountCr3bp(host, options = {}) {
     sys = SYSTEMS[sysId]; mu = sys.mu;
     lagrange = lagrangePoints(mu);
     const fam = { dt: 2e-3 };
-    families.L1 = lyapunovFamily(mu, 'L1', [.004, .008, .012, .018, .025, .035, .05, .07, .09], fam);
-    families.L2 = lyapunovFamily(mu, 'L2', [.004, .008, .012, .018, .025, .035, .05, .07, .09], fam);
+    /* Ax listesi γ'ya (L–ikincil uzaklığı) göreli: mutlak liste Güneş–Dünya'da (γ ≈ 0,01) ilk adımı 0,4γ yapıyor ve sahte yörüngelere kilitleniyordu */
+    const gam = L => Math.abs(lagrange[L].x - (1 - mu)), AXF = [.03, .05, .08, .12, .17, .23, .33, .46, .6];
+    families.L1 = lyapunovFamily(mu, 'L1', AXF.map(f => f * gam('L1')), fam);
+    families.L2 = lyapunovFamily(mu, 'L2', AXF.map(f => f * gam('L2')), fam);
     if (Czvc == null) Czvc = (lagrange.L1.C + lagrange.L2.C) / 2;
     zvc = zeroVelocityCurves(mu, Czvc, view);
     omegaImg = null;

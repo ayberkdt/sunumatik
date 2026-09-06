@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Halo Yörüngeleri ve Değişmez Manifoldlar — halo_manifolds</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; } .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); }
+    .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 120px; text-align: right; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 150px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 74px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Halo Yörüngeleri ve Değişmez Manifoldlar<small>halo_manifolds · CR3BP dönen çerçeve · Richardson 3. mertebe tahmin + 6×6 STM düzeltmesi · Az sürekliliğiyle aile · monodromi özvektörlerinden kararlı/kararsız manifold demetleri</small></h1>
+    <div class="tabs" role="group" aria-label="Sistem"><button data-sys="earthMoon" aria-pressed="true">Dünya–Ay</button><button data-sys="sunEarth">Güneş–Dünya</button></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="1000" step="1" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Nokta"><span>Nokta</span><button data-l="L1" aria-pressed="true">L1</button><button data-l="L2">L2</button><button id="northBtn" aria-pressed="true">kuzey</button></div>
+      <div class="group"><label class="field">Az <input id="az" type="range" min="0" max="1000" step="1" value="550"><output id="oAz">—</output></label><label class="field">manifold süresi <input id="tEnd" type="range" min="1" max="8" step="0.5" value="4"><output id="oT">—</output></label></div>
+      <div class="group" role="group" aria-label="Manifold"><span>Göster</span><button data-show="uPlus" aria-pressed="true">Wᵘ+</button><button data-show="uMinus" aria-pressed="true">Wᵘ−</button><button data-show="sPlus" aria-pressed="true">Wˢ+</button><button data-show="sMinus" aria-pressed="true">Wˢ−</button><button data-show="family" aria-pressed="true">aile</button><button data-show="lyap" aria-pressed="true">Lyapunov</button></div>
+      <div class="group" role="group" aria-label="Kamera"><span>Kamera</span><button data-cam="overview" aria-pressed="true">Sistem</button><button data-cam="lpoint">L noktası</button><button data-cam="top">Üstten</button><button data-cam="side">Yandan</button><button data-cam="free">Serbest</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountHalo } from './halo-manifolds.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id);
+    const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), nf4 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+    const hm = await mountHalo($('host'), { system: params.get('sys') || 'earthMoon', L: params.get('L') || 'L1', AzKm: params.has('az') ? Number(params.get('az')) : null, northern: params.get('south') !== '1', tEnd: params.has('tEnd') ? Number(params.get('tEnd')) : 4, camera: params.get('cam') || 'overview', autoplay: !deterministic, t: params.has('t') ? Number(params.get('t')) : undefined, warp: Number(params.get('warp')) || .35 });
+    window.__halo = hm;
+    const azFromSlider = v => { const m = hm.model; return m.AzMin + (m.AzMax - m.AzMin) * v / 1000; };
+    const sliderFromAz = az => { const m = hm.model; return Math.round((az - m.AzMin) / Math.max(1e-12, m.AzMax - m.AzMin) * 1000); };
+    const scrub = $('scrub'), timeOut = $('timeOut'), playBtn = $('playBtn');
+    function syncUi() {
+      const tl = hm.timeline, m = hm.model, c = hm.config; playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing));
+      if (document.activeElement !== scrub) scrub.value = String(Math.round(tl.t / tl.duration * 1000)); timeOut.textContent = m ? `${nf2.format(m.toDays(tl.t))} gün · ${nf2.format(tl.t / m.orbit.period)} T` : '—';
+      if (m) { if (document.activeElement !== $('az')) $('az').value = String(sliderFromAz(m.orbit.Az)); $('oAz').textContent = `${nf0.format(m.toKm(m.orbit.Az))} km`; $('oT').textContent = `${nf2.format(m.toDays(c.tEnd))} gün`; $('tEnd').value = String(c.tEnd); }
+      document.querySelectorAll('[data-sys]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.sys === c.system))); document.querySelectorAll('[data-l]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.l === c.L)));
+      $('northBtn').textContent = c.northern ? 'kuzey' : 'güney'; $('northBtn').setAttribute('aria-pressed', String(c.northern));
+      document.querySelectorAll('[data-show]').forEach(b => b.setAttribute('aria-pressed', String(!!hm.visible[b.dataset.show]))); document.querySelectorAll('[data-cam]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cam === hm.camera.current)));
+    }
+    function writeCaption() {
+      const m = hm.model; if (!m) { $('caption').textContent = 'Halo ailesi bulunamadı.'; return; }
+      const o = m.orbit, mo = m.mono;
+      $('caption').innerHTML = `<strong>Halo, Lyapunov ailesinden çatallanan üç boyutlu periyodik yörüngedir:</strong> Richardson 3. mertebe açılımı (x₀, z₀, ẏ₀) tahmin eder; z₀ sabit tutulup y = 0 geçişinde ẋ = ż = 0 olana dek (x₀, ẏ₀) 6×6 STM ile düzeltilir (${o.iterations} yineleme, artık <span class="nums">${o.residual.toExponential(1)}</span>). `
+        + `Seçili ${hm.config.L} halo: Az = <span class="nums">${nf0.format(m.toKm(o.Az))} km</span>, T = <span class="nums">${nf2.format(m.toDays(o.period))} gün</span>, C = ${nf4.format(o.C)} (C_${hm.config.L} = ${nf4.format(m.lagrange[hm.config.L].C)}). `
+        + `Monodromi Φ(T): det = ${mo.det.toFixed(4)} (simplektik), λ_u = <span class="nums">${mo.lambdaU >= 1e4 ? mo.lambdaU.toExponential(2) : nf2.format(mo.lambdaU)}</span> — bir periyotta sapma bu kadar büyür; ölçülen ×${m.growth ? (m.growth.ratio >= 1e4 ? m.growth.ratio.toExponential(2) : nf2.format(m.growth.ratio)) : '—'}. `
+        + `Kararsız manifold (turuncu) ${m.manifoldOpts.n} noktadan ε = ${nf0.format(m.toKm(m.manifoldOpts.eps))} km sapmayla ileri, kararlı (mavi) zaman-tersleme simetrisiyle geri yayılır; demetler ${m.sys.secondary} çevresinden geçişleri ve ${m.sys.primary}'ye dönüşleri gösterir. Sınırlar: CR3BP (eksantriklik, Güneş pertürbasyonu yok); halo ailesi Az sürekliliği ilk başarısızlıkta durur (NRHO ucu yok); tek-atışlı düzeltme.`;
+    }
+    playBtn.addEventListener('click', () => { const tl = hm.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { hm.timeline.pause(); hm.timeline.scrub(Number(scrub.value) / 1000 * hm.timeline.duration); syncUi(); });
+    document.querySelectorAll('[data-sys]').forEach(b => b.addEventListener('click', () => { hm.set({ system: b.dataset.sys, AzKm: null }); syncUi(); writeCaption(); }));
+    document.querySelectorAll('[data-l]').forEach(b => b.addEventListener('click', () => { hm.set({ L: b.dataset.l, AzKm: null }); syncUi(); writeCaption(); }));
+    $('northBtn').addEventListener('click', () => { hm.set({ northern: !hm.config.northern }); syncUi(); writeCaption(); });
+    $('az').addEventListener('change', () => { hm.set({ AzKm: hm.model.toKm(azFromSlider(Number($('az').value))) }); syncUi(); writeCaption(); });
+    $('az').addEventListener('input', () => { $('oAz').textContent = `${nf0.format(hm.model.toKm(azFromSlider(Number($('az').value))))} km`; });
+    $('tEnd').addEventListener('change', () => { hm.set({ tEnd: Number($('tEnd').value) }); syncUi(); writeCaption(); });
+    document.querySelectorAll('[data-show]').forEach(b => b.addEventListener('click', () => { hm.show(b.dataset.show, !hm.visible[b.dataset.show]); syncUi(); }));
+    document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => { hm.camera.transitionTo(b.dataset.cam); syncUi(); }));
+    (function tick() { syncUi(); requestAnimationFrame(tick); })();
+    syncUi(); writeCaption();
+    if (deterministic) { hm.timeline.pause(); hm.setActive(false); }
+    document.title += ' · hazır';
+  </script>
+</body>
+</html>
