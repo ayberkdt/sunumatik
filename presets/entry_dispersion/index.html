@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Giriş Dağılımı (Monte Carlo) — entry_dispersion</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; max-width: 60%; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 11.5px/1 var(--font-body); padding: 7px 10px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 100px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 54px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Giriş Dağılımı (Monte Carlo)<small>entry_dispersion · giriş açısı/hız/atmosfer/L/D/kütle/yatış sapmaları → menzil ve tepe yük istatistikleri · tek-değişken duyarlılık ve doğrusal RSS ↔ Monte Carlo</small></h1>
+    <div class="tabs" role="group" aria-label="Senaryolar" id="tabs"></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="control-row">
+      <div class="group"><span>Örnek</span><button data-n="100">100</button><button data-n="200" aria-pressed="true">200</button><button data-n="500">500</button><label class="field">tohum <input id="seed" type="range" min="1" max="50" step="1" value="1"><output id="oSeed">1</output></label></div>
+      <div class="group"><span>1σ</span><label class="field">γ <input id="sGamma" type="range" min="0" max="0.3" step="0.01" value="0.05"><output id="oGamma">0,05°</output></label><label class="field">v <input id="sV" type="range" min="0" max="50" step="1" value="10"><output id="oV">10 m/s</output></label><label class="field">ρ <input id="sRho" type="range" min="0" max="0.4" step="0.01" value="0.1"><output id="oRho">10 %</output></label><label class="field">L/D <input id="sLd" type="range" min="0" max="0.2" step="0.01" value="0.05"><output id="oLd">5 %</output></label></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountDispersion } from './entry-dispersion.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const $ = id => document.querySelector('#' + id);
+    const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let scId = params.get('s') || 'leoNominal';
+    const ed = await mountDispersion($('host'), { scenario: scId, n: Number(params.get('n')) || 200, seed: 20260906 + (Number(params.get('seed')) || 1) });
+    window.__dispersion = ed;
+    const tabs = $('tabs'); for (const [id, sc] of Object.entries(ed.scenarios)) { const b = document.createElement('button'); b.dataset.s = id; b.textContent = sc.label; b.setAttribute('aria-pressed', String(id === scId)); b.addEventListener('click', () => { scId = id; ed.set({ scenario: id, sigmas: null }); syncFrom(); writeCaption(); }); tabs.appendChild(b); }
+    function syncFrom() { const sg = ed.result.cfg.sigmas; $('sGamma').value = String(sg.gamma); $('oGamma').textContent = `${nf2.format(sg.gamma)}°`; $('sV').value = String(sg.v); $('oV').textContent = `${sg.v} m/s`; $('sRho').value = String(sg.rhoScale); $('oRho').textContent = `${nf0.format(sg.rhoScale * 100)} %`; $('sLd').value = String(sg.ld); $('oLd').textContent = `${nf0.format(sg.ld * 100)} %`; document.querySelectorAll('[data-s]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === scId))); document.querySelectorAll('[data-n]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.n) === ed.config.n))); }
+    const applySig = () => { ed.set({ sigmas: { gamma: Number($('sGamma').value), v: Number($('sV').value), rhoScale: Number($('sRho').value), ld: Number($('sLd').value) } }); syncFrom(); writeCaption(); };
+    for (const id of ['sGamma', 'sV', 'sRho', 'sLd']) $(id).addEventListener('change', applySig);
+    $('seed').addEventListener('change', () => { ed.set({ seed: 20260906 + Number($('seed').value) }); $('oSeed').textContent = $('seed').value; writeCaption(); });
+    document.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', () => { ed.set({ n: Number(b.dataset.n) }); syncFrom(); writeCaption(); }));
+    function writeCaption() {
+      const R = ed.result, s = R.stats.s, top = [...R.sens].sort((a, b) => b.share - a.share)[0];
+      $('caption').innerHTML = `<strong>İniş noktası bir sayı değil bir dağılımdır:</strong> ${R.runs.length} Monte Carlo örneği (tohumlu Gauss sapmalar) düzlemsel giriş modelinde entegre edilir. Nominal menzil <span class="nums">${nf1.format(R.nominal.s)} km</span>, Monte Carlo σ_s = <span class="nums">${s ? nf2.format(s.std) : '—'} km</span> (3σ ±${s ? nf1.format(3 * s.std) : '—'} km, p05–p95 ${s ? nf1.format(s.p05) + '–' + nf1.format(s.p95) : '—'} km). `
+        + `Tek-değişken duyarlılıkların RSS'i <span class="nums">${nf2.format(R.rssSigma)} km</span> — oran ${Number.isFinite(R.linearity) ? nf2.format(R.linearity) : '—'}: ${Number.isFinite(R.linearity) && Math.abs(R.linearity - 1) < .3 ? 'doğrusal yayılım Monte Carlo ile uyumlu' : 'DOĞRUSAL DEĞİL — sapmalar etkileşiyor ya da atlama/kaçış var'}. En büyük pay: ${top ? top.label + ' (%' + nf0.format(top.share * 100) + ')' : '—'}. `
+        + `Tepe g ${R.stats.peakG ? nf2.format(R.stats.peakG.mean) + ' ± ' + nf2.format(R.stats.peakG.std) : '—'}, ısı yükü ${R.stats.Q ? nf1.format(R.stats.Q.mean) + ' ± ' + nf1.format(R.stats.Q.std) + ' MJ/m²' : '—'}; atlama/kaçış ${R.skipouts}. Sınırlar: düzlemsel model (çapraz-menzil yok), sabit yatış (kapalı-çevrim güdüm yok — gerçek kapsüller dağılımı güdümle kapatır), Gauss ve bağımsız sapmalar, rüzgar/paraşüt sürüklenmesi yok, tek çalıştırma istatistiği (n ile σ'nın kendi belirsizliği ≈ σ/√(2n)).`;
+    }
+    syncFrom(); writeCaption();
+    document.title += ' · hazır';
+  </script>
+</body>
+</html>

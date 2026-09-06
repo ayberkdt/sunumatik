@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 56,
-    "presetsWithIndex": 49,
+    "presets": 57,
+    "presetsWithIndex": 50,
     "animatedPresets": 43,
     "skills": 18,
-    "demoSlides": 72,
-    "demoCards": 59,
+    "demoSlides": 73,
+    "demoCards": 60,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 72,
-    "cards": 59,
+    "slides": 73,
+    "cards": 60,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -36,6 +36,7 @@
       "craft_blocks",
       "earth_advanced",
       "eclipse_geometry",
+      "entry_dispersion",
       "equation_pen",
       "equation_steps",
       "figure_callouts",
@@ -237,6 +238,13 @@
       "title": "Tutulma, Örtülme ve Görünürlük — eclipse_geometry",
       "hasIndex": true,
       "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "entry_dispersion",
+      "title": "Giriş Dağılımı (Monte Carlo) — entry_dispersion",
+      "hasIndex": true,
+      "animated": false,
       "hasMotionManifest": true
     },
     {

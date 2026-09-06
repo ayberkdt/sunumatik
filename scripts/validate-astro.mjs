@@ -678,6 +678,23 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   const rs = M.resonances('earth'); check('tisserand', 'Rezonans yarı-büyük eksenleri: 2:1 → a = 2^{2/3} AU', near(rs.find(r => r.label === '2:1').a / M.AU, Math.pow(2, 2 / 3), 1e-9));
 }
 
+/* ───────────────────────── dispersion (giriş Monte Carlo) */
+{
+  const M = await mod('presets/entry_dispersion/dispersion-model.mjs');
+  const zero = M.runDispersion('leoNominal', { n: 20, sigmas: { gamma: 0, v: 0, rhoScale: 0, ld: 0, mass: 0, bank: 0 } });
+  check('dispersion', 'Sıfır sapma → σ_s = 0, her örnek nominal ile aynı (determinizm)', zero.stats.s.std < 1e-9 && zero.runs.every(r => Math.abs(r.s - zero.nominal.s) < 1e-9), `σ ${zero.stats.s.std.toExponential(1)}`);
+  const a = M.runDispersion('leoNominal', { n: 200 }), b = M.runDispersion('leoNominal', { n: 200 });
+  check('dispersion', 'Aynı tohum aynı sonuç; farklı tohum farklı örnek ama σ yakın (±30 %)', a.stats.s.std === b.stats.s.std && (() => { const c = M.runDispersion('leoNominal', { n: 200, seed: 7 }); return rel(c.stats.s.std, a.stats.s.std, .3); })());
+  check('dispersion', 'Monte Carlo ortalaması nominale yakın (|Δ| < 3σ/√n + %1 nominal)', Math.abs(a.stats.s.mean - a.nominal.s) < 3 * a.stats.s.std / Math.sqrt(a.runs.length) + .01 * a.nominal.s, `${a.stats.s.mean.toFixed(1)} vs ${a.nominal.s.toFixed(1)}`);
+  check('dispersion', 'Doğrusal RSS ↔ Monte Carlo σ oranı 0,7–1,3 (küçük sapmalarda doğrusal yayılım)', a.linearity > .7 && a.linearity < 1.3, a.linearity.toFixed(2));
+  const sg = a.sens.find(x => x.key === 'gamma'), sr = a.sens.find(x => x.key === 'rhoScale'), sl = a.sens.find(x => x.key === 'ld');
+  check('dispersion', 'İşaretler: daha sığ γ (Δγ > 0) menzili uzatır; daha yoğun atmosfer kısaltır; daha büyük L/D uzatır', sg.dsdx > 0 && sr.dsdx < 0 && sl.dsdx > 0, `∂s/∂γ ${sg.dsdx.toFixed(0)} km/°, ∂s/∂ρ ${sr.dsdx.toFixed(0)}, ∂s/∂(L/D) ${sl.dsdx.toFixed(0)}`);
+  const nav = M.runDispersion('nav', { n: 200 }); check('dispersion', 'Yalnız seyrüsefer sapması: γ payı > %60, RSS yalnız γ ve v katkısından', nav.sens.find(x => x.key === 'gamma').share > .6 && nav.sens.filter(x => x.key !== 'gamma' && x.key !== 'v').every(x => x.contrib === 0));
+  const atmo = M.runDispersion('atmo', { n: 200 }); check('dispersion', 'Yalnız atmosfer sapması (%20): σ_s < seyrüsefer senaryosunun σ_s\u2019i; tepe g neredeyse değişmez (σ_g < 0,05 g)', atmo.stats.s.std < nav.stats.s.std && atmo.stats.peakG.std < .05, `σ_s ${atmo.stats.s.std.toFixed(1)} km, σ_g ${atmo.stats.peakG.std.toFixed(3)}`);
+  const bal = M.runDispersion('ballistic', { n: 100 }); check('dispersion', 'Balistik sonda: dik giriş → küçük σ_s (< 20 km) ve yüksek tepe g (> 15 g)', bal.stats.s.std < 20 && bal.stats.peakG.mean > 15, `σ ${bal.stats.s.std.toFixed(1)} km, g ${bal.stats.peakG.mean.toFixed(1)}`);
+  check('dispersion', 'Yüzdelikler sıralı: min ≤ p05 ≤ p50 ≤ p95 ≤ max', a.stats.s.min <= a.stats.s.p05 && a.stats.s.p05 <= a.stats.s.p50 && a.stats.s.p50 <= a.stats.s.p95 && a.stats.s.p95 <= a.stats.s.max);
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

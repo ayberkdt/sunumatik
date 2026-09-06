@@ -53,7 +53,7 @@ export function simulateEntry(vehicle = VEHICLES.capsule, entry = {}) {
   let v = E.vEntry, gam = E.gammaEntry * rad, h = E.hEntry, s = 0, t = 0, Q = 0;
   const samples = []; let peakG = { n: 0 }, peakQ = { q: 0 }, outcome = 'landed';
   const deriv = (v, gam, h) => {
-    const r = R_E + h, g = MU / (r * r), rho = densityBlend(h);
+    const r = R_E + h, g = MU / (r * r), rho = densityBlend(h) * (E.rhoScale ?? 1);   // rhoScale: atmosfer yoğunluk sapması (dağılım analizi)
     const D = .5 * rho * v * v * V.cd * V.area, L = V.ld * D;
     return { dv: -D / V.m - g * Math.sin(gam), dgam: (L * cosBank) / (V.m * v) - (g / v - v / r) * Math.cos(gam), dh: v * Math.sin(gam), ds: (R_E / r) * v * Math.cos(gam), rho, D, g };
   };
