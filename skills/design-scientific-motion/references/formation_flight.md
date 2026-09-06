@@ -30,3 +30,7 @@ Saf kullanım: `buildFormation(id, opts)`, `statesAt(form, t)`, `trace(form, dep
 Doğrusal CW: J2 ve diferansiyel sürükleme yok (gerçek formasyonlar bakım
 manevrası ister); itki yok; araç boyları ölçeklenir, ölçek çubuğu sahnede.
 Sürüklenmesiz koşul ẏ₀ = −2n x₀; ihlalde sürüklenme −(6n x₀ + 3ẏ₀) — tabloda.
+
+## Sahne notu (Dünya)
+
+Dünya gerçek ölçek ve konumdadır: merkez LVLH orijininden −R yönünde R_E + h uzakta (h = senaryo irtifası), logaritmik derinlik tamponu ile çizilir; ufuk dalımı acos(R_E/(R_E + h)) (500 km için ≈ 22°). Kamera alçak bakışla ufku karenin üst üçte birinde tutar; −R ekseni Dünya merkezine bakar. Fresnel atmosfer ve uzak Güneş ışıması `core/lab-three.mjs` yardımcılarından.

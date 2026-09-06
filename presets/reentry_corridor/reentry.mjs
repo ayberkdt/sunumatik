@@ -13,7 +13,13 @@
         re.sim · re.corridor · re.timeline · re.setEntry({...}) · re.setVehicle(id) · re.tableau · re.replay() · re.dispose() */
 
 import { simulateEntry, findCorridor, isoDecelCurve, isoHeatCurve, sampleAt, VEHICLES, DEFAULT_ENTRY } from './reentry-model.mjs';
-import { palette, backdrop, polyline, marker, label, title, tag, Entrance, reveal, rgba } from '../core/lab-scene.mjs';
+import { palette, backdrop, polyline, marker, label, title, tag, Entrance, reveal, rgba, blackbody, mulberry } from '../core/lab-scene.mjs';
+const SIGMA_SB = 5.670374e-8, EPS_TPS = .85;   // Stefan–Boltzmann; ısı kalkanı yayıcılığı (karbon-fenolik/PICA sınıfı)
+/* deterministik titreşim: tam saniye adımlarında hash, arada doğrusal geçiş (30 Hz) */
+const hash1 = (i, k) => { const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
+const flicker = (i, t, hz = 30) => { const u = t * hz, k = Math.floor(u), f = u - k; return hash1(i, k) * (1 - f) + hash1(i, k + 1) * f; };
+/* Billig (1967) küt cisim yay şoku duruş mesafesi: Δ/R_n = 0,143·exp(3,24/M²) */
+const standoff = M => .143 * Math.exp(3.24 / Math.max(1, M * M));
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const mix = (a, b, t) => a + (b - a) * t;
@@ -55,6 +61,7 @@ export async function mountReentry(host, options = {}) {
           <dt>t</dt><dd data-hud="t">—</dd><dt>irtifa · hız</dt><dd data-hud="hv">—</dd>
           <dt>γ · Mach</dt><dd data-hud="gm">—</dd><dt>ısı yükü Q</dt><dd data-hud="Q">—</dd>
           <dt>ρ · q_dyn</dt><dd data-hud="rho">—</dd><dt>araç</dt><dd data-hud="veh">—</dd>
+          <dt>T_duvar (radyatif denge)</dt><dd data-hud="tw">—</dd><dt>şok mesafesi Δ/R_n</dt><dd data-hud="sh">—</dd>
         </dl>
         <div class="lab-legend" data-legend></div>
       </div>
@@ -145,7 +152,10 @@ export async function mountReentry(host, options = {}) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.globalAlpha = pP;
     ctx.fillStyle = heat > .3 ? heatColor(.35 + .4 * heat) : P.ink; ctx.beginPath(); ctx.moveTo(7, 0); ctx.quadraticCurveTo(7, -6, 2, -6); ctx.lineTo(-8, -2.5); ctx.lineTo(-8, 2.5); ctx.lineTo(2, 6); ctx.quadraticCurveTo(7, 6, 7, 0); ctx.closePath(); ctx.fill();
     ctx.fillStyle = 'rgba(20,16,10,.9)'; ctx.beginPath(); ctx.moveTo(-8, -2.5); ctx.lineTo(-2, -1.5); ctx.lineTo(-2, 1.5); ctx.lineTo(-8, 2.5); ctx.closePath(); ctx.fill(); ctx.restore();
+    /* ablasyon kıvılcımları: kalkan kenarından kopan yanan parçacıklar, akışla geriye sürüklenir (sayı ve parlaklık q̇ ile) */
+    if (heat > .15 && pP >= 1) { const n = Math.round(6 + 22 * heat); ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < n; i++) { const age = (timeline.t * (1.6 + hash1(i, 1)) + hash1(i, 2) * 5) % 1, side = hash1(i, 3) > .5 ? 1 : -1, sp = 30 + 60 * hash1(i, 4); const px = 4 - age * (sp + 40 * heat), py = side * (5 + 3 * hash1(i, 5)) + (hash1(i, 6) - .5) * 14 * age; ctx.globalAlpha = (1 - age) * (.5 + .5 * heat); ctx.fillStyle = age < .3 ? '#fff1d0' : age < .6 ? '#ffb060' : '#ff6a30'; ctx.beginPath(); ctx.arc(px, py, .8 + 1.2 * (1 - age), 0, Math.PI * 2); ctx.fill(); } ctx.restore(); }
     ctx.restore();
+    drawInset(ctx, cur, heat, pad, pw, ph, pP);
     /* yüzey: koyu bant + ufuk ışıltısı */
     const ground = ctx.createLinearGradient(0, pad.t + ph - 6, 0, pad.t + ph + 30); ground.addColorStop(0, `rgba(120,170,220,${.35 * pSky})`); ground.addColorStop(.3, '#101820'); ground.addColorStop(1, '#0a0e14'); ctx.fillStyle = ground; ctx.fillRect(pad.l, pad.t + ph - 4, pw, pad.b + 4);
     /* eksenler */
@@ -154,6 +164,45 @@ export async function mountReentry(host, options = {}) {
     const step = sMax > 6e6 ? 2e6 : sMax > 3e6 ? 1e6 : 500e3; for (let s = 0; s <= sMax; s += step) label(ctx, `${s / 1000}`, X({ s }), H - pad.b + 16, P, { align: 'center' });
     label(ctx, `yer menzili (km) · düşey abartı ×${nf0.format((ph / hMax) / (pw / sMax))}`, pad.l + pw / 2, H - 8, P, { align: 'center', mono: false, size: 11, color: P.ink, weight: 600 });
     if (heat > .05 && pP >= 1) tag(ctx, `q̇ ${nf2.format(cur.q / 1e6)} MW/m² · ${nf1.format(cur.n)} g`, x + (x > pad.l + pw * .7 ? -16 : 16), y - 18, P, { color: heatColor(.35 + .6 * heat), mono: true, anchor: x > pad.l + pw * .7 ? 'right' : 'left' });
+  }
+  /* ── HİPERSONİK AKIŞ YAKIN PLANI ────────────────────────────────────────
+     Akış soldan sağa; küt burun solda. Yay şoku duruş mesafesi Billig bağıntısından, şok katmanı parlaklığı q̇'dan (Sutton–Graves),
+     ısı kalkanı rengi radyatif denge sıcaklığından (q̇ = ε σ T⁴ → T), kuyruk türbülansı deterministik titreşimle; ablasyon
+     kıvılcımları akışla sürüklenir. Bu bir CFD DEĞİLDİR: geometri ve ölçekler bağıntılardan, doku temsilîdir. */
+  function drawInset(ctx, cur, heat, pad, pw, ph, pP) {
+    const w = Math.min(pw * .38, 360), h = Math.min(ph * .44, 230); if (w < 160 || h < 100) return; const x0 = pad.l + 14, y0 = pad.t + ph - h - 16, t = timeline.t;
+    const M = Math.max(1, cur.mach), dq = clamp(cur.dynP / 40e3, 0, 1), Tw = Math.pow(Math.max(0, cur.q) / (EPS_TPS * SIGMA_SB), .25), dR = standoff(M);
+    hud.tw.textContent = `${nf0.format(Tw)} K · ε ${EPS_TPS}`; hud.sh.textContent = `${nf2.format(dR)} · Δ ${nf2.format(dR * vehicle.rn)} m`;
+    ctx.save(); ctx.globalAlpha = pP; ctx.beginPath(); ctx.roundRect(x0, y0, w, h, 8); ctx.clip();
+    const bg = ctx.createLinearGradient(x0, y0, x0 + w, y0); bg.addColorStop(0, '#06080e'); bg.addColorStop(1, '#0a0c14'); ctx.fillStyle = bg; ctx.fillRect(x0, y0, w, h);
+    const cx = x0 + w * .42, cy = y0 + h * .55, Rn = h * .19;   // burun yarıçapı (piksel)
+    /* serbest akım çizgileri: hız ile kayan ince çizgiler, ρ ile görünür */
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 14; i++) { const yy = y0 + 8 + (h - 16) * (i + .5) / 14, off = (t * (140 + 90 * hash1(i, 7)) + hash1(i, 8) * w * 4) % (w + 60) - 30; const dy = Math.abs(yy - cy); if (dy < Rn * 1.35 && off > cx - Rn * 2.2) continue; ctx.strokeStyle = `rgba(150,190,240,${.05 + .22 * dq * (.5 + .5 * hash1(i, 9))})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 + off, yy); ctx.lineTo(x0 + off + 18 + 14 * dq, yy); ctx.stroke(); } ctx.restore();
+    if (heat > .01) {
+      const stand = Rn * dR * 2.2;   // gösterim ölçeği: Δ/R_n gerçek oran, görünürlük için 2,2× çizim
+      /* şok katmanı: şok ile gövde arası sıkışmış, ısınmış gaz — burunda en parlak */
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const layer = ctx.createRadialGradient(cx, cy, Rn * .9, cx - stand * .3, cy, Rn + stand * 1.6); layer.addColorStop(0, `rgba(255,240,210,${.55 * heat})`); layer.addColorStop(.35, `rgba(255,160,80,${.38 * heat})`); layer.addColorStop(.7, `rgba(140,90,255,${.14 * heat})`); layer.addColorStop(1, 'rgba(60,40,140,0)');
+      ctx.fillStyle = layer; ctx.beginPath(); ctx.moveTo(cx - Rn - stand, cy - Rn * 2.4); ctx.quadraticCurveTo(cx - Rn - stand * 1.05, cy, cx - Rn - stand, cy + Rn * 2.4); ctx.lineTo(cx + Rn * 1.6, cy + Rn * 2.4); ctx.lineTo(cx + Rn * 1.6, cy - Rn * 2.4); ctx.closePath(); ctx.fill();
+      /* yay şoku: hiperbolik kabuk, titreşimli parlaklık; standoff Δ */
+      for (let k = 0; k < 3; k++) { const fl = .7 + .3 * flicker(k + 20, t, 24), a = (.22 + .55 * heat) * fl * (k === 0 ? 1 : .35), off = k * 2.2; ctx.strokeStyle = k === 0 ? `rgba(255,236,200,${a})` : `rgba(180,140,255,${a})`; ctx.lineWidth = k === 0 ? 2.2 : 1; ctx.beginPath(); ctx.moveTo(cx + Rn * .2 - off, y0 - 4); ctx.quadraticCurveTo(cx - Rn - stand * 2.4 - off, cy, cx + Rn * .2 - off, y0 + h + 4); ctx.stroke(); }
+      /* plazma kuyruğu: türbülanslı, akışla sürüklenen sıcak gaz kabarcıkları (deterministik titreşim) */
+      for (let i = 0; i < 16; i++) { const age = (t * (.9 + .6 * hash1(i, 11)) + hash1(i, 12) * 7) % 1, px = cx + Rn * .6 + age * (w - (cx - x0)) * 1.1, py = cy + (hash1(i, 13) - .5) * Rn * (1.6 + 2.6 * age) + Math.sin(t * 9 + i) * Rn * .18 * age, r = Rn * (.35 + .9 * age) * (.8 + .4 * flicker(i, t, 18)); const g = ctx.createRadialGradient(px, py, 0, px, py, r); const a = heat * (1 - age) * (.5 + .5 * flicker(i + 40, t, 20)); g.addColorStop(0, `rgba(255,220,170,${.45 * a})`); g.addColorStop(.5, `rgba(255,120,60,${.22 * a})`); g.addColorStop(1, 'rgba(120,60,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.fill(); }
+      /* ablasyon kıvılcımları: kalkan kenarından kopar, akışla sağa sürüklenir */
+      const n = Math.round(10 + 40 * heat); for (let i = 0; i < n; i++) { const age = (t * (2 + 1.5 * hash1(i, 21)) + hash1(i, 22) * 4) % 1, side = hash1(i, 23) > .5 ? 1 : -1, sy = cy + side * Rn * (1.05 + .3 * hash1(i, 24)), sx = cx - Rn * .25 + age * (w * .75) * (1.2 + .8 * hash1(i, 25)), py = sy + side * age * Rn * (.6 + 1.2 * hash1(i, 26)); ctx.globalAlpha = (1 - age) * (.55 + .45 * heat); ctx.fillStyle = age < .25 ? '#fff4dc' : age < .55 ? '#ffb56a' : '#ff6a2e'; ctx.beginPath(); ctx.arc(sx, py, .8 + 1.4 * (1 - age), 0, Math.PI * 2); ctx.fill(); if (age < .35) { ctx.strokeStyle = `rgba(255,200,130,${.5 * (1 - age)})`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(sx, py); ctx.lineTo(sx - 5 - 10 * heat, py - side * 1.2); ctx.stroke(); } } ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+    /* kapsül gövdesi: küt ısı kalkanı (radyatif denge sıcaklığının kara-cisim rengi) + konik arka gövde */
+    const tpsCol = Tw > 900 ? blackbody(Tw) : '#3a3229';
+    ctx.fillStyle = '#2a2622'; ctx.beginPath(); ctx.moveTo(cx, cy - Rn); ctx.lineTo(cx + Rn * 1.9, cy - Rn * .42); ctx.lineTo(cx + Rn * 1.9, cy + Rn * .42); ctx.lineTo(cx, cy + Rn); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.save(); if (Tw > 1200) { ctx.shadowColor = tpsCol; ctx.shadowBlur = 8 + 24 * heat; } ctx.fillStyle = tpsCol; ctx.beginPath(); ctx.arc(cx, cy, Rn, Math.PI * .5, Math.PI * 1.5); ctx.closePath(); ctx.fill(); ctx.restore();
+    /* kalkan üstünde stagnasyon noktası vurgusu */ if (heat > .05) { const g = ctx.createRadialGradient(cx - Rn, cy, 0, cx - Rn, cy, Rn * .8); g.addColorStop(0, `rgba(255,255,240,${.7 * heat})`); g.addColorStop(1, 'rgba(255,200,120,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx - Rn, cy, Rn * .8, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+    ctx.save(); ctx.globalAlpha = pP; ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(x0 + .5, y0 + .5, w - 1, h - 1, 8); ctx.stroke();
+    label(ctx, 'hipersonik akış · yakın plan (temsilî doku, ölçekler bağıntıdan)', x0 + 10, y0 + 15, P, { mono: false, size: 10, color: 'rgba(255,255,255,.55)' });
+    label(ctx, `M ${nf1.format(M)} · Δ/R_n ${nf2.format(dR)} (Billig) · T_duvar ${nf0.format(Tw)} K · q̇ ${nf2.format(cur.q / 1e6)} MW/m²`, x0 + 10, y0 + h - 8, P, { size: 9.5, color: heat > .3 ? heatColor(.35 + .6 * heat) : P.muted });
+    ctx.restore();
   }
   /* ── (h, v) DÜZLEMİ ─────────────────────────────────────────────────────── */
   function drawHV() {

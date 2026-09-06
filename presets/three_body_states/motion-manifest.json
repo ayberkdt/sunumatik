@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "three-body-periodic-gallery",
+      "type": "simulation",
+      "truthLevel": "numerical",
+      "purpose": "Üç-cisim probleminin 'çözümsüz' ününe karşı bilinen periyodik çözümlerin bir galerisi: 20 panoda Šuvakov–Dmitrašinović aileleri (figure-8, kelebekler, güveler, yoyo, gözlük, yusufçuk, yin-yang), Lagrange eşkenar (eşit ve 1·2·3 kütleli), Euler doğrusal, Broucke A2 ve karşıtlık için Pisagor/Burrau kaotik problemi — her biri canlı entegre edilir, iz kuyrukları hareketi okutur.",
+      "model": "three-body-model.mjs (saf): G = 1, düzlemsel Newton çekimi, RK4 uyarlanır adım (h ∝ d_min^1.5, yakın geçişlerde küçülür). Başlangıç koşulları literatürden (Šuvakov & Dmitrašinović 2013 PRL 110, 114301; Lagrange 1772 ve Euler 1767 analitik ω; Broucke 1975; Burrau 1913). Denetim scripts/validate-astro.mjs 'threebody': her periyodik çözüm bir periyot yayılınca başlangıca döner (konum hatası < 5e-2), enerji ve açısal momentum korunur (< 1e-3 / 1e-8), Lagrange/Euler analitik ω ile 1e-9; Pisagor problemi ilk 10 birimde bağlı kalır.",
+      "limitations": "Nokta kütleler, düzlemsel, G = 1 birimsiz; yin-yang II ailesi yakın geçişler içerdiğinden dönüş hatası ~3e-2 (diğerleri ≤ 2e-3); kaotik Pisagor problemi 70 birimde ya da bir kaçışta baştan başlatılır (döngü, fiziksel değil); iz kuyruğu süresi periyoda göre seçilmiş gösterim parametresidir; panolar birbirinden bağımsız ölçeklenir (uzunluk ölçeği karşılaştırılamaz).",
+      "reducedMotion": "Panolar t = 4,5 anında statik tablodur (izler o âna kadar hesaplanır).",
+      "exportState": "?t=<birim>&speed=&labels=1 deterministik; export=1 alt bilgiyi gizler.",
+      "accessibility": "Oynat/duraklat, zaman kaydırıcısı, hız ve ad göstergesi yerli öğelerdir; tuval aria-label taşır; alt bilgi katalog kaynaklarını ve denetim iddiasını metin verir.",
+      "loop": true,
+      "pauseControl": true,
+      "solver": "RK4, uyarlanır adım h = min(2e-3, 4e-3·d_min^1.5) (kaotik problemde 1e-3 / 2e-3); durum 12 bileşen (x,y,vx,vy × 3); G = 1; her periyodik çözüm bir periyot yayılıp başlangıca dönüş, enerji ve açısal momentum sapması ölçülür"
+    }
+  ]
+}

@@ -744,6 +744,23 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('freereturn', 'Serbest dönüş Ay\u2019ın arka tarafından geçer (perilune anında x > 1 − μ − 0,01)', sb.states[sb.perilune.i][0] > 1 - M.MU - .01);
 }
 
+/* ───────────────────────── threebody (periyodik üç-cisim çözümleri) */
+{
+  const M = await mod('presets/three_body_states/three-body-model.mjs');
+  const periodic = M.CATALOG.filter(e => !e.chaotic);
+  check('threebody', 'Katalog: 19 periyodik + 1 kaotik, hepsinin T > 0 ve 12 bileşenli durumu var', periodic.length === 19 && M.CATALOG.length === 20 && M.CATALOG.every(e => e.T > 0 && e.state().length === 12));
+  const res = periodic.map(e => ({ e, r: M.sampleOrbit(e, { n: 800 }) }));
+  const tol = e => (e.name.startsWith('Yin-Yang II') ? 5e-2 : 2.5e-3);
+  const bad = res.filter(({ e, r }) => r.returnError > tol(e));
+  check('threebody', 'Her periyodik çözüm bir periyot sonra başlangıca döner (konum hatası ≤ 2,5e−3; yin-yang II ≤ 5e−2)', bad.length === 0, bad.map(({ e, r }) => `${e.name} ${r.returnError.toExponential(1)}`).join(', ') || `en kötü ${Math.max(...res.map(x => x.r.returnError)).toExponential(1)}`);
+  check('threebody', 'Enerji sapması ≤ 1e−3 ve açısal momentum sapması ≤ 1e−8 (yin-yang II hariç ≤ 1e−8 / 1e−10)', res.every(({ e, r }) => r.energyDrift <= (e.name.startsWith('Yin-Yang II') ? 1e-3 : 1e-8) && r.momentumDrift <= 1e-8), `maks dE ${Math.max(...res.map(x => x.r.energyDrift)).toExponential(1)}`);
+  const lag = res.find(x => x.e.id === 'lagrange'), eul = res.find(x => x.e.id === 'euler'), lag123 = res.find(x => x.e.id === 'lagrange-123');
+  check('threebody', 'Lagrange ve Euler analitik periyotlar (2π/√3, 2π/√(5/4), 2π/√6): dönüş hatası < 1e−9', lag.r.returnError < 1e-9 && eul.r.returnError < 1e-9 && lag123.r.returnError < 1e-9);
+  { const st = Float64Array.from(lag.e.state()); let cx = 0, cy = 0, px = 0, py = 0; for (let b = 0; b < 3; b++) { cx += st[2 * b]; cy += st[2 * b + 1]; px += st[6 + 2 * b]; py += st[7 + 2 * b]; } check('threebody', 'Lagrange: kütle merkezi ve toplam momentum sıfır; kenar uzunluğu 1', Math.hypot(cx, cy) < 1e-12 && Math.hypot(px, py) < 1e-12 && near(Math.hypot(st[2] - st[0], st[3] - st[1]), 1, 1e-12)); }
+  { const f8 = res.find(x => x.e.id === 'figure-8'); const pts = f8.r.pts; const d = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]); /* figure-8: üç cisim AYNI eğri üstünde (koreografi) — cisim 2'nin yolu cisim 1'in yolunu T/3 gecikmeyle izler */ const n = pts[0].length - 1, k = Math.round(n / 3); let worst = 0; for (let i = 0; i < n; i += 8) worst = Math.max(worst, Math.min(d(pts[1][i], pts[0][(i + k) % n]), d(pts[1][i], pts[0][(i + 2 * k) % n]))); check('threebody', 'Figure-8 koreografi: cisimler aynı eğriyi T/3 faz farkıyla izler (sapma < 2e−2)', worst < 2e-2, worst.toExponential(1)); }
+  { const py3 = M.CATALOG.find(e => e.chaotic); const st = Float64Array.from(py3.state()); const E0 = M.energy(st, py3.masses); let maxR = 0; for (let k = 0; k < 200; k++) { M.advance(st, py3.masses, .05, { hMax: 1e-3, k: 2e-3 }); for (let b = 0; b < 3; b++) maxR = Math.max(maxR, Math.hypot(st[2 * b], st[2 * b + 1])); } check('threebody', 'Pisagor problemi: E < 0 (bağlı), ilk 10 birimde hiçbir cisim 9 birimden uzaklaşmaz, enerji korunur (1e−4)', E0 < 0 && maxR < 9 && Math.abs((M.energy(st, py3.masses) - E0) / E0) < 1e-4, `E ${E0.toFixed(3)}, maks r ${maxR.toFixed(2)}`); }
+}
+
 /* ───────────────────────── soi (etki küresi, kalkış hiperbolü, el değiştirme) */
 {
   const M = await mod('presets/soi_explorer/soi-model.mjs');

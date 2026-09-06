@@ -19,6 +19,7 @@ import { Line2 } from '../moon_advanced/vendor/lines/Line2.js';
 import { LineGeometry } from '../moon_advanced/vendor/lines/LineGeometry.js';
 import { LineMaterial } from '../moon_advanced/vendor/lines/LineMaterial.js';
 import { buildFormation, statesAt, trace, separationStats, FORMATIONS } from './formation-model.mjs';
+import { R_EARTH } from '../core/astro-relative.mjs';
 
 const clamp01 = x => Math.min(1, Math.max(0, x));
 const smooth01 = x => { const s = clamp01(x); return s * s * (3 - 2 * s); };
@@ -67,11 +68,11 @@ export async function mountFormation(host, options = {}) {
   const palette = { ink: tok('--color-ink', '#e9e4d8'), muted: tok('--color-muted', '#9a938a'), accent: tok('--color-accent', '#d9b877'), data1: tok('--color-data-1', '#8fb8dd'), data2: tok('--color-data-2', '#d78f6c'), rule: tok('--color-rule', '#3a3c42'), canvas: tok('--color-canvas', '#0b0c10') };
   const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true, logarithmicDepthBuffer: true });
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.2;
   pane3d.insertBefore(renderer.domElement, pane3d.firstChild);
   const scene = new THREE.Scene(); scene.background = new THREE.Color(tok('--color-canvas', '#07080c'));
-  const camera = new THREE.PerspectiveCamera(40, 1, .01, 5000);
+  const camera = new THREE.PerspectiveCamera(40, 1, .01, 4e6);
   const sunDir = new THREE.Vector3(.7, .5, .6).normalize();
   const sun = new THREE.DirectionalLight('#fff4e6', 2.2); sun.position.copy(sunDir).multiplyScalar(200); scene.add(sun);
   scene.add(new THREE.HemisphereLight('#8fa8c4', '#2a2418', .5)); scene.add(new THREE.AmbientLight('#3a404c', .5));
@@ -89,9 +90,9 @@ export async function mountFormation(host, options = {}) {
   { const m = new THREE.Matrix4().makeBasis(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, 1, 0)); chief.quaternion.setFromRotationMatrix(m); }
   const deputyGroup = new THREE.Group(); scene.add(deputyGroup);
   const traceGroup = new THREE.Group(); scene.add(traceGroup);
-  /* Dünya: −R (nadir) yönünde ufuk — LVLH'nin neye göre tanımlandığı görülsün (ölçek temsilî: gerçek uzaklık a ≈ 6 800 km sahneye sığmaz) */
-  const EARTH_R = 40; /* ufuk dalımı acos(R/(R+h)) ≈ 53°: kamera −41° bakarken ufuk karenin altına düşer */ const earthGroup = new THREE.Group(); scene.add(earthGroup); await addEarth(THREE, earthGroup, { radius: EARTH_R, baseUrl: import.meta.url, atmosphere: '#6fb4ff', atmoStrength: 1.1, segments: 128 });
-  sunGlow(THREE, scene, sunDir, { dist: 1500, size: 240, opacity: .85 });
+  /* Dünya: GERÇEK ölçek ve konum — LVLH orijini şefte, Dünya merkezi tam −R yönünde (R_E + h) uzakta; ufuk dalımı acos(R/(R+h)) ≈ 22° (500 km) */
+  const earthGroup = new THREE.Group(); scene.add(earthGroup); await addEarth(THREE, earthGroup, { radius: 1, baseUrl: import.meta.url, atmosphere: '#6fb4ff', atmoStrength: 1.2, segments: 160 }); earthGroup.rotation.set(-.35, .9, 0);
+  sunGlow(THREE, scene, sunDir, { dist: 2.5e6, size: 3.2e5, opacity: .85 });
   const chiefGlow = glowSprite(THREE, palette.ink, .55); chiefGlow.scale.setScalar(1.8); chief.add(chiefGlow);
   const sepGroup = new THREE.Group(); scene.add(sepGroup);
 
@@ -104,12 +105,12 @@ export async function mountFormation(host, options = {}) {
     form = buildFormation(id, opts);
     const ext = form.deputies.reduce((m, d) => { const tr = trace(form, d, 0, form.span, 200); return Math.max(m, ...tr.map(s => Math.max(Math.abs(s[0]), Math.abs(s[1]), Math.abs(s[2])))); }, 1);
     U = 10 / ext; sceneExtent = 10 * 1.15;                              // en uzak nokta 10 birim
-    earthGroup.position.set(0, -EARTH_R - sceneExtent * 1.05, 0); earthGroup.rotation.set(-1.05, .7, 0);   // kutup yerine orta enlemler yukarı baksın
+    earthGroup.scale.setScalar(R_EARTH * U); earthGroup.position.set(0, -(R_EARTH + form.altitude) * U, 0);   // gerçek ölçek: −R ekseni Dünya merkezine bakar
     clear(frame); clear(deputyGroup); clear(traceGroup); clear(sepGroup); for (const l of labels) l.el.remove(); labels.length = 0; traces = []; depMeshes = []; sepLines = [];
     const L = sceneExtent * 1.2;
     frame.add(mkLine([-L, 0, 0, L, 0, 0], axisMat), mkLine([0, -L, 0, 0, L, 0], axisMat), mkLine([0, 0, -L, 0, 0, L], axisMat));
     addLabel('+V (iz boyu)', 'axis', new THREE.Vector3(L, .5, 0)); addLabel('−V', 'axis', new THREE.Vector3(-L, .5, 0));
-    addLabel('+R (zenit)', 'axis', new THREE.Vector3(.6, L, 0)); addLabel('−R (Dünya)', 'axis', new THREE.Vector3(.6, -L, 0)); addLabel('H (çapraz-iz)', 'axis', new THREE.Vector3(.6, .5, L)); addLabel('Dünya · nadir (ölçek temsilî)', '', new THREE.Vector3(0, -sceneExtent * .62, sceneExtent * .55));
+    addLabel('+R (zenit)', 'axis', new THREE.Vector3(.6, L, 0)); addLabel('−R (Dünya)', 'axis', new THREE.Vector3(.6, -L, 0)); addLabel('H (çapraz-iz)', 'axis', new THREE.Vector3(.6, .5, L)); addLabel(`Dünya · nadir · h = ${nf0.format(form.altitude / 1000)} km (gerçek ölçek)`, '', new THREE.Vector3(0, -sceneExtent * .62, sceneExtent * .55));
     const scaleBar = Math.pow(10, Math.floor(Math.log10(ext))); addLabel(`ölçek: ${nf0.format(scaleBar)} m`, '', new THREE.Vector3(scaleBar * U / 2, -.8, 0)); frame.add(mkLine([0, -.5, 0, scaleBar * U, -.5, 0], lineMat(palette.accent, 2, .8)));
     const chiefScale = Math.max(.35, Math.min(1.2, sceneExtent * .06)); chief.scale.setScalar(chiefScale);
     for (const d of form.deputies) {
@@ -155,12 +156,12 @@ export async function mountFormation(host, options = {}) {
   const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.dampingFactor = .08; controls.enabled = false;
   const cam = { current: options.camera ?? 'overview' };
   const camPos = new THREE.Vector3();
-  function scaleCamera() { const d = sceneExtent * 2.4; camPos.set(-d * .62, d * .72, -d * .42); }
+  function scaleCamera() { const d = sceneExtent * 2.4; camPos.set(-d * .74, d * .40, -d * .50); }   // alçak bakış: ufuk karenin üst üçte birinde, atmosfer kenarı görünür
   function updateCamera(dtReal) {
     if (cam.current === 'free') { controls.enabled = true; controls.update(); return; }
     controls.enabled = false;
     const d = sceneExtent * 2.4;
-    const target = cam.current === 'along' ? new THREE.Vector3(-d * 1.15, d * .12, 0) : cam.current === 'top' ? new THREE.Vector3(0, d * 1.2, .01) : new THREE.Vector3(-d * .62, d * .72, -d * .42);
+    const target = cam.current === 'along' ? new THREE.Vector3(-d * 1.15, d * .12, 0) : cam.current === 'top' ? new THREE.Vector3(0, d * 1.2, .01) : new THREE.Vector3(-d * .74, d * .40, -d * .50);
     camPos.lerp(target, 1 - Math.exp(-dtReal * 4)); camera.position.copy(camPos); camera.up.set(0, 1, 0); camera.lookAt(0, 0, 0);
   }
 

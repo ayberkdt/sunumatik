@@ -183,3 +183,7 @@ Manifest: `node scripts/validate-motion-manifest.mjs
    reduced-motion aynı deklare tabloyu (t=16 s) verir.
 7. Vendored three (import map), DPR ≤ 1,5, `preserveDrawingBuffer`,
    sekme gizlenince rAF durur, `active:false` iken hiç kurulmaz.
+
+## Güçlendirme notu
+
+Beş perde (yakın çok-katlı ön perde dScale 0,84; ana 1,12; ara 1,62 ve 2,45; uzak 3,40), ince filament oktavı (`rn3`, uTime ile kayar), fold genliği ve ışın genliği artırıldı, kar örtüsü düzlemi aurora ışığıyla uzaklıkla sönen aydınlanma alır; varsayılan Kp 6, pozlama 1,0, yeşil beyazlatma 0,05 (doygun 557,7). Fizik modeli değişmedi: renkler hâlâ CIE eşlemesinden, katmanlanma sönümleme ve çökelme profilinden.

@@ -171,3 +171,13 @@ export function band(ctx, a, b, color, alpha = .15) { if (!a?.length || !b?.leng
 export function shadowBand(ctx, x, y, r, len, dir = [1, 0], { alpha = .5 } = {}) {
   const L = Math.hypot(dir[0], dir[1]) || 1, dx = -dir[0] / L, dy = -dir[1] / L; ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(dy, dx)); const g = ctx.createLinearGradient(0, 0, len, 0); g.addColorStop(0, `rgba(0,0,0,${alpha})`); g.addColorStop(.6, `rgba(0,0,0,${alpha * .5})`); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, -r, len, 2 * r); ctx.restore();
 }
+
+/** Kara-cisim rengi (Kelvin → css rgb), Planck lokusu yaklaşımı (Helland uyumu; 1000–40 000 K). Isı kalkanı, egzoz, yıldız. */
+export function blackbody(K) {
+  const T = clamp01((K - 1000) / 39000) * 390 + 10; let r, g, b;   // T: yüzlerce Kelvin
+  if (T <= 66) { r = 255; g = 99.4708025861 * Math.log(T) - 161.1195681661; b = T <= 19 ? 0 : 138.5177312231 * Math.log(T - 10) - 305.0447927307; }
+  else { r = 329.698727446 * Math.pow(T - 60, -0.1332047592); g = 288.1221695283 * Math.pow(T - 60, -0.0755148492); b = 255; }
+  const c = v => Math.max(0, Math.min(255, Math.round(v)));
+  /* 1000 K altı: koyu kızıl kor (Planck lokusu dışı, gösterim) */ if (K < 1000) { const f = clamp01(K / 1000); return `rgb(${c(120 * f)},${c(20 * f)},0)`; }
+  return `rgb(${c(r)},${c(g)},${c(b)})`;
+}

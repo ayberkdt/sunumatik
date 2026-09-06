@@ -37,8 +37,10 @@ Astrodinamik ve GNC laboratuvarları: her biri saf bir model modülü, üstünde
 
 | | | |
 |:---:|:---:|:---:|
-| ![Etki küresi — Dünya kamerası, kalkış hiperbolü ve sonda](docs/media/lab-soi_explorer_earth.jpg) | ![Giriş koridoru — katmanlı atmosfer, ısı akısıyla renklenen yörünge, plazma kılıfı](docs/media/lab-reentry_corridor.jpg) | ![Halo yörüngeleri ve değişmez manifoldlar](docs/media/lab-halo_manifolds.jpg) |
-| **Etki küresi** — park yörüngesinden v∞ hedefli hiperbol | **Giriş koridoru** — plazma kılıfı, koridor bölgesi | **Halo + manifoldlar** — kararlı/kararsız demetler |
+| ![Üç-cisim durumları — 20 periyodik çözüm](docs/media/lab-three_body_states.jpg) | ![Giriş koridoru — katmanlı atmosfer, hipersonik akış yakın planı, plazma kılıfı](docs/media/lab-reentry_corridor.jpg) | ![Halo yörüngeleri ve değişmez manifoldlar](docs/media/lab-halo_manifolds.jpg) |
+| **Üç-cisim durumları** — figure-8, kelebekler, Lagrange, kaotik Pisagor | **Giriş koridoru** — yay şoku, kızaran kalkan, ablasyon | **Halo + manifoldlar** — kararlı/kararsız demetler |
+| ![Etki küresi — Dünya kamerası, kalkış hiperbolü ve sonda](docs/media/lab-soi_explorer_earth.jpg) | ![Formasyon uçuşu — LVLH, gerçek ölçekli Dünya nadirde](docs/media/lab-formation_flight.jpg) | ![Aurora — çok perdeli, ışınlı, kar örtüsü](docs/media/lab-aurora.jpg) |
+| **Etki küresi** — park yörüngesinden v∞ hedefli hiperbol | **Formasyon** — CW göreli yörüngeler, nadirde Dünya | **Aurora** — emisyon çizgilerinden renk, beş perde |
 | ![Ay serbest dönüş yörüngesi](docs/media/lab-free_return.jpg) | ![CR3BP ve Lagrange noktaları](docs/media/lab-cr3bp_lagrange.jpg) | ![Kütleçekim yardımı ve B-düzlemi](docs/media/lab-gravity_assist.jpg) |
 | **Serbest dönüş** — Apollo 13'ün "8" figürü | **CR3BP** — L1–L5, sıfır-hız eğrileri | **Kütleçekim yardımı** — B-düzlemi hedefleme |
 | ![Porkchop kâşifi](docs/media/lab-porkchop_explorer.jpg) | ![Fırlatma ve tırmanış](docs/media/lab-launch_ascent.jpg) | ![Takımyıldız kapsama](docs/media/lab-constellation_coverage.jpg) |
@@ -196,12 +198,13 @@ Manim ayarında, blok blok kurulabilir sahneler; program ve donmuş API (eksen s
 | [`comms_antenna/`](presets/comms_antenna) · [`comms_link_budget/`](presets/comms_link_budget) | Anten/yer istasyonu geometrisi ve kazanç · bağlantı bütçesi şelalesi (FSPL, yağmur, gürültü sıcaklığı, Eb/N0). |
 | [`aurora/`](presets/aurora) | Emisyon çizgisi tabanlı aurora: 630 nm sönümleme fiziği (O(1D) τ≈110 s), Kp 0–9 morfolojisi. |
 
-### Astrodinamik ve GNC laboratuvarları — 2. dalga (24 preset)
+### Astrodinamik ve GNC laboratuvarları — 2. dalga (25 preset)
 
 Her biri saf bir model modülü (`*-model.mjs` ya da `presets/core/astro-*.mjs`), sahne, deterministik URL (`?t=` / `export=1`), `motion-manifest.json` ve `skills/design-scientific-motion/references/<ad>.md` ile gelir; hepsi `node scripts/validate-astro.mjs` ile bağımsız sayısal denetimden geçer (CI adımı). Hiçbir sayı elle yerleştirilmez; model, varsayım ve sınırlar sahnede yazılıdır. Ortak sunum katmanı `presets/core/lab-scene.{css,mjs}`: kahraman HUD, giriş kaskadı (`Entrance`), tuval yardımcıları, tipografi; sahne görselleri (gezegen diski ve terminatör, Güneş koronası, yıldız alanı, hız/ısı ile renklenen çizgiler, gölge bandı) ve three.js için `presets/core/lab-three.mjs` (fresnel atmosfer, kamera-ölçekli ışıma noktaları, uzak Güneş ışıması, dokulu Dünya). Her görsel öğe bir fenomeni kodlar: terminatör Güneş yönünden, plazma kılıfı ısı akısından, hiperbol rengi hızdan türer.
 
 | Klasör | İçerik |
 |---|---|
+| [`three_body_states/`](presets/three_body_states) | **Üç-cisim durumları**: 20 panoda periyodik üç-cisim çözümleri canlı entegre (Šuvakov–Dmitrašinović aileleri, Lagrange, Euler, Broucke A2, kaotik Pisagor); ışıyan cisimler ve kuyruklu izler; her periyot denetimde başlangıca döner |
 | [`soi_explorer/`](presets/soi_explorer) | **Etki küresi kâşifi**: Laplace r_SOI = a(m/M)^(2/5) ve Hill küresi gerçek ölçekte (three.js, dönen dokulu Dünya, ilerleyen Ay, fresnel + ızgara kabuklar), park yörüngesinden v∞ hedefli kalkış hiperbolü (hızla renklenir, gün işaretleri), SOI kabuğunda Dünya → Güneş çerçevesi el değiştirme halkası, yamalı-konik artığı, Laplace oran paneli, Güneş çerçevesi paneli (transfer elipsi → afel), gezegen SOI ölçeği |
 | [`reentry_corridor/`](presets/reentry_corridor) | **Giriş koridoru**: Düzlemsel giriş dinamiği + Sutton–Graves ısı akısı; katmanlı atmosfer sahnesi, ısı akısıyla renklenen yörünge, plazma kılıfı, koridor bölgesi; aşma/altında kalma sınırları bisection ile (Ay dönüşü ≈ Apollo), eş-g ve eş-ısı eğrileri |
 | [`launch_ascent/`](presets/launch_ascent) | **Fırlatma ve tırmanış**: 2B tırmanış (RK4, US76 atmosfer, yerçekimi dönüşü + kapalı-çevrim 2. kademe güdümü), olay rayı (max-q türetilir, MECO/ayrılma/SECO), kayıplar; craft_blocks roket + motor efekti |

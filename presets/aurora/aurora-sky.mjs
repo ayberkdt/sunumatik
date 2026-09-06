@@ -333,10 +333,13 @@ float ridge(float n){ return max(0., 1. - abs(n)); }`;
 
 const CURTAINS = [
   /* envW: uç sönümü GENİŞLİĞİ — uzak perdelerin uçları kadraj içinde
-     bittiği için dar bir sönüm görünür DİKDÖRTGEN kenarı bırakıyordu */
-  { dScale: 1.00, lenScale: 1.00, weight: 1.00, envW: 0.20, sheets: [0, 2.4] },
-  { dScale: 1.62, lenScale: 0.92, weight: 0.45, envW: 0.36, sheets: [0, -3.0] },
-  { dScale: 2.45, lenScale: 0.80, weight: 0.26, envW: 0.44, sheets: [0] },
+     bittiği için dar bir sönüm görünür DİKDÖRTGEN kenarı bırakıyordu.
+     Beş perde: yakın çok-katlı ön perde (tepeye kadar yükselir), ana perde, iki ara, uzak arka plan — derinlik ve doluluk. */
+  { dScale: 0.84, lenScale: 1.18, weight: 0.30, envW: 0.16, sheets: [0, 1.9, -2.3] },
+  { dScale: 1.12, lenScale: 1.05, weight: 0.60, envW: 0.20, sheets: [0, 2.4, -2.9] },
+  { dScale: 1.62, lenScale: 0.92, weight: 0.34, envW: 0.36, sheets: [0, -3.0] },
+  { dScale: 2.45, lenScale: 0.80, weight: 0.20, envW: 0.44, sheets: [0, 2.2] },
+  { dScale: 3.40, lenScale: 0.72, weight: 0.12, envW: 0.50, sheets: [0] },
 ];
 const MAX_STARS = 3400;
 const EXPORT_TIME = 16;
@@ -362,13 +365,13 @@ export function mountAurora(container, options = {}) {
 
   const lines = Object.assign({ green: 1, red: 1, blue: 1, pink: 1 }, options.lines || {});
   const state = {
-    kp: clamp(options.kp ?? toKp(options.activity) ?? 4, 0, 9),
+    kp: clamp(options.kp ?? toKp(options.activity) ?? 6, 0, 9),
     density: clamp(options.density ?? 1, 0.35, 2.6),     /* atom yoğunluğu çarpanı */
     lines,
-    drift: options.drift ?? 0.28,                        /* perde ilerleme hızı, km/s ölçeği */
+    drift: options.drift ?? 0.50,                        /* perde ilerleme hızı, km/s ölçeği */
     artistic: options.artistic ?? false,
     artHue: options.artHue ?? 0.55,
-    exposure: options.exposure ?? 1.35,
+    exposure: options.exposure ?? 1.0,
     paused: false,
     active: options.active ?? true,
     showStars: options.stars ?? true,
@@ -380,7 +383,7 @@ export function mountAurora(container, options = {}) {
 
   /* ---- çizgi renkleri: dalga boyundan (CIE), elle hex YOK ---- */
   const PHYS_COLORS = {
-    green: wavelengthRGB(557.7, 0.17),   /* mezopik/atmosfer beyazlatması: sunum kararı */
+    green: wavelengthRGB(557.7, 0.05),   /* mezopik/atmosfer beyazlatması: sunum kararı (0,07: doygun yeşil) */
     red: wavelengthRGB(630.0, 0.05),
     blue: wavelengthRGB(427.8, 0.07),
     pink: wavelengthRGB(670.0, 0.05),    /* N₂ 1PG bant merkezi temsilcisi */
@@ -634,7 +637,8 @@ void main(){
      boyunca neredeyse değişmez (filamentler alan çizgisini izler) */
   float rn  = fbm3(vec3(vS * .052, vH * .0035, uSeedF));
   float rn2 = snoise(vec3(vS * .175, vH * .0018, uSeedF + 13.1));
-  float rays = max(0., 1. + uRayAmp * (.78 * rn + .42 * rn2));
+  float rn3 = snoise(vec3(vS * .42 + uTime * .05, vH * .0012, uSeedF + 27.3));   /* ince filamentler (ışınlı perde) */
+  float rays = max(0., 1. + uRayAmp * (.70 * rn + .48 * rn2 + .55 * ridge(rn3) - .18));
   float raysG = mix(1., rays, .88);      /* O(¹S) τ=0,7 s → hafif yumuşama */
   float raysR = mix(1., rays, .16);      /* O(¹D) τ=110 s → yapı SİLİNİR */
 
@@ -650,7 +654,7 @@ void main(){
   vec3 col = uColG * (Ig * uGain.x) + uColR * (Ir * uGain.y)
            + uColB * (Ib * uGain.z) + uColP * (Ip * uGain.w);
   col *= uFlux * env * pulse * uExposure * uWeight;
-  col = col / (1. + .85 * col);          /* yumuşak omuz — tepe beyaza kırpılmasın */
+  col = col / (1. + 1.05 * col);         /* yumuşak omuz — tepe beyaza kırpılmasın (doygun kalsın) */
   gl_FragColor = vec4(max(vec3(0.), col), 1.);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
@@ -825,8 +829,8 @@ void main(){
       uniform vec3 uColG; uniform float uFlux; varying float vTop;
       void main(){
         /* aurora kar/araziyi çok soluk aydınlatır — gerçek ama zayıf etki */
-        vec3 base = vec3(.014, .020, .030);
-        vec3 lit = base + uColG * (.030 * uFlux) * smoothstep(.45, 1., vTop);
+        vec3 base = vec3(.018, .026, .040);
+        vec3 lit = base + uColG * (.11 * uFlux) * smoothstep(.35, 1., vTop) + vec3(.02, .03, .05) * smoothstep(.6, 1., vTop);
         gl_FragColor = vec4(lit, 1.);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -837,6 +841,15 @@ void main(){
   ridge.renderOrder = -5;
   ridge.frustumCulled = false;
   scene.add(ridge);
+  /* kar örtüsü: gözlemcinin önündeki düzlük — aurora ışığıyla soluk aydınlanır (uzaklıkla söner), yansıma temsilî */
+  const snowMaterial = new THREE.ShaderMaterial({ uniforms: { uColG, uColR, uFlux, uTime }, vertexShader: `varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
+    fragmentShader: `uniform vec3 uColG; uniform vec3 uColR; uniform float uFlux; uniform float uTime; varying vec3 vP;
+      void main(){ float d = length(vP.xz); float fall = exp(-d / 14.); float grain = fract(sin(dot(floor(vP.xz * 3.), vec2(12.9898, 78.233))) * 43758.5453) * .06;
+        vec3 snow = vec3(.030, .040, .058) + vec3(grain); vec3 lit = snow + uColG * (.16 * uFlux) * fall + uColR * (.03 * uFlux) * fall;
+        gl_FragColor = vec4(lit, 1.);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment> }`, side: THREE.DoubleSide, depthWrite: true, depthTest: true });
+  const snow = new THREE.Mesh(new THREE.CircleGeometry(RIDGE_R * 1.02, 64), snowMaterial); snow.rotation.x = -Math.PI / 2; snow.position.y = -0.35; snow.renderOrder = -6; scene.add(snow);
 
   /* ═══ yükseklik ekseni (SVG bindirmesi — 3B izdüşümden okunur) ═══ */
   const AXIS_TICKS = [100, 150, 200, 250, 300, 350];
@@ -977,20 +990,20 @@ void main(){
        kırpar ya sakin yayı görünmez bırakırdı. Görünen parlaklık
        akının KAREKÖKÜ ile ölçeklenir — sıra korunur, tavan korunur. */
     uExposure.value = state.exposure * Math.pow(uFlux.value, -0.62);
-    uPulse.value = reducedMotion ? 0 : 0.12;
+    uPulse.value = reducedMotion ? 0 : 0.18;
 
     const m = morph();
-    uRayAmp.value = 0.12 + 0.85 * m.rays;
+    uRayAmp.value = 0.28 + 0.95 * m.rays;
     /* oval ekvatora doğru genişledikçe yay gözlemciye YAKLAŞIR (sınır
        enlemi ≈ 67° − 2·Kp'nin yumuşatılmış eşlemesi; mutlak uzaklık
        kadraj kararıdır, limitations'ta yazılı) */
-    const dist0 = 130 + 340 * Math.exp(-0.30 * kp);
+    const dist0 = 118 + 330 * Math.exp(-0.30 * kp);
     curtains.forEach(c => {
       c.uDist.value = dist0 * c.def.dScale;
       c.uArcR.value = 2400 * c.def.dScale;
       c.uLen.value = 900 * c.def.lenScale;
     });
-    uFoldAmp.value = Math.min(0.26 * dist0, 3 + 30 * m.folds);
+    uFoldAmp.value = Math.min(0.30 * dist0, 5 + 42 * m.folds);
     uCurlA.value = 2.3 * m.curl;
     uCurlW.value = 60 + 40 * m.curl;
 
@@ -1215,7 +1228,7 @@ void main(){
       starGeometry.dispose();
       ridgeGeometry.dispose();
       airglow.geometry.dispose();
-      [...curtains.map(c => c.material), starMaterial, ridgeMaterial, airglowMaterial].forEach(m => m.dispose());
+      [...curtains.map(c => c.material), starMaterial, ridgeMaterial, airglowMaterial, snowMaterial].forEach(m => m.dispose()); snow.geometry.dispose();
       renderer.dispose();
       figure.remove();
     },

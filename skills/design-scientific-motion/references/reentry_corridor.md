@@ -34,3 +34,7 @@ Düzlemsel, dönmeyen Dünya; sabit yatış (kılavuz yok); sabit C_D, L/D;
 yalnız konvektif ısınma (Ay dönüşünde radyatif ısınma MODELLENMEZ);
 paraşüt fazı yok. Varsayılan Ay dönüşü koridoru [−7,13°, −4,86°] ≈ Apollo
 [−7,7°, −5,3°] — sınırların fizikten çıktığının bağımsız kanıtı.
+
+## Hipersonik akış yakın planı
+
+Sahne tuvalinin sol altında, zaman çizgisiyle canlı: yay şoku (duruş mesafesi Billig 1967: Δ/R_n = 0,143·exp(3,24/M²), çizimde 2,2× büyütülmüş, oran HUD'da), şok katmanı ve plazma kuyruğu parlaklığı q̇/q̇_max ile, ısı kalkanı rengi radyatif denge sıcaklığından T = (q̇/εσ)^¼ (ε = 0,85; `blackbody(T)` kara-cisim rengi), ablasyon kıvılcımları kalkan kenarından koparak akışla sürüklenir (sayı ∝ q̇), serbest akım çizgileri hızla kayar. Titreşim deterministik (`flicker(i, t)`, 30 Hz hash); statik modda sabit kare. Bu bir CFD değildir: yalnız Δ/R_n, T_duvar, q̇ ve M ölçekleri bağıntıdan gelir; şok biçimi, türbülans dokusu ve kıvılcımlar temsilîdir (etiket sahnede yazılı). Ana sahnedeki kapsülün ardında da q̇ ile ölçekli kıvılcımlar vardır.

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Üç-Cisim Durumları — three_body_states</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../core/lab-scene.css">
+  <style>
+    :root { --color-canvas: #000; --color-surface: #0c0c10; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #ff7a2e; --color-accent-ink: #14100a; --color-rule: #2a2a30; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: #000; color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; align-items: center; gap: 14px; padding: 8px 18px 10px; border-top: 1px solid var(--color-rule); background: var(--color-surface); font-size: 12px; color: var(--color-muted); }
+    footer input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); } footer .time { font: 500 12px var(--font-mono); min-width: 70px; text-align: right; color: var(--color-ink); }
+    button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12px/1 var(--font-body); padding: 7px 11px; border-radius: 7px; cursor: pointer; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    footer label { display: inline-flex; gap: 6px; align-items: center; } footer .cap { flex: 1 1 auto; text-align: right; font-size: 11.5px; letter-spacing: .03em; }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <button id="playBtn" aria-pressed="true">Duraklat</button>
+    <input id="scrub" type="range" min="0" max="80" step="0.1" value="0" aria-label="Zaman (birim)">
+    <span class="time" id="timeOut">—</span>
+    <label><input id="labels" type="checkbox"> adlar</label>
+    <label>hız <input id="speed" type="range" min="0.2" max="3" step="0.1" value="0.8" style="width:90px"></label>
+    <span class="cap">three_body_states · 20 pano: Šuvakov–Dmitrašinović (2013) periyodik aileler, Lagrange, Euler, Broucke A2, Pisagor (kaotik) · G = 1 · RK4 uyarlanır adım · her periyot denetimde başlangıca döner</span>
+  </footer>
+  <script type="module">
+    import { mountThreeBody } from './three-body.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id);
+    const tb = await mountThreeBody($('host'), { t: params.has('t') ? Number(params.get('t')) : undefined, speed: Number(params.get('speed')) || .8, labels: params.get('labels') === '1', autoplay: !deterministic });
+    window.__threeBody = tb;
+    const scrub = $('scrub'), timeOut = $('timeOut'), playBtn = $('playBtn');
+    $('labels').checked = tb.labels; $('speed').value = String(tb.timeline.speed);
+    $('labels').addEventListener('change', () => { tb.labels = $('labels').checked; });
+    $('speed').addEventListener('input', () => { tb.timeline.speed = Number($('speed').value); });
+    playBtn.addEventListener('click', () => { const tl = tb.timeline; tl.playing ? tl.pause() : tl.play(); });
+    scrub.addEventListener('change', () => { tb.timeline.pause(); tb.timeline.scrub(Number(scrub.value)); });
+    function syncUi() { const tl = tb.timeline; playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(Math.min(80, tl.t)); timeOut.textContent = `t = ${tl.t.toFixed(1)}`; requestAnimationFrame(syncUi); }
+    syncUi();
+    if (deterministic) { tb.timeline.pause(); tb.setActive(false); }
+    document.title += ' · hazır';
+  </script>
+</body>
+</html>

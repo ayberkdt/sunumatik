@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 61,
-    "presetsWithIndex": 54,
-    "animatedPresets": 47,
+    "presets": 62,
+    "presetsWithIndex": 55,
+    "animatedPresets": 48,
     "skills": 18,
-    "demoSlides": 77,
-    "demoCards": 64,
+    "demoSlides": 78,
+    "demoCards": 65,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 77,
-    "cards": 64,
+    "slides": 78,
+    "cards": 65,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -71,6 +71,7 @@
       "rendezvous_docking",
       "soi_explorer",
       "sun_advanced",
+      "three_body_states",
       "timeline_tree",
       "tisserand_graph",
       "transfer_explorer"
@@ -499,6 +500,13 @@
     {
       "name": "sun_advanced",
       "title": "Sol Vanilla Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "three_body_states",
+      "title": "Üç-Cisim Durumları — three_body_states",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true
