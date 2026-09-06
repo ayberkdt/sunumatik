@@ -149,6 +149,21 @@ export async function buildSurfaceScene({ seed = 20260816, assetBaseUrl } = {}) 
       const dk = R * (.11 + .1 * taze);
       sahaKraterleri.push({ x, z, R, d: dk, rim: dk * (.2 + .24 * taze) });
     }
+    /* ORTA BANT (kullanıcı: iniş bacağı "çamur düzlüğü" — haklı): ana
+       krater alanı vista çevresini ±300 m temiz bırakıyordu, helikopter
+       çekiminin altındaki kuşak boş kalıyordu. 8–50 m'lik 46 krater
+       55–420 m bandını doldurur: inişte yer paralaksı, vista'da orta plan
+       dokusu. Sığ profil — engel değil, doku. */
+    for (let i = 0; i < 46; i++) {
+      const R = .08 + Math.pow(rnd(), 1.8) * .42;        // 8–50 m
+      const t = rnd() * Math.PI * 2;
+      const rr = .55 + Math.sqrt(rnd()) * 3.65;          // 55–420 m
+      const x = Math.cos(t) * rr, z = Math.sin(t) * rr;
+      if (Math.hypot(x, z) < .5 + R * 1.3) continue;     // ped + kamera çevresi temiz
+      const taze = .25 + rnd() * .6;
+      const dk = R * (.07 + .07 * taze);                 // sığ: derinlik/çap ~%7–14
+      sahaKraterleri.push({ x, z, R, d: dk, rim: dk * (.18 + .2 * taze) });
+    }
   }
   const sahaKatki = (x, z) => {
     let h = 0;
@@ -177,7 +192,7 @@ export async function buildSurfaceScene({ seed = 20260816, assetBaseUrl } = {}) 
         sahaKatki(x, z)
       + (deger2(x / .6 + 12.7, z / .6 - 5.3) - .5) * .028 * purussuz(.045, .3, d)
       + (deger2(x / .22 - 3.1, z / .22 + 8.9) - .5) * .011 * purussuz(.03, .18, d)
-    ) : (d < .9 ? sahaKatki(x, z) : 0);
+    ) : (d < 4.6 ? sahaKatki(x, z) : 0);   // orta bant 420 m'ye uzanır (+kenar payı)
     return kure + temizlik * kaba + yakinAlan;
   };
 
@@ -252,8 +267,8 @@ export async function buildSurfaceScene({ seed = 20260816, assetBaseUrl } = {}) 
      biçim vertex normalleriyle okunur. Ton GRİ: Ay toprağı kahve değildir;
      gri ton, dalış teslimindeki küre dokusuyla da renk sıçramasını yok eder. */
   const terrain = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({
-    map: albedo, color: albedo ? 0xbdb9b3 : 0x8f8a82,
-    bumpMap: bump, bumpScale: .045,
+    map: albedo, color: albedo ? 0xd0ccc4 : 0x9d968e,
+    bumpMap: bump, bumpScale: .038,
   }));
   terrain.receiveShadow = true;
   scene.add(terrain);
@@ -324,7 +339,7 @@ export async function buildSurfaceScene({ seed = 20260816, assetBaseUrl } = {}) 
      kameranın arka-sağ omzundan gelir; uzun gölge ufka doğru, KADRAJIN
      İÇİNE uzar. (İlk deneme Güneş'i karşı yakaya koydu, gezgin kömür
      silueti çıktı — ölçüldü.) */
-  const sun = new THREE.DirectionalLight('#fff2dc', 2.6);
+  const sun = new THREE.DirectionalLight('#fff2dc', 3.0);
   /* 14° irtifa: 9°'de zemin sin(9°)≈0,16 ile kömür karanlığındaydı
      (ölçüldü); 14° hâlâ "alçak güneş + uzun gölge" dilindedir ama
      regoliti okutur. */
@@ -338,12 +353,55 @@ export async function buildSurfaceScene({ seed = 20260816, assetBaseUrl } = {}) 
   sun.shadow.camera.top = .4; sun.shadow.camera.bottom = -.4;
   sun.target.position.set(0, 0, 0);
   scene.add(sun, sun.target);
-  scene.add(new THREE.AmbientLight('#8d95a8', .3));       // yıldız/dünya-ışığı dolgusu
+  scene.add(new THREE.AmbientLight('#8d95a8', .34));      // yıldız/dünya-ışığı dolgusu
+  /* YARIM KÜRE DOLGUSU (kullanıcı: iniş boyunca arazi kömür karanlığı —
+     haklı; helikopter planında Güneş 14°'de, Lambert cos'u zemini
+     okutmuyordu): gökten değil ZEMİNDEN gelen sıçrama — regolit gerçekten
+     Lambert yansıtıcıdır, alçak Güneş'te yatay yüzeyler birbirini besler.
+     Gök kanalı uzay karası, zemin kanalı ılık regolit tonu. */
+  scene.add(new THREE.HemisphereLight('#14161c', '#5f5b55', .5));
   /* vista dolgusu: kamera yanından çok kısık sıcak ışık — gezginin görünen
      yüzü kömürleşmesin (belgesel reflektörünün kısık hâli) */
   const dolgu = new THREE.PointLight('#ffe8cc', 1.1, 2.2);
   dolgu.position.set(.22, .08, .28);
   scene.add(dolgu);
+
+  /* --- DÜNYA (kullanıcı: sahne çok zayıf — gök bomboştu): Ay göğünün
+     imza öğesi. Konum TEMSİLÎDİR (altyazıda bildirilir); açısal çap ~2,1°
+     (gerçekte 1,9° — sinematik yuvarlama). Doku prosedürel ve tohumlu:
+     okyanus tabanı + value-noise kıta/bulut lekeleri + terminatör
+     kararması — saf f(seed), export deterministik. MeshBasic: Dünya
+     kendi güneş ışığını taşır, sahne ışığından etkilenmez. --- */
+  {
+    const rnd = mulberry32(seed ^ 0x3A9E);
+    const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#2d62a8'; ctx.fillRect(0, 0, 256, 256);       // okyanus
+    for (let i = 0; i < 34; i++) {                                  // kıta lekeleri
+      ctx.fillStyle = `rgba(${120 + rnd() * 40 | 0},${110 + rnd() * 30 | 0},${70 + rnd() * 25 | 0},${.5 + rnd() * .3})`;
+      const x = rnd() * 256, y = 40 + rnd() * 176, r = 8 + rnd() * 26;
+      ctx.beginPath(); ctx.ellipse(x, y, r, r * (.45 + rnd() * .5), rnd() * Math.PI, 0, Math.PI * 2); ctx.fill();
+    }
+    for (let i = 0; i < 60; i++) {                                  // bulut girdapları
+      ctx.fillStyle = `rgba(255,255,255,${.25 + rnd() * .35})`;
+      const x = rnd() * 256, y = rnd() * 256, r = 5 + rnd() * 18;
+      ctx.beginPath(); ctx.ellipse(x, y, r, r * .35, rnd() * Math.PI, 0, Math.PI * 2); ctx.fill();
+    }
+    /* terminatör: sağ kenara doğru kararma (kutup şeritleri kürede bant
+       artefaktı veriyordu — bulutlar yeter) */
+    const grad = ctx.createLinearGradient(96, 0, 256, 0);
+    grad.addColorStop(0, 'rgba(0,0,10,0)'); grad.addColorStop(1, 'rgba(0,0,10,.85)');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, 256, 256);
+    const dunyaDoku = new THREE.CanvasTexture(cv);
+    dunyaDoku.colorSpace = THREE.SRGBColorSpace;
+    const dunya = new THREE.Mesh(
+      new THREE.SphereGeometry(185, 48, 32),
+      new THREE.MeshBasicMaterial({ map: dunyaDoku }));
+    /* vista bakışının sağ-üst çeyreği, ufkun ~16° üstü (kadraj içi) */
+    dunya.position.set(-.79, .28, -.55).normalize().multiplyScalar(10200);
+    dunya.rotation.y = 2.1;                                         // terminatör dış kenara
+    scene.add(dunya);
+  }
 
   /* --- gezgin: craft-blocks buildRover — ölçek DÜRÜSTÇE bildirilir --- */
   const fenerMat = new THREE.MeshStandardMaterial({

@@ -29,8 +29,10 @@ export function buildCockpitShell({ palette } = {}) {
      yalnız cam ekranlar ve uzayın kendisidir. Koyu-oyun-odası paleti
      atıldı; sıcak beyaz paneller + gri yapı + seyrek altın aksan. */
   const mat = {
-    panel: new THREE.MeshStandardMaterial({ color: 0xd9d5cb, roughness: .74, metalness: .04 }),  // ana iç panel
-    yapi:  new THREE.MeshStandardMaterial({ color: 0x9ba0a6, roughness: .5,  metalness: .35 }),  // kaburga/çerçeve
+    /* pürüz yüksek tutulur: parlak beyaz plaka "patlıyordu" (ekran
+       görüntüsüyle yakalandı) — saten mat yüzey ISS diline daha yakın */
+    panel: new THREE.MeshStandardMaterial({ color: 0xd9d5cb, roughness: .88, metalness: .03 }),  // ana iç panel
+    yapi:  new THREE.MeshStandardMaterial({ color: 0x8f949b, roughness: .62, metalness: .2 }),   // kaburga/çerçeve
     govde: new THREE.MeshStandardMaterial({ color: 0xb9b5ac, roughness: .66, metalness: .1 }),   // ikincil panel
     koyu:  new THREE.MeshStandardMaterial({ color: 0x22262e, roughness: .55, metalness: .2 }),   // konsol gövdesi
     metal: new THREE.MeshStandardMaterial({ color: 0x8d939c, roughness: .34, metalness: .8 }),   // ray/tutamak
@@ -79,26 +81,30 @@ export function buildCockpitShell({ palette } = {}) {
   g.add(ustPlaka, altPlaka, solPlaka, sagPlaka);
 
   /* -- panel derzleri: açık yüzeyi bölen ince gri çizgiler (dikişsiz dev
-     plaka "ucuz" okunur; gerçek kabinler panel panosudur) -- */
+     plaka "ucuz" okunur; gerçek kabinler panel panosudur).
+     DERİNLİK DİSİPLİNİ: plaka ön yüzü z=.43'te biter — derz/kaburga/guse
+     hepsi bunun ÖNÜNDE ayrık durur. İlk sürümde derz ve kaburgalar plaka
+     HACMİNİN İÇİNE gömülüydü; eş düzleme yakın yüzeyler derinlik
+     tamponunda yarışıp dikmelerde testere dişi basıyordu (ekran
+     görüntüsüyle yakalandı — "çerçevede bug"). -- */
   for (const dx of [-.78, -.44, .44, .78]) {
-    const derz = box(.008, DUV_H, .062, mat.yapi);
-    derz.position.set(dx, .02, Z + .012);
+    const derz = box(.008, DUV_H, .012, mat.yapi);
+    derz.position.set(dx, .02, Z - .038);
     g.add(derz);
   }
-  const yatayDerz = box(DUV_W, .008, .062, mat.yapi);
-  yatayDerz.position.set(0, .02 + H / 2 + .16, Z + .012);
+  const yatayDerz = box(DUV_W, .008, .012, mat.yapi);
+  yatayDerz.position.set(0, .02 + H / 2 + .16, Z - .038);
   g.add(yatayDerz);
 
-  /* -- KABURGALAR: duvara YASLI ince yapı şeritleri (ilk deneme içeri taşan
-     döndürülmüş kamalardı — sağda parlak beyaz üçgen olarak patlıyordu,
-     ölçüldü) -- */
+  /* -- KABURGALAR: duvarın önünde ayrık ince yapı şeritleri (derinlik
+     disiplini yukarıda) -- */
   for (const dx of [-.68, .68]) {
     const kaburga = box(.04, DUV_H, .02, mat.yapi);
-    kaburga.position.set(dx, .02, Z - .002);
+    kaburga.position.set(dx, .02, Z - .045);
     g.add(kaburga);
   }
   const tavanKemeri = box(DUV_W * .7, .04, .02, mat.yapi);
-  tavanKemeri.position.set(0, .02 + H / 2 + .3, Z - .002);
+  tavanKemeri.position.set(0, .02 + H / 2 + .3, Z - .045);
   g.add(tavanKemeri);
 
   /* -- TUTUNMA RAYLARI (ISS imzası): pencere altı boydan boya + iki yanda
@@ -140,29 +146,42 @@ export function buildCockpitShell({ palette } = {}) {
       g.add(salter);
     }
   }
-  /* -- pencere çerçevesi: açıklığın kenarına oturan yapı-gri biyeler -- */
+  /* -- pencere PERVAZI: açıklık kenarını VE plaka derzini örten çerçeve
+     halkası. İLK SÜRÜMÜN BUG'I (kullanıcı: "çerçevede bug"): çerçeve
+     kutuları plakaların hacmine gömülüydü ve iç yüzleri plaka kenar
+     yüzleriyle 0,5 mm aralıklı PARALELDİ (−.3105 vs −.31) — derinlik
+     tamponu bu çiftlerde yarışıp dikmelerde testere dişi basıyordu
+     (görsel bisection ile bulundu). Şimdi pervaz plakanın ÖNÜNDE durur
+     (z .37–.44), açıklığa 1 cm dudak taşırır, plaka kenarını 7 cm örter;
+     dikeyler yatayların dudaklarıyla kesişmeden y=−.14/.18 hattında
+     buluşur — hiçbir yüz çifti 1 cm'den yakın paralel değildir. -- */
   const cerMat = mat.yapi;
-  const ust = box(W + 2 * KAL, KAL, .09, cerMat); ust.position.set(0, H / 2 + KAL / 2 + .02, Z);
-  const alt = box(W + 2 * KAL, KAL, .09, cerMat); alt.position.set(0, -H / 2 - KAL / 2 + .02, Z);
-  const sol = box(KAL, H, .09, cerMat); sol.position.set(-W / 2 - KAL / 2, .02, Z);
-  const sag = box(KAL, H, .09, cerMat); sag.position.set(W / 2 + KAL / 2, .02, Z);
+  const PZ = Z - .045;                                   // pervaz merkezi: ön .37, arka .44
+  const ust = box(W + .16, .08, .07, cerMat); ust.position.set(0, .02 + H / 2 + .03, PZ);
+  const alt = box(W + .16, .08, .07, cerMat); alt.position.set(0, .02 - H / 2 - .03, PZ);
+  const sol = box(.08, H - .02, .07, cerMat); sol.position.set(-W / 2 - .03, .02, PZ);
+  const sag = box(.08, H - .02, .07, cerMat); sag.position.set(W / 2 + .03, .02, PZ);
   /* çerçeve iç kenarı: ince metal biye — cam kenarı vurgusu.
      DİKKAT: EdgesGeometry LineSegments İSTER. Mesh ile çizilirse çizgi
      köşeleri üçgen listesi sanılır ve pencereye yarı saydam dev üçgenler
      basar — "diyagonal süt beyazı perde" tam olarak buydu; üç kez cam/halo
      sanıldı, görsel bisection buldu. */
+  /* biye pervaz dudağının 2 cm içinde kalır — pervaz arka yüzü (.44) ile
+     çakışmasın diye açıklıktan küçültüldü */
   const biye = new THREE.LineSegments(
-    new THREE.EdgesGeometry(new THREE.BoxGeometry(W, H, .002)),
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(W - .04, H - .04, .002)),
     new THREE.LineBasicMaterial({ color: p.metal, transparent: true, opacity: .5 }));
-  biye.position.set(0, .02, Z - .01);
+  biye.position.set(0, .02, Z - .007);
   const cam = new THREE.Mesh(new THREE.PlaneGeometry(W, H), mat.cam);
   cam.position.set(0, .02, Z - .006);
   /* Orta kayıt YOK (kullanıcı: "cezaevi gibi" — iki koyu düşey çubuk tam
      olarak parmaklık okunuyordu, ölçüldü): tek panoramik cam. Köşelere
      küçük guseler rektangleri yumuşatır. */
+  /* guseler çerçeve ön yüzünün ÖNÜNDE oturur (z=.405'ten öne) — eski
+     z=Z-.006 dikmelerin içine giriyordu, kopuk koyu kamalar okunuyordu */
   for (const [gx, gy] of [[-W / 2, H / 2], [W / 2, H / 2], [-W / 2, -H / 2], [W / 2, -H / 2]]) {
-    const guse = box(.05, .05, .04, cerMat);
-    guse.position.set(gx * .96, gy * .96 + .02, Z - .006);
+    const guse = box(.045, .045, .022, cerMat);
+    guse.position.set(gx * .96, gy * .96 + .02, Z - .092);   // pervaz ön yüzünün önünde
     guse.rotation.z = Math.PI / 4;
     g.add(guse);
   }
@@ -175,7 +194,7 @@ export function buildCockpitShell({ palette } = {}) {
       color: p.panel, roughness: .5, metalness: .3,
       emissive: new THREE.Color(i === 2 ? p.accent : 0x3a4a66), emissiveIntensity: .5,
     }));
-    led.position.set(-.12 + i * .06, H / 2 + KAL + .045, Z - .002);
+    led.position.set(-.12 + i * .06, H / 2 + KAL + .045, Z - .026);   // plaka önünde, gömülü değil
     g.add(led);
   }
 
@@ -200,7 +219,10 @@ export function buildCockpitShell({ palette } = {}) {
   serit.position.set(0, -.176, .3); serit.rotation.x = -.42;
   const tutamakL = cylZ(.012, .012, .1, 12, mat.metal); tutamakL.position.set(-.38, -.16, .30);
   const tutamakR = cylZ(.012, .012, .1, 12, mat.metal); tutamakR.position.set(.38, -.16, .30);
-  const aksanCizgi = box(.9, .008, .008, mat.aksan);
+  /* aksan çizgisi İNCE ve mat: p=1 pult eğiliminde alt kenarda geniş
+     turuncu bant olarak bulanıyordu (ekran görüntüsüyle yakalandı) */
+  const aksanCizgi = box(.9, .004, .005, new THREE.MeshStandardMaterial({
+    color: p.accent, roughness: .6, metalness: .3 }));
   aksanCizgi.position.set(0, -.248, .35); aksanCizgi.rotation.x = -.42;
   g.add(pult, anaEkran, serit, tutamakL, tutamakR, aksanCizgi);
 

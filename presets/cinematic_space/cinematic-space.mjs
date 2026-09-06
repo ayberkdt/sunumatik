@@ -9,8 +9,8 @@
               active:false, dışarıdan advance ile sürülür)
    · Ay     → moon_advanced/buildMoonMesh + loadMoonTextures (Faz 0 dışa açımı)
    · Araç   → craft_blocks/buildOrbiter (import düşerse yer tutucu — sözleşme)
-   · Kamera → camera-director.mjs keyframe rayı; idle nefesi ve paralaks
-              İKİNCİL katmanlardır, rayı süremezler.
+   · Kamera → camera-director.mjs keyframe rayı; kamera nefesi ve araç
+              solunumu İKİNCİL katmanlardır, rayı süremezler.
 
    API:
      const cine = await mountCinematicSpace(host, { seed });
@@ -26,7 +26,8 @@
 
    Determinizm: tüm hareket t'nin ve seed'in saf fonksiyonu; goTo geçişi de
    sim zamanıyla ilerler (advance altında aynı kareler). İşaretçi paralaksı
-   yalnız canlı modda; export/reduced'da tamamen kapalı.
+   KALDIRILDI (kullanıcı yönergesi) — yerine araç solunumu: saf f(t) olduğu
+   için export yolunda da aynıdır.
    ?p=0.78&t=12&export=1 → donuk deterministik kare (data-frozen-at).
    ?durum=cockpit → p=1 başlangıcı.
 
@@ -39,7 +40,6 @@ import { mountCosmos } from '../cosmos_advanced/cosmos-sky.mjs';
 import { loadMoonTextures, buildMoonMesh } from '../moon_advanced/lunaris-moon.mjs';
 import { createIdleModel } from './spatial-idle.mjs';
 import { createCameraDirector } from './camera-director.mjs';
-import { createParallax } from './parallax-controller.mjs';
 import { buildCockpitShell, buildCanopyPatch } from './cockpit/cockpit-scene.mjs';
 import { buildChapterConsole } from './cockpit/chapter-console.mjs';
 import { createChapterRouter } from './chapter-router.mjs';
@@ -530,8 +530,11 @@ export async function mountCinematicSpace(host, options = {}) {
   }
 
   /* -------- hareket katmanları: tam ray (plan §4 çizelgesi) */
-  const idle = createIdleModel(seed);
-  const parallax = createParallax(root, { enabled: !exportMode && !reducedMotion });
+  /* tutunma halkasının eksenleri araç duruşundan türetilir: geri kayış
+     MOTOR AKSI boyunca olur ki toparlanma itkisi fiziksel okunsun */
+  const aftYon = new THREE.Vector3(-1, 0, 0).applyEuler(CRAFT_EULER);
+  const yanYon = new THREE.Vector3().crossVectors(aftYon, new THREE.Vector3(0, 1, 0)).normalize();
+  const idle = createIdleModel(seed, { aft: aftYon, yan: yanYon });
   /* İç kadraj bakışları pencere yönüyle aynı vektörlerden türetilir
      (yukarıda, kokpit kurulumunda) — kamera ve pencere aynı kompozisyona
      bakar, çerçeve görüşte ortalanır. */
@@ -563,7 +566,6 @@ export async function mountCinematicSpace(host, options = {}) {
     const dx = camState.look.x - camState.pos.x, dz = camState.look.z - camState.pos.z;
     camState.look.x += -dz * s.yaw * olcek; camState.look.z += dx * s.yaw * olcek;
   });
-  director.addSecondary(parallax.secondary);             // canlı modda; kapalıyken no-op
 
   /* -------- durum + deterministik adım */
   const DURUMLAR = { exterior: 0, cockpit: 1 };
@@ -625,6 +627,9 @@ export async function mountCinematicSpace(host, options = {}) {
       CRAFT_POS.y + s.craft.y * idleOlcek,
       CRAFT_POS.z + s.craft.z * idleOlcek);
     craftPivot.rotation.set(s.craft.pitch * idleOlcek, s.craft.yaw * idleOlcek, s.craft.roll * idleOlcek);
+    /* solunum: paralaksın yerini alan yaşam belirtisi — tekdüze ölçek,
+       eşiğe yaklaşırken idle ile birlikte sıfıra rampalanır */
+    craftPivot.scale.setScalar(1 + s.craft.nefes * idleOlcek);
     if (craftPivot.visible) {
       rcsGuncelle(state.t);
       /* düzeltme alevi: tutunma döngüsünün yanma zarfı FX'i sürer */
@@ -678,6 +683,21 @@ export async function mountCinematicSpace(host, options = {}) {
     if (state.dalisQ > 0) {
       if (state.dalisQ < .55 || !dalisDirB) dalisDirA.apply(Math.min(state.dalisQ, .55), state.t);
       else dalisDirB.apply(state.dalisQ, state.t);
+      /* HIZ HİSSİ (kullanıcı: "animasyon gibi değil"): iniş boyunca ray
+         pozu değişmeden iki ikincil katman biner — (a) FOV vuruşu: hız
+         arttıkça görüş açılır, varışta toparlanır; (b) açısal mikro
+         türbülans (~0,2° tepe): pozisyon değil AÇI sarsılır, bu yüzden
+         dünya ölçeğinde de yüzey ölçeğinde de aynı okunur. Her ikisi
+         saf f(q, t) — export/advance altında birebir aynı kareler. */
+      const q = state.dalisQ;
+      const zarf = Math.sin(Math.PI * Math.min(1, Math.max(0, (q - .06) / .86))) ** 1.4;
+      if (zarf > 0) {
+        camera.fov += zarf * 9;
+        camera.updateProjectionMatrix();
+        const j = .0035 * zarf;
+        camera.rotateX(j * Math.sin(TAU2 * state.t * 1.9));
+        camera.rotateY(j * .8 * Math.sin(TAU2 * state.t * 2.7 + 1.7));
+      }
     } else {
       director.apply(state.p, state.t);
     }
@@ -735,14 +755,14 @@ export async function mountCinematicSpace(host, options = {}) {
   }
 
   /* -------- canlı çevrim */
-  const canliParalaks = !exportMode && !reducedMotion;
+  const canliGirdi = !exportMode && !reducedMotion;     // tekerlek vb. canlı girdiler
+  skyHost.style.transform = 'scale(1.05)';             // eski paralaks kaymasının sabit tabanı
   let frame = null;
   let onceki = performance.now();
   function tik(now) {
     frame = requestAnimationFrame(tik);
     const dt = Math.min(.05, (now - onceki) / 1000); onceki = now;
     if (!state.active) return;
-    parallax.update(dt);
     /* sürgü/tekerlek hedefi: geçiş yokken p hedefe yumuşak yaklaşır */
     if (!state.gecis && state.hedefP !== state.p) {
       const k = 1 - Math.exp(-dt / .22);
@@ -752,13 +772,8 @@ export async function mountCinematicSpace(host, options = {}) {
       if (!state.calisiyor) { kameraUygula(); renderFrame(); }
     }
     if (state.calisiyor) step(dt);
-    else if (canliParalaks) {                            // duraklatıldı: paralaks yine de kadrajı oynatır
-      kameraUygula();
-      renderFrame();
-    } else return;                                       // donuk + paralakssız: boşa render yok
-    /* gök katmanı: sonsuzdaki kubbenin dönme kayması */
-    const shift = parallax.skyShift(stage.clientHeight, camera.fov);
-    skyHost.style.transform = `translate(${shift.x.toFixed(2)}px, ${shift.y.toFixed(2)}px) scale(1.05)`;
+    /* duraklatılmışken sahne donuktur: sürgü dalı kendi karesini zaten
+       çizer, burada boşa render yok (paralaks kaldırıldı) */
   }
   if (!exportMode) { frame = requestAnimationFrame(tik); onceki = performance.now(); }
 
@@ -767,7 +782,7 @@ export async function mountCinematicSpace(host, options = {}) {
     '<strong>Ölçek ve tempo sinematik</strong> — araç–Ay oranı gerçek değildir; ' +
     'Ay burada ~5 dk\'da döner (gerçekte 27,3 gün). Ay dokuları gerçek ' +
     '(NASA türevi; yerçekimi filtresi Lunaris varlığıdır), yıldız parlaklık ' +
-    'dağılımı gerçekçi, konumlar temsilî.' +
+    'dağılımı gerçekçi, konumlar (yüzey göğündeki Dünya dâhil) temsilî.' +
     (cosmos.galaxyPhotoActive ? ' Samanyolu: ESO/S. Brunier (CC BY 4.0).' : '');
 
   /* -------- kontroller */
@@ -794,7 +809,7 @@ export async function mountCinematicSpace(host, options = {}) {
   });
   /* tekerlek = sinematik zaman çizelgesi (plan §17): sayfa kaydırmaz, rayı
      sarar. Dalışta ve bölümde devre dışı — o gramerlerin kendi dönüşü var. */
-  if (canliParalaks) root.addEventListener('wheel', event => {
+  if (canliGirdi) root.addEventListener('wheel', event => {
     event.preventDefault();
     if (state.dalisQ > 0 || state.dalisGecis || router.acikBolum) return;
     state.gecis = null;
@@ -969,7 +984,6 @@ export async function mountCinematicSpace(host, options = {}) {
       if (frame !== null) cancelAnimationFrame(frame);
       document.removeEventListener('visibilitychange', onVisibility);
       ro.disconnect();
-      parallax.dispose();
       router.dispose();
       konsol.dispose();
       surface?.dispose();

@@ -16,7 +16,8 @@
      export, canlı oynatımla aynı kareleri üretir.
 
    Örnek periyotlar (seed'e göre ±): öteleme ~10–18 s · dikey ~7–13 s ·
-   yaw ~15–25 s · roll ~18–30 s · kamera nefesi ~12–20 s. */
+   yaw ~15–25 s · roll ~18–30 s · kamera nefesi ~12–20 s ·
+   araç solunumu ~5,5–8 s · tutunma halkası ~15–19 s. */
 
 const TAU = Math.PI * 2;
 const DEG = Math.PI / 180;
@@ -42,8 +43,14 @@ function puruz(t, f1, f2, faz1, faz2) {
 /** Tutunma modelini kurar. Dönen sample(t), her çağrıda AYNI t için AYNI
     değerleri üretir (saf fonksiyon — export determinizminin temeli).
     amplitude: sahne birimi ölçeğinde genel genlik (araç boyu ≈ 1 için
-    varsayılan %1 mertebesi). */
-export function createIdleModel(seed = 20260816, { amplitude = 1 } = {}) {
+    varsayılan %1 mertebesi).
+    aft: motor aksının dünya yönü (geri kayış bu eksende; yanma +aft'a iter).
+    yan: aft'a dik yan vektör — halkanın şişme yönü. */
+export function createIdleModel(seed = 20260816, {
+  amplitude = 1,
+  aft = { x: -0.95, y: 0, z: -0.31 },
+  yan = { x: 0.31, y: 0, z: -0.95 },
+} = {}) {
   const rnd = mulberry32(seed);
   const faz = () => rnd() * TAU;
 
@@ -66,18 +73,27 @@ export function createIdleModel(seed = 20260816, { amplitude = 1 } = {}) {
   const fNefes = 1 / (12 + rnd() * 8);
   const nefesFaz = { x: faz(), y: faz(), yaw: faz() };
   const KARSI = -0.55;
+  /* ARAÇ SOLUNUMU (kullanıcı yönergesi: paralaks yerine breathing):
+     insan nefes temposunda (~5,5–8 s) çok küçük, pürüz zarflı ölçek
+     salınımı — araç "canlı" okunur. Saf f(t): export yolunda da aynıdır. */
+  const fSolunum = 1 / (5.5 + rnd() * 2.5);
+  const solunumFaz = faz();
 
   const kat = (k, t) =>
     k.A * Math.sin(TAU * k.f * t + k.faz) * puruz(t, zarf.f1, zarf.f2, zarf.faz1, zarf.faz2);
 
-  /* TUTUNMA DÖNGÜSÜ (kullanıcı yönergesi): araç ARA ARA geriye/aşağıya
-     süzülür, sonra ATEŞLEMEYLE eski yerine gelir — mikro-salınımın üstüne
-     binen, NEDENSELLİĞİ görünür bir düzeltme çevrimi. Her çevrim
-     deterministik: süre ve genlik k'nin tohumlu hash'inden.
-       faz 0.00–0.62: serbest sürüklenme (yavaş ivmelenen geri kayma)
-       faz 0.62–0.80: YANMA — alev açık, konum ease ile toparlanır
-       faz 0.80–1.00: sönümlü oturma (küçük aşım + yerleşme)                */
-  const CEVRIM = 17 + rnd() * 6;                  // 17–23 s
+  /* TUTUNMA DÖNGÜSÜ (kullanıcı yönergesi: "loop şeklinde uzağa gidip
+     ateşlenerek geri gelsin"): araç motor aksı boyunca GÖRÜNÜR biçimde
+     uzaklaşır (araç boyunun %26–38'i — kadrajdan ~70 px, göz kaçırmaz),
+     sonra kıç motoru ateşlenip onu toparlar. Gidiş ve dönüş AYNI doğru
+     üzerinde değildir: faza bağlı yan sapma gidişte bir yana şişer,
+     dönüş başka kirişten kapanır — yörünge bir HALKA (gözyaşı damlası)
+     çizer, ileri-geri titreme değil. Her çevrim deterministik: süre ve
+     genlik k'nin tohumlu hash'inden.
+       faz 0.00–0.62: serbest sürüklenme (yavaş ivmelenen kayma)
+       faz 0.62–0.82: YANMA — alev + sıcak ışık, konum ease ile toparlanır
+       faz 0.82–1.00: sönümlü oturma (küçük aşım + yerleşme)                */
+  const CEVRIM = 15 + rnd() * 4;                  // 15–19 s: tek bakışta tam halka
   const drNorm = k => {
     let h = (Math.imul(k, 2654435761) ^ (seed >>> 1)) >>> 0;
     h = Math.imul(h ^ (h >>> 15), 2246822519);
@@ -87,24 +103,28 @@ export function createIdleModel(seed = 20260816, { amplitude = 1 } = {}) {
   function tutunma(t) {
     const k = Math.floor(t / CEVRIM);
     const f = (t - k * CEVRIM) / CEVRIM;          // çevrim içi faz 0..1
-    const buyukluk = (0.045 + drNorm(k) * 0.035) * amplitude;   // 4,5–8 birim%
-    const yonJit = (drNorm(k ^ 0x9e37) - .5) * .5;
-    let geriKayma, yanma = 0;
+    const buyukluk = (0.26 + drNorm(k) * 0.12) * amplitude;   // araç boyu %26–38
+    const yonJit = (drNorm(k ^ 0x9e37) - .5) * .3;
+    let along, yanma = 0;
     if (f < .62) {
-      geriKayma = s3(f / .62) * buyukluk;          // yavaş, ivmelenen kayma
-    } else if (f < .80) {
-      const u = (f - .62) / .18;
-      geriKayma = buyukluk * (1 - s3(u)) * (1 + .06 * Math.sin(u * Math.PI)); // toparlanma
+      along = s3(f / .62) * buyukluk;              // yavaş, ivmelenen uzaklaşma
+    } else if (f < .82) {
+      const u = (f - .62) / .20;
+      along = buyukluk * (1 - s3(u)) * (1 + .05 * Math.sin(u * Math.PI)); // toparlanma
       yanma = Math.sin(u * Math.PI) ** .7;         // alev zarfı: aç → tepe → kapan
     } else {
-      const u = (f - .80) / .20;
-      geriKayma = -buyukluk * .05 * (1 - u) * Math.cos(u * 9); // minik aşım + sönüm
+      const u = (f - .82) / .18;
+      along = -buyukluk * .06 * (1 - u) * Math.cos(u * 8); // minik aşım + sönüm
     }
+    /* halkanın yan şişmesi: f'e bağlı (mesafeye değil) — aynı uzaklıkta
+       gidiş ve dönüş farklı yandadır, iz kapalı bir halka okunur */
+    const perp = buyukluk * .34 * Math.sin(Math.PI * Math.min(f, .82) / .82) * (1 + yonJit);
+    const oran = along / buyukluk;                 // −.06..1 — tutum bağlaşımı için
     return {
-      /* kayma yönü: geriye (−x) ve hafif aşağı; çevrim başına küçük açı oynaması */
-      x: -geriKayma * (0.92 + yonJit * .2),
-      y: -geriKayma * (0.35 - yonJit * .3),
+      along, perp,
+      dip: Math.max(0, along) * .22,               // sürüklenirken hafif aşağı sarkma
       yanma,
+      tutum: oran * 2.2 * DEG,                     // burun kayma yönüne hafif döner
     };
   }
 
@@ -118,8 +138,18 @@ export function createIdleModel(seed = 20260816, { amplitude = 1 } = {}) {
       const roll = kat(katmanlar.roll, t);
       const pitch = kat(katmanlar.pitch, t);
       const dur = tutunma(t);
+      const solunum = 0.013 *
+        Math.sin(TAU * fSolunum * t + solunumFaz) *
+        puruz(t, zarf.f1 * 1.7, zarf.f2 * 1.13, zarf.faz2, zarf.faz1);
       return {
-        craft: { x: x + dur.x, y: z * 0.4 + dur.y, z, yaw, pitch, roll },
+        craft: {
+          x: x + aft.x * dur.along + yan.x * dur.perp,
+          y: z * 0.4 + aft.y * dur.along + yan.y * dur.perp - dur.dip,
+          z: z + aft.z * dur.along + yan.z * dur.perp,
+          yaw: yaw + dur.tutum, pitch, roll,
+          /* solunum: ölçek delta'sı (±%1,3) — craftPivot.scale = 1 + nefes */
+          nefes: solunum,
+        },
         burn: dur.yanma,
         camera: {
           x: KARSI * x + 0.012 * amplitude * Math.sin(TAU * fNefes * t + nefesFaz.x),

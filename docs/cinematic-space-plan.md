@@ -108,6 +108,12 @@ ve bedava tutarlılık sağlar.
 
 ## 6. Paralaks mimarisi
 
+> **Revizyon (2026-08-16):** İşaretçi paralaksı kullanıcı yönergesiyle
+> KALDIRILDI — yerine araç solunumu (spatial-idle `nefes` kanalı, ±%1,3
+> ölçek, 5,5–8 s) kondu. Aşağısı tarihsel tasarım kaydıdır;
+> `parallax-controller.mjs` depodan silindi. Kamera hareketinden doğan
+> fiziksel paralaks (ör. vista yayı) tabii ki durur.
+
 Sahne gerçek 3B olduğundan paralaks FİZİKTEN gelir: pointer girdisi küçük
 bir kamera offsetine çevrilir, katmanların farklı kayması perspektiften
 kendiliğinden doğar. Katman başına el ayarı yapay değil, yalnız SINIRLAYICI
@@ -250,8 +256,7 @@ presets/cinematic_space/
 ├── cinematic-space.mjs         # mount + durum makinesi + zaman çizelgesi
 ├── camera-director.mjs         # keyframe rayı, C0 geçişler, ikincil offset
 ├── spatial-transitions.mjs     # beş gramer sınıfının uygulanışı
-├── parallax-controller.mjs     # pointer/orientation → kamera offseti
-├── spatial-idle.mjs            # §7 tutunma modeli (araç + kamera nefesi)
+├── spatial-idle.mjs            # §7 tutunma halkası + araç solunumu + kamera nefesi
 ├── chapter-router.mjs          # veri güdümlü bölümler, tembel mount, dönüş
 ├── cockpit/
 │   ├── cockpit-scene.mjs       # kabuk geometrisi (eksen yardımcılarıyla)
@@ -309,7 +314,7 @@ navigasyonundan da (ok tuşları) sürülür — iki giriş tek çizelgeye düş
 | 3.5 s yaklaşma + eşik + oturma | tek 0.4 s çapraz kararma ile kokpit tablosu (`transitionSlides` 'fade-through') |
 | dalış süpürmesi | pencere kadrajı → doğrudan gezgin tablosu |
 | idle tutunma + kamera nefesi | tamamen donuk; RCS yok |
-| pointer paralaksı | kapalı |
+| araç solunumu | tabloda donuk (canlı salınım yok) |
 
 Konsol tamamen klavyeyle kullanılır; odak halkaları her temada görünür.
 Her durum tablosu, normal moddaki son kareyle AYNIDIR (export tablolarıyla

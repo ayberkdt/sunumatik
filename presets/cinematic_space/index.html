@@ -72,6 +72,10 @@
     background: rgba(6,8,13,.66); border-radius: 10px; padding: 7px 11px; z-index: 5; }
   .cine-space__truth strong { color: #a9b4c9; }
   [data-export="true"] .cine-space__ctl, [data-export="true"] footer { display: none; }
+  /* donuk kare (export) ve reduced-motion: vinyet ANINDA oturur — 1.2 s'lik
+     geçiş, ekran görüntüsünün zamanlamasına göre farklı kare üretiyordu */
+  [data-export="true"] .cine-space__vinyet { transition: none; }
+  @media (prefers-reduced-motion: reduce) { .cine-space__vinyet { transition: none; } }
   /* bölüm açıkken kabuk kromu çekilir — hedef preset kendi dilini taşır */
   .cine-space[data-bolum] .cine-space__ctl,
   .cine-space[data-bolum] .cine-space__truth { display: none; }
@@ -89,7 +93,9 @@
       <small>Kompozisyon: cosmos gök kubbesi + Lunaris Ay'ı + craft-blocks orbiter.
         Tekerlek/sürgü kamera rayını sarar: dış idle → araca yaklaşma → kanopi eşiği →
         gözlem güvertesi (pencereden görünen Ay aynı sahnenin kendisidir — kopya değil).
-        Enter araca girer, Esc dışarı çıkar; işaretçi paralaksı küçük ikincil offsettir.</small>
+        Enter araca girer, Esc dışarı çıkar. Araç istasyon tutuşunu görünür bir halkayla
+        oynar: süzülerek uzaklaşır, kıç motoru ateşlenip geri getirir; solunum ölçeği
+        yaşam belirtisidir.</small>
     </h1>
   </header>
   <div id="host"></div>
