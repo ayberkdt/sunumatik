@@ -87,6 +87,33 @@ Manim ayarında, blok blok kurulabilir sahneler; program ve donmuş API (eksen s
 | [`comms_antenna/`](presets/comms_antenna) · [`comms_link_budget/`](presets/comms_link_budget) | Anten/yer istasyonu geometrisi ve kazanç · bağlantı bütçesi şelalesi (FSPL, yağmur, gürültü sıcaklığı, Eb/N0). |
 | [`aurora/`](presets/aurora) | Emisyon çizgisi tabanlı aurora: 630 nm sönümleme fiziği (O(1D) τ≈110 s), Kp 0–9 morfolojisi. |
 
+### Astrodinamik ve GNC laboratuvarları — 2. dalga (20 preset)
+
+Her biri saf bir model modülü (`*-model.mjs` ya da `presets/core/astro-*.mjs`), sahne, deterministik URL (`?t=` / `export=1`), `motion-manifest.json` ve `skills/design-scientific-motion/references/<ad>.md` ile gelir; hepsi `node scripts/validate-astro.mjs` ile bağımsız sayısal denetimden geçer (CI adımı). Hiçbir sayı elle yerleştirilmez; model, varsayım ve sınırlar sahnede yazılıdır.
+
+| Klasör | İçerik |
+|---|---|
+| [`launch_ascent/`](presets/launch_ascent) | **Fırlatma ve tırmanış**: 2B tırmanış (RK4, US76 atmosfer, yerçekimi dönüşü + kapalı-çevrim 2. kademe güdümü), olay rayı (max-q türetilir, MECO/ayrılma/SECO), kayıplar; craft_blocks roket + motor efekti |
+| [`rendezvous_docking/`](presets/rendezvous_docking) | **Randevu ve kenetlenme**: Clohessy–Wiltshire STM ile V-bar/R-bar/itme yaklaşmaları, KOS küresi, yaklaşma koridoru, LOS metrikleri; LVLH sahnesi |
+| [`ground_track_3d/`](presets/ground_track_3d) | **3B yörünge + yer izi**: Kepler + J2 seküler oranlar, ECI→ECEF, düğüm kayması; 3B küre ve eşdikdörtgen harita eşzamanlı |
+| [`porkchop_explorer/`](presets/porkchop_explorer) | **Porkchop kâşifi**: Evrensel-değişken Lambert + Standish gezegen elemanları; C3 / v∞ / ΔV ısı haritası, TOF eş-çizgileri, minimum, güneş-merkezli yan panel |
+| [`constellation_coverage/`](presets/constellation_coverage) | **Takımyıldız kapsama**: Walker Delta/Star, ayak izi λ = acos(R/(R+h)cos ε) − ε, kapsama boyama, yeniden ziyaret taraması; GPS/Galileo/Iridium/LEO kabuk/GEO |
+| [`reentry_corridor/`](presets/reentry_corridor) | **Giriş koridoru**: Düzlemsel giriş dinamiği + Sutton–Graves ısı akısı; koridor aşma/altında kalma sınırları bisection ile (Ay dönüşü ≈ Apollo), eş-g ve eş-ısı eğrileri |
+| [`formation_flight/`](presets/formation_flight) | **Formasyon uçuşu**: CW göreli yörüngeler: PCO / GCO / düzlem-içi 2:1 elips / lider–takipçi; 3B + üç izdüşüm, ayrılma istatistikleri |
+| [`cr3bp_lagrange/`](presets/cr3bp_lagrange) | **CR3BP ve Lagrange noktaları**: ∇Ω = 0 ile çözülen L1–L5, Jacobi sabiti, sıfır-hız eğrileri ve yasak bölgeler, Lyapunov aileleri (diferansiyel düzeltme + süreklilik), dönen ↔ eylemsiz |
+| [`gravity_assist/`](presets/gravity_assist) | **Kütleçekim yardımı ve B-düzlemi**: Yamalı-konik geçiş: hiperbol, sapma açısı, B-düzlemi hedefleme, güneş-merkezli enerji değişimi, Tisserand |
+| [`attitude_gnc/`](presets/attitude_gnc) | **Yönelim ve GNC**: Euler denklemleri + tepki tekerlekleri + kuaterniyon PD; dönüş, yuvarlanma, doyma, gimbal kilidi, slerp senaryoları |
+| [`orbit_perturbations/`](presets/orbit_perturbations) | **Yörünge pertürbasyonları**: RK4 ile J2, sürükleme (Vallado termosfer), SRP, üçüncü cisim; eleman zaman serileri, analitik seküler oranlarla karşılaştırma |
+| [`eclipse_geometry/`](presets/eclipse_geometry) | **Tutulma ve görüş geometrisi**: Sonlu Güneş diskli konik gölge (umbra/penumbra), β açısı, istasyon yükselme, örtülme; bantlar ve eğriler |
+| [`conjunction_covariance/`](presets/conjunction_covariance) | **Yakın geçiş ve kovaryans**: TCA (altın oran), karşılaşma düzlemi kovaryansı, 2B çarpışma olasılığı integrali, seyrelme eğrisi, eşik kararı |
+| [`gravity_field/`](presets/gravity_field) | **Küresel harmonik yerçekimi alanı**: Tam normalize Legendre (kararlı özyineleme), jeoit (Bruns, GRS80 çıkarılmış) ve serbest-hava anomalisi; düşük derece gerçek (EGM96), üstü açıkça SENTETİK; C̄20 düğüm kayması çapraz denetimi |
+| [`transfer_explorer/`](presets/transfer_explorer) | **Lambert transfer kâşifi**: r1, r2, Δθ, TOF → transfer yayı, v1/v2, ΔV; kısa/uzun yol; TOF taraması ve Hohmann limiti (Δθ → 180° eşleşmesi denetimde) |
+| [`halo_manifolds/`](presets/halo_manifolds) | **Halo yörüngeleri ve değişmez manifoldlar**: Richardson 3. mertebe + 6×6 STM düzeltmesi, Az sürekliliği; monodromi özvektörlerinden kararlı/kararsız manifold demetleri; kararlı demetten Dünya'ya transfer analizi; 3B dönen çerçeve |
+| [`orbit_determination/`](presets/orbit_determination) | **Yörünge belirleme (EKF)**: Yer istasyonu menzil/menzil-hızı ölçümleri, genişletilmiş Kalman filtresi (sonlu-fark STM, analitik H, Joseph), NEES/NIS tutarlılığı; gözlenebilirlik ve model hatası senaryoları |
+| [`low_thrust_transfer/`](presets/low_thrust_transfer) | **Düşük itkili transfer**: Sürekli teğetsel itki spirali (değişken kütle RK4), Edelbaum analitik ΔV (eğiklik dahil), Hohmann ve Tsiolkovsky karşılaştırması, gölge görev çevrimi |
+| [`tisserand_graph/`](presets/tisserand_graph) | **Tisserand grafiği**: Gezegen sabit-v∞ eğrileri, δ_max ile erişilebilir yaylar, Dünya rezonansları, açgözlü çoklu geçiş dizisi planlayıcı (VEEGA…); fazlama yok |
+| [`entry_dispersion/`](presets/entry_dispersion) | **Giriş dağılımı (Monte Carlo)**: reentry_corridor çekirdeği üstünde tohumlu sapmalar → menzil histogramı, 3σ, duyarlılık payları, doğrusal RSS ↔ Monte Carlo oranı |
+
 ### Bileşenler ve hareket
 
 | Klasör | İçerik |

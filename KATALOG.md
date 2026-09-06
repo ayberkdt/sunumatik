@@ -54,7 +54,32 @@ kullanın) — örnek deste dahil her şey oradan açılır.
 | **ML** · [ml-loss-landscape](presets/ml_loss_landscape/index.html) | Analitik kayıp yüzeyinde gerçek gradyanla SGD / momentum / Adam yarışı — SGD sığ tuzağa takılır |
 | **ML** · [ml-attention-flow](presets/ml_attention_flow/index.html) | Gerçek softmax(QKᵀ/√d) dikkat yayları, Türkçe cümle, katman/kafa/sorgu değiştirme |
 
-2\. dalga yol haritada: fırlatma-tırmanış, randevu-kenetlenme, yer izi 3B, porkchop, takımyıldız kapsama · embedding projektörü, konvolüsyon, çizge mesajlaşma.
+2\. dalga — astrodinamik ve GNC laboratuvarları (hepsi `scripts/validate-astro.mjs` ile denetlenir):
+
+| Kategori · Blok | Ne yapar |
+|---|---|
+| **ORBITAL** · [launch-ascent](presets/launch_ascent/index.html) | Fırlatma ve tırmanış: 2B tırmanış (RK4, US76 atmosfer, yerçekimi dönüşü + kapalı-çevrim 2. kademe güdümü), olay rayı (max-q türetilir, MECO/ayrılma/SECO), kayıplar; craft_blocks roket + motor efekti |
+| **ORBITAL** · [rendezvous-docking](presets/rendezvous_docking/index.html) | Randevu ve kenetlenme: Clohessy–Wiltshire STM ile V-bar/R-bar/itme yaklaşmaları, KOS küresi, yaklaşma koridoru, LOS metrikleri; LVLH sahnesi |
+| **ORBITAL** · [ground-track-3d](presets/ground_track_3d/index.html) | 3B yörünge + yer izi: Kepler + J2 seküler oranlar, ECI→ECEF, düğüm kayması; 3B küre ve eşdikdörtgen harita eşzamanlı |
+| **ORBITAL** · [porkchop-explorer](presets/porkchop_explorer/index.html) | Porkchop kâşifi: Evrensel-değişken Lambert + Standish gezegen elemanları; C3 / v∞ / ΔV ısı haritası, TOF eş-çizgileri, minimum, güneş-merkezli yan panel |
+| **ORBITAL** · [constellation-coverage](presets/constellation_coverage/index.html) | Takımyıldız kapsama: Walker Delta/Star, ayak izi λ = acos(R/(R+h)cos ε) − ε, kapsama boyama, yeniden ziyaret taraması; GPS/Galileo/Iridium/LEO kabuk/GEO |
+| **ORBITAL** · [reentry-corridor](presets/reentry_corridor/index.html) | Giriş koridoru: Düzlemsel giriş dinamiği + Sutton–Graves ısı akısı; koridor aşma/altında kalma sınırları bisection ile (Ay dönüşü ≈ Apollo), eş-g ve eş-ısı eğrileri |
+| **ORBITAL** · [formation-flight](presets/formation_flight/index.html) | Formasyon uçuşu: CW göreli yörüngeler: PCO / GCO / düzlem-içi 2:1 elips / lider–takipçi; 3B + üç izdüşüm, ayrılma istatistikleri |
+| **ORBITAL** · [cr3bp-lagrange](presets/cr3bp_lagrange/index.html) | CR3BP ve Lagrange noktaları: ∇Ω = 0 ile çözülen L1–L5, Jacobi sabiti, sıfır-hız eğrileri ve yasak bölgeler, Lyapunov aileleri (diferansiyel düzeltme + süreklilik), dönen ↔ eylemsiz |
+| **ORBITAL** · [gravity-assist](presets/gravity_assist/index.html) | Kütleçekim yardımı ve B-düzlemi: Yamalı-konik geçiş: hiperbol, sapma açısı, B-düzlemi hedefleme, güneş-merkezli enerji değişimi, Tisserand |
+| **ORBITAL** · [attitude-gnc](presets/attitude_gnc/index.html) | Yönelim ve GNC: Euler denklemleri + tepki tekerlekleri + kuaterniyon PD; dönüş, yuvarlanma, doyma, gimbal kilidi, slerp senaryoları |
+| **ORBITAL** · [orbit-perturbations](presets/orbit_perturbations/index.html) | Yörünge pertürbasyonları: RK4 ile J2, sürükleme (Vallado termosfer), SRP, üçüncü cisim; eleman zaman serileri, analitik seküler oranlarla karşılaştırma |
+| **ORBITAL** · [eclipse-geometry](presets/eclipse_geometry/index.html) | Tutulma ve görüş geometrisi: Sonlu Güneş diskli konik gölge (umbra/penumbra), β açısı, istasyon yükselme, örtülme; bantlar ve eğriler |
+| **ORBITAL** · [conjunction-covariance](presets/conjunction_covariance/index.html) | Yakın geçiş ve kovaryans: TCA (altın oran), karşılaşma düzlemi kovaryansı, 2B çarpışma olasılığı integrali, seyrelme eğrisi, eşik kararı |
+| **ORBITAL** · [gravity-field](presets/gravity_field/index.html) | Küresel harmonik yerçekimi alanı: Tam normalize Legendre (kararlı özyineleme), jeoit (Bruns, GRS80 çıkarılmış) ve serbest-hava anomalisi; düşük derece gerçek (EGM96), üstü açıkça SENTETİK; C̄20 düğüm kayması çapraz denetimi |
+| **ORBITAL** · [transfer-explorer](presets/transfer_explorer/index.html) | Lambert transfer kâşifi: r1, r2, Δθ, TOF → transfer yayı, v1/v2, ΔV; kısa/uzun yol; TOF taraması ve Hohmann limiti (Δθ → 180° eşleşmesi denetimde) |
+| **ORBITAL** · [halo-manifolds](presets/halo_manifolds/index.html) | Halo yörüngeleri ve değişmez manifoldlar: Richardson 3. mertebe + 6×6 STM düzeltmesi, Az sürekliliği; monodromi özvektörlerinden kararlı/kararsız manifold demetleri; kararlı demetten Dünya'ya transfer analizi; 3B dönen çerçeve |
+| **ORBITAL** · [orbit-determination](presets/orbit_determination/index.html) | Yörünge belirleme (EKF): Yer istasyonu menzil/menzil-hızı ölçümleri, genişletilmiş Kalman filtresi (sonlu-fark STM, analitik H, Joseph), NEES/NIS tutarlılığı; gözlenebilirlik ve model hatası senaryoları |
+| **ORBITAL** · [low-thrust-transfer](presets/low_thrust_transfer/index.html) | Düşük itkili transfer: Sürekli teğetsel itki spirali (değişken kütle RK4), Edelbaum analitik ΔV (eğiklik dahil), Hohmann ve Tsiolkovsky karşılaştırması, gölge görev çevrimi |
+| **ORBITAL** · [tisserand-graph](presets/tisserand_graph/index.html) | Tisserand grafiği: Gezegen sabit-v∞ eğrileri, δ_max ile erişilebilir yaylar, Dünya rezonansları, açgözlü çoklu geçiş dizisi planlayıcı (VEEGA…); fazlama yok |
+| **ORBITAL** · [entry-dispersion](presets/entry_dispersion/index.html) | Giriş dağılımı (Monte Carlo): reentry_corridor çekirdeği üstünde tohumlu sapmalar → menzil histogramı, 3σ, duyarlılık payları, doğrusal RSS ↔ Monte Carlo oranı |
+
+ML yol haritası: embedding projektörü, konvolüsyon, çizge mesajlaşma.
 
 ## Hareket ve etkileşim — `design-scientific-motion`
 
