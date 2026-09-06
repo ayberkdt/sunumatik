@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "geo-stationkeeping-budget",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "GEO uydusunun niçin yakıt harcadığını iki fizikten türetmek: Dünya ekvatorunun elipsliği (gerçek C̄22/S̄22) boylam sürüklenmesi ve kararlı/kararsız noktalar üretir; Ay + Güneş eğikliği yılda ~0,85° sürükler ve bütçenin baskın kalemi olur; ömür yakıtı kimyasal ile elektrikli itki arasında kat kat değişir.",
+      "model": "Doğu–batı: U₂₂ = (μ/r)(R/r)²P̄₂₂(0)(C̄₂₂cos2λ + S̄₂₂sin2λ) (gravity_field REAL_LOW_DEGREE: C̄22 = 2,4393e−6, S̄22 = −1,4003e−6, tam normalize), a_λ = (1/r)∂U₂₂/∂λ, λ̈ = −3a_λ/r; denge: a_λ = 0 kökleri (tan 2λ = S̄22/C̄22), kararlılık λ̈ eğiminden; yıllık ΔV_DB = |a_λ|·yıl; libration T = 2π/√(−dλ̈/dλ); serbest sürüklenme RK4. Kuzey–güney: orbit_perturbations propagatePerturbed('moonGeo', 365 gün, dt 300 s; J2 + dairesel Ay + Güneş) → eğiklik vektörü (i cosΩ, i sinΩ), Δi/yıl, ΔV_KG = V_geo·Δi. SRP: propagatePerturbed('srpGeo', 365 gün) eksantriklik vektörü, e_max. Bütçe: Tsiolkovsky ile ömür yakıtı (Isp 300 / 1500 s). Denetim scripts/validate-astro.mjs 'geosk' (kararlı 75,1° D / 104,9° B, kararsız 14,9° B / 165,1° D, ΔV_DB maks 1,5–2,1 m/s, libration 2–2,6 yıl, sürüklenme simetrisi, Δi 0,7–1,0°/yıl, ΔV_KG 38–54 m/s, yön ≈ ekliptik kutbu, SRP e_max, bütçe oranları).",
+      "limitations": "Yalnız J22 tesseral terimi (J31/J33 kararsız noktaları 11,5° B / 161,9° D'ye kaydırır — belirtilir); üçüncü-cisim modeli dairesel Ay/Güneş (18,6 yıllık düğüm çevrimi ve Δi'nin 0,75–0,95 aralığındaki değişimi yok); ölü-bant stratejisi, manevra zamanlaması ve birleşik e/λ kontrolü modellenmez; SRP silindirik gölge, sabit A/m.",
+      "reducedMotion": "Sahne statiktir.",
+      "exportState": "?lon=&years=&m0= deterministik; export=1 alt bilgiyi gizler.",
+      "accessibility": "Boylam/ömür/kütle kaydırıcıları ve hazır istasyon düğmeleri yerli öğelerdir; HUD tüm sayıları metin verir; tuvaller aria-label taşır; altyazı fiziği, kaynağı ve sınırları düzyazı anlatır.",
+      "loop": false,
+      "pauseControl": false
+    }
+  ]
+}

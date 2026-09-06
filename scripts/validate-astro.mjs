@@ -695,6 +695,23 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('dispersion', 'Yüzdelikler sıralı: min ≤ p05 ≤ p50 ≤ p95 ≤ max', a.stats.s.min <= a.stats.s.p05 && a.stats.s.p05 <= a.stats.s.p50 && a.stats.s.p50 <= a.stats.s.p95 && a.stats.s.p95 <= a.stats.s.max);
 }
 
+/* ───────────────────────── geosk (GEO istasyon tutma) */
+{
+  const M = await mod('presets/geo_stationkeeping/geo-sk-model.mjs');
+  const eq = M.equilibria(), st = eq.filter(e => e.stable).map(e => e.lonDeg), un = eq.filter(e => !e.stable).map(e => e.lonDeg);
+  check('geosk', 'Gerçek C̄22/S̄22 ile kararlı boylamlar 75,1° D ve 104,9° B (literatür 75° D / 105° B, ±1°)', st.some(l => near(l, 75.1, 1)) && st.some(l => near(l, -104.9, 1)), st.map(l => l.toFixed(1)).join(', '));
+  check('geosk', 'Kararsız boylamlar 14,9° B ve 165,1° D (yalnız J22; literatür J31/J33 ile 11,5° B / 161,9° D)', un.some(l => near(l, -14.9, 1)) && un.some(l => near(l, 165.1, 1)), un.map(l => l.toFixed(1)).join(', '));
+  check('geosk', 'Denge noktalarında a_λ = 0 (artık < 1e−10) ve kararlı/kararsız 2+2', eq.every(e => e.residual < 1e-10) && st.length === 2 && un.length === 2);
+  const dvMax = Math.max(...Array.from({ length: 361 }, (_, k) => M.dvEastWestPerYear(-180 + k)));
+  check('geosk', 'Yıllık doğu–batı ΔV en büyüğü 1,5–2,1 m/s (literatür ≈ 1,7–2 m/s/yıl), dengede 0', dvMax > 1.5 && dvMax < 2.1 && M.dvEastWestPerYear(st[0]) < 1e-6, `maks ${dvMax.toFixed(3)} m/s`);
+  const lib = M.librationPeriodYears(); check('geosk', 'Kararlı nokta çevresinde libration periyodu 2–2,6 yıl (literatür ≈ 2,2–2,3)', lib > 2 && lib < 2.6, lib.toFixed(2));
+  const d = M.driftTrajectory(42, 6); check('geosk', 'Serbest sürüklenme: 42° D\u2019den kararlı 75° D\u2019ye doğru salınır (simetrik: 42 ↔ ~108), en uzak nokta 105–111° D', Math.min(...d.map(x => x.lonDeg)) >= 41.9 && near(Math.max(...d.map(x => x.lonDeg)), 108.1, 3), `${Math.min(...d.map(x => x.lonDeg)).toFixed(1)}–${Math.max(...d.map(x => x.lonDeg)).toFixed(1)}`);
+  const ns = M.northSouth(); check('geosk', 'Ay + Güneş eğiklik sürüklenmesi 0,7–1,0 °/yıl (literatür 0,75–0,95), ΔV_KG 38–54 m/s/yıl', ns.diPerYear > .7 && ns.diPerYear < 1 && ns.dvPerYear > 38 && ns.dvPerYear < 54, `${ns.diPerYear.toFixed(3)} °/yıl, ${ns.dvPerYear.toFixed(1)} m/s`);
+  check('geosk', 'Eğiklik sürüklenme yönü ekliptik kutbuna yakın (Ω ≈ 90° ± 25°)', near(ns.driftDirDeg, 90, 25), ns.driftDirDeg.toFixed(0));
+  const srp = M.srpEccentricity(); check('geosk', 'SRP eksantriklik çemberi (A/m 0,04): e_max 3e−4 – 1,5e−3', srp.eMax > 3e-4 && srp.eMax < 1.5e-3, srp.eMax.toExponential(2));
+  const b = M.budget({ lonDeg: 42, years: 15, m0: 3000, ns }); check('geosk', '15 yıl bütçesi: KG baskın (> %90), toplam 600–850 m/s; elektrikli yakıt kimyasalın < 1/3', b.nsPerYear / b.totalPerYear > .9 && b.lifetimeDv > 600 && b.lifetimeDv < 850 && b.propEp < b.propChem / 3, `${b.lifetimeDv.toFixed(0)} m/s, kim ${b.propChem.toFixed(0)} / ep ${b.propEp.toFixed(0)} kg`);
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

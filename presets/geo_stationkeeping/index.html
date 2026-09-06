@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GEO İstasyon Tutma Bütçesi — geo_stationkeeping</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 180px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 70px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GEO İstasyon Tutma Bütçesi<small>geo_stationkeeping · doğu–batı sürüklenme GERÇEK C̄22/S̄22'den (gravity_field) · kuzey–güney Ay+Güneş 1 yıl RK4 (orbit_perturbations) · SRP eksantriklik · ömür yakıtı</small></h1>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="control-row">
+      <div class="group"><span>İstasyon</span><label class="field">boylam <input id="lon" type="range" min="-180" max="180" step="1" value="42"><output id="oLon">42° D</output></label><button data-lon="42">42° D (Türksat)</button><button data-lon="75.1">75° D (kararlı)</button><button data-lon="-14.9">15° B (kararsız)</button><button data-lon="-105">105° B</button></div>
+      <div class="group"><span>Görev</span><label class="field">ömür <input id="years" type="range" min="5" max="20" step="1" value="15"><output id="oY">15 yıl</output></label><label class="field">m₀ <input id="m0" type="range" min="1000" max="7000" step="250" value="3000"><output id="oM">3000 kg</output></label></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountGeoSk } from './geo-stationkeeping.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const $ = id => document.querySelector('#' + id);
+    const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), nf3 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    const gk = await mountGeoSk($('host'), { lonDeg: params.has('lon') ? Number(params.get('lon')) : 42, years: Number(params.get('years')) || 15, m0: Number(params.get('m0')) || 3000 });
+    window.__geoSk = gk;
+    const fmtLon = v => `${nf1.format(Math.abs(v))}° ${v >= 0 ? 'D' : 'B'}`;
+    function sync() { const c = gk.config; $('lon').value = String(c.lonDeg); $('oLon').textContent = fmtLon(c.lonDeg); $('years').value = String(c.years); $('oY').textContent = `${c.years} yıl`; $('m0').value = String(c.m0); $('oM').textContent = `${c.m0} kg`; document.querySelectorAll('[data-lon]').forEach(b => b.setAttribute('aria-pressed', String(Math.abs(Number(b.dataset.lon) - c.lonDeg) < .05))); }
+    $('lon').addEventListener('input', () => { gk.set({ lonDeg: Number($('lon').value) }); sync(); writeCaption(); });
+    $('years').addEventListener('input', () => { gk.set({ years: Number($('years').value) }); sync(); writeCaption(); });
+    $('m0').addEventListener('input', () => { gk.set({ m0: Number($('m0').value) }); sync(); writeCaption(); });
+    document.querySelectorAll('[data-lon]').forEach(b => b.addEventListener('click', () => { gk.set({ lonDeg: Number(b.dataset.lon) }); sync(); writeCaption(); }));
+    function writeCaption() {
+      const m = gk.model, b = m.budget, st = m.equilibria.filter(e => e.stable), un = m.equilibria.filter(e => !e.stable);
+      $('caption').innerHTML = `<strong>İstasyon tutma bütçesi iki farklı fizikten gelir:</strong> doğu–batı sürüklenme Dünya ekvatorunun elipsliğinden — gravity_field modülündeki gerçek EGM96 C̄22 = ${m.budget ? '2,439e−6' : ''}, S̄22 = −1,400e−6 katsayılarından türeyen teğetsel ivme; kararlı boylamlar <span class="nums">${st.map(e => fmtLon(e.lonDeg)).join(' ve ')}</span>, kararsızlar ${un.map(e => fmtLon(e.lonDeg)).join(' ve ')} (yalnız J22; J31/J33 kararsızları birkaç derece kaydırır — literatür 11,5° B / 161,9° D). `
+        + `${fmtLon(b.lonDeg)} istasyonu için ΔV_DB = <span class="nums">${nf2.format(b.ewPerYear)} m/s/yıl</span>, libration periyodu ${nf1.format(m.libration)} yıl. Kuzey–güney: Ay + Güneş 1 yıllık RK4 yayılımı eğikliği <span class="nums">${nf3.format(m.ns.diPerYear)}°/yıl</span> sürükler → ΔV_KG = V_geo·Δi = <span class="nums">${nf1.format(b.nsPerYear)} m/s/yıl</span> (bütçenin baskın kalemi; literatür 0,75–0,95°/yıl, ~40–50 m/s). `
+        + `SRP (A/m 0,04) eksantriklik çemberi e_max ${m.srp.eMax.toExponential(2)}. ${b.years} yılda toplam <span class="nums">${nf0.format(b.lifetimeDv)} m/s</span>: kimyasal (Isp 300 s) ${nf0.format(b.propChem)} kg, elektrikli (Isp 1500 s) ${nf0.format(b.propEp)} kg yakıt — tamamen elektrikli uyduların gerekçesi. Sınırlar: J22 dışı tesseral terimler yok, üçüncü-cisim modeli dairesel Ay/Güneş (18,6 yıllık düğüm çevrimi yok), ölü-bant stratejisi ve manevra zamanlaması modellenmez.`;
+    }
+    sync(); writeCaption();
+    document.title += ' · hazır';
+  </script>
+</body>
+</html>

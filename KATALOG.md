@@ -78,6 +78,7 @@ kullanın) — örnek deste dahil her şey oradan açılır.
 | **ORBITAL** · [low-thrust-transfer](presets/low_thrust_transfer/index.html) | Düşük itkili transfer: Sürekli teğetsel itki spirali (değişken kütle RK4), Edelbaum analitik ΔV (eğiklik dahil), Hohmann ve Tsiolkovsky karşılaştırması, gölge görev çevrimi |
 | **ORBITAL** · [tisserand-graph](presets/tisserand_graph/index.html) | Tisserand grafiği: Gezegen sabit-v∞ eğrileri, δ_max ile erişilebilir yaylar, Dünya rezonansları, açgözlü çoklu geçiş dizisi planlayıcı (VEEGA…); fazlama yok |
 | **ORBITAL** · [entry-dispersion](presets/entry_dispersion/index.html) | Giriş dağılımı (Monte Carlo): reentry_corridor çekirdeği üstünde tohumlu sapmalar → menzil histogramı, 3σ, duyarlılık payları, doğrusal RSS ↔ Monte Carlo oranı |
+| **ORBITAL** · [geo-stationkeeping](presets/geo_stationkeeping/index.html) | GEO istasyon tutma bütçesi: doğu–batı sürüklenme gerçek C̄22/S̄22'den, kuzey–güney Ay+Güneş 1 yıllık RK4, SRP eksantriklik, ömür yakıtı kimyasal vs elektrikli |
 
 ML yol haritası: embedding projektörü, konvolüsyon, çizge mesajlaşma.
 
