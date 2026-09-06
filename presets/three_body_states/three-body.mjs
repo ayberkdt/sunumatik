@@ -8,11 +8,15 @@
    çözümler aynı tempoda izlenir. Renkler üç cisim için sabit (turuncu · krem · mavi). Kaotik Pisagor problemi
    kaçışla biter ve baştan başlar.
 
-   API: const tb = await mountThreeBody(host, { t, speed, labels, autoplay });
-        tb.timeline{t, playing, speed, play(), pause(), scrub(t)} · tb.catalog · tb.replay() · tb.setActive(v) · tb.dispose() */
+   SİNEMA modu: tek çözüm tam kadrajda, alt yazıda ad · kaynak · periyot; pano ızgaradan kadraja yumuşak büyür (morf), sonra iz
+   yeniden birikir; otomatik geçiş (dwell) ile çözümler sırayla akar — ekran koruyucu kullanımı.
+
+   API: const tb = await mountThreeBody(host, { t, speed, labels, autoplay, mode:'grid'|'cinema', index, dwell });
+        tb.timeline{t, playing, speed, play(), pause(), scrub(t)} · tb.cinema(on, index?) · tb.next() · tb.prev() · tb.view
+        · tb.catalog · tb.advance(dt) · tb.replay() · tb.setActive(v) · tb.dispose() */
 
 import { CATALOG, sampleOrbit, advance, minDistance } from './three-body-model.mjs';
-import { staticMode, Entrance, reveal, palette } from '../core/lab-scene.mjs';
+import { staticMode, Entrance, reveal, palette, ease } from '../core/lab-scene.mjs';
 
 export const BODY_COLORS = ['#ff7326', '#ffe6c4', '#8c9dff'];
 const RGB = BODY_COLORS.map(h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
@@ -32,6 +36,8 @@ export async function mountThreeBody(host, options = {}) {
   const pathCv = document.createElement('canvas'), pctx = pathCv.getContext('2d');     // tam periyot yolları (statik)
   const P = palette(figure);
   let showLabels = options.labels ?? false;
+  /* sinema durumu: mode, seçili indeks, morf ilerlemesi (0 ızgara → 1 kadraj), geçiş solması, otomatik geçiş süresi */
+  const view = { mode: options.mode === 'cinema' ? 'cinema' : 'grid', idx: clamp(options.index ?? 0, 0, CATALOG.length - 1), morph: options.mode === 'cinema' ? 1 : 0, fade: 1, dwell: options.dwell ?? 0, dwellT: 0, switching: null };
   const entrance = new Entrance({ panels: { at: 0, dur: 1.4 } }, { onFrame: () => draw() });
 
   /* ── panolar ─────────────────────────────────────────────────────────── */
@@ -57,26 +63,37 @@ export async function mountThreeBody(host, options = {}) {
 
   /* ── yerleşim ve iz tuvali ───────────────────────────────────────────── */
   let dpr = 1, W = 0, H = 0, L = null;
-  function layout() { const n = panels.length, cols = W >= H * 1.05 ? 5 : 4, rows = Math.ceil(n / cols), pw = W / cols, ph = H / rows; L = { cols, rows, pw, ph, s: Math.min(pw, ph) }; panels.forEach((p, i) => { p.ox = (i % cols) * pw + pw / 2; p.oy = Math.floor(i / cols) * ph + ph / 2; p.sc = (L.s * .5 * .86) / p.half; p.rx = (i % cols) * pw; p.ry = Math.floor(i / cols) * ph; }); }
+  function layout() {
+    const n = panels.length, cols = W >= H * 1.05 ? 5 : 4, rows = Math.ceil(n / cols), pw = W / cols, ph = H / rows; L = { cols, rows, pw, ph, s: Math.min(pw, ph) };
+    const m = ease.inOutCubic(clamp(view.morph, 0, 1)), full = { ox: W / 2, oy: H / 2 - (H > W ? 0 : H * .02), s: Math.min(W, H) * .88, rx: 0, ry: 0, w: W, h: H };
+    panels.forEach((p, i) => {
+      const g = { ox: (i % cols) * pw + pw / 2, oy: Math.floor(i / cols) * ph + ph / 2, s: L.s * .86, rx: (i % cols) * pw, ry: Math.floor(i / cols) * ph, w: pw, h: ph };
+      const f = i === view.idx ? m : 0; const mix = (a, b) => a + (b - a) * f;
+      p.ox = mix(g.ox, full.ox); p.oy = mix(g.oy, full.oy); p.sc = mix(g.s, full.s) * .5 / p.half; p.rx = mix(g.rx, full.rx); p.ry = mix(g.ry, full.ry); p.rw = mix(g.w, full.w); p.rh = mix(g.h, full.h);
+      p.alpha = i === view.idx ? 1 : 1 - m;   // sinemada diğer panolar söner
+    });
+  }
   const X = (p, x) => p.ox + (x - p.cx) * p.sc, Y = (p, y) => p.oy - (y - p.cy) * p.sc;
   function drawPaths() {
     pctx.setTransform(dpr, 0, 0, dpr, 0, 0); pctx.clearRect(0, 0, W, H); pctx.lineWidth = 1;
-    for (const p of panels) { if (!p.orbit || p.entry.T >= 32) continue; for (let b = 0; b < 3; b++) { const pts = p.orbit.pts[b]; pctx.strokeStyle = rgba(b, .075); pctx.beginPath(); for (let k = 0; k < pts.length; k++) { const x = X(p, pts[k][0]), y = Y(p, pts[k][1]); k ? pctx.lineTo(x, y) : pctx.moveTo(x, y); } pctx.stroke(); } }
+    for (const p of panels) { if (!p.orbit || p.entry.T >= 32 || p.alpha <= 0) continue; pctx.globalAlpha = p.alpha; for (let b = 0; b < 3; b++) { const pts = p.orbit.pts[b]; pctx.strokeStyle = rgba(b, .075); pctx.beginPath(); for (let k = 0; k < pts.length; k++) { const x = X(p, pts[k][0]), y = Y(p, pts[k][1]); k ? pctx.lineTo(x, y) : pctx.moveTo(x, y); } pctx.stroke(); } }
   }
   /* iz tuvali: soldur (destination-out) + yeni parçaları toplamsal çiz */
   function paintTrails(dtGlobal) {
     tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     for (const p of panels) {
-      if (p.cleared) { tctx.clearRect(p.rx, p.ry, L.pw, L.ph); p.cleared = false; }
-      const dp = dtGlobal * p.k; if (dp > 0) { tctx.globalCompositeOperation = 'destination-out'; tctx.fillStyle = `rgba(0,0,0,${1 - Math.exp(-dp / p.tau)})`; tctx.fillRect(p.rx, p.ry, L.pw, L.ph); }
+      if (p.cleared) { tctx.clearRect(p.rx, p.ry, p.rw, p.rh); p.cleared = false; }
+      if (p.alpha <= 0 || (view.mode === 'cinema' && view.morph < 1)) { p.seg = []; p.prev = null; continue; }   // sinemaya geçişte iz yeniden birikir
+      const f = clamp(Math.min(p.rw, p.rh) / 300, 1, 3), tau = p.tau * (view.mode === 'cinema' && view.morph >= 1 ? 1.7 : 1);   // büyük kadrajda vuruşlar ve iz ömrü büyür
+      const dp = dtGlobal * p.k; if (dp > 0) { tctx.globalCompositeOperation = 'destination-out'; tctx.fillStyle = `rgba(0,0,0,${1 - Math.exp(-dp / tau)})`; tctx.fillRect(p.rx, p.ry, p.rw, p.rh); }
       if (!p.seg.length) continue;
       tctx.globalCompositeOperation = 'lighter'; tctx.lineCap = 'butt'; tctx.lineJoin = 'round';   // düz uç: ardışık parçalar eklem noktasında üst üste binip parlak nokta bırakmaz
       for (let b = 0; b < 3; b++) {
         const start = p.prev ? p.prev : p.seg[0];
         tctx.beginPath(); tctx.moveTo(X(p, start[2 * b]), Y(p, start[2 * b + 1])); for (const s of p.seg) tctx.lineTo(X(p, s[2 * b]), Y(p, s[2 * b + 1]));
-        tctx.strokeStyle = rgba(b, .07); tctx.lineWidth = 4.5; tctx.stroke();     // yumuşak hale
-        tctx.strokeStyle = rgba(b, .62); tctx.lineWidth = 1.4; tctx.stroke();     // orta (renk burada)
-        tctx.strokeStyle = 'rgba(255,255,255,.10)'; tctx.lineWidth = .7; tctx.stroke();   // ince sıcak çekirdek
+        tctx.strokeStyle = rgba(b, .07); tctx.lineWidth = 4.5 * f; tctx.stroke();     // yumuşak hale
+        tctx.strokeStyle = rgba(b, .62); tctx.lineWidth = 1.4 * f; tctx.stroke();     // orta (renk burada)
+        tctx.strokeStyle = 'rgba(255,255,255,.10)'; tctx.lineWidth = .7 * f; tctx.stroke();   // ince sıcak çekirdek
       }
       p.prev = p.seg[p.seg.length - 1]; p.seg = [];
     }
@@ -93,20 +110,25 @@ export async function mountThreeBody(host, options = {}) {
     const pE = entrance.progress('panels');
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.drawImage(pathCv, 0, 0); ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(trailCv, 0, 0); ctx.restore();
     panels.forEach((p, i) => {
-      const a = clamp(pE * panels.length * .5 - i * .35, 0, 1);
-      if (a < 1) { ctx.fillStyle = `rgba(0,0,0,${1 - a})`; ctx.fillRect(p.rx, p.ry, L.pw, L.ph); }
+      const a = clamp(pE * panels.length * .5 - i * .35, 0, 1) * p.alpha * (i === view.idx ? view.fade : 1);
+      if (a < 1 && p.alpha > 0) { ctx.fillStyle = `rgba(0,0,0,${1 - a})`; ctx.fillRect(p.rx, p.ry, p.rw, p.rh); }
       if (a <= 0) return;
       ctx.save(); ctx.globalAlpha = a; ctx.globalCompositeOperation = 'lighter';
       for (let b = 0; b < 3; b++) {
-        const x = X(p, p.st[2 * b]), y = Y(p, p.st[2 * b + 1]), r = 2.4 + (p.m[b] > 1 ? .5 * Math.sqrt(p.m[b] - 1) : 0);
-        const g = ctx.createRadialGradient(x, y, 0, x, y, 16); g.addColorStop(0, rgba(b, .62)); g.addColorStop(.3, rgba(b, .24)); g.addColorStop(1, rgba(b, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.fill();
+        const f = clamp(Math.min(p.rw, p.rh) / 300, 1, 3), x = X(p, p.st[2 * b]), y = Y(p, p.st[2 * b + 1]), r = (2.4 + (p.m[b] > 1 ? .5 * Math.sqrt(p.m[b] - 1) : 0)) * f, R = 16 * f;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, R); g.addColorStop(0, rgba(b, .62)); g.addColorStop(.3, rgba(b, .24)); g.addColorStop(1, rgba(b, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = rgba(b, 1); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(x, y, r * .55, 0, Math.PI * 2); ctx.fill();
       }
       ctx.globalCompositeOperation = 'source-over';
-      if (showLabels) { ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.font = `500 ${Math.max(9, L.s * .055)}px ${P.body}`; ctx.textAlign = 'center'; ctx.fillText(p.entry.name + (p.entry.chaotic ? ' · kaotik' : ''), p.ox, p.oy + L.s * .47); }
+      if (showLabels && view.morph < .5) { ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.font = `500 ${Math.max(9, L.s * .055)}px ${P.body}`; ctx.textAlign = 'center'; ctx.fillText(p.entry.name + (p.entry.chaotic ? ' · kaotik' : ''), p.ox, p.oy + L.s * .47); }
       ctx.restore();
     });
+    /* sinema alt yazısı: ad · kaynak · periyot · kütleler; sağ altta sıra */
+    if (view.morph > .6) { const e = panels[view.idx].entry, a = clamp((view.morph - .6) / .4, 0, 1) * view.fade, pad = Math.max(22, Math.min(W, H) * .04); ctx.save(); ctx.globalAlpha = a; ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.font = `600 ${Math.max(18, Math.min(W, H) * .036)}px ${P.display}`; ctx.textAlign = 'left'; ctx.fillText(e.name, pad, H - pad - Math.max(16, Math.min(W, H) * .03));
+      ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = `500 ${Math.max(11, Math.min(W, H) * .016)}px ${P.body}`; ctx.fillText(`${e.src}${e.note ? ' · ' + e.note : ''} · ${e.chaotic ? 'periyodik değil' : 'T = ' + e.T.toFixed(3)} · kütleler ${e.masses.join(' · ')} · G = 1`, pad, H - pad);
+      ctx.textAlign = 'right'; ctx.font = `500 ${Math.max(11, Math.min(W, H) * .016)}px ${P.mono}`; ctx.fillText(`${view.idx + 1} / ${panels.length}`, W - pad, pad + 12); ctx.restore(); }
     capEl.textContent = showLabels ? `t = ${timeline.t.toFixed(1)} · G = 1 · eşit kütleler (Lagrange 1·2·3 ve Pisagor 3·4·5 hariç) · Šuvakov–Dmitrašinović 2013, Lagrange, Euler, Broucke · pano hızları görsel tempoya normalize` : '';
   }
   function resize() {
@@ -116,8 +138,19 @@ export async function mountThreeBody(host, options = {}) {
   }
   let active = options.active ?? true, rafId = 0, lastNow = 0;
   /* bir kare ilerlet (gerçek saniye): dışarıdan kare kare sürmek ve ölçmek için de kullanılır */
-  function advanceFrame(dt) { const ds = dt * timeline.speed; timeline.t += ds; for (const p of panels) stepPanel(p, ds); paintTrails(ds); draw(); }
-  function loop(now) { rafId = 0; if (!active || document.hidden) return; const dt = Math.min(.05, lastNow ? (now - lastNow) / 1000 : 1 / 60); lastNow = now; if (timeline.playing && entrance.done) advanceFrame(dt); else draw(); if (timeline.playing) ensureLoop(); }
+  function tickView(dt) {
+    let relayout = false;
+    if (view.mode === 'cinema' && view.morph < 1) { view.morph = Math.min(1, view.morph + dt / .9); relayout = true; if (view.morph >= 1) { tctx.setTransform(dpr, 0, 0, dpr, 0, 0); tctx.clearRect(0, 0, W, H); for (const p of panels) { p.prev = null; p.seg = []; } } }
+    else if (view.mode === 'grid' && view.morph > 0) { view.morph = Math.max(0, view.morph - dt / .7); relayout = true; if (view.morph <= 0) { tctx.setTransform(dpr, 0, 0, dpr, 0, 0); tctx.clearRect(0, 0, W, H); for (const p of panels) { p.prev = null; p.seg = []; } } }
+    if (view.switching) { const sw = view.switching; sw.t += dt; if (sw.t < .55) view.fade = 1 - sw.t / .55; else if (!sw.done) { view.idx = sw.to; sw.done = true; relayout = true; tctx.setTransform(dpr, 0, 0, dpr, 0, 0); tctx.clearRect(0, 0, W, H); for (const p of panels) { p.prev = null; p.seg = []; } } else { view.fade = Math.min(1, (sw.t - .55) / .8); if (view.fade >= 1) view.switching = null; } }
+    else if (view.mode === 'cinema' && view.morph >= 1 && view.dwell > 0) { view.dwellT += dt; if (view.dwellT >= view.dwell) { view.dwellT = 0; view.switching = { to: (view.idx + 1) % panels.length, t: 0, done: false }; } }
+    if (relayout) { layout(); drawPaths(); }
+  }
+  function advanceFrame(dt) { tickView(dt); const ds = dt * timeline.speed; timeline.t += ds; for (const p of panels) stepPanel(p, ds); paintTrails(ds); draw(); }
+  function setCinema(on, idx) { if (idx != null) view.idx = clamp(idx, 0, panels.length - 1); view.mode = on ? 'cinema' : 'grid'; view.dwellT = 0; view.switching = null; view.fade = 1; if (staticMode()) { view.morph = on ? 1 : 0; layout(); drawPaths(); seekTo(timeline.t); } draw(); ensureLoop(); }
+  function jump(delta) { if (view.mode !== 'cinema') { setCinema(true, (view.idx + delta + panels.length) % panels.length); return; } if (staticMode()) { setCinema(true, (view.idx + delta + panels.length) % panels.length); return; } view.dwellT = 0; view.switching = { to: (view.idx + delta + panels.length) % panels.length, t: 0, done: false }; ensureLoop(); }
+  const viewBusy = () => (view.mode === 'cinema' ? view.morph < 1 : view.morph > 0) || !!view.switching;
+  function loop(now) { rafId = 0; if (!active || document.hidden) return; const dt = Math.min(.05, lastNow ? (now - lastNow) / 1000 : 1 / 60); lastNow = now; if (timeline.playing && entrance.done) advanceFrame(dt); else { tickView(dt); draw(); } if (timeline.playing || viewBusy()) ensureLoop(); }
   function ensureLoop() { if (active && !rafId && !document.hidden && !staticMode()) rafId = requestAnimationFrame(loop); }
   const onVis = () => { lastNow = 0; ensureLoop(); }; document.addEventListener('visibilitychange', onVis);
   const ro = new ResizeObserver(resize); ro.observe(figure);
@@ -125,7 +158,7 @@ export async function mountThreeBody(host, options = {}) {
   if (staticMode() || options.t != null) timeline.t = options.t ?? 6; else if (options.autoplay ?? true) timeline.playing = true;
   resize(); entrance.start(); ensureLoop();
   return {
-    timeline, catalog: CATALOG, advance: advanceFrame, panels: () => panels.map(p => ({ id: p.entry.id, t: p.t, k: p.k, minDist: minDistance(p.st) })),
+    timeline, catalog: CATALOG, advance: advanceFrame, cinema: setCinema, next: () => jump(1), prev: () => jump(-1), get view() { return { mode: view.mode, index: view.idx, dwell: view.dwell, entry: CATALOG[view.idx] }; }, set dwell(v) { view.dwell = Math.max(0, v || 0); view.dwellT = 0; }, panels: () => panels.map(p => ({ id: p.entry.id, t: p.t, k: p.k, minDist: minDistance(p.st) })),
     get labels() { return showLabels; }, set labels(v) { showLabels = !!v; draw(); }, replay() { entrance.start(); }, setActive(v) { active = !!v; if (active) { lastNow = 0; ensureLoop(); } },
     dispose() { active = false; entrance.stop(); if (rafId) cancelAnimationFrame(rafId); ro.disconnect(); document.removeEventListener('visibilitychange', onVis); figure.remove(); },
   };

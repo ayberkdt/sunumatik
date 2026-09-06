@@ -17,7 +17,11 @@
     button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12px/1 var(--font-body); padding: 7px 11px; border-radius: 7px; cursor: pointer; }
     button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
     footer label { display: inline-flex; gap: 6px; align-items: center; } footer .cap { flex: 1 1 auto; text-align: right; font-size: 11.5px; letter-spacing: .03em; }
-    html[data-export="true"] footer { display: none; }
+    html[data-export="true"] footer, html.tam footer { display: none; }
+    html.tam, html.tam body { cursor: none; } html.tam.cursor, html.tam.cursor body { cursor: default; }
+    .hint { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); padding: 10px 16px; border: 1px solid rgba(255,255,255,.18); border-radius: 10px; background: rgba(10,10,14,.8); color: rgba(255,255,255,.75); font-size: 13px; letter-spacing: .04em; pointer-events: none; transition: opacity .8s; }
+    .hint.gone { opacity: 0; }
+    footer a { color: var(--color-accent); text-decoration: none; border-bottom: 1px dotted var(--color-accent); } footer .nav { display: inline-flex; gap: 4px; }
   </style>
 </head>
 <body>
@@ -27,8 +31,11 @@
     <input id="scrub" type="range" min="0" max="80" step="0.1" value="0" aria-label="Zaman (birim)">
     <span class="time" id="timeOut">—</span>
     <label><input id="labels" type="checkbox"> adlar</label>
+    <button id="cinemaBtn" aria-pressed="false">Sinema</button><span class="nav"><button id="prevBtn" title="önceki çözüm (←)">◀</button><button id="nextBtn" title="sonraki çözüm (→)">▶</button></span>
+    <button id="fsBtn">Tam ekran</button>
+    <a id="ssLink" href="index.html?sinema=1&tam=1&sure=30" target="_blank" rel="noopener" title="Kontrolsüz tam ekran: çözümler 30 sn'de bir değişir, imleç gizlenir · Esc çıkar">Ekran koruyucu ↗</a>
     <label>hız <input id="speed" type="range" min="0.2" max="3" step="0.1" value="0.8" style="width:90px"></label>
-    <span class="cap">three_body_states · 20 pano: Šuvakov–Dmitrašinović (2013) periyodik aileler, Lagrange, Euler, Broucke A2, Pisagor (kaotik) · G = 1 · RK4 uyarlanır adım · her periyot denetimde başlangıca döner</span>
+    <span class="cap">three_body_states · 20 pano: Šuvakov–Dmitrašinović (2013), Lagrange, Euler, Broucke A2, Pisagor (kaotik) · G = 1 · RK4 uyarlanır adım · her periyot denetimde başlangıca döner · C sinema · ← → çözüm</span>
   </footer>
   <script type="module">
     import { mountThreeBody } from './three-body.mjs';
@@ -37,15 +44,25 @@
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
     const $ = id => document.querySelector('#' + id);
-    const tb = await mountThreeBody($('host'), { t: params.has('t') ? Number(params.get('t')) : undefined, speed: Number(params.get('speed')) || .8, labels: params.get('labels') === '1', autoplay: !deterministic });
+    const tam = params.get('tam') === '1', sinema = params.get('sinema') === '1' || tam;
+    if (tam) document.documentElement.classList.add('tam');
+    const tb = await mountThreeBody($('host'), { t: params.has('t') ? Number(params.get('t')) : undefined, speed: Number(params.get('speed')) || 1, labels: params.get('labels') === '1', autoplay: !deterministic, mode: sinema ? 'cinema' : 'grid', index: Number(params.get('secim')) || 0, dwell: sinema ? (params.has('sure') ? Number(params.get('sure')) : 30) : 0 });
     window.__threeBody = tb;
     const scrub = $('scrub'), timeOut = $('timeOut'), playBtn = $('playBtn');
     $('labels').checked = tb.labels; $('speed').value = String(tb.timeline.speed);
     $('labels').addEventListener('change', () => { tb.labels = $('labels').checked; });
     $('speed').addEventListener('input', () => { tb.timeline.speed = Number($('speed').value); });
     playBtn.addEventListener('click', () => { const tl = tb.timeline; tl.playing ? tl.pause() : tl.play(); });
+    const cinemaBtn = $('cinemaBtn'); cinemaBtn.addEventListener('click', () => { tb.cinema(tb.view.mode !== 'cinema'); tb.dwell = tb.view.mode === 'cinema' ? 30 : 0; });
+    $('prevBtn').addEventListener('click', () => tb.prev()); $('nextBtn').addEventListener('click', () => tb.next());
+    $('fsBtn').addEventListener('click', () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.()));
+    document.addEventListener('keydown', ev => { if (ev.target instanceof HTMLInputElement) return; if (ev.code === 'Space') { ev.preventDefault(); const tl = tb.timeline; tl.playing ? tl.pause() : tl.play(); } else if (ev.key === 'ArrowRight') tb.next(); else if (ev.key === 'ArrowLeft') tb.prev(); else if (ev.key === 'c' || ev.key === 'C') { tb.cinema(tb.view.mode !== 'cinema'); tb.dwell = tb.view.mode === 'cinema' ? 30 : 0; } else if (ev.key === 'Escape' && !document.fullscreenElement && tb.view.mode === 'cinema' && !tam) tb.cinema(false); });
+    /* ekran koruyucu: ilk tıklama/tuş tam ekrana alır (tarayıcı jest ister); imleç 2 s hareketsizlikte gizlenir */
+    if (tam) { const hint = document.createElement('div'); hint.className = 'hint'; hint.textContent = 'Tıkla: tam ekran · ← → çözüm · Esc: çık'; document.body.appendChild(hint); setTimeout(() => hint.classList.add('gone'), 5000);
+      const goFs = () => { document.documentElement.requestFullscreen?.(); hint.classList.add('gone'); }; document.addEventListener('pointerdown', goFs, { once: true }); document.addEventListener('keydown', ev => { if (ev.key !== 'Escape') goFs(); }, { once: true });
+      let idle; document.addEventListener('pointermove', () => { document.documentElement.classList.add('cursor'); clearTimeout(idle); idle = setTimeout(() => document.documentElement.classList.remove('cursor'), 2000); }); }
     scrub.addEventListener('change', () => { tb.timeline.pause(); tb.timeline.scrub(Number(scrub.value)); });
-    function syncUi() { const tl = tb.timeline; playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(Math.min(80, tl.t)); timeOut.textContent = `t = ${tl.t.toFixed(1)}`; requestAnimationFrame(syncUi); }
+    function syncUi() { const tl = tb.timeline; playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(Math.min(80, tl.t)); timeOut.textContent = `t = ${tl.t.toFixed(1)}`; cinemaBtn.setAttribute('aria-pressed', String(tb.view.mode === 'cinema')); cinemaBtn.textContent = tb.view.mode === 'cinema' ? `Sinema · ${tb.view.entry.name}` : 'Sinema'; requestAnimationFrame(syncUi); }
     syncUi();
     if (deterministic) { tb.timeline.pause(); tb.setActive(false); }
     document.title += ' · hazır';

@@ -30,7 +30,7 @@ export const lerp = (a, b, t) => a + (b - a) * t;
 
 export function palette(el) {
   const css = getComputedStyle(el); const tok = (n, fb) => (css.getPropertyValue(n) || '').trim() || fb;
-  return { ink: tok('--color-ink', '#e9e4d8'), muted: tok('--color-muted', '#9a938a'), accent: tok('--color-accent', '#d9b877'), data1: tok('--color-data-1', '#8fb8dd'), data2: tok('--color-data-2', '#d78f6c'), rule: tok('--color-rule', '#3a3c42'), canvas: tok('--color-canvas', '#0b0c10'), surface: tok('--color-surface', '#15161a'), green: '#8fd39a', violet: '#c9a0e0', mono: 'JetBrains Mono Deck, ui-monospace, monospace', body: 'Source Sans 3 Deck, Inter, system-ui, sans-serif', display: 'Space Grotesk Deck, Inter, system-ui, sans-serif' };
+  return { ink: tok('--color-ink', '#e9e4d8'), muted: tok('--color-muted', '#9a938a'), accent: tok('--color-accent', '#d9b877'), data1: tok('--color-data-1', '#8fb8dd'), data2: tok('--color-data-2', '#d78f6c'), rule: tok('--color-rule', '#3a3c42'), canvas: tok('--color-canvas', '#0b0c10'), surface: tok('--color-surface', '#15161a'), green: '#8fd39a', violet: '#c9a0e0', mono: '"JetBrains Mono Deck", ui-monospace, monospace', body: '"Source Sans 3 Deck", Inter, system-ui, sans-serif', display: '"Space Grotesk Deck", Inter, system-ui, sans-serif' };   // aile adları tırnaklı: aksi hâlde ctx.font geçersiz sayılır ve önceki yazı tipi kalır
 }
 export function rgba(hex, a) { const h = hex.replace('#', ''); const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; }
 

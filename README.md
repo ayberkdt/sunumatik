@@ -82,7 +82,7 @@ sunucu (`python -m http.server`) yeterlidir.
 İlk beş dakika için önerilen rota:
 
 1. `http://localhost:8790/demo/index.html` — canlı katalog; **G** dizini açar, ok tuşları slayt değiştirir.
-2. `http://localhost:8790/presets/three_body_states/index.html` — [Üç-Cisim Durumları](presets/three_body_states/index.html): 20 periyodik çözüm canlı, tam ekran izlemelik; `http://localhost:8790/presets/soi_explorer/index.html` — bir laboratuvarı tek başına aç; sekmeler, kaydırıcılar ve kameralar canlı.
+2. `http://localhost:8790/presets/three_body_states/index.html` — [Üç-Cisim Durumları](presets/three_body_states/index.html): 20 periyodik çözüm canlı; **C** sinema modu, [ekran koruyucu](presets/three_body_states/index.html?sinema=1&tam=1&sure=30) (`?sinema=1&tam=1`); `http://localhost:8790/presets/soi_explorer/index.html` — bir laboratuvarı tek başına aç; sekmeler, kaydırıcılar ve kameralar canlı.
 3. Aynı adrese `?export=1&t=2.5` ekle — deterministik kare; sunum çıktısı bu kareyi kullanır.
 4. `node scripts/validate-astro.mjs` — sahnelerin dayandığı sayıların bağımsız denetimi.
 

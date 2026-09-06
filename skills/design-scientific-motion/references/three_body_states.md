@@ -21,9 +21,18 @@ Saf (`three-body-model.mjs`): `CATALOG`, `accel`, `advance(state, m, dt, {hMax, 
 `energy`, `angularMomentum`, `minDistance`, `sampleOrbit(entry, {n})` →
 `{ pts, returnError, energyDrift, momentumDrift, bbox }`.
 
+## Sinema ve ekran koruyucu
+
+`tb.cinema(true, i)` tek çözümü kadraja büyütür (pano ızgaradan 0,9 s morf ile
+büyür, iz yeniden birikir; vuruş ve hale kadrajla ölçeklenir, iz ömrü 1,7×);
+alt yazı ad · kaynak · T · kütleler, sağ üstte sıra. `dwell` saniyesinde bir
+sonraki çözüme 0,55 s sönme + 0,8 s açılma ile geçer; `next()/prev()`, tuşlar
+← → C Esc. Ekran koruyucu: `index.html?sinema=1&tam=1&sure=30` — alt bilgi
+gizli, imleç 2 s'de gizlenir, ilk tıklama tam ekrana alır (tarayıcı jesti).
+
 ## URL
 
-`?t=<birim>&speed=<birim/s>&labels=1&export=1`
+`?t=<birim>&speed=<birim/s>&labels=1&sinema=1&secim=<0–19>&sure=<s>&tam=1&export=1`
 
 ## Model ve dürüstlük
 
