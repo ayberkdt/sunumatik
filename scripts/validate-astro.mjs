@@ -728,6 +728,22 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('launchwindow', 'KSC menzil güvenliği (35°–120°): ISS çıkan geçiş izinli, inen (137°) yasak; Vandenberg SSO inen geçiş izinli', A.ascAllowed && !A.descAllowed && M.analyze({ site: 'vandenberg', target: 'sso' }).descAllowed);
 }
 
+/* ───────────────────────── freereturn (Ay serbest dönüş) */
+{
+  const M = await mod('presets/free_return/free-return-model.mjs');
+  check('freereturn', 'Birimler: VU ≈ 1,023 km/s, TU ≈ 4,35 gün (Dünya–Ay)', near(M.VU, 1.023, .002) && near(M.TU / 86400, 4.348, .01));
+  const s0 = M.initialState({ h0: 200, theta0: 229, dvKmS: 3.14 }); const vI = Math.hypot(s0[3] - s0[1], s0[4] + (s0[0] + M.MU)) * M.VU;
+  check('freereturn', 'Başlangıç eylemsiz hız = v_circ + ΔV (7,784 + 3,14 = 10,92 km/s)', near(vI, 7.784 + 3.14, 2e-3), vI.toFixed(3));
+  const sc = M.scan();
+  check('freereturn', 'Serbest dönüş çözümleri bulunur (≥ 5), dönüş perigee 100 ± 150 km, perilune > 100 km', sc.refined.length >= 5 && sc.refined.every(r => Math.abs(r.hr - 100) < 150 && r.hp > 100), `${sc.refined.length} çözüm`);
+  check('freereturn', 'Apollo ölçeği: ΔV_TLI 3,12–3,16 km/s, Ay uzaklığına 2,5–3,7 gün, toplam 5,5–8 gün', sc.refined.every(r => r.dv > 3.12 && r.dv < 3.16 && r.tPeri > 2.5 && r.tPeri < 3.7 && r.tRet > 5.5 && r.tRet <= 8.01), sc.best ? `${sc.best.dv.toFixed(3)} km/s, ${sc.best.tPeri.toFixed(2)} / ${sc.best.tRet.toFixed(2)} gün` : '—');
+  const b = sc.best, sb = M.simulate({ dvKmS: b.dv, theta0: b.th });
+  check('freereturn', 'En iyi aday yeniden yayılınca aynı sonuç (perigee ±5 km) ve Jacobi sapması < 1e−5', near(sb.returnPerigee.altKm, b.hr, 5) && sb.jacobiDrift < 1e-5, `${sb.returnPerigee.altKm.toFixed(1)} km, ΔC ${sb.jacobiDrift.toExponential(1)}`);
+  check('freereturn', 'Duyarlılık: θ₀ + 0,3° dönüş perigee\u2019yi > 500 km kaydırır (dar koridor)', Math.abs(M.simulate({ dvKmS: b.dv, theta0: b.th + .3 }).returnPerigee.altKm - b.hr) > 500);
+  check('freereturn', 'Düşük ΔV (3,05 km/s) Ay\u2019a ulaşmaz (perilune > 20 000 km)', M.simulate({ dvKmS: 3.05, theta0: 229 }).perilune.altKm > 20000);
+  check('freereturn', 'Serbest dönüş Ay\u2019ın arka tarafından geçer (perilune anında x > 1 − μ − 0,01)', sb.states[sb.perilune.i][0] > 1 - M.MU - .01);
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

@@ -80,6 +80,7 @@ kullanın) — örnek deste dahil her şey oradan açılır.
 | **ORBITAL** · [entry-dispersion](presets/entry_dispersion/index.html) | Giriş dağılımı (Monte Carlo): reentry_corridor çekirdeği üstünde tohumlu sapmalar → menzil histogramı, 3σ, duyarlılık payları, doğrusal RSS ↔ Monte Carlo oranı |
 | **ORBITAL** · [geo-stationkeeping](presets/geo_stationkeeping/index.html) | GEO istasyon tutma bütçesi: doğu–batı sürüklenme gerçek C̄22/S̄22'den, kuzey–güney Ay+Güneş 1 yıllık RK4, SRP eksantriklik, ömür yakıtı kimyasal vs elektrikli |
 | **ORBITAL** · [launch-window](presets/launch_window/index.html) | Fırlatma penceresi ve azimut: küresel trigonometri, Dünya dönmesi düzeltmesi, günde iki fırsat, gecikme → düzlem değişimi ΔV → pencere |
+| **ORBITAL** · [free-return](presets/free_return/index.html) | Ay serbest dönüş yörüngesi: CR3BP'de TLI ΔV/faz taraması, manevrasız 100 km dönüş perigee çözümleri, perilune ve süreler |
 
 ML yol haritası: embedding projektörü, konvolüsyon, çizge mesajlaşma.
 

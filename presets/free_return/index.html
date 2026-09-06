@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ay Serbest Dönüş Yörüngesi — free_return</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 200px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 80px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ay Serbest Dönüş Yörüngesi<small>free_return · Dünya–Ay CR3BP (core/astro-cr3bp) · LEO'dan TLI ΔV ve faz açısı taraması → manevrasız Dünya'ya dönen "8" figürü koridoru · perilune ve dönüş perigee sayısal</small></h1>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="control-row">
+      <div class="group"><span>TLI</span><label class="field">ΔV <input id="dv" type="range" min="3.125" max="3.155" step="0.0005" value="3.14"><output id="oDv">—</output></label><label class="field">θ₀ <input id="th" type="range" min="222" max="236" step="0.1" value="229"><output id="oTh">—</output></label><button id="bestBtn">En iyi adaya git</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountFreeReturn } from './free-return.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const $ = id => document.querySelector('#' + id);
+    const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), nf3 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    const fr = await mountFreeReturn($('host'), { dvKmS: params.has('dv') ? Number(params.get('dv')) : null, theta0: params.has('th') ? Number(params.get('th')) : null });
+    window.__freeReturn = fr;
+    function sync() { const c = fr.config; $('dv').value = String(c.dvKmS); $('oDv').textContent = `${nf3.format(c.dvKmS)} km/s`; $('th').value = String(c.theta0); $('oTh').textContent = `${nf1.format(c.theta0)}°`; }
+    $('dv').addEventListener('input', () => { fr.set({ dvKmS: Number($('dv').value) }); sync(); writeCaption(); });
+    $('th').addEventListener('input', () => { fr.set({ theta0: Number($('th').value) }); sync(); writeCaption(); });
+    $('bestBtn').addEventListener('click', () => { const b = fr.scan.best; if (b) { fr.set({ dvKmS: b.dv, theta0: b.th }); sync(); writeCaption(); } });
+    function writeCaption() {
+      const S = fr.sim, SC = fr.scan, ok = SC.cells.filter(c => c.ok);
+      $('caption').innerHTML = `<strong>Serbest dönüş, kütleçekimin kendisiyle geri getirir:</strong> LEO'dan (${S.h0} km) ΔV_TLI = <span class="nums">${nf3.format(S.dvKmS)} km/s</span>, faz θ₀ = ${nf1.format(S.theta0)}° ile Dünya–Ay CR3BP'de (adaptif adımlı RK4, Jacobi sapması ${S.jacobiDrift.toExponential(1)}) yayılım: perilune <span class="nums">${S.perilune ? nf0.format(S.perilune.altKm) + ' km' : '—'}</span> ${S.perilune ? nf2.format(S.perilune.tDays) + ' günde' : ''}, dönüş perigee <span class="nums">${S.returnPerigee ? nf0.format(S.returnPerigee.altKm) + ' km' : '—'}</span> ${S.returnPerigee ? nf2.format(S.returnPerigee.tDays) + ' günde' : ''}. `
+        + `Tarama (${SC.cells.length} hücre + bisection): serbest dönüş çözümleri (perilune > ${SC.hpMin} km, dönüş perigee ${SC.hrTarget} km) ${SC.refined.length ? SC.refined.length + ' adet — ΔV ' + nf3.format(Math.min(...SC.refined.map(c => c.dv))) + '–' + nf3.format(Math.max(...SC.refined.map(c => c.dv))) + ' km/s, her ΔV için tek bir θ₀' : 'bulunamadı'}; θ₀ birkaç onda derece sapınca perigee binlerce km kayar — Apollo TLI zamanlamasının hassasiyeti budur. `
+        + `Sınırlar: düzlemsel CR3BP (Ay eğikliği ve eksantrikliği yok, Güneş yok), anlık TLI, atmosfer yok (dönüş perigee geometrik), Dünya çevresi ilk kısımda J2 yok; koridor ızgara çözünürlüğüyle sınırlı (sürekli en-iyileme yok).`;
+    }
+    sync(); writeCaption();
+    document.title += ' · hazır';
+  </script>
+</body>
+</html>

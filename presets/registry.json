@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 59,
-    "presetsWithIndex": 52,
+    "presets": 60,
+    "presetsWithIndex": 53,
     "animatedPresets": 43,
     "skills": 18,
-    "demoSlides": 75,
-    "demoCards": 62,
+    "demoSlides": 76,
+    "demoCards": 63,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 75,
-    "cards": 62,
+    "slides": 76,
+    "cards": 63,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -41,6 +41,7 @@
       "equation_steps",
       "figure_callouts",
       "formation_flight",
+      "free_return",
       "geo_stationkeeping",
       "gravity_assist",
       "gravity_field",
@@ -285,6 +286,13 @@
       "hasMotionManifest": true
     },
     {
+      "name": "free_return",
+      "title": "Ay Serbest Dönüş Yörüngesi — free_return",
+      "hasIndex": true,
+      "animated": false,
+      "hasMotionManifest": true
+    },
+    {
       "name": "geo_stationkeeping",
       "title": "GEO İstasyon Tutma Bütçesi — geo_stationkeeping",
       "hasIndex": true,
@@ -338,7 +346,7 @@
       "title": "Fırlatma Penceresi ve Azimut — launch_window",
       "hasIndex": true,
       "animated": false,
-      "hasMotionManifest": false
+      "hasMotionManifest": true
     },
     {
       "name": "low_thrust_transfer",

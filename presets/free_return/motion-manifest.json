@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "free-return-corridor",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Serbest dönüş yörüngesinin ne olduğunu ve niçin dar bir koridor olduğunu göstermek: LEO'dan tek bir TLI itkisiyle Ay'ın arkasından dolanıp hiç manevrasız Dünya atmosferine dönen '8' figürü; ΔV ve faz açısındaki küçük sapmaların dönüş perigee'sini binlerce km kaydırması (Apollo 13'ün güvenlik ağı).",
+      "model": "Dünya–Ay CR3BP (core/astro-cr3bp.mjs, μ = 0,01215; L = 384 400 km, TU = T_ay/2π): LEO (h₀ = 200 km) üstünde Dünya–Ay doğrultusundan θ₀ fazında, Dünya'ya göre eylemsiz teğetsel hız v_circ + ΔV_TLI; dönen çerçeveye v_R = v_I − ω × r_rel; cisme yakınlıkla küçülen adımlı RK4 (adım ∝ (r/0,2)^1,5, Jacobi sapması ~1e−6); perilune = Ay'a en yakın nokta, dönüş perigee = perilune sonrası Dünya'ya en yakın nokta; (ΔV, θ₀) ızgarası (16×29) sonra her ΔV satırında dönüş perigee − 100 km işaret değişimi için θ₀ bisection'ı (14 adım). Denetim scripts/validate-astro.mjs 'freereturn' (birimler, başlangıç hızı, ≥ 5 çözüm, Apollo ölçeği ΔV/süreler, yeniden yayılım tutarlılığı, 0,3° duyarlılık, düşük ΔV ulaşmaz, arkadan geçiş).",
+      "limitations": "Düzlemsel CR3BP (Ay yörünge eğikliği ve eksantrikliği, Güneş çekimi, J2 yok); anlık TLI (sonlu yanma yok); atmosfer yok (dönüş perigee geometrik hedef, giriş için reentry_corridor); ızgara + tek boyutlu bisection (tam iki boyutlu en-iyileme yok); perilune süreleri idealize; koridor haritası ~1 s hesaplanır (etkileşim gecikmeli).",
+      "reducedMotion": "Sahne statiktir.",
+      "exportState": "?dv=<km/s>&th=<°> deterministik; export=1 alt bilgiyi gizler.",
+      "accessibility": "ΔV ve θ₀ kaydırıcıları ile 'en iyi adaya git' düğmesi yerli öğelerdir; HUD sonuçları metin verir (serbest dönüş evet/hayır gerekçeli); tuvaller aria-label taşır; altyazı yöntemi, sayıları ve sınırları düzyazı anlatır.",
+      "loop": false,
+      "pauseControl": false
+    }
+  ]
+}
