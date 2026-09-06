@@ -6,6 +6,7 @@
   <title>Ay Serbest Dönüş Yörüngesi — free_return</title>
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../core/lab-scene.css">
   <style>
     :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
       --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
@@ -25,14 +26,15 @@
     html[data-export="true"] footer { display: none; }
   </style>
 </head>
-<body>
-  <header>
+<body class="lab">
+  <header data-lab-reveal>
     <h1>Ay Serbest Dönüş Yörüngesi<small>free_return · Dünya–Ay CR3BP (core/astro-cr3bp) · LEO'dan TLI ΔV ve faz açısı taraması → manevrasız Dünya'ya dönen "8" figürü koridoru · perilune ve dönüş perigee sayısal</small></h1>
   </header>
   <div class="stage-area" id="host"></div>
-  <footer>
+  <footer data-lab-reveal>
     <div class="control-row">
       <div class="group"><span>TLI</span><label class="field">ΔV <input id="dv" type="range" min="3.125" max="3.155" step="0.0005" value="3.14"><output id="oDv">—</output></label><label class="field">θ₀ <input id="th" type="range" min="222" max="236" step="0.1" value="229"><output id="oTh">—</output></label><button id="bestBtn">En iyi adaya git</button></div>
+      <div class="group" role="group" aria-label="Hareket"><span>Hareket</span><button id="playBtn" aria-pressed="true">Duraklat</button><button id="replayBtn">Girişi tekrar oynat</button></div>
     </div>
     <p class="caption" id="caption"></p>
   </footer>
@@ -42,7 +44,8 @@
     if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
     const $ = id => document.querySelector('#' + id);
     const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), nf3 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
-    const fr = await mountFreeReturn($('host'), { dvKmS: params.has('dv') ? Number(params.get('dv')) : null, theta0: params.has('th') ? Number(params.get('th')) : null });
+    const deterministic = params.has('u') || params.get('export') === '1';
+    const fr = await mountFreeReturn($('host'), { dvKmS: params.has('dv') ? Number(params.get('dv')) : null, theta0: params.has('th') ? Number(params.get('th')) : null, u: params.has('u') ? Number(params.get('u')) : undefined, autoplay: !deterministic });
     window.__freeReturn = fr;
     function sync() { const c = fr.config; $('dv').value = String(c.dvKmS); $('oDv').textContent = `${nf3.format(c.dvKmS)} km/s`; $('th').value = String(c.theta0); $('oTh').textContent = `${nf1.format(c.theta0)}°`; }
     $('dv').addEventListener('input', () => { fr.set({ dvKmS: Number($('dv').value) }); sync(); writeCaption(); });
@@ -54,6 +57,9 @@
         + `Tarama (${SC.cells.length} hücre + bisection): serbest dönüş çözümleri (perilune > ${SC.hpMin} km, dönüş perigee ${SC.hrTarget} km) ${SC.refined.length ? SC.refined.length + ' adet — ΔV ' + nf3.format(Math.min(...SC.refined.map(c => c.dv))) + '–' + nf3.format(Math.max(...SC.refined.map(c => c.dv))) + ' km/s, her ΔV için tek bir θ₀' : 'bulunamadı'}; θ₀ birkaç onda derece sapınca perigee binlerce km kayar — Apollo TLI zamanlamasının hassasiyeti budur. `
         + `Sınırlar: düzlemsel CR3BP (Ay eğikliği ve eksantrikliği yok, Güneş yok), anlık TLI, atmosfer yok (dönüş perigee geometrik), Dünya çevresi ilk kısımda J2 yok; koridor ızgara çözünürlüğüyle sınırlı (sürekli en-iyileme yok).`;
     }
+    $('playBtn').addEventListener('click', () => { const tl = fr.timeline; tl.playing ? tl.pause() : tl.play(); $('playBtn').textContent = tl.playing ? 'Duraklat' : 'Oynat'; $('playBtn').setAttribute('aria-pressed', String(tl.playing)); });
+    $('replayBtn').addEventListener('click', () => fr.replay());
+    if (deterministic) { $('playBtn').textContent = 'Oynat'; $('playBtn').setAttribute('aria-pressed', 'false'); }
     sync(); writeCaption();
     document.title += ' · hazır';
   </script>
