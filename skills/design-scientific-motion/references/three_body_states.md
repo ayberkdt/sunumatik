@@ -47,6 +47,18 @@ gizli, imleç 2 s'de gizlenir, ilk tıklama tam ekrana alır (tarayıcı jesti).
   geçmediği için katalogda değildir.
 - İntegratör RK4 uyarlanır adım: h = min(h_max, k·d_min^1.5).
 
+## Renk ve solma (GIF kalibrasyonu)
+
+Kaynak GIF'in kareleri ölçüldü (ton kümeleri): kızıl-turuncu ton 0,047, sıcak
+krem/ten ton 0,10 düşük doygunluk, lavanta-periwinkle ton 0,68. Cisim renkleri
+`BODY_COLORS = ['#ff6226', '#f4dcb4', '#7f8cff']`, baş çekirdekleri cisme göre
+sıcak-beyaz `HOT_COLORS` (sarı-beyaz, krem-beyaz, buz-beyaz; τ_h = 0,07 τ —
+yalnız başta beyaz, kuyruk doygun renk, uç koyu). Toplam parlaklık GIF'in
+piksel dağılımına göre ayarlandı (>150 parlaklık ~%1 kare payı): keskin gövde
+0,62 + dar ışıma 0,5 + geniş ışıma 0,42 toplamsal; beyaza kırpma yok. İz ömrü
+τ = clamp(0,45 T, 3, 14): yörüngenin büyük kısmı görünür kalır ve e^(−yaş/τ)
+ile yumuşakça söner.
+
 ## Sınırlar
 
 Panolar bağımsız ölçeklenir (uzunluklar karşılaştırılamaz); iz süresi

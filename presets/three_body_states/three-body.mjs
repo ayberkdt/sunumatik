@@ -18,7 +18,9 @@
 import { CATALOG, sampleOrbit, advance, minDistance } from './three-body-model.mjs';
 import { staticMode, Entrance, reveal, palette, ease } from '../core/lab-scene.mjs';
 
-export const BODY_COLORS = ['#ff7326', '#ffe6c4', '#8c9dff'];
+export const BODY_COLORS = ['#ff6226', '#f4dcb4', '#7f8cff'];   // GIF ölçümü: kızıl-turuncu (ton 0,047) · sıcak krem/ten · lavanta-periwinkle (ton 0,68)
+export const HOT_COLORS = ['#ffd49a', '#fff8ec', '#dfe4ff'];    // baş çekirdeği: cisim rengine göre sıcak-beyaz (GIF'te baş sarı-beyaz, kuyruk doygun, uç koyu)
+const HOT = HOT_COLORS.map(h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
 const RGB = BODY_COLORS.map(h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
 const rgba = (i, a) => `rgba(${RGB[i][0]},${RGB[i][1]},${RGB[i][2]},${a})`;
 const dim = (i, k) => `rgb(${Math.round(RGB[i][0] * k)},${Math.round(RGB[i][1] * k)},${Math.round(RGB[i][2] * k)})`;   // OPAK sönük renk: toplamsal birleşimde zayıf ışıma, üst üste binen parçalarda boncuk yok
@@ -50,7 +52,7 @@ export async function mountThreeBody(host, options = {}) {
     /* görsel hız normalizasyonu: ortalama cisim hızı (pano-kesri / zaman birimi) → hedef tempo */
     let k = 1;
     if (orbit) { let sum = 0, n = 0; const dt = entry.T / (orbit.pts[0].length - 1); for (let b = 0; b < 3; b++) for (let i = 1; i < orbit.pts[b].length; i++) { sum += Math.hypot(orbit.pts[b][i][0] - orbit.pts[b][i - 1][0], orbit.pts[b][i][1] - orbit.pts[b][i - 1][1]) / dt; n++; } const meanNorm = (sum / n) * (.43 / half); k = clamp(.17 / Math.max(1e-6, meanNorm), .3, 2.4); }
-    const tau = entry.chaotic ? 4 : clamp(entry.T * .22, 1.2, 6);   // iz ömrü (pano zamanı)
+    const tau = entry.chaotic ? 6 : clamp(entry.T * .45, 3, 14);   // iz ömrü (pano zamanı): uzun, yumuşak solma (GIF: yörüngenin büyük kısmı görünür kalır)
     return { entry, m, orbit, half, cx, cy, k, tau, st: Float64Array.from(entry.state()), t: 0, prev: null, seg: [] };
   });
   const resetPanel = p => { p.st = Float64Array.from(p.entry.state()); p.t = 0; p.prev = null; p.seg = []; };
@@ -87,7 +89,7 @@ export async function mountThreeBody(host, options = {}) {
       if (p.cleared) { tctx.clearRect(p.rx, p.ry, p.rw, p.rh); hctx.clearRect(p.rx, p.ry, p.rw, p.rh); p.cleared = false; }
       if (p.alpha <= 0 || (view.mode === 'cinema' && view.morph < 1)) { p.seg = []; p.prev = null; continue; }   // sinemaya geçişte iz yeniden birikir
       const f = clamp(Math.min(p.rw, p.rh) / 300, 1, 2.3), tau = p.tau * (view.mode === 'cinema' && view.morph >= 1 ? 1.7 : 1);   // büyük kadrajda vuruşlar ve iz ömrü büyür
-      const dp = dtGlobal * p.k, tauH = tau * .16, rT = Math.exp(-dp / tau), rH = Math.exp(-dp / tauH);
+      const dp = dtGlobal * p.k, tauH = tau * .07, rT = Math.exp(-dp / tau), rH = Math.exp(-dp / tauH);
       if (dp > 0) { for (const [c, r] of [[tctx, rT], [hctx, rH]]) { c.globalCompositeOperation = 'destination-out'; c.fillStyle = `rgba(0,0,0,${1 - r})`; c.fillRect(p.rx, p.ry, p.rw, p.rh); } }
       if (!p.seg.length) continue;
       /* source-over + yuvarlak uç: ardışık kare parçaları eklemde ne boşluk ne parlak nokta bırakır (toplamsal karışım yalnız tuvaller
@@ -101,8 +103,8 @@ export async function mountThreeBody(host, options = {}) {
         const grad = (c, col, r) => { if (Math.abs(gx1 - gx0) + Math.abs(gy1 - gy0) < .01) return col(1); const g = c.createLinearGradient(gx0, gy0, gx1, gy1); g.addColorStop(0, col(r)); g.addColorStop(1, col(1)); return g; };
         const dimA = (k, a) => `rgba(${Math.round(RGB[b][0] * k)},${Math.round(RGB[b][1] * k)},${Math.round(RGB[b][2] * k)},${a})`;
         /* yalnız ince renk gövdesi: hale, birleştirmede bulanıklaştırılmış kopyadan gelir (parça eklemleri yok → pürüzsüz ışıma) */
-        tctx.strokeStyle = grad(tctx, a => dimA(1, a * .9), rT); tctx.lineWidth = 1.4 * f; tctx.stroke(path);
-        hctx.strokeStyle = grad(hctx, a => `rgba(255,255,255,${a * .8})`, rH); hctx.lineWidth = .6 * f; hctx.stroke(path);   // beyaz-sıcak çekirdek (hızlı söner)
+        tctx.strokeStyle = grad(tctx, a => dimA(1, a * .78), rT); tctx.lineWidth = 1.0 * f; tctx.stroke(path);
+        hctx.strokeStyle = grad(hctx, a => `rgba(${HOT[b][0]},${HOT[b][1]},${HOT[b][2]},${a * .8})`, rH); hctx.lineWidth = .5 * f; hctx.stroke(path);   // beyaz-sıcak çekirdek (hızlı söner)
       }
       p.prev = p.seg[p.seg.length - 1]; p.seg = [];
     }
@@ -121,17 +123,18 @@ export async function mountThreeBody(host, options = {}) {
     const pE = entrance.progress('panels');
     /* birleştirme: soluk tam yol; iz rengi iki bulanık kopya (dar + geniş ışıma) + keskin gövde; beyaz-sıcak çekirdek — hepsi toplamsal (ışık) */
     ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.drawImage(pathCv, 0, 0); ctx.globalCompositeOperation = 'lighter';
-    const fb = clamp(Math.min(W, H) / 600, 1, 2.2) * dpr; ctx.filter = `blur(${(3 * fb).toFixed(1)}px)`; ctx.globalAlpha = .55; ctx.drawImage(trailCv, 0, 0); ctx.filter = `blur(${(12 * fb).toFixed(1)}px)`; ctx.globalAlpha = .5; ctx.drawImage(trailCv, 0, 0); ctx.filter = 'none'; ctx.globalAlpha = .95; ctx.drawImage(trailCv, 0, 0); ctx.globalAlpha = 1; ctx.drawImage(hotCv, 0, 0); ctx.restore();
+    const fb = clamp(Math.min(W, H) / 600, 1, 2.2) * dpr; /* toplam parlaklık GIF ölçüsünde: keskin gövde + dar ışıma + geniş ışıma beyaza kırpmadan rengi korur (baş dışında beyaz yok) */
+    ctx.filter = `blur(${(2.5 * fb).toFixed(1)}px)`; ctx.globalAlpha = .5; ctx.drawImage(trailCv, 0, 0); ctx.filter = `blur(${(10 * fb).toFixed(1)}px)`; ctx.globalAlpha = .42; ctx.drawImage(trailCv, 0, 0); ctx.filter = 'none'; ctx.globalAlpha = .62; ctx.drawImage(trailCv, 0, 0); ctx.globalAlpha = 1; ctx.drawImage(hotCv, 0, 0); ctx.restore();
     panels.forEach((p, i) => {
       const a = clamp(pE * panels.length * .5 - i * .35, 0, 1) * p.alpha * (i === view.idx ? view.fade : 1);
       if (a < 1 && p.alpha > 0) { ctx.fillStyle = `rgba(0,0,0,${1 - a})`; ctx.fillRect(p.rx, p.ry, p.rw, p.rh); }
       if (a <= 0) return;
       ctx.save(); ctx.globalAlpha = a; ctx.globalCompositeOperation = 'lighter';
       for (let b = 0; b < 3; b++) {
-        const f = clamp(Math.min(p.rw, p.rh) / 300, 1, 2.3), x = X(p, p.st[2 * b]), y = Y(p, p.st[2 * b + 1]), r = (2.4 + (p.m[b] > 1 ? .5 * Math.sqrt(p.m[b] - 1) : 0)) * f, R = 16 * f;
-        const g = ctx.createRadialGradient(x, y, 0, x, y, R); g.addColorStop(0, rgba(b, .62)); g.addColorStop(.3, rgba(b, .24)); g.addColorStop(1, rgba(b, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
+        const f = clamp(Math.min(p.rw, p.rh) / 300, 1, 2.3), x = X(p, p.st[2 * b]), y = Y(p, p.st[2 * b + 1]), r = (2.2 + (p.m[b] > 1 ? .5 * Math.sqrt(p.m[b] - 1) : 0)) * f, R = 30 * f;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, R); g.addColorStop(0, rgba(b, .6)); g.addColorStop(.2, rgba(b, .26)); g.addColorStop(.55, rgba(b, .07)); g.addColorStop(1, rgba(b, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = rgba(b, 1); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(x, y, r * .55, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = `rgba(${HOT[b][0]},${HOT[b][1]},${HOT[b][2]},.95)`; ctx.beginPath(); ctx.arc(x, y, r * .6, 0, Math.PI * 2); ctx.fill();
       }
       ctx.globalCompositeOperation = 'source-over';
       if (showLabels && view.morph < .5) { ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.font = `500 ${Math.max(9, L.s * .055)}px ${P.body}`; ctx.textAlign = 'center'; ctx.fillText(p.entry.name + (p.entry.chaotic ? ' · kaotik' : ''), p.ox, p.oy + L.s * .47); }
