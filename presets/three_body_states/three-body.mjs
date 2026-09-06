@@ -21,6 +21,7 @@ import { staticMode, Entrance, reveal, palette, ease } from '../core/lab-scene.m
 export const BODY_COLORS = ['#ff7326', '#ffe6c4', '#8c9dff'];
 const RGB = BODY_COLORS.map(h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
 const rgba = (i, a) => `rgba(${RGB[i][0]},${RGB[i][1]},${RGB[i][2]},${a})`;
+const dim = (i, k) => `rgb(${Math.round(RGB[i][0] * k)},${Math.round(RGB[i][1] * k)},${Math.round(RGB[i][2] * k)})`;   // OPAK sönük renk: toplamsal birleşimde zayıf ışıma, üst üste binen parçalarda boncuk yok
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 
 export async function mountThreeBody(host, options = {}) {
@@ -32,7 +33,8 @@ export async function mountThreeBody(host, options = {}) {
     </style><canvas aria-label="Üç-cisim periyodik çözümleri"></canvas><div class="tb__cap" data-cap></div>`;
   host.appendChild(figure);
   const cv = figure.querySelector('canvas'), ctx = cv.getContext('2d'), capEl = figure.querySelector('[data-cap]');
-  const trailCv = document.createElement('canvas'), tctx = trailCv.getContext('2d');   // kalıcı iz tuvali
+  const trailCv = document.createElement('canvas'), tctx = trailCv.getContext('2d');   // kalıcı iz tuvali (renk, uzun ömür)
+  const hotCv = document.createElement('canvas'), hctx = hotCv.getContext('2d');       // sıcak çekirdek tuvali (beyaz, kısa ömür → başa yakın beyaz-sıcak, geriye doğru renge döner)
   const pathCv = document.createElement('canvas'), pctx = pathCv.getContext('2d');     // tam periyot yolları (statik)
   const P = palette(figure);
   let showLabels = options.labels ?? false;
@@ -80,42 +82,53 @@ export async function mountThreeBody(host, options = {}) {
   }
   /* iz tuvali: soldur (destination-out) + yeni parçaları toplamsal çiz */
   function paintTrails(dtGlobal) {
-    tctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    tctx.setTransform(dpr, 0, 0, dpr, 0, 0); hctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     for (const p of panels) {
-      if (p.cleared) { tctx.clearRect(p.rx, p.ry, p.rw, p.rh); p.cleared = false; }
+      if (p.cleared) { tctx.clearRect(p.rx, p.ry, p.rw, p.rh); hctx.clearRect(p.rx, p.ry, p.rw, p.rh); p.cleared = false; }
       if (p.alpha <= 0 || (view.mode === 'cinema' && view.morph < 1)) { p.seg = []; p.prev = null; continue; }   // sinemaya geçişte iz yeniden birikir
-      const f = clamp(Math.min(p.rw, p.rh) / 300, 1, 3), tau = p.tau * (view.mode === 'cinema' && view.morph >= 1 ? 1.7 : 1);   // büyük kadrajda vuruşlar ve iz ömrü büyür
-      const dp = dtGlobal * p.k; if (dp > 0) { tctx.globalCompositeOperation = 'destination-out'; tctx.fillStyle = `rgba(0,0,0,${1 - Math.exp(-dp / tau)})`; tctx.fillRect(p.rx, p.ry, p.rw, p.rh); }
+      const f = clamp(Math.min(p.rw, p.rh) / 300, 1, 2.3), tau = p.tau * (view.mode === 'cinema' && view.morph >= 1 ? 1.7 : 1);   // büyük kadrajda vuruşlar ve iz ömrü büyür
+      const dp = dtGlobal * p.k, tauH = tau * .16, rT = Math.exp(-dp / tau), rH = Math.exp(-dp / tauH);
+      if (dp > 0) { for (const [c, r] of [[tctx, rT], [hctx, rH]]) { c.globalCompositeOperation = 'destination-out'; c.fillStyle = `rgba(0,0,0,${1 - r})`; c.fillRect(p.rx, p.ry, p.rw, p.rh); } }
       if (!p.seg.length) continue;
-      tctx.globalCompositeOperation = 'lighter'; tctx.lineCap = 'butt'; tctx.lineJoin = 'round';   // düz uç: ardışık parçalar eklem noktasında üst üste binip parlak nokta bırakmaz
+      /* source-over + yuvarlak uç: ardışık kare parçaları eklemde ne boşluk ne parlak nokta bırakır (toplamsal karışım yalnız tuvaller
+         birleştirilirken); halo ve renk uzun ömürlü tuvale, beyaz-sıcak çekirdek kısa ömürlü tuvale */
+      for (const c of [tctx, hctx]) { c.globalCompositeOperation = 'source-over'; c.lineCap = 'round'; c.lineJoin = 'round'; }
       for (let b = 0; b < 3; b++) {
-        const start = p.prev ? p.prev : p.seg[0];
-        tctx.beginPath(); tctx.moveTo(X(p, start[2 * b]), Y(p, start[2 * b + 1])); for (const s of p.seg) tctx.lineTo(X(p, s[2 * b]), Y(p, s[2 * b + 1]));
-        tctx.strokeStyle = rgba(b, .07); tctx.lineWidth = 4.5 * f; tctx.stroke();     // yumuşak hale
-        tctx.strokeStyle = rgba(b, .62); tctx.lineWidth = 1.4 * f; tctx.stroke();     // orta (renk burada)
-        tctx.strokeStyle = 'rgba(255,255,255,.10)'; tctx.lineWidth = .7 * f; tctx.stroke();   // ince sıcak çekirdek
+        const start = p.prev ? p.prev : p.seg[0], end = p.seg[p.seg.length - 1]; const path = new Path2D(); path.moveTo(X(p, start[2 * b]), Y(p, start[2 * b + 1])); for (const s of p.seg) path.lineTo(X(p, s[2 * b]), Y(p, s[2 * b + 1]));
+        /* parça boyunca alfa gradyanı: eski uç bir önceki solmuş parçayla (r) aynı alfada başlar, yeni uç 1 — iz boyunca alfa sürekli e^(−yaş/τ),
+           basamak/boncuk yok; vuruşlar opak renkle, ışıma toplamsal birleşimle */
+        const gx0 = X(p, start[2 * b]), gy0 = Y(p, start[2 * b + 1]), gx1 = X(p, end[2 * b]), gy1 = Y(p, end[2 * b + 1]);
+        const grad = (c, col, r) => { if (Math.abs(gx1 - gx0) + Math.abs(gy1 - gy0) < .01) return col(1); const g = c.createLinearGradient(gx0, gy0, gx1, gy1); g.addColorStop(0, col(r)); g.addColorStop(1, col(1)); return g; };
+        const dimA = (k, a) => `rgba(${Math.round(RGB[b][0] * k)},${Math.round(RGB[b][1] * k)},${Math.round(RGB[b][2] * k)},${a})`;
+        /* yalnız ince renk gövdesi: hale, birleştirmede bulanıklaştırılmış kopyadan gelir (parça eklemleri yok → pürüzsüz ışıma) */
+        tctx.strokeStyle = grad(tctx, a => dimA(1, a * .9), rT); tctx.lineWidth = 1.4 * f; tctx.stroke(path);
+        hctx.strokeStyle = grad(hctx, a => `rgba(255,255,255,${a * .8})`, rH); hctx.lineWidth = .6 * f; hctx.stroke(path);   // beyaz-sıcak çekirdek (hızlı söner)
       }
       p.prev = p.seg[p.seg.length - 1]; p.seg = [];
     }
-    tctx.globalCompositeOperation = 'source-over';
+    tctx.globalCompositeOperation = 'source-over'; hctx.globalCompositeOperation = 'source-over';
   }
   /* t'ye git: baştan yeniden entegre; izi parça parça soldurarak yeniden kur (deterministik) */
   function seekTo(t) {
-    tctx.setTransform(dpr, 0, 0, dpr, 0, 0); tctx.clearRect(0, 0, W, H);
+    tctx.setTransform(dpr, 0, 0, dpr, 0, 0); tctx.clearRect(0, 0, W, H); hctx.setTransform(dpr, 0, 0, dpr, 0, 0); hctx.clearRect(0, 0, W, H);
     for (const p of panels) resetPanel(p);
-    let left = t; while (left > 1e-9) { const dt = Math.min(.05, left); for (const p of panels) stepPanel(p, dt); paintTrails(dt); left -= dt; }
+    /* ince parçalar (1/48 s): iz sürekli kalır; görünür pencerenin (en uzun 4τ) dışında kalan kısım yalnız entegre edilir, çizilmez */
+    const win = Math.max(...panels.map(p => 4 * p.tau * 1.7 / p.k));
+    let left = t; while (left > 1e-9) { const dt = Math.min(1 / 48, left); for (const p of panels) stepPanel(p, dt); if (left <= win) paintTrails(dt); else for (const p of panels) { p.prev = p.seg[p.seg.length - 1] || p.prev; p.seg = []; } left -= dt; }
   }
   function draw() {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     const pE = entrance.progress('panels');
-    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.drawImage(pathCv, 0, 0); ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(trailCv, 0, 0); ctx.restore();
+    /* birleştirme: soluk tam yol; iz rengi iki bulanık kopya (dar + geniş ışıma) + keskin gövde; beyaz-sıcak çekirdek — hepsi toplamsal (ışık) */
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.drawImage(pathCv, 0, 0); ctx.globalCompositeOperation = 'lighter';
+    const fb = clamp(Math.min(W, H) / 600, 1, 2.2) * dpr; ctx.filter = `blur(${(3 * fb).toFixed(1)}px)`; ctx.globalAlpha = .55; ctx.drawImage(trailCv, 0, 0); ctx.filter = `blur(${(12 * fb).toFixed(1)}px)`; ctx.globalAlpha = .5; ctx.drawImage(trailCv, 0, 0); ctx.filter = 'none'; ctx.globalAlpha = .95; ctx.drawImage(trailCv, 0, 0); ctx.globalAlpha = 1; ctx.drawImage(hotCv, 0, 0); ctx.restore();
     panels.forEach((p, i) => {
       const a = clamp(pE * panels.length * .5 - i * .35, 0, 1) * p.alpha * (i === view.idx ? view.fade : 1);
       if (a < 1 && p.alpha > 0) { ctx.fillStyle = `rgba(0,0,0,${1 - a})`; ctx.fillRect(p.rx, p.ry, p.rw, p.rh); }
       if (a <= 0) return;
       ctx.save(); ctx.globalAlpha = a; ctx.globalCompositeOperation = 'lighter';
       for (let b = 0; b < 3; b++) {
-        const f = clamp(Math.min(p.rw, p.rh) / 300, 1, 3), x = X(p, p.st[2 * b]), y = Y(p, p.st[2 * b + 1]), r = (2.4 + (p.m[b] > 1 ? .5 * Math.sqrt(p.m[b] - 1) : 0)) * f, R = 16 * f;
+        const f = clamp(Math.min(p.rw, p.rh) / 300, 1, 2.3), x = X(p, p.st[2 * b]), y = Y(p, p.st[2 * b + 1]), r = (2.4 + (p.m[b] > 1 ? .5 * Math.sqrt(p.m[b] - 1) : 0)) * f, R = 16 * f;
         const g = ctx.createRadialGradient(x, y, 0, x, y, R); g.addColorStop(0, rgba(b, .62)); g.addColorStop(.3, rgba(b, .24)); g.addColorStop(1, rgba(b, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = rgba(b, 1); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(x, y, r * .55, 0, Math.PI * 2); ctx.fill();
@@ -133,16 +146,16 @@ export async function mountThreeBody(host, options = {}) {
   }
   function resize() {
     dpr = Math.min(devicePixelRatio || 1, 2); W = Math.max(1, cv.clientWidth); H = Math.max(1, cv.clientHeight);
-    for (const c of [cv, trailCv, pathCv]) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
+    for (const c of [cv, trailCv, hotCv, pathCv]) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
     layout(); drawPaths(); seekTo(timeline.t); draw();
   }
   let active = options.active ?? true, rafId = 0, lastNow = 0;
   /* bir kare ilerlet (gerçek saniye): dışarıdan kare kare sürmek ve ölçmek için de kullanılır */
   function tickView(dt) {
     let relayout = false;
-    if (view.mode === 'cinema' && view.morph < 1) { view.morph = Math.min(1, view.morph + dt / .9); relayout = true; if (view.morph >= 1) { tctx.setTransform(dpr, 0, 0, dpr, 0, 0); tctx.clearRect(0, 0, W, H); for (const p of panels) { p.prev = null; p.seg = []; } } }
-    else if (view.mode === 'grid' && view.morph > 0) { view.morph = Math.max(0, view.morph - dt / .7); relayout = true; if (view.morph <= 0) { tctx.setTransform(dpr, 0, 0, dpr, 0, 0); tctx.clearRect(0, 0, W, H); for (const p of panels) { p.prev = null; p.seg = []; } } }
-    if (view.switching) { const sw = view.switching; sw.t += dt; if (sw.t < .55) view.fade = 1 - sw.t / .55; else if (!sw.done) { view.idx = sw.to; sw.done = true; relayout = true; tctx.setTransform(dpr, 0, 0, dpr, 0, 0); tctx.clearRect(0, 0, W, H); for (const p of panels) { p.prev = null; p.seg = []; } } else { view.fade = Math.min(1, (sw.t - .55) / .8); if (view.fade >= 1) view.switching = null; } }
+    if (view.mode === 'cinema' && view.morph < 1) { view.morph = Math.min(1, view.morph + dt / .9); relayout = true; if (view.morph >= 1) { tctx.setTransform(dpr, 0, 0, dpr, 0, 0); tctx.clearRect(0, 0, W, H); hctx.setTransform(dpr, 0, 0, dpr, 0, 0); hctx.clearRect(0, 0, W, H); for (const p of panels) { p.prev = null; p.seg = []; } } }
+    else if (view.mode === 'grid' && view.morph > 0) { view.morph = Math.max(0, view.morph - dt / .7); relayout = true; if (view.morph <= 0) { tctx.setTransform(dpr, 0, 0, dpr, 0, 0); tctx.clearRect(0, 0, W, H); hctx.setTransform(dpr, 0, 0, dpr, 0, 0); hctx.clearRect(0, 0, W, H); for (const p of panels) { p.prev = null; p.seg = []; } } }
+    if (view.switching) { const sw = view.switching; sw.t += dt; if (sw.t < .55) view.fade = 1 - sw.t / .55; else if (!sw.done) { view.idx = sw.to; sw.done = true; relayout = true; tctx.setTransform(dpr, 0, 0, dpr, 0, 0); tctx.clearRect(0, 0, W, H); hctx.setTransform(dpr, 0, 0, dpr, 0, 0); hctx.clearRect(0, 0, W, H); for (const p of panels) { p.prev = null; p.seg = []; } } else { view.fade = Math.min(1, (sw.t - .55) / .8); if (view.fade >= 1) view.switching = null; } }
     else if (view.mode === 'cinema' && view.morph >= 1 && view.dwell > 0) { view.dwellT += dt; if (view.dwellT >= view.dwell) { view.dwellT = 0; view.switching = { to: (view.idx + 1) % panels.length, t: 0, done: false }; } }
     if (relayout) { layout(); drawPaths(); }
   }

@@ -85,6 +85,11 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   background: var(--sf); border: 1px solid var(--rule); border-radius: 8px;
   padding: 8px 12px; display: inline-block; max-width: 440px;
   overflow-wrap: break-word; line-height: 1.45; }
+.linkler { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 4px; }
+.linkler a { display: inline-block; padding: 9px 16px; border: 1px solid var(--acc); border-radius: 999px; color: var(--acc);
+  text-decoration: none; font-size: 18px; letter-spacing: .02em; transition: background .15s, color .15s; }
+.linkler a:first-child { background: var(--acc); color: var(--bg); font-weight: 600; }
+.linkler a:hover { background: var(--acc); color: var(--bg); }
 .ac { display: inline-block; margin-top: 20px; color: var(--acc);
   text-decoration: none; font-size: 21px; border-bottom: 1px solid transparent; }
 .ac:hover { border-bottom-color: var(--acc); }
@@ -159,6 +164,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Sinematik Uzay Yolculuğu <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Sinematik Uzay Sahnesi</h2>
     <p class="hook">Slayt geçişi değil uzamsal yolculuk: Ay&#x27;ın yanındaki araca yaklaş, kanopiden süz, güvertedeki konsoldan bölüm seç — yörüngeye ya da gezgin vistasına.</p>
+
     <ul class="feats">
       <li>Tek dünya + kokpit kabuğu: penceredeki Ay senkron değil, sahnenin KENDİSİ</li>
       <li>φ³ ölçüşmez frekanslı &#x27;aktif tutunma&#x27; + tohumlu RCS pufları — tümü t&#x27;nin saf fonksiyonu</li>
@@ -186,6 +192,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Yörünge Sahnesi</h2>
     <p class="hook">Elemanları ver, gerçek koniği çizer: Hohmann transferi, Ay&#x27;a hiperbolik varış, yanma anında okunan ΔV.</p>
+
     <ul class="feats">
       <li>Üç yörünge kaynağı: Kepler elemanları · durum dizisi (veri) · RK4 itki</li>
       <li>Yanma işaretleri: alev, ΔV oku, öncesi-sonrası hayalet yörüngeler</li>
@@ -206,6 +213,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Araç Blokları</h2>
     <p class="hook">Beş parametrik uzay aracı + sinematik ateşleme sistemi: mach elmaslı alevler, ateşleme flaşı, çan kızarması.</p>
+
     <ul class="feats">
       <li>buildOrbiter · buildLander · buildRocket · buildCubesat · buildCapsule</li>
       <li>buildEngineFX: vakum · atmosfer · hover alev tipleri, gaz sürgüsü, Ateşle/Kes</li>
@@ -226,6 +234,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Ay&#x27;a Motorlu İniş</h2>
     <p class="hook">Üç fazlı iniş gerçek Ay yerçekimine karşı entegre edilir; yüzey artık gerçek 3B arazi — kraterler kendi gölgesini düşürür.</p>
+
     <ul class="feats">
       <li>~550 kraterli yer değiştirme arazisi: yükseltilmiş kenarlar, ejecta, mare sırtlı ufuk</li>
       <li>Frenleme → yaklaşma → dikey iniş; craft-effects hover alevi entegre</li>
@@ -246,6 +255,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Fırlatma ve Tırmanış</h2>
     <p class="hook">Rampadan yörüngeye gerçek entegre tırmanış: Max-Q hesaplanır, MECO ve SECO yörüngeden türetilir — zaman çizelgesine elle olay yazılmaz.</p>
+
     <ul class="feats">
       <li>US76 atmosferi (Dünya ile döner) + C_D(M) sürükleme + basınca bağlı Isp; RK4 0,05 s</li>
       <li>Dikey kalkış → pitch kick → yerçekimi dönüşü (α = 0) → kapalı-döngü 2. kademe → SECO</li>
@@ -266,6 +276,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Randevu ve Kenetlenme</h2>
     <p class="hook">Clohessy–Wiltshire ile gerçek göreli hareket: V-bar/R-bar yaklaşması, KOS, koridor, glideslope — ve &#x27;hedefe doğru it&#x27; hatasının neden geriye sürüklediği.</p>
+
     <ul class="feats">
       <li>LVLH çerçeve, kapalı biçim CW STM; hop = Φ_rv⁻¹ hedeflemesi, ΔV sahnede okunur</li>
       <li>V-bar beklemesi doğal, R-bar beklemesi sürekli itkili (a_x = −3n²x) — HUD mm/s² gösterir</li>
@@ -286,6 +297,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>3B Yörünge + 2B Yer İzi</h2>
     <p class="hook">Aynı yörünge iki görünümde: eylemsiz yörünge dönen Dünya&#x27;nın üstünde, alt-uydu noktası haritada — iz çizilmez, koordinat dönüşümünden türetilir.</p>
+
     <ul class="feats">
       <li>ECI Kepler → θ = θ₀ + ω_e t ile ECEF → lat = asin(z/r), lon = atan2(y,x) − θ; sarım temiz kesilir</li>
       <li>Eğiklik · RAAN · irtifa · e kaydırıcıları izi gerçekten değiştirir; tur başına kayma −ω_e·T okunur</li>
@@ -306,6 +318,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Porkchop / Fırlatma Penceresi</h2>
     <p class="hook">Kalkış × varış ızgarasının her hücresi bir Lambert çözümü: C3 yüzeyi, TOF eş-eğrileri, minimum ve seçili transferin heliosantrik geometrisi — hazır ısı haritası yok.</p>
+
     <ul class="feats">
       <li>JPL yaklaşık Kepler elemanları (Standish) + evrensel-değişken Lambert, kısa/uzun yol; 3.600 çözüm ~40 ms</li>
       <li>C3 · v∞ varış · ΔV toplam yüzeyleri, marching-squares konturlar, ızgara minimumu işaretli</li>
@@ -326,6 +339,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Takımyıldızı Kapsaması</h2>
     <p class="hook">Walker Delta/Star parametrelerinden üretilen takımyıldız: kapsama konileri, ayak izleri, katlılık boyaması, kapsanmayan bölgeler ve zaman taramasıyla en uzun boşluk.</p>
+
     <ul class="feats">
       <li>i:T/P/F sözdizimi; düzlem RAAN&#x27;ları ve faz parametreden — uydu rastgele konmaz</li>
       <li>Ayak izi λ = acos(R/(R+h)·cos ε) − ε; GPS 71,2°, Iridium 19,9° doğrulanmış</li>
@@ -346,6 +360,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Giriş Koridoru</h2>
     <p class="hook">Koridor iki dekoratif eğri değil: sığ girişler atmosferden sekip çıkar, dik girişler g ve ısı tavanını aşar — sınırlar γ taraması ve bisection ile BULUNUR.</p>
+
     <ul class="feats">
       <li>Düzlemsel giriş denklemleri (RK4), US76 atmosferi, L/D ve yatış açısı; Sutton–Graves ısı akısı ve ∫q̇ ısı yükü</li>
       <li>(h, v) düzleminde kapalı biçim eş-yavaşlama ve eş-ısı-akısı eğrileri; aşma ve altında-kalma sınır yörüngeleri</li>
@@ -366,6 +381,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Formasyon Uçuşu</h2>
     <p class="hook">Şef/deputy göreli yörüngeleri: PCO&#x27;nun y–z&#x27;de daire, düzlem-içi 2:1 elips çizdiği ve 5 cm/s&#x27;lik hız hatasının formasyonu nasıl dağıttığı — CW ile.</p>
+
     <ul class="feats">
       <li>PCO · GCO · düzlem-içi elips · lider–takipçi (GRACE tarzı) · sürüklenmesiz koşul ihlali; özel deputy listesi</li>
       <li>Kapalı biçim başlangıç durumları (ẏ₀ = −2n x₀); sekülar sürüklenme −(6n x₀ + 3ẏ₀) tabloda</li>
@@ -386,6 +402,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>CR3BP ve Lagrange Noktaları</h2>
     <p class="hook">L1–L5 göz kararı konmaz, ∇Ω = 0&#x27;dan çözülür; Jacobi sabiti düşerken yasak bölgeler L1 → L2 → L3 → L4/L5 sırasıyla açılır — kaydırıcıyla izlenir.</p>
+
     <ul class="feats">
       <li>Dünya–Ay · Güneş–Dünya · Güneş–Jüpiter; gradyan artıkları ~1e−16 tabloda; Güneş–Dünya L1 ≈ 1,49 milyon km</li>
       <li>Sıfır-hız eğrileri 2Ω = C (marching squares) + yasak bölge boyaması; etkin potansiyel alanı</li>
@@ -406,6 +423,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Yerçekimi Yardımı ve B-Düzlemi</h2>
     <p class="hook">Gezegen aracı &#x27;öne çekmez&#x27;: gezegen-göreli |v∞| korunur, yön δ döner; heliosantrik |V| çerçeve değişimiyle değişir — üç görünüm, tek model.</p>
+
     <ul class="feats">
       <li>Gezegen-göreli hiperbol: asimptotlar, enberi, δ = 2 asin(1/e), B-düzlemi çizgisi ve B vektörü, hareket eden araç</li>
       <li>Heliosantrik: önce/sonra yörüngeler + hız üçgeni V = V_p + v∞ (|v∞| çemberi); ΔV = 2v∞ sin(δ/2), ΔE = V_p·Δv∞</li>
@@ -426,6 +444,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Yönelim / GNC Laboratuvarı</h2>
     <p class="hook">Dönen küp değil GNC: Euler denklemleri, kuaterniyon PD, tepki tekerleği doyması, Dzhanibekov devrilmesi ve gimbal kilidi — hepsi entegre.</p>
+
     <ul class="feats">
       <li>I ω̇ = −ω×(Iω + h_w) + τ − ḣ_w; q̇ = ½ q⊗ω (RK4, |q| = 1); K_p = Iω_n², K_d = 2ζω_n I</li>
       <li>Tekerlekler: τ_max ve h_max sınırı; sabit dış torkta h_max/τ sürede doyma → kontrol kaybı (momentum boşaltma dersi)</li>
@@ -446,6 +465,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Yörünge Pertürbasyonları</h2>
     <p class="hook">Pertürbasyon modelden çıkar: J2 düğüm gerilemesi RK4&#x27;ten, analitik sekülar doğru üstüne; sürükleme bozunması, SRP, Ay–Güneş sürüklenmesi.</p>
+
     <ul class="feats">
       <li>İki-cisim + J2 + sürükleme (üstel-tablo termosferi, dönen atmosfer) + SRP (silindirik gölge) + Ay/Güneş</li>
       <li>Ω̇ sayısal vs analitik ±0,5 %; Molniya kritik eğiklikte ω sabit; SSO +0,986°/gün; H_z korunumu HUD&#x27;da</li>
@@ -466,6 +486,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Tutulma, Örtülme ve Görünürlük</h2>
     <p class="hook">Umbra/penumbra girişleri, istasyon AOS/LOS ve sensör/röle örtülmeleri elle yazılmaz: sonlu Güneş diski, dönen Dünya ve çizgi-görüş geometrisinden türetilir.</p>
+
     <ul class="feats">
       <li>Konik gölge fonksiyonu ν (disk örtüşmesi); β açısı ve silindirik limit β* = asin(R/r); ISS umbra ≈ 33 dk/tur</li>
       <li>Yer istasyonu ECEF&#x27;te dönen Dünya ile: yükseklik/azimut, maske açısı, AOS/LOS bisection</li>
@@ -486,6 +507,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Yakın Geçiş ve Kovaryans</h2>
     <p class="hook">İki nokta neredeyse çarpışıyor değil: TCA bulunur, kovaryanslar karşılaşma düzlemine izdüşürülür, 2B P_c hesaplanır — ve seyrelme eğrisi &#x27;büyük belirsizlik güvenli değildir&#x27; der.</p>
+
     <ul class="feats">
       <li>TCA menzil minimizasyonuyla (altın oran); karşılaşma çerçevesi v_rel&#x27;e dik; TCA&#x27;da r_rel ⊥ v_rel denetimde</li>
       <li>RTN kovaryansları ECI&#x27;ye döndürülüp toplanır, düzleme izdüşürülür: 1/2/3σ elipsleri, Mahalanobis uzaklığı</li>
@@ -506,6 +528,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Üç-Cisim Durumları</h2>
     <p class="hook">Üç-cisim problemi &#x27;çözümsüz&#x27; değil, kaotik: 20 panoda bilinen periyodik çözümler canlı entegre — figure-8, kelebekler, güveler, Lagrange, Euler, Broucke — ve karşıtlık için kaçışla biten Pisagor problemi.</p>
+    <p class="linkler"><a href="../presets/three_body_states/index.html" target="_blank" rel="noopener">Sayfayı aç ↗</a><a href="../presets/three_body_states/index.html?sinema=1" target="_blank" rel="noopener">Sinema modu</a><a href="../presets/three_body_states/index.html?sinema=1&amp;tam=1&amp;sure=30" target="_blank" rel="noopener">Ekran koruyucu · tam ekran</a></p>
     <ul class="feats">
       <li>Šuvakov–Dmitrašinović (2013) eşit-kütle aileleri: figure-8, butterfly I–III, bumblebee, moth I–III, goggles, dragonfly, yarn, yin-yang I/II; başlangıç koşulları literatürden</li>
       <li>Lagrange eşkenar (eşit ve 1·2·3 kütle, ω² = GM/d³) ve Euler doğrusal (ω² = 5G/4a³) analitik; Broucke A2 (1975); Pisagor/Burrau 3·4·5 kaotik</li>
@@ -526,6 +549,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Etki Küresi Kâşifi</h2>
     <p class="hook">r_SOI = a(m/M)^(2/5): Dünya&#x27;nın 924 647 km&#x27;lik etki küresi, Ay&#x27;ınki ve Hill küresi gerçek ölçekte; park yörüngesinden v∞ hedefli hiperbol kabuğa varır, çerçeve el değiştirir — yamalı-konik artığı sayıyla.</p>
+
     <ul class="feats">
       <li>r_SOI ve Hill GM/yarı-büyük eksenden hesaplanır (Dünya 924 647 km, Ay 66 183 km, Jüpiter 48,2 M km — literatürle denetimde); Laplace oranları log–log panelde, kesişim bisection (≈ 0,87 r_SOI)</li>
       <li>Kalkış hiperbolü a = −μ/v∞², e = 1 + r_p v∞²/μ; SOI&#x27;ye süre hiperbolik anomaliyle (Mars v∞ 2,95 km/s → 3,15 gün, ΔV 3,613 km/s); SOI&#x27;de |v| − v∞ artığı (%4,8)</li>
@@ -546,6 +570,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Ay Serbest Dönüş Yörüngesi</h2>
     <p class="hook">LEO&#x27;dan TLI ΔV ve faz açısı taramasıyla Dünya–Ay CR3BP&#x27;de manevrasız geri dönen 8 figürü: perilune ~1 000 km, dönüş perigee 100 km, ~6 gün — Apollo 13&#x27;ün yolu.</p>
+
     <ul class="feats">
       <li>core/astro-cr3bp adaptif adımlı RK4 (Jacobi sapması 1e−6); LEO → dönen çerçeve dönüşümü v_R = v_I − ω × r; perilune ve dönüş perigee sayısal</li>
       <li>(ΔV, θ₀) ızgara taraması + satır başına bisection: dönüş perigee 100 km çözümleri; ΔV 3,13–3,16 km/s, Ay&#x27;a ~3 gün, toplam ~6–7 gün (denetimde)</li>
@@ -566,6 +591,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Fırlatma Penceresi ve Azimut</h2>
     <p class="hook">sin β = cos i / cos φ: sahadan hedef düzleme azimut, Dünya dönmesi düzeltmesi, günde iki fırsat (LST) ve gecikme → düzlem değişimi ΔV → pencere genişliği.</p>
+
     <ul class="feats">
       <li>Küresel trigonometri (Vallado 6.4): eylemsiz azimut, düğüm uzaklığı λ_u, LST = Ω + λ_u → UTC; KSC→ISS 45,0°/135,0° denetimde</li>
       <li>Dönme düzeltmesi: v_rel = V_bo(sin β, cos β) − (ω_e R cos φ, 0) → uçulan azimut 42,8°, tasarruf ~280 m/s (ekvator 465 m/s)</li>
@@ -586,6 +612,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>GEO İstasyon Tutma Bütçesi</h2>
     <p class="hook">Doğu–batı sürüklenme gerçek C̄22/S̄22&#x27;den, kuzey–güney Ay+Güneş 1 yıllık RK4&#x27;ten: kararlı 75° D / 105° B, ~1,7 m/s/yıl DB, ~46 m/s/yıl KG, 15 yıl yakıt kimyasal vs elektrikli.</p>
+
     <ul class="feats">
       <li>gravity_field&#x27;in gerçek EGM96 tesseral katsayılarından teğetsel ivme; denge boylamları kök olarak bulunur (kararlı 75,1° D / 104,9° B — literatürle denetimde)</li>
       <li>orbit_perturbations üçüncü-cisim modeliyle eğiklik vektörü izi: Δi ≈ 0,86°/yıl → ΔV_KG = V_geo·Δi ≈ 46 m/s/yıl (literatür 0,75–0,95°/yıl)</li>
@@ -606,6 +633,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Giriş Dağılımı (Monte Carlo)</h2>
     <p class="hook">İniş noktası bir sayı değil bir dağılımdır: γ/v/ρ/L/D/kütle/yatış sapmaları → menzil histogramı, 3σ, duyarlılık payları ve doğrusal RSS ↔ Monte Carlo karşılaştırması.</p>
+
     <ul class="feats">
       <li>reentry_corridor çekirdeğini yeniden kullanır (US76 + termosfer, Sutton–Graves); tohumlu Gauss sapmalar, 100–500 örnek</li>
       <li>Tek-değişken merkezi-fark duyarlılıkları ∂s/∂x; RSS σ_s ile Monte Carlo σ_s oranı doğrusallık ölçüsü (denetimde 0,7–1,3)</li>
@@ -626,6 +654,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Tisserand Grafiği</h2>
     <p class="hook">Çoklu kütleçekim yardımı tasarımının haritası: gezegen sabit-v∞ eğrileri, geçişte eğri boyunca kayış (|Δα| ≤ δ_max) ve VEEGA gibi dizilerin geometrik erişilebilirliği.</p>
+
     <ul class="feats">
       <li>T = a_P/a + 2√(a/a_P(1−e²)) geçişte korunur, v∞ = V_P√(3 − T); eğri boyunca T sabitliği ve tersinirlik denetimde</li>
       <li>δ_max = 2 asin(1/(1 + r_p v∞²/μ_P)) ile erişilebilir yay; Dünya rezonans eğrileri (a = a_E(k/m)^{2/3})</li>
@@ -646,6 +675,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Düşük İtkili Transfer Laboratuvarı</h2>
     <p class="hook">Elektrikli itki spirali: ΔV Hohmann&#x27;ın üstüne çıkar, yakıt kat kat azalır — sayısal spiral Edelbaum analitik limitiyle ±0,5 % örtüşür.</p>
+
     <ul class="feats">
       <li>Sürekli teğetsel itki, değişken kütle RK4 (adım = periyot/200); ΔV = ∫T/m dt; hedef yarı-büyük eksende durur</li>
       <li>Edelbaum ΔV = √(v₀² + v₁² − 2v₀v₁cos(πΔi/2)) ve yaw kanunu; Hohmann ve Tsiolkovsky karşılaştırması (Isp 1800 vs 320)</li>
@@ -666,6 +696,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Yörünge Belirleme (EKF) Laboratuvarı</h2>
     <p class="hook">Yer istasyonu menzil/menzil-hızı ölçümlerinden genişletilmiş Kalman filtresi: yakınsama, 3σ zarfı, NEES/NIS tutarlılığı, gözlenebilirlik ve model hatası.</p>
+
     <ul class="feats">
       <li>Gerçek: iki-cisim + J2 RK4; istasyonlar döner, yükseklik maskesi, tohumlu Gauss gürültü (σρ 10 m, σρ̇ 1 cm/s)</li>
       <li>EKF: RK4 haritasının sonlu-fark STM&#x27;si, sürekli beyaz-ivme Q, analitik H (menzil, menzil-hızı), Joseph biçimi; NEES = eᵀP⁻¹e ve NIS denetimde (beklenen 6 ve 1)</li>
@@ -686,6 +717,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Halo Yörüngeleri ve Değişmez Manifoldlar</h2>
     <p class="hook">Richardson tahmini + 6×6 STM düzeltmesiyle halo ailesi; monodromi özvektörlerinden kararlı/kararsız manifold tüpleri — Dünya–Ay ve Güneş–Dünya L1/L2.</p>
+
     <ul class="feats">
       <li>Richardson (1980) 3. mertebe açılım → z₀ sabit, (x₀, ẏ₀) sönümlü Newton (y = 0&#x27;da ẋ = ż = 0); Az sürekliliği ve adım yarılamalı aile</li>
       <li>Güneş–Dünya L2 halo Az 110 000 km: x₀ = 1,00833, T = 180 gün literatürle denetimde; periyodiklik 1e−8, Jacobi 1e−12</li>
@@ -706,6 +738,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Lambert Transfer Kâşifi</h2>
     <p class="hook">r1, r2, Δθ ve TOF&#x27;tan transfer yayı, v1/v2 ve ΔV bütçesi: Lambert&#x27;in anatomisi, kısa/uzun yol ve TOF taramasının Hohmann&#x27;a inişi.</p>
+
     <ul class="feats">
       <li>Paylaşılan evrensel-değişken Lambert (porkchop ile aynı çözücü); Kepler yayı uç noktası r2&#x27;ye ~1e−7 km</li>
       <li>ΔV₁ = |v1 − v_c1|, ΔV₂ = |v_c2 − v2| okları, Δθ yayı, a/e/r_p/r_a; Δθ = 180° limitinde Hohmann&#x27;a 1e−4 eşleşme denetimde</li>
@@ -726,6 +759,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Yörünge Sahnesi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Küresel Harmonik Yerçekimi Alanı</h2>
     <p class="hook">Derece/mertebe, kesme ve tek-derece katkısı: jeoit ve anomali haritası tam normalize Legendre ile hesaplanır — düşük derece gerçek, üstü açıkça SENTETİK.</p>
+
     <ul class="feats">
       <li>U = (GM/r)Σ(R/r)^l ΣP̄_lm(C̄ cos mλ + S̄ sin mλ); kararlı özyineleme; ortonormallik ve C̄20 = −J2/√5 denetimde</li>
       <li>C̄20, C̄22/S̄22, C̄30, C̄40 EGM96&#x27;dan (yuvarlatılmış); geri kalanı Kaula 1e−5/l² sentetik — sahne her karede uyarır</li>
@@ -753,6 +787,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">ML Sahneleri <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Kayıp Yüzeyi</h2>
     <p class="hook">SGD, momentum ve Adam aynı gerçek gradyan üzerinde yarışır — izler süs değil, entegrasyondur.</p>
+
     <ul class="feats">
       <li>Analitik bileşik yüzey + kapalı biçim ∇f</li>
       <li>Üç iyileştiricinin adım adım izleri</li>
@@ -772,6 +807,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">ML Sahneleri <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Dikkat Akışı</h2>
     <p class="hook">softmax(QKᵀ/√d) sahnede gerçekten hesaplanır; yayların kalınlığı ağırlığın kendisidir.</p>
+
     <ul class="feats">
       <li>Jeton şeritleri üzerinde ağırlıklı dikkat yayları</li>
       <li>Katman katman ilerleme, kafa seçimi</li>
@@ -791,6 +827,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">ML Sahneleri <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Mimari Kurucu</h2>
     <p class="hook">Mimariyi tarif et, sahne onu blok blok kursun: her katman yerine otururken şekli ve parametre sayısı belirir.</p>
+
     <ul class="feats">
       <li>Gerçek şekil çıkarımı: out = ⌊(in+2p−k)/s⌋+1, stride ve dolgu dahil</li>
       <li>Parametre sayıları doğrulanmış — küçük CNN 225.034 (Keras MNIST ile birebir)</li>
@@ -811,6 +848,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">ML Sahneleri <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Katman Blokları</h2>
     <p class="hook">On katman tipi, tek elden: ne yaptıkları renk kodundan değil geometrilerinden okunur.</p>
+
     <ul class="feats">
       <li>buildConv · buildPool · buildDense · buildFlatten · buildNorm · buildActivation</li>
       <li>buildAttention · buildResidual · buildInput · buildOutput — donmuş API</li>
@@ -831,6 +869,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">ML Sahneleri <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Evrişimli Görü</h2>
     <p class="hook">Çekirdek görüntü üzerinde kayarken dokuz çarpım, toplamı ve doğan çıktı pikseli ekranda — evrişim gerçekten hesaplanır.</p>
+
     <ul class="feats">
       <li>Sobel · Laplace · Gauss + tohumlu çekirdekler; altı filtre altı öznitelik haritası</li>
       <li>Adım ve dolgu değiştirilebilir; çıktı boyutu formülü canlı doğrulanır</li>
@@ -851,6 +890,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">ML Sahneleri <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Kayıp Fonksiyonları</h2>
     <p class="hook">Aykırı değeri sürükleyin: MSE&#x27;nin gradyanı doğrusal büyürken MAE ve Huber tavana çarpıp orada kalır.</p>
+
     <ul class="feats">
       <li>MSE · MAE · Huber(δ) · log-cosh · BCE/CCE · hinge · focal(γ) — eğri VE türev</li>
       <li>Türevler merkezî farkla doğrulandı (en kötü sapma 4,3e−6)</li>
@@ -871,6 +911,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">ML Sahneleri <span class="badge klasik">KLASİK</span></p>
     <h2>Sinir Ağı Yürüyüşü</h2>
     <p class="hook">İleri besleme ağını katman katman yürüten klasik anlatım sahnesi.</p>
+
     <ul class="feats">
       <li>Aktivasyonların katman sırasıyla canlanması</li>
       <li>Ağırlık vurguları ve akış okları</li>
@@ -896,6 +937,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Havacılık ve Akışkanlar <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Uçak Blokları</h2>
     <p class="hook">Kanatlar kutu değil: gerçek NACA kesitinden loft edilir ve referans geometri meshi üreten tablodan ÖLÇÜLÜR.</p>
+
     <ul class="feats">
       <li>Altı arketip: yolcu uçağı · savaş uçağı · ojiv delta · waverider · planör · uçan kanat</li>
       <li>Açıklık oranı 0,37&#x27;den 31,3&#x27;e — tek sayı uçağın ne işe yaradığını anlatır</li>
@@ -916,6 +958,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Havacılık ve Akışkanlar <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Profil Etrafında Akım</h2>
     <p class="hook">Doğrusal şiddetli vorteks paneli + Thwaites–Michel–Head sınır tabakası. Ekrandaki hiçbir eğri elle çizilmedi.</p>
+
     <ul class="feats">
       <li>Doğrulandı: α_L0 −2,15° (lit. −2,1) · M_kritik 0,744 (lit. 0,74) · durma Cp 0,9957</li>
       <li>Kutta koşulu KAPATILABİLİR: Γ = 0, kaldırma sıfır, akım keskin firardan dolanır</li>
@@ -936,6 +979,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Havacılık ve Akışkanlar <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Şok ve Genleşme Dalgaları</h2>
     <p class="hook">Açılar θ-β-M bağıntısından çözülür; parçacıklar şoku geçerken aynı anda döner, yavaşlar ve sıklaşır.</p>
+
     <ul class="feats">
       <li>NACA 1135 tablolarıyla dört hane uyum: M=2, θ=10° → β 39,31° · M₂ 1,6405 · p₂/p₁ 1,7066</li>
       <li>θ_max aşılınca şok KOPAR: yapışık şok gider, önde Billig yay şoku durur</li>
@@ -956,6 +1000,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Havacılık ve Akışkanlar <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Kármán Vorteks Caddesi</h2>
     <p class="hook">Salınım hiçbir yerde programlanmadı: kafes Boltzmann denklemleri çözülüyor ve cadde kendiliğinden doğuyor.</p>
+
     <ul class="feats">
       <li>ÖLÇÜLEN Strouhal 0,157 · Roshko bağıntısı 0,167 — %6,2 fark, elle konsa bu karşılaştırmanın anlamı olmazdı</li>
       <li>Re 40&#x27;ta salınım YOK (kritik Re ≈ 47&#x27;nin altı), Re 100&#x27;de tam cadde — geçiş kendiliğinden</li>
@@ -983,6 +1028,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Haberleşme <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Anten ve Yer İstasyonu</h2>
     <p class="hook">Cassegrain çanak; hüzme konisinin açısı kazancı veren aynı λ&#x27;dan gelir — banda basınca ikisi birlikte değişir.</p>
+
     <ul class="feats">
       <li>Doğrulandı: DSN 34 m X bandı 68,5 dBi (literatür ~68,3), hüzme 4,4 yay dakikası</li>
       <li>Verim tek sayı değil: gölgeleme ve Ruze yüzey terimi geometriden HESAPLANIR</li>
@@ -1003,6 +1049,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Haberleşme <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Bağlantı Bütçesi</h2>
     <p class="hook">Şelale, 282 dB&#x27;lik serbest uzay kaybı ile 68 dB&#x27;lik anten kazancını aynı eksende toplar; sonuç tek sayı: marj.</p>
+
     <ul class="feats">
       <li>Doğrulandı: GEO 12 GHz 205,1 dB (literatür 205,2) · Mars uzak X bandı 282,5 dB</li>
       <li>Aynı bağlantı dört bantta: S −13,8 dB marj, X −2,7, Ku +1,3, Ka +6,5</li>
@@ -1030,6 +1077,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Gök Cisimleri ve Fonlar <span class="badge guncel">GÜNCEL</span></p>
     <h2>Güneş</h2>
     <p class="hook">Granülasyon, tayflı korona ve ışık halkası — kapanış slaytlarının kahramanı.</p>
+
     <ul class="feats">
       <li>Katmanlı korona, yumuşak düşüşlü parlaklık</li>
       <li>Deste paletine uyan sıcaklık tonları</li>
@@ -1048,6 +1096,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Gök Cisimleri ve Fonlar <span class="badge guncel">GÜNCEL</span></p>
     <h2>Ay</h2>
     <p class="hook">Gerçek albedo ve yükseklik dokularıyla dönen, sürüklenebilir Ay.</p>
+
     <ul class="feats">
       <li>Gerçek NASA dokuları</li>
       <li>Fare ile döndürme, atalet</li>
@@ -1066,6 +1115,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Gök Cisimleri ve Fonlar <span class="badge guncel">GÜNCEL</span></p>
     <h2>Dünya</h2>
     <p class="hook">Gündüz-gece dokuları ve atmosfer kenarıyla Dünya küresi.</p>
+
     <ul class="feats">
       <li>Gündüz / gece doku geçişi</li>
       <li>Atmosfer saçılım kenarı</li>
@@ -1084,6 +1134,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Gök Cisimleri ve Fonlar <span class="badge guncel">GÜNCEL</span></p>
     <h2>Gezegenler</h2>
     <p class="hook">Gezegen aileleri tek sahnede — karşılaştırmalı anlatım için.</p>
+
     <ul class="feats">
       <li>Gerçek doku seti</li>
       <li>Ölçek ve sıralama anlatımı</li>
@@ -1102,6 +1153,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Gök Cisimleri ve Fonlar <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Kozmos Fonu</h2>
     <p class="hook">ESO&#x27;nun 360° Samanyolu panoraması (S. Brunier) gerçek doku olarak — fon artık süs değil, gökyüzünün kendisi.</p>
+
     <ul class="feats">
       <li>ESO/S. Brunier panoraması, CC BY 4.0 — kredi zorunlu</li>
       <li>Prosedürel yıldız katmanları + derinlik paralaksı</li>
@@ -1121,6 +1173,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Gök Cisimleri ve Fonlar <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Aurora</h2>
     <p class="hook">Renkler keyfi değil: atom yoğunluğunu artırın, 630 nm kırmızı çarpışmayla fiziksel olarak sönsün.</p>
+
     <ul class="feats">
       <li>Emisyon çizgisi sürgüleri: 557,7 yeşil · 630,0 kırmızı · 427,8 mavi · N₂ pembe</li>
       <li>Sönümleme gerçek: τ≈110 s&#x27;lik O(¹D) yoğun havada ışıyamaz — kırmızı yalnız ≳200 km</li>
@@ -1141,6 +1194,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Gök Cisimleri ve Fonlar <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>JWST Kaşifi</h2>
     <p class="hook">On gerçek James Webb karesi, görsel olarak doğrulanmış 35 ilgi noktası; yaylı kamera hedefe süzülür.</p>
+
     <ul class="feats">
       <li>Yay-sönüm kamera (k=120, c=22), log uzayında yakınlaşma</li>
       <li>Her karede adlandırılmış ilgi noktaları ve anlatı metni</li>
@@ -1167,6 +1221,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Denklem ve Anlatım <span class="badge guncel">GÜNCEL</span></p>
     <h2>Denklem Kalemi</h2>
     <p class="hook">Denklemi bir el yazar gibi çizer — kalem izi, gerçek yazma temposu.</p>
+
     <ul class="feats">
       <li>Vuruş sırasına sadık çizim</li>
       <li>Desteyle aynı TeX dizgisi</li>
@@ -1185,6 +1240,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Denklem ve Anlatım <span class="badge guncel">GÜNCEL</span></p>
     <h2>Türetme Adımları</h2>
     <p class="hook">Terim terim türetme: her adımda ne değişti, göz kaybetmeden izler.</p>
+
     <ul class="feats">
       <li>Terim vurgulama ve taşıma</li>
       <li>Adım adım ilerleme kontrolü</li>
@@ -1203,6 +1259,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Denklem ve Anlatım <span class="badge guncel">GÜNCEL</span></p>
     <h2>Figür Anlatımı</h2>
     <p class="hook">Bir figürün üzerinde adım adım işaretli anlatım — bakışı yöneten oklar ve maskeler.</p>
+
     <ul class="feats">
       <li>Adımlı vurgu bölgeleri</li>
       <li>Karartma maskesi ile odak</li>
@@ -1221,6 +1278,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Denklem ve Anlatım <span class="badge klasik">KLASİK</span></p>
     <h2>Zaman Çizelgesi</h2>
     <p class="hook">Dallanan kronoloji ağacı — tarihsel akış slaytları için.</p>
+
     <ul class="feats">
       <li>Dallı zaman çizgisi</li>
       <li>Aşamalı ortaya çıkış</li>
@@ -1246,6 +1304,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Grafik Motoru</h2>
     <p class="hook">Koreografili grafik motoru: eksenler süpürülür, çizgi komet başıyla çizilir, veri güncellemesi delta çipleriyle akar.</p>
+
     <ul class="feats">
       <li>enter(): eksen → grid → tik → veri; komet başı + canlı odometre okuması</li>
       <li>setData(): FLIP geçişi, eksen tik&#x27;leri odometre gibi yeniden numaralanır</li>
@@ -1266,6 +1325,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge guncel">GÜNCEL</span></p>
     <h2>Hareket Primitifleri</h2>
     <p class="hook">Motion-primitives&#x27;ten uyarlanan giriş efektleri: odometre sayaçlar, harf harf başlıklar, yumuşak beliriş.</p>
+
     <ul class="feats">
       <li>Odometre sayı akışı</li>
       <li>Kademeli harf/kelime girişi</li>
@@ -1285,6 +1345,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Tablo Sahnesi</h2>
     <p class="hook">Tablolar sahneye çıkar: odometre silindirleri, toplam satırına akan ışık izleri, FLIP sıralama, sütun düellosu.</p>
+
     <ul class="feats">
       <li>Yönetmenli giriş + gerçek odometre dolumu (data-count)</li>
       <li>data-total-of: toplam hücresine süzülen akış izi — toplamın kaynağı görünür</li>
@@ -1305,6 +1366,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge guncel">GÜNCEL</span></p>
     <h2>Slayt Geçişleri</h2>
     <p class="hook">Sayfalar arası sinematik geçişler ve morph sürekliliği — kesme yok, akış var.</p>
+
     <ul class="feats">
       <li>Yön duyarlı kaydırma ve perde geçişleri</li>
       <li>Ortak öğe morph&#x27;u</li>
@@ -1323,6 +1385,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Veri, Grafik ve Hareket <span class="badge guncel">GÜNCEL</span></p>
     <h2>Etkileşim Efektleri</h2>
     <p class="hook">İmleç ve odak tepkileri: mıknatıs düğmeler, eğilen kartlar, iz bırakan vurgular.</p>
+
     <ul class="feats">
       <li>Hover / odak mikro animasyonları</li>
       <li>Dokunmatik güvenli davranış</li>
@@ -1348,6 +1411,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Tasarım Sistemi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Kompozisyon Kılavuzu</h2>
     <p class="hook">Üçler, çerçeve içinde çerçeve, yönlendiren çizgiler — her ilke önce/sonra ve altında canlı ölçümle.</p>
+
     <ul class="feats">
       <li>olcCompozisyon(): kesişime uzaklık, optik merkez sapması, boş alan oranı</li>
       <li>Açılıp kapanan kılavuz katmanı; dışa aktarımda tek piksel çizmez</li>
@@ -1368,6 +1432,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Tasarım Sistemi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Tipografi Sistemi</h2>
     <p class="hook">Yedi açık lisanslı aile ve altı görüntü muamelesi — kraterli Ay başlığı dahil.</p>
+
     <ul class="feats">
       <li>Türkçe üç yolla doğrulandı: cmap · gerçek render · yedek-font sondası</li>
       <li>Orbitron ELENDİ: latin-ext altkümesi yok, ğ Ğ İ ş Ş taşımıyor</li>
@@ -1388,6 +1453,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Tasarım Sistemi <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Palet Galerisi</h2>
     <p class="hook">37 palet ve 8 geçiş, ölçülmüş kontrastlarıyla: ikili paletler açık ve koyu eşiyle yan yana.</p>
+
     <ul class="feats">
       <li>data-palette ile tek satırda tema; --data-1..6 ve --ramp-seq/div jetonları</li>
       <li>Her kontrast WCAG ile ÖLÇÜLDÜ; eşiği geçmeyen çift &#x27;yalnız gösterim&#x27; damgalı</li>
@@ -1415,6 +1481,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">İkon Katmanları <span class="badge cekirdek">ÇEKİRDEK</span></p>
     <h2>Alan İkonları</h2>
     <p class="hook">Matematikten itkiye 276 duotone ikon, sekiz aile, tek elden: .16 dolgu + 1,8 kontur + tek dolu odak.</p>
+
     <ul class="feats">
       <li>Aileler: matematik · sinyal-kontrol · fizik · astrodinamik · GNC · itki · roket-uydu · ML-kozmos</li>
       <li>Bilimsel dürüstlük: gerçek nav-ball işaretleri, açık hiperbol</li>
@@ -1434,6 +1501,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">İkon Katmanları <span class="badge guncel">GÜNCEL</span></p>
     <h2>Utility İkonlar</h2>
     <p class="hook">168 ince kontur ikon — ok, durum, gezinme gibi tesisat işleri için; duotone ile aynı slaytta karışmaz.</p>
+
     <ul class="feats">
       <li>Lucide/Tabler kökenli, lisansları pakette</li>
       <li>validate-icon-usage.mjs karışımı uyarır</li>
@@ -1452,6 +1520,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">İkon Katmanları <span class="badge guncel">GÜNCEL</span></p>
     <h2>Kahraman Bilim İkonları</h2>
     <p class="hook">Kapak ve bölüm açılışları için 23 büyük duotone kahraman ikon.</p>
+
     <ul class="feats">
       <li>Alan setiyle aynı çizim dili</li>
       <li>Büyük boyutta test edilmiş</li>
@@ -1477,6 +1546,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
     <p class="eyebrow">Arşiv <span class="badge arsiv">ARŞİV</span></p>
     <h2>Analitik Ay Yörüngesi</h2>
     <p class="hook">Yerini Yörünge Sahnesi aldı; eski desteler bozulmasın diye repoda duruyor.</p>
+
     <ul class="feats">
       <li>Yeni işler için: orbital_stage kullanın</li>
     </ul>

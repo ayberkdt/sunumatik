@@ -190,6 +190,7 @@ KARTLAR = [
     dict(src="three-body-states-preset", repo="three_body_states", kat="orbital",
          ad="Üç-Cisim Durumları", status="cekirdek",
          embed="../presets/three_body_states/index.html",
+         links=[("Sayfayı aç ↗", "../presets/three_body_states/index.html"), ("Sinema modu", "../presets/three_body_states/index.html?sinema=1"), ("Ekran koruyucu · tam ekran", "../presets/three_body_states/index.html?sinema=1&tam=1&sure=30")],
          hook="Üç-cisim problemi 'çözümsüz' değil, kaotik: 20 panoda bilinen periyodik çözümler canlı entegre — figure-8, kelebekler, güveler, Lagrange, Euler, Broucke — ve karşıtlık için kaçışla biten Pisagor problemi.",
          feats=["Šuvakov–Dmitrašinović (2013) eşit-kütle aileleri: figure-8, butterfly I–III, bumblebee, moth I–III, goggles, dragonfly, yarn, yin-yang I/II; başlangıç koşulları literatürden",
                 "Lagrange eşkenar (eşit ve 1·2·3 kütle, ω² = GM/d³) ve Euler doğrusal (ω² = 5G/4a³) analitik; Broucke A2 (1975); Pisagor/Burrau 3·4·5 kaotik",
@@ -606,12 +607,15 @@ def uret(repo_kok):
             st = k["status"]
             feats = "\n".join(f"      <li>{esc(f)}</li>" for f in k["feats"])
             url = k["embed"]
+            # görünür bağlantı şeridi (kancanın hemen altında): sayfa, sinema, ekran koruyucu gibi hedefler
+            linkler = ("    <p class=\"linkler\">" + "".join(f'<a href="{esc(h)}" target="_blank" rel="noopener">{esc(t)}</a>' for t, h in k["links"]) + "</p>") if k.get("links") else ""
             slaytlar.append(f"""
 <section class="slide card" data-tur="kart" data-kat="{kid}" data-embed="{esc(url)}">
   <div class="bilgi">
     <p class="eyebrow">{esc(baslik)} <span class="badge {st}">{STATUS_ETIKET[st]}</span></p>
     <h2>{esc(k["ad"])}</h2>
     <p class="hook">{esc(k["hook"])}</p>
+{linkler}
     <ul class="feats">
 {feats}
     </ul>
@@ -752,6 +756,11 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   background: var(--sf); border: 1px solid var(--rule); border-radius: 8px;
   padding: 8px 12px; display: inline-block; max-width: 440px;
   overflow-wrap: break-word; line-height: 1.45; }
+.linkler { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 4px; }
+.linkler a { display: inline-block; padding: 9px 16px; border: 1px solid var(--acc); border-radius: 999px; color: var(--acc);
+  text-decoration: none; font-size: 18px; letter-spacing: .02em; transition: background .15s, color .15s; }
+.linkler a:first-child { background: var(--acc); color: var(--bg); font-weight: 600; }
+.linkler a:hover { background: var(--acc); color: var(--bg); }
 .ac { display: inline-block; margin-top: 20px; color: var(--acc);
   text-decoration: none; font-size: 21px; border-bottom: 1px solid transparent; }
 .ac:hover { border-bottom-color: var(--acc); }

@@ -54,10 +54,14 @@ gösterim parametresi; Pisagor döngüsü fiziksel değildir; birimsiz sistem.
 
 ## Hareket
 
-İz, KALICI bir tuvalde tutulur: her karede tuval `destination-out` ile
-e^(−dt/τ) soldurulur ve yalnız o karenin yeni parçası toplamsal çizilir (üç
-vuruş: geniş hale, orta, sıcak çekirdek). Böylece binlerce parça yeniden
-çizilmez; kare başına ~1,5 ms (20 pano). Zaman kaydırma baştan yeniden
+İz, iki KALICI tuvalde tutulur (renk gövdesi, τ; beyaz-sıcak çekirdek, 0,16 τ):
+her karede tuvaller `destination-out` ile e^(−dt/τ) soldurulur ve yalnız o
+karenin yeni parçası çizilir — parça boyunca alfa gradyanı (eski uç bir önceki
+solmuş parçayla aynı alfada) iz boyunca sürekli e^(−yaş/τ) verir, basamak ya
+da boncuk kalmaz. Işıma (bloom) vuruşta değil birleştirmede: renk tuvali iki
+bulanık kopya (dar + geniş) ve keskin gövde olarak toplamsal bindirilir, üstüne
+sıcak çekirdek. Böylece binlerce parça yeniden çizilmez; kare başına ~1,5 ms
+(20 pano). Zaman kaydırma baştan yeniden
 entegre edip izi aynı kuralla kurar (deterministik). Her panonun zaman
 çarpanı `k` görsel tempoya normalize edilir: ortalama cisim hızı pano
 kesri/saniye cinsinden ~0,17 olacak şekilde (0,3–2,4 aralığında), yani
