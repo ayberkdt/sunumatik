@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "gravity-harmonic-field",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Küresel harmonik yerçekimi alanının anatomisini göstermek: derece/mertebe, kesme (truncation) etkisi, tek derecenin katkısı, jeoit yüksekliği ve serbest-hava anomalisi haritaları, derece varyans spektrumu — ve hangi katsayının gerçek, hangisinin sentetik olduğunu açıkça belirtmek.",
+      "model": "U = (GM/r)[1 + Σ_{l≥2}(R/r)^l Σ_m P̄_lm(sin φ)(C̄_lm cos mλ + S̄_lm sin mλ)], tam normalize (4π) bağlı Legendre fonksiyonları kararlı ileri özyinelemeyle (P̄_ll, P̄_{l,l−1}, üç-terim); bozukluk potansiyeli T, jeoit N = T/γ (Bruns, γ = GM/R²), serbest-hava anomalisi δg = (GM/r²)Σ(l−1)(R/r)^l Σ(…); jeoit referansı GRS80 normal alanı (C̄20n = −4,841668e−4, C̄40n = 7,903e−7) çıkarılarak elipsoide göre verilir (küre referansı seçilebilir: J2 şişkinliği km düzeyinde görünür). Derece varyansı σ_l = √Σ_m(C̄²+S̄²), Kaula referansı 1e−5/l². Katsayılar: GERÇEK C̄20 = −4,84165e−4, C̄22 = 2,4393e−6, S̄22 = −1,4003e−6, C̄30 = 9,5716e−7, C̄40 = 5,3999e−7 (NGA EGM96, 4–5 anlamlı basamağa yuvarlanmış); diğer tüm katsayılar tohumlu SENTETİK (Gauss, Kaula genliği) — sahne bunu kalıcı uyarıyla yazar; dış katsayı listesi loadCoefficients ile yüklenebilir. Çapraz denetim: yalnız-C̄20 alanında merkezi-fark ∇U ile RK4 yayılımı, düğüm kayması J2 analitik oranıyla karşılaştırılır (±0,5 %). Denetim scripts/validate-astro.mjs (P̄ değerleri, ortonormallik, C̄20 ↔ J2, kaynak işaretleri, Kaula mertebesi, elipsoid/küre jeoit aralıkları, Ω̇ çapraz denetimi, enerji korunumu, yassılık işaretleri).",
+      "limitations": "Yüksek dereceler SENTETİKTİR — bu bir Dünya jeoidi değildir (gerçek yapı için EGM2008 katsayıları yüklenmelidir); küresel yaklaşımlı Bruns/anomali formülleri (elipsoidal düzeltmeler yok); L ≤ 36 (Legendre özyinelemesi bu aralıkta kararlı; çok yüksek derecelerde ölçekleme gerekir); yayılım kısa ve ECI≈ECEF (Dünya dönmesi tesseral etki için ihmal); mascon/yerel anomali modeli yok.",
+      "reducedMotion": "Küre otomatik dönmez; harita ve spektrum statiktir.",
+      "exportState": "?L=&field=&seed= deterministik (tohumlu sentetik katsayılar).",
+      "accessibility": "Kesme/tek-derece/abartı kaydırıcıları, zonal ve elipsoid anahtarları yerli öğelerdir; HUD aralık, RMS, C̄20, J2 ve Ω̇ karşılaştırmasını metin verir; sentetik uyarısı metindir; altyazı yöntemi ve kaynağı düzyazı anlatır.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

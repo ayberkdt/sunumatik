@@ -520,6 +520,32 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   const e = C.eig2(4, 1, 2); check('conjunction', 'eig2: özdeğerler iz ve determinantı sağlar', near(e.l1 + e.l2, 6, 1e-12) && near(e.l1 * e.l2, 7, 1e-12));
 }
 
+/* ───────────────────────── Küresel harmonik yerçekimi alanı */
+{
+  const G = await mod('presets/gravity_field/gravity-model.mjs');
+  const O = await mod('presets/core/astro-orbit.mjs');
+  const t = .3, P = G.legendreNormalized(t, 8);
+  check('gravity', 'P̄20 = √5(3t²−1)/2, P̄22 = (√15/2)(1−t²)', near(P[2][0], Math.sqrt(5) * (3 * t * t - 1) / 2, 1e-12) && near(P[2][2], Math.sqrt(15) / 2 * (1 - t * t), 1e-12));
+  let acc = 0; const nl = 300, nm = 300; for (let a = 0; a < nl; a++) { const th = (a + .5) / nl * Math.PI, Pl = G.legendreNormalized(Math.cos(th), 8); for (let b = 0; b < nm; b++) { const lam = (b + .5) / nm * 2 * Math.PI, v = Pl[6][3] * Math.cos(3 * lam); acc += v * v * Math.sin(th) * (Math.PI / nl) * (2 * Math.PI / nm); } }
+  check('gravity', 'tam normalize ortonormallik: (1/4π)∬(P̄63 cos3λ)² dΩ = 1 (±1e−3)', near(acc / (4 * Math.PI), 1, 1e-3), (acc / (4 * Math.PI)).toFixed(5));
+  const cs = G.buildCoefficients(24);
+  check('gravity', 'C̄20 = −J2/√5 (EGM96 yuvarlatılmış)', near(-Math.sqrt(5) * cs.C[2][0], G.J2, 2e-6), (-Math.sqrt(5) * cs.C[2][0]).toExponential(5));
+  check('gravity', 'katsayı kaynağı işaretli: 5 gerçek, gerisi sentetik', cs.prov[2][0] === 1 && cs.prov[2][2] === 1 && cs.prov[3][0] === 1 && cs.prov[4][0] === 1 && cs.prov[3][1] === 2 && cs.prov[5][0] === 2);
+  const spec = G.degreeSpectrum(cs);
+  check('gravity', 'sentetik dereceler Kaula 1e−5/l² mertebesinde (l = 8: 0,3–3×)', spec.find(s => s.l === 8).sigma / (1e-5 / 64) > .3 && spec.find(s => s.l === 8).sigma / (1e-5 / 64) < 3);
+  /* elipsoide göre jeoit: normal alan çıkarılınca ±200 m içinde; küreye göre J2 şişkinliği km düzeyinde */
+  const gE = G.surfaceGrid(cs, 60, 30, { removeNormal: true }), gS = G.surfaceGrid(cs, 60, 30, { removeNormal: false });
+  check('gravity', 'jeoit elipsoide göre ±200 m içinde; küreye göre km düzeyinde (J2)', Math.max(Math.abs(gE.nMin), Math.abs(gE.nMax)) < 200 && Math.abs(gS.nMin) > 3000, `${gE.nMin.toFixed(0)}…${gE.nMax.toFixed(0)} m vs ${gS.nMin.toFixed(0)}…${gS.nMax.toFixed(0)} m`);
+  /* yalnız C̄20 alanı → düğüm kayması J2 analitik (±2 %) */
+  const csJ2 = G.loadCoefficients([{ l: 2, m: 0, C: -4.84165e-4, S: 0 }], 2);
+  const nd = G.propagateNodeDrift(csJ2, { hours: 4, dt: 40, opts: { removeNormal: false } }), an = O.j2Rates({ a: 6778.137, e: 0, i: 51.6 * Math.PI / 180 }).raanDot;
+  check('gravity', 'yalnız-C̄20 alanında sayısal Ω̇ ≈ J2 analitik (±2 %)', rel(nd.raanDot, an, .02), `${(nd.raanDot * 86400 * 180 / Math.PI).toFixed(3)} vs ${(an * 86400 * 180 / Math.PI).toFixed(3)} °/gün`);
+  check('gravity', 'yayılımda enerji korunur (< 1e−6 göreli)', nd.energyDrift < 1e-6, nd.energyDrift.toExponential(1));
+  /* tek derece l=2 zonal: N ∝ P̄20 → ekvator/kutup işaretleri zıt */
+  const eq = G.disturbance(csJ2, G.R, 0, 0, { removeNormal: false }), po = G.disturbance(csJ2, G.R, Math.PI / 2, 0, { removeNormal: false });
+  check('gravity', 'C̄20 tek: kutupta N < 0, ekvatorda N > 0 (yassılık), oran −2', eq.N > 0 && po.N < 0 && near(po.N / eq.N, -2, 1e-6));
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

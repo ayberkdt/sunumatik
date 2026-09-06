@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Küresel Harmonik Yerçekimi Alanı — gravity_field</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field, label.toggle { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 110px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 44px; text-align: right; }
+    label.toggle { display: inline-flex; gap: 6px; align-items: center; } label.toggle input { accent-color: var(--color-accent); margin: 0; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Küresel Harmonik Yerçekimi Alanı<small>gravity_field · tam normalize P̄_lm, derece/mertebe, kesme karşılaştırması, jeoit ve anomali haritası, derece spektrumu — düşük derece gerçek, üstü SENTETİK</small></h1>
+    <div class="tabs" role="group" aria-label="Alan"><button data-field="N" aria-pressed="true">Jeoit N</button><button data-field="dg">Anomali δg</button></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Kesme"><span>Kesme</span><label class="field">L <input id="lMax" type="range" min="2" max="36" step="1" value="24"><output id="oL">24</output></label><label class="field">l_min <input id="lMin" type="range" min="2" max="36" step="1" value="2"><output id="oLmin">2</output></label><label class="toggle"><input type="checkbox" id="zonal"> yalnız zonal (m = 0)</label></div>
+      <div class="group" role="group" aria-label="Tek derece"><span>Tek derece</span><label class="field">l <input id="only" type="range" min="1" max="36" step="1" value="1"><output id="oOnly">kapalı</output></label></div>
+      <div class="group" role="group" aria-label="Görünüm"><span>Görünüm</span><label class="field">abartı <input id="exag" type="range" min="0" max="20000" step="500" value="6000"><output id="oEx">6000×</output></label><label class="field">tohum <input id="seed" type="range" min="1" max="20" step="1" value="7"><output id="oSeed">7</output></label><label class="toggle"><input type="checkbox" id="rot" checked> otomatik dönüş</label><label class="toggle"><input type="checkbox" id="normal" checked> referans elipsoid çıkar</label></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountGravityField } from './gravity-field.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const $ = id => document.querySelector('#' + id);
+    const gf = await mountGravityField($('host'), { Lmax: 36, lMaxShow: Number(params.get('L')) || 24, field: params.get('field') || 'N', seed: Number(params.get('seed')) || 7 });
+    window.__gravityField = gf;
+    if (params.has('export') || matchMedia('(prefers-reduced-motion: reduce)').matches) { gf.setAutoRotate(false); $('rot').checked = false; }
+    const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const outs = () => { $('oL').textContent = $('lMax').value; $('oLmin').textContent = $('lMin').value; $('oOnly').textContent = Number($('only').value) < 2 ? 'kapalı' : $('only').value; $('oEx').textContent = `${$('exag').value}×`; $('oSeed').textContent = $('seed').value; };
+    const apply = () => { const only = Number($('only').value); gf.set({ lMaxShow: Number($('lMax').value), lMin: Number($('lMin').value), zonalOnly: $('zonal').checked, onlyDegree: only >= 2 ? only : null, exaggeration: Number($('exag').value), seed: Number($('seed').value), removeNormal: $('normal').checked }); writeCaption(); };
+    for (const id of ['lMax', 'lMin', 'only', 'exag', 'seed']) { $(id).addEventListener('input', outs); $(id).addEventListener('change', apply); }
+    $('zonal').addEventListener('change', apply); $('normal').addEventListener('change', apply); $('rot').addEventListener('change', () => gf.setAutoRotate($('rot').checked));
+    document.querySelectorAll('[data-field]').forEach(b => b.addEventListener('click', () => { gf.set({ field: b.dataset.field }); writeCaption(); document.querySelectorAll('[data-field]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    document.querySelectorAll('[data-field]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.field === (params.get('field') || 'N'))));
+    function writeCaption() {
+      const g = gf.grid, c = gf.config, cs = gf.coefficients;
+      $('caption').innerHTML = `<strong>Katsayı kaynağı açık:</strong> C̄20, C̄22/S̄22, C̄30, C̄40 EGM96'dan yuvarlatılmış GERÇEK değerler (C̄20 = ${cs.C[2][0].toExponential(4)} ⇒ J2 = −√5·C̄20 = ${(-Math.sqrt(5) * cs.C[2][0]).toExponential(4)}); geri kalan tüm katsayılar Kaula kuralına (σ_l ≈ 1e−5/l²) uyan tohumlu SENTETİK sayılardır — bu harita gerçek Dünya jeoidi DEĞİLDİR, yöntemi ve ölçekleri gösterir (gerçek jeoit elipsoide göre ±100 m; burada ${nf1.format(g.nMin)} … ${nf1.format(g.nMax)} m${c.removeNormal ? ', GRS80 normal alanı çıkarılmış' : ', KÜREYE göre — J2 şişkinliği dahil'}). `
+        + `Potansiyel U = (GM/r)[1 + Σ(R/r)^l Σ P̄_lm(sinφ)(C̄ cos mλ + S̄ sin mλ)], tam normalize Legendre kararlı özyinelemeyle; N = T/γ (Bruns), δg = (GM/r²)Σ(l−1)(…). Kesme L düşürülünce yalnız uzun dalga boyları kalır; tek derece seçince o derecenin katkısı görünür (l = 2: yassılık, l = 3: armut biçimi). Sağdaki spektrum: σ_l gerçek derecelerde altın. Çapraz denetim: yalnız-C̄20 alanında sayısal düğüm kayması, J2 analitik oranıyla HUD'da karşılaştırılır.`;
+    }
+    outs(); writeCaption();
+    document.title += ' · hazır';
+  </script>
+</body>
+</html>

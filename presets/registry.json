@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 50,
-    "presetsWithIndex": 43,
-    "animatedPresets": 39,
+    "presets": 51,
+    "presetsWithIndex": 44,
+    "animatedPresets": 40,
     "skills": 18,
-    "demoSlides": 66,
-    "demoCards": 53,
+    "demoSlides": 67,
+    "demoCards": 54,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 66,
-    "cards": 53,
+    "slides": 67,
+    "cards": 54,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -41,6 +41,7 @@
       "figure_callouts",
       "formation_flight",
       "gravity_assist",
+      "gravity_field",
       "ground_track_3d",
       "jwst_explorer",
       "launch_ascent",
@@ -271,6 +272,13 @@
     {
       "name": "gravity_assist",
       "title": "Yerçekimi Yardımı ve B-Düzlemi — gravity_assist",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "gravity_field",
+      "title": "Küresel Harmonik Yerçekimi Alanı — gravity_field",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true
