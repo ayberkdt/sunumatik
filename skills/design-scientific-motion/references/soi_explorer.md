@@ -5,7 +5,7 @@ Laplace etki küresi r_SOI = a(m/M)^(2/5) ve Hill küresi a(m/3M)^(1/3) gerçek
 kabuğuna kadar izlenir; kabukta Dünya → Güneş çerçevesi el değiştirmesi nabızla
 işaretlenir; yamalı-konik artığı |v(r_SOI)| − v∞ sayıyla verilir. Sol: three.js
 sahne (dokulu Dünya/Ay, fresnel kabuklar, Hill halkası, ilerleyen hiperbol,
-sonda); sağ: kahraman HUD, Laplace log–log oran paneli, gezegen SOI ölçeği.
+sonda, gün işaretleri, SOI geçiş halkası); sağ: kahraman HUD, Laplace log–log oran paneli, Güneş çerçevesi paneli (transfer elipsi, afel, hedef gezegen yörüngesi), gezegen SOI ölçeği.
 
 ## Mount
 
@@ -42,7 +42,7 @@ Saf (`soi-model.mjs`): `BODIES` (GM, a, R — Merkür…Neptün, Ay), `MU_SUN`, 
 
 ## Sınırlar
 
-Ay kalkış fazında sabit; hiperbol Ay yörünge düzleminde gösterim amaçlı
+Ay dairesel yörüngesinde ortalama hareketle ilerler ama hiperbol Ay çekimini içermez; hiperbol Ay yörünge düzleminde gösterim amaçlı
 yönlendirildi; dairesel Dünya yörüngesi; SOI dışı iz asimptot boyunca
 (Güneş çekimi eklenmez); Laplace gelgiti radyal birinci mertebe.
 

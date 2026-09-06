@@ -194,7 +194,7 @@ KARTLAR = [
          feats=["r_SOI ve Hill GM/yarı-büyük eksenden hesaplanır (Dünya 924 647 km, Ay 66 183 km, Jüpiter 48,2 M km — literatürle denetimde); Laplace oranları log–log panelde, kesişim bisection (≈ 0,87 r_SOI)",
                 "Kalkış hiperbolü a = −μ/v∞², e = 1 + r_p v∞²/μ; SOI'ye süre hiperbolik anomaliyle (Mars v∞ 2,95 km/s → 3,15 gün, ΔV 3,613 km/s); SOI'de |v| − v∞ artığı (%4,8)",
                 "Güneş çerçevesi: V_⊕ + v∞ → afel (Mars 1,52 AU) ya da kaçış; görevler Mars · TLI · Jüpiter · kaçış; v∞ ve park kaydırıcıları",
-                "three.js: dokulu Dünya/Ay, fresnel etki kabukları, Hill halkası, ilerleyen hiperbol ve sonda, SOI geçiş nabzı; kameralar etki küresi / Ay / Dünya / sondayı izle / serbest; ?case=&vinf=&hpark=&cam=&t= deterministik"]),
+                "three.js: dönen dokulu Dünya, ilerleyen Ay, fresnel + ızgara etki kabukları, Hill halkası, hızla renklenen hiperbol, gün işaretleri, sonda, SOI geçiş halkası; Güneş çerçevesi paneli (transfer elipsi → afel, hedef yörünge); kameralar etki küresi / Ay / Dünya / sondayı izle / serbest; ?case=&vinf=&hpark=&cam=&t= deterministik"]),
     dict(src="free-return-preset", repo="free_return", kat="orbital",
          ad="Ay Serbest Dönüş Yörüngesi", status="cekirdek",
          embed="../presets/free_return/index.html",

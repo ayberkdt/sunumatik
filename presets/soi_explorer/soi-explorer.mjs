@@ -42,7 +42,7 @@ export async function mountSoi(host, options = {}) {
       .soi__labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
       .soi__label{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-family:var(--font-body);font-size:11.5px;letter-spacing:.05em;color:var(--color-muted,#9a938a);text-shadow:0 1px 4px rgba(0,0,0,.95);}
       .soi__label.body{color:var(--color-ink,#e9e4d8);font-weight:600;} .soi__label.shell{color:#9fd0d8;font-weight:600;letter-spacing:.1em;text-transform:uppercase;font-size:10.5px;} .soi__label.hand{color:var(--color-accent,#d9b877);font-weight:600;}
-      .soi__side{min-width:0;min-height:0;border-left:1px solid var(--lab-rule,#3a3c42);display:grid;grid-template-rows:auto minmax(0,3fr) minmax(0,2fr);}
+      .soi__side{min-width:0;min-height:0;border-left:1px solid var(--lab-rule,#3a3c42);display:grid;grid-template-rows:auto minmax(0,5fr) minmax(0,5fr) minmax(0,3fr);}
       .soi__hud{padding:12px 16px 10px;border-bottom:1px solid var(--lab-rule,#3a3c42);} .soi .lab-hud dl{grid-template-columns:auto 1fr;} .soi .lab-hud__hero .v{font-size:18px;}
       .soi__cell{position:relative;min-height:0;} .soi__cell canvas{position:absolute;inset:0;width:100%;height:100%;display:block;} .soi__cell + .soi__cell{border-top:1px solid var(--lab-rule,#3a3c42);}
     </style>
@@ -63,6 +63,7 @@ export async function mountSoi(host, options = {}) {
         <div class="lab-legend" data-legend></div>
       </div>
       <div class="soi__cell" data-lab-reveal="fade"><canvas data-plot="laplace" aria-label="Laplace oran grafiği"></canvas></div>
+      <div class="soi__cell" data-lab-reveal="fade"><canvas data-plot="helio" aria-label="Güneş çerçevesi yörünge görünümü"></canvas></div>
       <div class="soi__cell" data-lab-reveal="fade"><canvas data-plot="scale" aria-label="Gezegen SOI ölçeği"></canvas></div>
     </div>`;
   host.appendChild(figure);
@@ -105,11 +106,17 @@ export async function mountSoi(host, options = {}) {
   { const pts = []; for (let k = 0; k <= 180; k++) { const a = Math.PI * 2 * k / 180; pts.push(aMoon * Math.cos(a), 0, -aMoon * Math.sin(a)); } scene.add(mkLine(pts, lineMat('#a9a49b', 1, .35))); }
   /* Dünya SOI ve Hill */
   const soiShell = new THREE.Mesh(new THREE.SphereGeometry(rSoiE, 64, 48), shellMaterial('#5fc4d4', .75)); scene.add(soiShell);
-  const soiBack = new THREE.Mesh(new THREE.SphereGeometry(rSoiE, 64, 48), new THREE.MeshBasicMaterial({ color: '#0e2a33', transparent: true, opacity: .18, side: THREE.BackSide, depthWrite: false })); scene.add(soiBack);
+  const soiBack = new THREE.Mesh(new THREE.SphereGeometry(rSoiE, 64, 48), new THREE.MeshBasicMaterial({ color: '#0e2a33', transparent: true, opacity: .11, side: THREE.BackSide, depthWrite: false })); scene.add(soiBack);
+  /* SOI kabuğu üstünde ince enlem/boylam ağı (1 px, düşük opaklık): sınırın bir yüzey olduğunu okutur, dekor değil */
+  const soiGrid = (() => { const v = []; const seg = 96; for (let m = 0; m < 12; m++) { const lon = Math.PI * m / 12; for (let k = 0; k < seg; k++) { const a0 = Math.PI * 2 * k / seg, a1 = Math.PI * 2 * (k + 1) / seg; v.push(rSoiE * Math.cos(a0) * Math.cos(lon), rSoiE * Math.sin(a0), -rSoiE * Math.cos(a0) * Math.sin(lon), rSoiE * Math.cos(a1) * Math.cos(lon), rSoiE * Math.sin(a1), -rSoiE * Math.cos(a1) * Math.sin(lon)); } }
+    for (const lat of [-60, -30, 30, 60]) { const r = rSoiE * Math.cos(lat * Math.PI / 180), y = rSoiE * Math.sin(lat * Math.PI / 180); for (let k = 0; k < seg; k++) { const a0 = Math.PI * 2 * k / seg, a1 = Math.PI * 2 * (k + 1) / seg; v.push(r * Math.cos(a0), y, -r * Math.sin(a0), r * Math.cos(a1), y, -r * Math.sin(a1)); } }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); const l = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: '#5fc4d4', transparent: true, opacity: .1, depthWrite: false })); scene.add(l); return l; })();
+  /* SOI geçiş halkası: kabuk üstünde, radyal eksenli, nabızla genişleyip sönen (tek olay, sönümlü) */
+  const crossRing = new THREE.Mesh(new THREE.RingGeometry(.86, 1, 72), new THREE.MeshBasicMaterial({ color: '#b8f0f8', transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false })); scene.add(crossRing);
   { const pts = []; for (let k = 0; k <= 240; k++) { const a = Math.PI * 2 * k / 240; pts.push(rHill * Math.cos(a), 0, -rHill * Math.sin(a)); } const hillLine = mkLine(pts, lineMat(P.data2, 1.2, .55, true)); scene.add(hillLine); }
   { const pts = []; for (let k = 0; k <= 240; k++) { const a = Math.PI * 2 * k / 240; pts.push(rSoiE * Math.cos(a), 0, -rSoiE * Math.sin(a)); } scene.add(mkLine(pts, lineMat('#5fc4d4', 1, .5))); }
   addLabel('Dünya', 'body', new THREE.Vector3(0, rE * 1.6, 0)); addLabel('Ay', 'body', new THREE.Vector3(0, rM * 2.4, 0), 'moon'); addLabel('Ay etki küresi', 'shell', new THREE.Vector3(0, rSoiM * 1.08, 0), 'moonShell');
-  addLabel('Dünya etki küresi', 'shell', new THREE.Vector3(0, rSoiE * 1.03, 0)); addLabel('Hill küresi', 'shell', new THREE.Vector3(rHill * .72, 0, -rHill * .72));
+  addLabel('Dünya etki küresi', 'shell', new THREE.Vector3(-rSoiE * .58, rSoiE * .8, 0)); addLabel('Güneş yönü →', 'shell', sunDir.clone().multiplyScalar(rSoiE * 1.3)); addLabel('Hill küresi', 'shell', new THREE.Vector3(rHill * .72, 0, -rHill * .72));
   /* hiperbol + sonda */
   const hypGroup = new THREE.Group(); scene.add(hypGroup);
   const probe = buildProbe({ scale: 1 }); scene.add(probe); probe.visible = false;
@@ -117,6 +124,10 @@ export async function mountSoi(host, options = {}) {
   const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.18, 'rgba(255,255,255,.55)'); r.addColorStop(.5, 'rgba(255,255,255,.12)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
   const mkGlow = (color, op) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity: op, depthWrite: false, depthTest: false })); sp.renderOrder = 5; scene.add(sp); return sp; };
   const earthGlow = mkGlow('#9fc4ea', .85), moonGlow = mkGlow('#d8d2c6', .6); moonGlow.position.copy(moonGroup.position);
+  const sunGlow = mkGlow('#ffe6bd', .95); sunGlow.position.copy(sunDir).multiplyScalar(7000); sunGlow.scale.setScalar(760); sunGlow.renderOrder = -5;
+  /* gün işaretleri: hiperbol üstünde 1., 2., 3. gün — zamanın okunması (yeniden kurulumda temizlenir) */
+  const dayMarks = []; const removeLabel = rec => { rec.el.remove(); const i = labels.indexOf(rec); if (i >= 0) labels.splice(i, 1); };
+  const nMoon = Math.sqrt(E.mu / (M.a * M.a * M.a));   // Ay ortalama hareketi (rad/s), dairesel yörünge
   const handLabel = addLabel('el değiştirme · Dünya → Güneş çerçevesi', 'hand', new THREE.Vector3(), 'hand'); handLabel.el.style.opacity = '0';
 
   let cfg = { case: options.case ?? 'mars', vinf: options.vinf ?? null, hPark: options.hPark ?? 200 }, model = null, hypLine = null, asymLine = null, hypPts = [];
@@ -129,7 +140,14 @@ export async function mountSoi(host, options = {}) {
     while (hypGroup.children.length) { const c = hypGroup.children.pop(); c.geometry?.dispose?.(); }
     /* hiperbol düzlemi: Ay yörünge düzlemi (x–z), asimptot +x'e doğru; sondanın kalkışı gösterim amaçlı */
     const rot = -model.nuInf; hypPts = model.pts.map(p => { const x = p.x * Math.cos(rot) - p.y * Math.sin(rot), y = p.x * Math.sin(rot) + p.y * Math.cos(rot); return [x * U, 0, -y * U, p.t]; });
-    const flat = hypPts.flatMap(p => [p[0], p[1], p[2]]); hypLine = mkLine(flat, lineMat(P.accent, 2.4, 1)); hypGroup.add(hypLine);
+    const flat = hypPts.flatMap(p => [p[0], p[1], p[2]]);
+    /* hız ile renk: perigee'de beyaz-sıcak, SOI'ye yaklaşırken sönük amber — hızın konumla nasıl düştüğü çizginin kendisinde */
+    { const vLo = model.vAtSoi, vHi = model.vPeri, cA = new THREE.Color('#7a5a30'), cB = new THREE.Color(P.accent), cC = new THREE.Color('#fff3d6'), cols = [];
+      for (const q of model.pts) { const u = Math.sqrt(clamp01((q.v - vLo) / Math.max(1e-9, vHi - vLo))); const c = u < .5 ? cA.clone().lerp(cB, u * 2) : cB.clone().lerp(cC, (u - .5) * 2); cols.push(c.r, c.g, c.b); }
+      const hm = lineMat('#ffffff', 2.6, 1); hm.vertexColors = true; const g = new LineGeometry(); g.setPositions(flat); g.setColors(cols); hypLine = new Line2(g, hm); hypGroup.add(hypLine); }
+    for (const d of dayMarks) { scene.remove(d.mesh); d.mesh.geometry.dispose(); removeLabel(d.rec); } dayMarks.length = 0;
+    for (let day = 1; day * 86400 < model.tSoiDays * 86400; day++) { const pos = stateAt(day * 86400).p; const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8), new THREE.MeshBasicMaterial({ color: P.ink, transparent: true, opacity: .9 })); mesh.position.copy(pos); scene.add(mesh); const rec = addLabel(`${day}. gün`, '', pos.clone().add(new THREE.Vector3(0, -rSoiE * .045, 0))); dayMarks.push({ mesh, rec }); }
+    { const last = hypPts[hypPts.length - 1]; crossRing.position.set(last[0], 0, last[2]); crossRing.lookAt(0, 0, 0); }
     const last = hypPts[hypPts.length - 1], dir = new THREE.Vector3(last[0] - hypPts[hypPts.length - 6][0], 0, last[2] - hypPts[hypPts.length - 6][2]).normalize();
     asymLine = mkLine([last[0], 0, last[2], last[0] + dir.x * rSoiE * .5, 0, last[2] + dir.z * rSoiE * .5], lineMat(P.accent, 1.4, .5, true)); hypGroup.add(asymLine);
     { const pts = []; for (let k = 0; k <= 120; k++) { const a = Math.PI * 2 * k / 120; pts.push(model.rp * U * Math.cos(a), 0, -model.rp * U * Math.sin(a)); } hypGroup.add(mkLine(pts, lineMat(P.data1, 1, .5))); }
@@ -141,7 +159,7 @@ export async function mountSoi(host, options = {}) {
     H.helio.innerHTML = m.helio.hyperbolic ? `kaçış<span class="u">e ${nf2.format(m.helio.e)}</span>` : `${nf2.format(m.helio.aphelion / AU)}<span class="u">AU afel</span>`;
     H.hill.textContent = `${nf0.format(hillRadius('earth'))} km`; H.moon.textContent = `${nf0.format(soiRadius('moon'))} km`; H.hyp.textContent = `${nf2.format(cfg.vinf ?? CASES[cfg.case].vinf)} km/s · e ${nf3.format(m.e)} · δ ${nf1.format(m.turnDeg)}°`;
     H.res.textContent = `${nf3.format(m.residual)} km/s · ${nf1.format(m.residualPct)} %`; H.lap.textContent = `${nf0.format(laplaceCrossing('earth') / 1000)}e3 km · ${nf2.format(laplaceCrossing('earth') / soiRadius('earth'))} r_SOI`;
-    topEl.textContent = `Dünya merkezli, gerçek ölçek (1 birim = 10 000 km) · r_SOI = a(m/M)^(2/5) · Hill = a(m/3M)^(1/3) · ${CASES[cfg.case].label} · park ${cfg.hPark} km`;
+    topEl.textContent = `Dünya merkezli, gerçek ölçek (1 birim = 10 000 km) · r_SOI = a(m/M)^(2/5) · Hill = a(m/3M)^(1/3) · ${CASES[cfg.case].label} · park ${cfg.hPark} km · Ay ortalama hareketle ilerler, hiperbol Ay çekimini içermez`;
   }
   const stateAt = t => { const s = t; let i = 0; while (i < hypPts.length - 2 && hypPts[i + 1][3] < s) i++; if (s >= hypPts[hypPts.length - 1][3]) { const last = hypPts[hypPts.length - 1], prev = hypPts[hypPts.length - 6]; const d = new THREE.Vector3(last[0] - prev[0], 0, last[2] - prev[2]).normalize(); const dt = s - last[3]; const v = model.vAtSoi * U; return { p: new THREE.Vector3(last[0] + d.x * v * dt, 0, last[2] + d.z * v * dt), beyond: true }; } const a = hypPts[i], b = hypPts[i + 1], f = (s - a[3]) / Math.max(1e-9, b[3] - a[3]); return { p: new THREE.Vector3(a[0] + (b[0] - a[0]) * f, 0, a[2] + (b[2] - a[2]) * f), beyond: false }; };
   function scaleCamera(snap) { const d = cam.current === 'soi' ? rSoiE * 3.1 : cam.current === 'moon' ? rSoiM * 4 : cam.current === 'earth' ? rE * 14 : rSoiE * .9; const tgt = cam.current === 'moon' ? moonGroup.position.clone() : cam.current === 'follow' ? stateAt(timeline.t).p : new THREE.Vector3(0, 0, 0); const p = tgt.clone().add(new THREE.Vector3(-.55 * d, .62 * d, .68 * d)); if (snap) { camPos.copy(p); camTgt.copy(tgt); controls.target.copy(tgt); } return { p, tgt }; }
@@ -169,10 +187,30 @@ export async function mountSoi(host, options = {}) {
     const cv = plots.scale, ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); backdrop(ctx, W, Hh, { canvas: P.canvas });
     const ids = ['moon', 'mercury', 'mars', 'venus', 'earth', 'uranus', 'neptune', 'saturn', 'jupiter']; const pad = { l: 64, r: 14, t: 24, b: 8 }, pw = W - pad.l - pad.r, bh = Math.min(16, (Hh - pad.t - pad.b) / ids.length - 3), pL = entrance.progress('laplace');
     title(ctx, 'etki küresi yarıçapları (log ölçek) — hepsi a(m/M)^(2/5)', pad.l, 15, P);
-    const lo = 3e4, hi = 8e7, X = r => pad.l + Math.log10(r / lo) / Math.log10(hi / lo) * pw;
-    ids.forEach((id, i) => { const r = soiRadius(id), y = pad.t + 4 + i * (bh + 3), w = (X(r) - pad.l) * pL; ctx.fillStyle = id === 'earth' ? P.accent : rgba(BODIES[id].color, .8); ctx.fillRect(pad.l, y, Math.max(1, w), bh); label(ctx, BODIES[id].label, pad.l - 6, y + bh * .75, P, { align: 'right', mono: false, size: 10.5, color: id === 'earth' ? P.ink : P.muted }); if (pL > .9) label(ctx, `${r >= 1e6 ? nf1.format(r / 1e6) + ' M' : nf0.format(r / 1000) + ' e3'} km`, pad.l + w + 6, y + bh * .75, P, { size: 9.5 }); });
+    const lo = 3e4, hi = 1.6e8, X = r => pad.l + Math.log10(r / lo) / Math.log10(hi / lo) * pw;
+    ids.forEach((id, i) => { const r = soiRadius(id), y = pad.t + 4 + i * (bh + 3), w = (X(r) - pad.l) * pL; ctx.fillStyle = id === 'earth' ? P.accent : rgba(BODIES[id].color, .8); ctx.fillRect(pad.l, y, Math.max(1, w), bh); label(ctx, BODIES[id].label, pad.l - 6, y + bh * .75, P, { align: 'right', mono: false, size: 10.5, color: id === 'earth' ? P.ink : P.muted }); if (pL > .9) { const txt = `${r >= 1e6 ? nf1.format(r / 1e6) + ' M' : nf0.format(r / 1000) + ' e3'} km`; const inside = pad.l + w + 70 > W; label(ctx, txt, inside ? pad.l + w - 6 : pad.l + w + 6, y + bh * .75, P, { size: 9.5, align: inside ? 'right' : 'left', color: inside ? P.canvas : P.muted, weight: inside ? 600 : 400 }); } });
   }
-  function drawPanels() { drawLaplace(); drawScale(); }
+  function drawHelio() {
+    const cv = plots.helio, ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); backdrop(ctx, W, Hh, { canvas: P.canvas }); if (!model || W < 60 || Hh < 70) return;
+    const h = model.helio, pL = entrance.progress('laplace'), pH = entrance.progress('hyp');
+    const target = cfg.case === 'jupiter' ? 'jupiter' : cfg.case === 'mars' ? 'mars' : null;
+    const rMax = (h.hyperbolic ? 5.6 * AU : Math.max(h.aphelion, target ? BODIES[target].a : AU) * 1.18);
+    const cx = W / 2, cy = Hh / 2 + 6, S = Math.min(W, Hh - 30) * .47 / rMax, X = (r, th) => cx + r * Math.cos(th) * S, Y = (r, th) => cy - r * Math.sin(th) * S;
+    title(ctx, `Güneş çerçevesi · V_⊕ + v∞ = ${nf2.format(h.v)} km/s → ${h.hyperbolic ? 'hiperbolik: Güneş sisteminden kaçış' : `afel ${nf2.format(h.aphelion / AU)} AU`}`, 12, 15, P);
+    /* Güneş: ışıma */ { const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 26); g.addColorStop(0, 'rgba(255,238,200,1)'); g.addColorStop(.25, 'rgba(255,214,140,.55)'); g.addColorStop(1, 'rgba(255,200,120,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, 26, 0, Math.PI * 2); ctx.fill(); }
+    for (const id of ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn']) { const B = BODIES[id]; if (B.a * S > Math.min(W, Hh) * .62) continue; const isT = id === target || id === 'earth'; ctx.beginPath(); ctx.arc(cx, cy, B.a * S, 0, Math.PI * 2); ctx.strokeStyle = rgba(B.color, isT ? .75 : .28); ctx.lineWidth = isT ? 1.2 : .8; ctx.stroke(); if (isT || id === 'jupiter' || id === 'saturn') label(ctx, B.label, cx + B.a * S * .707 + 4, cy - B.a * S * .707 - 4, P, { mono: false, size: 10, color: rgba(B.color, isT ? 1 : .6) }); }
+    /* transfer: perihel Dünya'da (θ = 0), prograd; eliptikse afele kadar, hiperbolikse asimptota yakın */
+    const aH = h.a, eH = h.e, pp = h.hyperbolic ? -aH * (eH * eH - 1) : aH * (1 - eH * eH), thMax = h.hyperbolic ? Math.acos(-1 / eH) - .06 : Math.PI; const pts = [];
+    for (let k = 0; k <= 160; k++) { const th = thMax * k / 160, r = pp / (1 + eH * Math.cos(th)); if (r * S > Math.hypot(W, Hh)) break; pts.push([X(r, th), Y(r, th)]); }
+    if (!h.hyperbolic) { const rest = []; for (let k = 0; k <= 120; k++) { const th = Math.PI + Math.PI * k / 120, r = pp / (1 + eH * Math.cos(th)); rest.push([X(r, th), Y(r, th)]); } polyline(ctx, rest, { progress: pL, color: P.accent, width: 1, alpha: .3, dash: [3, 5] }); }
+    polyline(ctx, pts, { progress: pL, color: P.accent, width: 2 });
+    marker(ctx, X(AU, 0), Y(AU, 0), 4, BODIES.earth.color, { ring: true }); tag(ctx, 'Dünya · kalkış', X(AU, 0) + 8, Y(AU, 0) + 14, P, { color: BODIES.earth.color });
+    { const L = 26, x0 = X(AU, 0), y0 = Y(AU, 0); ctx.strokeStyle = rgba(P.ink, .8); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0, y0 - L); ctx.lineTo(x0 - 4, y0 - L + 6); ctx.moveTo(x0, y0 - L); ctx.lineTo(x0 + 4, y0 - L + 6); ctx.stroke(); label(ctx, 'v∞ ∥ V_⊕', x0 + 8, y0 - L + 4, P, { size: 9.5 }); }
+    if (!h.hyperbolic && pL > .9) { marker(ctx, X(h.aphelion, Math.PI), Y(h.aphelion, Math.PI), 3.5, P.accent); tag(ctx, `afel ${nf2.format(h.aphelion / AU)} AU${target ? ` · ${BODIES[target].label} yörüngesi ${nf2.format(BODIES[target].a / AU)} AU` : ''}`, X(h.aphelion, Math.PI) + 8, Y(h.aphelion, Math.PI) + 16, P, { color: P.accent, mono: true }); }
+    if (h.hyperbolic && pL > .9) { const q = pts[Math.floor(pts.length * .8)]; if (q) tag(ctx, `e = ${nf2.format(eH)} · kaçış`, q[0] + 8, q[1], P, { color: P.accent, mono: true }); }
+    label(ctx, 'ölçek: AU · dairesel gezegen yörüngeleri · fazlama yok', 12, Hh - 8, P, { mono: false, size: 9.5 });
+  }
+  function drawPanels() { drawLaplace(); drawHelio(); drawScale(); }
 
   /* ── render ────────────────────────────────────────────────────────────── */
   const _c = new THREE.Vector3(); let lastBeyond = false;
@@ -180,7 +218,9 @@ export async function mountSoi(host, options = {}) {
     if (!model) return;
     const pB = entrance.progress('bodies'), pS = entrance.progress('shells'), pH = entrance.progress('hyp'), pP = entrance.progress('probe');
     earth.material.transparent = true; earth.material.opacity = pB; moon.material.transparent = true; moon.material.opacity = pB; atmo.material.uniforms.uAlpha.value = pB;
-    const sc = .001 + .999 * pS; soiShell.scale.setScalar(sc); soiBack.scale.setScalar(sc); moonShell.scale.setScalar(sc);
+    const sc = .001 + .999 * pS; soiShell.scale.setScalar(sc); soiBack.scale.setScalar(sc); moonShell.scale.setScalar(sc); soiGrid.scale.setScalar(sc); soiGrid.material.opacity = .1 * pS * clamp01((camera.position.length() - rSoiE * 1.2) / (rSoiE * .9));
+    { const a = moonPhase + nMoon * timeline.t; moonGroup.position.set(aMoon * Math.cos(a), 0, -aMoon * Math.sin(a)); moonGlow.position.copy(moonGroup.position); moon.rotation.y = a + Math.PI; earth.rotation.y = Math.PI * 2 * timeline.t / 86164; }
+    crossRing.material.opacity = .9 * pulse; crossRing.scale.setScalar(rSoiE * (.05 + .3 * (1 - pulse)));
     soiShell.material.uniforms.uAlpha.value = 1 + 1.4 * pulse; soiShell.material.uniforms.uStrength.value = .75 + .9 * pulse;
     if (hypLine) { hypLine.geometry.instanceCount = Math.max(0, Math.floor((hypPts.length - 1) * pH)); asymLine.material.opacity = .5 * (pH >= 1 ? 1 : 0); }
     const st = stateAt(timeline.t); probe.visible = pP > 0 && pH >= 1; probe.position.copy(st.p); probe.rotation.y += dtReal * .4;
@@ -190,7 +230,8 @@ export async function mountSoi(host, options = {}) {
     updateCamera(dtReal);
     { const dE = camera.position.length(), dM = camera.position.distanceTo(moonGroup.position), dP = camera.position.distanceTo(probe.position);
       earthGlow.scale.setScalar(Math.max(rE * 3, dE * .028)); earthGlow.material.opacity = .85 * pB * clamp01((dE - rE * 20) / (rE * 40)); moonGlow.scale.setScalar(Math.max(rM * 3, dM * .016)); moonGlow.material.opacity = .6 * pB * clamp01((dM - rM * 20) / (rM * 40));
-      probe.scale.setScalar(Math.max(rE * 1.2, dP * .045)); }
+      probe.scale.setScalar(Math.max(rE * 1.2, dP * .045));
+      for (const d of dayMarks) { d.mesh.visible = pH >= 1; d.rec.el.style.display = pH >= 1 ? '' : 'none'; d.mesh.scale.setScalar(Math.max(rE * .25, camera.position.distanceTo(d.mesh.position) * .0032)); } }
     const w = pane3d.clientWidth, h = pane3d.clientHeight;
     for (const l of labels) { _c.copy(l.pos).project(camera); const vis = _c.z < 1 && Math.abs(_c.x) < 1.05 && Math.abs(_c.y) < 1.05; l.el.style.display = vis ? '' : 'none'; if (vis) { l.el.style.left = `${((_c.x + 1) / 2 * w).toFixed(1)}px`; l.el.style.top = `${((1 - _c.y) / 2 * h).toFixed(1)}px`; } }
     renderer.render(scene, camera);
