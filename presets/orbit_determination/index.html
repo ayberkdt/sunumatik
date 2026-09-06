@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Yörünge Belirleme (EKF) Laboratuvarı — orbit_determination</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; max-width: 60%; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 11.5px/1 var(--font-body); padding: 7px 10px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; } .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); }
+    .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 110px; text-align: right; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 120px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 60px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Yörünge Belirleme (EKF) Laboratuvarı<small>orbit_determination · yer istasyonu menzil / menzil-hızı ölçümleri · genişletilmiş Kalman filtresi · 3σ zarfı, NEES/NIS tutarlılığı, gözlenebilirlik, model hatası</small></h1>
+    <div class="tabs" role="group" aria-label="Senaryolar" id="tabs"></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="1000" step="1" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
+    <div class="control-row">
+      <div class="group"><span>Filtre</span><label class="field">σ_a <input id="sigA" type="range" min="-10" max="-5" step="0.25" value="-8"><output id="oSigA">1e−8</output></label><label class="field">başlangıç hatası <input id="err0" type="range" min="-1" max="1.5" step="0.1" value="0"><output id="oErr0">1 km</output></label><button id="j2Btn" aria-pressed="true">filtrede J2</button></div>
+      <div class="group"><span>Ölçüm</span><button data-meas="range" aria-pressed="true">menzil</button><button data-meas="rate" aria-pressed="true">menzil-hızı</button><label class="field">maske <input id="mask" type="range" min="0" max="30" step="5" value="10"><output id="oMask">10°</output></label></div>
+      <div class="group" role="group" aria-label="Hız"><span>Hız</span><button data-warp="300">300×</button><button data-warp="900" aria-pressed="true">900×</button><button data-warp="3600">3600×</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountOd } from './orbit-determination.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id);
+    const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let scId = params.get('s') || 'leoOne';
+    const od = await mountOd($('host'), { scenario: scId, warp: Number(params.get('warp')) || 900, autoplay: !deterministic, t: params.has('t') ? Number(params.get('t')) * 3600 : undefined });
+    window.__od = od;
+    const tabs = $('tabs'); for (const [id, sc] of Object.entries(od.scenarios)) { const b = document.createElement('button'); b.dataset.s = id; b.textContent = sc.label.replace(/\s*\(.*?\)/g, '').replace(/[:,].*$/, ''); b.title = sc.label; b.setAttribute('aria-pressed', String(id === scId)); b.addEventListener('click', () => { scId = id; resetControlsFrom(id); apply(); }); tabs.appendChild(b); }
+    const ctl = { sigA: null, err0: null, j2: null, meas: null, mask: null };
+    function resetControlsFrom(id) { const sc = od.scenarios[id]; ctl.sigA = sc.sigA; ctl.err0 = sc.err0Pos ?? 1; ctl.j2 = sc.filterJ2; ctl.meas = sc.meas.slice(); ctl.mask = 10; syncControls(); }
+    function syncControls() { $('sigA').value = String(Math.log10(ctl.sigA)); $('oSigA').textContent = ctl.sigA.toExponential(1).replace('e-', 'e−'); $('err0').value = String(Math.log10(ctl.err0)); $('oErr0').textContent = `${ctl.err0 >= 1 ? nf1.format(ctl.err0) + ' km' : nf0.format(ctl.err0 * 1000) + ' m'}`; $('j2Btn').setAttribute('aria-pressed', String(ctl.j2)); document.querySelectorAll('[data-meas]').forEach(b => b.setAttribute('aria-pressed', String(ctl.meas.includes(b.dataset.meas)))); $('mask').value = String(ctl.mask); $('oMask').textContent = `${ctl.mask}°`; }
+    function apply() { od.setScenario(scId, { sigA: ctl.sigA, err0Pos: ctl.err0, err0Vel: ctl.err0 * 1e-3, filterJ2: ctl.j2, meas: ctl.meas.length ? ctl.meas : ['range'], maskDeg: ctl.mask }); document.querySelectorAll('[data-s]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === scId))); writeCaption(); if (!deterministic) od.timeline.play(); syncUi(); }
+    $('sigA').addEventListener('change', () => { ctl.sigA = 10 ** Number($('sigA').value); apply(); }); $('sigA').addEventListener('input', () => { $('oSigA').textContent = (10 ** Number($('sigA').value)).toExponential(1).replace('e-', 'e−'); });
+    $('err0').addEventListener('change', () => { ctl.err0 = 10 ** Number($('err0').value); apply(); }); $('err0').addEventListener('input', () => { const v = 10 ** Number($('err0').value); $('oErr0').textContent = v >= 1 ? nf1.format(v) + ' km' : nf0.format(v * 1000) + ' m'; });
+    $('j2Btn').addEventListener('click', () => { ctl.j2 = !ctl.j2; apply(); });
+    document.querySelectorAll('[data-meas]').forEach(b => b.addEventListener('click', () => { const m = b.dataset.meas; ctl.meas = ctl.meas.includes(m) ? ctl.meas.filter(x => x !== m) : [...ctl.meas, m]; if (!ctl.meas.length) ctl.meas = [m]; apply(); }));
+    $('mask').addEventListener('change', () => { ctl.mask = Number($('mask').value); apply(); });
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { od.timeline.warp = Number(b.dataset.warp); syncUi(); }));
+    const scrub = $('scrub'), timeOut = $('timeOut'), playBtn = $('playBtn');
+    function syncUi() { const tl = od.timeline; playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(Math.round(tl.t / tl.duration * 1000)); timeOut.textContent = `${nf1.format(tl.t / 3600)} sa / ${nf0.format(tl.duration / 3600)} sa`; document.querySelectorAll('[data-warp]').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.warp) === tl.warp))); }
+    function writeCaption() {
+      const r = od.run, s = r.stats, c = r.cfg;
+      $('caption').innerHTML = `<strong>Filtre ölçümü, dinamiğin ve gürültünün tutarlı bir tahminine dönüştürür:</strong> gerçek yörünge iki-cisim + J2 ile üretilir; ${r.stations.map(x => x.label).join(', ')} istasyon${r.stations.length > 1 ? 'ları' : 'u'} ${c.meas.map(m => m === 'range' ? 'menzil (σ ' + nf0.format(c.sigRho * 1000) + ' m)' : 'menzil-hızı (σ ' + nf1.format(c.sigRate * 1e5) + ' cm/s)').join(' ve ')} ölçer (maske ${c.maskDeg}°, ${s.nPasses} geçiş, ${s.nMeas} ölçüm). `
+        + `EKF ${c.filterJ2 ? 'J2 dahil' : 'J2 OLMADAN'} yayar (σ_a = ${c.sigA.toExponential(0)} km/s²); başlangıç hatası ${nf1.format(c.err0Pos)} km / ${nf1.format(c.err0Vel * 1000)} m/s, P₀ aynı ölçekte. Son çeyrek RMS hata <span class="nums">${s.rmsPosFinal >= 1 ? nf2.format(s.rmsPosFinal) + ' km' : nf0.format(s.rmsPosFinal * 1000) + ' m'}</span>, `
+        + `hata 3σ içinde kalma <span class="nums">%${nf0.format(s.inside3sigFrac * 100)}</span>, NEES ortalaması <span class="nums">${s.neesMean >= 1e4 ? s.neesMean.toExponential(1) : nf1.format(s.neesMean)}</span> (tutarlı filtrede ≈ 6), NIS ortalaması <span class="nums">${Number.isFinite(s.nisMean) ? nf2.format(s.nisMean) : '—'}</span> (≈ 1). `
+        + (s.inside3sigFrac < .9 ? '<strong>Filtre aşırı güvenli:</strong> hata kovaryansın dışında — model hatası (J2 eksik) ya da doğrusallaştırma (büyük başlangıç hatası) P\'yi çökertiyor; beyaz süreç gürültüsü bir yanlılığı örtemez. ' : '')
+        + `Sınırlar: kısıtlı EKF (ardışık ölçüm güncellemesi, sonlu-fark STM), sürükleme/SRP/üçüncü cisim yok, ışık-zamanı ve troposfer gecikmesi yok, istasyon saat hatası ve yanlılık kestirimi yok.`;
+    }
+    playBtn.addEventListener('click', () => { const tl = od.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { od.timeline.pause(); od.timeline.scrub(Number(scrub.value) / 1000 * od.timeline.duration); syncUi(); });
+    (function tick() { syncUi(); requestAnimationFrame(tick); })();
+    resetControlsFrom(scId); writeCaption(); syncUi();
+    if (deterministic) { od.timeline.pause(); od.setActive(false); }
+    document.title += ' · hazır';
+  </script>
+</body>
+</html>

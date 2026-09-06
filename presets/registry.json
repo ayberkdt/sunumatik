@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 53,
-    "presetsWithIndex": 46,
-    "animatedPresets": 41,
+    "presets": 54,
+    "presetsWithIndex": 47,
+    "animatedPresets": 42,
     "skills": 18,
-    "demoSlides": 69,
-    "demoCards": 56,
+    "demoSlides": 70,
+    "demoCards": 57,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 69,
-    "cards": 56,
+    "slides": 70,
+    "cards": 57,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -57,6 +57,7 @@
       "moon_advanced",
       "motion_core",
       "neural_network",
+      "orbit_determination",
       "orbit_perturbations",
       "orbital_stage",
       "planets_advanced",
@@ -393,6 +394,13 @@
     {
       "name": "neural_network",
       "title": "Neural Network Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "orbit_determination",
+      "title": "Yörünge Belirleme (EKF) Laboratuvarı — orbit_determination",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

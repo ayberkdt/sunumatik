@@ -608,6 +608,32 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   }
 }
 
+/* ───────────────────────── od (yörünge belirleme, EKF) */
+{
+  const M = await mod('presets/orbit_determination/od-model.mjs');
+  /* ölçüm modeli geometrisi */
+  const st = M.stationEci([1, 0, 0], 0); const x = [7000, 0, 0, 0, 7.5, 0]; const me = M.measure(x, st);
+  check('od', 'Menzil = |r − R_s| (istasyon x ekseninde, uydu zenitte: ρ = 7000 − R_E, yükseklik 90°)', near(me.rho, 7000 - M.R_E, 1e-9) && near(me.el, Math.PI / 2, 1e-9), `ρ ${me.rho.toFixed(3)}, el ${(me.el * 180 / Math.PI).toFixed(2)}°`);
+  check('od', 'Menzil-hızı: zenitte yalnız istasyon dönüşü etkisi düşer (ρ̇ = d·(v − V_s)/ρ; V_s ⊥ d ⇒ ρ̇ = 0)', Math.abs(me.rhoDot) < 1e-9, me.rhoDot.toExponential(1));
+  /* H sonlu-fark karşılaştırması */
+  { const x2 = [5000, 3000, 2500, -3, 5, 2], st2 = M.stationEci(M.STATIONS ? [.5, .6, Math.sqrt(1 - .25 - .36)] : [1, 0, 0], .7), m0 = M.measure(x2, st2); let maxErr = 0;
+    for (let j = 0; j < 6; j++) { const eps = j < 3 ? 1e-4 : 1e-7, xp = x2.slice(), xm = x2.slice(); xp[j] += eps; xm[j] -= eps; const mp = M.measure(xp, st2), mm = M.measure(xm, st2); maxErr = Math.max(maxErr, Math.abs((mp.rho - mm.rho) / (2 * eps) - m0.H_rho[j]), Math.abs((mp.rhoDot - mm.rhoDot) / (2 * eps) - m0.H_rate[j])); }
+    check('od', 'Analitik H (menzil, menzil-hızı) sonlu farkla uyuşur (< 1e−6)', maxErr < 1e-6, maxErr.toExponential(1)); }
+  /* STM: iki-cisim analitik 2. mertebe ile */
+  { const x0 = [6878, 0, 0, 0, 5.3, 5.3], dt = 10, Phi = M.stmStep(x0, dt, false), r = [x0[0], x0[1], x0[2]], rn = Math.hypot(...r); const G = [0, 1, 2].map(i => [0, 1, 2].map(j => M.MU / rn ** 3 * (3 * r[i] * r[j] / (rn * rn) - (i === j ? 1 : 0))));
+    let mx = 0; for (let i = 0; i < 6; i++) for (let j = 0; j < 6; j++) { const a = (i === j ? 1 : 0) + (i < 3 && j >= 3 && j - 3 === i ? dt : 0) + (i >= 3 && j < 3 ? G[i - 3][j] * dt : 0) + (i < 3 && j < 3 ? G[i][j] * dt * dt / 2 : 0) + (i >= 3 && j >= 3 ? G[i - 3][j - 3] * dt * dt / 2 : 0); mx = Math.max(mx, Math.abs(Phi[i][j] - a)); }
+    check('od', 'Sonlu-fark STM ≈ I + A dt + A² dt²/2 (iki-cisim, 10 s; fark < 1e−3)', mx < 1e-3, mx.toExponential(1)); }
+  const R = {}; for (const id of ['leoOne', 'leoThree', 'rangeOnly', 'rateOnly', 'badModel', 'lostInSpace', 'geo', 'molniya']) R[id] = M.runOd(id);
+  for (const id of ['leoOne', 'leoThree', 'rateOnly', 'molniya']) { const s = R[id].stats; check('od', `${id}: tutarlı EKF — NEES ort. 0,5–8, NIS ort. 0,6–1,6, 3σ içinde ≥ %95, yakınsadı (RMS < hata₀/10)`, s.neesMean > .5 && s.neesMean < 8 && s.nisMean > .6 && s.nisMean < 1.6 && s.inside3sigFrac >= .95 && s.converged, `NEES ${s.neesMean.toFixed(2)}, NIS ${s.nisMean.toFixed(2)}, in3σ ${s.inside3sigFrac.toFixed(3)}, RMS ${s.rmsPosFinal.toExponential(2)} km`); }
+  check('od', 'rangeOnly: yalnız menzil de yakınsar (iki istasyon), NIS ≈ 1', R.rangeOnly.stats.converged && R.rangeOnly.stats.nisMean > .6 && R.rangeOnly.stats.nisMean < 1.6, `RMS ${R.rangeOnly.stats.rmsPosFinal.toExponential(2)} km, NIS ${R.rangeOnly.stats.nisMean.toFixed(2)}`);
+  check('od', 'leoThree konum RMS (son çeyrek) < 20 m ve leoOne < 50 m (σρ 10 m, σρ̇ 1 cm/s)', R.leoThree.stats.rmsPosFinal < .02 && R.leoOne.stats.rmsPosFinal < .05, `${(R.leoThree.stats.rmsPosFinal * 1000).toFixed(1)} m / ${(R.leoOne.stats.rmsPosFinal * 1000).toFixed(1)} m`);
+  check('od', 'Filtre J2 bilmezse (LEO): sapma — RMS > 10 km, 3σ içinde kalma < %30, NEES ≫ 6 (aşırı güven)', R.badModel.stats.rmsPosFinal > 10 && R.badModel.stats.inside3sigFrac < .3 && R.badModel.stats.neesMean > 1e3, `RMS ${R.badModel.stats.rmsPosFinal.toFixed(1)} km, in3σ ${R.badModel.stats.inside3sigFrac.toFixed(2)}, NEES ${R.badModel.stats.neesMean.toExponential(1)}`);
+  check('od', 'Büyük başlangıç hatası (10 km / 10 m/s): EKF tutarsız (3σ içinde < %50 ya da NEES > 100) — doğrusallaştırma sınırı', R.lostInSpace.stats.inside3sigFrac < .5 || R.lostInSpace.stats.neesMean > 100, `in3σ ${R.lostInSpace.stats.inside3sigFrac.toFixed(2)}, NEES ${R.lostInSpace.stats.neesMean.toExponential(1)}`);
+  check('od', 'GEO tek istasyon: sürekli ölçüme rağmen RMS hata LEO’nun ≥ 10 katı ve yakınsamaz, ama tutarlı (zayıf gözlenebilirlik)', R.geo.stats.nMeas > 100 && R.geo.stats.rmsPosFinal > 10 * R.leoOne.stats.rmsPosFinal && !R.geo.stats.converged && R.geo.stats.inside3sigFrac >= .95, `n ${R.geo.stats.nMeas}, RMS ${R.geo.stats.rmsPosFinal.toExponential(2)} km vs ${R.leoOne.stats.rmsPosFinal.toExponential(2)} km, in3σ ${R.geo.stats.inside3sigFrac.toFixed(2)}`);
+  check('od', 'Ölçüm yokken hata da 3σ da büyür; geçişler ölçüm sayısıyla tutarlı (Σ geçiş n = ölçüm/ölçüm-türü)', (() => { const r = R.leoOne; const sumN = r.passes.reduce((a, p) => a + p.n, 0); return sumN * r.cfg.meas.length === r.stats.nMeas; })(), `${R.leoOne.passes.length} geçiş`);
+  check('od', 'Deterministik: aynı tohum aynı sonuç', M.runOd('leoOne').stats.rmsPosFinal === R.leoOne.stats.rmsPosFinal);
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

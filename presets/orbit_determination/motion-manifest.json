@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "od-ekf-tracking",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Yörünge belirlemenin ne olduğunu göstermek: gürültülü yer istasyonu ölçümleri (menzil, menzil-hızı) ile dinamik modelin genişletilmiş Kalman filtresinde birleşmesi; hatanın 3σ zarfına göre nasıl küçüldüğü, NEES/NIS ile filtre tutarlılığı, gözlenebilirlik (yalnız menzil, yalnız menzil-hızı, GEO tek istasyon) ve model hatasının (J2 eksik) sapmaya yol açması.",
+      "model": "Gerçek: iki-cisim + J2 (RK4, dt 10–60 s). İstasyonlar ECEF birim vektörden θ = ω_e t ile ECI'ye döndürülür (V_s = ω × R_s); ölçüm ρ = |r − R_s|, ρ̇ = d·(v − V_s)/ρ, yükseklik maskesi, tohumlu Box–Muller Gauss gürültü (σρ = 10 m, σρ̇ = 1 cm/s). EKF: durum [r; v], Φ = RK4 haritasının merkezi sonlu-fark Jacobian'ı, Q = q·[[dt³/3 I, dt²/2 I],[dt²/2 I, dt I]] (q = σ_a²), analitik H (∂ρ/∂r = d/ρ; ∂ρ̇/∂r = (v − V_s)/ρ − ρ̇ d/ρ², ∂ρ̇/∂v = d/ρ), ardışık skaler güncelleme, Joseph biçimi P, simetrileştirme. Başlangıç hatası rastgele yönde verilen büyüklükte, P₀ aynı ölçekte (tutarlılık adil). Tutarlılık: NEES = eᵀP⁻¹e (beklenen 6), NIS = ν²/S (beklenen 1), 3σ içinde kalma oranı, son çeyrek RMS. Denetim scripts/validate-astro.mjs 'od' grubu (ölçüm modeli geometri, H sonlu-fark, STM analitik karşılaştırma, tutarlı senaryolarda NEES/NIS aralıkları ve yakınsama, J2'siz filtrede sapma, yalnız-menzil-hızı gözlenebilirliği, GEO tek istasyonda büyük belirsizlik).",
+      "limitations": "Ardışık skaler EKF (UKF/toplu en küçük kareler yok); sürükleme, SRP, üçüncü cisim, ışık-zamanı, troposfer/iyonosfer gecikmesi, istasyon saat ve yanlılık kestirimi yok; süreç gürültüsü beyaz ivme (yanlılık örtemez — J2 eksik senaryosu bunu gösterir); gerçek ve filtre aynı entegratörü kullanır (sayısal model hatası yok); tek çalıştırma (Monte Carlo istatistiği yok, NEES tek örnekli).",
+      "reducedMotion": "Zaman imleci simülasyonun ortasında durur; grafikler statik.",
+      "exportState": "?s=<senaryo>&t=<saat>&warp= deterministik (tohumlu gürültü); export=1 alt bilgiyi gizler.",
+      "accessibility": "Senaryo, ölçüm türü, J2, σ_a, başlangıç hatası ve maske denetimleri yerli öğelerdir; HUD tüm istatistikleri metin verir (hata, 3σ, NEES, NIS, RMS, 3σ içinde kalma); tuvaller aria-label taşır; altyazı yöntemi, sayıları ve sınırları düzyazı anlatır ve tutarsız filtreyi açıkça adlandırır.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}
