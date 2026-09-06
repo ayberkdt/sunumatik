@@ -8,6 +8,7 @@
    API: const ed = await mountDispersion(host, { scenario, n, seed, sigmas }); ed.set({...}) · ed.result · ed.dispose() */
 
 import { runDispersion, SCENARIOS, PARAMS } from './dispersion-model.mjs';
+import { palette, backdrop, polyline, marker, label, title, tag, arrow, Entrance, reveal, staticMode, rgba } from '../core/lab-scene.mjs';
 
 export async function mountDispersion(host, options = {}) {
   if (!host) throw new Error('mountDispersion bir kap ister');
@@ -19,55 +20,59 @@ export async function mountDispersion(host, options = {}) {
         background:var(--color-canvas,#0b0c10);font-family:var(--font-body,'Inter','Segoe UI',system-ui,sans-serif);color:var(--color-ink,#e9e4d8);}
       .ed canvas.p{position:absolute;inset:0;width:100%;height:100%;display:block;} .ed__cell{position:relative;min-height:0;min-width:0;}
       .ed__left{display:grid;grid-template-rows:minmax(0,1fr) auto;min-width:0;min-height:0;}
-      .ed__hud{padding:8px 12px;border-top:1px solid var(--color-rule,#3a3c42);font-size:12px;color:var(--color-muted,#9a938a);}
-      .ed__hud dl{margin:0;display:grid;grid-template-columns:auto 1fr auto 1fr;gap:1px 10px;} .ed__hud dt{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;align-self:baseline;}
-      .ed__hud dd{margin:0;text-align:right;font-family:var(--font-mono,'JetBrains Mono',ui-monospace,monospace);font-size:11.5px;color:var(--color-ink,#e9e4d8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .ed__hud dd.hi{color:var(--color-accent,#d9b877);} .ed__hud dd.bad{color:var(--color-data-2,#d78f6c);}
+      .ed__hud{padding:12px 16px 10px;border-top:1px solid var(--lab-rule,#3a3c42);}
       .ed__plots{display:grid;grid-template-rows:repeat(3,minmax(0,1fr));border-left:1px solid var(--color-rule,#3a3c42);min-width:0;min-height:0;} .ed__plots .ed__cell{border-bottom:1px solid var(--color-rule,#3a3c42);} .ed__plots .ed__cell:last-child{border-bottom:0;}
-      .ed__top{position:absolute;top:12px;left:14px;font-size:11px;letter-spacing:.06em;color:var(--color-muted,#9a938a);pointer-events:none;max-width:75%;}
     </style>
     <div class="ed__left">
-      <div class="ed__cell"><canvas class="p" data-plot="fan" aria-label="Yörünge yelpazesi"></canvas><div class="ed__top" data-top></div></div>
-      <div class="ed__hud" role="status"><dl>
-        <dt>Nominal menzil</dt><dd data-h="nom">—</dd><dt>Örnek</dt><dd data-h="n">—</dd>
-        <dt>σ_s (Monte Carlo)</dt><dd data-h="sig" class="hi">—</dd><dt>σ_s (doğrusal RSS)</dt><dd data-h="rss">—</dd>
-        <dt>3σ menzil</dt><dd data-h="s3" class="hi">—</dd><dt>p05 – p95</dt><dd data-h="p">—</dd>
-        <dt>Tepe g</dt><dd data-h="g">—</dd><dt>Isı yükü</dt><dd data-h="q">—</dd>
-        <dt>Atlama / kaçış</dt><dd data-h="skip">—</dd><dt>Doğrusallık (RSS/MC)</dt><dd data-h="lin">—</dd>
-      </dl></div>
+      <div class="ed__cell" data-lab-reveal="fade"><canvas class="p" data-plot="fan" aria-label="Yörünge yelpazesi"></canvas><div class="lab-top" data-top></div></div>
+      <div class="ed__hud lab-hud" role="status" data-lab-reveal>
+        <div class="lab-hud__hero">
+          <div><span class="k">σ_s Monte Carlo</span><span class="v hi" data-h="sig">—</span></div>
+          <div><span class="k">3σ menzil</span><span class="v hi" data-h="s3">—</span></div>
+          <div><span class="k">Doğrusallık RSS/MC</span><span class="v" data-h="lin">—</span></div>
+          <div><span class="k">Atlama / kaçış</span><span class="v" data-h="skip">—</span></div>
+        </div>
+        <dl>
+          <dt>Nominal menzil</dt><dd data-h="nom">—</dd><dt>Örnek</dt><dd data-h="n">—</dd>
+          <dt>σ_s (doğrusal RSS)</dt><dd data-h="rss">—</dd><dt>p05 – p95</dt><dd data-h="p">—</dd>
+          <dt>Tepe g</dt><dd data-h="g">—</dd><dt>Isı yükü</dt><dd data-h="q">—</dd>
+        </dl>
+        <div class="lab-legend" data-legend></div>
+      </div>
     </div>
     <div class="ed__plots">
-      <div class="ed__cell"><canvas class="p" data-plot="hist" aria-label="Menzil histogramı"></canvas></div>
-      <div class="ed__cell"><canvas class="p" data-plot="sens" aria-label="Duyarlılık payları"></canvas></div>
-      <div class="ed__cell"><canvas class="p" data-plot="scatter" aria-label="Menzil–γ saçılımı"></canvas></div>
+      <div class="ed__cell" data-lab-reveal="fade"><canvas class="p" data-plot="hist" aria-label="Menzil histogramı"></canvas></div>
+      <div class="ed__cell" data-lab-reveal="fade"><canvas class="p" data-plot="sens" aria-label="Duyarlılık payları"></canvas></div>
+      <div class="ed__cell" data-lab-reveal="fade"><canvas class="p" data-plot="scatter" aria-label="Menzil–γ saçılımı"></canvas></div>
     </div>`;
   host.appendChild(figure);
   const H = {}; for (const el of figure.querySelectorAll('[data-h]')) H[el.dataset.h] = el;
   const plots = {}; for (const cv of figure.querySelectorAll('[data-plot]')) plots[cv.dataset.plot] = cv;
   const topEl = figure.querySelector('[data-top]');
-  const css = getComputedStyle(figure); const tok = (n, fb) => (css.getPropertyValue(n) || '').trim() || fb;
-  const P = { ink: tok('--color-ink', '#e9e4d8'), muted: tok('--color-muted', '#9a938a'), accent: tok('--color-accent', '#d9b877'), data1: tok('--color-data-1', '#8fb8dd'), data2: tok('--color-data-2', '#d78f6c'), canvas: tok('--color-canvas', '#0b0c10') };
+  const P = palette(figure); const legendEl = figure.querySelector('[data-legend]'); if (legendEl) legendEl.innerHTML = `<span><i style="background:${P.data1}"></i>örnek yörüngeler · iniş noktaları</span><span><i style="background:${P.accent}"></i>nominal</span><span><i style="background:${P.data2}"></i>atlama / kaçış</span>`;
+  const entrance = new Entrance({ frame: { at: 0, dur: .4 }, fan: { at: .2, dur: 1.4 }, marks: { at: 1.3, dur: .5 } }, { onFrame: () => draw() });
   const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   let cfg = { scenario: options.scenario ?? 'leoNominal', n: options.n ?? 200, seed: options.seed ?? 20260906, sigmas: options.sigmas ?? null }, R = null;
   function rebuild() { R = runDispersion(cfg.scenario, { n: cfg.n, seed: cfg.seed, sigmas: cfg.sigmas }); writeHud(); }
   function writeHud() {
     const s = R.stats.s, g = R.stats.peakG, q = R.stats.Q;
     H.nom.textContent = `${nf1.format(R.nominal.s)} km`; H.n.textContent = `${R.runs.length} (tohum ${R.cfg.seed})`;
-    H.sig.textContent = s ? `${nf2.format(s.std)} km` : '—'; H.rss.textContent = `${nf2.format(R.rssSigma)} km`; H.s3.textContent = s ? `±${nf1.format(3 * s.std)} km` : '—'; H.p.textContent = s ? `${nf1.format(s.p05)} – ${nf1.format(s.p95)} km` : '—';
+    H.sig.innerHTML = s ? `${nf2.format(s.std)}<span class="u">km</span>` : '—'; H.rss.textContent = `${nf2.format(R.rssSigma)} km`; H.s3.innerHTML = s ? `±${nf1.format(3 * s.std)}<span class="u">km</span>` : '—'; H.p.textContent = s ? `${nf1.format(s.p05)} – ${nf1.format(s.p95)} km` : '—';
     H.g.textContent = g ? `${nf2.format(g.mean)} ± ${nf2.format(g.std)} g (maks ${nf2.format(g.max)})` : '—'; H.q.textContent = q ? `${nf1.format(q.mean)} ± ${nf1.format(q.std)} MJ/m²` : '—';
-    H.skip.textContent = `${R.skipouts} / ${R.runs.length}`; H.skip.className = R.skipouts ? 'bad' : ''; H.lin.textContent = Number.isFinite(R.linearity) ? nf2.format(R.linearity) : '—'; H.lin.className = Number.isFinite(R.linearity) && Math.abs(R.linearity - 1) < .3 ? '' : 'bad';
+    H.skip.textContent = `${R.skipouts} / ${R.runs.length}`; H.skip.className = R.skipouts ? 'v bad' : 'v ok'; H.lin.textContent = Number.isFinite(R.linearity) ? nf2.format(R.linearity) : '—'; H.lin.className = Number.isFinite(R.linearity) && Math.abs(R.linearity - 1) < .3 ? 'v ok' : 'v bad';
     const sg = R.cfg.sigmas; topEl.textContent = `${SCENARIOS[cfg.scenario].label} · ${R.vehicle.label} · γ ${R.cfg.entry.gammaEntry}°, v ${nf0.format(R.cfg.entry.vEntry)} m/s · 1σ sapmalar: γ ${sg.gamma}°, v ${sg.v} m/s, ρ ${nf0.format(sg.rhoScale * 100)} %, L/D ${nf0.format(sg.ld * 100)} %, kütle ${nf0.format(sg.mass * 100)} %, yatış ${sg.bank}°`;
   }
   let dpr = 1;
-  function frame(cv, title) { const ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = P.canvas; ctx.fillRect(0, 0, W, Hh); ctx.fillStyle = P.muted; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText(title, 10, 13); const pad = { l: 50, r: 12, t: 20, b: 18 }; return { ctx, W, Hh, pad, pw: W - pad.l - pad.r, ph: Hh - pad.t - pad.b }; }
+  function frame(cv, text) { const ctx = cv.getContext('2d'), W = cv.clientWidth, Hh = cv.clientHeight; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); backdrop(ctx, W, Hh, { canvas: P.canvas }); title(ctx, text, 12, 15, P); const pad = { l: 50, r: 12, t: 20, b: 18 }; return { ctx, W, Hh, pad, pw: W - pad.l - pad.r, ph: Hh - pad.t - pad.b }; }
   function drawFan() {
-    const f = frame(plots.fan, ''), { ctx, pad, pw, ph, Hh } = f; const trajs = R.runs.filter(r => r.samples); const sMax = Math.max(R.nominal.s, ...R.runs.map(r => r.s)) * 1.05, hMax = 125;
+    const f = frame(plots.fan, ''), { ctx, pad, pw, ph, Hh } = f; const pF = entrance.progress('fan'), pM = entrance.progress('marks'); const trajs = R.runs.filter(r => r.samples); const sMax = Math.max(R.nominal.s, ...R.runs.map(r => r.s)) * 1.05, hMax = 125;
     const X = s => pad.l + s / sMax * pw, Y = h => pad.t + ph - h / hMax * ph;
     ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.fillStyle = P.muted; ctx.font = '9.5px ui-monospace, monospace'; ctx.textAlign = 'right'; for (const h of [0, 25, 50, 75, 100, 120]) { ctx.beginPath(); ctx.moveTo(pad.l, Y(h)); ctx.lineTo(pad.l + pw, Y(h)); ctx.stroke(); ctx.fillText(`${h} km`, pad.l - 4, Y(h) + 3); } ctx.textAlign = 'center'; const step = sMax > 3000 ? 500 : sMax > 1200 ? 250 : 100; for (let s = 0; s <= sMax; s += step) ctx.fillText(`${s}`, X(s), Hh - 5); ctx.textAlign = 'left'; ctx.fillText('menzil (km)', pad.l + pw - 70, Hh - 5);
-    for (const r of trajs) { ctx.strokeStyle = r.outcome === 'landed' ? 'rgba(143,184,221,.35)' : 'rgba(215,143,108,.8)'; ctx.lineWidth = 1; ctx.beginPath(); r.samples.forEach((p, i) => { const x = X(p.s / 1000), y = Y(p.h / 1000); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); }
-    ctx.strokeStyle = P.accent; ctx.lineWidth = 2; ctx.beginPath(); R.nominal.samples.forEach((p, i) => { const x = X(p.s / 1000), y = Y(p.h / 1000); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
-    for (const r of R.runs) if (r.outcome === 'landed') { ctx.fillStyle = 'rgba(143,184,221,.6)'; ctx.fillRect(X(r.s) - 1, Y(10) - 1, 2, 2); }
-    ctx.fillStyle = P.accent; ctx.beginPath(); ctx.arc(X(R.nominal.s), Y(10), 4, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = P.muted; ctx.font = '10.5px Inter, sans-serif'; ctx.fillText(`yükseklik–menzil · ${trajs.length} örnek yörünge (mavi), nominal (altın), atlama/kaçış (turuncu) · iniş noktaları 10 km'de`, pad.l, Hh - 26);
+    /* kaskad: yörüngeler sırayla çizilir (her biri kısmi ilerlemeyle), nominal en son ve kalın */
+    trajs.forEach((r, j) => { const pr = Math.min(1, Math.max(0, pF * (trajs.length + 6) / trajs.length - j / trajs.length * 1.0)); if (pr <= 0) return; polyline(ctx, r.samples.map(p => [X(p.s / 1000), Y(p.h / 1000)]), { progress: pr, color: r.outcome === 'landed' ? P.data1 : P.data2, alpha: r.outcome === 'landed' ? .32 : .85, width: 1 }); });
+    polyline(ctx, R.nominal.samples.map(p => [X(p.s / 1000), Y(p.h / 1000)]), { progress: pF, color: P.accent, width: 2.2 });
+    if (pM > 0) { ctx.save(); ctx.globalAlpha = pM; for (const r of R.runs) if (r.outcome === 'landed') { ctx.fillStyle = rgba(P.data1, .6); ctx.fillRect(X(r.s) - 1, Y(10) - 1, 2, 2); } ctx.restore(); marker(ctx, X(R.nominal.s), Y(10), 4 * pM, P.accent, { alpha: pM }); }
+    title(ctx, `yükseklik–menzil · ${trajs.length} örnek yörünge · iniş noktaları 10 km'de`, pad.l, Hh - 26, P);
   }
   function drawHist() {
     const f = frame(plots.hist, 'menzil histogramı — p05 / p50 / p95 (kesikli), ±3σ (mavi), nominal (altın)'), { ctx, pad, pw, ph, Hh } = f; const s = R.stats.s; if (!s) return;
@@ -93,6 +98,6 @@ export async function mountDispersion(host, options = {}) {
   function draw() { if (!R) return; drawFan(); drawHist(); drawSens(); drawScatter(); }
   function resize() { dpr = Math.min(devicePixelRatio || 1, 2); for (const cv of Object.values(plots)) { cv.width = Math.round(cv.clientWidth * dpr); cv.height = Math.round(cv.clientHeight * dpr); } draw(); }
   const ro = new ResizeObserver(resize); ro.observe(figure);
-  rebuild(); resize();
-  return { get result() { return R; }, get config() { return { ...cfg }; }, scenarios: SCENARIOS, params: PARAMS, set(c) { cfg = { ...cfg, ...c }; rebuild(); draw(); }, dispose() { ro.disconnect(); figure.remove(); } };
+  reveal(figure); rebuild(); resize(); entrance.start();
+  return { replay() { entrance.start(); }, get result() { return R; }, get config() { return { ...cfg }; }, scenarios: SCENARIOS, params: PARAMS, set(c) { cfg = { ...cfg, ...c }; rebuild(); draw(); }, dispose() { ro.disconnect(); figure.remove(); } };
 }

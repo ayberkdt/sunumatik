@@ -6,6 +6,7 @@
   <title>Giriş Dağılımı (Monte Carlo) — entry_dispersion</title>
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../core/lab-scene.css">
   <style>
     :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
       --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
@@ -27,15 +28,15 @@
     html[data-export="true"] footer { display: none; }
   </style>
 </head>
-<body>
-  <header>
+<body class="lab">
+  <header data-lab-reveal>
     <h1>Giriş Dağılımı (Monte Carlo)<small>entry_dispersion · giriş açısı/hız/atmosfer/L/D/kütle/yatış sapmaları → menzil ve tepe yük istatistikleri · tek-değişken duyarlılık ve doğrusal RSS ↔ Monte Carlo</small></h1>
     <div class="tabs" role="group" aria-label="Senaryolar" id="tabs"></div>
   </header>
   <div class="stage-area" id="host"></div>
-  <footer>
+  <footer data-lab-reveal>
     <div class="control-row">
-      <div class="group"><span>Örnek</span><button data-n="100">100</button><button data-n="200" aria-pressed="true">200</button><button data-n="500">500</button><label class="field">tohum <input id="seed" type="range" min="1" max="50" step="1" value="1"><output id="oSeed">1</output></label></div>
+      <div class="group"><span>Örnek</span><button data-n="100">100</button><button data-n="200" aria-pressed="true">200</button><button data-n="500">500</button><button id="replayBtn">Girişi tekrar oynat</button><label class="field">tohum <input id="seed" type="range" min="1" max="50" step="1" value="1"><output id="oSeed">1</output></label></div>
       <div class="group"><span>1σ</span><label class="field">γ <input id="sGamma" type="range" min="0" max="0.3" step="0.01" value="0.05"><output id="oGamma">0,05°</output></label><label class="field">v <input id="sV" type="range" min="0" max="50" step="1" value="10"><output id="oV">10 m/s</output></label><label class="field">ρ <input id="sRho" type="range" min="0" max="0.4" step="0.01" value="0.1"><output id="oRho">10 %</output></label><label class="field">L/D <input id="sLd" type="range" min="0" max="0.2" step="0.01" value="0.05"><output id="oLd">5 %</output></label></div>
     </div>
     <p class="caption" id="caption"></p>
@@ -61,6 +62,7 @@
         + `Tek-değişken duyarlılıkların RSS'i <span class="nums">${nf2.format(R.rssSigma)} km</span> — oran ${Number.isFinite(R.linearity) ? nf2.format(R.linearity) : '—'}: ${Number.isFinite(R.linearity) && Math.abs(R.linearity - 1) < .3 ? 'doğrusal yayılım Monte Carlo ile uyumlu' : 'DOĞRUSAL DEĞİL — sapmalar etkileşiyor ya da atlama/kaçış var'}. En büyük pay: ${top ? top.label + ' (%' + nf0.format(top.share * 100) + ')' : '—'}. `
         + `Tepe g ${R.stats.peakG ? nf2.format(R.stats.peakG.mean) + ' ± ' + nf2.format(R.stats.peakG.std) : '—'}, ısı yükü ${R.stats.Q ? nf1.format(R.stats.Q.mean) + ' ± ' + nf1.format(R.stats.Q.std) + ' MJ/m²' : '—'}; atlama/kaçış ${R.skipouts}. Sınırlar: düzlemsel model (çapraz-menzil yok), sabit yatış (kapalı-çevrim güdüm yok — gerçek kapsüller dağılımı güdümle kapatır), Gauss ve bağımsız sapmalar, rüzgar/paraşüt sürüklenmesi yok, tek çalıştırma istatistiği (n ile σ'nın kendi belirsizliği ≈ σ/√(2n)).`;
     }
+    $('replayBtn').addEventListener('click', () => ed.replay());
     syncFrom(); writeCaption();
     document.title += ' · hazır';
   </script>

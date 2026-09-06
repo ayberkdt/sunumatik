@@ -6,6 +6,7 @@
   <title>GEO İstasyon Tutma Bütçesi — geo_stationkeeping</title>
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../core/lab-scene.css">
   <style>
     :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
       --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
@@ -25,14 +26,14 @@
     html[data-export="true"] footer { display: none; }
   </style>
 </head>
-<body>
-  <header>
+<body class="lab">
+  <header data-lab-reveal>
     <h1>GEO İstasyon Tutma Bütçesi<small>geo_stationkeeping · doğu–batı sürüklenme GERÇEK C̄22/S̄22'den (gravity_field) · kuzey–güney Ay+Güneş 1 yıl RK4 (orbit_perturbations) · SRP eksantriklik · ömür yakıtı</small></h1>
   </header>
   <div class="stage-area" id="host"></div>
-  <footer>
+  <footer data-lab-reveal>
     <div class="control-row">
-      <div class="group"><span>İstasyon</span><label class="field">boylam <input id="lon" type="range" min="-180" max="180" step="1" value="42"><output id="oLon">42° D</output></label><button data-lon="42">42° D (Türksat)</button><button data-lon="75.1">75° D (kararlı)</button><button data-lon="-14.9">15° B (kararsız)</button><button data-lon="-105">105° B</button></div>
+      <div class="group"><span>İstasyon</span><label class="field">boylam <input id="lon" type="range" min="-180" max="180" step="1" value="42"><output id="oLon">42° D</output></label><button data-lon="42">42° D (Türksat)</button><button data-lon="75.1">75° D (kararlı)</button><button data-lon="-14.9">15° B (kararsız)</button><button data-lon="-105">105° B</button><button id="replayBtn">Girişi tekrar oynat</button></div>
       <div class="group"><span>Görev</span><label class="field">ömür <input id="years" type="range" min="5" max="20" step="1" value="15"><output id="oY">15 yıl</output></label><label class="field">m₀ <input id="m0" type="range" min="1000" max="7000" step="250" value="3000"><output id="oM">3000 kg</output></label></div>
     </div>
     <p class="caption" id="caption"></p>
@@ -57,6 +58,7 @@
         + `${fmtLon(b.lonDeg)} istasyonu için ΔV_DB = <span class="nums">${nf2.format(b.ewPerYear)} m/s/yıl</span>, libration periyodu ${nf1.format(m.libration)} yıl. Kuzey–güney: Ay + Güneş 1 yıllık RK4 yayılımı eğikliği <span class="nums">${nf3.format(m.ns.diPerYear)}°/yıl</span> sürükler → ΔV_KG = V_geo·Δi = <span class="nums">${nf1.format(b.nsPerYear)} m/s/yıl</span> (bütçenin baskın kalemi; literatür 0,75–0,95°/yıl, ~40–50 m/s). `
         + `SRP (A/m 0,04) eksantriklik çemberi e_max ${m.srp.eMax.toExponential(2)}. ${b.years} yılda toplam <span class="nums">${nf0.format(b.lifetimeDv)} m/s</span>: kimyasal (Isp 300 s) ${nf0.format(b.propChem)} kg, elektrikli (Isp 1500 s) ${nf0.format(b.propEp)} kg yakıt — tamamen elektrikli uyduların gerekçesi. Sınırlar: J22 dışı tesseral terimler yok, üçüncü-cisim modeli dairesel Ay/Güneş (18,6 yıllık düğüm çevrimi yok), ölü-bant stratejisi ve manevra zamanlaması modellenmez.`;
     }
+    $('replayBtn').addEventListener('click', () => gk.replay());
     sync(); writeCaption();
     document.title += ' · hazır';
   </script>
