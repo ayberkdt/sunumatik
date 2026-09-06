@@ -473,6 +473,28 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('perturbation', 'elemanlar → durum → elemanlar gidiş-dönüş (1e−9)', near(back.a, el.a, 1e-6) && near(back.e, el.e, 1e-9) && near(back.i, el.i, 1e-9) && near(back.raan, el.raan, 1e-9) && near(back.argp, el.argp, 1e-9) && near(back.nu, el.nu, 1e-9));
 }
 
+/* ───────────────────────── Tutulma / görünürlük geometrisi */
+{
+  const E = await mod('presets/eclipse_geometry/eclipse-model.mjs');
+  const O = await mod('presets/core/astro-orbit.mjs');
+  const eq = { ...O.ORBIT_PRESETS.iss, i: 0, raan: 0 };
+  const b = E.analyze({ el: eq, dayOfYear: 80, revs: 1 });
+  const theo = Math.asin(O.R_E / eq.a) / Math.PI;
+  check('eclipse', 'β = 0 dairesel: umbra ≤ silindirik asin(R/r)/π ≤ penumbra (konik ⊂ silindirik ⊂ penumbra)', b.stats.umbraFrac <= theo + 1e-3 && b.stats.penumbraFrac >= theo - 1e-3 && Math.abs(b.stats.umbraFrac - theo) < .01, `${b.stats.umbraFrac.toFixed(4)} ≤ ${theo.toFixed(4)} ≤ ${b.stats.penumbraFrac.toFixed(4)}`);
+  const dd = E.analyze({ el: { ...O.ORBIT_PRESETS.polar, raan: Math.PI / 2 }, dayOfYear: 80, revs: 1 });
+  check('eclipse', 'şafak-alacakaranlık kutupsal (β = 90°): tutulma yok', dd.noEclipseByBeta && dd.stats.umbraFrac === 0, `β ${(dd.beta * 180 / Math.PI).toFixed(1)}°`);
+  const iss = E.analyze({ el: O.ORBIT_PRESETS.iss, dayOfYear: 80, revs: 3, station: { lat: 39.9, lon: 32.9, maskDeg: 5 } });
+  check('eclipse', 'ISS umbra tur başına 30–37 dk', iss.stats.umbraPerRev / 60 > 30 && iss.stats.umbraPerRev / 60 < 37, `${(iss.stats.umbraPerRev / 60).toFixed(1)} dk`);
+  check('eclipse', 'olaylar sıralı ve umbra girişi penumbra girişinden sonra', iss.events.every((e, k) => k === 0 || e.t >= iss.events[k - 1].t) && iss.events.findIndex(e => e.id === 'umbra-entry') > iss.events.findIndex(e => e.id === 'penumbra-entry'));
+  const st = E.stationEcef(0, 0);
+  check('eclipse', 'tepe noktasındaki uydu ε = 90°', near(E.elevationFrom(st, [O.R_E + 400, 0, 0], 0).elevation, Math.PI / 2, 1e-6));
+  check('eclipse', 'ufuk geometrisi: ε = 0 için merkez açı = acos(R/r)', near(E.elevationFrom(st, [(O.R_E + 400) * Math.cos(Math.acos(O.R_E / (O.R_E + 400))), (O.R_E + 400) * Math.sin(Math.acos(O.R_E / (O.R_E + 400))), 0], 0).elevation, 0, 1e-6));
+  const tg = E.segmentBlocked([7000, 0, 0], [0, 7000, 0]);
+  check('eclipse', 'doğru parçası teğet yüksekliği = 7000/√2 − R', near(tg.tangentAlt, 7000 / Math.SQRT2 - O.R_E, 1e-6) && tg.blocked);
+  check('eclipse', 'gölge fonksiyonu limitleri: karşı-Güneş noktası umbra (0), Güneş tarafı 1', E.shadowFunction([-(O.R_E + 400), 0, 0], [1, 0, 0]).nu === 0 && E.shadowFunction([O.R_E + 400, 0, 0], [1, 0, 0]).nu === 1);
+  check('eclipse', 'GEO ekinoks tutulması: penumbra toplamı 2–8 dk (sonlu Güneş diski; giriş+çıkış ≈ 2×2 dk)', (() => { const g = E.analyze({ el: O.ORBIT_PRESETS.geo, dayOfYear: 80, revs: 1, dt: 20 }); return (g.stats.penumbraFrac - g.stats.umbraFrac) * g.period / 60 > 2 && (g.stats.penumbraFrac - g.stats.umbraFrac) * g.period / 60 < 8; })());
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

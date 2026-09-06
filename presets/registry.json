@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 48,
-    "presetsWithIndex": 41,
-    "animatedPresets": 37,
+    "presets": 49,
+    "presetsWithIndex": 42,
+    "animatedPresets": 38,
     "skills": 18,
-    "demoSlides": 64,
-    "demoCards": 51,
+    "demoSlides": 65,
+    "demoCards": 52,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 64,
-    "cards": 51,
+    "slides": 65,
+    "cards": 52,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -34,6 +34,7 @@
       "cr3bp_lagrange",
       "craft_blocks",
       "earth_advanced",
+      "eclipse_geometry",
       "equation_pen",
       "equation_steps",
       "figure_callouts",
@@ -213,6 +214,13 @@
     {
       "name": "earth_advanced",
       "title": "Terra Vanilla Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "eclipse_geometry",
+      "title": "Tutulma, Örtülme ve Görünürlük — eclipse_geometry",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

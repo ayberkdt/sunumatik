@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "eclipse-visibility-geometry",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Uydu için üç görünürlük sorusunu tek geometriyle yanıtlamak: ne zaman gölgede (umbra/penumbra, sonlu Güneş diski), yer istasyonu ne zaman görür (AOS/LOS, dönen Dünya), sensör hedefi ve röle bağlantısı ne zaman Dünya arkasında kalır (çizgi-görüş örtülmesi) — bütün geçiş zamanları geometriden türetilir, elle yazılmaz.",
+      "model": "Uydu Kepler yörüngesi (presets/core/astro-orbit.mjs); Güneş yönü yıl gününden (ekliptik boylam, ε = 23,44°), 1 AU, R_☉ = 695 700 km. Gölge fonksiyonu (Montenbruck & Gill konik model): görünen yarıçaplar a = asin(R_☉/d), b = asin(R_⊕/r), merkez açısı c; a + b ≤ c → ν = 1, c ≤ b − a → ν = 0, aksi hâlde dairesel disk örtüşme alanıyla ν = 1 − A/(πa²); umbra/penumbra girişleri ν eşiklerinde tarama + bisection. Beta açısı β = asin(ŝ·ĥ); silindirik limit β* = asin(R/r). Yer istasyonu ECEF'te, θ = θ₀ + ω_e t; yükseklik açısı ve azimut; AOS/LOS ε = maske geçişleri. Örtülme: doğru parçası–küre en yakın nokta (R + h_atm eşiği), yıldız hedefi için ışın–küre. Denetim: scripts/validate-astro.mjs (β = 0 dairesel yörüngede konik umbra ≈ silindirik asin(R/r)/π, |β| > β* → tutulma yok, ISS umbra 30–37 dk, tepe noktasında ε = 90°, teğet yüksekliği geometrisi, gölge fonksiyonu limitleri).",
+      "limitations": "Küresel Dünya (basıklık yok), atmosferik kırılma ve sönümleme yok (penumbra sınırı geometrik), Ay gölgesi yok, Güneş efemerisi basitleştirilmiş (dairesel, ekliptik), yörünge iki-cisim (J2 isteğe bağlı seküler), istasyon maskesi tek sabit açı (arazi yok); röle GEO dairesel. Görev planlaması için gerçek efemeris ve link bütçesi gerekir (comms_link_budget ile birleştirilebilir).",
+      "reducedMotion": "Otomatik oynatma yok; ilk umbra girişinden 5 dk sonrasında donmuş kare; bantlar ve HUD statik okunur.",
+      "exportState": "?preset=&doy=&raan=&revs=&t=<dk> deterministik (kapalı biçim geometri, tohumlu yıldızlar).",
+      "accessibility": "Yörünge düğmeleri, Güneş/istasyon/örtülme girişleri ve zaman kaydırıcısı yerli öğelerdir; HUD tüm durumları metin verir (ν, bölge, β/β*, umbra süresi, ε, görünürlük, sensör, bağlantı, sonraki olay); olay bantları metin etiketli; altyazı yöntemi düzyazı anlatır.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "eclipse-shadow-cones",
+      "type": "trace",
+      "truthLevel": "analytic",
+      "purpose": "3B'de umbra (yakınsak) ve penumbra (ıraksak) konilerini Güneş/Dünya yarıçaplarından çizmek; uydunun rengi gölge fonksiyonunu izler; istasyon ve röle çizgileri görünür/örtülü renklenir.",
+      "model": "Umbra uzunluğu R_⊕·d/(R_☉ − R_⊕) ≈ 1,38 milyon km (sahnede 4,5 R_⊕ kesilir); penumbra yarıçapı 1 + L(R_☉ + R_⊕)/d.",
+      "limitations": "Koniler kesiktir; renk geçişi ν'nin fonksiyonudur (eşik yok).",
+      "reducedMotion": "Statik.",
+      "exportState": "t'nin fonksiyonu.",
+      "accessibility": "Durumlar HUD'da metin.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

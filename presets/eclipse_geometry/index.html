@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tutulma, Örtülme ve Görünürlük — eclipse_geometry</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; } .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); } .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 110px; text-align: right; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field, label.toggle { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 90px; accent-color: var(--color-accent); margin: 0; } label.field input[type="number"] { width: 62px; background: var(--color-canvas); color: var(--color-ink); border: 1px solid var(--color-rule); border-radius: 5px; padding: 3px 6px; font: 500 12px var(--font-mono); } label.field output { font: 500 12px var(--font-mono); min-width: 54px; text-align: right; }
+    label.toggle { display: inline-flex; gap: 6px; align-items: center; } label.toggle input { accent-color: var(--color-accent); margin: 0; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Tutulma, Örtülme ve Görünürlük<small>eclipse_geometry · umbra/penumbra (sonlu Güneş diski), yer istasyonu AOS/LOS, sensör ve haberleşme örtülmesi — geçişler geometriden</small></h1>
+    <div class="tabs" role="group" aria-label="Yörünge"><button data-preset="iss" aria-pressed="true">ISS</button><button data-preset="sso">SSO</button><button data-preset="polar">Kutupsal</button><button data-preset="molniya">Molniya</button><button data-preset="gps">GPS</button><button data-preset="geo">GEO</button></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="100" step="1" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Güneş"><span>Güneş</span><label class="field">yıl günü <input id="doy" type="range" min="1" max="365" step="1" value="80"><output id="oDoy">80</output></label><label class="field">Ω kayması <input id="raan" type="range" min="0" max="360" step="1" value="46"><output id="oRaan">46°</output></label><label class="field">tur <input id="revs" type="range" min="1" max="8" step="1" value="2"><output id="oRevs">2</output></label></div>
+      <div class="group" role="group" aria-label="İstasyon"><span>İstasyon</span><label class="field">lat <input id="sLat" type="number" value="39.9" step="0.1"></label><label class="field">lon <input id="sLon" type="number" value="32.9" step="0.1"></label><label class="field">maske <input id="sMask" type="number" value="5" step="1" min="0" max="45">°</label></div>
+      <div class="group" role="group" aria-label="Örtülme"><span>Örtülme</span><label class="toggle"><input type="checkbox" id="relayOn" checked> röle (GEO)</label><label class="toggle"><input type="checkbox" id="starOn" checked> sensör hedefi (+z yıldızı)</label><label class="field">h_atm <input id="hAtm" type="number" value="100" step="10" min="0" max="500"> km</label><button id="applyBtn">Uygula</button></div>
+      <div class="group" role="group" aria-label="Zaman"><span>Zaman</span><button data-warp="30">30×</button><button data-warp="60" aria-pressed="true">60×</button><button data-warp="240">240×</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountEclipse } from './eclipse-geometry.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id); const rad = Math.PI / 180;
+    const ORBIT = (await import('../core/astro-orbit.mjs')).ORBIT_PRESETS;
+    let presetId = params.get('preset') || 'iss';
+    const elFor = (id, raanDeg) => ({ ...ORBIT[id], raan: raanDeg * rad });
+    const ec = await mountEclipse($('host'), { preset: presetId, elements: elFor(presetId, Number(params.get('raan') ?? 46)), dayOfYear: Number(params.get('doy')) || 80, revs: Number(params.get('revs')) || 2, warp: Number(params.get('warp')) || 60, autoplay: !deterministic, t: params.has('t') ? Number(params.get('t')) * 60 : undefined });
+    window.__eclipse = ec;
+    if (params.has('t')) ec.timeline.scrub(Number(params.get('t')) * 60);
+    const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 });
+    const outs = () => { $('oDoy').textContent = $('doy').value; $('oRaan').textContent = `${$('raan').value}°`; $('oRevs').textContent = $('revs').value; };
+    const apply = () => { ec.set({ preset: presetId, elements: elFor(presetId, Number($('raan').value)), dayOfYear: Number($('doy').value), revs: Number($('revs').value), station: { lat: Number($('sLat').value), lon: Number($('sLon').value), maskDeg: Number($('sMask').value) }, relayPreset: $('relayOn').checked ? 'geo' : null, star: $('starOn').checked ? [0, 0, 1] : null, hAtm: Number($('hAtm').value) }); writeCaption(); ec.timeline.play(); };
+    for (const id of ['doy', 'raan', 'revs']) { $(id).addEventListener('input', outs); $(id).addEventListener('change', apply); }
+    $('applyBtn').addEventListener('click', apply);
+    document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => { presetId = b.dataset.preset; apply(); document.querySelectorAll('[data-preset]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    document.querySelectorAll('[data-preset]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.preset === presetId)));
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { ec.timeline.setWarp(Number(b.dataset.warp)); document.querySelectorAll('[data-warp]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    function writeCaption() {
+      const A = ec.analysis, deg = x => x * 180 / Math.PI;
+      $('caption').innerHTML = `<strong>Geçişler geometriden türetilir:</strong> gölge fonksiyonu ν, uydudan görünen Güneş diski (yarıçap a) ile Dünya diskinin (b) örtüşme alanından hesaplanır — a + b ≤ c tam güneş, c ≤ b − a umbra, arası penumbra; giriş/çıkış zamanları ν eşiklerinde bisection ile. `
+        + `β = ${nf1.format(deg(A.beta))}° (yörünge düzlemi–Güneş açısı); silindirik limit β* = asin(R/r) = ${nf1.format(deg(A.betaStar))}°: ${A.noEclipseByBeta ? '|β| > β* → tutulma YOK (şafak-alacakaranlık geometrisi)' : `umbra tur başına <span class="nums">${nf1.format(A.stats.umbraPerRev / 60)} dk</span>`}. `
+        + (A.station ? `İstasyon (${A.station.lat}°, ${A.station.lon}°) dönen Dünya'da: ${A.stats.passes} geçiş, görünürlük oranı ${nf1.format(A.stats.visFrac * 100)} % (ε ≥ ${A.station.maskDeg}°). ` : '')
+        + `Sensör ve röle örtülmeleri doğru parçası–küre testinden (teğet yüksekliği < ${A.hAtm} km → örtülü). Küresel Dünya, kırılma yok, Ay gölgesi yok.`;
+    }
+    outs(); writeCaption();
+    const scrub = $('scrub'), playBtn = $('playBtn'), timeOut = $('timeOut');
+    function syncUi() { const tl = ec.timeline; scrub.max = String(tl.duration); scrub.step = String(tl.duration / 2000); playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(tl.t); timeOut.textContent = `${nf1.format(tl.t / 60)} dk`; }
+    setInterval(syncUi, 150);
+    playBtn.addEventListener('click', () => { const tl = ec.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { ec.timeline.pause(); ec.timeline.scrub(Number(scrub.value)); syncUi(); });
+    if (deterministic) { ec.timeline.pause(); ec.setActive(false); }
+    document.title += ' · hazır'; syncUi();
+  </script>
+</body>
+</html>
