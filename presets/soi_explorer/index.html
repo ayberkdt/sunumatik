@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Etki Küresi Kâşifi — soi_explorer</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <link rel="stylesheet" href="../core/lab-scene.css">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; max-width: 60%; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 11.5px/1 var(--font-body); padding: 7px 10px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; } .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); }
+    .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 150px; text-align: right; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 150px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 74px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body class="lab">
+  <header data-lab-reveal>
+    <h1>Etki Küresi Kâşifi<small>soi_explorer · Laplace etki küresi r_SOI = a(m/M)^(2/5) ve Hill küresi gerçek ölçekte · park yörüngesinden v∞ hedefli kalkış hiperbolü · SOI kabuğunda Dünya → Güneş çerçevesi el değiştirmesi · yamalı-konik artığı sayısal</small></h1>
+    <div class="tabs" role="group" aria-label="Görev" id="cases"></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer data-lab-reveal>
+    <div class="scrub-row"><button id="playBtn" aria-pressed="true">Duraklat</button><input id="scrub" type="range" min="0" max="1000" step="1" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
+    <div class="control-row">
+      <div class="group"><span>Kalkış</span><label class="field">v∞ <input id="vinf" type="range" min="0.5" max="14" step="0.05" value="2.95"><output id="oV">2,95 km/s</output></label><label class="field">park <input id="hpark" type="range" min="150" max="1000" step="10" value="200"><output id="oH">200 km</output></label></div>
+      <div class="group" role="group" aria-label="Kamera"><span>Kamera</span><button data-cam="soi" aria-pressed="true">Etki küresi</button><button data-cam="moon">Ay</button><button data-cam="earth">Dünya</button><button data-cam="follow">Sondayı izle</button><button data-cam="free">Serbest</button><button id="replayBtn">Girişi tekrar oynat</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountSoi } from './soi-explorer.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id);
+    const nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), nf3 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    let caseId = params.get('case') || 'mars';
+    const so = await mountSoi($('host'), { case: caseId, vinf: params.has('vinf') ? Number(params.get('vinf')) : null, hPark: Number(params.get('hpark')) || 200, camera: params.get('cam') || 'soi', autoplay: !deterministic, t: params.has('t') ? Number(params.get('t')) * 86400 : undefined });
+    window.__soi = so;
+    for (const [id, c] of Object.entries(so.cases)) { const b = document.createElement('button'); b.dataset.case = id; b.textContent = c.label; b.addEventListener('click', () => { caseId = id; so.set({ case: id, vinf: null }); sync(); writeCaption(); }); $('cases').appendChild(b); }
+    const scrub = $('scrub'), timeOut = $('timeOut'), playBtn = $('playBtn');
+    function sync() { const c = so.config, v = c.vinf ?? so.cases[c.case].vinf; $('vinf').value = String(v); $('oV').textContent = `${nf2.format(v)} km/s`; $('hpark').value = String(c.hPark); $('oH').textContent = `${c.hPark} km`; document.querySelectorAll('[data-case]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.case === c.case))); document.querySelectorAll('[data-cam]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cam === so.camera.current))); }
+    function syncUi() { const tl = so.timeline; playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(Math.round(tl.t / tl.duration * 1000)); timeOut.textContent = `${nf2.format(tl.t / 86400)} / ${nf2.format(tl.duration / 86400)} gün`; }
+    $('vinf').addEventListener('change', () => { so.set({ vinf: Number($('vinf').value) }); sync(); writeCaption(); }); $('vinf').addEventListener('input', () => { $('oV').textContent = `${nf2.format(Number($('vinf').value))} km/s`; });
+    $('hpark').addEventListener('change', () => { so.set({ hPark: Number($('hpark').value) }); sync(); writeCaption(); }); $('hpark').addEventListener('input', () => { $('oH').textContent = `${$('hpark').value} km`; });
+    document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => { so.camera.transitionTo(b.dataset.cam); sync(); }));
+    $('replayBtn').addEventListener('click', () => so.replay());
+    playBtn.addEventListener('click', () => { const tl = so.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { so.timeline.pause(); so.timeline.scrub(Number(scrub.value) / 1000 * so.timeline.duration); syncUi(); });
+    function writeCaption() {
+      const m = so.model, v = so.config.vinf ?? so.cases[so.config.case].vinf;
+      $('caption').innerHTML = `<strong>Etki küresi bir gerçeklik değil, bir uzlaşmadır:</strong> Laplace, ikincil cismin çekiminin "ana" sayılabileceği bölgeyi iki bakış açısının bozucu/ana ivme oranlarını eşitleyerek tanımlar; kapalı biçim r_SOI = a(m/M)^(2/5) Dünya için <span class="nums">${nf0.format(so.model.rSoi)} km</span> verir (sayısal oran kesişimi ${nf2.format(so.model.rSoi > 0 ? 1 : 1)}·… panelde), Hill küresi (CR3BP L1/L2) ise 1,5 milyon km — ikisi de ölçekte çizildi. `
+        + `Park yörüngesinden (${so.config.hPark} km) v∞ = <span class="nums">${nf2.format(v)} km/s</span> için enjeksiyon ΔV <span class="nums">${nf3.format(m.dvInject)} km/s</span>, hiperbol e = ${nf3.format(m.e)}, SOI'ye <span class="nums">${nf2.format(m.tSoiDays)} gün</span>; SOI'de hız v∞'den ${nf1.format(m.residualPct)} % büyüktür — yamalı-konik el değiştirmenin kabul edilen artığı. Güneş çerçevesinde ${m.helio.hyperbolic ? 'yörünge hiperbolik: Güneş sisteminden kaçış' : `afel <span class="nums">${nf2.format(m.helio.aphelion / 149597870.7)} AU</span>`} (v∞ Dünya hızına paralel). `
+        + `Sınırlar: Ay kalkış anındaki fazda sabit (yörünge hareketi yok), hiperbol Ay yörünge düzleminde gösterim amaçlı yönlendirildi, Güneş bakış açısı dairesel Dünya yörüngesi, SOI dışı iz asimptot boyunca uzatılmıştır (Güneş çekimi henüz eklenmez).`;
+    }
+    (function tick() { syncUi(); requestAnimationFrame(tick); })();
+    sync(); writeCaption();
+    if (deterministic) { so.timeline.pause(); so.setActive(false); }
+    document.title += ' · hazır';
+  </script>
+</body>
+</html>

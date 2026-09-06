@@ -81,6 +81,7 @@ kullanın) — örnek deste dahil her şey oradan açılır.
 | **ORBITAL** · [geo-stationkeeping](presets/geo_stationkeeping/index.html) | GEO istasyon tutma bütçesi: doğu–batı sürüklenme gerçek C̄22/S̄22'den, kuzey–güney Ay+Güneş 1 yıllık RK4, SRP eksantriklik, ömür yakıtı kimyasal vs elektrikli |
 | **ORBITAL** · [launch-window](presets/launch_window/index.html) | Fırlatma penceresi ve azimut: küresel trigonometri, Dünya dönmesi düzeltmesi, günde iki fırsat, gecikme → düzlem değişimi ΔV → pencere |
 | **ORBITAL** · [free-return](presets/free_return/index.html) | Ay serbest dönüş yörüngesi: CR3BP'de TLI ΔV/faz taraması, manevrasız 100 km dönüş perigee çözümleri, perilune ve süreler |
+| **ORBITAL** · [soi-explorer](presets/soi_explorer/index.html) | Etki küresi kâşifi: Laplace r_SOI ve Hill küresi gerçek ölçekte, v∞ hedefli kalkış hiperbolü, SOI kabuğunda çerçeve el değiştirmesi ve yamalı-konik artığı, Laplace oran paneli |
 
 ML yol haritası: embedding projektörü, konvolüsyon, çizge mesajlaşma.
 

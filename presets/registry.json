@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 60,
-    "presetsWithIndex": 53,
-    "animatedPresets": 43,
+    "presets": 61,
+    "presetsWithIndex": 54,
+    "animatedPresets": 47,
     "skills": 18,
-    "demoSlides": 76,
-    "demoCards": 63,
+    "demoSlides": 77,
+    "demoCards": 64,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 76,
-    "cards": 63,
+    "slides": 77,
+    "cards": 64,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -69,6 +69,7 @@
       "porkchop_explorer",
       "reentry_corridor",
       "rendezvous_docking",
+      "soi_explorer",
       "sun_advanced",
       "timeline_tree",
       "tisserand_graph",
@@ -198,7 +199,7 @@
       "name": "core",
       "title": null,
       "hasIndex": false,
-      "animated": false,
+      "animated": true,
       "hasMotionManifest": false
     },
     {
@@ -289,7 +290,7 @@
       "name": "free_return",
       "title": "Ay Serbest Dönüş Yörüngesi — free_return",
       "hasIndex": true,
-      "animated": false,
+      "animated": true,
       "hasMotionManifest": true
     },
     {
@@ -489,6 +490,13 @@
       "hasMotionManifest": true
     },
     {
+      "name": "soi_explorer",
+      "title": "Etki Küresi Kâşifi — soi_explorer",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
       "name": "sun_advanced",
       "title": "Sol Vanilla Preset",
       "hasIndex": true,
@@ -513,7 +521,7 @@
       "name": "transfer_explorer",
       "title": "Lambert Transfer Kâşifi — transfer_explorer",
       "hasIndex": true,
-      "animated": false,
+      "animated": true,
       "hasMotionManifest": true
     }
   ]

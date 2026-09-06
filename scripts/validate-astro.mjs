@@ -744,6 +744,27 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('freereturn', 'Serbest dönüş Ay\u2019ın arka tarafından geçer (perilune anında x > 1 − μ − 0,01)', sb.states[sb.perilune.i][0] > 1 - M.MU - .01);
 }
 
+/* ───────────────────────── soi (etki küresi, kalkış hiperbolü, el değiştirme) */
+{
+  const M = await mod('presets/soi_explorer/soi-model.mjs');
+  check('soi', 'r_SOI literatür: Dünya 924 000 km (±1 %), Ay 66 100 km (±1 %), Jüpiter 48,2 M km (±1 %)', near(M.soiRadius('earth') / 924e3, 1, .01) && near(M.soiRadius('moon') / 66.1e3, 1, .01) && near(M.soiRadius('jupiter') / 48.2e6, 1, .01), `${M.soiRadius('earth').toFixed(0)} / ${M.soiRadius('moon').toFixed(0)} / ${(M.soiRadius('jupiter') / 1e6).toFixed(2)} M km`);
+  check('soi', 'Hill küresi Dünya ≈ 1,50 M km (±1 %), Hill > r_SOI', near(M.hillRadius('earth') / 1.4965e6, 1, .01) && M.hillRadius('earth') > M.soiRadius('earth'), `${(M.hillRadius('earth') / 1e6).toFixed(3)} M km`);
+  const rl = M.laplaceCrossing('earth'), q = M.accelRatios('earth', rl);
+  check('soi', 'Laplace oranları sayısal kesişimde eşit (|log oran| < 1e−6) ve kesişim 0,8–0,95 r_SOI', Math.abs(Math.log(q.geo / q.helio)) < 1e-6 && rl / M.soiRadius('earth') > .8 && rl / M.soiRadius('earth') < .95, `${(rl / M.soiRadius('earth')).toFixed(3)} r_SOI`);
+  check('soi', 'Laplace oranları: yakında Dünya çerçevesi oranı küçük (< 1e−3 @ 50 000 km), uzakta büyük (> 1 @ 3 M km)', M.accelRatios('earth', 5e4).geo < 1e-3 && M.accelRatios('earth', 3e6).geo > 1);
+  const d = M.departure('earth', { hPark: 200, vinf: 2.95 });
+  const eps = d.pts.map(p => p.v * p.v / 2 - M.BODIES.earth.mu / p.r), eps0 = 2.95 * 2.95 / 2;
+  check('soi', 'Hiperbol enerjisi korunur: ε = v²/2 − μ/r = v∞²/2 (her noktada 1e−9 bağıl)', eps.every(x => Math.abs(x - eps0) < 1e-9 * Math.max(1, eps0) + 1e-9), eps0.toFixed(6));
+  check('soi', 'Mars kalkışı (v∞ 2,95 km/s, 200 km): ΔV 3,55–3,65 km/s, e 1,1–1,2, SOI\u2019ye 2,5–4 gün, artık 3–7 %', d.dvInject > 3.55 && d.dvInject < 3.65 && d.e > 1.1 && d.e < 1.2 && d.tSoiDays > 2.5 && d.tSoiDays < 4 && d.residualPct > 3 && d.residualPct < 7, `${d.dvInject.toFixed(3)} km/s, e ${d.e.toFixed(3)}, ${d.tSoiDays.toFixed(2)} gün, ${d.residualPct.toFixed(1)} %`);
+  check('soi', 'Zaman ve yarıçap ν ile tekdüze artar; son nokta r = r_SOI (1e−6)', d.pts.every((p, i) => i === 0 || (p.t > d.pts[i - 1].t && p.r > d.pts[i - 1].r)) && near(d.pts[d.pts.length - 1].r / d.rSoi, 1, 1e-6));
+  check('soi', 'Güneş çerçevesi: Mars durumu afel 1,45–1,60 AU (Hohmann ≈ 1,52), perihel ≈ 1 AU', d.helio.aphelion / M.AU > 1.45 && d.helio.aphelion / M.AU < 1.6 && near(d.helio.perihelion / M.AU, 1, .01), `${(d.helio.aphelion / M.AU).toFixed(3)} AU`);
+  const dj = M.departure('earth', { hPark: 200, vinf: 8.8 }), de = M.departure('earth', { hPark: 200, vinf: 12.5 }), dm = M.departure('earth', { hPark: 200, vinf: .8 });
+  check('soi', 'Jüpiter (v∞ 8,8) afel 4,5–6 AU, eliptik; kaçış (v∞ 12,5 km/s) hiperbolik (V_⊕ + v∞ > √2·29,78 = 42,12 km/s)', dj.helio.aphelion / M.AU > 4.5 && dj.helio.aphelion / M.AU < 6 && !dj.helio.hyperbolic && de.helio.hyperbolic && de.helio.v > 42.12, `${(dj.helio.aphelion / M.AU).toFixed(2)} AU · ${de.helio.v.toFixed(2)} km/s`);
+  check('soi', 'v∞ arttıkça ΔV artar, SOI\u2019ye süre ve artık % azalır (TLI < Mars < Jüpiter)', dm.dvInject < d.dvInject && d.dvInject < dj.dvInject && dm.tSoiDays > d.tSoiDays && d.tSoiDays > dj.tSoiDays && dm.residualPct > d.residualPct && d.residualPct > dj.residualPct);
+  check('soi', 'Park irtifası yükselince enjeksiyon ΔV azalır (200 → 1000 km)', M.departure('earth', { hPark: 1000, vinf: 2.95 }).dvInject < d.dvInject);
+  check('soi', 'Sapma açısı δ = 2 asin(1/e), asimptot ν∞ = acos(−1/e) (Mars: δ ≈ 120°, ν∞ ≈ 150°)', near(d.turnDeg, 2 * Math.asin(1 / d.e) * 180 / Math.PI, 1e-9) && near(d.asymptoteDeg, Math.acos(-1 / d.e) * 180 / Math.PI, 1e-9) && d.turnDeg > 110 && d.turnDeg < 130);
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

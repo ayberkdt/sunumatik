@@ -87,7 +87,7 @@ Manim ayarında, blok blok kurulabilir sahneler; program ve donmuş API (eksen s
 | [`comms_antenna/`](presets/comms_antenna) · [`comms_link_budget/`](presets/comms_link_budget) | Anten/yer istasyonu geometrisi ve kazanç · bağlantı bütçesi şelalesi (FSPL, yağmur, gürültü sıcaklığı, Eb/N0). |
 | [`aurora/`](presets/aurora) | Emisyon çizgisi tabanlı aurora: 630 nm sönümleme fiziği (O(1D) τ≈110 s), Kp 0–9 morfolojisi. |
 
-### Astrodinamik ve GNC laboratuvarları — 2. dalga (23 preset)
+### Astrodinamik ve GNC laboratuvarları — 2. dalga (24 preset)
 
 Her biri saf bir model modülü (`*-model.mjs` ya da `presets/core/astro-*.mjs`), sahne, deterministik URL (`?t=` / `export=1`), `motion-manifest.json` ve `skills/design-scientific-motion/references/<ad>.md` ile gelir; hepsi `node scripts/validate-astro.mjs` ile bağımsız sayısal denetimden geçer (CI adımı). Hiçbir sayı elle yerleştirilmez; model, varsayım ve sınırlar sahnede yazılıdır.
 
@@ -116,6 +116,7 @@ Her biri saf bir model modülü (`*-model.mjs` ya da `presets/core/astro-*.mjs`)
 | [`geo_stationkeeping/`](presets/geo_stationkeeping) | **GEO istasyon tutma bütçesi**: doğu–batı sürüklenme gerçek C̄22/S̄22'den (kararlı 75° D / 105° B kök olarak), kuzey–güney Ay+Güneş 1 yıllık RK4 (Δi ≈ 0,86°/yıl → ~46 m/s), SRP eksantriklik, ömür yakıtı kimyasal vs elektrikli |
 | [`launch_window/`](presets/launch_window) | **Fırlatma penceresi ve azimut**: sin β = cos i / cos φ, Dünya dönmesi düzeltmesi, LST ile günde iki fırsat (UTC), menzil güvenliği sektörü, gecikme → düzlem değişimi ΔV → pencere genişliği; i < φ dogleg uyarısı |
 | [`free_return/`](presets/free_return) | **Ay serbest dönüş yörüngesi**: Dünya–Ay CR3BP'de LEO'dan TLI ΔV ve faz taraması, bisection ile 100 km dönüş perigee çözümleri, perilune, süreler, dar koridor duyarlılığı; dönen ve eylemsiz görünümler |
+| [`soi_explorer/`](presets/soi_explorer) | **Etki küresi kâşifi**: Laplace r_SOI = a(m/M)^(2/5) ve Hill küresi gerçek ölçekte (three.js, dokulu Dünya/Ay, fresnel kabuklar), park yörüngesinden v∞ hedefli kalkış hiperbolü, SOI kabuğunda Dünya → Güneş çerçevesi el değiştirmesi, yamalı-konik artığı, Laplace oran paneli, gezegen SOI ölçeği |
 
 ### Bileşenler ve hareket
 
