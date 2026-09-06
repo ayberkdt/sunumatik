@@ -70,7 +70,7 @@ export async function mountThreeBody(host, options = {}) {
       if (p.cleared) { tctx.clearRect(p.rx, p.ry, L.pw, L.ph); p.cleared = false; }
       const dp = dtGlobal * p.k; if (dp > 0) { tctx.globalCompositeOperation = 'destination-out'; tctx.fillStyle = `rgba(0,0,0,${1 - Math.exp(-dp / p.tau)})`; tctx.fillRect(p.rx, p.ry, L.pw, L.ph); }
       if (!p.seg.length) continue;
-      tctx.globalCompositeOperation = 'lighter'; tctx.lineCap = 'round'; tctx.lineJoin = 'round';
+      tctx.globalCompositeOperation = 'lighter'; tctx.lineCap = 'butt'; tctx.lineJoin = 'round';   // düz uç: ardışık parçalar eklem noktasında üst üste binip parlak nokta bırakmaz
       for (let b = 0; b < 3; b++) {
         const start = p.prev ? p.prev : p.seg[0];
         tctx.beginPath(); tctx.moveTo(X(p, start[2 * b]), Y(p, start[2 * b + 1])); for (const s of p.seg) tctx.lineTo(X(p, s[2 * b]), Y(p, s[2 * b + 1]));
