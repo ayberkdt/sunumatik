@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Yörünge Pertürbasyonları — orbit_perturbations</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; } .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); } .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 80px; text-align: right; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field, label.toggle { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 90px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 60px; text-align: right; }
+    label.toggle { display: inline-flex; gap: 6px; align-items: center; } label.toggle input { accent-color: var(--color-accent); margin: 0; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Yörünge Pertürbasyonları<small>orbit_perturbations · J2 düğüm/perigee kayması, sürükleme bozunması, SRP, Ay–Güneş — oskülatör sayısal vs analitik sekülar</small></h1>
+    <div class="tabs" role="group" aria-label="Senaryo"><button data-sc="j2leo" aria-pressed="true">J2 · LEO</button><button data-sc="sso">J2 · SSO</button><button data-sc="molniya">J2 · Molniya</button><button data-sc="molniyaOff">J2 · 55°</button><button data-sc="drag">Sürükleme</button><button data-sc="srpGeo">SRP · GEO</button><button data-sc="moonGeo">Ay+Güneş · GEO</button><button data-sc="twoBody">İki-cisim</button></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="100" step="1" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Elemanlar"><span>Elemanlar</span>
+        <label class="field">irtifa <input id="eAlt" type="range" min="200" max="36000" step="10" value="420"><output id="oAlt">420 km</output></label>
+        <label class="field">e <input id="eE" type="range" min="0" max="0.8" step="0.005" value="0"><output id="oE">0,000</output></label>
+        <label class="field">i <input id="eI" type="range" min="0" max="120" step="0.1" value="51.6"><output id="oI">51,6°</output></label>
+        <label class="field">gün <input id="eD" type="range" min="1" max="180" step="1" value="7"><output id="oD">7</output></label></div>
+      <div class="group" role="group" aria-label="Kuvvetler"><span>Kuvvetler</span><label class="toggle"><input type="checkbox" id="fJ2" checked> J2</label><label class="toggle"><input type="checkbox" id="fDrag"> sürükleme</label><label class="toggle"><input type="checkbox" id="fSrp"> SRP</label><label class="toggle"><input type="checkbox" id="fMoon"> Ay+Güneş</label><button id="applyBtn">Hesapla</button></div>
+      <div class="group" role="group" aria-label="Zaman"><span>Zaman</span><button data-warp="3600">1 sa/s</button><button data-warp="21600" aria-pressed="true">6 sa/s</button><button data-warp="86400">1 gün/s</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountPerturbations } from './orbit-perturbations.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id); const R_E = 6378.137, DAY = 86400;
+    const sc0 = params.get('sc') || 'j2leo';
+    const op = await mountPerturbations($('host'), { scenario: sc0, warp: Number(params.get('warp')) || 21600, autoplay: !deterministic, t: params.has('t') ? Number(params.get('t')) * DAY : undefined });
+    window.__perturbations = op;
+    if (params.has('t')) op.timeline.scrub(Number(params.get('t')) * DAY);
+    const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf3 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 3, maximumFractionDigits: 3 }), nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 });
+    const outs = () => { $('oAlt').textContent = `${$('eAlt').value} km`; $('oE').textContent = nf3.format(Number($('eE').value)); $('oI').textContent = `${nf1.format(Number($('eI').value))}°`; $('oD').textContent = $('eD').value; };
+    function showCfg() { const c = op.sim.cfg; $('eAlt').value = String(Math.round(c.el.a - R_E)); $('eE').value = String(c.el.e); $('eI').value = String(c.el.i); $('eD').value = String(c.days); $('fJ2').checked = !!c.forces.j2; $('fDrag').checked = !!c.forces.drag; $('fSrp').checked = !!c.forces.srp; $('fMoon').checked = !!c.forces.moon; outs(); }
+    function apply() { const a = R_E + Number($('eAlt').value), e = Math.min(Number($('eE').value), Math.max(0, 1 - (R_E + 150) / a)); const days = Number($('eD').value); op.setScenario(op.scenario, { el: { a, e, i: Number($('eI').value) }, days, dt: a < 10000 ? 10 : a < 30000 ? 30 : 120, forces: { j2: $('fJ2').checked, drag: $('fDrag').checked, srp: $('fSrp').checked, moon: $('fMoon').checked, sun: $('fMoon').checked } }); writeCaption(); op.timeline.play(); syncUi(); }
+    for (const id of ['eAlt', 'eE', 'eI', 'eD']) $(id).addEventListener('input', outs);
+    $('applyBtn').addEventListener('click', apply);
+    document.querySelectorAll('[data-sc]').forEach(b => b.addEventListener('click', () => { op.setScenario(b.dataset.sc); showCfg(); writeCaption(); op.timeline.play(); document.querySelectorAll('[data-sc]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); syncUi(); }));
+    document.querySelectorAll('[data-sc]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.sc === sc0)));
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { op.timeline.setWarp(Number(b.dataset.warp)); document.querySelectorAll('[data-warp]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    function writeCaption() {
+      const s = op.sim, r = op.rates, d = 180 / Math.PI * DAY, S0 = s.samples[0], S1 = s.samples[s.samples.length - 1];
+      let txt = `<strong>Pertürbasyon modelden çıkar:</strong> RK4 ile ${['j2', 'drag', 'srp', 'moon'].filter(k => s.cfg.forces[k]).map(k => ({ j2: 'J2 ivmesi', drag: 'US76 sürüklemesi (dönen atmosfer)', srp: 'top-model SRP (silindirik gölge)', moon: 'Ay+Güneş üçüncü cisim' })[k]).join(', ') || 'yalnız iki-cisim'} entegre edilir; oskülatör elemanlar durumdan, sekülar doğru analitikten. `;
+      if (s.cfg.forces.j2) txt += `Ω̇: sayısal <span class="nums">${nf3.format(r.raanNum * d)}</span> vs analitik <span class="nums">${nf3.format(r.raanAn * d)} °/gün</span>; ${s.el0.e < .005 ? 'ω dairesel yörüngede tanımsız (e ≈ 0) — grafik enlem argümanını gösterir' : `ω̇: ${nf3.format(r.argpNum * d)} vs ${nf3.format(r.argpAn * d)} °/gün`}. Kısa-periyot sallantı oskülatörde görünür, ortalama eğri sekülara oturur. `;
+      if (s.cfg.forces.drag) txt += `Sürükleme: irtifa ${nf0.format(S0.alt)} → <span class="nums">${nf0.format(S1.alt)} km</span> ${nf1.format(S1.t / DAY)} günde${s.decayed ? ' — 120 km\'ye ulaştı (yeniden giriş)' : ''}; enerji tek yönlü azalır. US76 uzatması termosferde kaba (güneş aktivitesiyle 10× değişir). `;
+      if (s.cfg.forces.moon) txt += `Ay+Güneş: GEO eğikliği ${nf3.format(S0.el.i * 180 / Math.PI)}° → <span class="nums">${nf3.format(S1.el.i * 180 / Math.PI)}°</span> (~0,8°/yıl beklenir); Ay dairesel ve ~23° eğik, Güneş ekliptikte — basitleştirilmiş efemeris. `;
+      if (s.cfg.forces.srp) txt += `SRP: e salınımı yıllık periyotlu; A/m = 0,04 m²/kg, C_R 1,3. `;
+      if (!s.cfg.forces.j2 && !s.cfg.forces.drag && !s.cfg.forces.srp && !s.cfg.forces.moon) txt += `Referans: elemanlar sabit kalır (ΔE, ΔH_z ~ 1e−12 — entegratör hatası düzeyi). `;
+      $('caption').innerHTML = txt;
+    }
+    showCfg(); writeCaption();
+    const scrub = $('scrub'), playBtn = $('playBtn'), timeOut = $('timeOut');
+    function syncUi() { const tl = op.timeline; scrub.max = String(tl.duration); scrub.step = String(tl.duration / 2000); playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(tl.t); timeOut.textContent = `${nf1.format(tl.t / DAY)} gün`; }
+    setInterval(syncUi, 150);
+    playBtn.addEventListener('click', () => { const tl = op.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { op.timeline.pause(); op.timeline.scrub(Number(scrub.value)); syncUi(); });
+    if (deterministic) { op.timeline.pause(); op.setActive(false); }
+    document.title += ' · hazır'; syncUi();
+  </script>
+</body>
+</html>

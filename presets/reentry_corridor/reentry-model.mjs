@@ -9,8 +9,8 @@
    Isınma vekili (BİLDİRİLEN MODEL): Sutton–Graves durma-noktası konvektif akısı
      q̇ = k √(ρ/r_n) v³,  k = 1,7415e−4 (SI; W/m², ρ kg/m³, r_n m, v m/s) — radyatif ısınma yok.
      Q = ∫ q̇ dt (J/m²).  Yavaşlama n = |a_aero|/g₀.
-   Atmosfer: US76 (0–86 km) + izotermal üstel uzatma (86 km üstü; giriş arayüzü 120 km'de
-     yoğunluk ~1e−8 kg/m³ düzeyinde, gerçek termosfere göre faktör 2 içinde — ilan edilir).
+   Atmosfer: US76 (0–86 km) + üstel-tablo termosferi (≥ 90 km, Vallado Tablo 8-4; 120 km'de 2,4e−8 kg/m³),
+     86–90 km arası doğrusal karışım (densityBlend).
    Entegrasyon: RK4, dt = 0,25 s (v > 1 km/s) → 0,5 s; bitiş: h ≤ h_son (10 km) ya da atmosferden
      çıkış (h > h_arayüz ve ḣ > 0 → 'skip').
 
@@ -23,7 +23,7 @@
    Ayrıca (h, v) düzleminde eş-yavaşlama ve eş-ısı-akısı eğrileri kapalı biçimden çizilir:
      n = g_lim ⇒ v = √(2 n g₀ β / ρ(h));  q̇ = q̇_lim ⇒ v = (q̇_lim / (k √(ρ(h)/r_n)))^{1/3}. */
 
-import { atmosphere, G0 } from '../core/astro-atmosphere.mjs';
+import { atmosphere, densityBlend, G0 } from '../core/astro-atmosphere.mjs';
 
 export const MU = 3.986004418e14, R_E = 6378137;
 export const K_SG = 1.7415e-4;
@@ -53,7 +53,7 @@ export function simulateEntry(vehicle = VEHICLES.capsule, entry = {}) {
   let v = E.vEntry, gam = E.gammaEntry * rad, h = E.hEntry, s = 0, t = 0, Q = 0;
   const samples = []; let peakG = { n: 0 }, peakQ = { q: 0 }, outcome = 'landed';
   const deriv = (v, gam, h) => {
-    const r = R_E + h, g = MU / (r * r), rho = atmosphere(h).rho;
+    const r = R_E + h, g = MU / (r * r), rho = densityBlend(h);
     const D = .5 * rho * v * v * V.cd * V.area, L = V.ld * D;
     return { dv: -D / V.m - g * Math.sin(gam), dgam: (L * cosBank) / (V.m * v) - (g / v - v / r) * Math.cos(gam), dh: v * Math.sin(gam), ds: (R_E / r) * v * Math.cos(gam), rho, D, g };
   };
@@ -140,11 +140,11 @@ export function findCorridor(vehicle = VEHICLES.capsule, entry = {}, { gMin = -3
 
 /** (h, v) düzleminde eş-yavaşlama eğrisi: v(h) = √(2 n g₀ β / ρ(h)). */
 export function isoDecelCurve(beta, nG, hMin = 20e3, hMax = 120e3, steps = 60) {
-  const out = []; for (let k = 0; k <= steps; k++) { const h = hMin + (hMax - hMin) * k / steps; out.push({ h, v: Math.sqrt(2 * nG * G0 * beta / atmosphere(h).rho) }); } return out;
+  const out = []; for (let k = 0; k <= steps; k++) { const h = hMin + (hMax - hMin) * k / steps; out.push({ h, v: Math.sqrt(2 * nG * G0 * beta / densityBlend(h)) }); } return out;
 }
 /** Eş-ısı-akısı eğrisi: v(h) = (q̇ / (k √(ρ/r_n)))^{1/3}. */
 export function isoHeatCurve(rn, qDot, hMin = 20e3, hMax = 120e3, steps = 60) {
-  const out = []; for (let k = 0; k <= steps; k++) { const h = hMin + (hMax - hMin) * k / steps; out.push({ h, v: Math.cbrt(qDot / (K_SG * Math.sqrt(atmosphere(h).rho / rn))) }); } return out;
+  const out = []; for (let k = 0; k <= steps; k++) { const h = hMin + (hMax - hMin) * k / steps; out.push({ h, v: Math.cbrt(qDot / (K_SG * Math.sqrt(densityBlend(h) / rn))) }); } return out;
 }
 
 export function sampleAt(sim, t) {

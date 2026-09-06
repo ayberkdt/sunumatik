@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "perturbation-propagation",
+      "type": "simulation",
+      "truthLevel": "numerical",
+      "purpose": "Yörünge pertürbasyonlarını iki-cisim referansına karşı göstermek: J2 düğüm gerilemesi ve perigee kayması (oskülatör sayısal eğri ile analitik sekülar doğru üst üste), Güneş-eşzamanlılık, kritik eğiklik, atmosferik sürükleme bozunması, SRP dış-merkezlik salınımı, Ay–Güneş üçüncü-cisim eğiklik sürüklenmesi — pertürbasyon modelden çıkar, sallantı çizilmez.",
+      "model": "ECI'de RK4 (km, s): iki-cisim μ = 398600,4418; J2 ivmesi (3/2)J2μR²/r⁴[…] (J2 = 1,08262668e−3); sürükleme a = −½ρ(C_D A/m)|v_rel|v_rel, v_rel = v − ω_e×r, ρ: <86 km US76, ≥90 km üstel-tablo termosferi (Vallado Tablo 8-4; presets/core/astro-atmosphere.mjs densityBlend); SRP top modeli a = −P_☉C_R(A/m)ŝ (P_☉ = 4,56e−6 N/m², silindirik gölge, Güneş ekliptikte yıllık dönen); Ay (dairesel 384 400 km, ~23° eğik) ve Güneş üçüncü-cisim ivmesi. Oskülatör elemanlar durumdan (rvToElements); ortalama elemanlar bir periyot koşan ortalama; sekülar J2 oranları presets/core/astro-orbit.mjs j2Rates; sayısal oran sarımı açılmış açının en-küçük-kareler eğimi. Senaryolar: LEO 51,6°, SSO 98,2°, Molniya 63,4° ve 55°, sürükleme 300 km (B = 100 kg/m²), SRP GEO (A/m 0,04), Ay+Güneş GEO, iki-cisim. Denetim scripts/validate-astro.mjs (Ω̇ sayısal ≈ analitik ±2 %, Molniya ω̇ ≈ 0, H_z korunumu, iki-cisim elemanları sabit, sürükleme bozunması tek yönlü, GEO eğiklik sürüklenmesi 0,7–1,0°/yıl).",
+      "solver": "RK4 sabit adım (10 s LEO, 20 s Molniya, 120 s GEO); örnekleme ≈ süre/4000; 120 km altında yeniden giriş olayı.",
+      "limitations": "Yalnız J2 (J3+, tesseral yok); termosfer ortalama güneş aktivitesi (gerçek yoğunluk 10× değişir, B* bilinmez); SRP silindirik gölge ve sabit A/m; Ay/Güneş efemerisi dairesel ve basitleştirilmiş eğikliklerle (gerçek efemeris değil); relativistik, gelgit, albedo yok. Oskülatör ω, e ≈ 0 için tanımsızdır (sahne bunu söyler ve enlem argümanını gösterir). Görev analizi için yüksek-dereceli alan + gerçek efemeris gerekir.",
+      "reducedMotion": "Otomatik oynatma yok; sürenin %60'ında donmuş kare; grafikler ve HUD statik okunur.",
+      "exportState": "?sc=&t=<gün> deterministik (RK4 deterministik).",
+      "accessibility": "Senaryo düğmeleri, eleman kaydırıcıları, kuvvet anahtarları ve zaman kaydırıcısı yerli öğelerdir; HUD sayısal ve analitik oranları metin verir; altyazı karşılaştırmayı düzyazı anlatır; lejant metinli.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "perturbation-orbit-fan",
+      "type": "trace",
+      "truthLevel": "numerical",
+      "purpose": "3B'de oskülatör yörüngenin zaman boyunca anlık görüntüleri (yelpaze) ve düğüm çizgisi: düğüm gerilemesi ve perigee kayması doğrudan görünür.",
+      "model": "Örneklerden 8 anlık oskülatör eleman seti, her biri kapalı biçim elipsle çizilir; düğüm çizgisi RAAN yönünde.",
+      "solver": "elementsToRv.",
+      "limitations": "Yelpaze anlık görüntüleri eşit zaman aralıklıdır; Dünya dönmesi çizilmez (ECI).",
+      "reducedMotion": "Statik.",
+      "exportState": "t'nin fonksiyonu.",
+      "accessibility": "Oranlar HUD'da metin.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

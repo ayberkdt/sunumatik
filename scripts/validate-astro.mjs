@@ -41,6 +41,10 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   let mono = true, prev = Infinity;
   for (let z = 0; z <= 200e3; z += 500) { const r = atmosphere(z).rho; if (r > prev) mono = false; prev = r; }
   check('atmosphere', 'ρ(z) monoton azalır (0–200 km)', mono);
+  const { densityExponential, densityBlend } = await mod('presets/core/astro-atmosphere.mjs');
+  check('atmosphere', 'üstel tablo: 300 km ρ = 2,418e−11, 400 km 3,725e−12 (Vallado 8-4)', rel(densityExponential(300e3), 2.418e-11, 1e-6) && rel(densityExponential(400e3), 3.725e-12, 1e-6));
+  let monoB = true, prevB = Infinity; for (let z = 0; z <= 1000e3; z += 1000) { const r = densityBlend(z); if (r > prevB) monoB = false; prevB = r; }
+  check('atmosphere', 'birleşik yoğunluk 0–1000 km monoton ve 86–90 km karışımı C0', monoB && rel(densityBlend(86e3 - 1), densityBlend(86e3 + 1), .05));
 }
 
 /* ───────────────────────── Fırlatma / tırmanış */
@@ -292,16 +296,16 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
 /* ───────────────────────── Atmosferik giriş / koridor */
 {
   const R = await mod('presets/reentry_corridor/reentry-model.mjs');
-  const { atmosphere, G0 } = await mod('presets/core/astro-atmosphere.mjs');
+  const { atmosphere, densityBlend, G0 } = await mod('presets/core/astro-atmosphere.mjs');
   const s = R.simulateEntry(R.VEHICLES.capsule, { vEntry: 7800, gammaEntry: -6, bank: 0 });
   check('reentry', 'LEO −6° kapsül girişi 10 km\'ye iner', s.outcome === 'landed');
   /* tepe yavaşlama: n = D/m/g0 tanımıyla örnekte tutarlı */
   const pk = s.samples.find(x => x.t === s.peakG.t);
-  const nCalc = Math.hypot(1, s.vehicle.ld) * .5 * atmosphere(pk.h).rho * pk.v * pk.v * s.vehicle.cd * s.vehicle.area / s.vehicle.m / G0;
+  const nCalc = Math.hypot(1, s.vehicle.ld) * .5 * densityBlend(pk.h) * pk.v * pk.v * s.vehicle.cd * s.vehicle.area / s.vehicle.m / G0;
   check('reentry', 'tepe g, ½ρv²C_D A/m tanımıyla örtüşür', rel(pk.n, nCalc, 1e-6), `${pk.n.toFixed(2)} g @ ${(pk.h / 1e3).toFixed(0)} km`);
   /* Sutton–Graves: q̇ ∝ v³ √ρ — örnekte doğrula */
   const pq = s.samples.find(x => x.t === s.peakQ.t);
-  check('reentry', 'Sutton–Graves q̇ = k√(ρ/r_n)v³ örnekte tutarlı', rel(pq.q, R.K_SG * Math.sqrt(atmosphere(pq.h).rho / s.vehicle.rn) * pq.v ** 3, 1e-9));
+  check('reentry', 'Sutton–Graves q̇ = k√(ρ/r_n)v³ örnekte tutarlı', rel(pq.q, R.K_SG * Math.sqrt(densityBlend(pq.h) / s.vehicle.rn) * pq.v ** 3, 1e-9));
   check('reentry', 'tepe ısınma tepe yavaşlamadan ÖNCE gelir (v³ ağırlığı)', s.peakQ.t < s.peakG.t, `${s.peakQ.t.toFixed(0)} s < ${s.peakG.t.toFixed(0)} s`);
   /* enerji: hız kaybı sürüklemeden — atmosfersiz limit: ρ → 0 üstü (300 km'de) dış kuvvet yok, Kepler enerjisi korunur */
   const hi = R.simulateEntry(R.VEHICLES.capsule, { hEntry: 300e3, vEntry: 7800, gammaEntry: -1, hEnd: 150e3, dt: .5 });
@@ -320,7 +324,7 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('reentry', 'balistik sonda koridoru dar (< 0,5°)', !isNaN(cb.width) && cb.width < .5, `${cb.width.toFixed(2)}°`);
   /* eş-yavaşlama eğrisi: kapalı biçim v = √(2 n g₀ β/ρ) → o (h,v)'de gerçekten n g */
   const p = R.isoDecelCurve(s.beta, 5)[20];
-  check('reentry', 'eş-yavaşlama eğrisi: n = ½ρv²/β/g₀ = 5 g', near(.5 * atmosphere(p.h).rho * p.v * p.v / s.beta / G0, 5, 1e-9));
+  check('reentry', 'eş-yavaşlama eğrisi: n = ½ρv²/β/g₀ = 5 g', near(.5 * densityBlend(p.h) * p.v * p.v / s.beta / G0, 5, 1e-9));
 }
 
 /* ───────────────────────── Formasyon uçuşu */
@@ -429,6 +433,44 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('attitude', 'SLERP yarı yol = 45° (büyük çember)', near(A.qAngle(s5), Math.PI / 4, 1e-12));
   /* K_p = I ω_n² tanımı */
   check('attitude', 'K_p = I·ω_n², K_d = 2ζω_n·I', slew.Kp.every((k, i) => near(k, slew.cfg.I[i] * slew.cfg.wn ** 2, 1e-12)) && slew.Kd.every((k, i) => near(k, 2 * slew.cfg.zeta * slew.cfg.wn * slew.cfg.I[i], 1e-12)));
+}
+
+/* ───────────────────────── Yörünge pertürbasyonları */
+{
+  const Pm = await mod('presets/orbit_perturbations/perturbation-model.mjs');
+  const d = 180 / Math.PI * 86400;
+  const run = id => { const p = Pm.propagatePerturbed(id); const T = p.samples.map(s => s.t); return { p, raan: Pm.fitRate(T, Pm.unwrap(p.samples.map(s => s.el.raan))), argp: Pm.fitRate(T, Pm.unwrap(p.samples.map(s => s.el.argp))) }; };
+  const leo = run('j2leo');
+  check('perturbation', 'J2 LEO 51,6°: sayısal Ω̇ ≈ analitik (±2 %)', rel(leo.raan, leo.p.secular.raanDot, .02), `${(leo.raan * d).toFixed(3)} vs ${(leo.p.secular.raanDot * d).toFixed(3)} °/gün`);
+  const sso = run('sso');
+  check('perturbation', 'SSO 98,2°: Ω̇ ≈ +0,986 °/gün (Güneş-eşzamanlı)', near(sso.raan * d, .9856, .03), `${(sso.raan * d).toFixed(3)} °/gün`);
+  const mol = run('molniya'), off = run('molniyaOff');
+  check('perturbation', 'Molniya 63,4°: ω̇ ≈ 0; 55°: ω̇ ≈ analitik (±3 %)', Math.abs(mol.argp * d) < .01 && rel(off.argp, off.p.secular.argpDot, .03), `${(mol.argp * d).toFixed(4)} / ${(off.argp * d).toFixed(3)} vs ${(off.p.secular.argpDot * d).toFixed(3)}`);
+  /* J2 eksenel simetrik: H_z korunur (göreli 1e−8) */
+  const hz0 = leo.p.samples[0].el.hz, hzMax = Math.max(...leo.p.samples.map(s => Math.abs(s.el.hz - hz0)));
+  check('perturbation', 'J2 altında H_z korunur (göreli < 1e−7)', hzMax / Math.abs(hz0) < 1e-7, (hzMax / Math.abs(hz0)).toExponential(1));
+  /* iki-cisim: elemanlar sabit */
+  const tb = Pm.propagatePerturbed('twoBody');
+  const aSpread = Math.max(...tb.samples.map(s => s.el.a)) - Math.min(...tb.samples.map(s => s.el.a)), iSpread = Math.max(...tb.samples.map(s => s.el.i)) - Math.min(...tb.samples.map(s => s.el.i));
+  check('perturbation', 'iki-cisim: a ve i sabit (Δa < 1 m, Δi < 1e−9)', aSpread < 1e-3 && iSpread < 1e-9, `Δa ${(aSpread * 1000).toExponential(1)} m`);
+  /* sürükleme: enerji tek yönlü azalır, irtifa düşer */
+  const dr = Pm.propagatePerturbed('drag');
+  /* J2 dahil toplam enerji: E = v²/2 − (μ/r)[1 − J2 (R/r)² (3 sin²φ − 1)/2] — J2 korunumlu, sürükleme tek yönlü azaltır */
+  const eJ2 = s => { const r = Math.hypot(...s.r), v2 = s.v[0] ** 2 + s.v[1] ** 2 + s.v[2] ** 2, sp = s.r[2] / r; return v2 / 2 - Pm.MU / r * (1 - Pm.J2 * (Pm.R_E / r) ** 2 * (3 * sp * sp - 1) / 2); };
+  let monoE = true; for (let k = 1; k < dr.samples.length; k++) if (eJ2(dr.samples[k]) > eJ2(dr.samples[k - 1]) + 1e-7) monoE = false;
+  const eJ2Leo = leo.p.samples.map(eJ2); const spreadLeo = (Math.max(...eJ2Leo) - Math.min(...eJ2Leo)) / Math.abs(eJ2Leo[0]);
+  check('perturbation', 'J2 dahil enerji: yalnız J2\'de korunur (göreli < 1e−6)', spreadLeo < 1e-6, spreadLeo.toExponential(1));
+  check('perturbation', 'sürükleme: J2-dahil enerji tek yönlü azalır; 300 km\'de 20 günde > 15 km bozunma', monoE && dr.samples[0].el.a - dr.samples[dr.samples.length - 1].el.a > 15, `Δa = ${(dr.samples[0].el.a - dr.samples[dr.samples.length - 1].el.a).toFixed(1)} km`);
+  /* Ay+Güneş GEO: eğiklik ~0,8–0,9 °/yıl büyür */
+  const mg = Pm.propagatePerturbed('moonGeo');
+  const di = (mg.samples[mg.samples.length - 1].el.i - mg.samples[0].el.i) * 180 / Math.PI / (mg.cfg.days / 365.25);
+  check('perturbation', 'Ay+Güneş: GEO eğiklik sürüklenmesi 0,6–1,1 °/yıl', di > .6 && di < 1.1, `${di.toFixed(2)} °/yıl`);
+  /* SRP: e salınır ama a korunur (göreli < 1e−4) */
+  const sr = Pm.propagatePerturbed('srpGeo');
+  check('perturbation', 'SRP: e değişir, a korunur (< 1e−4 göreli)', Math.abs(sr.samples[sr.samples.length - 1].el.a - sr.samples[0].el.a) / sr.samples[0].el.a < 1e-4);
+  /* elemanlar gidiş-dönüş */
+  const el = { a: 26562, e: .74, i: 1.1, raan: 2.2, argp: 4.7, nu: .8 }, rv = Pm.elementsToRv(el), back = Pm.rvToElements(rv.r, rv.v);
+  check('perturbation', 'elemanlar → durum → elemanlar gidiş-dönüş (1e−9)', near(back.a, el.a, 1e-6) && near(back.e, el.e, 1e-9) && near(back.i, el.i, 1e-9) && near(back.raan, el.raan, 1e-9) && near(back.argp, el.argp, 1e-9) && near(back.nu, el.nu, 1e-9));
 }
 
 /* ───────────────────────── rapor */
