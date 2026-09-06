@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "tisserand-graph",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Çoklu kütleçekim yardımı tasarımının nitel aracını göstermek: Tisserand parametresi geçişte korunduğundan her gezegenin sabit-v∞ eğrisi grafikte bir yoldur; bir geçiş aracı bu eğri boyunca en çok δ_max kadar kaydırır; dizi (VEEGA gibi) eğriler arasında atlayarak Jüpiter'e ulaşır — düşük kalkış v∞'siyle yüksek enerjiye pompalama.",
+      "model": "Eş-düzlem dairesel gezegenler (a_P, V_P = √(μ☉/a_P)); (v∞, α) → güneş-merkezli yörünge: v_t = V_P + v∞cos α, v_r = v∞sin α, a = 1/(2/a_P − v²/μ☉), h = a_P v_t, e = √(1 − h²/(μ☉a)); T = a_P/a + 2√(a/a_P(1−e²)), v∞ = V_P√(3 − T); δ_max = 2 asin(1/(1 + (R_P + h_min)v∞²/μ_P)); Dünya rezonansları a = a_E(k/m)^{2/3}. Dizi planlayıcı açgözlü: her gezegende erişilebilir α aralığında bir sonraki gezegeni kesen yörüngeler taranır, dışa giderken sonraki v∞ büyütülür, aynı gezegene dönüşte rezonans periyodu hedeflenir, hedefte v∞ küçültülür. Denetim scripts/validate-astro.mjs 'tisserand' (T eğri boyunca sabit, v∞ ↔ T tersinirliği, Dünya→Jüpiter Hohmann ölçeği v∞ 8,8 → 5,6, δ_max formülü, VEEGA erişilebilirliği ve pompalama, erişilemez dizi işaretlemesi).",
+      "limitations": "Fazlama ve efemeris yok (gezegenlerin gerçekten orada olup olmadığına bakılmaz — tarihler için porkchop_explorer); eş-düzlem dairesel gezegenler (eğiklik/eksantriklik yok); tek geçiş sapması, derin uzay manevrası ve aero-yardım yok; Tisserand ilişkisi yaklaşık (üç-cisim düzeltmeleri yok); açgözlü seçim en iyi dizi değildir; güneş-merkezli görünümde elipsler görsel ayrım için döndürülmüştür.",
+      "reducedMotion": "Sahne statiktir (animasyon yok).",
+      "exportState": "?seq=&vinf0=&hmin= deterministik; export=1 alt bilgiyi gizler.",
+      "accessibility": "Dizi düğmeleri, v∞₀ ve h_min kaydırıcıları yerli öğelerdir; bacak tablosu tüm sayıları metin verir (erişilemez bacak vurgulanır); tuvaller aria-label taşır; altyazı ilkeyi, sayıları ve sınırları düzyazı anlatır.",
+      "loop": false,
+      "pauseControl": false
+    }
+  ]
+}

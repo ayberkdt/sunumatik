@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 55,
-    "presetsWithIndex": 48,
+    "presets": 56,
+    "presetsWithIndex": 49,
     "animatedPresets": 43,
     "skills": 18,
-    "demoSlides": 71,
-    "demoCards": 58,
+    "demoSlides": 72,
+    "demoCards": 59,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 71,
-    "cards": 58,
+    "slides": 72,
+    "cards": 59,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -67,6 +67,7 @@
       "rendezvous_docking",
       "sun_advanced",
       "timeline_tree",
+      "tisserand_graph",
       "transfer_explorer"
     ]
   },
@@ -465,6 +466,13 @@
     {
       "name": "timeline_tree",
       "title": "Chronology Timeline Preset",
+      "hasIndex": true,
+      "animated": false,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "tisserand_graph",
+      "title": "Tisserand Grafiği — tisserand_graph",
       "hasIndex": true,
       "animated": false,
       "hasMotionManifest": true

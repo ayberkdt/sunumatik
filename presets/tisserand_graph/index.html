@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tisserand Grafiği — tisserand_graph</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; max-width: 60%; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 11.5px/1 var(--font-body); padding: 7px 10px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 150px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 70px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Tisserand Grafiği<small>tisserand_graph · gezegen sabit-v∞ eğrileri (r_a, r_p) · kütleçekim yardımı = eğri boyunca kayış (|Δα| ≤ δ_max) · çoklu geçiş dizisi planlayıcı (fazlama yok)</small></h1>
+    <div class="tabs" role="group" aria-label="Diziler" id="tabs"></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="control-row">
+      <div class="group"><span>Kalkış</span><label class="field">v∞₀ <input id="vinf0" type="range" min="2" max="12" step="0.1" value="3.6"><output id="oV">3,6 km/s</output></label><label class="field">h_min <input id="hmin" type="range" min="100" max="5000" step="100" value="300"><output id="oH">300 km</output></label></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountTisserand } from './tisserand.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const $ = id => document.querySelector('#' + id);
+    const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 });
+    let seqId = params.get('seq') || 'veega';
+    const tg = await mountTisserand($('host'), { sequence: seqId, vinf0: params.has('vinf0') ? Number(params.get('vinf0')) : undefined, hMin: params.has('hmin') ? Number(params.get('hmin')) : 300 });
+    window.__tisserand = tg;
+    const tabs = $('tabs'); for (const [id, sq] of Object.entries(tg.sequences)) { const b = document.createElement('button'); b.dataset.seq = id; b.textContent = sq.label; b.setAttribute('aria-pressed', String(id === seqId)); b.addEventListener('click', () => { seqId = id; tg.set({ sequence: id, vinf0: null }); sync(); writeCaption(); }); tabs.appendChild(b); }
+    function sync() { const S = tg.sequences[seqId], v = tg.config.vinf0 ?? S.vinf0; $('vinf0').value = String(v); $('oV').textContent = `${nf1.format(v)} km/s`; $('hmin').value = String(tg.config.hMin); $('oH').textContent = `${nf0.format(tg.config.hMin)} km`; document.querySelectorAll('[data-seq]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.seq === seqId))); }
+    $('vinf0').addEventListener('input', () => { tg.set({ vinf0: Number($('vinf0').value) }); sync(); writeCaption(); });
+    $('hmin').addEventListener('input', () => { tg.set({ hMin: Number($('hmin').value) }); sync(); writeCaption(); });
+    function writeCaption() {
+      const p = tg.plan, S = tg.sequences[seqId], L = p.legs, first = L[0], last = L[L.length - 1];
+      $('caption').innerHTML = `<strong>Tisserand parametresi geçişte korunur, pompa açısı değişir:</strong> T = a_P/a + 2√(a/a_P(1−e²)), v∞ = V_P√(3 − T); bu yüzden her gezegenin sabit-v∞ eğrisi bir "yol"dur ve bir geçiş aracı bu eğri boyunca en çok δ_max = 2 asin(1/(1 + r_p v∞²/μ_P)) kadar kaydırır. `
+        + `${S.label}: kalkış v∞₀ = <span class="nums">${nf1.format(first.vinf)} km/s</span> (C3 = ${nf1.format(first.vinf ** 2)} km²/s²)` + (p.feasible ? `, varış ${tg.planets[p.final.planet].label} v∞ = <span class="nums">${nf2.format(p.final.vinf)} km/s</span>; geçişler: ${L.slice(1).map(l => `${tg.planets[l.from].label} |Δα| ${nf1.format(l.used * 180 / Math.PI)}° / δ_max ${nf1.format(l.delta * 180 / Math.PI)}°`).join(', ')}. ` : `; dizi bu v∞₀/h_min ile erişilemez (${tg.planets[last.from].label} geçişinde δ_max aşılıyor). `)
+        + `Açgözlü seçim: dışa giderken bir sonraki v∞ büyütülür, Dünya–Dünya bacağında rezonans periyodu hedeflenir, hedefte v∞ küçültülür. Sınırlar: eş-düzlem dairesel gezegenler, fazlama/efemeris yok (tarihler ve gerçek uygunluk için porkchop_explorer), tek geçiş sapması (derin uzay manevrası yok), Tisserand ilişkisi yaklaşık (üç-cisim düzeltmeleri yok).`;
+    }
+    sync(); writeCaption();
+    document.title += ' · hazır';
+  </script>
+</body>
+</html>

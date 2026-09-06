@@ -658,6 +658,26 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   const down = M.simulateSpiral({ r0: r1, r1: r0, di: 0, vehicle: 'hallGeo' }); check('lowthrust', 'İçe spiral (GEO→LEO) da Edelbaum ±0,5 %', down.reached && rel(down.dvTotal, down.edelbaum, 5e-3), down.dvTotal.toFixed(3));
 }
 
+/* ───────────────────────── tisserand (grafik ve dizi planlayıcı) */
+{
+  const M = await mod('presets/tisserand_graph/tisserand-model.mjs');
+  const c = M.contour('venus', 5).filter(p => !p.hyperbolic); const Ts = c.map(p => p.T);
+  check('tisserand', 'Sabit-v∞ eğrisi boyunca Tisserand parametresi sabit (< 1e−9)', Math.max(...Ts) - Math.min(...Ts) < 1e-9, (Math.max(...Ts) - Math.min(...Ts)).toExponential(1));
+  check('tisserand', 'v∞ = V_P√(3 − T) tersinirliği (Dünya, 8,8 km/s)', (() => { const o = M.orbitFromVinf('earth', 8.8, .7); return near(Math.sqrt(3 - o.T) * M.vPlanet('earth'), 8.8, 1e-9); })());
+  check('tisserand', 'vinfAt ↔ orbitFromVinf tutarlı (v∞ ve α geri bulunur)', (() => { const o = M.orbitFromVinf('earth', 6, 1.1); const at = M.vinfAt('earth', o.rp, o.ra); return at && near(at.vinf, 6, 1e-9) && near(at.alpha, 1.1, 1e-9); })());
+  const o = M.orbitFromVinf('earth', 8.8, 0), at = M.vinfAt('jupiter', o.rp, o.ra);
+  check('tisserand', 'Dünya v∞ 8,8 km/s teğet kalkış: r_a ≈ 5,2 AU (Jüpiter), Jüpiter\u2019de v∞ ≈ 5,6 km/s (Hohmann ölçeği)', near(o.ra / M.AU, 5.2, .1) && at && near(at.vinf, 5.65, .1), `ra ${(o.ra / M.AU).toFixed(2)} AU, v∞J ${at?.vinf.toFixed(2)}`);
+  check('tisserand', 'δ_max formülü: Venüs 5 km/s 300 km ≈ 84°, Jüpiter 6 km/s 300 km > 150°', near(M.maxTurn('venus', 5, 300).delta * 180 / Math.PI, 84.4, 1) && M.maxTurn('jupiter', 6, 300).delta * 180 / Math.PI > 150);
+  check('tisserand', 'δ_max v∞ ile küçülür, h_min ile küçülür', M.maxTurn('earth', 3, 300).delta > M.maxTurn('earth', 9, 300).delta && M.maxTurn('earth', 5, 300).delta > M.maxTurn('earth', 5, 3000).delta);
+  const v = M.planSequence(M.SEQUENCES.veega.seq, { vinf0: 3.6, mode: 'pump', resonanceTargets: { 3: [2, 1] } });
+  check('tisserand', 'VEEGA erişilebilir: her geçişte |Δα| ≤ δ_max, Dünya–Dünya bacağı 2:1 rezonans (T ≈ 2 yıl), Jüpiter varış v∞ 5–7 km/s', v.feasible && v.legs.slice(1).every(l => l.used <= l.delta + 1e-9) && near(v.legs[2].orbit.period / 86400 / 365.25, 2, .05) && v.final.vinf > 5 && v.final.vinf < 7, `varış ${v.final.vinf.toFixed(2)} km/s, EE T ${(v.legs[2].orbit.period / 86400 / 365.25).toFixed(2)} yıl`);
+  check('tisserand', 'Pompalama: Venüs geçişi Dünya\u2019daki v∞\u2019yi kalkıştan büyütür (3,6 → > 10 km/s)', v.legs[1].vinfNext > 10, v.legs[1].vinfNext.toFixed(2));
+  check('tisserand', 'Bacaklar gezegenleri kesen yörüngeler: her bacak r_p ≤ a_from,to ≤ r_a', v.legs.every(l => l.orbit && l.orbit.rp <= M.PLANETS[l.from].a * (1 + 1e-6) && l.orbit.ra >= M.PLANETS[l.to].a * (1 - 1e-6) || (l.orbit && l.orbit.rp <= M.PLANETS[l.to].a * (1 + 1e-6) && l.orbit.ra >= M.PLANETS[l.from].a * (1 - 1e-6))));
+  const bad = M.planSequence(['earth', 'venus', 'jupiter'], { vinf0: 2.5, mode: 'pump' });
+  check('tisserand', 'Erişilemez dizi işaretlenir (Dünya → Venüs → Jüpiter, v∞₀ 2,5: Venüs tek geçişte Jüpiter\u2019e pompalayamaz)', !bad.feasible && bad.legs[bad.legs.length - 1].reachable === false);
+  const rs = M.resonances('earth'); check('tisserand', 'Rezonans yarı-büyük eksenleri: 2:1 → a = 2^{2/3} AU', near(rs.find(r => r.label === '2:1').a / M.AU, Math.pow(2, 2 / 3), 1e-9));
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));
