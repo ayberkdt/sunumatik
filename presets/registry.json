@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 46,
-    "presetsWithIndex": 39,
-    "animatedPresets": 35,
+    "presets": 47,
+    "presetsWithIndex": 40,
+    "animatedPresets": 36,
     "skills": 18,
-    "demoSlides": 62,
-    "demoCards": 49,
+    "demoSlides": 63,
+    "demoCards": 50,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 62,
-    "cards": 49,
+    "slides": 63,
+    "cards": 50,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -21,6 +21,7 @@
       "aero_shock_waves",
       "aero_vortex_street",
       "aircraft_blocks",
+      "attitude_gnc",
       "aurora",
       "charts_icons",
       "cinematic_space",
@@ -106,6 +107,13 @@
     {
       "name": "aircraft_blocks",
       "title": "Uçak Blokları — aircraft_blocks",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "attitude_gnc",
+      "title": "Yönelim / GNC Laboratuvarı — attitude_gnc",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

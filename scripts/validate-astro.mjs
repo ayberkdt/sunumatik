@@ -407,6 +407,30 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('flyby', 'Jüpiter v∞ 10 km/s, r_p 5R: e = 1 + r_p v∞²/μ = 1,276', near(vg.e, 1 + 5 * 69911 * 100 / 1.26686534e8, 1e-9), vg.e.toFixed(4));
 }
 
+/* ───────────────────────── Yönelim dinamiği / GNC */
+{
+  const A = await mod('presets/attitude_gnc/attitude-model.mjs');
+  const slew = A.simulateAttitude({ craft: 'small', mode: 'slew', duration: 120 });
+  check('attitude', 'kuaterniyon normu korunur (|q| = 1 ± 1e−9)', slew.samples.every(s => Math.abs(Math.hypot(...s.q) - 1) < 1e-9));
+  check('attitude', 'PD slew hedefe oturur (< 0,5°, 120 s içinde; tekerlek torku sınırlı)', slew.stats.settledAt != null, slew.stats.settledAt ? `${slew.stats.settledAt.toFixed(1)} s` : 'oturmadı');
+  check('attitude', 'slew sırasında toplam momentum (gövde + tekerlek) korunur (< 1e−3 N·m·s)', slew.stats.HDrift < 1e-3 && (Math.max(...slew.samples.map(s => s.H)) - Math.min(...slew.samples.map(s => s.H))) < 1e-3, `${slew.stats.HDrift.toExponential(1)}`);
+  const tum = A.simulateAttitude({ craft: 'tumbler', mode: 'tumble', w0: [.01, 2, 0], duration: 40, wheels: false });
+  check('attitude', 'serbest gövde: kinetik enerji ve |H| korunur (< 1e−8)', tum.stats.energyDrift < 1e-8 && tum.stats.HDrift < 1e-8, `${tum.stats.energyDrift.toExponential(1)} / ${tum.stats.HDrift.toExponential(1)}`);
+  check('attitude', 'Dzhanibekov: ara eksen dönüşü devrilir (|ω₁| büyür ≥ 1 rad/s)', Math.max(...tum.samples.map(s => Math.abs(s.w[0]))) > 1);
+  const stable = A.simulateAttitude({ craft: 'tumbler', mode: 'tumble', w0: [.01, 0, 2], duration: 40, wheels: false });
+  check('attitude', 'büyük eksen dönüşü kararlı (|ω₁| ≤ 0,02)', Math.max(...stable.samples.map(s => Math.abs(s.w[0]))) <= .02);
+  const sat = A.simulateAttitude({ craft: 'small', mode: 'saturation', tauExt: [.02, 0, 0], duration: 120, qTarget: [0, 0, 0, 1] });
+  check('attitude', 'sabit dış tork: tekerlek h_max/τ = 50 s\'de doyar (±1 s)', sat.stats.satAt != null && Math.abs(sat.stats.satAt - 50) < 1, sat.stats.satAt ? `${sat.stats.satAt.toFixed(1)} s` : 'yok');
+  check('attitude', 'doymadan sonra toplam |H| = τ·t büyür (120 s: 2,4 N·m·s ±2 %)', rel(sat.samples[sat.samples.length - 1].H, .02 * 120, .02), sat.samples[sat.samples.length - 1].H.toFixed(3));
+  const q = A.qFromEuler321(.7, -.3, 1.1), e = A.euler321FromQ(q);
+  check('attitude', 'Euler 3-2-1 → q → Euler gidiş-dönüş', near(e.psi, .7, 1e-12) && near(e.theta, -.3, 1e-12) && near(e.phi, 1.1, 1e-12));
+  check('attitude', 'gimbal kilidi: θ = 89,9° için Euler hız matrisi det = 1/cos θ ≈ 573', near(A.eulerRateMatrix321(89.9 * Math.PI / 180, .3).det, 1 / Math.cos(89.9 * Math.PI / 180), 1e-9));
+  const s5 = A.qSlerp([0, 0, 0, 1], A.qFromAxisAngle([0, 0, 1], Math.PI / 2), .5);
+  check('attitude', 'SLERP yarı yol = 45° (büyük çember)', near(A.qAngle(s5), Math.PI / 4, 1e-12));
+  /* K_p = I ω_n² tanımı */
+  check('attitude', 'K_p = I·ω_n², K_d = 2ζω_n·I', slew.Kp.every((k, i) => near(k, slew.cfg.I[i] * slew.cfg.wn ** 2, 1e-12)) && slew.Kd.every((k, i) => near(k, 2 * slew.cfg.zeta * slew.cfg.wn * slew.cfg.I[i], 1e-12)));
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

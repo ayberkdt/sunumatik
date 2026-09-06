@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "attitude-dynamics",
+      "type": "simulation",
+      "truthLevel": "numerical",
+      "purpose": "Uzay aracı yönelim dinamiği ve kontrolünü gerçek katı-gövde entegrasyonuyla göstermek: kuaterniyon PD ile slew, tepki tekerleği momentumu ve doyması, serbest dönmede ara-eksen kararsızlığı (Dzhanibekov), 3-2-1 Euler gimbal kilidi ve SLERP ↔ Euler interpolasyon farkı — 'dönen küp' değil, GNC.",
+      "model": "Kuaterniyon q = [x,y,z,w] (gövde→eylemsiz), q̇ = ½ q ⊗ [ω,0]; Euler denklemleri I ω̇ = −ω × (Iω + h_w) + τ_dış − ḣ_w (üç gövde ekseninde tekerlek); tekerlek ḣ_w = −τ_c, |ḣ_w| ≤ τ_max, |h_w| ≤ h_max (doymuş eksende o yönde tork sıfır); kontrolcü δq = q_hedef* ⊗ q, τ_c = −K_p sgn(δq_w) δq_v − K_d ω, K_p = I ω_n², K_d = 2ζω_n I. Serbest gövdede T = ½ωᵀIω ve |H| korunur (RK4 denetimi ~1e−10). Euler 3-2-1 dönüşümleri ve hız matrisi [φ̇,θ̇,ψ̇]ᵀ = M(θ,φ) ω, det = 1/cos θ (θ → ±90° gimbal kilidi). SLERP büyük-çember interpolasyonu. Araç presetleri (I, h_max, τ_max) kamuya açık sınıf değerleri. Kaynak presets/attitude_gnc/attitude-model.mjs; denetim scripts/validate-astro.mjs (|q| = 1, slew oturma, momentum korunumu, T/|H| korunumu, Dzhanibekov devrilme, büyük eksen kararlılığı, doyma h_max/τ = 50 s, Euler gidiş-dönüş, gimbal det, SLERP, gain tanımları).",
+      "solver": "RK4, dt = 0,01 s, q her adımda normalize; örnekleme 0,05 s. SLERP / Euler / gimbal modları kinematik gösterimdir (dinamik entegre edilmez, altyazı söyler).",
+      "limitations": "Rijit gövde (esnek panel, yakıt çalkalanması yok); tekerlek modeli ideal (sürtünme, hız-bağımlı tork sınırı, tekerlek eğim matrisi/piramit yok — üç dik tekerlek); sensör/kestirim yok (tam durum bilgisi); dış tork sabit ve gövde ekseninde; kontrolcü basit PD (feed-forward, sınır-güdümlü profil yok); Dzhanibekov modu kontrolsüz; araç geometrisi craft-blocks orbiter (I ile tutarlı ölçekli değil, sembolik).",
+      "reducedMotion": "Otomatik oynatma yok; sürenin %35'inde donmuş kare; kaydırıcı, HUD, grafikler çalışır.",
+      "exportState": "?mode=&t= ile deterministik kare (RK4 deterministik, kamera OrbitControls başlangıç pozu sabit).",
+      "accessibility": "Mod düğmeleri, araç seçici, ω_n/ζ/hedef/dış tork kaydırıcıları ve zaman kaydırıcısı yerli öğelerdir; HUD tüm büyüklükleri metin verir (hata açısı, ω, Euler, q, τ_c, |H|, 1/cos θ, T); tekerlek çubukları sayısal değer taşır; altyazı modun fiziğini ve sonucunu düzyazı anlatır.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "attitude-plots",
+      "type": "trace",
+      "truthLevel": "numerical",
+      "purpose": "Gövde hızları, yönelim hatası / tekerlek momentumu (ya da serbest dönmede T ve |H|), Euler açıları zaman grafikleri; imleç sahne zamanını izler.",
+      "model": "Aynı simülasyon örnekleri.",
+      "solver": "attitude-model.mjs.",
+      "limitations": "Y ekseni her grafikte otomatik ölçeklenir.",
+      "reducedMotion": "Statik.",
+      "exportState": "t'nin fonksiyonu.",
+      "accessibility": "Değerler HUD'da metin.",
+      "loop": true,
+      "pauseControl": true
+    }
+  ]
+}

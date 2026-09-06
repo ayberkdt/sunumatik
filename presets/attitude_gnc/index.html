@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Yönelim / GNC Laboratuvarı — attitude_gnc</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; } .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); } .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 70px; text-align: right; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field, select { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    select { background: var(--color-canvas); padding: 6px 10px; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 90px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 52px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Yönelim / GNC Laboratuvarı<small>attitude_gnc · gerçek katı-gövde dinamiği, kuaterniyon PD, tepki tekerlekleri ve doyma, Dzhanibekov, gimbal kilidi, SLERP</small></h1>
+    <div class="tabs" role="group" aria-label="Mod"><button data-mode="slew" aria-pressed="true">Slew (kontrolcü)</button><button data-mode="tumble">Serbest dönme (Dzhanibekov)</button><button data-mode="saturation">Tekerlek doyması</button><button data-mode="gimbal">Gimbal kilidi</button><button data-mode="slerp">SLERP ↔ Euler</button></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="60" step="0.05" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Araç"><span>Araç</span><select id="craft"><option value="small">Küçük uydu</option><option value="observatory">Gözlem uydusu</option><option value="cubesat">CubeSat 3U</option><option value="tumbler">Dzhanibekov cismi</option></select></div>
+      <div class="group" role="group" aria-label="Kontrolcü"><span>Kontrolcü</span><label class="field">ω_n <input id="wn" type="range" min="0.05" max="1" step="0.01" value="0.2"><output id="oWn">0,20</output></label><label class="field">ζ <input id="zeta" type="range" min="0.2" max="1.5" step="0.05" value="1"><output id="oZ">1,00</output></label></div>
+      <div class="group" role="group" aria-label="Hedef"><span>Hedef (3-2-1)</span><label class="field">ψ <input id="tPsi" type="range" min="-180" max="180" step="1" value="46"><output id="oPsi">46°</output></label><label class="field">θ <input id="tTh" type="range" min="-89" max="89" step="1" value="23"><output id="oTh">23°</output></label><label class="field">φ <input id="tPhi" type="range" min="-180" max="180" step="1" value="-34"><output id="oPhi">−34°</output></label></div>
+      <div class="group" role="group" aria-label="Dış tork"><span>Dış tork x</span><label class="field"><input id="tau" type="range" min="0" max="0.05" step="0.001" value="0"><output id="oTau">0 N·m</output></label></div>
+      <div class="group" role="group" aria-label="Zaman"><span>Zaman</span><button data-warp="0.5">0,5×</button><button data-warp="1" aria-pressed="true">1×</button><button data-warp="4">4×</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountAttitude } from './attitude-gnc.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id); const rad = Math.PI / 180;
+    const mode0 = params.get('mode') || 'slew';
+    const MODE_DEFAULTS = { slew: { craft: 'small', w0: [0, 0, 0], tauExt: [0, 0, 0], duration: 120, wheels: true }, tumble: { craft: 'tumbler', w0: [.01, 2, 0], tauExt: [0, 0, 0], duration: 40, wheels: false }, saturation: { craft: 'small', w0: [0, 0, 0], tauExt: [.02, 0, 0], duration: 120, wheels: true }, gimbal: { craft: 'small', duration: 12, wheels: false }, slerp: { craft: 'small', duration: 12, wheels: false } };
+    const gnc = await mountAttitude($('host'), { mode: mode0, ...MODE_DEFAULTS[mode0], warp: Number(params.get('warp')) || 1, autoplay: !deterministic, t: params.has('t') ? Number(params.get('t')) : undefined, target: { psi: 46 * rad, theta: 23 * rad, phi: -34 * rad } });
+    window.__attitude = gnc; $('craft').value = MODE_DEFAULTS[mode0].craft; if (MODE_DEFAULTS[mode0].tauExt) $('tau').value = String(MODE_DEFAULTS[mode0].tauExt[0]);
+    if (params.has('t')) gnc.timeline.scrub(Number(params.get('t')));
+    const nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const outs = () => { $('oWn').textContent = nf2.format(Number($('wn').value)); $('oZ').textContent = nf2.format(Number($('zeta').value)); $('oPsi').textContent = `${$('tPsi').value}°`; $('oTh').textContent = `${$('tTh').value}°`; $('oPhi').textContent = `${$('tPhi').value}°`; $('oTau').textContent = `${$('tau').value} N·m`; };
+    const apply = () => { gnc.set({ craft: $('craft').value, wn: Number($('wn').value), zeta: Number($('zeta').value), target: { psi: Number($('tPsi').value) * rad, theta: Number($('tTh').value) * rad, phi: Number($('tPhi').value) * rad }, tauExt: [Number($('tau').value), 0, 0] }); writeCaption(); gnc.timeline.play(); };
+    for (const id of ['wn', 'zeta', 'tPsi', 'tTh', 'tPhi', 'tau']) { $(id).addEventListener('input', outs); $(id).addEventListener('change', apply); }
+    $('craft').addEventListener('change', apply);
+    document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { const m = b.dataset.mode; const d = MODE_DEFAULTS[m]; $('craft').value = d.craft; if (d.tauExt) $('tau').value = String(d.tauExt[0]); outs(); gnc.set({ mode: m, ...d }); writeCaption(); gnc.timeline.play(); document.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode0)));
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { gnc.timeline.setWarp(Number(b.dataset.warp)); document.querySelectorAll('[data-warp]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    const CAP = {
+      slew: s => `<strong>Kuaterniyon PD ile slew:</strong> τ_c = −K_p sgn(δq_w) δq_v − K_d ω, K_p = I ω_n², K_d = 2ζω_n I; tekerlekler ḣ_w = −τ_c ile emer (|ḣ_w| ≤ τ_max). ${s.stats.settledAt ? `Hedefe <span class="nums">${nf1.format(s.stats.settledAt)} s</span>'de oturdu (< 0,5°)` : 'Bu sürede oturmadı'}; en yüksek hız ${nf2.format(s.stats.maxRate * 180 / Math.PI)}°/s; toplam |H| korunur (dış tork yok). Euler denklemleri RK4 ile, q her adımda normalize.`,
+      tumble: s => `<strong>Dzhanibekov / ara-eksen etkisi:</strong> I = diag(1, 2, 3), ω₂ = 2 rad/s + 0,01 rad/s pertürbasyon, kontrol yok. Ara eksen (I₂) etrafındaki dönüş kararsızdır: küçük sapma büyür, cisim periyodik olarak devrilir; büyük ve küçük eksen kararlıdır. Enerji sapması <span class="nums">${s.stats.energyDrift.toExponential(1)} J</span>, |H| sapması ${s.stats.HDrift.toExponential(1)} — korunum RK4 denetimidir.`,
+      saturation: s => `<strong>Tekerlek doyması:</strong> sabit dış tork (x ekseni) tekerleğe sürekli momentum yükler; ${s.stats.satAt ? `<span class="nums">${nf1.format(s.stats.satAt)} s</span>'de h_max'a ulaşır (beklenen h_max/τ)` : 'doyma bu sürede olmadı'} — doyunca tork üretilemez, yönelim hatası büyür (son hata ${nf2.format(s.stats.finalErr * 180 / Math.PI)}°). Gerçek uydular bu yüzden momentum boşaltır (manyetotork / itici).`,
+      gimbal: s => `<strong>Gimbal kilidi (3-2-1):</strong> θ → 90°'de gövde hızlarını Euler hızlarına çeviren matris tekilleşir (1/cos θ → ∞); ψ ve φ aynı fiziksel eksene çöker, ayrışamaz. Kuaterniyon aynı hareketi tekilliksiz taşır (q bileşenleri HUD'da düzgün).`,
+      slerp: s => `<strong>SLERP ↔ Euler doğrusal interpolasyon:</strong> aynı uç noktalar; SLERP büyük çember (sabit açısal hız, en kısa dönüş), Euler açılarının doğrusal interpolasyonu ise eğri bir yol izler ve hız düzgün değildir — grafiklerde ω ve Euler eğrilerini karşılaştırın (mod: kinematik gösterim, dinamik yok).`,
+    };
+    function writeCaption() { $('caption').innerHTML = CAP[gnc.config.mode](gnc.sim); }
+    outs(); writeCaption();
+    const scrub = $('scrub'), playBtn = $('playBtn'), timeOut = $('timeOut');
+    function syncUi() { const tl = gnc.timeline; scrub.max = String(tl.duration); playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(tl.t); timeOut.textContent = `${nf1.format(tl.t)} s`; }
+    setInterval(syncUi, 150);
+    playBtn.addEventListener('click', () => { const tl = gnc.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { gnc.timeline.pause(); gnc.timeline.scrub(Number(scrub.value)); syncUi(); });
+    if (deterministic) { gnc.timeline.pause(); gnc.setActive(false); }
+    document.title += ' · hazır'; syncUi();
+  </script>
+</body>
+</html>
