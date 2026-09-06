@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "motions": [
+    {
+      "id": "flyby-hyperbola",
+      "type": "simulation",
+      "truthLevel": "analytic",
+      "purpose": "Yerçekimi yardımının mekaniğini iki çerçevede AYRI AYRI göstermek: gezegen-göreli çerçevede hiperbol, asimptotlar, enberi, dönme açısı δ ve B-düzlemi hedeflemesi; heliosantrik çerçevede hız üçgeni V = V_p + v∞ ile |v∞| korunurken |V|'nin nasıl değiştiği ve önce/sonra heliosantrik yörüngeler — 'gezegen aracı öne çeker' yanılgısını kırmak.",
+      "model": "Yama-konik: gezegen dairesel heliosantrik yörüngede (V_p = √(μ_☉/a_p)); v∞_in = V_in − V_p; hiperbol a = −μ/v∞², e = 1 + r_p v∞²/μ, δ = 2 asin(1/e), b = r_p √(1 + 2μ/(r_p v∞²)); B-düzlemi S ⊥, T̂ = S × ẑ/|·|, R̂ = S × T̂, B = b(cos θ T̂ + sin θ R̂), çarpma dairesi R √(1 + 2μ/(R v∞²)); v∞_out = v∞(cos δ S − sin δ B̂) (gezegene doğru bükülme; |v∞| korunur); V_out = V_p + v∞_out; ΔV = 2 v∞ sin(δ/2); ΔE = V_p·Δv∞; önce/sonra elemanlar vis-viva ve e-vektöründen; Tisserand T = a_p/a + 2√((a/a_p)(1−e²)) cos i. Hiperbol boyunca zaman hiperbolik Kepler denklemiyle (t = 0 enberi); heliosantrik yama yolu = gezegen hareketi + göreli hiperbol. Gezegen sabitleri: μ, R, a, SOI (kamu değerleri). Kaynak presets/gravity_assist/flyby-model.mjs; denetim scripts/validate-astro.mjs (|v∞| korunumu, ΔV = 2v∞ sin(δ/2), ΔE = V_p·Δv∞, Tisserand korunumu, enberi hızı vis-viva, asimptot yönleri, çarpma dairesi limiti, arka/ön geçiş işareti).",
+      "limitations": "Yama-konik ve anlık (SOI içinde iki-cisim, dışında Güneş; geçiş süresi gezegen hareketine yalnız yama yolunda yansır); gezegen yörüngesi dairesel ve ekliptikte (gerçek eğiklik/dış-merkezlik yok); gezegenin yassılığı ve uyduları yok; v∞_in yönü ekliptik düzleminde (α) — geliş düzlem-dışı bileşeni yalnız θ ile çıkışta; navigasyon belirsizliği, TCM'ler yok. Çizimlerde gezegen ve çarpma dairesi asgari piksel boyutuna kenetlenir.",
+      "reducedMotion": "Otomatik oynatma yok; araç enberide (t = 0) donmuş kare; tüm geometri statik ve okunur.",
+      "exportState": "?body=&vinf=&alpha=&rp=&theta=&t= deterministik: kapalı biçim geometri.",
+      "accessibility": "Gezegen düğmeleri ve v∞/α/r_p/θ kaydırıcıları yerli öğelerdir; HUD tüm büyüklükleri metin verir (e, δ, r_p, |B|, B·T/B·R, çarpma, |V_in|, |V_out|, ΔV, ΔE, önce/sonra a-e, Tisserand); altyazı çerçeve ayrımını düzyazı anlatır.",
+      "loop": true,
+      "pauseControl": true
+    },
+    {
+      "id": "flyby-velocity-triangle",
+      "type": "comparison",
+      "truthLevel": "analytic",
+      "purpose": "Hız üçgeni: V_p ortak, v∞_in ve v∞_out aynı uzunlukta (|v∞| çemberi üstünde), V_in ve V_out farklı — enerji değişiminin kaynağı vektör geometrisidir.",
+      "model": "V = V_p + v∞; ok uzunlukları km/s ile orantılı.",
+      "limitations": "Ekliptik düzlemine izdüşüm (θ ≠ 0'da z bileşeni gösterilmez, HUD'da eğiklik).",
+      "reducedMotion": "Statik.",
+      "exportState": "Girdilerin fonksiyonu.",
+      "accessibility": "Sayılar HUD'da.",
+      "loop": false,
+      "pauseControl": true
+    }
+  ]
+}

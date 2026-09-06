@@ -374,6 +374,39 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('cr3bp', 'eylemsiz dönüşüm uzunluk korur', near(Math.hypot(...C.rotatingToInertial([.3, .4, 0], 1.234).slice(0, 2)), .5, 1e-12));
 }
 
+/* ───────────────────────── Yerçekimi yardımı / B-düzlemi */
+{
+  const F = await mod('presets/gravity_assist/flyby-model.mjs');
+  const fb = F.solveFlyby({ body: 'jupiter', vinf: 6, alpha: 120, rp: 6 * 69911, theta: 0 });
+  const n = v => Math.hypot(v[0], v[1], v[2]);
+  check('flyby', '|v∞| korunur (giriş = çıkış)', near(n(fb.vinfIn), n(fb.vinfOut), 1e-9), `${n(fb.vinfOut).toFixed(6)} km/s`);
+  check('flyby', 'δ = 2 asin(1/e) ve ΔV = 2 v∞ sin(δ/2)', near(fb.delta, 2 * Math.asin(1 / fb.e), 1e-12) && near(fb.dV, 2 * fb.vinf * Math.sin(fb.delta / 2), 1e-9), `δ ${(fb.delta * 180 / Math.PI).toFixed(2)}°, ΔV ${fb.dV.toFixed(3)}`);
+  check('flyby', 'ΔE = V_p·Δv∞ (vis-viva farkı ile)', near(fb.dEnergy, fb.dEnergyCheck, 1e-6), `${fb.dEnergy.toFixed(3)} km²/s²`);
+  check('flyby', 'Tisserand parametresi korunur (dairesel gezegen)', near(fb.tisserandIn, fb.tisserandOut, 1e-9), fb.tisserandOut.toFixed(6));
+  /* geometri: hiperbol enberisi r_p, enberi hızı vis-viva, asimptot yönleri S / S_out */
+  const path = F.hyperbolaPath(fb, { n: 2000 });
+  const mn = path.reduce((m, p) => p.dist < m.dist ? p : m, path[0]);
+  check('flyby', 'hiperbol en yakın nokta = r_p, hız = √(v∞² + 2μ/r_p)', rel(mn.dist, fb.rp, 1e-6) && rel(mn.speed, Math.sqrt(fb.vinf ** 2 + 2 * fb.body.mu / fb.rp), 1e-6));
+  const u = v => { const k = n(v); return v.map(x => x / k); };
+  const din = u(path[0].v), dout = u(path[path.length - 1].v);
+  check('flyby', 'giriş asimptot yönü = S, çıkış = S_out (< 0,2°)', Math.acos(din[0] * fb.S[0] + din[1] * fb.S[1] + din[2] * fb.S[2]) < .2 * Math.PI / 180 && Math.acos(dout[0] * u(fb.vinfOut)[0] + dout[1] * u(fb.vinfOut)[1] + dout[2] * u(fb.vinfOut)[2]) < .2 * Math.PI / 180);
+  check('flyby', 'enberi B̂ tarafında (P̂·B̂ > 0) ve açısal momentum yönü tutarlı', (fb.Phat[0] * fb.Bhat[0] + fb.Phat[1] * fb.Bhat[1] + fb.Phat[2] * fb.Bhat[2]) > 0);
+  /* çarpma limiti: r_p = R → b = b_çarpma; r_p < R kenetlenir */
+  const fbR = F.solveFlyby({ body: 'jupiter', vinf: 6, alpha: 120, rp: 69911 });
+  check('flyby', 'r_p = R için |B| = çarpma dairesi yarıçapı', near(fbR.b, fbR.bImpact, 1e-6));
+  /* arka geçiş enerji kazandırır, ön geçiş kaybettirir (θ = 0 vs 180) */
+  /* küçük δ'da ΔE ≈ −sin δ · v∞ (V_p·B̂): taraf değişince işaret döner (büyük δ'da (cos δ − 1) terimi baskın olabilir) */
+  const back = F.solveFlyby({ body: 'jupiter', vinf: 6, alpha: 120, rp: 30 * 69911, theta: 0 }), front = F.solveFlyby({ body: 'jupiter', vinf: 6, alpha: 120, rp: 30 * 69911, theta: 180 });
+  check('flyby', 'arka geçiş (θ = 0) enerji kazandırır, ön geçiş (θ = 180) kaybettirir (r_p = 30R)', back.dEnergy > 0 && front.dEnergy < 0, `${back.dEnergy.toFixed(1)} / ${front.dEnergy.toFixed(1)}`);
+  check('flyby', 'ΔE(θ) − ΔE(θ+π) = −2 sin δ v∞ V_p·B̂', near(back.dEnergy - front.dEnergy, -2 * Math.sin(back.delta) * back.vinf * (back.Vp[0] * back.Bhat[0] + back.Vp[1] * back.Bhat[1] + back.Vp[2] * back.Bhat[2]), 1e-6));
+  /* limit: r_p → ∞ ⇒ δ → 0, ΔV → 0 */
+  const far = F.solveFlyby({ body: 'jupiter', vinf: 6, alpha: 120, rp: 4e7 });
+  check('flyby', 'uzak geçişte δ ve ΔV küçülür', far.delta < fb.delta / 4 && far.dV < fb.dV / 4);
+  /* Voyager-benzeri sayı: Jüpiter v∞ ≈ 10 km/s, r_p ≈ 5 R → δ ≈ 2 asin(1/(1+ r_p v∞²/μ)) */
+  const vg = F.solveFlyby({ body: 'jupiter', vinf: 10, alpha: 120, rp: 5 * 69911 });
+  check('flyby', 'Jüpiter v∞ 10 km/s, r_p 5R: e = 1 + r_p v∞²/μ = 1,276', near(vg.e, 1 + 5 * 69911 * 100 / 1.26686534e8, 1e-9), vg.e.toFixed(4));
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

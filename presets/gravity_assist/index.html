@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Yerçekimi Yardımı ve B-Düzlemi — gravity_assist</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script>document.documentElement.classList.add('js');</script>
+  <style>
+    :root { --color-canvas: #0b0c10; --color-surface: #15161a; --color-ink: #e9e4d8; --color-muted: #9a938a; --color-accent: #d9b877; --color-accent-ink: #14100a;
+      --color-data-1: #8fb8dd; --color-data-2: #d78f6c; --color-rule: #3a3c42; --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace; }
+    * { box-sizing: border-box; } html, body { width: 100%; height: 100%; margin: 0; }
+    body { background: var(--color-canvas); color: var(--color-ink); font-family: var(--font-body); display: flex; flex-direction: column; overflow: hidden; }
+    header { display: flex; align-items: center; gap: 20px; padding: 12px 24px 10px; border-bottom: 1px solid var(--color-rule); flex: 0 0 auto; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    header h1 small { display: block; font-size: 11px; font-weight: 400; letter-spacing: .06em; color: var(--color-muted); text-transform: none; margin-top: 2px; }
+    .tabs { display: flex; gap: 6px; margin-left: auto; } .tabs button { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-muted); font: 600 12px/1 var(--font-body); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+    .tabs button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    .stage-area { position: relative; flex: 1 1 auto; min-height: 0; }
+    footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; padding: 12px 24px 14px; border-top: 1px solid var(--color-rule); background: var(--color-surface); }
+    .scrub-row { display: flex; align-items: center; gap: 14px; } .scrub-row input[type="range"] { flex: 1 1 auto; accent-color: var(--color-accent); } .scrub-row .time { font: 500 13px var(--font-mono); color: var(--color-muted); min-width: 120px; text-align: right; }
+    .control-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .control-row .group { display: flex; gap: 6px; align-items: center; }
+    .control-row .group > span { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--color-muted); margin-right: 2px; }
+    button, label.field { appearance: none; border: 1px solid var(--color-rule); background: transparent; color: var(--color-ink); font: 500 12.5px/1 var(--font-body); padding: 8px 12px; border-radius: 7px; cursor: pointer; user-select: none; }
+    button[aria-pressed="true"] { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
+    label.field { display: inline-flex; gap: 6px; align-items: center; cursor: default; padding: 5px 10px; } label.field input[type="range"] { width: 110px; accent-color: var(--color-accent); margin: 0; } label.field output { font: 500 12px var(--font-mono); min-width: 64px; text-align: right; }
+    .caption { font-size: 13.5px; color: var(--color-muted); margin: 0; } .caption strong { color: var(--color-ink); font-weight: 600; } .caption .nums { font-family: var(--font-mono); color: var(--color-ink); }
+    html[data-export="true"] footer { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Yerçekimi Yardımı ve B-Düzlemi<small>gravity_assist · gezegen-göreli hiperbol, dönme açısı, B vektörü, heliosantrik hız üçgeni — |v∞| korunur, |V| değişir</small></h1>
+    <div class="tabs" role="group" aria-label="Gezegen"><button data-body="venus">Venüs</button><button data-body="earth">Dünya</button><button data-body="mars">Mars</button><button data-body="jupiter" aria-pressed="true">Jüpiter</button><button data-body="saturn">Satürn</button></div>
+  </header>
+  <div class="stage-area" id="host"></div>
+  <footer>
+    <div class="scrub-row"><button id="playBtn" aria-pressed="false">Oynat</button><input id="scrub" type="range" min="0" max="100" step="1" value="0" aria-label="Zaman"><span class="time" id="timeOut">—</span></div>
+    <div class="control-row">
+      <div class="group" role="group" aria-label="Geliş"><span>Geliş</span>
+        <label class="field">v∞ <input id="pV" type="range" min="1" max="20" step="0.1" value="6"><output id="oV">6,0 km/s</output></label>
+        <label class="field">α (V_p'ye göre) <input id="pA" type="range" min="0" max="360" step="1" value="120"><output id="oA">120°</output></label></div>
+      <div class="group" role="group" aria-label="Hedefleme"><span>Hedefleme</span>
+        <label class="field">r_p / R <input id="pR" type="range" min="1" max="40" step="0.1" value="6"><output id="oR">6,0 R</output></label>
+        <label class="field">θ (B-düzlemi) <input id="pT" type="range" min="-180" max="180" step="1" value="0"><output id="oT">0°</output></label></div>
+      <div class="group" role="group" aria-label="Zaman"><span>Zaman</span><button data-warp="5000">5k×</button><button data-warp="20000" aria-pressed="true">20k×</button><button data-warp="80000">80k×</button></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </footer>
+  <script type="module">
+    import { mountGravityAssist } from './gravity-assist.mjs';
+    const params = new URLSearchParams(location.search);
+    if (params.get('export') === '1') document.documentElement.dataset.export = 'true';
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deterministic = params.has('t') || reduced || document.documentElement.dataset.export === 'true';
+    const $ = id => document.querySelector('#' + id);
+    const ga = await mountGravityAssist($('host'), { body: params.get('body') || 'jupiter', vinf: Number(params.get('vinf')) || 6, alpha: params.has('alpha') ? Number(params.get('alpha')) : 120, rpRatio: Number(params.get('rp')) || 6, theta: Number(params.get('theta')) || 0, warp: Number(params.get('warp')) || 20000, autoplay: !deterministic });
+    window.__gravityAssist = ga;
+    if (params.has('t')) ga.timeline.scrub(Number(params.get('t')));
+    const nf1 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }), nf2 = new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), nf0 = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 });
+    const F = { V: $('pV'), A: $('pA'), R: $('pR'), T: $('pT') };
+    const outs = () => { $('oV').textContent = `${nf1.format(Number(F.V.value))} km/s`; $('oA').textContent = `${F.A.value}°`; $('oR').textContent = `${nf1.format(Number(F.R.value))} R`; $('oT').textContent = `${F.T.value}°`; };
+    const show = () => { const c = ga.config; F.V.value = c.vinf; F.A.value = c.alpha; F.R.value = c.rpRatio; F.T.value = c.theta; outs(); };
+    const apply = () => { ga.set({ vinf: Number(F.V.value), alpha: Number(F.A.value), rpRatio: Number(F.R.value), theta: Number(F.T.value) }); writeCaption(); };
+    for (const f of Object.values(F)) { f.addEventListener('input', () => { outs(); apply(); }); }
+    document.querySelectorAll('[data-body]').forEach(b => b.addEventListener('click', () => { ga.set({ body: b.dataset.body }); writeCaption(); document.querySelectorAll('[data-body]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    document.querySelectorAll('[data-body]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.body === (params.get('body') || 'jupiter'))));
+    document.querySelectorAll('[data-warp]').forEach(b => b.addEventListener('click', () => { ga.timeline.setWarp(Number(b.dataset.warp)); document.querySelectorAll('[data-warp]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); }));
+    function writeCaption() {
+      const f = ga.flyby;
+      $('caption').innerHTML = `<strong>Gezegen aracı "öne çekmez"; çerçeve değişir:</strong> gezegen-göreli hız büyüklüğü v∞ = <span class="nums">${nf2.format(f.vinf)} km/s</span> giriş ve çıkışta AYNIDIR (enerji gezegen çerçevesinde korunur); yön δ = 2 asin(1/e) = <span class="nums">${nf1.format(f.delta * 180 / Math.PI)}°</span> döner. `
+        + `Heliosantrik çerçevede V = V_p + v∞: |V_in| ${nf2.format(Math.hypot(...f.Vin))} → |V_out| <span class="nums">${nf2.format(Math.hypot(...f.Vout))} km/s</span>, ΔV = 2 v∞ sin(δ/2) = <span class="nums">${nf2.format(f.dV)} km/s</span>, ΔE = V_p·Δv∞ = ${f.dEnergy >= 0 ? '+' : ''}${nf1.format(f.dEnergy)} km²/s² — `
+        + `${f.dEnergy > 0 ? 'gezegenin ARKASINDAN geçiş enerji kazandırır' : 'gezegenin ÖNÜNDEN geçiş enerji kaybettirir'} (θ ile taraf değişir). Heliosantrik yörünge: a ${f.before.e < 1 ? nf2.format(f.before.a / 149597870.7) + ' AU' : 'hiperbolik'} → ${f.after.e < 1 ? nf2.format(f.after.a / 149597870.7) + ' AU' : 'HİPERBOLİK (kaçış)'}. `
+        + `B-düzlemi: |B| = ${nf0.format(f.b)} km, çarpma dairesi ${nf0.format(f.bImpact)} km${f.impact ? ' — ÇARPAR' : ''}. Tisserand ${f.tisserandIn.toFixed(4)} → ${f.tisserandOut.toFixed(4)} (dairesel gezegen yörüngesinde korunur). Yama-konik, anlık uçuş; SOI içinde iki-cisim.`;
+    }
+    show(); writeCaption();
+    const scrub = $('scrub'), playBtn = $('playBtn'), timeOut = $('timeOut');
+    function syncUi() { const tl = ga.timeline; scrub.min = String(tl.tMin); scrub.max = String(tl.tMax); scrub.step = String(Math.max(1, (tl.tMax - tl.tMin) / 1000)); playBtn.textContent = tl.playing ? 'Duraklat' : 'Oynat'; playBtn.setAttribute('aria-pressed', String(tl.playing)); if (document.activeElement !== scrub) scrub.value = String(tl.t); timeOut.textContent = `${tl.t >= 0 ? '+' : '−'}${nf1.format(Math.abs(tl.t) / 3600)} sa`; }
+    setInterval(syncUi, 150);
+    playBtn.addEventListener('click', () => { const tl = ga.timeline; tl.playing ? tl.pause() : tl.play(); syncUi(); });
+    scrub.addEventListener('input', () => { ga.timeline.pause(); ga.timeline.scrub(Number(scrub.value)); syncUi(); });
+    if (deterministic) { ga.timeline.pause(); ga.setActive(false); }
+    document.title += ' · hazır'; syncUi();
+  </script>
+</body>
+</html>

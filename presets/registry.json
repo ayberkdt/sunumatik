@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 45,
-    "presetsWithIndex": 38,
-    "animatedPresets": 34,
+    "presets": 46,
+    "presetsWithIndex": 39,
+    "animatedPresets": 35,
     "skills": 18,
-    "demoSlides": 61,
-    "demoCards": 48,
+    "demoSlides": 62,
+    "demoCards": 49,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 61,
-    "cards": 48,
+    "slides": 62,
+    "cards": 49,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -37,6 +37,7 @@
       "equation_steps",
       "figure_callouts",
       "formation_flight",
+      "gravity_assist",
       "ground_track_3d",
       "jwst_explorer",
       "launch_ascent",
@@ -238,6 +239,13 @@
     {
       "name": "formation_flight",
       "title": "Formasyon Uçuşu — formation_flight",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "gravity_assist",
+      "title": "Yerçekimi Yardımı ve B-Düzlemi — gravity_assist",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true
