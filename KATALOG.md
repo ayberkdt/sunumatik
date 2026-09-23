@@ -49,7 +49,7 @@ kullanın) — örnek deste dahil her şey oradan açılır.
 |---|---|
 | **SİNEMATİK** · [cinematic-space](presets/cinematic_space/index.html) | Uzamsal yolculuk kabuğu: dış uzay → kanopi eşiği → gözlem güvertesi → bölüm konsolu → orbital teslimi / gezgin dalışı. Cosmos + Lunaris Ay'ı + craft-blocks kompozisyonu; deterministik ray, `goTo/back` API'si |
 | **ORBITAL** · [orbital-stage](presets/orbital_stage/index.html) | Yörünge ver → animasyon al: Kepler elemanları, durum vektörü dizisi (gerçek görev verisi) ya da RK4 + impulsif yakışlar; yakış hayaletleri, kamera yönetmeni, telemetri HUD. Demo: LEO→GEO Hohmann + Ay'a hiperbolik varış |
-| **ORBITAL** · [craft-blocks](presets/craft_blocks/index.html) | Estetik parametrik araç kütüphanesi: orbiter, iniş aracı, 2 kademeli roket, CubeSat, kapsül — tüm bloklar bununla birleşir |
+| **ORBITAL** · [craft-blocks](presets/craft_blocks/index.html) | Estetik parametrik araç kütüphanesi (9 araç): her ayrıntı bir mekanizma; adlı eklemler + `userData.rig` parça sözleşmesi (physical_rigs F0) — tüm bloklar bununla birleşir |
 | **ORBITAL** · [lunar-descent](presets/lunar_descent/index.html) | Gerçek entegre üç fazlı Ay inişi: temas 0,90 m/s, ΔV 2,08 km/s; gaz kelebeği plums, toz, yüzey kamerası |
 | **ML** · [ml-loss-landscape](presets/ml_loss_landscape/index.html) | Analitik kayıp yüzeyinde gerçek gradyanla SGD / momentum / Adam yarışı — SGD sığ tuzağa takılır |
 | **ML** · [ml-attention-flow](presets/ml_attention_flow/index.html) | Gerçek softmax(QKᵀ/√d) dikkat yayları, Türkçe cümle, katman/kafa/sorgu değiştirme |

@@ -55,6 +55,15 @@
       position: absolute; left: 22px; bottom: 62px; z-index: 5;
       font-size: 11px; color: #6f7688; letter-spacing: 0.03em; pointer-events: none;
     }
+    /* Odaklanan aracın mühendislik notu (userData.notes.why) + eklem sayısı */
+    #not {
+      position: absolute; left: 22px; bottom: 84px; z-index: 5; max-width: 560px;
+      font-size: 12.5px; line-height: 1.45; color: #b9bfcc;
+      background: rgba(10, 12, 18, 0.72); border: 1px solid #232837; border-radius: 10px; padding: 8px 12px;
+    }
+    #not:empty { display: none; }
+    #not b { color: #c9a35c; font-weight: 600; }
+    #not small { display: block; margin-top: 4px; color: #6f7688; font-size: 11px; letter-spacing: 0.03em; }
     #stage { cursor: grab; }
     #stage.suruklu { cursor: grabbing; }
   </style>
@@ -76,6 +85,7 @@
     </div>
   </header>
   <div id="ipucu">Sürükle: döndür · Tekerlek: yakınlaş · Sağ tık / iki parmak: kaydır · Çift tık: araca odaklan</div>
+  <div id="not"></div>
   <div id="fxPanel" title="Motor ateşleme efekt sistemi">
     <span class="fx-baslik">Ateşleme</span>
     <select id="fxArac" title="Araç">
@@ -230,7 +240,7 @@
       controls.maxDistance = 15;
       controls.minPolarAngle = 0.10;
       controls.maxPolarAngle = Math.PI / 2 - 0.045;   // zemin düzleminin üstünde kal
-      controls.maxTargetRadius = 6.0;                 // sehpa alanından uzaklaşma
+      controls.maxTargetRadius = YARIM + 1.5;         // sehpa alanından uzaklaşma — sıra genişliğinden türetilir (sabit 6 iken uç araçlar (±8) odaklanamıyordu)
       controls.target.set(0, 0.66, 0);
       const stageEl = host;
       controls.addEventListener('start', () => { gecis = null; stageEl.classList.add('suruklu'); });
@@ -566,9 +576,24 @@
     function cipleriIsaretle() {
       for (const [id, el] of cipler) el.classList.toggle('on', (etkinOdak || '') === id);
     }
+    // Odaklanan aracın notu: her ayrıntı bir mekanizma ya da kısıt anlatır;
+    // kurucunun userData.notes.why'ı ve rig eklem sayısı burada okunur.
+    const notEl = document.querySelector('#not');
+    function notuGuncelle() {
+      const i = TANIMLAR.findIndex((t) => t.id === etkinOdak);
+      const kok = i >= 0 ? araclar[i] : null;
+      if (!kok || !kok.userData.notes) { notEl.textContent = ''; return; }
+      const rig = kok.userData.rig;
+      const eklemler = rig ? Object.keys(rig.joints) : [];
+      const eksik = rig ? eklemler.filter((k) => !rig.joints[k].found) : [];
+      notEl.innerHTML = `<b>${TANIMLAR[i].ad}</b> · ${kok.userData.notes.regime}<br>${kok.userData.notes.why}`
+        + `<small>${kok.userData.parts} parça · ${eklemler.length} eklem${eklemler.length ? ': ' + eklemler.join(', ') : ''}`
+        + `${rig && rig.massClass ? ' · ' + rig.massClass : ''}${eksik.length ? ' · EKSİK DÜĞÜM: ' + eksik.join(', ') : ''}</small>`;
+    }
     function odaklan(id) {
       etkinOdak = id || '';
       cipleriIsaretle();
+      notuGuncelle();
       const url = etkinOdak ? `?focus=${etkinOdak}` : '?';
       // Sorgu dizgisi korunur ki paylaşılan bağlantı aynı kadrajı açsın.
       history.replaceState(null, '', url + location.hash);
@@ -584,6 +609,7 @@
     cipYap('', 'Genel bakış', '?');
     for (const t of TANIMLAR) cipYap(t.id, t.ad, `?focus=${t.id}`);
     cipleriIsaretle();
+    notuGuncelle();
 
     // Çift tık: tıklanan araca odaklan (boşluğa çift tık → genel bakış).
     const isinlayici = new THREE.Raycaster();
@@ -664,6 +690,7 @@
     document.querySelector('#palet').value = baslangicPalet;
     kur(baslangicPalet);
     kamerayiKur();
+    notuGuncelle();          // araçlar kurulduktan sonra: not userData'dan okunur
 
 
     // Ateşleme açılış parametreleri: ?fx=1&arac=rocket&tip=atmosfer&gaz=0.8[&t=2.0]
@@ -712,7 +739,7 @@
       setPalette(ad) { paletSec.value = ad; paletiUygula(ad); },
       // Hata avı kancası: araçları gerçekten SÖKÜP yeniden kurar (normal
       // palet yolu artık bunu kullanmaz — yerinde renklendirme yapar).
-      rebuild(ad) { paletSec.value = ad; kur(ad); kamerayiKur(); ciz(); },
+      rebuild(ad) { paletSec.value = ad; kur(ad); kamerayiKur(); notuGuncelle(); ciz(); },
       focus(id) { odaklan(id || ''); },
       // Programatik kamera (doğrulama kareleri): {poz:[x,y,z], hedef:[x,y,z]}
       kamera({ poz, hedef } = {}) {

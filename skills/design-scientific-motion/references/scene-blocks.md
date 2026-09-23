@@ -88,6 +88,25 @@ buildCapsule({ scale=1, palette })   // crew capsule + service module
   metalness/roughness — premium satin, no toy plastic, no emissive gimmicks.
 - Consumers import via relative path and MUST degrade to a simple placeholder
   group if the import fails — blocks never hard-depend on each other.
+- **Parts contract (2026-09-23, physical_rigs F0 — `docs/physical-rigs-plan.md` §2).**
+  Every moving part is a NAMED `THREE.Group`; `root.userData.rig` carries
+  `{ kind, units:'design', scaleToRoot, joints, contacts, massClass }` where
+  `joints[name] = { node, axis:'x'|'y'|'z'|['y','z'], range:[lo,hi], deg:true,
+  rateDegS?, mode?:'translate', dir?, oneWay?, spin?, radius?, rpm?, spokes?, found }`.
+  A joint group has identity rotation at zero angle and its local axes coincide
+  with the design axes; if an orientation is needed an OUTER orientation group
+  carries it and the joint stays inside. `found:false` means the node name is
+  missing (a bug, never silent). Consumers that cannot find a node fall back to
+  static (surface-scene behaviour). Every builder also sets
+  `root.userData.notes = { regime, why }` — the engineering reason for each
+  visible mechanism; the showcase prints it for the focused craft.
+  Rover: `rockerL/R → bogieL/R → wheel*`, corner `steer*`, `mastPan/mastTilt`,
+  `armJ1..J3/armTurret`, `hgaAz/El`, `differential`. Orbiter: `wingL/R` (SADA),
+  `hgaAz/El`, `engineGimbal`, `louvers`. Lander: `leg{i}Stroke` (one-way
+  translate), `engineGimbal`, `sbandAz/El`. Rocket: `engineGimbal`, `gridFin{i}`,
+  `leg{i}`, `stage2` (translate), `fairingL/R`. Capsule: `hatch`, `smWing{i}`,
+  `engineGimbal`. Cubesat: `wingL/R`. Starship: `flapF*/R*`, `engineSL{i}`.
+  Helicopter: `rotorAlt/rotorUst` (spin, rpm, spokes).
 
 ## Quality bar (what "manim-grade" means here)
 
