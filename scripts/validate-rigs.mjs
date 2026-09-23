@@ -16,6 +16,8 @@ const root = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace
 const mod = (rel) => import(pathToFileURL(path.join(root, rel)).href);
 const { createRig, solveRockerBogie, ackermann, wheelAdvance, slipRatio, hashPose, DEG } = await mod('presets/physical_rigs/rig-core.mjs');
 const { createProgram, PROGRAMS } = await mod('presets/physical_rigs/choreography.mjs');
+const { createTreadmill, loopClosure, periodicNoise, wrapZ } = await mod('presets/physical_rigs/terrain-treadmill.mjs');
+const { createRoverDrive, ROVER_GEOM, reconstructInclinations } = await mod('presets/physical_rigs/rover-drive.mjs');
 
 let fails = 0, total = 0;
 const check = (name, ok, detail = '') => { total++; console.log(`  ${ok ? 'ok ' : 'HATA'} ${name}${detail ? '  (' + detail + ')' : ''}`); if (!ok) fails++; };
@@ -165,6 +167,84 @@ console.log('== 7 koreografi programları (kurucu rig haritaları üzerinde)');
   }
   check('bilinmeyen tür → boş program (sessiz)', createProgram('yok').period === 1);
   check('starship-stack programı starship ile aynı', PROGRAMS['starship-stack'] === PROGRAMS.starship);
+}
+
+console.log('== 8 treadmill: dikissiz periyodik zemin'.replace('dikissiz', 'dikişsiz'));
+{
+  const P = 17.37;
+  const field = createTreadmill({ period: P, seed: 4242 });
+  let hMax = 0, gMax = 0, pMax = 0;
+  for (let i = 0; i < 400; i++) {
+    const x = (i / 400 - 0.5) * 40;
+    hMax = Math.max(hMax, Math.abs(field.height(x, -P / 2) - field.height(x, P / 2)));
+    const gA = field.gradient(x, -P / 2), gB = field.gradient(x, P / 2);
+    gMax = Math.max(gMax, Math.abs(gA[1] - gB[1]));
+    const z = (i / 400 - 0.5) * P;
+    pMax = Math.max(pMax, Math.abs(field.height(x, z) - field.height(x, z + P)));
+  }
+  check('döşeme sınırında YÜKSEKLİK atlamıyor (h(x,−P/2) = h(x,+P/2))', hMax < 1e-9, hMax.toExponential(2));
+  check('döşeme sınırında EĞİM atlamıyor (C¹ dikiş)', gMax < 1e-9, gMax.toExponential(2));
+  check('h(x, z) = h(x, z + P) her yerde', pMax < 1e-9, pMax.toExponential(2));
+  const n = periodicNoise(7, 16);
+  let nMax = 0;
+  for (let i = 0; i < 64; i++) { const u = i / 64; nMax = Math.max(nMax, Math.abs(n(u, 0) - n(u, 1)), Math.abs(n(0, u) - n(1, u))); }
+  check('periyodik gürültü kenarda sarar (doku dikişsiz)', nMax < 1e-12, nMax.toExponential(2));
+  /* wrapZ periyodik DEĞİL, ANTİ-periyodiktir: wrapZ(z+P) = −wrapZ(z).
+     Dikişin kapanması, biçimlerin dz'de ÇİFT olmasından gelir (üstteki üç sınama). */
+  check('wrapZ anti-periyodik (wrapZ(z+P) = −wrapZ(z)) ve merkezde z − cz',
+    Math.abs(wrapZ(5, 0, P) + wrapZ(5 + P, 0, P)) < 1e-12 && Math.abs(wrapZ(0.001, 0, P) - 0.001) < 1e-6);
+  check('bilinmeyen biçim reddedilir', (() => { try { createTreadmill({ period: 10, features: [{ kind: 'yok' }] }); return false; } catch { return true; } })());
+}
+
+console.log('== 9 döngü kapanışı (tekerlek tam sayı devir)');
+{
+  const r = 0.2509, k = loopClosure({ wheelRadius: r, revolutions: 28, loopSeconds: 96 });
+  check('travel = 2π r N', Math.abs(k.travel - 2 * Math.PI * r * 28) < 1e-12, k.travel.toFixed(4));
+  check('speed × loop = travel', Math.abs(k.speed * 96 - k.travel) < 1e-12);
+  const aci = (k.speed * 96) / r;
+  check('bir döngüde tekerlek açısı = 2π × 28 (sıçrama yok)', Math.abs(aci - 2 * Math.PI * 28) < 1e-9, (aci / (2 * Math.PI)).toFixed(6) + ' devir');
+  check('arazi periyodu = travel (zemin tam bir döşeme kayar)', k.period === k.travel);
+  check('devir sayısı tam sayıya yuvarlanır', loopClosure({ wheelRadius: r, revolutions: 27.6 }).revolutions === 28);
+}
+
+console.log('== 10 araziye bağlı sürüş (rover-drive)');
+{
+  const R = 0.1433;
+  const duz = () => 0;
+  const flat = createRoverDrive({ wheelRadius: R }).update(null, { sample: duz, v: 0, dt: 0 });
+  check('düz arazi: tüm açılar 0, gövde yüksekliği = yarıçap',
+    Math.abs(flat.pitch) < 1e-12 && Math.abs(flat.roll) < 1e-12 && Math.abs(flat.height - R) < 1e-12, flat.height.toFixed(4));
+  const egim = 8 * Math.PI / 180;
+  const rampa = (lx) => -Math.tan(egim) * lx;
+  const ramp = createRoverDrive({ wheelRadius: R }).update(null, { sample: rampa, v: 0, dt: 0 });
+  check('eğimli düzlem: yunuslama düzlem eğimine eşit (±0,03°)',
+    Math.abs(Math.abs(ramp.pitch) - egim) < 6e-4, `${(ramp.pitch * 180 / Math.PI).toFixed(3)}° / ${(egim * 180 / Math.PI).toFixed(3)}°`);
+  check('eğimli düzlemde yalpa 0 ve diferansiyel 0', Math.abs(ramp.roll) < 1e-12 && Math.abs(ramp.differential) < 1e-12);
+  const yan = createRoverDrive({ wheelRadius: R }).update(null, { sample: (lx, ly) => 0.12 * ly, v: 0, dt: 0 });
+  check('yalnız yanal eğimde yunuslama 0, yalpa ≠ 0', Math.abs(yan.pitch) < 1e-12 && Math.abs(yan.roll) > 0.05, `${(yan.roll * 180 / Math.PI).toFixed(2)}°`);
+
+  const joints = {};
+  for (const nm of ['rocker.L', 'rocker.R', 'bogie.L', 'bogie.R', 'differential']) joints[nm] = { node: nm, axis: 'y', range: [-90, 90], rateDegS: 1e6 };
+  for (const nm of ['steer.FL', 'steer.FR', 'steer.RL', 'steer.RR']) joints[nm] = { node: nm, axis: 'z', range: [-90, 90], rateDegS: 1e6 };
+  for (const nm of ['FL', 'ML', 'RL', 'FR', 'MR', 'RR']) joints[`wheel.${nm}`] = { node: `wheel${nm}`, axis: 'y', spin: true, spokes: 48, radius: R };
+  const rig = createRig({ kind: 'rover', joints });
+  const engebe = (lx, ly) => 0.09 * Math.sin(lx * 3.1) + 0.05 * Math.cos(ly * 2.3 + lx);
+  const sol = createRoverDrive({ wheelRadius: R }).update(rig, { sample: engebe, v: 0.4, dt: 1 / 60 });
+  for (let i = 0; i < 400; i++) rig.advance(1 / 60);
+  const geri = reconstructInclinations(rig, sol.pitch);
+  const err = Math.max(Math.abs(geri.rockerL - sol.rocker.L), Math.abs(geri.rockerR - sol.rocker.R),
+    Math.abs(geri.bogieL - sol.bogie.L), Math.abs(geri.bogieR - sol.bogie.R));
+  check('eklem zinciri mutlak rocker/bogie eğimlerini geri verir (< 0,01°)', err * 180 / Math.PI < 0.01, (err * 180 / Math.PI).toExponential(2) + '°');
+
+  const st = createRoverDrive({ wheelRadius: R }).update(null, { sample: (lx) => -Math.tan(35 * Math.PI / 180) * lx, v: 0.4, dt: 1 });
+  check('25° üstü yamaçta rig ilerlemeyi reddeder (patinaj)', st.stalled && st.odometer === 0, `${(st.slopeRad * 180 / Math.PI).toFixed(1)}°`);
+  const fl = createRoverDrive({ wheelRadius: R }).update(null, { sample: duz, v: 0.4, dt: 1 });
+  check('düzlükte odometre = v·dt ve ω r > v (kayma)', Math.abs(fl.odometer - 0.4) < 1e-12 && fl.omega * R > 0.4);
+
+  const kos = () => { const dr = createRoverDrive({ wheelRadius: R }); let o = 0;
+    for (let i = 0; i < 300; i++) o = dr.update(null, { sample: engebe, v: 0.5, dt: 1 / 60 }).odometer; return o; };
+  check('aynı girdi → aynı odometre', kos() === kos(), kos().toFixed(9));
+  check('ROVER_GEOM donmuş (tek doğruluk kaynağı)', Object.isFrozen(ROVER_GEOM));
 }
 
 console.log('\n(7 kol IK: henüz yok — plan §5.2, F3.)');

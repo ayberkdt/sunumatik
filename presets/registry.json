@@ -2,18 +2,18 @@
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
     "presets": 63,
-    "presetsWithIndex": 55,
-    "animatedPresets": 48,
+    "presetsWithIndex": 56,
+    "animatedPresets": 49,
     "skills": 18,
-    "demoSlides": 78,
-    "demoCards": 65,
+    "demoSlides": 79,
+    "demoCards": 66,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 78,
-    "cards": 65,
+    "slides": 79,
+    "cards": 66,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -65,6 +65,7 @@
       "orbit_determination",
       "orbit_perturbations",
       "orbital_stage",
+      "physical_rigs",
       "planets_advanced",
       "porkchop_explorer",
       "reentry_corridor",
@@ -464,10 +465,10 @@
     },
     {
       "name": "physical_rigs",
-      "title": null,
-      "hasIndex": false,
-      "animated": false,
-      "hasMotionManifest": false
+      "title": "Fiziksel Aksam — physical_rigs",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
     },
     {
       "name": "planets_advanced",

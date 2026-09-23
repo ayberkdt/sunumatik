@@ -17,9 +17,31 @@
 > `choreography.mjs` (araç başına saf f(t) programlar), `scripts/validate-rigs.mjs`
 > (44 denetim, CI'da) ve craft vitrininde Mekanizma/Etiketler anahtarları +
 > rotor bulanıklık diski. surface-scene direği artık adla (`mastPan`) sürüyor;
-> kopya HGA kaldırıldı. HENÜZ YOK: arazi bağlı sürüş (§3.2 gerçek terrain-query,
-> gövde yunuslaması), iz/toz (§3.4), rota takibi (§4), kol IK (§5.2), tracker
-> (§5.3–5.4), `physical_rigs/index.html` vitrini, cinematic sürüş beat'i (F2–F4).
+> kopya HGA kaldırıldı.
+>
+> **F2 UYGULANDI (23 Eylül 2026, üçüncü tur — kaynak: Masaüstü/Sunumlar/rover-sahnesi
+> "Night Traverse" sahnesinden çıkarılan teknikler):** `terrain-treadmill.mjs`
+> (three'siz, KESİNTİSİZ periyodik zemin: z farkı (P/π)·sin(π(z−cz)/P) vekiline
+> çevrilir, döşeme sınırında yükseklik ve eğim birebir eşleşir; döngü kapanışı
+> travel = 2π·r_dış·N), `ground-treadmill.mjs` (5 döşemeli örgü, periyodik
+> prosedürel renk+tümsek dokusu, tohumlu kaya alanı, tekerlek izi şeridi, temas
+> gölgesi), `rover-drive.mjs` (§3.2 tek geçişli çözüm + §3.1 kayma/patinaj),
+> `presets/physical_rigs/index.html` vitrini ve motion-manifest. Ölçülen temas
+> artığı **1,9 mm** (4,2 birimlik gezgin) — §7.2 ölçütü karşılanıyor.
+> craft-blocks tarafında tekerlek AÇIK çıtalı tekerleğe yükseltildi ve
+> `WHEEL_OUTER_RADIUS` dışa açıldı; rig haritasındaki `radius` artık çıta dış
+> köşesidir (nominal jantla %8 fark, ekranda "tekerlek kayıyor" diye okunuyordu).
+>
+> İKİ GERÇEK HATA doğrulamayla yakalandı ve kayda geçti: (1) `Lrocker`, rocker
+> pivotundan ön tekerleğe mesafe (0,42) sanılmıştı; solveSide eğimi ön tekerlek
+> ile BOGIE PİVOTU arasından çözdüğü için doğru açıklık 0,695'tir — 8°'lik bir
+> düzlemde gövde 13,1° yunusluyordu. (2) `wrapZ` periyodik değil ANTİ-periyodiktir
+> (wrapZ(z+P) = −wrapZ(z)); dikişin kapanması biçimlerin dz'de ÇİFT olmasından
+> gelir, bu artık modülde yazılı ve sınanıyor.
+>
+> HENÜZ YOK: toz (§3.4 ikinci yarısı), rota takibi (§4 `follow(path)`),
+> kol IK (§5.2), tracker/HGA takibi (§5.3–5.4), cinematic sürüş beat'i (F4),
+> terrain_blocks köprüsü (vitrin kendi treadmill alanını kullanıyor).
 > `scene-blocks.md` programına ve `webgl-scene-contract.md`'ye bağlıdır. Modül
 > ve API adları 16 Eylül 2026'da depodan doğrulandı.
 >

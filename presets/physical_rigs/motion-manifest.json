@@ -1,0 +1,33 @@
+{
+  "preset": "physical_rigs",
+  "motions": [
+    {
+      "id": "rigs-terrain-drive",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Gezginin GERÇEK araziye oturarak yol almasını göstermek: altı tekerleğin altında zemin örneklenir, her yan için bogie eğimi β = atan2(h_arka − h_orta, L_bogie) ve rocker eğimi ρ = atan2(h_pivot − h_ön, L_rocker) çözülür, diferansiyel gövde yunuslamasını iki rockerın ORTALAMASI yapar (pitch = (ρ_sol + ρ_sağ)/2), eklem açıları gövdeye göre yazılır (rocker_eklem = ρ − pitch, bogie_eklem = β − ρ). Tekerlek açısı ω = v / (r(1 − s)) ile döner: gevşek regolitte tekerlek yol hızından hızlıdır ve kayma tırmanışta artar. Yuvarlanma yarıçapı nominal jant değil ÇITA DIŞ KÖŞESİDİR (craft-blocks WHEEL_OUTER_RADIUS); yanlış yarıçap ekranda 'tekerlek kayıyor' diye okunur.",
+      "loop": true,
+      "durationMs": 96000,
+      "pauseControl": "Başlıktaki Duraklat (Boşluk) sahne zamanını durdurur; Hız sürgüsü 0'a çekilince araç durur ama sahne yaşar; sekme gizlendiğinde rAF otomatik durur.",
+      "reducedMotion": "prefers-reduced-motion: reduce altında sahne duraklatılmış açılır: zemin t = 0 tablosunda, gezgin çözülmüş pozunda tek kare çizilir. Kamera kumandası bu modda da çalışır ve sahne zamanını ilerletmez.",
+      "exportState": "?t=<sn> ile t = 0'dan 1/60 sn adımlarla deterministik sarma (fx, terrain ve craft ile aynı sözleşme); ?export=1 donmuş kare; ?kamera=takip|yan|kus|teker kadraj; ?hiz=<birim/s>; ?etiket=1 eklem etiketleri. Okunaklı tablolar: t=12 (düzlük), t=30 (krater kenarında yalpa), t=42 (tümsek tırmanışı), t=84 (dönüş öncesi).",
+      "accessibility": "Hareket duraklatılabilir; durduğunda HUD'daki bütün sayılar kalır (yunuslama, yalpa, diferansiyel, rocker/bogie açıları, eğim, kayma, tekerlek devri). Kumandalar klavyeyle erişilebilir yerel form öğeleridir, hedef boyutu ≥ 40 px; tam ekran F ile de açılır.",
+      "limitations": "Kinematik gösteridir, dinamik simülasyon DEĞİL: süspansiyon kuvvetleri, tekerlek esnemesi ve gövde ataleti çözülmez; çözüm TEK GEÇİŞLİDİR (iterasyon yok) ve bogie pivotu orta–arka tekerleğin tam ortasında kabul edilir (gerçek tasarımda 3,5 cm kayık). Kayma modeli s = s0 + k·tan(eğim) KALİTATİFTİR (düzlükte 0,05; 20° yamaçta ≈ 0,30 — Curiosity/MER gözlemleri bu mertebede, ama ölçülmüş bir eğri değildir); 25° üstünde rig ilerlemeyi reddeder ve patinaj gösterir. Arazi tek bir periyodik döşemedir (gerçek bir gezegen yüzeyinin örneklemesi değil); toz, iz derinliği ve tekerlek–kaya teması yok. Kol ters kinematiği (IK) ve direk hedefe bakma davranışı bu sayfada sürülmez.",
+      "notes": "Ölçülen temas artığı (tekerlek altı ile zemin arası) 1,9 mm dünya birimi — gezgin 4,2 birim uzunlukta, yani ~%0,05. Modüller: terrain-treadmill.mjs (three'siz periyodik yükseklik alanı; h(x,z) = h(x,z+P) ve ∂h/∂z de eşit, ölçüldü 1,8e−15 / 1,6e−14), ground-treadmill.mjs (5 döşemeli örgü, periyodik prosedürel renk+tümsek dokusu, tohumlu kaya alanı, iz şeridi, temas gölgesi), rover-drive.mjs (çözücü), rig-core.mjs (eklem sürücüsü). Döngü kapanışı: travel = 2π·r_dış·28 ve arazi periyodu = travel, yani 96 s'de tekerlek TAM 28 devir atar ve zemin tam bir döşeme kayar — döngü sınırında sıçrama yok. Görünür geometri hiç yeniden kurulmaz: zemin grubu ötelenir, iz şeridinin yalnız konum attribute'u güncellenir. Deterministik: Math.random/Date.now yok, zaman yalnız 1/60 sn adımlarının toplamı. Doğrulama: scripts/validate-rigs.mjs (64 denetim, CI'da)."
+    },
+    {
+      "id": "rigs-rotor-blur",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Helikopter rotorunun stroboskop (wagon-wheel) yanılsamasına düşmeden okunmasını sağlamak: 2400 dev/dk × 2 kanat = 80 Hz çıta frekansı, 60 Hz kare hızının 0,4 katını aştığı için rotor kanatları gizlenir ve yerine yarı saydam bir bulanıklık diski gösterilir — gerçek algı budur.",
+      "loop": true,
+      "durationMs": 96000,
+      "pauseControl": "Sahne Duraklat ile durur; durdurulduğunda bulanıklık diski açık kalır (kanatlar sahte bir 'durmuş rotor' göstermez).",
+      "reducedMotion": "Donmuş modda rotor sabit hızda kabul edilir; disk görünür, çıta titremesi yoktur.",
+      "exportState": "?t= ile aynı deterministik sarma; rotor hızı rampası rig-core'un rpm sınırından gelir (600 dev/dk/s).",
+      "accessibility": "Yanıp sönen ince çıta deseni yok; sabit yarı saydam disk — ışığa duyarlı izleyici için güvenli.",
+      "limitations": "Aerodinamik yok: itki, burulma ve rotor kanat esnemesi modellenmez; disk yarıçapı rotor düğümünün sınırlayıcı kutusundan ölçülür.",
+      "notes": "Kural rig-core'da: dönen düğüm `spokes` bildirir, f = spokes·ω/2π > 0,4·fps olduğunda `rig.blur(ad)` true döner; tüketici kanatları gizleyip diski açar. validate-rigs 80 Hz'de açık, 10 Hz'de kapalı olduğunu sınar."
+    }
+  ]
+}

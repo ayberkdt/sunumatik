@@ -8,12 +8,16 @@
    vurgu). Süreler gerçek aktüatör hızlarına göre seçildi (spec.rateDegS). */
 
 import { solveRockerBogie, ackermann, wheelAdvance, slipRatio, DEG } from './rig-core.mjs';
+import { ROVER_GEOM } from './rover-drive.mjs';
 
 const seg = (t, a, b) => t >= a && t < b;                     // [a, b)
 const lerp = (a, b, u) => a + (b - a) * Math.min(1, Math.max(0, u));
 
-/* Gezgin geometrisi — buildRover tasarım koordinatlarından (craft-blocks) */
-const ROVER = { wR: 0.135, Lrocker: 0.42, Lbogie: 0.37, track: 0.62, wheelbase: 0.51 };
+/* Gezgin geometrisi TEK KAYNAKTAN (rover-drive.ROVER_GEOM); burada ikinci
+   bir kopya tutmak, Lrocker düzeltmesinin yalnız bir yerde uygulanmasına
+   ve iki modülün sessizce ayrışmasına yol açardı. */
+const ROVER = { wR: ROVER_GEOM.wheelRadius, Lrocker: ROVER_GEOM.Lrocker,
+  Lbogie: ROVER_GEOM.Lbogie, track: ROVER_GEOM.track, wheelbase: ROVER_GEOM.wheelbase };
 
 /* Sentetik arazi: iki kayanın üstünden geçiş (düz + iki Gauss tümsek). Yol
    koordinatı s (tasarım birimi). Sahne arazisine bağlı değil: vitrin. */

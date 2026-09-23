@@ -188,7 +188,12 @@ export function createRig(rigData, { fps = 60 } = {}) {
 /** Rocker-bogie kinematiği (§3.2) — bir yan için: tekerlek altı yükseklikleri
     (ön hF, orta hM, arka hR) ve kol boyları → bogie açısı β, rocker açısı ρ.
     Bogie pivotu orta–arka ortasında kabul edilir (buildRover geometrisi:
-    pivot x=−0,22, orta −0,07, arka −0,44 → orta nokta −0,255; fark ihmal). */
+    pivot x=−0,22, orta −0,07, arka −0,44 → orta nokta −0,255; fark ihmal).
+
+    SÖZLEŞME: `Lrocker`, ön tekerlek ile BOGIE PİVOTU arasındaki YATAY
+    açıklıktır (rocker pivotuna olan mesafe değil) — ρ bu iki nokta
+    arasından çözüldüğü için. `Lbogie` orta ↔ arka yatay açıklığı.
+    Yanlış açıklık, düzlemde bile yanlış yunuslama üretir (ölçüldü). */
 export function solveSide({ hF, hM, hR }, { Lbogie, Lrocker }) {
   const beta = Math.atan2(hR - hM, Lbogie);              // arka yüksekse pozitif
   const hPivot = 0.5 * (hM + hR);

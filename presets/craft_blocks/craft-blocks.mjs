@@ -21,7 +21,7 @@
 import * as THREE from 'three';
 // Eksen yardımcıları tek kaynaktan: ../core/geometry-axis.mjs
 // (cylY/cylZ/coneX/coneZ/latheX/latheZ de orada — gerektiğinde import edin).
-import { eksenX, cylX, cylY, cylZ, latheX } from '../core/geometry-axis.mjs';
+import { eksenX, cylX, cylY, cylZ, latheX, cylGeoY } from '../core/geometry-axis.mjs';
 
 // Varsayılan palet: obsidyen gövde, koyu hücreler, şampanya vurgusu, saten çelik.
 export const CRAFT_PALETTE = Object.freeze({
@@ -963,28 +963,73 @@ export function buildCapsule({ scale = 1, palette } = {}) {
 /* Ortak parçalar — ikinci dalga                                      */
 /* ================================================================== */
 
-// Tekerlek: silindir + çevresinde radyal ÇITALAR (grouser).
-// Çıtalar süs değil: gevşek regolitte tekerlek bir tırtıl gibi kazır,
-// düz bir jant kayar. Gezgin tekerleklerinde bu yüzden kesme yönünde
-// dişler vardır ve iz üstünde ayrık damgalar bırakırlar.
-function tekerlek(m, { r = 0.13, w = 0.10, cita = 18 } = {}) {
+/* Tekerlek ölçüleri TEK YERDE: yuvarlanma yarıçapı buradan türer.
+   ÇITA DIŞ KÖŞESİ jant değil — tekerlek zemine oradan basar, dolayısıyla
+   θ = yol / r hesabında kullanılacak yarıçap budur. Nominal jantı (0,132)
+   kullanmak %8 hata demektir ve ekranda "tekerlek kayıyor" diye okunur;
+   sürüş modülü (physical_rigs/rover-drive) bu sabiti ister. */
+const CITA_MERKEZ = 0.137, CITA_RADYAL = 0.012, CITA_TEGET = 0.018;
+export const WHEEL_OUTER_RADIUS = Math.hypot(CITA_MERKEZ + CITA_RADYAL / 2, CITA_TEGET / 2);
+
+// Tekerlek: AÇIK alüminyum tekerlek — jant kabuğu, 48 radyal ÇITA (grouser),
+// iki jant halkası, yaylı yan duvarlar, parmaklar ve göbek.
+// Çıtalar süs değil: gevşek regolitte tekerlek bir tırtıl gibi kazır, düz bir
+// jant kayar. Parmaklı açık gövde de süs değil: gezgin tekerleği yay
+// görevini KENDİ yapısıyla görür (ayrı süspansiyon yayı yoktur), o yüzden
+// dolu bir silindir değil esneyen bir kafestir.
+function tekerlek(m, { r = 0.132, w = 0.095, cita = 48, parmak = 10 } = {}) {
   const g = new THREE.Group();
   // AKS YÖNÜ: CylinderGeometry'nin ekseni zaten +Y'dir ve blok düzeninde
   // +Y açıklık/aks yönüdür — yani DÖNDÜRMEK GEREKMEZ. rotation.x = π/2
   // konunca aks +Z'ye (yukarı) gidiyor ve tekerlekler yere serilmiş tabaklar
-  // gibi yatıyordu. Çıtalar XZ düzleminde doğru yerleştirilmiş olduğu için
-  // hata yalnız jantta ve göbekte görünüyordu.
-  const jant = new THREE.Mesh(new THREE.CylinderGeometry(r, r, w, 26), m.metal);
-  g.add(jant);
-  const cg = new THREE.BoxGeometry(0.012, w * 0.94, 0.018);
+  // gibi yatıyordu (eksen dersi, scene-blocks.md).
+  const kabuk = cylY(r, r, w, 48, m.metal, true);      // açık uçlu: içi görünür
+  kabuk.material = m.metal;
+  g.add(kabuk);
+
+  // Çıtalar TEK çizim çağrısı (InstancedMesh): 48 adet × 6 tekerlek = 288 kutu,
+  // ayrı mesh olsalardı sahne bütçesini tek başına yerlerdi.
+  const citalar = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(CITA_RADYAL, w * 0.96, CITA_TEGET), m.frame, cita);
+  const yer = new THREE.Object3D();
   for (let i = 0; i < cita; i++) {
     const a = (i * 2 * Math.PI) / cita;
-    const c = new THREE.Mesh(cg, m.frame);
-    c.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
-    c.rotation.y = -a;
-    g.add(c);
+    yer.position.set(Math.cos(a) * CITA_MERKEZ, 0, Math.sin(a) * CITA_MERKEZ);
+    yer.rotation.set(0, -a, 0);
+    yer.updateMatrix();
+    citalar.setMatrixAt(i, yer.matrix);
   }
-  const gobek = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.34, r * 0.34, w * 1.1, 16), m.body);
+  citalar.instanceMatrix.needsUpdate = true;
+  g.add(citalar);
+
+  // İki yüz: jant halkası + yaylı yan duvar + parmaklar (parmaklar da tek çağrı).
+  const parmakGeo = cylGeoY(0.0055, 0.0055, 1, 8);
+  for (const yuz of [-w / 2, w / 2]) {
+    const halka = new THREE.Mesh(new THREE.TorusGeometry(r * 0.95, 0.013, 6, 36), m.metal);
+    halka.rotation.x = Math.PI / 2; halka.position.y = yuz;
+    g.add(halka);
+    const duvar = new THREE.Mesh(new THREE.TorusGeometry(r * 0.82, 0.018, 6, 36), m.body);
+    duvar.rotation.x = Math.PI / 2; duvar.position.y = yuz * 0.94;
+    g.add(duvar);
+    const p = new THREE.InstancedMesh(parmakGeo, m.frame, parmak);
+    for (let i = 0; i < parmak; i++) {
+      const a = (i * 2 * Math.PI) / parmak + (yuz > 0 ? 0.1 : 0);
+      const ic = 0.030, dis = r * 0.89;
+      const uzun = dis - ic, orta = (dis + ic) / 2;
+      yer.position.set(Math.cos(a) * orta, yuz, Math.sin(a) * orta);
+      yer.rotation.set(Math.PI / 2, 0, -a + Math.PI / 2);   // silindir ekseni radyale döner
+      yer.scale.set(1, uzun, 1);
+      yer.updateMatrix();
+      p.setMatrixAt(i, yer.matrix);
+    }
+    yer.scale.set(1, 1, 1);
+    p.instanceMatrix.needsUpdate = true;
+    g.add(p);
+    const kapak = cylY(0.021, 0.021, 0.006, 16, m.accent);
+    kapak.position.y = yuz * 1.37;
+    g.add(kapak);
+  }
+  const gobek = cylY(r * 0.25, r * 0.25, w * 1.3, 16, m.body);
   g.add(gobek);
   return g;
 }
@@ -1221,13 +1266,15 @@ export function buildRover({ scale = 1, palette, arm = true } = {}) {
   // Rocker-bogie: GERÇEK pivot ağacı. rocker(L/R) gövde pivotunda döner; ön
   // tekerlek ve bogie pivotu rockerın çocuğudur; orta/arka tekerlek bogienin.
   // Köşe tekerlekleri (ön/arka) direksiyon eklemi (Z) taşır, ortadakiler taşımaz.
-  const wR = 0.135, wW = 0.095;
+  const wR = 0.132, wW = 0.095;      // jant; YUVARLANMA yarıçapı WHEEL_OUTER_RADIUS
   const N = { rockerP: [0.02, -0.02], bogieP: [-0.22, -0.13],
               on: [0.44, -0.30], orta: [-0.07, -0.30], arka: [-0.44, -0.30] };
   const teker = (ad, steer) => {
     const w = eklem(ad);
     w.add(tekerlek(m, { r: wR, w: wW }));
-    joints[`wheel.${ad.slice(5)}`] = { node: ad, axis: 'y', radius: wR, spin: true, ...(steer ? { steer } : {}) };
+    /* radius = ÇITA DIŞ KÖŞESİ: tüketici θ = yol / radius yazınca tekerlek
+       gerçekten yuvarlanır (nominal jantla %8 kayma görünürdü). */
+    joints[`wheel.${ad.slice(5)}`] = { node: ad, axis: 'y', radius: WHEEL_OUTER_RADIUS, rim: wR, spokes: 48, spin: true, ...(steer ? { steer } : {}) };
     return w;
   };
   const pivotDisk = () => { const p = cylY(0.024, 0.024, 0.05, 14, m.frame); return p; };
