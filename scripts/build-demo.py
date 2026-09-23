@@ -72,7 +72,7 @@ KARTLAR = [
          embed="../presets/craft_blocks/index.html?fx=1&arac=rocket&tip=atmosfer&gaz=0.9",
          hook="Dokuz parametrik uzay aracı, her ayrıntı bir mekanizma: SADA kanatları, iki eksenli çanak gimbali, bal peteği strok'lu iniş bacağı, rocker-bogie pivot ağacı — artı sinematik ateşleme sistemi.",
          feats=["buildOrbiter · buildLander · buildRocket · buildCubesat · buildCapsule · buildStarship · buildRover · buildMarsHelicopter · buildProbe",
-                "Parça sözleşmesi (physical_rigs F0): hareketli her parça adlı Group, userData.rig eklem haritası (eksen, sınır, hız); odaklanan aracın mühendislik notu sahnede",
+                "Mekanizmalar ÇALIŞIR (physical_rigs): rocker-bogie arazi takibi + ω = v/r tekerlek + Ackermann yerinde dönüş + direk panoraması; SADA/gimbal/panjur; bal peteği strok'u temasta; yaylı küpsat açılımı; rotor 2400 dev/dk → bulanıklık diski; kritik sönümlü, hız sınırlı eklemler; teknik etiketler",
                 "buildEngineFX: vakum · atmosfer · hover alev tipleri, gaz sürgüsü, Ateşle/Kes; ateşleme geçici rejimi",
                 "Eksen sözleşmesi: +X ileri, −X itki çıkışı — sahneler buna güvenir; çıplak kurucu tabanı 65 → 54"]),
     dict(src="lunar-descent-preset", repo="lunar_descent", kat="orbital",

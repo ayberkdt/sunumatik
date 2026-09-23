@@ -63,6 +63,9 @@ jobs:
       - name: Eksen ratchet'i (çıplak geometri kurucuları tabanı aşamaz)
         run: python scripts/eksen-denetimi.py
 
+      - name: physical_rigs eklem sürücüsü ve çözücüler (three'siz)
+        run: node scripts/validate-rigs.mjs
+
       - name: motion-manifest şemaları
         shell: bash
         run: |

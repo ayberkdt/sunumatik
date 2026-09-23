@@ -440,17 +440,8 @@ export async function buildSurfaceScene({ seed = 20260816, assetBaseUrl } = {}) 
   };
   const dbox = (w, h, d, m) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
   {
-    /* HGA çanağı: güvertede arka-solda, göğe eğik yarım küre + besleme */
-    const canak = new THREE.Mesh(new THREE.SphereGeometry(.13, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2.6), dMat.beyazDis);
-    canak.rotation.x = Math.PI;                          // kâse yukarı bakar
-    canak.scale.z = .55;
-    const hga = new THREE.Group();
-    hga.add(canak);
-    const besleme = cylZ(.008, .008, .12, 8, dMat.metal); besleme.position.z = .07; hga.add(besleme);
-    const hgaKol = cylZ(.02, .024, .1, 10, dMat.metal); hgaKol.position.z = -.08; hga.add(hgaKol);
-    hga.position.set(-.32, .12, .33);
-    hga.rotation.set(.4, .2, 0);
-    ic.add(hga);
+    /* HGA çanağı artık KURUCUDAN gelir (buildRover: hgaAz/hgaEl eklemleri, F0) —
+       buradaki kopya kaldırıldı; iki çanak üst üste biniyordu. */
 
     /* yan dolaplar (batarya/elektronik) + kablo kanalları */
     for (const s of [1, -1]) {
@@ -493,23 +484,11 @@ export async function buildSurfaceScene({ seed = 20260816, assetBaseUrl } = {}) 
     fener.position.set(-.14, .16, .245);
     ic.add(fener);
 
-    /* KAFA GRUBU: buildRover'ın kafa kutusu + lensler + maske, direk tepesinde
-       DÖNDÜRÜLEBİLİR gruba alınır (konumdan eşleştirme — builder çocukları
-       adsızdır; bulunamazsa tarama animasyonu sessizce devre dışı kalır) */
-    const kafaParcalari = [];
-    ic.traverse(o => {
-      if (!o.isMesh) return;
-      const p = o.position;
-      if (Math.abs(p.z - .66) < .03 && Math.abs(p.x - .3) < .11) kafaParcalari.push(o);
-    });
-    if (kafaParcalari.length >= 2) {
-      kafa.position.set(.30, 0, .63);
-      for (const parca of kafaParcalari) {
-        parca.position.sub(kafa.position);
-        kafa.add(parca);
-      }
-      ic.add(kafa);
-    }
+    /* DİREK: kurucunun ADLI eklemi (mastPan — rig sözleşmesi F0). Konumdan
+       eşleştirme kalktı: buildRover kafayı artık mastTilt grubunun içinde
+       yerel koordinatta kurar, eski z≈.66 araması hiçbir parça bulamıyordu.
+       Bulunamazsa tarama sessizce devre dışı (blok sözleşmesi). */
+    kafa.userData.mastPan = rover.getObjectByName('mastPan') || null;
   }
   rover.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   /* EKSEN SÖZLEŞMESİ ÇEVİRİSİ: craft blokları +X ileri / +Z yukarı kurar,
@@ -546,9 +525,8 @@ export async function buildSurfaceScene({ seed = 20260816, assetBaseUrl } = {}) 
     /** saf f(t): direk taraması + fener nabzı */
     guncelle(t) {
       fenerMat.emissiveIntensity = .28 + .3 * (0.5 + 0.5 * Math.sin(t * 1.5));
-      if (kafa.children.length) {
-        kafa.rotation.z = etkilesim.taramaAcik ? .5 * Math.sin(Math.PI * 2 * t / 26) : 0;
-      }
+      const mastPan = kafa.userData.mastPan;
+      if (mastPan) mastPan.rotation.z = etkilesim.taramaAcik ? .5 * Math.sin(Math.PI * 2 * t / 26) : 0;
     },
   };
 

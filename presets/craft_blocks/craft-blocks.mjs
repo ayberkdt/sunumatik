@@ -604,7 +604,8 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
         fin.add(plateO, plateI, hinge);
         yon.add(fin);
         g.add(yon);
-        joints[`gridFin.${k}.fold`] = { node: `gridFin${k}`, axis: 'z', range: [0, 90], rateDegS: 45 };
+        /* tasarım pozu = AÇIK; katlı = 85° buruna doğru (sense −1: +açı gövde boyunca +X'e katlar) */
+        joints[`gridFin.${k}.fold`] = { node: `gridFin${k}`, axis: 'z', range: [0, 90], rateDegS: 45, sense: -1, folded: 85 };
       }
       // Kablo kanalı (raceway) + iki BESLEME HATTI: yakıt/oksitleyici boruları
       // tank dışından geçer (iç geçiş tankı deler, kütle ve risk ekler).
@@ -633,7 +634,8 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
         leg.add(menteşe);
         yon.add(leg);
         g.add(yon);
-        joints[`leg.${k}.deploy`] = { node: `leg${k}`, axis: 'z', range: [0, 70], rateDegS: 30 };
+        /* tasarım pozu = KATLI (gövde boyunca); +açı dışa açar (sense −1: yerel +z dönüşü içe bakıyordu, ölçüldü) */
+        joints[`leg.${k}.deploy`] = { node: `leg${k}`, axis: 'z', range: [0, 70], rateDegS: 30, sense: -1 };
       }
       // Soğuk gaz RCS kapsülleri (kademe tepesinde: en uzun moment kolu),
       // 4 adet — kıyı dönüşü ve geri dönüş yönelimi için.
@@ -773,7 +775,8 @@ export function buildCubesat({ units = 3, scale = 1, palette } = {}) {
     }
     yon.add(kanat);
     g.add(yon);
-    joints[`wing.${Lr}.deploy`] = { node: `wing${Lr}`, axis: 'x', range: [0, 90], oneWay: true, spring: true };
+    /* tasarım pozu = AÇIK (0°); katlı poz gövdeye doğru: sol +85°, sağ −85° (ayna). Yay + dayanak (range). */
+    joints[`wing.${Lr}.deploy`] = { node: `wing${Lr}`, axis: 'x', range: sgn > 0 ? [0, 85] : [-85, 0], spring: true, folded: sgn > 0 ? 85 : -85 };
   }
 
   // TEK vurgu: −Z yüzünde şampanya erişim kapağı.
@@ -850,10 +853,12 @@ export function buildCapsule({ scale = 1, palette } = {}) {
 
   // TEK vurgu: +Z tarafında kapak (hatch) halkası; kapak menteşeli EKLEM.
   const hatchYon = yuzeyde(0.16, 0);
-  const hatch = eklem('hatch');
+  const hatch = eklem('hatch', 0, -0.062, 0);          // menteşe kapağın ALT kenarında (yerel −y)
   const hDisc = cylZ(0.052, 0.052, 0.012, 28, m.panel);
+  hDisc.position.y = 0.062;
   hatch.add(hDisc);
   const hRing = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.009, 12, 36), m.accent);
+  hRing.position.y = 0.062;
   hatch.add(hRing);
   hatchYon.add(hatch);
   g.add(hatchYon);
@@ -917,7 +922,8 @@ export function buildCapsule({ scale = 1, palette } = {}) {
     wing.add(panel);
     yon.add(wing);
     g.add(yon);
-    joints[`smWing.${k}.deploy`] = { node: `smWing${k}`, axis: 'x', range: [0, 90], oneWay: true };
+    /* tasarım pozu = AÇIK (radyal); katlı = −85° kıça doğru (SM boyunca), tek yönlü açılım */
+    joints[`smWing.${k}.deploy`] = { node: `smWing${k}`, axis: 'x', range: [-90, 0], oneWay: true, folded: -85 };
   }
 
   // Umbilikal kaplama + 4 RCS dörtlüsü + 8 yardımcı itici (kıç halkası).

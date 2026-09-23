@@ -10,8 +10,16 @@
 > eklemleri, iki yarım başlık, X-düzeni SM kanatları, pencereler, kapsül RCS'i,
 > P-POD anahtarları). Piksel-diff YAPILMADI: detaylandırma görünür değişiklik
 > istediği için "birebir aynı" hedefi bu turda geçerli değildi; ekran
-> görüntüleriyle doğrulandı. F1–F4 (rig-core, sürüş rig'i, iz/toz, tracker/kol/
-> açılım/TVC, entegrasyon) ve `scripts/validate-rigs.mjs` henüz yok.
+> görüntüleriyle doğrulandı. F1 KISMEN UYGULANDI (23 Eylül 2026, ikinci tur):
+> `presets/physical_rigs/rig-core.mjs` (three'siz eklem sürücüsü: kapalı form
+> kritik sönüm, hız sınırı, sınır, tek yön, yay, spin + stroboskop, translate;
+> saf çözücüler solveRockerBogie / ackermann / wheelAdvance / slipRatio),
+> `choreography.mjs` (araç başına saf f(t) programlar), `scripts/validate-rigs.mjs`
+> (44 denetim, CI'da) ve craft vitrininde Mekanizma/Etiketler anahtarları +
+> rotor bulanıklık diski. surface-scene direği artık adla (`mastPan`) sürüyor;
+> kopya HGA kaldırıldı. HENÜZ YOK: arazi bağlı sürüş (§3.2 gerçek terrain-query,
+> gövde yunuslaması), iz/toz (§3.4), rota takibi (§4), kol IK (§5.2), tracker
+> (§5.3–5.4), `physical_rigs/index.html` vitrini, cinematic sürüş beat'i (F2–F4).
 > `scene-blocks.md` programına ve `webgl-scene-contract.md`'ye bağlıdır. Modül
 > ve API adları 16 Eylül 2026'da depodan doğrulandı.
 >
