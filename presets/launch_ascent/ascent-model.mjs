@@ -52,6 +52,29 @@ export const DEFAULT_VEHICLE = Object.freeze({
     { dry: 22200, prop: 411000, thrustSL: 7.6e6, thrustVac: 8.2e6, ispSL: 283, ispVac: 312 },
     { dry: 4000,  prop: 107500, thrustSL: 0,     thrustVac: 9.34e5, ispSL: 0,   ispVac: 348 },
   ],
+  /* KATI YAKITLI İTİCİ KUŞAĞI (isteğe bağlı, varsayılan yok).
+     Katı itici kısılamaz ve söndürülemez: ateşlendiği anda profili
+     bellidir, yakıtı biter ve atılır. Bu yüzden modelde tek bir sabit
+     kütle akışı ve sabit itki (basınç düzeltmeli) olarak yaşar.
+     Değerler GEM-63 sınıfı bir yan iticinin mertebesindedir; kesin
+     üretici verisi değildir ve manifest bunu bildirir. */
+  boosters: null,   // { count, dry, prop, thrustSL, thrustVac, ispSL, ispVac, diameter }
+});
+
+/** SRB'li araç için AYRI PITCH PROGRAMI.
+    Yan iticiler kalkış itki/ağırlık oranını 1,38'den 1,68'e çıkarır; aynı
+    3,2°'lik kick ile araç neredeyse dik tırmanır (MECO'da uçuş yolu açısı
+    69°, yörünge YOK — ölçüldü). Yüksek T/W'li bir fırlatıcı daha ERKEN ve
+    daha BÜYÜK bir kick ister; ızgara taramasıyla tPitch = 5 s, kick = 10°
+    seçildi: 196 × 204 km (hedef 200 km dairesel), Max-Q 54 kPa.
+    Bu, bir görev tasarımcısının yaptığı işin ta kendisidir: itki profili
+    değişince yunuslama programı yeniden ayarlanır. */
+export const SRB_PROFILE = Object.freeze({ tPitch: 5, pitchKick: 10 });
+
+/** Yan itici ön tanımı — çağıran `boosters: SRB_GEM63` diye kullanabilir. */
+export const SRB_GEM63 = Object.freeze({
+  count: 2, dry: 4000, prop: 44000,
+  thrustSL: 1.60e6, thrustVac: 1.75e6, ispSL: 265, ispVac: 280, diameter: 1.6,
 });
 
 export const DEFAULT_PROFILE = Object.freeze({
@@ -61,6 +84,7 @@ export const DEFAULT_PROFILE = Object.freeze({
   pitchKick: 3.2,        // deg — kick sonrası yerel dikeyden sapma
   pitchKickDur: 10,      // s — kick rampası
   sepDelay: 3,           // s — MECO → ayrılma
+  srbSepDelay: 2,        // s — yan itici tükenmesi → atılması
   sesDelay: 4,           // s — ayrılma → SES
   fairingQ: 1000,        // Pa — kapak atma eşiği (q bunun altına inince)
   dt: 0.05,              // s
@@ -91,7 +115,12 @@ export function dragCoefficient(mach) {
 export function simulateAscent(vehicleIn = {}, profileIn = {}) {
   const V = { ...DEFAULT_VEHICLE, ...vehicleIn, stages: (vehicleIn.stages || DEFAULT_VEHICLE.stages).map(s => ({ ...s })) };
   const P = { ...DEFAULT_PROFILE, ...profileIn };
-  const A = Math.PI * (V.diameter / 2) ** 2;
+  const B = V.boosters ? { ...V.boosters } : null;
+  /* Referans alan: yan iticiler frontal alanı büyütür ve sürükleme artar.
+     Toplama YAKLAŞIMDIR (gerçekte gövdeler kısmen birbirini gölgeler);
+     üst sınır olarak alınır ve manifest bunu bildirir. */
+  const A = Math.PI * (V.diameter / 2) ** 2
+    + (B ? B.count * Math.PI * (B.diameter / 2) ** 2 : 0);
   const rad = Math.PI / 180;
   const lat = P.latitude * rad;
   const rTarget = R_EARTH + P.targetAlt;
@@ -100,11 +129,18 @@ export function simulateAscent(vehicleIn = {}, profileIn = {}) {
   /* durum: x,y (m, eylemsiz düzlem), vx,vy (m/s), m (kg) */
   const s = { x: R_EARTH, y: 0, vx: 0, vy: 0, m: 0 };
   const stageMass = V.stages.map(st => st.dry + st.prop);
-  s.m = stageMass.reduce((a, b) => a + b, 0) + V.payload + V.fairing;
+  s.m = stageMass.reduce((a, b) => a + b, 0) + V.payload + V.fairing
+    + (B ? B.count * (B.dry + B.prop) : 0);
   if (P.earthRotation) s.vy = OMEGA_EARTH * R_EARTH * Math.cos(lat);
 
   let stage = 0;                    // aktif kademe indeksi
   let propLeft = V.stages[0].prop;
+  /* SRB durumu: yanarken srbOn, tükendikten sonra hâlâ takılıysa srbAttached
+     (boş kütle taşınmaya devam eder — asıl ceza budur). */
+  let srbOn = !!B, srbAttached = !!B;
+  let srbPropLeft = B ? B.count * B.prop : 0;
+  let tSrbOut = null, tSrbSep = null;
+  const srbMdot = B ? B.count * B.thrustVac / (G0 * B.ispVac) : 0;
   let fairingOn = true;
   let phase = 'vertical';           // vertical | kick | gravityturn | coast | stage2 | orbit
   let tMeco = null, tSep = null, tSes = null, tSeco = null, tFairing = null, tMach1 = null;
@@ -133,8 +169,14 @@ export function simulateAscent(vehicleIn = {}, profileIn = {}) {
   /* itki yönü (birim vektör, eylemsiz) + hücum açısı */
   const guidance = (t, st, L) => {
     const stg = V.stages[stage];
-    if (!engineOn) return { tx: 0, ty: 0, thrust: 0, pitch: 0, alpha: 0 };
-    const thrust = stg.thrustVac - (stg.thrustVac - stg.thrustSL) * Math.min(1, L.atm.p / SEA_LEVEL.p);
+    const pRatio = Math.min(1, L.atm.p / SEA_LEVEL.p);
+    /* Yan iticiler ÇEKİRDEKTEN BAĞIMSIZ yanar: çekirdek kapalı olsa bile
+       (bu modelde olmuyor) SRB itkisi eklenir. Aynı yöne iter — strap-on
+       düzeni simetriktir, bileşke itki eksen boyuncadır. */
+    const srbThrust = (B && srbOn) ? B.count * (B.thrustVac - (B.thrustVac - B.thrustSL) * pRatio) : 0;
+    if (!engineOn && srbThrust <= 0) return { tx: 0, ty: 0, thrust: 0, pitch: 0, alpha: 0 };
+    const coreThrust = engineOn ? stg.thrustVac - (stg.thrustVac - stg.thrustSL) * pRatio : 0;
+    const thrust = coreThrust + srbThrust;
     let dx, dy;                                   // yön: yerel çerçevede (radyal, yatay)
     if (phase === 'vertical') { dx = 1; dy = 0; }
     else if (phase === 'kick') {
@@ -173,7 +215,8 @@ export function simulateAscent(vehicleIn = {}, profileIn = {}) {
     /* sürükleme hava-göreli hıza karşı: eylemsiz bileşenler */
     const vAx = L.vAirR * L.ux + L.vAirH * L.hx, vAy = L.vAirR * L.uy + L.vAirH * L.hy;
     const dAx = -D * vAx / dn / st.m, dAy = -D * vAy / dn / st.m;
-    const mdot = engineOn ? V.stages[stage].thrustVac / (G0 * V.stages[stage].ispVac) : 0;
+    const mdot = (engineOn ? V.stages[stage].thrustVac / (G0 * V.stages[stage].ispVac) : 0)
+      + (srbOn ? srbMdot : 0);
     return {
       dx: st.vx, dy: st.vy,
       dvx: -MU_EARTH * st.x / r3 + g.thrust * g.tx / st.m + dAx,
@@ -195,6 +238,7 @@ export function simulateAscent(vehicleIn = {}, profileIn = {}) {
       gamma, q: L.q, mach: L.mach, rho: L.atm.rho, thrust: d.g.thrust, twr,
       accel: Math.hypot(d.dvx + MU_EARTH * st.x / L.r ** 3, d.dvy + MU_EARTH * st.y / L.r ** 3) / G0,
       drag: d.D, cd: d.cd, pitch: d.g.pitch, alpha: d.g.alpha, stage: stage + 1, phase, fairing: fairingOn,
+      srbOn, srbAttached,
       propFrac: propLeft / V.stages[stage].prop,
     });
   };
@@ -211,7 +255,13 @@ export function simulateAscent(vehicleIn = {}, profileIn = {}) {
     else if (phase === 'kick' && t >= kickStart + P.pitchKickDur) phase = 'gravityturn';
 
     /* RK4 adımı */
-    const h = Math.min(dt, engineOn ? propLeft / Math.max(1e-9, -d0.dm) : dt);
+    /* Adım, HER İKİ yakıtın tükenme anını da aşmamalı: yoksa kütle eksiye
+       düşer ve itki bir adım fazla uygulanır. İki akış da SABİT olduğu için
+       kalan süre tam bölmeyle bulunur. */
+    const coreMdot = engineOn ? V.stages[stage].thrustVac / (G0 * V.stages[stage].ispVac) : 0;
+    const h = Math.min(dt,
+      coreMdot > 0 ? propLeft / coreMdot : dt,
+      srbOn && srbMdot > 0 ? srbPropLeft / srbMdot : dt);
     const k1 = d0;
     const s2 = { x: s.x + .5 * h * k1.dx, y: s.y + .5 * h * k1.dy, vx: s.vx + .5 * h * k1.dvx, vy: s.vy + .5 * h * k1.dvy, m: s.m + .5 * h * k1.dm };
     const k2 = deriv(t + .5 * h, s2);
@@ -224,7 +274,13 @@ export function simulateAscent(vehicleIn = {}, profileIn = {}) {
     s.vx += h / 6 * (k1.dvx + 2 * k2.dvx + 2 * k3.dvx + k4.dvx);
     s.vy += h / 6 * (k1.dvy + 2 * k2.dvy + 2 * k3.dvy + k4.dvy);
     const dm = h / 6 * (k1.dm + 2 * k2.dm + 2 * k3.dm + k4.dm);
-    s.m += dm; propLeft += dm;
+    /* Yakıt defteri AKIŞ BAŞINA tutulur: `dm` iki akışın toplamıdır ve
+       tek bir sayaca yazılırsa çekirdek, yan iticinin yaktığı yakıtı da
+       harcamış görünür (MECO erkene kayar). İki akış da sabit olduğu için
+       çıkarma tamdır. */
+    s.m += dm;
+    propLeft -= coreMdot * h;
+    if (srbOn) srbPropLeft -= srbMdot * h;
     t += h;
 
     /* kayıplar (k1 ile, birinci mertebe yeterli) */
@@ -240,6 +296,15 @@ export function simulateAscent(vehicleIn = {}, profileIn = {}) {
     }
 
     const L = local(s);
+    /* yan itici tükenmesi ve atılması */
+    if (srbOn && srbPropLeft <= 1e-6) {
+      srbOn = false; tSrbOut = t;
+      events.push({ id: 'srbburnout', t, label: 'Yan itici tükendi', alt: L.alt });
+    }
+    if (srbAttached && tSrbOut != null && t >= tSrbOut + P.srbSepDelay) {
+      srbAttached = false; s.m -= B.count * B.dry; tSrbSep = t;
+      events.push({ id: 'srbsep', t, label: 'Yan itici ayrılması', alt: L.alt });
+    }
     /* kapak */
     if (fairingOn && stage >= 1 && L.q <= P.fairingQ) {
       fairingOn = false; s.m -= V.fairing; tFairing = t;
@@ -282,6 +347,7 @@ export function simulateAscent(vehicleIn = {}, profileIn = {}) {
   return {
     samples, events, maxQ, losses, orbit, ok: !!orbit,
     vehicle: V, profile: P, duration: t, tMeco, tSep, tSes, tSeco, tFairing, tMach1,
+    boosters: B, tSrbOut, tSrbSep,
     targets: { rTarget, vCircTarget },
   };
 }

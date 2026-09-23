@@ -5,7 +5,10 @@
 //   • Eksenler: +X = ileri/hız, −X = ana motor egzozu, +Z = yukarı/çanak tarafı.
 //   • Orijin geometrik merkezde; en uzun boyut ≈ 1 × scale.
 //   • palette = { body, panel, accent, metal } — varsayılan obsidyen–şampanya.
-//   • Yalnızca MeshStandardMaterial; emissive yok, doku yok — geometri ve malzeme disiplini.
+//   • Yalnızca MeshStandardMaterial; emissive yok, DIŞARIDAN doku çekilmez.
+//     Prosedürel (tuvalde üretilen, tohumlu, ağsız) doku serbesttir —
+//     craft-surface.mjs; bir fırlatıcının gövdesi düz beyaz silindir değildir
+//     ve panel dikişi/stringer/buz bandı geometriyle yazılsa mesh patlar.
 //   • Araç başına TEK vurgu (accent) öğesi; her ayrıntı bir MEKANİZMA ya da
 //     bir mühendislik kısıtı anlatır (userData.notes.why bunu yazar) — süs yok.
 //   • PARÇA SÖZLEŞMESİ (docs/physical-rigs-plan.md §2, F0): hareketli her parça
@@ -21,7 +24,8 @@
 import * as THREE from 'three';
 // Eksen yardımcıları tek kaynaktan: ../core/geometry-axis.mjs
 // (cylY/cylZ/coneX/coneZ/latheX/latheZ de orada — gerektiğinde import edin).
-import { eksenX, cylX, cylY, cylZ, latheX, cylGeoY } from '../core/geometry-axis.mjs';
+import { eksenX, cylX, cylY, cylZ, coneX, latheX, cylGeoY } from '../core/geometry-axis.mjs';
+import { bodySurface, srbSurface } from './craft-surface.mjs';
 
 // Varsayılan palet: obsidyen gövde, koyu hücreler, şampanya vurgusu, saten çelik.
 export const CRAFT_PALETTE = Object.freeze({
@@ -536,11 +540,25 @@ export function buildLander({ scale = 1, palette } = {}) {
 /*    başlık + kafes kanatçıklar + motor kümesi. Burun +X.            */
 /* ================================================================== */
 
-export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
+export function buildRocket({ stages = 2, scale = 1, palette, boosters = 0, surface = true } = {}) {
   const m = makeMats(palette);
   const g = new THREE.Group();
   const joints = {};
   const R = 0.12;
+  const nSrb = Math.max(0, Math.min(4, Math.round(boosters)));
+  /* Prosedürel yüzey: gövde panelleri/kaynakları/buz bandı ve SRB segment
+     ekleri. Doku ÜRETİLİR, çekilmez; kapatmak için surface:false. */
+  const yuzey = surface ? bodySurface(THREE, { seed: 4711, tone: '#d9d5cd',
+    bands: [{ from: 0.06, to: 0.30, kind: 'insulation' }, { from: 0.985, to: 1.0, kind: 'dark' }] }) : null;
+  const srbYuzey = (surface && nSrb) ? srbSurface(THREE, { seed: 913, segments: 4 }) : null;
+  const govdeMat = yuzey
+    ? new THREE.MeshStandardMaterial({ color: 0xffffff, map: yuzey.map,
+        roughnessMap: yuzey.roughnessMap, roughness: 1, metalness: 0.18 })
+    : m.body;
+  const srbMat = srbYuzey
+    ? new THREE.MeshStandardMaterial({ color: 0xffffff, map: srbYuzey.map,
+        roughnessMap: srbYuzey.roughnessMap, roughness: 1, metalness: 0.2 })
+    : m.body;
   const stageLens = [0.88, 0.44, 0.3].slice(0, Math.max(1, Math.min(3, stages)));
 
   let x = 0; // kuyruk tabanı; +X'e doğru istifleriz, motorlar −X'e taşar
@@ -589,7 +607,7 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
       g.add(kap);
       joints['stage.sep'] = { node: 'stage2', mode: 'translate', dir: [1, 0, 0], range: [0, 3], oneWay: true };
     }
-    const stage = cylX(R, R, L, 40, m.body);
+    const stage = cylX(R, R, L, 40, govdeMat);
     ekle(stage, x + L / 2);
     const x0 = x;
     x += L;
@@ -662,6 +680,74 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
       stage1.add(umb);
     }
 
+    /* ── KATI YAKITLI İTİCİLER (SRB) ──────────────────────────────────
+       Neden katı? Kalkışta gereken itki, sıvı çekirdeğin tek başına
+       veremeyeceği kadar büyüktür; katı itici basit, çok yoğun itkili ve
+       ucuzdur — karşılığında KISILAMAZ ve SÖNDÜRÜLEMEZ. Bu yüzden erken
+       biter ve atılır: taşınan boş kütle, kalan uçuşun tamamına ceza yazar.
+       Gövde SEGMENTLİDİR (fabrikada parça parça üretilip sahada birleşir);
+       segment ekleri yüzeyde kalın halkalar olarak görünür.
+       Nozul DIŞA KANIKTIR: itki vektörü aracın ağırlık merkezinden geçsin
+       diye; dümdüz aşağı bakan bir strap-on aracı yalpalatır.
+       Burun ve kuyruktaki küçük AYIRMA MOTORLARI, ayrılan iticiyi çekirdeğe
+       çarpmadan uzağa iter. */
+    if (i === 0 && nSrb > 0) {
+      const rS = 0.058, LS = L * 0.84, ofs = R + rS + 0.006;
+      const kanik = 4 * Math.PI / 180;                  // nozul kanıklığı
+      for (let k = 0; k < nSrb; k++) {
+        const a = nSrb === 2 ? (k * Math.PI) + Math.PI / 2 : (Math.PI / 4 + k * Math.PI / 2);
+        const ry = Math.sin(a), rz = Math.cos(a);
+        const srb = new THREE.Group();
+        srb.name = `srb${k}`;
+        /* gövde: segmentli kasa */
+        const kasa = cylX(rS, rS, LS, 28, srbMat);
+        kasa.position.x = x0 + LS / 2;
+        srb.add(kasa);
+        for (let j = 1; j < 4; j++) {                   // segment ek halkaları
+          const halka = cylX(rS * 1.045, rS * 1.045, 0.012, 28, m.metal);
+          halka.position.x = x0 + (j * LS) / 4;
+          srb.add(halka);
+        }
+        /* burun: ojiv başlık + ayırma motoru */
+        const bp = [];
+        for (let j = 0; j <= 10; j++) {
+          const u = j / 10;
+          bp.push(new THREE.Vector2(rS * Math.sqrt(Math.max(0, 1 - u * u)), u * rS * 2.1));
+        }
+        const burun = latheX(bp, 24, srbMat);
+        burun.position.x = x0 + LS;
+        srb.add(burun);
+        const ayirUst = coneX(0.016, 0.042, 12, m.dark, true);
+        ayirUst.quaternion.setFromUnitVectors(V3(1, 0, 0), V3(0.55, ry, rz).normalize());
+        ayirUst.position.set(x0 + LS + rS * 1.1, ry * rS * 0.5, rz * rS * 0.5);
+        srb.add(ayirUst);
+        /* kuyruk eteği + kanık nozul */
+        const etek = cylX(rS, rS * 1.12, 0.055, 28, m.metal);
+        etek.position.x = x0 + 0.028;
+        srb.add(etek);
+        const nozul = engineAssembly(m, { rThroat: 0.021, rExit: 0.049, len: 0.10, mountX: 0, ringR: 0.030 });
+        nozul.rotation.z = -kanik * (nSrb === 2 ? Math.sign(ry) || 1 : 1) * 0;
+        nozul.quaternion.setFromUnitVectors(V3(1, 0, 0),
+          V3(Math.cos(kanik), Math.sin(kanik) * ry, Math.sin(kanik) * rz).normalize());
+        nozul.position.x = x0;
+        srb.add(nozul);
+        const ayirAlt = coneX(0.013, 0.034, 10, m.dark, true);
+        ayirAlt.quaternion.setFromUnitVectors(V3(1, 0, 0), V3(-0.4, ry, rz).normalize());
+        ayirAlt.position.set(x0 + 0.10, ry * rS * 1.05, rz * rS * 1.05);
+        srb.add(ayirAlt);
+        /* bağlantı: ön (itki taşıyan) ve arka (yanal) dikmeler */
+        srb.add(strut(V3(x0 + LS * 0.92, 0, 0), V3(x0 + LS * 0.92, -ry * (ofs - R) * 0.9, -rz * (ofs - R) * 0.9), 0.009, m.metal));
+        for (const dz of [0.55, -0.55]) {
+          srb.add(strut(V3(x0 + 0.13, dz * rS, dz * rS * 0.2),
+            V3(x0 + 0.13, -ry * (ofs - R) * 0.85 + dz * rS, -rz * (ofs - R) * 0.85), 0.006, m.metal));
+        }
+        srb.position.set(0, ry * ofs, rz * ofs);
+        stage1.add(srb);
+        joints[`srb.${k}.jettison`] = { node: `srb${k}`, mode: 'translate',
+          dir: [-0.25, ry, rz], range: [0, 2], oneWay: true };
+      }
+    }
+
     // Ara halka: ilkinde ŞAMPANYA BANT (tek vurgu), diğerlerinde metal.
     if (i < stageLens.length - 1) {
       const ring = cylX(R * 1.045, R * 1.045, 0.07, 40, i === 0 ? m.accent : m.metal);
@@ -686,6 +772,10 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
   for (const [ad, phi0, sgn] of [['fairingR', 0, -1], ['fairingL', Math.PI, 1]]) {
     const yarim = eklem(ad);                       // menteşe: başlık tabanı, eksen z
     yarim.position.x = x - kap.position.x;
+    /* Başlık DÜZ kalır: gövde dokusunun v ekseni silindir boyunca
+       ayarlıdır, ojive sarılınca bütün bantlar burna sıkışıyor ve nose
+       tek renk koyu bir kütleye dönüyordu (ölçüldü). Gerçek başlıklar da
+       düz boyalıdır; panel deseni tank gövdesine aittir. */
     const kabuk = latheX(pts, 24, m.body, phi0, Math.PI);
     kabuk.material = m.body;
     yarim.add(kabuk);
@@ -700,10 +790,12 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
   const root = finalize(g, 'rocket', scale, m, { joints, massClass: 'orta sınıf fırlatıcı (~500 t)' });
   /* ATILABİLİR GÖVDELER: tüketici bunları sahneye devredip serbest cisim
      olarak sürebilir (physical_rigs/jettison.mjs). Adları sözleşmedir. */
-  root.userData.jettison = ['stage1', 'fairingL', 'fairingR'];
+  root.userData.jettison = [...Array.from({ length: nSrb }, (_, k) => `srb${k}`), 'stage1', 'fairingL', 'fairingR'];
+  root.userData.boosters = nSrb;
+  root.userData.dispose = () => { yuzey?.dispose(); srbYuzey?.dispose(); };
   root.userData.notes = {
-    regime: 'fırlatıcı · iki kademe · tekrar kullanılabilir 1. kademe',
-    why: 'İki kademe iki ayrı gruptur (stage1/stage2) ve ayrılma bir ANİMASYON değil, bir DEVİRDİR: itici sahneye bırakılır ve kendi balistiğini yaşar. Merkez motor gimballidir: kalkışta hız sıfırken aerodinamik yüzey işe yaramaz, tek yönelim aracı itki vektörüdür. Kafes kanatçıklar geri dönüşte açılır — süpersonik akımda düz kanatçıktan iyi çalışır ve katlanınca yer kaplamaz. Soğuk gaz RCS kademe tepesindedir: aynı itkiyle en büyük tork. Besleme hatları tank DIŞINDAN geçer; tankı delmek kütle ve risk ekler. Başlık iki yarımdır: atmosfer bittiğinde tabandaki menteşeden açılıp atılır, taşımak yakıta mal olur.',
+    regime: nSrb ? `fırlatıcı · iki kademe + ${nSrb} katı yakıtlı itici` : 'fırlatıcı · iki kademe · tekrar kullanılabilir 1. kademe',
+    why: 'İki kademe iki ayrı gruptur (stage1/stage2) ve ayrılma bir ANİMASYON değil, bir DEVİRDİR: itici sahneye bırakılır ve kendi balistiğini yaşar. Katı yakıtlı iticiler kalkış itkisini verir ama KISILAMAZ ve SÖNDÜRÜLEMEZ; erken biter ve atılırlar, çünkü taşınan boş kütle kalan uçuşun tamamına ceza yazar. Gövdeleri segmentlidir (sahada birleştirilir) ve nozulları dışa kanıktır: itki vektörü ağırlık merkezinden geçmezse araç yalpalar. Merkez motor gimballidir: kalkışta hız sıfırken aerodinamik yüzey işe yaramaz, tek yönelim aracı itki vektörüdür. Kafes kanatçıklar geri dönüşte açılır — süpersonik akımda düz kanatçıktan iyi çalışır ve katlanınca yer kaplamaz. Soğuk gaz RCS kademe tepesindedir: aynı itkiyle en büyük tork. Besleme hatları tank DIŞINDAN geçer; tankı delmek kütle ve risk ekler. Başlık iki yarımdır: atmosfer bittiğinde tabandaki menteşeden açılıp atılır, taşımak yakıta mal olur.',
   };
   return root;
 }

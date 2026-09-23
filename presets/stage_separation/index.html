@@ -96,15 +96,22 @@ try {
      kg/m³, yani q = ½ρv² ≈ 0,4 Pa. Eşik ölçülerek seçildi — 30 Pa da
      erkendi (ayrılmada q zaten 22 Pa'ydı, ölçüldü). 0,4 Pa ile kapak
      ayrılması kendi beat'ine oturur. */
-  sim = am.simulateAscent({}, { fairingQ: 0.4 });
+  /* İKİ KATI YAKITLI İTİCİ + onlara AYARLI pitch programı.
+     Yan iticiler kalkış T/W'sini 1,38 → 1,68 yapar; varsayılan 3,2°'lik
+     kick ile araç neredeyse dik tırmanıyor ve yörüngeye ulaşamıyordu
+     (ölçüldü). SRB_PROFILE, ızgara taramasıyla bulunan tPitch = 5 s,
+     kick = 10° değerleridir: 196 × 204 km. */
+  sim = am.simulateAscent({ boosters: am.SRB_GEM63 }, { ...am.SRB_PROFILE, fairingQ: 0.4 });
   sampleAt = am.sampleAt;
 } catch (e) {
   console.warn('ascent-model yüklenemedi; ilan edilmiş YEDEK profil kullanılıyor.', e);
   modelKaynak = 'yedek analitik profil (ascent-model yüklenemedi)';
   ({ sim, sampleAt } = yedekProfil());
 }
-const OLAYLAR = sim.events.filter(e => ['liftoff', 'maxq', 'meco', 'separation', 'ses', 'fairing', 'seco'].includes(e.id));
+const OLAYLAR = sim.events.filter(e => ['liftoff', 'maxq', 'srbburnout', 'srbsep', 'meco', 'separation', 'ses', 'fairing', 'seco'].includes(e.id));
 const tSep = sim.tSep ?? 150, tSes = sim.tSes ?? tSep + 4, tFairing = sim.tFairing ?? tSes + 30;
+const tSrbOut = sim.tSrbOut ?? null, tSrbSep = sim.tSrbSep ?? null;
+const nSrb = sim.boosters ? sim.boosters.count : 0;
 const T_SON = Math.min(sim.duration, (sim.tSeco ?? tSes + 300) + 25);
 /* MENZİL RAMPAYA GÖRE ölçülür. Model ataletsel (dönen Dünya'nın taşıma hızı
    dahil) bir çerçevede çalışır: t = 0'da araç yere göre duruyor olmasına
@@ -226,7 +233,7 @@ try {
 try { ({ buildEngineFX } = await import('../craft_blocks/craft-effects.mjs')); } catch { /* plümsüz çalışır */ }
 
 const ROKET_BOY = 66 * UNIT;                      // 66 m
-const roket = buildRocket ? buildRocket({ stages: 2, scale: ROKET_BOY,
+const roket = buildRocket ? buildRocket({ stages: 2, scale: ROKET_BOY, boosters: nSrb || 2, surface: true,
   palette: { body: 0xd8d4cc, panel: 0x232830, metal: 0xa9aeb5, accent: 0xc9a35c } })
   : (() => { const g = new THREE.Group(); const i = new THREE.Group();
       i.add(cylY(0.12, 0.12, 1, 20, new THREE.MeshStandardMaterial({ color: 0xd8d4cc })));
@@ -242,6 +249,7 @@ const stage1 = roket.getObjectByName('stage1');
 const stage2 = roket.getObjectByName('stage2');
 const fairingL = roket.getObjectByName('fairingL');
 const fairingR = roket.getObjectByName('fairingR');
+const srbler = Array.from({ length: nSrb || 2 }, (_, k) => roket.getObjectByName(`srb${k}`)).filter(Boolean);
 /* Roketin tabanı rampaya otursun: kök, sınırlayıcı kutunun MERKEZİNDEDİR. */
 arac.updateMatrixWorld(true);
 const kutu = new THREE.Box3().setFromObject(arac);
@@ -257,14 +265,14 @@ const bagil = new THREE.Group();
 scene.add(bagil);
 const a2 = (() => { const s = sampleAt(sim, tSes + 2); return Math.max(2, (s.accel || 0.75) * G0); })();
 const jett = createJettison({ gravity: [0, -a2 * UNIT, 0] });
-let birakildi = { stage1: false, fairing: false };
+let birakildi = { stage1: false, fairing: false, srb: false };
 let boosterRig = null;
 /* GERİ ALMA için bırakma öncesi durum: ebeveyn + yerel dönüşüm. Zaman
    sürgüsü geriye çekilince sahne yeniden yüklenmez; gövdeler yerine takılır.
    (İlk yazımda location.reload() vardı: sürgüyü geri çekmek sayfayı
    sıfırlıyordu ve ?t= ile kare yakalama kırılıyordu.) */
 const ilkDurum = new Map();
-for (const node of [stage1, fairingL, fairingR]) {
+for (const node of [stage1, fairingL, fairingR, ...srbler]) {
   if (node) ilkDurum.set(node, { parent: node.parent, p: node.position.clone(), q: node.quaternion.clone() });
 }
 function geriAl() {
@@ -273,7 +281,7 @@ function geriAl() {
     node.position.copy(d.p); node.quaternion.copy(d.q);
   }
   jett.reset();
-  birakildi = { stage1: false, fairing: false };
+  birakildi = { stage1: false, fairing: false, srb: false };
   boosterRig = null;
   plumKur();
 }
@@ -290,7 +298,7 @@ function birak(node, { push, tumble, yon, id }) {
 }
 
 /* ---------- plüm ---------- */
-let fx1 = null, fx2 = null;
+let fx1 = null, fx2 = null, fxSrb = [];
 /** Bir grubun KENDİ çerçevesindeki sınırlayıcı kutusu. Box3.setFromObject
     DÜNYA kutusunu verir; roket döndürülmüş olduğu için onun min köşesini
     yerele çevirmek yanlış eksene düşer (ölçüldü: plüm hiç görünmedi).
@@ -321,6 +329,8 @@ const ICSCALE = roket.children[0]?.scale.x || 1;
 function plumKur() {
   if (fx1) { fx1.dispose(); fx1 = null; }
   if (fx2) { fx2.dispose(); fx2 = null; }
+  for (const f of fxSrb) f.dispose();
+  fxSrb = [];
   if (!buildEngineFX) return;
   if (stage1) {
     fx1 = buildEngineFX({ scale: (ROKET_BOY * 0.42) / ICSCALE, tip: 'atmosfer', seed: 7 });
@@ -332,6 +342,14 @@ function plumKur() {
     fx2.group.position.set(yerelKutu(stage2).min.x + 0.012, 0, 0);
     stage2.add(fx2.group);
   }
+  /* Yan itici plümleri: katı itici alevi kısa ve çok parlaktır; ölçek
+     çekirdeğin yarısı kadar. Tükenmede sönümlenir, sonra sökülür. */
+  fxSrb = srbler.map((srb, k) => {
+    const fx = buildEngineFX({ scale: (ROKET_BOY * 0.24) / ICSCALE, tip: 'atmosfer', seed: 21 + k });
+    fx.group.position.set(yerelKutu(srb).min.x + 0.008, 0, 0);
+    srb.add(fx.group);
+    return fx;
+  });
 }
 plumKur();
 
@@ -358,6 +376,21 @@ function uygula(zaman) {
   yildizMat.opacity = k * 0.9;
   scene.fog.near = 40 + k * 4000; scene.fog.far = 2600 + k * 60000;
   dolgu.intensity = 1.05 - k * 0.8;
+
+  /* YAN İTİCİ AYRILMASI (kademe ayrılmasından ÖNCE): tükenen iticiler
+     dışa ve hafif geriye itilir, takla atarak uzaklaşır. Bağıl ivme burada
+     çekirdeğin o andaki eksenel ivmesidir (SRB'ler gitti, çekirdek yanıyor). */
+  if (!birakildi.srb && tSrbSep != null && t >= tSrbSep && srbler.length) {
+    birakildi.srb = true;
+    srbler.forEach((srb, k) => {
+      const a = nSrb === 2 ? (k * Math.PI) + Math.PI / 2 : (Math.PI / 4 + k * Math.PI / 2);
+      birak(srb, { push: 2.5 * UNIT, tumble: 0.7,
+        yon: [-0.35, Math.sin(a), Math.cos(a)], id: `srb${k}` });
+    });
+    for (const f of fxSrb) f.dispose();
+    fxSrb = [];
+  }
+  if (birakildi.srb && tSrbSep != null && t < tSrbSep) geriAl();
 
   /* ayrılma: itici sahneye DEVREDİLİR ve kendi balistiğini yaşar */
   if (!birakildi.stage1 && t >= tSep && stage1) {
@@ -388,7 +421,7 @@ function uygula(zaman) {
 
   /* atılan gövdelerin pozu KAPALI FORM: herhangi bir t'ye adım atmadan gidilir */
   for (const b of jett.bodies) {
-    const t0 = b.id === 'stage1' ? tSep : tFairing;
+    const t0 = b.id === 'stage1' ? tSep : b.id.startsWith('srb') ? tSrbSep : tFairing;
     const poz = jett.poseAt(b, t - t0);
     b.node.position.set(poz.p[0], poz.p[1], poz.p[2]);
     b.node.quaternion.copy(b.q0);
@@ -414,6 +447,8 @@ function uygula(zaman) {
   const gaz1 = t < (sim.tMeco ?? tSep - 2) ? Math.min(1, 0.55 + t / 40) : 0;
   const gaz2 = t >= tSes && t < (sim.tSeco ?? T_SON) ? 0.9 : 0;
   if (fx1) fx1.update(DT, { gaz: gaz1, atesle: gaz1 > 0 });
+  const gazSrb = (tSrbOut != null && t < tSrbOut) ? Math.min(1, 0.85 + t / 90) : 0;
+  for (const f of fxSrb) f.update(DT, { gaz: gazSrb, atesle: gazSrb > 0 });
   if (fx2) fx2.update(DT, { gaz: gaz2, atesle: gaz2 > 0 });
   if (fx2) fx2.group.visible = t >= tSes - 0.2;
 
@@ -436,8 +471,13 @@ function kadraj(id, zaman) {
          açıklıkla büyür. Sabit kadraj, itici birkaç saniyede kadrajdan
          çıktığı için ayrılmayı göstermiyordu (ölçüldü: t = 163 s'de itici
          271 m aşağıdaydı, karede yoktu). */
-      const g = jett.bodies.find(b => b.id === 'stage1');
-      const dy = g ? Math.abs(g.node.position.y) : 0;
+      /* En uzak bırakılan gövde kadrajı belirler: yan itici ayrılmasında
+         stage1 henüz yoktur, SRB'ler vardır. */
+      const g = jett.bodies.reduce((en, b) => {
+        const d = Math.hypot(b.node.position.x, b.node.position.y, b.node.position.z);
+        return (!en || d > en.d) ? { b, d } : en;
+      }, null);
+      const dy = g ? Math.max(Math.abs(g.b.node.position.y), g.d * 0.8) : 0;
       const orta = p.y - dy * 0.5;                     // iki govdenin ortasi
       /* Mesafe KADRAJDAN turetilir, elle secilmez: gereken yari-yukseklik
          (aciklik/2 + arac boyu payi) fov'un yarisinin tanjantina bolunur.
@@ -456,6 +496,7 @@ function kadraj(id, zaman) {
 function yonetmen(zaman) {
   if (zaman < 13) return 'pad';
   if (zaman < 44) return 'kule';
+  if (tSrbSep != null && zaman > tSrbSep - 3 && zaman < tSrbSep + 7) return 'ayrilma';
   if (zaman < tSep - 6) return 'takip';
   if (zaman < tSep + 9) return 'ayrilma';        // ayrilma beat'i: 9 s
   if (zaman < tFairing - 3) return 'takip';
@@ -486,7 +527,8 @@ const FAZ = { vertical: 'dikey tırmanış', kick: 'pitch kick', gravityturn: 'y
   coast: 'kıyı (kademe ayrılması)', stage2: '2. kademe', orbit: 'yörünge', stage1: '1. kademe' };
 function hudYaz(s) {
   hud.innerHTML = `<b>t + ${f(t, 1)} s</b> · ${FAZ[s.phase] ?? s.phase}`
-    + ` · kademe ${s.stage}${s.fairing ? '' : ' · başlık atıldı'}<br>`
+    + ` · kademe ${s.stage}${s.srbOn ? ` · ${nSrb} yan itici yanıyor` : (s.srbAttached ? ' · yan itici tükendi' : '')}`
+    + `${s.fairing ? '' : ' · başlık atıldı'}<br>`
     + `irtifa ${f(s.alt / 1000, 1)} km · menzil ${f(menzil(s, t) / 1000, 1)} km · hız ${f(s.v, 0)} m/s`
     + ` · Mach ${f(s.mach, 1)}<br>q ${f((s.q || 0) / 1000, 1)} kPa · ivme ${f(s.accel, 2)} g`
     + ` · yunuslama ${f((Math.PI / 2 - (s.pitch ?? Math.PI / 2)) * 180 / Math.PI, 0)}° (dikeyden)<br>`
