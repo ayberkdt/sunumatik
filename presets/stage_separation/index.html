@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kademe Ayrılması — stage_separation</title>
+<script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+    font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+  #stage { position: absolute; inset: 0; }
+  header { position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 22px; }
+  h1 { margin: 0; font-size: 15px; letter-spacing: .14em; text-transform: uppercase; color: #c9a35c; font-weight: 600; }
+  h1 small { display: block; margin-top: 4px; font-size: 11px; letter-spacing: .05em;
+    text-transform: none; color: #6f7688; font-weight: 400; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  select, button { font: inherit; font-size: 12.5px; min-height: 40px; padding: 0 14px;
+    background: rgba(16, 19, 27, .85); color: #dfe3ea; border: 1px solid #2b303d; border-radius: 8px; cursor: pointer; }
+  button:hover, select:hover { border-color: #3b4252; }
+  label.rng { display: flex; gap: 8px; align-items: center; font-size: 12.5px; color: #b9bfcc;
+    background: rgba(16, 19, 27, .85); border: 1px solid #2b303d; border-radius: 8px; min-height: 40px; padding: 0 14px; }
+  input[type="range"] { width: 190px; accent-color: #c9a35c; }
+  #hud { position: absolute; left: 22px; bottom: 22px; z-index: 5; font-size: 12px; line-height: 1.55;
+    color: #b9bfcc; background: rgba(10, 12, 18, .78); border: 1px solid #232837; border-radius: 10px;
+    padding: 9px 13px; font-variant-numeric: tabular-nums; }
+  #hud b { color: #c9a35c; font-weight: 600; }
+  #ray { position: absolute; right: 22px; bottom: 22px; z-index: 5; font-size: 11.5px; line-height: 1.7;
+    color: #6f7688; background: rgba(10, 12, 18, .72); border: 1px solid #232837; border-radius: 10px; padding: 8px 12px; }
+  #ray .simdi { color: #c9a35c; font-weight: 600; }
+  #ray .gecti { color: #9aa1b0; }
+  /* Sinema modu: bütün arayüz kalkar, 2.39:1 maske iner — temiz yakalama. */
+  body.sinema header, body.sinema #hud, body.sinema #ray { display: none; }
+  body.sinema .maske { display: block; }
+  .maske { display: none; position: absolute; left: 0; right: 0; height: calc((100vh - 100vw / 2.39) / 2);
+    background: #05070b; z-index: 6; pointer-events: none; }
+  .maske.ust { top: 0; } .maske.alt { bottom: 0; }
+  body.ui-gizli header, body.ui-gizli #hud, body.ui-gizli #ray { display: none; }
+</style>
+</head>
+<body>
+  <div id="stage"></div>
+  <div class="maske ust"></div>
+  <div class="maske alt"></div>
+  <header>
+    <h1>Kademe Ayrılması<small>stage_separation · iki kademeli fırlatma, itici bırakılır ve kendi balistiğini yaşar</small></h1>
+    <div class="controls">
+      <select id="kamera" title="Kamera">
+        <option value="sinema" selected>Sinema (otomatik)</option>
+        <option value="pad">Rampa</option>
+        <option value="kule">Kule</option>
+        <option value="takip">Takip</option>
+        <option value="ayrilma">Ayrılma</option>
+        <option value="genis">Geniş</option>
+      </select>
+      <label class="rng" title="Zaman (s)">t <input id="zaman" type="range" min="0" max="400" step="0.1" value="0"><span id="tYazi">0 s</span></label>
+      <button id="durdur">Duraklat</button>
+      <button id="tamEkran" title="Tam ekran (F)">⤢ Tam ekran</button>
+    </div>
+  </header>
+  <div id="hud"></div>
+  <div id="ray"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { cylY } from '../core/geometry-axis.mjs';
+import { createRig } from '../physical_rigs/rig-core.mjs';
+import { createJettison, separationImpulse } from '../physical_rigs/jettison.mjs';
+
+const sorgu = new URLSearchParams(location.search);
+const DT = 1 / 60;
+const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const disaAktarim = document.documentElement.dataset.export === 'true' || sorgu.get('export') === '1';
+const sabitT = sorgu.has('t') ? Math.max(0, parseFloat(sorgu.get('t')) || 0) : null;
+const donmusMod = azaltilmis || disaAktarim || sabitT !== null;
+if (sorgu.get('sinema') === '1') document.body.classList.add('sinema');
+if (sorgu.get('ui') === '0') document.body.classList.add('ui-gizli');
+
+/* ---------- ölçek sözleşmesi ---------- */
+// 1 sahne birimi = 20 m. Roket ~66 m → 3,3 birim; MECO irtifası ~70 km →
+// 3500 birim. Uzaklık aralığı geniş olduğu için logaritmik derinlik tamponu
+// açılır (yoksa rampa yakınında z-çakışması olur).
+const UNIT = 1 / 20;
+const G0 = 9.80665;
+
+/* ---------- gerçek tırmanış çözümü (YUMUŞAK bağımlılık) ---------- */
+let sim = null, sampleAt = null, modelKaynak = 'launch_ascent/ascent-model.mjs';
+try {
+  const am = await import('../launch_ascent/ascent-model.mjs');
+  /* fairingQ: kapak atma dinamik basınç eşiği. Modelin varsayılanı 1 kPa;
+     o değerde kapak, kademe ayrılmasından BİR ADIM sonra atılıyor (ölçüldü:
+     tSep 156,36 s → tFairing 156,41 s) çünkü q zaten çoktan düşmüş oluyor.
+     Gerçek ölçüt serbest-moleküler ısı akısıdır (~1135 W/m²) ve çok daha
+     düşük bir q'ya denk gelir: 1135 ≈ ½ρv³ ve v ≈ 3 km/s iken ρ ≈ 8·10⁻⁸
+     kg/m³, yani q = ½ρv² ≈ 0,4 Pa. Eşik ölçülerek seçildi — 30 Pa da
+     erkendi (ayrılmada q zaten 22 Pa'ydı, ölçüldü). 0,4 Pa ile kapak
+     ayrılması kendi beat'ine oturur. */
+  sim = am.simulateAscent({}, { fairingQ: 0.4 });
+  sampleAt = am.sampleAt;
+} catch (e) {
+  console.warn('ascent-model yüklenemedi; ilan edilmiş YEDEK profil kullanılıyor.', e);
+  modelKaynak = 'yedek analitik profil (ascent-model yüklenemedi)';
+  ({ sim, sampleAt } = yedekProfil());
+}
+const OLAYLAR = sim.events.filter(e => ['liftoff', 'maxq', 'meco', 'separation', 'ses', 'fairing', 'seco'].includes(e.id));
+const tSep = sim.tSep ?? 150, tSes = sim.tSes ?? tSep + 4, tFairing = sim.tFairing ?? tSes + 30;
+const T_SON = Math.min(sim.duration, (sim.tSeco ?? tSes + 300) + 25);
+/* MENZİL RAMPAYA GÖRE ölçülür. Model ataletsel (dönen Dünya'nın taşıma hızı
+   dahil) bir çerçevede çalışır: t = 0'da araç yere göre duruyor olmasına
+   rağmen `downrange` saniyede ~408 m büyüyor (28,5° enlemde Ω·R·cos φ).
+   Ham değeri kullanınca roket kalkar kalkmaz yana fırlıyordu (ölçüldü:
+   t = 6 s'de 2,45 km). Taşıma hızı ilk iki örnekten OKUNUR, uydurulmaz. */
+const SITE_HIZ = (() => {
+  const S = sim.samples;
+  if (S.length < 2) return 0;
+  return (S[1].downrange - S[0].downrange) / Math.max(1e-6, S[1].t - S[0].t);
+})();
+const menzil = (s, zaman) => (s.downrange ?? 0) - SITE_HIZ * zaman;
+
+/** ascent-model yoksa: kademeli, ilan edilmiş analitik profil. Bilimsel
+    iddiası yoktur; yalnız sahne çalışsın diye vardır ve HUD bunu yazar. */
+function yedekProfil() {
+  const S = [];
+  for (let t = 0; t <= 420; t += 0.25) {
+    const a = t < 150 ? 1.3 + t * 0.022 : t < 154 ? 0 : 0.75;
+    const v = t < 150 ? 9.81 * (1.3 * t + 0.011 * t * t) : 2400 + (t - 154) * 7.4;
+    const pitch = Math.min(1.45, Math.max(0, (t - 12) * 0.0105));
+    const alt = t < 150 ? 0.5 * 9.81 * 1.6 * t * t * 0.55 : 70000 + (t - 150) * 900;
+    S.push({ t, alt, downrange: Math.max(0, (t - 20) * (t - 20) * 1.1), v, vAir: v, gamma: Math.PI / 2 - pitch,
+      q: Math.max(0, 34000 * Math.exp(-(((t - 62) / 34) ** 2))), mach: v / 300, accel: a, pitch,
+      stage: t < 152 ? 1 : 2, phase: t < 150 ? 'stage1' : t < 154 ? 'coast' : 'stage2', fairing: t < 180, thrust: 0, twr: a });
+  }
+  const ev = [{ id: 'liftoff', t: 0, label: 'Kalkış' }, { id: 'maxq', t: 62, label: 'Max-Q' },
+    { id: 'meco', t: 150, label: 'MECO' }, { id: 'separation', t: 152, label: 'Kademe ayrılması' },
+    { id: 'ses', t: 154, label: 'SES' }, { id: 'fairing', t: 180, label: 'Başlık atma' },
+    { id: 'seco', t: 400, label: 'SECO' }];
+  const f = (s, t) => { const i = Math.min(S.length - 1, Math.max(0, Math.round(t / 0.25))); return S[i]; };
+  return { sim: { samples: S, events: ev, duration: 420, tSep: 152, tSes: 154, tFairing: 180, tSeco: 400,
+    maxQ: { t: 62, q: 34000 }, orbit: null, ok: false }, sampleAt: f };
+}
+
+/* ---------- sahne ---------- */
+const host = document.querySelector('#stage');
+/* logarithmicDepthBuffer KAPALI: craft-effects plümü kendi ShaderMaterial'ını
+   kullanır ve logdepth chunk'larını içermez — açıkken alev hiç görünmüyordu
+   (ölçüldü). Bunun yerine derinlik aralığı daraltılır: kamera hep roketin
+   yakınında olduğu için near 0,3 birim (6 m) yeter. */
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+host.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.3, 60000);
+
+/* ŞAFAK fırlatması: parlak gündüz mavisinde eklemeli (additive) plüm
+   okunmuyordu — t = 5 s karesinde alev hiç görünmedi. Koyu şafak mavisi hem
+   plümü okutur hem de yükseklikle karartmaya doğal bir başlangıç verir.
+   Bu bir sinematik karar; fizikte bir karşılığı yoktur ve manifest'te yazılıdır. */
+const gokMavi = new THREE.Color(0x3d5f8c), gokUzay = new THREE.Color(0x03060d);
+scene.background = gokMavi.clone();
+scene.fog = new THREE.Fog(0x6b83a6, 40, 2600);
+const gunes = new THREE.DirectionalLight(0xffdcb4, 3.4);   // alçak şafak güneşi
+gunes.position.set(-70, 26, 60);
+scene.add(gunes, gunes.target);
+const dolgu = new THREE.HemisphereLight(0xbcd0e6, 0x2b2622, 1.05);
+scene.add(dolgu);
+
+/* Yıldızlar: irtifayla açılır (60 km üstünde gökyüzü kararır). */
+const yildizGeo = new THREE.BufferGeometry();
+{
+  const n = 1400, poz = new Float32Array(n * 3);
+  let a = 20260924;
+  const rnd = () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  for (let i = 0; i < n; i++) {
+    const th = rnd() * Math.PI * 2, ph = Math.acos(rnd() * 1.6 - 0.6), r = 30000;
+    poz[i * 3] = r * Math.sin(ph) * Math.cos(th);
+    poz[i * 3 + 1] = Math.abs(r * Math.cos(ph));
+    poz[i * 3 + 2] = r * Math.sin(ph) * Math.sin(th);
+  }
+  yildizGeo.setAttribute('position', new THREE.BufferAttribute(poz, 3));
+}
+const yildizMat = new THREE.PointsMaterial({ color: 0xdfe6f2, size: 2, sizeAttenuation: false, transparent: true, opacity: 0 });
+const yildizlar = new THREE.Points(yildizGeo, yildizMat);
+yildizlar.renderOrder = -10;
+scene.add(yildizlar);
+
+/* Zemin + rampa + kule: yalnız ilk saniyelerde okunur, ama ölçeği o veriyor. */
+const zemin = new THREE.Mesh(new THREE.CircleGeometry(26000, 72),
+  new THREE.MeshStandardMaterial({ color: 0x272f2c, roughness: 1, metalness: 0 }));
+zemin.rotation.x = -Math.PI / 2;
+scene.add(zemin);
+/* Rampa ~32 m çapında, kule ~100 m: ikisi de 1 birim = 20 m ölçeğinde.
+   İlk yazımda kule 13 birim (260 m) idi ve roketi cüce gösteriyordu. */
+const rampa = cylY(0.8, 0.95, 0.22, 24,
+  new THREE.MeshStandardMaterial({ color: 0x3c4148, roughness: .9 }));
+rampa.position.y = 0.11;
+scene.add(rampa);
+const kuleMat = new THREE.MeshStandardMaterial({ color: 0x555c66, roughness: .75, metalness: .35 });
+const kule = new THREE.Group();
+for (const [dx, dz] of [[-0.45, -0.45], [0.45, -0.45], [-0.45, 0.45], [0.45, 0.45]]) {
+  const p = new THREE.Mesh(new THREE.BoxGeometry(0.09, 5.0, 0.09), kuleMat);
+  p.position.set(dx, 2.5, dz);
+  kule.add(p);
+}
+for (let i = 1; i <= 8; i++) {
+  const k = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.05, 1.0), kuleMat);
+  k.position.y = i * 0.58;
+  kule.add(k);
+}
+/* Servis kolu: roketin gövdesine uzanır, kalkışta geride kalır. */
+const kol = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.07, 0.3), kuleMat);
+kol.position.set(0.85, 3.3, 0);
+kule.add(kol);
+kule.position.set(-1.6, 0, 0);
+scene.add(kule);
+
+/* ---------- araç ---------- */
+let buildRocket = null, buildEngineFX = null;
+try {
+  const cb = await import('../craft_blocks/craft-blocks.mjs');
+  buildRocket = cb.buildRocket;
+} catch (e) { console.warn('craft_blocks yüklenemedi; yer tutucu roket.', e); }
+try { ({ buildEngineFX } = await import('../craft_blocks/craft-effects.mjs')); } catch { /* plümsüz çalışır */ }
+
+const ROKET_BOY = 66 * UNIT;                      // 66 m
+const roket = buildRocket ? buildRocket({ stages: 2, scale: ROKET_BOY,
+  palette: { body: 0xd8d4cc, panel: 0x232830, metal: 0xa9aeb5, accent: 0xc9a35c } })
+  : (() => { const g = new THREE.Group(); const i = new THREE.Group();
+      i.add(cylY(0.12, 0.12, 1, 20, new THREE.MeshStandardMaterial({ color: 0xd8d4cc })));
+      i.scale.setScalar(ROKET_BOY); g.add(i);
+      g.userData = { kind: 'rocket', parts: 1 }; return g; })();
+roket.traverse(o => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } });
+/* craft +X ileri (burun) → dünya +Y: R_z(+90°) (1,0,0) → (0,1,0) */
+const stand = new THREE.Group(); stand.rotation.z = Math.PI / 2; stand.add(roket);
+const arac = new THREE.Group(); arac.add(stand); scene.add(arac);
+
+const rig = roket.userData.rig ? createRig(roket.userData.rig, { fps: 60 }) : null;
+const stage1 = roket.getObjectByName('stage1');
+const stage2 = roket.getObjectByName('stage2');
+const fairingL = roket.getObjectByName('fairingL');
+const fairingR = roket.getObjectByName('fairingR');
+/* Roketin tabanı rampaya otursun: kök, sınırlayıcı kutunun MERKEZİNDEDİR. */
+arac.updateMatrixWorld(true);
+const kutu = new THREE.Box3().setFromObject(arac);
+const TABAN = -kutu.min.y;                        // kök → taban ofseti
+
+/* ---------- atılan gövdeler ---------- */
+/* GÖRELİ çerçeve: kamera aracı izlediği için önemli olan GÖRELİ harekettir.
+   Ayrılmadan sonra itici yalnız yerçekimi altındadır, üst kademe ise
+   ~7,4 m/s² ile hızlanır; ikisi arasındaki BAĞIL ivme −a₂'dir ve gövde
+   ekseni boyuncadır. Bırakılan gövdeler bu yüzden ayrılma ANINDAKİ araç
+   yönelimini taşıyan, ama aracın KONUMUNU izleyen bir çerçevede yaşar. */
+const bagil = new THREE.Group();
+scene.add(bagil);
+const a2 = (() => { const s = sampleAt(sim, tSes + 2); return Math.max(2, (s.accel || 0.75) * G0); })();
+const jett = createJettison({ gravity: [0, -a2 * UNIT, 0] });
+let birakildi = { stage1: false, fairing: false };
+let boosterRig = null;
+/* GERİ ALMA için bırakma öncesi durum: ebeveyn + yerel dönüşüm. Zaman
+   sürgüsü geriye çekilince sahne yeniden yüklenmez; gövdeler yerine takılır.
+   (İlk yazımda location.reload() vardı: sürgüyü geri çekmek sayfayı
+   sıfırlıyordu ve ?t= ile kare yakalama kırılıyordu.) */
+const ilkDurum = new Map();
+for (const node of [stage1, fairingL, fairingR]) {
+  if (node) ilkDurum.set(node, { parent: node.parent, p: node.position.clone(), q: node.quaternion.clone() });
+}
+function geriAl() {
+  for (const [node, d] of ilkDurum) {
+    if (node.parent !== d.parent) d.parent.add(node);
+    node.position.copy(d.p); node.quaternion.copy(d.q);
+  }
+  jett.reset();
+  birakildi = { stage1: false, fairing: false };
+  boosterRig = null;
+  plumKur();
+}
+
+function birak(node, { push, tumble, yon, id }) {
+  const g = new THREE.Group();
+  g.name = `${id}Gövde`;
+  /* Düğümü dünya dönüşümünü KORUYARAK devral: attach() bunu yapar. */
+  bagil.attach(node);
+  node.position.set(0, 0, 0);
+  const imp = separationImpulse(id === 'stage1' ? 0xA17 : 0xFA1, { push, tumble, axis: yon });
+  return jett.release(node, { position: [0, 0, 0], quaternion: node.quaternion.clone(),
+    velocity: imp.velocity, omega: imp.omega, id });
+}
+
+/* ---------- plüm ---------- */
+let fx1 = null, fx2 = null;
+/** Bir grubun KENDİ çerçevesindeki sınırlayıcı kutusu. Box3.setFromObject
+    DÜNYA kutusunu verir; roket döndürülmüş olduğu için onun min köşesini
+    yerele çevirmek yanlış eksene düşer (ölçüldü: plüm hiç görünmedi).
+    Burada her mesh'in geometri kutusunun 8 köşesi grubun yerel çerçevesine
+    taşınır — sonuç eksenden bağımsız doğrudur. */
+function yerelKutu(grup) {
+  grup.updateWorldMatrix(true, true);
+  const inv = new THREE.Matrix4().copy(grup.matrixWorld).invert();
+  const kutu = new THREE.Box3(), v = new THREE.Vector3();
+  grup.traverse((o) => {
+    if (!o.isMesh || !o.geometry) return;
+    o.geometry.computeBoundingBox();
+    const bb = o.geometry.boundingBox;
+    if (!bb) return;
+    for (let i = 0; i < 8; i++) {
+      v.set(i & 1 ? bb.max.x : bb.min.x, i & 2 ? bb.max.y : bb.min.y, i & 4 ? bb.max.z : bb.min.z);
+      v.applyMatrix4(o.matrixWorld).applyMatrix4(inv);
+      kutu.expandByPoint(v);
+    }
+  });
+  return kutu;
+}
+/* İÇ ÖLÇEK: finalize() iç grubu ölçekler, plüm ona çocuk olduğu için aynı
+   ölçeği miras alır — istenen dünya boyu bu çarpana BÖLÜNEREK verilir. */
+const ICSCALE = roket.children[0]?.scale.x || 1;
+/** Plümler motor ağzına oturur (kademenin yerel −X ucu). Idempotent:
+    geri almada yeniden kurulabilir. */
+function plumKur() {
+  if (fx1) { fx1.dispose(); fx1 = null; }
+  if (fx2) { fx2.dispose(); fx2 = null; }
+  if (!buildEngineFX) return;
+  if (stage1) {
+    fx1 = buildEngineFX({ scale: (ROKET_BOY * 0.42) / ICSCALE, tip: 'atmosfer', seed: 7 });
+    fx1.group.position.set(yerelKutu(stage1).min.x + 0.012, 0, 0);
+    stage1.add(fx1.group);
+  }
+  if (stage2) {
+    fx2 = buildEngineFX({ scale: (ROKET_BOY * 0.30) / ICSCALE, tip: 'vakum', seed: 11 });
+    fx2.group.position.set(yerelKutu(stage2).min.x + 0.012, 0, 0);
+    stage2.add(fx2.group);
+  }
+}
+plumKur();
+
+/* ---------- zaman ---------- */
+let t = 0, duraklat = donmusMod, sonFaz = '';
+const zamanSurgu = document.querySelector('#zaman');
+zamanSurgu.max = String(Math.round(T_SON));
+
+function uygula(zaman) {
+  t = Math.min(T_SON, Math.max(0, zaman));
+  const s = sampleAt(sim, t);
+
+  /* araç konumu ve yönelimi */
+  arac.position.set(menzil(s, t) * UNIT, s.alt * UNIT + TABAN, 0);
+  /* Model `pitch`i YEREL UFUKTAN ölçer: dikey tırmanışta π/2'dir (ölçüldü:
+     t = 6 s'de 90°). Dikeyden sapma = π/2 − pitch. İlk yazımda doğrudan
+     `pitch` kullanılmıştı ve roket rampada YATAY duruyordu. */
+  const dikeydenSapma = Math.PI / 2 - (s.pitch ?? Math.PI / 2);
+  arac.rotation.z = -dikeydenSapma;
+
+  /* gök: irtifayla kararır, yıldızlar açılır, sis seyrelir */
+  const k = Math.min(1, Math.max(0, (s.alt - 12000) / 58000));
+  scene.background.copy(gokMavi).lerp(gokUzay, k);
+  yildizMat.opacity = k * 0.9;
+  scene.fog.near = 40 + k * 4000; scene.fog.far = 2600 + k * 60000;
+  dolgu.intensity = 1.05 - k * 0.8;
+
+  /* ayrılma: itici sahneye DEVREDİLİR ve kendi balistiğini yaşar */
+  if (!birakildi.stage1 && t >= tSep && stage1) {
+    birakildi.stage1 = true;
+    /* Ayrılma itkisi 2 m/s (yaylı iticilerin tipik değeri); UNIT ile sahne
+       birimine çevrilir. Asıl uzaklaşmayı zaten BAĞIL İVME (−a₂) yapar. */
+    birak(stage1, { push: 2.0 * UNIT, tumble: 0.16, yon: [0, -1, 0], id: 'stage1' });
+    if (fx1) { fx1.dispose(); fx1 = null; }
+    boosterRig = createRig({ kind: 'booster', joints: {
+      'gridFin.0.fold': { node: 'gridFin0', axis: 'z', range: [0, 90], rateDegS: 45, sense: -1 },
+      'gridFin.1.fold': { node: 'gridFin1', axis: 'z', range: [0, 90], rateDegS: 45, sense: -1 },
+      'gridFin.2.fold': { node: 'gridFin2', axis: 'z', range: [0, 90], rateDegS: 45, sense: -1 },
+      'gridFin.3.fold': { node: 'gridFin3', axis: 'z', range: [0, 90], rateDegS: 45, sense: -1 },
+    } }, { fps: 60 });
+    for (let i = 0; i < 4; i++) boosterRig.jump(`gridFin.${i}.fold`, 85);
+  }
+  if (birakildi.stage1 && t < tSep) geriAl();      // geri sarma: gövdeleri yerine tak
+  if (!birakildi.fairing && t >= tFairing && fairingL && fairingR) {
+    birakildi.fairing = true;
+    /* Kapak yarımları YANA açılır (menteşe itkisi ~3 m/s) ve kendi
+       eksenlerinde dönerek uzaklaşır. */
+    birak(fairingL, { push: 3.0 * UNIT, tumble: 0.5, yon: [0, 0.25, 1], id: 'fairingL' });
+    birak(fairingR, { push: 3.0 * UNIT, tumble: 0.5, yon: [0, 0.25, -1], id: 'fairingR' });
+  }
+
+  /* bağıl çerçeve aracı İZLER, ama ayrılma anındaki yönelimi korur */
+  bagil.position.copy(arac.position);
+
+  /* atılan gövdelerin pozu KAPALI FORM: herhangi bir t'ye adım atmadan gidilir */
+  for (const b of jett.bodies) {
+    const t0 = b.id === 'stage1' ? tSep : tFairing;
+    const poz = jett.poseAt(b, t - t0);
+    b.node.position.set(poz.p[0], poz.p[1], poz.p[2]);
+    b.node.quaternion.copy(b.q0);
+    b.node.rotateX(poz.q[0]); b.node.rotateY(poz.q[1]); b.node.rotateZ(poz.q[2]);
+  }
+  if (boosterRig && stage1) {
+    for (let i = 0; i < 4; i++) boosterRig.set(`gridFin.${i}.fold`, t > tSep + 6 ? 0 : 85);
+    boosterRig.advance(DT);
+    boosterRig.apply(stage1);
+  }
+
+  /* eklemler: kalkışta TVC dairesi, ayrılmadan sonra üst kademe sabit */
+  if (rig) {
+    const yanma1 = t < (sim.tMeco ?? tSep - 2);
+    rig.set('engine.gimbal', yanma1 ? [3 * Math.sin(t * 1.7), 3 * Math.cos(t * 1.7)] : [0, 0]);
+    rig.set('fairing.L.open', t >= tFairing - 1.2 && t < tFairing ? 42 : 0);
+    rig.set('fairing.R.open', t >= tFairing - 1.2 && t < tFairing ? -42 : 0);
+    rig.advance(DT);
+    rig.apply(roket);
+  }
+
+  /* plüm: 1. kademe MECO'da söner, 2. kademe SES'te yanar */
+  const gaz1 = t < (sim.tMeco ?? tSep - 2) ? Math.min(1, 0.55 + t / 40) : 0;
+  const gaz2 = t >= tSes && t < (sim.tSeco ?? T_SON) ? 0.9 : 0;
+  if (fx1) fx1.update(DT, { gaz: gaz1, atesle: gaz1 > 0 });
+  if (fx2) fx2.update(DT, { gaz: gaz2, atesle: gaz2 > 0 });
+  if (fx2) fx2.group.visible = t >= tSes - 0.2;
+
+  sonFaz = s.phase;
+  kamerayiKur(t);
+  hudYaz(s);
+}
+
+/* ---------- kameralar ---------- */
+const _hedef = new THREE.Vector3(), _poz = new THREE.Vector3();
+function kadraj(id, zaman) {
+  const p = arac.position;
+  const boy = ROKET_BOY;
+  switch (id) {
+    case 'pad': return { poz: [4.6, 1.9, 8.2], hedef: [0, Math.min(p.y + boy * 0.25, 5.5), 0], fov: 40 };
+    case 'kule': return { poz: [3.4, Math.min(p.y * 0.5 + 2.4, 14), 6.2], hedef: [p.x, p.y, 0], fov: 34 };
+    case 'takip': return { poz: [p.x + boy * 2.1, p.y + boy * 0.55, boy * 3.2], hedef: [p.x, p.y, 0], fov: 36 };
+    case 'ayrilma': {
+      /* İki gövdeyi BİRDEN çerçevele: hedef ikisinin ortası, mesafe
+         açıklıkla büyür. Sabit kadraj, itici birkaç saniyede kadrajdan
+         çıktığı için ayrılmayı göstermiyordu (ölçüldü: t = 163 s'de itici
+         271 m aşağıdaydı, karede yoktu). */
+      const g = jett.bodies.find(b => b.id === 'stage1');
+      const dy = g ? Math.abs(g.node.position.y) : 0;
+      const orta = p.y - dy * 0.5;                     // iki govdenin ortasi
+      /* Mesafe KADRAJDAN turetilir, elle secilmez: gereken yari-yukseklik
+         (aciklik/2 + arac boyu payi) fov'un yarisinin tanjantina bolunur.
+         Sabit mesafe ya da sabit aciklik, birkac saniye sonra govdelerden
+         birini kadrajin disinda birakiyordu (olculdu t = 164, 166 s). */
+      const yariYuk = dy * 0.5 + boy * 1.25;
+      const uzak = yariYuk / Math.tan(38 * Math.PI / 360);
+      return { poz: [p.x + uzak * 0.38, orta + uzak * 0.06, uzak * 0.92],
+        hedef: [p.x, orta, 0], fov: 38 };
+    }
+    case 'genis': return { poz: [p.x - boy * 9, p.y + boy * 3.2, boy * 14], hedef: [p.x, p.y, 0], fov: 30 };
+    default: return kadraj(yonetmen(zaman), zaman);
+  }
+}
+/** Sinema yönetmeni: kesme noktaları OLAYLARDAN türer, elle yazılmaz. */
+function yonetmen(zaman) {
+  if (zaman < 13) return 'pad';
+  if (zaman < 44) return 'kule';
+  if (zaman < tSep - 6) return 'takip';
+  if (zaman < tSep + 9) return 'ayrilma';        // ayrilma beat'i: 9 s
+  if (zaman < tFairing - 3) return 'takip';
+  if (zaman < tFairing + 8) return 'ayrilma';    // kapak beat'i
+  return 'genis';
+}
+const kameraSec = document.querySelector('#kamera');
+if (['sinema', 'pad', 'kule', 'takip', 'ayrilma', 'genis'].includes(sorgu.get('kamera'))) kameraSec.value = sorgu.get('kamera');
+let oncekiId = null, gecisT = 0;
+function kamerayiKur(zaman) {
+  const id = kameraSec.value === 'sinema' ? yonetmen(zaman) : kameraSec.value;
+  const k = kadraj(id, zaman);
+  if (id !== oncekiId) { gecisT = oncekiId === null ? 1 : 0; oncekiId = id; }
+  gecisT = Math.min(1, gecisT + DT / 1.1);
+  const u = gecisT * gecisT * (3 - 2 * gecisT);
+  _poz.set(...k.poz); _hedef.set(...k.hedef);
+  camera.position.lerp(_poz, gecisT >= 1 ? 1 : 0.06 + u * 0.3);
+  camera.lookAt(_hedef);
+  if (Math.abs(camera.fov - k.fov) > 0.01) { camera.fov += (k.fov - camera.fov) * 0.12; camera.updateProjectionMatrix(); }
+  gunes.target.position.copy(arac.position);
+}
+
+/* ---------- HUD + olay rayı ---------- */
+const hud = document.querySelector('#hud'), ray = document.querySelector('#ray');
+const f = (v, n = 1) => (v ?? 0).toFixed(n);
+/* Model fazları: vertical | kick | gravityturn | coast | stage2 | orbit */
+const FAZ = { vertical: 'dikey tırmanış', kick: 'pitch kick', gravityturn: 'yerçekimi dönüşü',
+  coast: 'kıyı (kademe ayrılması)', stage2: '2. kademe', orbit: 'yörünge', stage1: '1. kademe' };
+function hudYaz(s) {
+  hud.innerHTML = `<b>t + ${f(t, 1)} s</b> · ${FAZ[s.phase] ?? s.phase}`
+    + ` · kademe ${s.stage}${s.fairing ? '' : ' · başlık atıldı'}<br>`
+    + `irtifa ${f(s.alt / 1000, 1)} km · menzil ${f(menzil(s, t) / 1000, 1)} km · hız ${f(s.v, 0)} m/s`
+    + ` · Mach ${f(s.mach, 1)}<br>q ${f((s.q || 0) / 1000, 1)} kPa · ivme ${f(s.accel, 2)} g`
+    + ` · yunuslama ${f((Math.PI / 2 - (s.pitch ?? Math.PI / 2)) * 180 / Math.PI, 0)}° (dikeyden)<br>`
+      + `<span style="color:#6f7688">Model: ${modelKaynak} · 1 birim = 20 m · menzil rampaya göre (taşıma ${f(SITE_HIZ, 0)} m/s çıkarıldı) · bırakılan gövde bağıl ivme −a₂ = ${f(a2, 1)} m/s²</span>`;
+  ray.innerHTML = OLAYLAR.map(e => {
+    const cls = Math.abs(t - e.t) < 2.5 ? 'simdi' : (t > e.t ? 'gecti' : '');
+    return `<div class="${cls}">${f(e.t, 0)} s · ${e.label}</div>`;
+  }).join('');
+  zamanSurgu.value = String(t);
+  document.querySelector('#tYazi').textContent = `${f(t, 0)} s`;
+}
+
+/* ---------- döngü ---------- */
+function boyutla() {
+  const w = host.clientWidth || 800, h = host.clientHeight || 600;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+function ciz() { renderer.render(scene, camera); }
+let istekId = 0;
+function kareIste() { if (!istekId && !document.hidden) istekId = requestAnimationFrame(dongu); }
+function dongu() {
+  istekId = 0;
+  if (document.hidden) return;
+  if (!duraklat) { uygula(t + DT >= T_SON ? 0 : t + DT); }
+  ciz();
+  if (!duraklat) kareIste();
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) kareIste(); });
+
+const durButon = document.querySelector('#durdur');
+const durYaz = () => { durButon.textContent = duraklat ? 'Devam' : 'Duraklat'; };
+durButon.addEventListener('click', () => { duraklat = !duraklat; durYaz(); kareIste(); ciz(); });
+zamanSurgu.addEventListener('input', () => { duraklat = true; durYaz(); uygula(parseFloat(zamanSurgu.value)); ciz(); });
+kameraSec.addEventListener('change', () => { oncekiId = null; uygula(t); ciz(); });
+document.querySelector('#tamEkran').addEventListener('click', () => {
+  if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+});
+addEventListener('keydown', (e) => {
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+  const key = e.key.toLowerCase();
+  if (key === ' ') { e.preventDefault(); durButon.click(); }
+  if (key === 'f') document.querySelector('#tamEkran').click();
+  if (key === 'c') { document.body.classList.toggle('sinema'); ciz(); }
+});
+addEventListener('resize', () => { boyutla(); ciz(); });
+
+boyutla();
+/* Sabit-zaman tablosu: plüm ve eklemler 1/60 sn adımlarıyla sarılır; araç,
+   gök ve atılan gövdeler zaten KAPALI FORM (doğrudan t'den çözülür). */
+uygula(0);
+if (sabitT !== null) {
+  const n = Math.round(sabitT / DT);
+  for (let k = 0; k < n; k++) uygula((k + 1) * DT);
+}
+durYaz();
+ciz();
+kareIste();
+
+window.__stage = {
+  scene, camera, renderer, roket, arac, jett, sim,
+  advance(sn) { const n = Math.max(1, Math.round(sn / DT)); for (let k = 0; k < n; k++) uygula(t + DT); ciz(); },
+  goTo(sn) { uygula(sn); ciz(); },
+  durum() {
+    return { t, faz: sonFaz, tSep, tSes, tFairing, tSon: T_SON, modelKaynak, a2,
+      birakildi: { ...birakildi }, govde: jett.bodies.map(b => ({ id: b.id, p: b.node.position.toArray().map(v => +v.toFixed(2)) })),
+      kamera: kameraSec.value === 'sinema' ? yonetmen(t) : kameraSec.value };
+  },
+  kamera(id) { kameraSec.value = id; oncekiId = null; uygula(t); ciz(); },
+};
+window.dispatchEvent(new CustomEvent('stage:hazir', { detail: window.__stage }));
+</script>
+</body>
+</html>

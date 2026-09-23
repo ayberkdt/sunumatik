@@ -39,6 +39,16 @@
 > (wrapZ(z+P) = −wrapZ(z)); dikişin kapanması biçimlerin dz'de ÇİFT olmasından
 > gelir, bu artık modülde yazılı ve sınanıyor.
 >
+> **§5.11 (kademe ayrılması) UYGULANDI (24 Eylül 2026):** `jettison.mjs`
+> (bırakılan gövde: ayrılma itkisi, takla, balistik; `poseAt` ile KAPALI
+> FORM çözüm — herhangi bir t'ye adım atmadan gidilir) ve yeni
+> `presets/stage_separation/` vitrini: iki kademeli fırlatma, olaylar
+> `launch_ascent/ascent-model.mjs` yörüngesinden türer, itici sahneye
+> devredilir, kapak iki yarım hâlinde atılır, kamera yönetmeni olaylardan
+> keser. `buildRocket` artık `stage1`/`stage2` ADLI gruplar ve
+> `userData.jettison` listesi verir — tüketicinin kütüphaneyi çatallaması
+> gerekmez.
+>
 > HENÜZ YOK: toz (§3.4 ikinci yarısı), rota takibi (§4 `follow(path)`),
 > kol IK (§5.2), tracker/HGA takibi (§5.3–5.4), cinematic sürüş beat'i (F4),
 > terrain_blocks köprüsü (vitrin kendi treadmill alanını kullanıyor).

@@ -544,10 +544,20 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
   const stageLens = [0.88, 0.44, 0.3].slice(0, Math.max(1, Math.min(3, stages)));
 
   let x = 0; // kuyruk tabanı; +X'e doğru istifleriz, motorlar −X'e taşar
-  // Üst kademe(ler) AYRILABİLİR bir grupta yaşar: kademe ayrılması = bu grubun
-  // +X boyunca ötelenmesi. `kap` o an eklenen kabı, `ekle` mutlak x'i kabın
-  // yerel x'ine çevirir.
-  let kap = g;
+  /* İKİ KADEME, İKİ AYRI GRUP — ve ikisi de ADLI:
+       `stage1` itici (motorlar, tanklar, kafes kanatçıklar, bacaklar, RCS,
+                ara halka) — ayrılmada GERİDE KALIR ve serbest cisim olur,
+       `stage2` üst kademe + başlık — uçmaya devam eder.
+     Kurucu bu tutamağı vermezse tüketici aracı ÇATALLAMAK zorunda kalır
+     (Night Traverse sahnesi tam bunu yapmıştı: craft-blocks'u kopyalayıp
+     `userData.suspension` eklemişti). Artık ayrılma, `stage1` grubunu
+     sahneye devretmekten ibaret: physical_rigs/jettison.mjs onu balistik
+     olarak sürer.
+     `kap` o an eklenen kabı, `ekle` mutlak x'i kabın yerel x'ine çevirir. */
+  const stage1 = new THREE.Group();
+  stage1.name = 'stage1';
+  g.add(stage1);
+  let kap = stage1;
   const ekle = (mesh, absX) => { mesh.position.x = absX - kap.position.x; kap.add(mesh); };
 
   // Motor eteği + taban halkası.
@@ -560,14 +570,14 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
   // atmosfer dışında tek yönelim aracı), 4 çevre motoru sabit.
   const engineGimbal = eklem('engineGimbal', x, 0, 0);
   engineGimbal.add(engineAssembly(m, { rThroat: 0.045, rExit: 0.095, len: 0.16, mountX: 0, ringR: 0.07 }));
-  g.add(engineGimbal);
+  stage1.add(engineGimbal);
   joints['engine.gimbal'] = { node: 'engineGimbal', axis: ['y', 'z'], range: [-8, 8], rateDegS: 20 };
-  for (const s of [1, -1]) g.add(strut(V3(0.07, s * 0.06, -0.06), V3(0.0, s * 0.035, -0.035), 0.006, m.metal, 6));
+  for (const s of [1, -1]) stage1.add(strut(V3(0.07, s * 0.06, -0.06), V3(0.0, s * 0.035, -0.035), 0.006, m.metal, 6));
   for (let k = 0; k < 4; k++) {
     const a = Math.PI / 4 + (k * Math.PI) / 2;
     const e = engineAssembly(m, { rThroat: 0.028, rExit: 0.058, len: 0.11, mountX: 0, ringR: 0.045 });
     e.position.set(x, Math.sin(a) * 0.072, Math.cos(a) * 0.072);
-    g.add(e);
+    stage1.add(e);
   }
   x += 0.07;
 
@@ -603,7 +613,7 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
         hinge.position.set(0.018, 0.0, 0);
         fin.add(plateO, plateI, hinge);
         yon.add(fin);
-        g.add(yon);
+        stage1.add(yon);
         /* tasarım pozu = AÇIK; katlı = 85° buruna doğru (sense −1: +açı gövde boyunca +X'e katlar) */
         joints[`gridFin.${k}.fold`] = { node: `gridFin${k}`, axis: 'z', range: [0, 90], rateDegS: 45, sense: -1, folded: 85 };
       }
@@ -611,11 +621,11 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
       // tank dışından geçer (iç geçiş tankı deler, kütle ve risk ekler).
       const race = box(L * 0.86, 0.024, 0.03, m.dark);
       race.position.set(x - L / 2, 0, R + 0.008);
-      g.add(race);
+      stage1.add(race);
       for (const sy of [1, -1]) {
         const hat = cylX(0.011, 0.011, L * 0.9, 10, m.metal);
         hat.position.set(x0 + L * 0.5, sy * (R + 0.012), -0.02);
-        g.add(hat);
+        stage1.add(hat);
       }
       // İniş bacakları (4, katlı): 45° kaydırılmış, kanatçıklarla çakışmaz.
       // Dış yönelim + iç eklem (menteşe üstte, bacak −X'e sarkar).
@@ -633,7 +643,7 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
         menteşe.position.set(0.0, 0.01, 0);
         leg.add(menteşe);
         yon.add(leg);
-        g.add(yon);
+        stage1.add(yon);
         /* tasarım pozu = KATLI (gövde boyunca); +açı dışa açar (sense −1: yerel +z dönüşü içe bakıyordu, ölçüldü) */
         joints[`leg.${k}.deploy`] = { node: `leg${k}`, axis: 'z', range: [0, 70], rateDegS: 30, sense: -1 };
       }
@@ -644,12 +654,12 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
         const q = thrusterQuad(m, 0.55);
         q.quaternion.setFromUnitVectors(V3(0, 0, 1), V3(0, Math.sin(a), Math.cos(a)));
         q.position.set(x - 0.06, Math.sin(a) * (R + 0.012), Math.cos(a) * (R + 0.012));
-        g.add(q);
+        stage1.add(q);
       }
       // Umbilikal kapağı (yer bağlantısı, +Z, tabana yakın).
       const umb = box(0.05, 0.05, 0.02, m.dark);
       umb.position.set(x0 + 0.1, 0, R + 0.004);
-      g.add(umb);
+      stage1.add(umb);
     }
 
     // Ara halka: ilkinde ŞAMPANYA BANT (tek vurgu), diğerlerinde metal.
@@ -688,9 +698,12 @@ export function buildRocket({ stages = 2, scale = 1, palette } = {}) {
   kap.add(umb2);
 
   const root = finalize(g, 'rocket', scale, m, { joints, massClass: 'orta sınıf fırlatıcı (~500 t)' });
+  /* ATILABİLİR GÖVDELER: tüketici bunları sahneye devredip serbest cisim
+     olarak sürebilir (physical_rigs/jettison.mjs). Adları sözleşmedir. */
+  root.userData.jettison = ['stage1', 'fairingL', 'fairingR'];
   root.userData.notes = {
     regime: 'fırlatıcı · iki kademe · tekrar kullanılabilir 1. kademe',
-    why: 'Merkez motor gimballidir: kalkışta hız sıfırken aerodinamik yüzey işe yaramaz, tek yönelim aracı itki vektörüdür. Kafes kanatçıklar geri dönüşte açılır — süpersonik akımda düz kanatçıktan iyi çalışır ve katlanınca yer kaplamaz. Soğuk gaz RCS kademe tepesindedir: aynı itkiyle en büyük tork. Besleme hatları tank DIŞINDAN geçer; tankı delmek kütle ve risk ekler. Başlık iki yarımdır: atmosfer bittiğinde tabandaki menteşeden açılıp atılır, taşımak yakıta mal olur.',
+    why: 'İki kademe iki ayrı gruptur (stage1/stage2) ve ayrılma bir ANİMASYON değil, bir DEVİRDİR: itici sahneye bırakılır ve kendi balistiğini yaşar. Merkez motor gimballidir: kalkışta hız sıfırken aerodinamik yüzey işe yaramaz, tek yönelim aracı itki vektörüdür. Kafes kanatçıklar geri dönüşte açılır — süpersonik akımda düz kanatçıktan iyi çalışır ve katlanınca yer kaplamaz. Soğuk gaz RCS kademe tepesindedir: aynı itkiyle en büyük tork. Besleme hatları tank DIŞINDAN geçer; tankı delmek kütle ve risk ekler. Başlık iki yarımdır: atmosfer bittiğinde tabandaki menteşeden açılıp atılır, taşımak yakıta mal olur.',
   };
   return root;
 }
