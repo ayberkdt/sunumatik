@@ -1,0 +1,47 @@
+{
+  "preset": "terrain_blocks",
+  "motions": [
+    {
+      "id": "terrain-static",
+      "type": "reveal",
+      "truthLevel": "analytic",
+      "purpose": "Arazi hareketsizdir: yükseklik alanı h(x,z) seed'in saf fonksiyonudur; kare kamera ve Güneş irtifasından başka hiçbir şeye bağlı değildir. Bu kayıt 'sahnede hareket eden bir şey yok' ilanıdır — kullanıcı boş yere hareket beklemesin.",
+      "model": "h(x,z) = −d²/(2R) + Σ kapı_i·katman_i (+ eğim kırpma düzeltmesi). R gerçek cisim yarıçapı (Ay 1737,4 km, Mars 3389,5 km; 1 birim = 100 m). Katmanlar adlandırılmış olgulardır: Pareto (b=2) boy dağılımlı krater alanı (aşınma yaşı, karmaşık krater merkez tepesi/terası, üst üste binme), sırtlı çok-fraktal masif, asimetrik mare sırtı, kanyon (duvar + taban kanalı + heyelan yelpazesi), barchan kumul (yalnız Mars), katmanlı mesa (talus 33°), kıvrımlı rille, çökme çukuru, fBm regolit, mikro kabartma. Gevşek regolit hücrelerinde eğim termal erozyonla 35° durma açısına kırpılır; sert kaya (masif, kanyon duvarı, mesa, rille, çukur) muaf.",
+      "limitations": "Biçimler morfolojik modellerdir, jeolojik süreç simülasyonu değil: krater çanağı s^k profili, ejecta s⁻²; erozyon tek fazlı termal aktarım (akışkan/rüzgâr taşınımı yok). Yükseklik dokusu katmanı (moon_disp_real.webp) yalnız Ay profillerinde ve tarayıcıda örneklenir; Node doğrulaması bu katmanı 0 ile geçer. Mars profilleri prosedürel albedo kullanır (gerçek Mars dokusu yok). Kaskad gölge bu turda YOK: tek 2048² gölge haritası seçilen alana (40 m / 600 m / 6 km) sıkılır, dışında gölge yerine tepe normali aydınlatması vardır — vendor'a CSM eklenmesi karar bekliyor (plan §14). Karşıtlık etkisi (opposition surge) light-physics planına bırakıldı (uOppositionGain = 0). Sürüş koridoru alan kapısıyla (eğim ≤ 15°, kayasız) güvence altındadır; koridor şerit örgüsü (20 cm hücre) henüz yok.",
+      "loop": false,
+      "durationMs": 0,
+      "pauseControl": "Hareket yoktur; duraklatacak bir şey de yoktur. Kamera kumandası her modda çalışır.",
+      "reducedMotion": "prefers-reduced-motion: reduce altında sahne zaten aynıdır: aynı seed, aynı kare. Kamera turu (aşağıda) çalışmaz, Güneş süpürmesi yalnız kaydırıcıyla, tek karede uygulanır.",
+      "exportState": "?profil=<id>&seed=<n>&sun=<derece>&export=1[&view=shaded|height|slope][&cam=vista|bird|wide]: seçili profil, tohum ve Güneş irtifasıyla tek deterministik kare. Aynı URL aynı pikselleri üretir (kurulum sırası ve tüm sayılar tohuma bağlı; Math.random/Date.now yok).",
+      "accessibility": "Tüm kumandalar yerel form öğeleridir (klavye erişilebilir). Ölçek ilanı altyazıda her zaman görünür: birim, cisim yarıçapı, sagitta, abartı çarpanı (kilitli 1; açılırsa altyazı ABARTILI ilanı yapar). Yükseklik ve eğim haritası görünümleri gölgeye bağımlı olmadan biçimi okutur (renk körlüğü için lacivert→altın→fildişi tek-yönlü rampa).",
+      "notes": "presets/terrain_blocks/ — mount'suz KÜTÜPHANE (craft_blocks'un arazi ikizi): terrain-field (kompozitör), terrain-features (olgular), terrain-mesh (kutupsal örgü 256 dilim × ratio 1,03, ufka 3 600 km — Samanyolu sızması dersi; eğim kırpma; harita renkleri), terrain-material (Lambert + eğim/yükseklik albedo + dört-tap detay merdiveni + bölge albedosu + overlay kancası), terrain-scatter (mavi-gürültü kaya/çakıl, eğim ve ejecta yoğunluğu, yerel normale yatırma), terrain-query (h, ∇h, n, eğim, tekerlek teması, dikey ışın, kaya sorgusu). Analitik height() örgüyle aynı yüzeyi görür: kırpma düzeltmesi alana geri yazılır (validate-terrain: fark < 1 mm). CI: node scripts/validate-terrain.mjs (determinizm imzası, NaN, sagitta ±1 %, ped |h| < 2 cm, koridor ≤ 15°, kırpma ≤ 36°, Pareto eğimi −2 ± 0,15 @ N=20 000, Ay'da kumul reddi). Mevcut sahneler (cinematic_space surface-scene, lunar_descent) DOKUNULMADI (plan §10 G1)."
+    },
+    {
+      "id": "terrain-shadow-sweep",
+      "type": "parameter-sweep",
+      "truthLevel": "analytic",
+      "purpose": "Güneş irtifası kaydırıcısı (0–60°): alçak Güneş'te uzun gölge ve kenar silüeti, yüksek Güneş'te düz görünen zemin — 'alçak güneş dili' burada öğretilir. Gölge uzunluğu geometriden gelir: L = H / tan(irtifa).",
+      "model": "Yönlü ışık vektörü irtifa ve sabit azimutla (kameranın arka-sağ omzu, surface-scene deseni) kurulur; gölge haritası seçilen alana sıkılır (40 m: 2 cm/texel; 600 m; 6 km). Lambert cos-yasası + yarımküre dolgusu (zeminden sıçrama) + zayıf ortam.",
+      "limitations": "Tek gölge haritası: seçilen alan dışında gölge yok. Yumuşak gölge PCF; yarı-gölge (Güneş diski 0,5°) modellenmez. Işık birimleri fiziksel değil (light-physics planı).",
+      "loop": false,
+      "durationMs": 0,
+      "pauseControl": "Kaydırıcı; ?sun=<derece> ile deterministik.",
+      "reducedMotion": "Kaydırıcı hareketi doğrudan uygular (geçiş/animasyon yok); reduced altında da aynı.",
+      "exportState": "?sun=<derece> parametresi; varsayılan profil değeri (Ay 14°, kutup kenarı 1,8°, Mars 22°).",
+      "accessibility": "Kaydırıcının değeri derece olarak etiketlenir; gölge dilini ayrıca yükseklik/eğim harita görünümleri taşır (gölgeye bağlı olmayan biçim okuması)."
+    },
+    {
+      "id": "terrain-showcase-orbit",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Vitrin kamera turu: hedef etrafında çok yavaş azimut dönüşü (0,04 rad/s), arazinin biçimini her açıdan incelemek için — dekoratif değil, inceleme amaçlı. Kullanıcı sürüklediği anda tur durur (kamera devralınır).",
+      "loop": true,
+      "durationMs": 157080,
+      "pauseControl": "Başlıktaki Duraklat/Devam düğmesi; sürükleme turu keser; sekme gizlendiğinde rAF durur. Donmuş modda (?export=1, ?t=, reduced) tur hiç başlamaz.",
+      "reducedMotion": "prefers-reduced-motion: reduce altında tur yoktur; kamera seçili kadrajda (vista/bird/wide) tek karede durur, kumanda açıktır.",
+      "exportState": "?t=<sn> sabit-zaman: tur açısı a₀ + 0,04·t ile deterministik; ?export=1 → t=0 kadrajı.",
+      "accessibility": "Tur duraklatılabilir ve hiçbir bilgi hareketle taşınmaz; kamera kadrajları klavyeyle seçilebilir (select). Kamera zemin altına inemez, sahneden kopamaz (OrbitControls sınırları).",
+      "notes": "Sabit 1/60 s adım; duvar saati yok. Deterministik: aynı t aynı kare."
+    }
+  ]
+}

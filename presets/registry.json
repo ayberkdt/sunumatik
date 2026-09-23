@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 62,
-    "presetsWithIndex": 55,
-    "animatedPresets": 48,
+    "presets": 63,
+    "presetsWithIndex": 56,
+    "animatedPresets": 49,
     "skills": 18,
-    "demoSlides": 78,
-    "demoCards": 65,
+    "demoSlides": 79,
+    "demoCards": 66,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 78,
-    "cards": 65,
+    "slides": 79,
+    "cards": 66,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -71,6 +71,7 @@
       "rendezvous_docking",
       "soi_explorer",
       "sun_advanced",
+      "terrain_blocks",
       "three_body_states",
       "timeline_tree",
       "tisserand_graph",
@@ -500,6 +501,13 @@
     {
       "name": "sun_advanced",
       "title": "Sol Vanilla Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "terrain_blocks",
+      "title": "Arazi Blokları — terrain_blocks",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

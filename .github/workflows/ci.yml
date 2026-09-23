@@ -60,6 +60,9 @@ jobs:
       - name: Astrodinamik çözücüler (US76, tırmanış, CW, Lambert, CR3BP… bağımsız sayısal denetim)
         run: node scripts/validate-astro.mjs
 
+      - name: Arazi kütüphanesi (determinizm, sagitta, kapılar, eğim kırpma, Pareto krater eğimi, gezegen kısıtı)
+        run: node scripts/validate-terrain.mjs
+
       - name: Eksen ratchet'i (çıplak geometri kurucuları tabanı aşamaz)
         run: python scripts/eksen-denetimi.py
 
