@@ -48,6 +48,16 @@ export function directionBucket(dir) {
   return b.join(',');
 }
 
+/** Eksen beyanını doğrular: üç sonlu sayı ve sıfır olmayan uzunluk. */
+function eksenDogrula(a) {
+  if (a == null) return [0, 0, 1];
+  if (!Array.isArray(a) || a.length !== 3 || !a.every(Number.isFinite)) {
+    throw new TypeError(`createAssembly: axis üç sayıdan oluşan bir dizi olmalı, gelen: ${JSON.stringify(a)}`);
+  }
+  if (len(a) < 1e-9) throw new RangeError('createAssembly: axis sıfır uzunlukta olamaz');
+  return a;
+}
+
 /**
  * Montaj grafiğini kurar.
  *
@@ -55,7 +65,12 @@ export function directionBucket(dir) {
  * Zorunlu parça alanları: id, parent, iface, step, why.
  */
 export function createAssembly(beyan) {
-  const axis = norm(beyan.axis || [0, 0, 1]);
+  /* Eksen SESSİZCE kabul edilmez. `axis: 'z'` gibi bir dizgi verildiğinde
+     norm() NaN üretiyor ve `axial`/`layered` kipleri hiçbir parçayı
+     kıpırdatmıyordu — hata görünmüyordu çünkü sıfır ötelenme de geçerli
+     bir sonuç gibi duruyor (denetim yakaladı: 0/26 parça hareket etti).
+     Sessiz yanlış yerine yüksek sesli hata. */
+  const axis = norm(eksenDogrula(beyan.axis));
   const steps = beyan.steps || [];
   const ham = beyan.parts || [];
   if (!ham.length) throw new Error('assembly: parça listesi boş');

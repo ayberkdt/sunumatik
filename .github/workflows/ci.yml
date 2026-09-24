@@ -84,6 +84,9 @@ jobs:
       - name: Saha yerleşimi (kural kataloğu, çözücü, determinizm, araziye yazılan kapılar)
         run: node scripts/validate-site.mjs
 
+      - name: Habitat blokları (ortam kuralı, hat matematiği, ortamlı bütçe)
+        run: node scripts/validate-habitat.mjs
+
       - name: motion-manifest şemaları
         shell: bash
         run: |

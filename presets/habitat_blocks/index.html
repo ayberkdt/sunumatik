@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Habitat Blokları — habitat_blocks</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+    #stage { position: absolute; left: 292px; top: 0; right: 366px; bottom: 0; cursor: grab; }
+    #stage.suruklu { cursor: grabbing; }
+    aside { position: absolute; top: 0; bottom: 0; width: 292px; overflow-y: auto; background: #090b11;
+      border-right: 1px solid #1c212c; padding: 14px 14px 22px; }
+    #sag { left: auto; right: 0; width: 366px; border-right: 0; border-left: 1px solid #1c212c; }
+    h1 { margin: 0 0 10px; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #c9a35c; font-weight: 600; }
+    h1 small { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: .05em;
+      text-transform: none; color: #8a90a0; margin-top: 3px; line-height: 1.45; }
+    h2 { margin: 38px 0 6px; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase;
+      color: #c9a35c; font-weight: 600; }
+    h2:first-child { margin-top: 0; }
+    p.alt { margin: 0 0 10px; font-size: 11px; line-height: 1.5; color: #7d8393; }
+    .adim { display: grid; grid-template-columns: 20px 1fr; gap: 8px; padding: 8px; border-radius: 8px;
+      cursor: pointer; border: 1px solid transparent; font-size: 11.5px; line-height: 1.4; min-height: 44px; align-items: start; }
+    .adim:hover { border-color: #2b303d; }
+    .adim.secili { background: rgba(201,163,92,.10); border-color: #c9a35c; }
+    .adim .no { font-variant-numeric: tabular-nums; color: #c9a35c; font-weight: 600; }
+    .adim b { font-weight: 600; color: #e8dcc0; }
+    .adim .ac { display: block; color: #7d8393; margin-top: 2px; }
+    .sis { display: flex; gap: 8px; align-items: center; font-size: 11.5px; padding: 6px 4px; min-height: 34px; }
+    .nokta { width: 10px; height: 10px; border-radius: 2px; flex: 0 0 auto; }
+    .sis .kg { margin-left: auto; color: #8a90a0; font-variant-numeric: tabular-nums; }
+    table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    td { padding: 5px 0; border-bottom: 1px solid #141821; vertical-align: top; line-height: 1.45; }
+    td.k { color: #7d8393; }
+    td.v { text-align: right; font-variant-numeric: tabular-nums; color: #e8dcc0; white-space: nowrap; }
+    .kart { border: 1px solid #1c212c; border-radius: 8px; padding: 11px 12px; font-size: 11.5px;
+      line-height: 1.55; color: #aeb5c4; }
+    .kart b { color: #e8dcc0; font-weight: 600; }
+    .kart .e { display: block; color: #7d8393; text-transform: uppercase; font-size: 10px;
+      letter-spacing: .08em; margin-top: 9px; }
+    .kart .e:first-child { margin-top: 0; }
+    .red { border-color: #4a3524; color: #d69a4a; }
+    header { position: absolute; left: 306px; right: 380px; top: 12px; z-index: 5; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    button, select { background: rgba(16,19,27,.9); color: #dfe3ea; border: 1px solid #2b303d;
+      border-radius: 8px; padding: 8px 11px; font-size: 12px; min-height: 44px; cursor: pointer; }
+    button:hover, select:hover { border-color: #c9a35c; }
+    button.aktif { border-color: #c9a35c; background: rgba(201,163,92,.14); color: #f0e2c4; }
+    #altyazi { position: absolute; left: 306px; right: 380px; bottom: 14px; z-index: 5; font-size: 11.5px;
+      line-height: 1.5; color: #b9bfcc; background: rgba(10,12,18,.76); border: 1px solid #232837;
+      border-radius: 8px; padding: 10px 14px; pointer-events: none; }
+    #altyazi b { color: #e8dcc0; }
+  </style>
+</head>
+<body>
+  <aside id="sol">
+    <h1>Habitat Blokları<small>habitat_blocks · yüzey üssü bileşenleri, hat yönlendirme ve ortam kuralı</small></h1>
+    <h2>Kurulum adımları</h2>
+    <p class="alt">Sıra keyfi değil: her adım bir sonrakinin zeminini hazırlar. Adıma tıkla, üs o ana kadar kurulsun.</p>
+    <div id="adimlar"></div>
+    <h2>Sistemler</h2>
+    <div id="sistemler"></div>
+  </aside>
+
+  <header>
+    <button id="ortam" class="aktif">Ortam: Mars</button>
+    <button id="hatlar" class="aktif">Hatlar</button>
+    <select id="gorunum" aria-label="Bakış">
+      <option value="serbest">Serbest bakış</option>
+      <option value="ust">Üstten</option>
+      <option value="yan">Yandan</option>
+    </select>
+  </header>
+
+  <div id="stage"></div>
+  <div id="altyazi"></div>
+
+  <aside id="sag">
+    <h2>Ortam</h2>
+    <div class="kart" id="ortamKart"></div>
+    <h2>Hat hesabı</h2>
+    <table id="hatTablo"></table>
+    <p class="alt" id="hatNot"></p>
+    <h2>Kütle bütçesi</h2>
+    <table id="butce"></table>
+  </aside>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
+    import { buildHabitat } from './hab-build.mjs';
+    import { PARTS, STEPS, SUBSYSTEMS, HAB_ENV,
+             massBudget, runEndpoints, partById } from './hab-parts.mjs';
+    import { planRun, buildRun } from './routing.mjs';
+
+    const el = (s) => document.querySelector(s);
+    const sorgu = new URLSearchParams(location.search);
+    let ortam = sorgu.get('ortam') === 'moon' ? 'moon' : 'mars';
+    let adim = null, hatlarAcik = true;
+
+    /* ── sahne ─────────────────────────────────────────────────────── */
+    const host = el('#stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    host.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.2, 800);
+    camera.up.set(0, 0, 1);
+    const kontrol = new OrbitControls(camera, renderer.domElement);
+    kontrol.enableDamping = true;
+    kontrol.dampingFactor = 0.08;
+    kontrol.maxPolarAngle = Math.PI * 0.49;          // yerin altına inilmez
+
+    const gokyuzu = new THREE.HemisphereLight(0xffffff, 0x000000, 1);
+    scene.add(gokyuzu);
+    const gunes = new THREE.DirectionalLight(0xffffff, 1);
+    gunes.castShadow = true;
+    gunes.shadow.mapSize.set(2048, 2048);
+    Object.assign(gunes.shadow.camera, { left: -26, right: 26, top: 26, bottom: -26, near: 1, far: 90 });
+    scene.add(gunes);
+
+    let kok = null, hatGrup = null;
+
+    /* Ortam yalnız bir etiket değil: gökyüzü rengi, güneş açısı ve
+       gölgenin sertliği ortamın fiziğinden gelir. Ay'da atmosfer yoktur,
+       bu yüzden gökyüzü siyah ve gölge keskindir; Mars'ta ince atmosfer
+       ışığı saçar ve gölgeyi yumuşatır. */
+    function ortamUygula() {
+      const mars = ortam === 'mars';
+      scene.background = new THREE.Color(mars ? 0x2a1c16 : 0x02030a);
+      gokyuzu.color.set(mars ? 0xb59277 : 0x1b2430);
+      gokyuzu.groundColor.set(mars ? 0x3a2418 : 0x0d1016);
+      gokyuzu.intensity = mars ? 0.48 : 0.16;        // Ay'da saçılma yok
+      gunes.color.set(mars ? 0xffd9b0 : 0xfff6e6);
+      gunes.intensity = mars ? 2.0 : 3.1;            // Ay daha yakın, atmosfer süzmüyor
+      gunes.position.set(mars ? 16 : 24, mars ? -20 : -8, mars ? 20 : 9);
+      renderer.toneMappingExposure = mars ? 0.82 : 0.78;
+      el('#ortam').textContent = `Ortam: ${HAB_ENV[ortam].ad}`;
+    }
+
+    function kur() {
+      if (kok) { scene.remove(kok); kok = null; }
+      const yapim = buildHabitat(THREE, { env: ortam });
+      kok = yapim.root;
+      scene.add(kok);
+
+      hatGrup = new THREE.Group();
+      kok.add(hatGrup);
+      const hatVerisi = [];
+      for (const p of PARTS.filter(q => q.sekil === 'hat')) {
+        const u = runEndpoints(p.id);
+        if (!u) continue;
+        const plan = planRun(u.a, u.b, { akiskan: u.akiskan, env: ortam, odM: u.odM, wallM: u.wallM, malzeme: u.malzeme });
+        hatGrup.add(buildRun(THREE, plan));
+        hatVerisi.push({ p, plan });
+      }
+      hatGrup.visible = hatlarAcik;
+
+      adimUygula();
+      cerceve();
+      paneller(yapim.reddedilen, hatVerisi);
+    }
+
+    /* Kamera üssün gerçek gabarisinden kurulur. Elle yazılan konum
+       (21, −24, 14) 26 m'lik platformu kadrajın dışına taşırıyordu:
+       o mesafede görünen yarı-yükseklik 12,6 m, gereken ise 16 m'ydi. */
+    let cercevelendi = false;
+    function cerceve(zorla = false) {
+      if (cercevelendi && !zorla) return;
+      const kutu = new THREE.Box3().setFromObject(kok);
+      const boyut = kutu.getSize(new THREE.Vector3());
+      const merkez = kutu.getCenter(new THREE.Vector3());
+      const r = Math.max(boyut.x, boyut.y, boyut.z) * 0.5 || 1;
+      const uzaklik = r / Math.tan(camera.fov * Math.PI / 360) * 1.18;
+      kontrol.target.copy(merkez);
+      camera.position.copy(merkez).add(new THREE.Vector3(0.58, -0.72, 0.38).normalize().multiplyScalar(uzaklik));
+      camera.far = uzaklik * 8;
+      camera.updateProjectionMatrix();
+      kontrol.update();
+      cercevelendi = true;
+    }
+
+    function adimUygula() {
+      if (!kok) return;
+      for (const p of PARTS) {
+        const g = kok.getObjectByName(p.id);
+        if (!g) continue;
+        g.visible = adim === null || p.step <= adim;
+      }
+      if (hatGrup) hatGrup.visible = hatlarAcik && (adim === null || adim >= 7);
+    }
+
+    /* ── paneller ──────────────────────────────────────────────────── */
+    function adimListesi() {
+      const h = el('#adimlar');
+      h.innerHTML = '';
+      const yap = (no, ad, ac) => {
+        const div = document.createElement('div');
+        div.className = 'adim' + (adim === no ? ' secili' : '');
+        div.innerHTML = '<span class="no"></span><span><b></b><span class="ac"></span></span>';
+        div.querySelector('.no').textContent = no === null ? '◆' : no;
+        div.querySelector('b').textContent = ad;
+        div.querySelector('.ac').textContent = ac;
+        div.onclick = () => { adim = no; adimUygula(); adimListesi(); };
+        h.appendChild(div);
+      };
+      yap(null, 'Kurulmuş üs', 'Bütün bileşenler görünür.');
+      for (const s of STEPS) yap(s.no, s.ad, s.aciklama);
+    }
+
+    function paneller(reddedilen, hatVerisi) {
+      /* Ortam kartı: reddedilen bileşen bir hata değil, bir BULGU'dur;
+         gerekçesi ve önerisi birlikte yazılır. */
+      const k = el('#ortamKart');
+      k.innerHTML = '';
+      const e = HAB_ENV[ortam];
+      const ekle = (baslik, metin) => {
+        const b = document.createElement('span'); b.className = 'e'; b.textContent = baslik;
+        const v = document.createElement('div'); v.textContent = metin;
+        k.append(b, v);
+      };
+      ekle('Yerçekimi', `${e.gravity} m/s²  ·  Dünya'nın %${(e.gravity / 9.81 * 100).toFixed(0)}'i`);
+      ekle('Basınç', e.pressure ? `${e.pressure} Pa (Dünya'nın binde 6'sı)` : 'Yok — mutlak vakum');
+      ekle('Toz', e.toz);
+      k.classList.toggle('red', reddedilen.length > 0);
+      if (reddedilen.length) {
+        for (const r of reddedilen) {
+          ekle(`Reddedildi: ${partById(r.id).ad}`, `${r.neden}  →  ${r.oneri}`);
+        }
+      } else {
+        ekle('Reddedilen bileşen', 'Yok — katalogdaki her bileşen bu ortamda gerçek.');
+      }
+
+      /* Hat tablosu: her sayı bir hesaptan gelir, hiçbiri elle yazılmadı. */
+      const t = el('#hatTablo');
+      t.innerHTML = '';
+      const satir = (a, b) => {
+        const tr = document.createElement('tr');
+        const x = document.createElement('td'); x.className = 'k'; x.textContent = a;
+        const y = document.createElement('td'); y.className = 'v'; y.textContent = b;
+        tr.append(x, y); t.appendChild(tr);
+      };
+      for (const { p, plan } of hatVerisi) {
+        satir(`${p.ad} — boy`, `${plan.uzunlukM.toFixed(1)} m`);
+        satir('izin verilen açıklık', `${plan.izinliAralikM.toFixed(1)} m`);
+        satir('seçilen mesnet aralığı', `${plan.mesnetAraligiM.toFixed(2)} m  (${plan.mesnetAdedi} mesnet)`);
+        satir('sarkma', `${(plan.sarkmaM * 1000).toFixed(2)} mm`);
+        satir('ısıl boy değişimi', `${(plan.genlesme.dLm * 1000).toFixed(1)} mm  →  ${plan.genlesme.ilmekAdedi} ilmek`);
+      }
+      const ilk = hatVerisi[0];
+      el('#hatNot').textContent = ilk
+        ? `Mesnet aralığı sarkma sınırından çıkar: δ = 5wL⁴/(384EI) ≤ L/360. Yük yerçekimiyle ` +
+          `ölçeklendiğinden izin verilen açıklık g^(−1/3) gibi değişir — ${HAB_ENV[ortam].ad}'da ` +
+          `aynı boru ${ortam === 'moon' ? 'daha uzun' : 'daha kısa'} açıklık geçer.`
+        : '';
+
+      /* Kütle bütçesi */
+      const b = massBudget(ortam);
+      const bt = el('#butce');
+      bt.innerHTML = '';
+      const satir2 = (a, c) => {
+        const tr = document.createElement('tr');
+        const x = document.createElement('td'); x.className = 'k'; x.textContent = a;
+        const y = document.createElement('td'); y.className = 'v'; y.textContent = c;
+        tr.append(x, y); bt.appendChild(tr);
+      };
+      for (const s of b.sistemler) satir2(s.ad, `${s.kg.toFixed(0)} kg`);
+      satir2('Toplam', `${b.toplamKg.toFixed(0)} kg`);
+      satir2('Yerinde üretilen', `${b.yerindeUretilen.length} bileşen · 0 kg taşındı`);
+
+      /* Sistem listesi */
+      const sh = el('#sistemler');
+      sh.innerHTML = '';
+      for (const s of b.sistemler) {
+        const div = document.createElement('div');
+        div.className = 'sis';
+        const n = document.createElement('span'); n.className = 'nokta';
+        n.style.background = SUBSYSTEMS[s.sistem].renk;
+        const ad = document.createElement('span'); ad.textContent = s.ad;
+        const kg = document.createElement('span'); kg.className = 'kg'; kg.textContent = `%${(s.pay * 100).toFixed(0)}`;
+        div.append(n, ad, kg);
+        div.title = SUBSYSTEMS[s.sistem].neden;
+        sh.appendChild(div);
+      }
+
+      altyazi(reddedilen);
+    }
+
+    function altyazi(reddedilen) {
+      const a = el('#altyazi');
+      a.innerHTML = '';
+      const baslik = document.createElement('b');
+      baslik.textContent = `${HAB_ENV[ortam].ad} yüzey üssü`;
+      const s = document.createElement('span');
+      const b = massBudget(ortam);
+      s.textContent = ` — ${b.kapsamParca} bileşen, ${b.toplamKg.toFixed(0)} kg taşınan kütle` +
+        (b.disaridaKg ? ` (${b.disaridaKg.toFixed(0)} kg bu ortamda gönderilmiyor). ` : '. ') +
+        (reddedilen.length
+          ? `${reddedilen.length} bileşen bu ortamda gerçek olmadığı için kurulmadı; gerekçeleri sağda.`
+          : 'Regolit örtüsü ve platform yerinde üretildiği için kütle bütçesinde görünmez.');
+      a.append(baslik, s);
+    }
+
+    /* ── etkileşim ─────────────────────────────────────────────────── */
+    el('#ortam').addEventListener('click', () => {
+      ortam = ortam === 'mars' ? 'moon' : 'mars';
+      ortamUygula(); kur();
+    });
+    el('#hatlar').addEventListener('click', () => {
+      hatlarAcik = !hatlarAcik;
+      el('#hatlar').classList.toggle('aktif', hatlarAcik);
+      adimUygula();
+    });
+    el('#gorunum').addEventListener('change', (e) => {
+      cerceve(true);
+      const d = camera.position.distanceTo(kontrol.target);
+      const t = kontrol.target;
+      if (e.target.value === 'ust') camera.position.set(t.x + 0.01, t.y - 0.01, t.z + d);
+      else if (e.target.value === 'yan') camera.position.set(t.x, t.y - d * 0.97, t.z + d * 0.22);
+      kontrol.update();
+    });
+
+    function boyut() {
+      const w = host.clientWidth, h = host.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / Math.max(h, 1);
+      camera.updateProjectionMatrix();
+    }
+    addEventListener('resize', boyut);
+
+    function kare() {
+      kontrol.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(kare);
+    }
+
+    boyut();
+    ortamUygula();
+    adimListesi();
+    kur();
+    requestAnimationFrame(kare);
+  </script>
+</body>
+</html>

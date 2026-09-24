@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Patlatılmış Görünüm — exploded_view</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+    #stage { position: absolute; left: 292px; top: 0; right: 360px; bottom: 0; cursor: grab; }
+    #stage.suruklu { cursor: grabbing; }
+    aside { position: absolute; top: 0; bottom: 0; width: 292px; overflow-y: auto; background: #090b11;
+      border-right: 1px solid #1c212c; padding: 14px 14px 22px; }
+    #sag { left: auto; right: 0; width: 360px; border-right: 0; border-left: 1px solid #1c212c; padding-top: 14px; }
+    h1 { margin: 0 0 10px; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #c9a35c; font-weight: 600; }
+    h1 small { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: .05em;
+      text-transform: none; color: #8a90a0; margin-top: 3px; line-height: 1.45; }
+    h2 { margin: 38px 0 6px; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase;
+      color: #c9a35c; font-weight: 600; }
+    h2:first-child { margin-top: 0; }
+    p.alt { margin: 0 0 10px; font-size: 11px; line-height: 1.5; color: #7d8393; }
+    .cisim { display: grid; grid-template-columns: 1fr auto; gap: 4px 9px; padding: 9px 10px; border-radius: 8px;
+      cursor: pointer; border: 1px solid transparent; font-size: 11.5px; line-height: 1.4; min-height: 44px; align-items: center; }
+    .cisim:hover { border-color: #2b303d; }
+    .cisim.secili { background: rgba(201,163,92,.10); border-color: #c9a35c; }
+    .cisim b { font-weight: 600; color: #e8dcc0; }
+    .cisim .k { color: #7d8393; font-variant-numeric: tabular-nums; }
+    .cisim .n { grid-column: 1 / -1; color: #7d8393; }
+    .adim { display: grid; grid-template-columns: 20px 1fr; gap: 8px; padding: 7px 8px; border-radius: 8px;
+      cursor: pointer; border: 1px solid transparent; font-size: 11.5px; line-height: 1.4; min-height: 44px; align-items: start; }
+    .adim:hover { border-color: #2b303d; }
+    .adim.secili { background: rgba(201,163,92,.10); border-color: #c9a35c; }
+    .adim .no { font-variant-numeric: tabular-nums; color: #c9a35c; font-weight: 600; }
+    .adim .ac { display: block; color: #7d8393; margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    td { padding: 5px 0; border-bottom: 1px solid #141821; vertical-align: top; line-height: 1.45; }
+    td.k { color: #7d8393; }
+    td.v { text-align: right; font-variant-numeric: tabular-nums; color: #e8dcc0; white-space: nowrap; }
+    .kart { border: 1px solid #1c212c; border-radius: 8px; padding: 11px 12px; font-size: 11.5px;
+      line-height: 1.55; color: #aeb5c4; }
+    .kart b { color: #e8dcc0; font-weight: 600; }
+    .kart .e { display: block; color: #7d8393; text-transform: uppercase; font-size: 10px;
+      letter-spacing: .08em; margin-top: 9px; }
+    .kart .e:first-child { margin-top: 0; }
+    .tahmin { color: #d69a4a; }
+    header { position: absolute; left: 306px; right: 374px; top: 12px; z-index: 5; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    button, select { background: rgba(16,19,27,.9); color: #dfe3ea; border: 1px solid #2b303d;
+      border-radius: 8px; padding: 8px 11px; font-size: 12px; min-height: 44px; cursor: pointer; }
+    button:hover, select:hover { border-color: #c9a35c; }
+    button.aktif { border-color: #c9a35c; background: rgba(201,163,92,.14); color: #f0e2c4; }
+    label.rng { display: flex; gap: 8px; align-items: center; background: rgba(16,19,27,.9);
+      border: 1px solid #2b303d; border-radius: 8px; padding: 7px 10px; font-size: 12px; min-height: 44px; }
+    label.rng input { width: 190px; height: 22px; accent-color: #c9a35c; }
+    label.rng b { min-width: 3.4em; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+    #altyazi { position: absolute; left: 306px; right: 374px; bottom: 14px; z-index: 5; font-size: 11.5px;
+      line-height: 1.5; color: #b9bfcc; background: rgba(10,12,18,.76); border: 1px solid #232837;
+      border-radius: 8px; padding: 10px 14px; pointer-events: none; }
+    #altyazi b { color: #e8dcc0; }
+    #etiketler { position: absolute; left: 292px; top: 0; right: 360px; bottom: 0; pointer-events: none; z-index: 4; }
+    .xv-et { position: absolute; transform: translateY(-50%); font-size: 10.5px; line-height: 1.25;
+      letter-spacing: .02em; color: #cdd3de; background: rgba(5,7,11,.82);
+      border: 1px solid #262c39; border-radius: 4px; padding: 2px 6px; }
+    .xv-et--secili { border-color: #c9a35c; color: #f0e2c4; }
+    .xv-kilavuzlar polyline { fill: none; stroke: #39404f; stroke-width: 1; }
+    .xv-kilavuzlar polyline.xv-kilavuz--secili { stroke: #c9a35c; }
+  </style>
+</head>
+<body>
+  <aside id="sol">
+    <h1>Patlatılmış Görünüm<small>exploded_view · tek montaj çekirdeği, altı farklı cisim · beyan edilen ve sahneden türetilen yollar yan yana</small></h1>
+    <h2>Cisim</h2>
+    <p class="alt">İlk ikisi parça parça BEYAN edilmiştir: kütle ve arayüz katalogdan gelir. Kalan dördü sahne grafiğinden TÜRETİLİR; oradaki kütleler tahmindir ve öyle işaretlenir.</p>
+    <div id="cisimler"></div>
+    <h2>Montaj adımları</h2>
+    <div id="adimlar"></div>
+  </aside>
+
+  <header>
+    <label class="rng">Patlatma <input id="patla" type="range" min="0" max="100" value="0" aria-label="Patlatma oranı"><b id="patlaEt">%0</b></label>
+    <button id="oynat">▶ Montajı oynat</button>
+    <select id="kip" aria-label="Patlatma kipi">
+      <option value="assembly">Montaj yönü</option>
+      <option value="axial">Eksenel</option>
+      <option value="radial">Işınsal</option>
+      <option value="layered">Katmanlı</option>
+    </select>
+    <button id="kesit">Kesit</button>
+  </header>
+
+  <div id="stage"></div>
+  <div id="etiketler"></div>
+  <div id="altyazi"></div>
+
+  <aside id="sag">
+    <h2>Parça künyesi</h2>
+    <div class="kart" id="kunye">Bir parçaya tıkla ya da soldan bir adım seç.</div>
+    <h2>Montaj zinciri</h2>
+    <div class="kart" id="zincir">—</div>
+    <h2>Kütle bütçesi</h2>
+    <table id="butce"></table>
+    <h2>Arayüz sayımı</h2>
+    <table id="arayuz"></table>
+  </aside>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
+    import { createExplodedView } from '../core/exploded-view.mjs';
+    import { assemblyFromCatalog, groupsFromCatalog, nodesFromBuild } from './adapters/catalog.mjs';
+    import { assemblyFromScene, assemblyFromCraft } from './adapters/scene.mjs';
+    import { createAssembly } from '../core/assembly.mjs';
+    import { buildSatellite } from '../satellite_integration/sat-build.mjs';
+    import * as SAT from '../satellite_integration/sat-parts.mjs';
+    import { buildHabitat } from '../habitat_blocks/hab-build.mjs';
+    import * as HAB from '../habitat_blocks/hab-parts.mjs';
+    import { buildCraft, CRAFT_LABELS } from '../craft_blocks/craft-blocks.mjs';
+
+    const el = (s) => document.querySelector(s);
+    const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const sorgu = new URLSearchParams(location.search);
+
+    /* ── cisim kayıtları ───────────────────────────────────────────────
+       İki yol yan yana durur ve bu KASITLIDIR: beyan edilen cisim tam
+       künye taşır, türetilen cisim taşımaz. Vitrinin gösterdiği şey
+       patlatmanın ikisinde de aynı çalıştığıdır. */
+    const CISIMLER = {
+      uydu: {
+        ad: 'Uydu', not: 'beyan edilmiş katalog · 33 parça', olcek: 2.6,
+        kur() {
+          const yapim = buildSatellite(THREE, { scale: 1 });
+          const A = assemblyFromCatalog(SAT, { axis: [0, 0, 1] });
+          return { root: yapim.root, assembly: A, nodes: nodesFromBuild(THREE, yapim),
+            gruplar: groupsFromCatalog(SAT), beyan: true, dispose: () => yapim.dispose?.() };
+        },
+      },
+      habitat: {
+        ad: 'Yüzey üssü', not: 'beyan edilmiş katalog · 26 bileşen', olcek: 0.42,
+        kur() {
+          const yapim = buildHabitat(THREE, { env: 'mars' });
+          const A = assemblyFromCatalog(HAB, { axis: [0, 0, 1] });
+          /* Ortam kuralıyla reddedilen bileşenin düğümü yoktur; montaj
+             grafiği onu yine de taşır ve patlatma görünmeyeni atlar. */
+          return { root: yapim.root, assembly: A, nodes: yapim.nodes,
+            gruplar: groupsFromCatalog(HAB), beyan: true };
+        },
+      },
+      rover: { ad: 'Gezgin', not: 'sahneden türetildi · kütleler tahmin', olcek: 2.2, craft: 'rover' },
+      lander: { ad: 'İniş aracı', not: 'sahneden türetildi · kütleler tahmin', olcek: 2.2, craft: 'lander' },
+      rocket: { ad: 'Roket', not: 'sahneden türetildi · kütleler tahmin', olcek: 2.2, craft: 'rocket' },
+      orbiter: { ad: 'Yörünge aracı', not: 'sahneden türetildi · kütleler tahmin', olcek: 2.2, craft: 'orbiter' },
+    };
+    for (const [ad, c] of Object.entries(CISIMLER)) {
+      if (!c.craft) continue;
+      c.kur = () => {
+        const root = buildCraft(c.craft, { scale: 2 });
+        const t = assemblyFromCraft(THREE, root, { maxDepth: 3, minOran: 0.05 });
+        return { root, assembly: createAssembly({ units: 'design', axis: [0, 1, 0], parts: t.parts }),
+          nodes: t.nodes, gruplar: null, beyan: false, tahmin: t.tahmin };
+      };
+    }
+
+    /* ── sahne ─────────────────────────────────────────────────────── */
+    const host = el('#stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    host.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x05070b);
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 400);
+    camera.up.set(0, 0, 1);
+    camera.position.set(9, -11, 6.5);
+    const kontrol = new OrbitControls(camera, renderer.domElement);
+    kontrol.enableDamping = true;
+    kontrol.dampingFactor = 0.08;
+
+    scene.add(new THREE.HemisphereLight(0x8fa6c4, 0x151a22, 0.55));
+    const gunes = new THREE.DirectionalLight(0xfff2dd, 2.1);
+    gunes.position.set(7, -9, 11);
+    gunes.castShadow = true;
+    gunes.shadow.mapSize.set(2048, 2048);
+    const d = 16;
+    Object.assign(gunes.shadow.camera, { left: -d, right: d, top: d, bottom: -d, near: 0.5, far: 60 });
+    scene.add(gunes);
+    const dolgu = new THREE.DirectionalLight(0x6d86a8, 0.5);
+    dolgu.position.set(-8, 6, 3);
+    scene.add(dolgu);
+
+    /* ── durum ─────────────────────────────────────────────────────── */
+    let aktif = null, xv = null, kok = null;
+    let cisimAd = CISIMLER[sorgu.get('cisim')] ? sorgu.get('cisim') : 'uydu';
+    let adim = null, oynuyor = false, oynatT = 0, kesitAcik = false;
+
+    function yukle(ad) {
+      if (aktif) { scene.remove(kok); aktif.dispose?.(); xv?.dispose(); }
+      cisimAd = ad;
+      const c = CISIMLER[ad];
+      aktif = c.kur();
+      kok = new THREE.Group();
+      kok.scale.setScalar(c.olcek);
+      kok.add(aktif.root);
+      scene.add(kok);
+      xv = createExplodedView(THREE, aktif.assembly, aktif.nodes, {
+        labelHost: el('#etiketler'), camera, renderer, omega: azaltilmis ? 40 : 6,
+      });
+      adim = null;
+      xv.setMode(el('#kip').value);
+      xv.setExplode(Number(el('#patla').value) / 100);
+      if (azaltilmis) xv.jumpExplode(Number(el('#patla').value) / 100);
+      cerceveleAyarla();
+      cisimListesi(); adimListesi(); sagPanel(); altyaziYaz(null);
+    }
+
+    /* Kamera cismin gerçek gabarisine göre kurulur: her cisim farklı
+       büyüklükte ve sabit bir kamera kimini ufacık, kimini taşırır.
+       Ölçü MONTAJLI hâlden değil TAM PATLAMIŞ hâlden alınır: montajlıya
+       göre çerçevelenen kamera, kaydırak sonuna geldiğinde parçaları
+       ekran dışına taşırıyordu (itici tankı etiketi üstten kesiliyordu).
+       Patlatma ötelemelerinin en büyüğü yarıçapa eklenir. */
+    function cerceveleAyarla() {
+      const kutu = new THREE.Box3().setFromObject(kok);
+      const boyut = kutu.getSize(new THREE.Vector3());
+      const merkez = kutu.getCenter(new THREE.Vector3());
+      let enUzak = 0;
+      for (const d of aktif.assembly.explode(1, { mode: el('#kip').value }).values()) {
+        enUzak = Math.max(enUzak, Math.hypot(d[0], d[1], d[2]));
+      }
+      const r = (Math.max(boyut.x, boyut.y, boyut.z) * 0.5 + enUzak * kok.scale.x) || 1;
+      const uzaklik = r / Math.tan(camera.fov * Math.PI / 360) * 1.02;
+      kontrol.target.copy(merkez);
+      camera.position.copy(merkez).add(new THREE.Vector3(0.62, -0.78, 0.46).multiplyScalar(uzaklik));
+      camera.near = Math.max(uzaklik / 400, 0.01);
+      camera.far = uzaklik * 12;
+      camera.updateProjectionMatrix();
+      kontrol.update();
+    }
+
+    /* ── sol panel ─────────────────────────────────────────────────── */
+    function cisimListesi() {
+      const h = el('#cisimler');
+      h.innerHTML = '';
+      for (const [ad, c] of Object.entries(CISIMLER)) {
+        const div = document.createElement('div');
+        div.className = 'cisim' + (ad === cisimAd ? ' secili' : '');
+        div.innerHTML = `<b></b><span class="k"></span><span class="n"></span>`;
+        div.querySelector('b').textContent = c.ad;
+        div.querySelector('.n').textContent = c.not;
+        if (ad === cisimAd && aktif) div.querySelector('.k').textContent = `${aktif.assembly.parts.length} parça`;
+        div.onclick = () => yukle(ad);
+        h.appendChild(div);
+      }
+    }
+
+    function adimListesi() {
+      const h = el('#adimlar');
+      h.innerHTML = '';
+      const adimlar = aktif.assembly.steps || [];
+      if (!adimlar.length) {
+        h.innerHTML = '<p class="alt">Bu cisim adım adım beyan edilmemiştir: montaj sırası sahne derinliğinden türetilir, bu yüzden adım listesi yoktur.</p>';
+        return;
+      }
+      const yap = (no, ad, ac) => {
+        const div = document.createElement('div');
+        div.className = 'adim' + (adim === no ? ' secili' : '');
+        div.innerHTML = `<span class="no"></span><span><b></b><span class="ac"></span></span>`;
+        div.querySelector('.no').textContent = no === null ? '◆' : no;
+        div.querySelector('b').textContent = ad;
+        div.querySelector('.ac').textContent = ac;
+        div.onclick = () => { adim = no; xv.setStep(no); adimListesi(); altyaziYaz(null); };
+        h.appendChild(div);
+      };
+      yap(null, 'Tümü', 'Bütün parçalar görünür.');
+      for (const s of adimlar) yap(s.no, s.ad, s.aciklama || '');
+    }
+
+    /* ── sağ panel ─────────────────────────────────────────────────── */
+    function sagPanel() {
+      const A = aktif.assembly;
+      const b = A.budget();
+      const t = el('#butce');
+      t.innerHTML = '';
+      const satir = (k, v) => {
+        const tr = document.createElement('tr');
+        const a = document.createElement('td'); a.className = 'k'; a.textContent = k;
+        const c = document.createElement('td'); c.className = 'v'; c.textContent = v;
+        tr.append(a, c); t.appendChild(tr);
+      };
+      if (aktif.beyan) {
+        for (const g of b.gruplar || []) satir(aktif.gruplar?.[g.grup]?.ad || g.grup, `${g.kg.toFixed(1)} kg`);
+        satir('Toplam', `${b.toplamKg.toFixed(1)} kg`);
+      } else {
+        satir('Toplam (TAHMİN)', `≈ ${b.toplamKg.toFixed(1)} kg`);
+        satir('Parça', `${A.parts.length}`);
+      }
+
+      const ta = el('#arayuz');
+      ta.innerHTML = '';
+      for (const x of A.interfaceCensus()) {
+        const tr = document.createElement('tr');
+        const a = document.createElement('td'); a.className = 'k'; a.textContent = x.ad;
+        const c = document.createElement('td'); c.className = 'v'; c.textContent = x.adet;
+        tr.append(a, c); ta.appendChild(tr);
+      }
+      if (!aktif.beyan) {
+        const tr = document.createElement('tr');
+        const a = document.createElement('td'); a.colSpan = 2; a.className = 'k tahmin';
+        a.textContent = 'Bu sayım addan TAHMİN edilmiştir; beyan değildir.';
+        tr.appendChild(a); ta.appendChild(tr);
+      }
+    }
+
+    function kunyeYaz(id) {
+      const k = el('#kunye');
+      const p = aktif.assembly.byId.get(id);
+      if (!p) { k.textContent = 'Bir parçaya tıkla ya da soldan bir adım seç.'; el('#zincir').textContent = '—'; return; }
+      k.innerHTML = '';
+      const ekle = (baslik, metin, sinif = '') => {
+        const e = document.createElement('span'); e.className = 'e'; e.textContent = baslik;
+        const v = document.createElement('div'); v.textContent = metin; if (sinif) v.className = sinif;
+        k.append(e, v);
+      };
+      const b = document.createElement('b'); b.textContent = p.ad || p.id;
+      k.appendChild(b);
+      ekle('Neden böyle', p.why || '—');
+      ekle('Arayüz', p.iface + (p.arayuzTahmini ? '  (tahmin)' : ''), p.arayuzTahmini ? 'tahmin' : '');
+      if (Number.isFinite(p.massKg)) {
+        ekle('Kütle', p.tahmini ? `≈ ${p.massKg.toFixed(2)} kg  (tahmin)` : `${p.massKg} kg`,
+          p.tahmini ? 'tahmin' : '');
+      }
+      el('#zincir').textContent = aktif.assembly.chain(id).map(q => q.ad || q.id).join('  →  ');
+    }
+
+    function altyaziYaz(id) {
+      const a = el('#altyazi');
+      if (id) { kunyeYaz(id); }
+      const c = CISIMLER[cisimAd];
+      const t = aktif.tahmin;
+      a.innerHTML = '';
+      const b = document.createElement('b'); b.textContent = c.ad;
+      a.appendChild(b);
+      const s = document.createElement('span');
+      s.textContent = aktif.beyan
+        ? ` — ${aktif.assembly.parts.length} parça beyan edilmiş; kütle, arayüz ve montaj sırası katalogdan gelir. Patlatma yönü her parçanın BAĞLANDIĞI parçaya göre konumundan çıkar.`
+        : ` — ${aktif.assembly.parts.length} parça sahne grafiğinden türetildi. ${t?.not || ''}`;
+      a.appendChild(s);
+    }
+
+    /* ── etkileşim ─────────────────────────────────────────────────── */
+    const isin = new THREE.Raycaster();
+    const fare = new THREE.Vector2();
+    let basladi = null;
+    renderer.domElement.addEventListener('pointerdown', (e) => { basladi = [e.clientX, e.clientY]; host.classList.add('suruklu'); });
+    renderer.domElement.addEventListener('pointerup', (e) => {
+      host.classList.remove('suruklu');
+      if (!basladi) return;
+      const kaydi = Math.hypot(e.clientX - basladi[0], e.clientY - basladi[1]) > 5;
+      basladi = null;
+      if (kaydi) return;                      // sürükleme seçim değildir
+      const r = renderer.domElement.getBoundingClientRect();
+      fare.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      isin.setFromCamera(fare, camera);
+      const id = xv.pick(isin);
+      xv.setSelected(id);
+      altyaziYaz(id);
+    });
+
+    el('#patla').addEventListener('input', (e) => {
+      const k = Number(e.target.value) / 100;
+      el('#patlaEt').textContent = `%${e.target.value}`;
+      oynuyor = false; el('#oynat').classList.remove('aktif');
+      if (azaltilmis) xv.jumpExplode(k); else xv.setExplode(k);
+    });
+    el('#kip').addEventListener('change', (e) => xv.setMode(e.target.value));
+    el('#kesit').addEventListener('click', () => {
+      kesitAcik = !kesitAcik;
+      el('#kesit').classList.toggle('aktif', kesitAcik);
+      xv.setSection(kesitAcik ? { eksen: 'y', konum: 0, yon: -1 } : null);
+    });
+    el('#oynat').addEventListener('click', () => {
+      oynuyor = !oynuyor; oynatT = 0;
+      el('#oynat').classList.toggle('aktif', oynuyor);
+      el('#oynat').textContent = oynuyor ? '⏸ Duraklat' : '▶ Montajı oynat';
+    });
+
+    /* ── döngü ─────────────────────────────────────────────────────── */
+    function boyut() {
+      const w = host.clientWidth, h = host.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / Math.max(h, 1);
+      camera.updateProjectionMatrix();
+    }
+    addEventListener('resize', boyut);
+
+    let onceki = performance.now();
+    function kare(simdi) {
+      const dt = Math.min((simdi - onceki) / 1000, 0.05);
+      onceki = simdi;
+      if (oynuyor) {
+        /* Oynatım adımları SIRAYLA gezer; her adım kendi süresini alır ve
+           geçiş kritik sönümle sürüldüğü için hızlandırma sarsmaz. */
+        const adimlar = aktif.assembly.steps || [];
+        const sure = 1.5;
+        oynatT += dt;
+        if (adimlar.length) {
+          const i = Math.floor(oynatT / sure);
+          if (i >= adimlar.length) { oynuyor = false; oynatT = 0; adim = null; xv.setStep(null); el('#oynat').classList.remove('aktif'); el('#oynat').textContent = '▶ Montajı oynat'; adimListesi(); }
+          else if (adim !== adimlar[i].no) { adim = adimlar[i].no; xv.setStep(adim); adimListesi(); }
+        } else {
+          const k = Math.min(oynatT / 4, 1);
+          xv.setExplode(k);
+          el('#patla').value = String(Math.round(k * 100));
+          el('#patlaEt').textContent = `%${Math.round(k * 100)}`;
+          if (k >= 1) { oynuyor = false; el('#oynat').classList.remove('aktif'); el('#oynat').textContent = '▶ Montajı oynat'; }
+        }
+      }
+      kontrol.update();
+      xv.update(dt);
+      renderer.render(scene, camera);
+      requestAnimationFrame(kare);
+    }
+
+    boyut();
+    yukle(cisimAd);
+    requestAnimationFrame(kare);
+  </script>
+</body>
+</html>

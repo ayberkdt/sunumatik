@@ -1,0 +1,19 @@
+{
+  "preset": "habitat_blocks",
+  "motions": [
+    {
+      "id": "habitat-kurulum-sirasi",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Bir yüzey üssünün neye benzediğini değil, hangi sırayla ve NEDEN öyle kurulduğunu anlatır. Adımlar keyfi değildir: zemin sıkıştırılmadan modül oturmaz, basınçlı hacim hava kilidi takılmadan kullanılamaz, hat çekilmeden güç ve oksijen üsse ulaşmaz. Ortam anahtarı üssü yeniden kurar ve o ortamda gerçek olmayan bileşeni REDDEDER — gerekçesiyle ve önerisiyle birlikte.",
+      "loop": false,
+      "durationMs": 0,
+      "pauseControl": "Otomatik oynatım yoktur; adım listesinden herhangi bir adıma atlanır, hatlar açılıp kapanır, sahne sürüklenerek döndürülür ve tekerlekle yakınlaşılır.",
+      "reducedMotion": "Sahnede süreye bağlı hiçbir hareket yoktur: her durum tek karede durur. prefers-reduced-motion altında da davranış aynıdır, çünkü değişen tek şey kullanıcının kendi tetiklediği yeniden kurulumdur.",
+      "exportState": "?ortam=mars|moon ortamı seçer. Verilmezse Mars. Adım ve hat görünürlüğü ekrandan seçilir.",
+      "accessibility": "Kumandalar yerel form öğeleridir, hedef boyutu ≥ 44 px (ölçüldü). Sistem rengi TEK BAŞINA bilgi taşımaz: her satırda sistemin adı ve kütle payı yazılıdır. Akışkan renk bandı da tek başına bırakılmaz; hat hesabı tablosunda boy, açıklık, sarkma ve ilmek sayısı sayı olarak verilir. Reddedilen bileşen renkle değil, gerekçe cümlesiyle bildirilir.",
+      "limitations": "Bu bir TASARIM ÖRNEĞİDİR, belirli bir görevin veri sayfası değildir: dört mürettebatlı, ~90 gün özerk bir yüzey üssünün tipik büyüklükleri kullanılmıştır. Hat hesabı basit kiriş ve zincir eğrisi kuramına dayanır (δ = 5wL⁴/(384EI), s = a(cosh(L/2a)−1)); titreşim, basınç düşümü, akış hızı, vana yükü ve sismik yük HESAPLANMAZ — seçilen mesnet aralığı bu yüzden izin verilenin altında tutulur. Isıl denge, radyasyon dozu, yapısal analiz ve yaşam desteği kütle akışı yoktur. Regolit örtüsü kalınlığı gerekçede anlatılır ama doz hesabı yapılmaz.",
+      "notes": "Katalog: presets/habitat_blocks/hab-parts.mjs — 26 bileşen, 8 sistem, 7 kurulum adımı; her satırda mountsTo, arayüz türü, adım, kütle ve NEDEN VAR. Geometri hab-build.mjs'te kataloğun kendi alanlarından kurulur. Hat yönlendirme routing.mjs'tedir ve three görmez: mesnet aralığı sarkma sınırından çıkar ve yerçekimiyle g^(−1/3) gibi ölçeklenir (Ay'da 13,3 m, Mars'ta 10,1 m — ölçüldü), sarkma zincir eğrisidir (parabol değil), genleşme ilmeği sayısı ΔL = αLΔT'den gelir. Katalog biçimi satellite_integration ile birebir aynıdır, bu yüzden üs de exploded_view'da hiçbir özel durum gerektirmeden patlatılır. Doğrulama: scripts/validate-habitat.mjs (80 denetim) — katalog bütünlüğü, ortam kuralı ve ters sınavı, ortama bağlı kütle bütçesi, hat matematiğinin analitik kimlikleri, beyan ile hesabın %12 içinde tutması, arayüz noktaları ve patlatma sistemiyle bütünleşme."
+    }
+  ]
+}

@@ -40,3 +40,47 @@ export function groupsFromCatalog(mod) {
   const g = mod.SUBSYSTEMS || {};
   return Object.fromEntries(Object.entries(g).map(([k, v]) => [k, { ad: v.ad, renk: v.renk, neden: v.neden }]));
 }
+
+/**
+ * Kurulmuş gövdeleri katalog kimliğine göre DÜĞÜM haritasına çevirir.
+ *
+ * `sat-build.mjs` çoklu parçaları (qty > 1) ayrı gövdeler olarak kurar ve
+ * kimliklerine `#1`, `#2` ekler; katalog ise onları TEK satırda beyan eder.
+ * Patlatma katalog satırını taşır, gövdeleri değil — bu yüzden kopyalar
+ * ortak bir kapsayıcıya alınır ve kapsayıcı kopyaların ORTALAMA konumuna
+ * oturur. Ortalama yerine ilk kopyanın konumu alınsaydı dört köşedeki
+ * itici takımı tek köşeye doğru patlardı.
+ *
+ * @param yapim  { root, parts:[{ id, group }] }
+ * @returns Map(katalogKimliği → Object3D)
+ */
+export function nodesFromBuild(THREE, yapim) {
+  const oebek = new Map();
+  for (const q of yapim.parts) {
+    const ham = String(q.id).split('#')[0];
+    if (!oebek.has(ham)) oebek.set(ham, []);
+    oebek.get(ham).push(q.group);
+  }
+  const nodes = new Map();
+  for (const [id, govdeler] of oebek) {
+    if (govdeler.length === 1) {
+      const g = govdeler[0];
+      g.userData.partId = id;
+      g.traverse(o => { o.userData.partId = id; });
+      nodes.set(id, g);
+      continue;
+    }
+    const kap = new THREE.Group();
+    kap.name = id;
+    const ort = new THREE.Vector3();
+    for (const g of govdeler) ort.add(g.position);
+    ort.divideScalar(govdeler.length);
+    kap.position.copy(ort);
+    for (const g of govdeler) { g.position.sub(ort); kap.add(g); }
+    yapim.root.add(kap);
+    kap.userData.partId = id;
+    kap.traverse(o => { o.userData.partId = id; });
+    nodes.set(id, kap);
+  }
+  return nodes;
+}

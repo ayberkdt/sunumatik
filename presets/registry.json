@@ -1,9 +1,9 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 70,
-    "presetsWithIndex": 63,
-    "animatedPresets": 56,
+    "presets": 72,
+    "presetsWithIndex": 65,
+    "animatedPresets": 58,
     "skills": 18,
     "demoSlides": 87,
     "demoCards": 73,
@@ -282,6 +282,13 @@
       "hasMotionManifest": false
     },
     {
+      "name": "exploded_view",
+      "title": "Patlatılmış Görünüm — exploded_view",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
       "name": "figure_callouts",
       "title": "Figure Callout Preset — figür üzerinde adım adım anlatım",
       "hasIndex": true,
@@ -326,6 +333,13 @@
     {
       "name": "ground_track_3d",
       "title": "3B Yörünge + 2B Yer İzi — ground_track_3d",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "habitat_blocks",
+      "title": "Habitat Blokları — habitat_blocks",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

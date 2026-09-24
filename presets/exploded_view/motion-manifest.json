@@ -1,0 +1,19 @@
+{
+  "preset": "exploded_view",
+  "motions": [
+    {
+      "id": "patlatma-gecisi",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Bir cismin parçalarını, hangi parçanın neye bağlandığını gizlemeden ayırır. Patlatma yönü rastgele bir dağılma değildir: her parça BAĞLANDIĞI parçadan dışarı, montajın tersi doğrultuda çıkar. Aynı doğrultuda giden parçalar izdüşümlerine göre paketlenir, böylece hiçbiri diğerini geçmez ve sıra patlatma boyunca sabit kalır. Geçiş kritik sönümle sürülür: aşım yoktur, kadanstan bağımsızdır.",
+      "loop": false,
+      "durationMs": 10500,
+      "pauseControl": "Patlatma kaydırağı her an elle sürülür; oynatım duraklatılır; adım listesinden herhangi bir adıma atlanır; kip (montaj/eksenel/ışınsal/katmanlı) değiştirilir; kesit açılır. Sahne sürüklenerek döndürülür.",
+      "reducedMotion": "prefers-reduced-motion: reduce altında geçiş sönümü pratikte anlık olur (ω = 40) ve kaydırak değeri doğrudan uygulanır; oynatım kendiliğinden başlamaz. Bütün künye, bütçe ve arayüz sayımı okunur kalır.",
+      "exportState": "?cisim=uydu|habitat|rover|lander|rocket|orbiter seçilen cismi belirler. Verilmezse uydu. Patlatma oranı, kip ve adım ekrandan seçilir.",
+      "accessibility": "Kumandalar yerel form öğeleridir, hedef boyutu ≥ 44 px (ölçüldü); patlatma kaydırağı 44 px'lik bir kapsayıcı içindedir. Etiketler cismin üstüne basılmaz: iki kenar oluğuna alınır, ölçülen yüksekliklerine göre dikeyde ayrıştırılır ve kılavuz çizgisiyle parçalarına bağlanır — on dokuz etiketi gövdenin üstüne basmak modeli tamamen gizliyordu. Etiket sayısı okunabilirlik için sınırlıdır (en çok 14) ve bu bir yer değil BİLGİ kuralıdır. Tahmin edilen kütle ve arayüz her yerde 'tahmin' sözcüğüyle işaretlenir; renk tek başına bilgi taşımaz.",
+      "limitations": "İki yol vardır ve doğruluk düzeyleri FARKLIDIR. Beyan edilen cisimlerde (uydu, yüzey üssü) kütle, arayüz ve montaj sırası katalogdan gelir. Sahneden türetilen cisimlerde (gezgin, iniş aracı, roket, yörünge aracı) montaj ağacı sahne hiyerarşisinden çıkarılır, kütle sınır hacmi × eşdeğer yoğunlukla TAHMİN edilir ve arayüz addan varsayılır: bu sayıların mutlak değeri anlamlı DEĞİLDİR, yalnız oranları kabaca doğrudur ve arayüzde böyle ilan edilir. Sahne grafiğinde birden çok köksüz düğüm varsa cismin bütününü temsil eden sentetik bir kök ÜRETİLİR (kütlesi sıfır). Kesit tek düzlemlidir; iç boşluklar modellenmiş geometriyle sınırlıdır.",
+      "notes": "Çekirdek: presets/core/assembly.mjs — three görmez, bu yüzden bütün patlatma mantığı ekransız doğrulanabilir (scripts/validate-assembly.mjs, 43 denetim). Sahneye uygulama presets/core/exploded-view.mjs'tedir. Adaptörler: adapters/catalog.mjs beyan edilmiş katalogları (sat-parts, hab-parts aynı biçimde), adapters/scene.mjs herhangi bir three nesnesini alır. Aynı sistem altı cisme hiçbir özel durum olmadan uygulanır; vitrinin gösterdiği şey budur."
+    }
+  ]
+}
