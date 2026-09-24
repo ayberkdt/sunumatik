@@ -522,13 +522,39 @@ export async function buildSurfaceScene({ seed = 20260816, assetBaseUrl } = {}) 
       farMat.emissiveIntensity = etkilesim.farAcik ? 1.2 : 0;
     },
     setTarama(v) { etkilesim.taramaAcik = Boolean(v); },
-    /** saf f(t): direk taraması + fener nabzı */
+    /** saf f(t): direk taraması + fener nabzı.
+
+        NEFES KÜTÜPHANESİNE GEÇİŞ (breathing-motion-plan §9 F2). Buradaki
+        iki hareket de TEK SİNÜSTÜ ve kendi kuralımıza aykırıydı: fener
+        `.28 + .3·sin(1,5t)` iki saniyede okunan bir yanıp sönmeydi, direk
+        `.5·sin(2πt/26)` hız sınırı olmadan salınıyordu — gerçek bir
+        Mastcam hedef seçer, hız sınırıyla döner, bekler. Artık ikisi de
+        life_signs kataloğundan gelir: `roverBeacon` (üç durumlu LED,
+        Poisson geçişli) ve `roverGaze` (hedef programı + 12°/s kritik
+        sönümlü saccade + sıralı panorama).
+
+        Eski davranış `?nefes=0` ile geri gelir: geçiş bir bayrakla
+        yapılır ki karşılaştırma yapılabilsin. */
     guncelle(t) {
-      fenerMat.emissiveIntensity = .28 + .3 * (0.5 + 0.5 * Math.sin(t * 1.5));
       const mastPan = kafa.userData.mastPan;
+      if (nefes) {
+        fenerMat.emissiveIntensity = nefes.fener.sample(t).emissive;
+        if (mastPan) mastPan.rotation.z = etkilesim.taramaAcik ? nefes.bakis.sample(t).pan : 0;
+        return;
+      }
+      fenerMat.emissiveIntensity = .28 + .3 * (0.5 + 0.5 * Math.sin(t * 1.5));
       if (mastPan) mastPan.rotation.z = etkilesim.taramaAcik ? .5 * Math.sin(Math.PI * 2 * t / 26) : 0;
     },
   };
+
+  /* Nefes davranışları YUMUŞAK yüklenir: kütüphane yoksa sahne eski tek
+     sinüsleriyle çalışmaya devam eder (scene-blocks: yer tutucuya düş). */
+  let nefes = null;
+  if (typeof document !== 'undefined' && new URLSearchParams(location.search).get('nefes') !== '0') {
+    import('../life_signs/catalog.mjs')
+      .then(m => { nefes = { fener: m.roverBeacon({ seed: 41 }), bakis: m.roverGaze({ seed: 31, rateDegS: 12 }) }; })
+      .catch(() => { nefes = null; });
+  }
 
   return { scene, terrain, rover, sun, araziYukseklik, vista, fenerMat, etkilesim, dispose() {
     geo.dispose();

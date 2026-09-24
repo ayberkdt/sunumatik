@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nefes Kütüphanesi — life_signs</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+    #stage { position: absolute; left: 320px; top: 0; right: 360px; bottom: 190px; }
+    #olcum { position: absolute; left: 320px; right: 360px; bottom: 0; height: 190px;
+      border-top: 1px solid #1c212c; background: #080a0f; }
+    #olcum canvas { display: block; width: 100%; height: 100%; }
+    aside { position: absolute; top: 0; bottom: 0; width: 320px; overflow-y: auto;
+      background: #090b11; border-right: 1px solid #1c212c; padding: 14px 14px 20px; }
+    #sag { left: auto; right: 0; width: 360px; border-right: 0; border-left: 1px solid #1c212c; }
+    h1 { margin: 0 0 3px; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #c9a35c; font-weight: 600; }
+    h1 small { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: .05em; text-transform: none; color: #8a90a0; margin-top: 3px; line-height: 1.45; }
+    h2 { margin: 18px 0 6px; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: #c9a35c; font-weight: 600; }
+    p.alt { margin: 0 0 10px; font-size: 11px; line-height: 1.5; color: #7d8393; }
+    .dav { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px; align-items: center;
+      padding: 7px 8px; border-radius: 8px; cursor: pointer; font-size: 12px; min-height: 40px;
+      border: 1px solid transparent; }
+    .dav:hover { border-color: #2b303d; }
+    .dav.secili { background: rgba(201,163,92,.10); border-color: #c9a35c; }
+    .dav.pasif { opacity: .42; cursor: default; }
+    .dav input { accent-color: #c9a35c; width: 15px; height: 15px; }
+    .dav b { font-weight: 500; }
+    .dav .rozet { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #6f7688;
+      border: 1px solid #262c39; border-radius: 4px; padding: 1px 5px; }
+    .dav .sal { font-variant-numeric: tabular-nums; color: #8a90a0; font-size: 11px; }
+    .kutu { border: 1px solid #1c212c; border-radius: 8px; padding: 11px 12px; font-size: 11.5px; line-height: 1.55; color: #aeb5c4; }
+    .kutu b { color: #e8dcc0; font-weight: 600; }
+    .kutu .k { color: #7d8393; text-transform: uppercase; font-size: 10px; letter-spacing: .08em; display: block; margin-top: 8px; }
+    .kutu .k:first-child { margin-top: 0; }
+    #butce { display: grid; gap: 5px; font-size: 11px; }
+    #butceBar { height: 7px; border-radius: 4px; background: #161a23; overflow: hidden; }
+    #butceBar i { display: block; height: 100%; background: #6fbf8f; transition: width .2s ease, background-color .2s ease; }
+    #butceBar.tasti i { background: #e06a4a; }
+    header { position: absolute; left: 334px; top: 12px; z-index: 5; display: flex; gap: 8px; align-items: center; }
+    button, select, input[type="number"] { background: rgba(16,19,27,.9); color: #dfe3ea; border: 1px solid #2b303d;
+      border-radius: 8px; padding: 8px 11px; font-size: 12px; min-height: 40px; cursor: pointer; }
+    button:hover, select:hover { border-color: #c9a35c; }
+    input[type="number"] { width: 104px; cursor: text; }
+    label.rng { display: flex; gap: 7px; align-items: center; background: rgba(16,19,27,.9);
+      border: 1px solid #2b303d; border-radius: 8px; padding: 7px 10px; font-size: 12px; min-height: 40px; }
+    label.rng input { width: 150px; accent-color: #c9a35c; }
+    label.rng b { min-width: 4.2em; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+    #durum { position: absolute; left: 334px; bottom: 202px; z-index: 5; font-size: 11.5px; color: #b9bfcc;
+      background: rgba(10,12,18,.78); border: 1px solid #232837; border-radius: 8px; padding: 8px 12px; }
+    #durum b { color: #e8dcc0; }
+    @media (prefers-reduced-motion: reduce) { #butceBar i { transition: none; } }
+  </style>
+</head>
+<body>
+  <aside id="sol">
+    <h1>Nefes Kütüphanesi<small>life_signs · gerçek mekanizmanın gerçek boşta davranışı · her satır neden gerçek olduğunu söyler</small></h1>
+    <h2>Davranışlar</h2>
+    <p class="alt">Kutuyu işaretle: davranış sahneye bağlanır. Satıra tıkla: künyesi sağda açılır.</p>
+    <div id="liste"></div>
+  </aside>
+
+  <header>
+    <button id="oynat">⏸ Duraklat</button>
+    <input id="seed" type="number" value="31" step="1" title="Tohum">
+    <label class="rng" title="Zaman (saniye)">t <input id="zaman" type="range" min="0" max="240" step="0.1" value="0"><b id="zamanEt">0,0 s</b></label>
+    <select id="kamera" title="Kamera">
+      <option value="yakin">Yakın plan (6 birim)</option>
+      <option value="orta" selected>Orta (22 birim)</option>
+      <option value="uzak">Uzak (40 birim)</option>
+    </select>
+  </header>
+
+  <div id="stage"></div>
+  <div id="olcum"><canvas></canvas></div>
+  <div id="durum"></div>
+
+  <aside id="sag">
+    <h2>Künye</h2>
+    <div class="kutu" id="kunye"></div>
+    <h2>Sahne bütçesi</h2>
+    <p class="alt">Aynı anda en çok <b>3 fark edilir</b> davranış, toplam salience ≤ 1,0. Kamera yaklaştıkça salience büyür: yakın planda daha AZ şey nefes alabilir.</p>
+    <div id="butce"></div>
+    <div id="butceBar"><i style="width:0%"></i></div>
+    <h2>Yasak</h2>
+    <p class="alt" id="yasak"></p>
+  </aside>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import * as CAT from './catalog.mjs';
+    import { createBudget, FORBIDDEN_CLASSES, YASAK, ESIK } from './budget.mjs';
+    import { createBinder } from './bind.mjs';
+
+    const sorgu = new URLSearchParams(location.search);
+    const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const disaAktarim = sorgu.get('export') === '1';
+    const debug = sorgu.get('debug') === '1';       // plan §10-2: salience sayıları
+    const sabitT = sorgu.get('t') !== null ? parseFloat(sorgu.get('t')) : null;
+    const el = (s) => document.querySelector(s);
+
+    /* ---------- davranışlar ---------- */
+    let seed = Number.isFinite(parseInt(sorgu.get('seed'), 10)) ? parseInt(sorgu.get('seed'), 10) : 31;
+    el('#seed').value = String(seed);
+    const KAMERA = { yakin: 6, orta: 22, uzak: 40 };
+    let mesafe = KAMERA[sorgu.get('kamera')] ? KAMERA[sorgu.get('kamera')] : KAMERA.orta;
+    if (sorgu.get('kamera')) el('#kamera').value = sorgu.get('kamera');
+
+    /* Sahneye bağlanabilen davranışlar (nesnesi bu vitrinde var olanlar). */
+    const SAHNE = ['roverGaze', 'roverBeacon', 'roverHgaTrack', 'craftBreath', 'cameraBreath', 'documentaryArc', 'beaconAviation', 'rcsPuff'];
+    let acik = new Set(sorgu.get('davranis') ? sorgu.get('davranis').split(',') : ['roverGaze', 'roverBeacon', 'craftBreath']);
+    let secili = sorgu.get('odak') || 'roverGaze';
+    let davranislar = {}, butce = null;
+
+    function kur() {
+      davranislar = {};
+      for (const id of SAHNE) davranislar[id] = CAT.BUILDERS[id]({ seed: seed + id.length });
+      butce = createBudget();
+      const kabul = {};
+      for (const id of SAHNE) {
+        if (!acik.has(id)) continue;
+        const r = butce.add(davranislar[id], { distance: mesafe });
+        kabul[id] = r;
+        if (!r.kabul) acik.delete(id);          // bütçe reddetti: sahneye girmez
+      }
+      return kabul;
+    }
+
+    /* ---------- three sahnesi ---------- */
+    const host = el('#stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    host.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x05070b, 9, 34);
+    const camera = new THREE.PerspectiveCamera(38, 1, .05, 400);
+    scene.add(new THREE.HemisphereLight('#8ea3c4', '#0a0b10', .75));
+    const key = new THREE.DirectionalLight('#fff1dc', 2.2); key.position.set(-4, 6, 5); scene.add(key);
+    const rim = new THREE.DirectionalLight('#9ca7bc', .8); rim.position.set(5, 2, -4); scene.add(rim);
+
+    /* zemin: ölçek referansı, NEFES ALMAZ (yasak sınıf) */
+    const zemin = new THREE.Mesh(new THREE.CircleGeometry(60, 48).rotateX(-Math.PI / 2),
+      new THREE.MeshLambertMaterial({ color: 0x2a2724 }));
+    zemin.position.y = -0.02; zemin.name = 'zemin-terrain'; scene.add(zemin);
+    const izgara = new THREE.GridHelper(60, 40, 0x1d2430, 0x151b24);
+    izgara.material.transparent = true; izgara.material.opacity = .5; scene.add(izgara);
+
+    let rover = null, mastPan = null, mastTilt = null, dish = null, fenerMat = null, ledMat = null, gövde = null;
+    const dunya = new THREE.Group(); scene.add(dunya);
+
+    async function aracKur() {
+      let build = null;
+      try { ({ buildRover: build } = await import('../craft_blocks/craft-blocks.mjs')); } catch { build = null; }
+      if (!build) {                                   // yumuşak düşüş: kutu gezgin
+        const g = new THREE.Group();
+        g.add(new THREE.Mesh(new THREE.BoxGeometry(1.6, .5, 1), new THREE.MeshLambertMaterial({ color: 0x8b8578 })));
+        dunya.add(g); gövde = g; return;
+      }
+      const r = build({ scale: 2.4, palette: { body: '#b9b3a6', panel: '#2a3035', metal: '#a8aeab', accent: '#c98a5c' } });
+      const stand = new THREE.Group(); stand.rotation.x = -Math.PI / 2; stand.add(r);
+      const rig = new THREE.Group(); rig.add(stand); rig.rotation.y = -Math.PI / 2 + .5;
+      dunya.add(rig);
+      const bb = new THREE.Box3().setFromObject(rig);
+      rig.position.y = -bb.min.y;
+      rover = rig; gövde = rig;
+      const joints = r.userData?.rig?.joints || {};
+      mastPan = r.getObjectByName('mastPan') || joints['mast.pan']?.found || null;
+      mastTilt = r.getObjectByName('mastTilt') || joints['mast.tilt']?.found || null;
+      dish = r.getObjectByName('dishAz') || joints['dish.az']?.found || null;
+      /* durum feneri: güvertede küçük bir küre (kurucuda yok — vitrinin kendi işareti) */
+      fenerMat = new THREE.MeshStandardMaterial({ color: '#f0d9a8', emissive: '#e8b25a', emissiveIntensity: .3 });
+      const fener = new THREE.Mesh(new THREE.SphereGeometry(.05, 12, 10), fenerMat);
+      fener.position.set(-.34, .42, .16); rig.add(fener);
+      /* engel lambası: direğin tepesinde kırmızı çakar */
+      ledMat = new THREE.MeshStandardMaterial({ color: '#f0a08a', emissive: '#e04a34', emissiveIntensity: .2 });
+      const led = new THREE.Mesh(new THREE.SphereGeometry(.042, 10, 8), ledMat);
+      led.position.set(.32, 1.62, 0); rig.add(led);
+    }
+
+    /* ---------- bağlama ---------- */
+    let binder = null;
+    function bagla() {
+      binder = createBinder();
+      const harita = {
+        roverGaze: () => (mastPan || mastTilt) && binder.add(davranislar.roverGaze,
+          { pan: mastPan ? { node: mastPan, rot: 'z' } : null, tilt: mastTilt ? { node: mastTilt, rot: 'y' } : null }, { sinif: 'rover' }),
+        roverHgaTrack: () => dish && binder.add(davranislar.roverHgaTrack, { az: { node: dish, rot: 'z' } }, { sinif: 'rover' }),
+        roverBeacon: () => fenerMat && binder.add(davranislar.roverBeacon, { emissive: { material: fenerMat, absolute: true } }, { sinif: 'light' }),
+        beaconAviation: () => ledMat && binder.add(davranislar.beaconAviation, { emissive: { material: ledMat, absolute: true, gain: 1.6 } }, { sinif: 'light' }),
+        craftBreath: () => gövde && binder.add(davranislar.craftBreath, { nefes: { scale: gövde } }, { sinif: 'craft' }),
+        rcsPuff: () => binder.add(davranislar.rcsPuff, { puf: { set: (v) => { pufIsik.intensity = v * 5.5; } } }, { sinif: 'craft' }),
+        cameraBreath: () => binder.add(davranislar.cameraBreath, {
+          x: { set: (v) => { kamNefes.x = v * 1.4; } }, y: { set: (v) => { kamNefes.y = v * 1.4; } }, yaw: { set: (v) => { kamNefes.yaw = v; } },
+        }, { sinif: 'camera' }),
+        documentaryArc: () => binder.add(davranislar.documentaryArc, { yaw: { set: (v) => { kamYay = v; } } }, { sinif: 'camera' }),
+      };
+      for (const id of SAHNE) if (acik.has(id)) harita[id]?.();
+    }
+    const pufIsik = new THREE.PointLight('#cfe4ff', 0, 6, 2); pufIsik.position.set(-1.2, .5, .4); dunya.add(pufIsik);
+    const kamNefes = { x: 0, y: 0, yaw: 0 };
+    let kamYay = 0;
+
+    /* ---------- ölçüm grafiği ---------- */
+    const olcumCv = el('#olcum canvas'), octx = olcumCv.getContext('2d');
+    function olcumCiz(t) {
+      const w = olcumCv.clientWidth, h = olcumCv.clientHeight;
+      const dpr = Math.min(devicePixelRatio, 2);
+      if (olcumCv.width !== Math.round(w * dpr)) { olcumCv.width = Math.round(w * dpr); olcumCv.height = Math.round(h * dpr); }
+      octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      octx.clearRect(0, 0, w, h);
+      const b = davranislar[secili];
+      if (!b || !b.sample) return;
+      const kanal = Object.keys(b.limits.kanal || {}).find(k => typeof b.sample(t)[k] === 'number');
+      if (!kanal) return;
+      const PENCERE = 60, N = Math.min(900, Math.floor(w));
+      let lo = Infinity, hi = -Infinity;
+      const ys = new Array(N);
+      for (let i = 0; i < N; i++) {
+        const tt = t - PENCERE + (i / (N - 1)) * PENCERE;
+        const v = b.sample(Math.max(0, tt))[kanal];
+        ys[i] = v; lo = Math.min(lo, v); hi = Math.max(hi, v);
+      }
+      if (!(hi > lo)) { hi = lo + 1e-6; }
+      const pad = (hi - lo) * .16; lo -= pad; hi += pad;
+      /* sıfır çizgisi */
+      const Y = v => h - 14 - (v - lo) / (hi - lo) * (h - 30);
+      octx.strokeStyle = '#1b212c'; octx.lineWidth = 1;
+      octx.beginPath(); octx.moveTo(0, Y(0)); octx.lineTo(w, Y(0)); octx.stroke();
+      octx.beginPath();
+      for (let i = 0; i < N; i++) { const x = i / (N - 1) * w; i ? octx.lineTo(x, Y(ys[i])) : octx.moveTo(x, Y(ys[i])); }
+      octx.strokeStyle = '#c9a35c'; octx.lineWidth = 1.6; octx.stroke();
+      /* şimdi imleci */
+      octx.beginPath(); octx.moveTo(w - 1, 8); octx.lineTo(w - 1, h - 8);
+      octx.strokeStyle = '#6fbf8f'; octx.lineWidth = 1.4; octx.stroke();
+      octx.font = '10px "Segoe UI", system-ui, sans-serif'; octx.fillStyle = '#7d8393';
+      octx.fillText(`ÖLÇÜM · ${b.ad} · ${kanal} · 60 s pencere`, 8, 14);
+      octx.textAlign = 'right';
+      octx.fillText(`${lo.toFixed(3)} … ${hi.toFixed(3)}`, w - 8, 14);
+      octx.textAlign = 'left';
+    }
+
+    /* ---------- paneller ---------- */
+    function listeCiz() {
+      const kapsayici = el('#liste');
+      kapsayici.textContent = '';
+      for (const satir of CAT.catalogRows()) {
+        const d = document.createElement('div');
+        const sahnede = SAHNE.includes(satir.id);
+        d.className = 'dav' + (satir.id === secili ? ' secili' : '') + (sahnede ? '' : ' pasif');
+        const kutu = sahnede
+          ? `<input type="checkbox" ${acik.has(satir.id) ? 'checked' : ''} data-id="${satir.id}">`
+          : '<span></span>';
+        const rozet = satir.durum === 'uygulandı'
+          ? (sahnede ? '' : '<span class="rozet">kütüphanede</span>')
+          : `<span class="rozet">${satir.durum}</span>`;
+        d.innerHTML = `${kutu}<span><b>${satir.ad}</b><br><span style="color:#7d8393;font-size:10.5px">${satir.nesne}</span></span>`
+          + `<span class="sal">${rozet}${satir.salience !== null && satir.salience !== undefined && debug ? ' ' + satir.salience.toFixed(2) : ''}</span>`;
+        d.addEventListener('click', (e) => {
+          if (e.target.tagName === 'INPUT') return;
+          secili = satir.id; listeCiz(); kunyeCiz(); olcumCiz(t);
+        });
+        const cb = d.querySelector('input');
+        cb?.addEventListener('change', () => {
+          if (cb.checked) acik.add(satir.id); else acik.delete(satir.id);
+          yenile();
+        });
+        kapsayici.appendChild(d);
+      }
+    }
+    function kunyeCiz() {
+      const satir = CAT.catalogRows().find(r => r.id === secili);
+      if (!satir) return;
+      const lim = satir.limits || {};
+      const sinirlar = Object.entries(lim).filter(([k]) => k !== 'kanal')
+        .map(([k, v]) => `${k}: ${typeof v === 'number' ? (k.startsWith('aci') || k === 'rateMax' ? (v * 180 / Math.PI).toFixed(2) + '°' : v) : v}`).join(' · ');
+      el('#kunye').innerHTML =
+        `<span class="k">Davranış</span><b>${satir.ad}</b> — ${satir.nesne}`
+        + `<span class="k">Neden gerçek</span>${satir.neden}`
+        + (satir.model ? `<span class="k">Model</span>${satir.model}` : '')
+        + (satir.duygu ? `<span class="k">Duygu</span>${satir.duygu}` : '')
+        + (sinirlar ? `<span class="k">Sınırlar</span>${sinirlar}` : '')
+        + (satir.kanallar?.length ? `<span class="k">Kanallar</span>${satir.kanallar.join(' · ')}` : '')
+        + (satir.plan ? `<span class="k">Bekliyor</span>${satir.plan}` : '');
+    }
+    function butceCiz() {
+      const rep = butce.report();
+      el('#butce').innerHTML = rep.girdiler.length
+        ? rep.girdiler.map(g => `<div style="display:flex;justify-content:space-between;color:${g.farkedilir ? '#e8dcc0' : '#7d8393'}">`
+          + `<span>${davranislar[g.id]?.ad || g.id}${g.farkedilir ? '' : ' <span style="font-size:10px">eşik altı</span>'}</span>`
+          + `<span style="font-variant-numeric:tabular-nums">${g.effective.toFixed(2)}</span></div>`).join('')
+        : '<div style="color:#7d8393">Hiçbir davranış bağlı değil.</div>';
+      const bar = el('#butceBar');
+      bar.querySelector('i').style.width = `${Math.min(100, rep.toplam * 100)}%`;
+      bar.classList.toggle('tasti', !rep.gecti);
+      el('#durum').innerHTML = `<b>Σ salience ${rep.toplam.toFixed(2)}</b> / ${rep.sinir.toplam}`
+        + ` · fark edilir <b>${rep.farkedilir}</b>/${rep.sinir.farkedilir}`
+        + ` · kamera ${mesafe} birim`
+        + (davranislar.roverGaze && acik.has('roverGaze') ? ` · direk hedefi <b>${davranislar.roverGaze.targetAt(t)}</b>` : '');
+    }
+    el('#yasak').innerHTML = FORBIDDEN_CLASSES.map(c => `<b style="color:#e0a24a">${c}</b>: ${YASAK[c]}`).join('<br><br>');
+
+    /* ---------- döngü ---------- */
+    let t = sabitT ?? 0, calisiyor = !(azaltilmis || disaAktarim || sabitT !== null), raf = 0, son = 0;
+    const zamanSurgu = el('#zaman'), zamanEt = el('#zamanEt');
+
+    function yenile() { kur(); bagla(); listeCiz(); kunyeCiz(); butceCiz(); ciz(); }
+
+    function boyutla() {
+      const w = host.clientWidth, h = host.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
+    }
+    function ciz() {
+      binder?.apply(t);
+      const d = mesafe * 0.42 + 3.2;
+      const az = -0.75 + kamYay + kamNefes.yaw;
+      camera.position.set(Math.cos(az) * d + kamNefes.x, 1.5 + d * 0.16 + kamNefes.y, Math.sin(az) * d);
+      camera.lookAt(0, 0.75, 0);
+      renderer.render(scene, camera);
+      olcumCiz(t);
+      butceCiz();
+      zamanSurgu.value = String(Math.min(240, t));
+      zamanEt.textContent = `${t.toFixed(1).replace('.', ',')} s`;
+    }
+    function kare(now) {
+      if (!calisiyor) { raf = 0; return; }
+      if (son) t += Math.min(.05, (now - son) / 1000);
+      son = now;
+      ciz();
+      raf = requestAnimationFrame(kare);
+    }
+    function oynat(v) {
+      calisiyor = v && !azaltilmis && !disaAktarim;
+      el('#oynat').textContent = calisiyor ? '⏸ Duraklat' : '▶ Oynat';
+      if (calisiyor && !raf) { son = 0; raf = requestAnimationFrame(kare); }
+      if (!calisiyor && raf) { cancelAnimationFrame(raf); raf = 0; ciz(); }
+    }
+    el('#oynat').addEventListener('click', () => oynat(!calisiyor));
+    zamanSurgu.addEventListener('input', () => { oynat(false); t = parseFloat(zamanSurgu.value); ciz(); });
+    el('#seed').addEventListener('change', (e) => { const v = parseInt(e.target.value, 10); if (Number.isFinite(v)) { seed = v; yenile(); } });
+    el('#kamera').addEventListener('change', (e) => { mesafe = KAMERA[e.target.value]; yenile(); });
+    addEventListener('resize', () => { boyutla(); ciz(); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; } else if (!document.hidden && calisiyor && !raf) { son = 0; raf = requestAnimationFrame(kare); } });
+
+    await aracKur();
+    boyutla();
+    yenile();
+    if (azaltilmis || disaAktarim || sabitT !== null) { butce.setReduced(true, t); oynat(false); } else oynat(true);
+
+    window.lifeSigns = {
+      state: () => ({ t, seed, mesafe, acik: [...acik], butce: butce.report() }),
+      rows: () => CAT.catalogRows(),
+      advance(s) { t = s; ciz(); },
+      ready: true, reducedMotion: azaltilmis,
+    };
+  </script>
+</body>
+</html>

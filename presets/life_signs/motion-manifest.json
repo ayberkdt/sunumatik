@@ -1,0 +1,19 @@
+{
+  "preset": "life_signs",
+  "motions": [
+    {
+      "id": "life-signs-catalog",
+      "type": "simulation",
+      "truthLevel": "illustrative",
+      "purpose": "Bir sahnenin canlı görünmesi hareket EKLEMEKLE olmaz; gerçek bir mekanizmanın gerçek BOŞTA davranışını göstermekle olur. Bu vitrin o davranışları adlandırır ve tek tek inceletir: duran gezgin gövdesiyle salınmaz, DİREĞİNİ çevirir (hız sınırlı Mastcam bakışı ve sıralı panorama); durum feneri süs değil, üç durumlu bir bildirimdir; HGA Dünya'dan sürüklenir ve düzeltilir; kamera nesneye NEGATİF korelasyonla nefes alır. Her davranışın yanında neden gerçek olduğu, hangi bağıntıyla üretildiği ve hangi sınırı aşmadığı yazar.",
+      "loop": true,
+      "durationMs": 240000,
+      "pauseControl": "Duraklat düğmesi ve zaman sürgüsü; sürgüye dokunmak oynatmayı durdurur. Her davranış ayrıca kendi kutusuyla sahneden çıkarılabilir.",
+      "reducedMotion": "prefers-reduced-motion: reduce altında hiçbir davranış ilerlemez: bütçe tek kareyi dondurur (setReduced), olaylar yok, LED nominal değerinde sabit kalır. Künye, ölçüm grafiği ve bütçe tablosu tam okunur.",
+      "exportState": "?t=<sn> kareyi dondurur, ?seed= tohumu, ?kamera=yakin|orta|uzak mesafeyi, ?davranis=<id,id> hangi davranışların bağlı olduğunu, ?odak=<id> künyede açık satırı, ?debug=1 salience sayılarını (plan §10-2), ?export=1 donmuş kare.",
+      "accessibility": "Kumandalar yerel form öğeleridir, hedef boyutu ≥ 40 px. Durum rengi tek başına bilgi taşımaz: her satırda durum rozeti yazıyla da verilir. Ölçüm grafiği bir süs değil, seçili kanalın 60 saniyelik gerçek izidir; kanalın adı ve değer aralığı üstünde yazar.",
+      "limitations": "Davranışlar İKİNCİL kanaldır: rayı ve simülasyonu asla sürmezler, taban pozun üstüne eklenirler. Sahnedeki gezgin bir ÖLÇEK REFERANSIDIR, sürmez. Zemin ve ızgara bilerek nefes almaz (yasak sınıf). Katalogdaki 22 satırın 14'ü çalışır, 1'i REDDEDİLMİŞTİR (gerçek gezginde kol boştayken kilitlidir), 7'si bağlanacağı kütüphane (astronaut_blocks, habitat_blocks, sky_blocks, core/light-physics) yazılana kadar bekler. Salience sayıları tasarım aracıdır, ölçülmüş bir dikkat verisi değildir.",
+      "notes": "Çekirdek: presets/core/life-signs.mjs — oscBank (φ türevi oranlar), roughness (iki ölçüşmez sinüsün çarpımı, [0,55–1], tek sinüs asla), poissonSchedule (önceden üretilmiş olay dizisi), saccadeSettle (KAPALI FORM kritik sönüm; ω = min(ωMax, rateMax·e/|e₀|) ile hız sınırı aktüatör fiziğinden gelir), segmentChain (segment başlangıcı bir öncekinin SONUNDA ulaşılmış değerdir — aksi hâlde komut değişiminde 39 000°/s'lik sıçrama oluyordu), gazeProgram, envelope, counterBreath, stationKeeping. stationKeeping, cinematic_space/spatial-idle.mjs'in TAŞINMIŞ hâlidir ve aynı tohumda birebir aynı sayıları üretir (denetim: 3 tohum × 1300 kare, Δ < 1e-12) — sahne kütüphaneye geçtiğinde tek piksel değişmez. Doğrulama: scripts/validate-life-signs.mjs (34 denetim): ortak periyot > 120 s (sürekli kesir yakınsayanlarıyla), genlik bütçesi, sahne bütçesi, hız sınırı, yasak sınıf reddi, determinizm + kadans + süreksizlik taraması (delta örnekleme adımıyla küçülmeli), spatial-idle eşitliği, katalog bütünlüğü."
+    }
+  ]
+}

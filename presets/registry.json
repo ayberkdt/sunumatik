@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 67,
-    "presetsWithIndex": 60,
-    "animatedPresets": 53,
+    "presets": 68,
+    "presetsWithIndex": 61,
+    "animatedPresets": 54,
     "skills": 18,
-    "demoSlides": 83,
-    "demoCards": 70,
+    "demoSlides": 84,
+    "demoCards": 71,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 83,
-    "cards": 70,
+    "slides": 84,
+    "cards": 71,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -50,6 +50,7 @@
       "jwst_explorer",
       "launch_ascent",
       "launch_window",
+      "life_signs",
       "low_thrust_transfer",
       "lunar_descent",
       "lunar_orbit",
@@ -353,6 +354,13 @@
       "title": "Fırlatma Penceresi ve Azimut — launch_window",
       "hasIndex": true,
       "animated": false,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "life_signs",
+      "title": "Nefes Kütüphanesi — life_signs",
+      "hasIndex": true,
+      "animated": true,
       "hasMotionManifest": true
     },
     {
