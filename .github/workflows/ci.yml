@@ -75,6 +75,9 @@ jobs:
       - name: Işık fiziği çekirdeği (Planck eğrisi, ters kare, ortam kuralı, 1/f titreşim, pozlama)
         run: node scripts/validate-light.mjs
 
+      - name: Uydu entegrasyonu (kütle bütçesi, montaj ağacı, sıra, kütle merkezi)
+        run: node scripts/validate-satellite.mjs
+
       - name: Saha yerleşimi (kural kataloğu, çözücü, determinizm, araziye yazılan kapılar)
         run: node scripts/validate-site.mjs
 

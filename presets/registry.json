@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 69,
-    "presetsWithIndex": 62,
-    "animatedPresets": 55,
+    "presets": 70,
+    "presetsWithIndex": 63,
+    "animatedPresets": 56,
     "skills": 18,
-    "demoSlides": 86,
-    "demoCards": 72,
+    "demoSlides": 87,
+    "demoCards": 73,
     "demoSections": 12,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 86,
-    "cards": 72,
+    "slides": 87,
+    "cards": 73,
     "sections": 12,
     "coverSections": 10,
     "referencedPresets": [
@@ -73,6 +73,7 @@
       "porkchop_explorer",
       "reentry_corridor",
       "rendezvous_docking",
+      "satellite_integration",
       "site_plan",
       "soi_explorer",
       "stage_separation",
@@ -521,6 +522,13 @@
     {
       "name": "rendezvous_docking",
       "title": "Randevu ve Kenetlenme — rendezvous_docking",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "satellite_integration",
+      "title": "Uydu Entegrasyonu — satellite_integration",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

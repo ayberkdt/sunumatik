@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Uydu Entegrasyonu — satellite_integration</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+    #stage { position: absolute; left: 300px; top: 0; right: 380px; bottom: 0; cursor: grab; }
+    #stage.suruklu { cursor: grabbing; }
+    aside { position: absolute; top: 0; bottom: 0; width: 300px; overflow-y: auto; background: #090b11;
+      border-right: 1px solid #1c212c; padding: 14px 14px 22px; }
+    #sag { left: auto; right: 0; width: 380px; border-right: 0; border-left: 1px solid #1c212c; }
+    h1 { margin: 0 0 10px; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #c9a35c; font-weight: 600; }
+    h1 small { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: .05em;
+      text-transform: none; color: #8a90a0; margin-top: 3px; line-height: 1.45; }
+    h2 { margin: 18px 0 6px; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase;
+      color: #c9a35c; font-weight: 600; }
+    h2:first-child { margin-top: 0; }
+    p.alt { margin: 0 0 10px; font-size: 11px; line-height: 1.5; color: #7d8393; }
+    .adim { display: grid; grid-template-columns: 22px 1fr; gap: 9px; padding: 8px; border-radius: 8px;
+      cursor: pointer; border: 1px solid transparent; font-size: 11.5px; line-height: 1.4; min-height: 40px; align-items: start; }
+    .adim:hover { border-color: #2b303d; }
+    .adim.secili { background: rgba(201,163,92,.10); border-color: #c9a35c; }
+    .adim.gecmis { opacity: .55; }
+    .adim b { font-weight: 600; color: #e8dcc0; }
+    .adim .no { font-variant-numeric: tabular-nums; color: #c9a35c; font-weight: 600; }
+    .adim .ac { display: block; color: #7d8393; margin-top: 2px; }
+    .sis { display: flex; gap: 8px; align-items: center; font-size: 11.5px; padding: 6px 4px;
+      cursor: pointer; min-height: 40px; }
+    .sis input { accent-color: #c9a35c; width: 15px; height: 15px; }
+    .nokta { width: 10px; height: 10px; border-radius: 2px; flex: 0 0 auto; }
+    .sis .kg { margin-left: auto; color: #8a90a0; font-variant-numeric: tabular-nums; }
+    table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    td { padding: 5px 0; border-bottom: 1px solid #141821; vertical-align: top; line-height: 1.45; }
+    td.k { color: #7d8393; }
+    td.v { text-align: right; font-variant-numeric: tabular-nums; color: #e8dcc0; white-space: nowrap; }
+    .kart { border: 1px solid #1c212c; border-radius: 8px; padding: 11px 12px; font-size: 11.5px;
+      line-height: 1.55; color: #aeb5c4; }
+    .kart b { color: #e8dcc0; font-weight: 600; }
+    .kart .e { display: block; color: #7d8393; text-transform: uppercase; font-size: 10px;
+      letter-spacing: .08em; margin-top: 9px; }
+    .kart .e:first-child { margin-top: 0; }
+    .zincir { color: #8a90a0; font-size: 11px; }
+    header { position: absolute; left: 314px; top: 12px; z-index: 5; display: flex; gap: 8px; align-items: center; }
+    button, select { background: rgba(16,19,27,.9); color: #dfe3ea; border: 1px solid #2b303d;
+      border-radius: 8px; padding: 8px 11px; font-size: 12px; min-height: 40px; cursor: pointer; }
+    button:hover, select:hover { border-color: #c9a35c; }
+    button.aktif { border-color: #c9a35c; background: rgba(201,163,92,.14); color: #f0e2c4; }
+    label.rng { display: flex; gap: 8px; align-items: center; background: rgba(16,19,27,.9);
+      border: 1px solid #2b303d; border-radius: 8px; padding: 7px 10px; font-size: 12px; min-height: 40px; }
+    label.rng input { width: 170px; accent-color: #c9a35c; }
+    label.rng b { min-width: 3.4em; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+    #altyazi { position: absolute; left: 314px; right: 394px; bottom: 14px; z-index: 5; font-size: 11.5px;
+      line-height: 1.5; color: #b9bfcc; background: rgba(10,12,18,.76); border: 1px solid #232837;
+      border-radius: 8px; padding: 10px 14px; pointer-events: none; }
+    #altyazi b { color: #e8dcc0; }
+    #etiketler { position: absolute; left: 300px; top: 0; right: 380px; bottom: 0; pointer-events: none; z-index: 4; }
+    .et { position: absolute; transform: translate(-50%, -50%); font-size: 10.5px; letter-spacing: .02em;
+      color: #cdd3de; background: rgba(5,7,11,.72); border: 1px solid #262c39; border-radius: 4px;
+      padding: 2px 6px; white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <aside id="sol">
+    <h1>Uydu Entegrasyonu<small>satellite_integration · parçalar, arayüzler ve montaj sırası · patlatılmış görünüm</small></h1>
+    <h2>Montaj adımları</h2>
+    <p class="alt">Sıra keyfi değil: her adım bir sonrakinin erişimini kapatır. Adıma tıkla, uydu o ana kadar kurulsun.</p>
+    <div id="adimlar"></div>
+    <h2>Alt sistemler</h2>
+    <div id="sistemler"></div>
+  </aside>
+
+  <header>
+    <label class="rng" title="Patlatma">Patlatma <input id="patla" type="range" min="0" max="100" value="0"><b id="patlaEt">%0</b></label>
+    <button id="oynat">▶ Montajı oynat</button>
+    <button id="hepsi" class="aktif">Tümü</button>
+    <select id="gorunum">
+      <option value="serbest">Serbest bakış</option>
+      <option value="on">Önden (+X)</option>
+      <option value="yan">Yandan (+Y)</option>
+      <option value="ust">Üstten (+Z)</option>
+    </select>
+  </header>
+
+  <div id="stage"></div>
+  <div id="etiketler"></div>
+  <div id="altyazi"></div>
+
+  <aside id="sag">
+    <h2>Parça künyesi</h2>
+    <div class="kart" id="kunye">Bir parçaya tıkla ya da soldan bir adım seç.</div>
+    <h2>Kütle bütçesi</h2>
+    <table id="butce"></table>
+    <h2>Kütle merkezi</h2>
+    <div class="kart" id="km"></div>
+  </aside>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { buildSatellite } from './sat-build.mjs';
+    import { PARTS, STEPS, SUBSYSTEMS, INTERFACES, massBudget, centerOfMass, mountChain, partById, partMass, describe } from './sat-parts.mjs';
+
+    const sorgu = new URLSearchParams(location.search);
+    const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const el = (s) => document.querySelector(s);
+
+    let patla = Number(sorgu.get('patla') ?? 0) / 100;
+    let adim = sorgu.get('adim') ? Number(sorgu.get('adim')) : STEPS.length;
+    let hepsi = sorgu.get('adim') === null;
+    let secili = sorgu.get('parca') || null;
+    const kapali = new Set();          // gizlenen alt sistemler
+    let oynuyor = false, oynatT = 0;
+
+    /* ---------- sahne ---------- */
+    const host = el('#stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    host.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x070910);
+    const camera = new THREE.PerspectiveCamera(38, 1, .05, 200);
+    const dunya = new THREE.Group(); scene.add(dunya);
+
+    scene.add(new THREE.HemisphereLight(0x8ea3c4, 0x1a1c22, 1.1));
+    const key = new THREE.DirectionalLight(0xfff2e2, 2.6); key.position.set(5, 6, 7);
+    key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
+    key.shadow.camera.left = -6; key.shadow.camera.right = 6;
+    key.shadow.camera.top = 6; key.shadow.camera.bottom = -6; key.shadow.bias = -0.0009;
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0x9cb4d6, 1.0); rim.position.set(-6, 2, -5); scene.add(rim);
+
+    const uydu = buildSatellite(THREE, { scale: 1 });
+    dunya.add(uydu.root);
+
+    /* gövde ekseni: ayırma halkası ekseni — kütle merkezi buna göre okunur */
+    const eksen = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, -1.4), new THREE.Vector3(0, 0, 2.1)]),
+      new THREE.LineBasicMaterial({ color: 0x3a4250 }));
+    dunya.add(eksen);
+    const kmNokta = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 12),
+      new THREE.MeshBasicMaterial({ color: 0xe06a4a }));
+    dunya.add(kmNokta);
+
+    /* ---------- kamera ---------- */
+    const kam = { az: -0.9, el: 0.42, d: 9.5 };
+    function kameraKur() {
+      const { az, el: e, d } = kam;
+      camera.position.set(Math.cos(az) * Math.cos(e) * d, Math.sin(e) * d, Math.sin(az) * Math.cos(e) * d);
+      camera.lookAt(0, 0, 0);
+    }
+    host.addEventListener('pointerdown', (ev) => {
+      const p0 = { x: ev.clientX, y: ev.clientY, az: kam.az, el: kam.el };
+      host.classList.add('suruklu');
+      let hareket = 0;
+      const mv = (m) => {
+        hareket += Math.abs(m.clientX - p0.x) + Math.abs(m.clientY - p0.y);
+        kam.az = p0.az - (m.clientX - p0.x) * .007;
+        kam.el = Math.max(-1.3, Math.min(1.3, p0.el + (m.clientY - p0.y) * .005));
+      };
+      const up = (m) => {
+        host.classList.remove('suruklu');
+        removeEventListener('pointermove', mv); removeEventListener('pointerup', up);
+        if (hareket < 5) sec(m);
+      };
+      addEventListener('pointermove', mv); addEventListener('pointerup', up);
+    });
+    host.addEventListener('wheel', (e) => { e.preventDefault(); kam.d = Math.min(26, Math.max(3.4, kam.d * (1 + Math.sign(e.deltaY) * .11))); }, { passive: false });
+
+    /* ---------- seçim ---------- */
+    const ray = new THREE.Raycaster(), fare = new THREE.Vector2();
+    function sec(ev) {
+      const b = host.getBoundingClientRect();
+      fare.set(((ev.clientX - b.left) / b.width) * 2 - 1, -((ev.clientY - b.top) / b.height) * 2 + 1);
+      ray.setFromCamera(fare, camera);
+      const vur = ray.intersectObjects(uydu.root.children, true);
+      const ilk = vur.find(v => v.object.visible && v.object.parent?.visible);
+      if (!ilk) { secili = null; panel(); return; }
+      let o = ilk.object;
+      while (o && !o.userData.part) o = o.parent;
+      secili = o?.userData?.part?.id ?? null;
+      panel();
+    }
+
+    /* ---------- paneller ---------- */
+    function adimlarCiz() {
+      el('#adimlar').innerHTML = STEPS.map(s => {
+        const kg = PARTS.filter(p => p.step === s.no).reduce((a, p) => a + partMass(p), 0);
+        const sinif = hepsi ? '' : (s.no === adim ? ' secili' : (s.no < adim ? ' gecmis' : ''));
+        return `<div class="adim${sinif}" data-adim="${s.no}"><span class="no">${s.no}</span>`
+          + `<span><b>${s.ad}</b> <span style="color:#8a90a0">· ${kg.toFixed(0)} kg</span>`
+          + `<span class="ac">${s.aciklama}</span></span></div>`;
+      }).join('');
+      el('#adimlar').querySelectorAll('[data-adim]').forEach(d => d.addEventListener('click', () => {
+        adim = Number(d.dataset.adim); hepsi = false; oynuyor = false;
+        el('#hepsi').classList.remove('aktif'); el('#oynat').textContent = '▶ Montajı oynat';
+        uygula(); panel();
+      }));
+    }
+    function sistemlerCiz() {
+      const b = massBudget();
+      el('#sistemler').innerHTML = b.sistemler.map(s =>
+        `<label class="sis"><input type="checkbox" data-sis="${s.sistem}" ${kapali.has(s.sistem) ? '' : 'checked'}>`
+        + `<span class="nokta" style="background:${SUBSYSTEMS[s.sistem].renk}"></span>`
+        + `<span>${s.ad}</span><span class="kg">${s.kg} kg</span></label>`).join('');
+      el('#sistemler').querySelectorAll('input').forEach(i => i.addEventListener('change', () => {
+        if (i.checked) kapali.delete(i.dataset.sis); else kapali.add(i.dataset.sis);
+        uygula();
+      }));
+    }
+    function butceCiz() {
+      const b = massBudget(), d = describe();
+      el('#butce').innerHTML =
+        b.sistemler.map(s => `<tr><td class="k">${s.ad}</td><td class="v">${s.kg} kg · %${(s.pay * 100).toFixed(1)}</td></tr>`).join('')
+        + `<tr><td class="k"><b>Kuru kütle</b></td><td class="v"><b>${b.kuruKg} kg</b></td></tr>`
+        + `<tr><td class="k">İtici yükü</td><td class="v">${b.iticiKg} kg</td></tr>`
+        + `<tr><td class="k"><b>Fırlatma kütlesi</b></td><td class="v"><b>${b.firlatmaKg} kg</b></td></tr>`
+        + `<tr><td class="k">Parça</td><td class="v">${b.parcaSayisi} adet · ${d.parca} tür</td></tr>`;
+      const c = centerOfMass(), ck = centerOfMass({ yakitli: false });
+      el('#km').innerHTML = `<b>Yakıtlı</b> [${c.x.toFixed(3)}, ${c.y.toFixed(3)}, ${c.z.toFixed(3)}] m`
+        + `<br><b>Kuru</b> [${ck.x.toFixed(3)}, ${ck.y.toFixed(3)}, ${ck.z.toFixed(3)}] m`
+        + `<span class="e">Eksenden sapma</span>${d.eksendenSapmaMm} mm`
+        + `<span class="e">Neden önemli</span>Apogee motorunun ekseni kütle merkezinden geçmezse her yakış bir dönme momenti üretir ve yakıt onu düzeltmeye gider.`;
+      kmNokta.position.set(c.x, c.y, c.z);
+    }
+    function panel() {
+      const p = secili ? partById(secili) : null;
+      if (!p) {
+        const s = STEPS.find(x => x.no === adim);
+        el('#kunye').innerHTML = hepsi
+          ? 'Bir parçaya tıkla ya da soldan bir adım seç.'
+          : `<b>Adım ${s.no} — ${s.ad}</b><span class="e">Ne oluyor</span>${s.aciklama}`;
+        return;
+      }
+      const zincir = mountChain(p.id).map(x => x.ad).reverse().join(' → ');
+      const ust = p.mountsTo ? partById(p.mountsTo).ad : 'fırlatıcı arayüzü';
+      el('#kunye').innerHTML =
+        `<b>${p.ad}</b>${p.qty ? ` <span style="color:#8a90a0">× ${p.qty}</span>` : ''}`
+        + `<span class="e">Alt sistem</span>${SUBSYSTEMS[p.sistem].ad}`
+        + `<span class="e">Neden var</span>${p.why}`
+        + `<span class="e">Neye bağlanır</span>${ust}`
+        + `<span class="e">Arayüz</span>${INTERFACES[p.arayuz]}`
+        + `<span class="e">Montaj adımı</span>${p.step} — ${STEPS.find(s => s.no === p.step).ad}`
+        + `<span class="e">Kütle</span>${p.qty ? `${p.qty} × ${p.massKg} = ${partMass(p)} kg` : `${p.massKg} kg`}`
+        + `<span class="e">Bağlanma zinciri</span><span class="zincir">${zincir}</span>`;
+    }
+
+    /* ---------- uygula ---------- */
+    function uygula() {
+      uydu.explode(patla);
+      for (const q of uydu.parts) {
+        const gorunur = (hepsi || q.part.step <= adim) && !kapali.has(q.part.sistem);
+        q.group.visible = gorunur;
+      }
+      const d = describe();
+      const s = STEPS.find(x => x.no === adim);
+      el('#altyazi').innerHTML = hepsi
+        ? `<b>Tam montaj</b> · ${d.parca} tür, ${d.adet} parça · kuru ${d.kuruKg} kg, itici ${d.iticiKg} kg, fırlatma ${d.firlatmaKg} kg`
+        + ` · kütle merkezi eksenden ${d.eksendenSapmaMm} mm · patlatma %${Math.round(patla * 100)}`
+        : `<b>Adım ${s.no}/${STEPS.length} — ${s.ad}</b> · ${s.aciklama}`;
+    }
+
+    /* ---------- etiketler ---------- */
+    const etKat = el('#etiketler');
+    const v = new THREE.Vector3();
+    function etiketler() {
+      /* ETİKET SEÇİMİ bir bilgi kuralıdır, hepsini basmak değil: adım
+         modundayken YALNIZ o adımın parçaları adlandırılır (okuyucunun
+         sorusu "şimdi ne takılıyor"dur); tam montajda yalnız ağır
+         parçalar (≥ 15 kg) yazılır, çünkü 43 etiket üst üste binince
+         hiçbiri okunmuyor (ölçüldü). Seçili parça her hâlde yazılır. */
+      const goster = patla > 0.25;
+      const esik = 15;
+      const listesi = goster ? uydu.parts.filter(q => {
+        if (!q.group.visible || (q.part.qty ?? 1) !== 1) return false;
+        if (q.part.id === secili) return true;
+        if (!hepsi) return q.part.step === adim;
+        return q.part.massKg >= esik;
+      }) : [];
+      while (etKat.children.length > listesi.length) etKat.lastChild.remove();
+      while (etKat.children.length < listesi.length) {
+        const d = document.createElement('div'); d.className = 'et'; etKat.appendChild(d);
+      }
+      const b = host.getBoundingClientRect();
+      /* Önce ekran konumları, sonra DİKEY ÇAKIŞMA ÇÖZÜMÜ: aynı yükseklikte
+         iki etiket varsa birbirini iter. Yerleri her karede yeniden
+         hesaplandığı için kilitlenme olmaz. */
+      const yerler = [];
+      listesi.forEach((q) => {
+        q.group.getWorldPosition(v).project(camera);
+        const x = (v.x * .5 + .5) * b.width, y = (-v.y * .5 + .5) * b.height;
+        yerler.push({ q, x, y, gorunur: v.z < 1 && x > 4 && x < b.width - 4 && y > 4 && y < b.height - 4 });
+      });
+      const gorunenler = yerler.filter(p2 => p2.gorunur).sort((a, c) => a.y - c.y);
+      const SATIR = 17;
+      for (let gecis = 0; gecis < 12; gecis++) {
+        let itildi = false;
+        for (let i = 1; i < gorunenler.length; i++) {
+          const a = gorunenler[i - 1], c = gorunenler[i];
+          if (Math.abs(a.x - c.x) > 130) continue;
+          const d = c.y - a.y;
+          if (d >= SATIR) continue;
+          const it = (SATIR - d) / 2;
+          a.y -= it; c.y += it; itildi = true;
+        }
+        if (!itildi) break;
+      }
+      yerler.forEach((p2, i) => {
+        const e = etKat.children[i];
+        e.style.display = p2.gorunur ? '' : 'none';
+        if (!p2.gorunur) return;
+        e.style.left = `${p2.x}px`; e.style.top = `${p2.y}px`;
+        const metin = p2.q.part.ad;
+        if (e.textContent !== metin) e.textContent = metin;
+        const vurgu = secili === p2.q.part.id;
+        e.style.borderColor = vurgu ? '#c9a35c' : '#262c39';
+        e.style.color = vurgu ? '#f0e2c4' : '#cdd3de';
+      });
+    }
+
+    /* ---------- kumandalar ---------- */
+    const patlaSurgu = el('#patla');
+    patlaSurgu.value = String(Math.round(patla * 100));
+    el('#patlaEt').textContent = `%${Math.round(patla * 100)}`;
+    patlaSurgu.addEventListener('input', () => {
+      patla = Number(patlaSurgu.value) / 100;
+      el('#patlaEt').textContent = `%${patlaSurgu.value}`;
+      uygula();
+    });
+    el('#hepsi').addEventListener('click', () => {
+      hepsi = true; oynuyor = false; el('#hepsi').classList.add('aktif');
+      el('#oynat').textContent = '▶ Montajı oynat';
+      adimlarCiz(); uygula(); panel();
+    });
+    el('#oynat').addEventListener('click', () => {
+      oynuyor = !oynuyor;
+      el('#oynat').textContent = oynuyor ? '⏸ Durdur' : '▶ Montajı oynat';
+      if (oynuyor) { hepsi = false; adim = 1; oynatT = 0; el('#hepsi').classList.remove('aktif'); adimlarCiz(); uygula(); }
+    });
+    el('#gorunum').addEventListener('change', (e) => {
+      const g = e.target.value;
+      if (g === 'on') { kam.az = 0; kam.el = 0; }
+      else if (g === 'yan') { kam.az = Math.PI / 2; kam.el = 0; }
+      else if (g === 'ust') { kam.az = -0.9; kam.el = 1.28; }
+      else { kam.az = -0.9; kam.el = 0.42; }
+    });
+
+    /* ---------- döngü ---------- */
+    function boyutla() {
+      const w = host.clientWidth, h = host.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
+    }
+    addEventListener('resize', boyutla);
+    let son = 0, raf = 0;
+    function kare(now) {
+      const dt = son ? Math.min(.05, (now - son) / 1000) : 0;
+      son = now;
+      if (oynuyor && !azaltilmis) {
+        oynatT += dt;
+        const yeni = Math.min(STEPS.length, 1 + Math.floor(oynatT / 1.6));
+        if (yeni !== adim) { adim = yeni; adimlarCiz(); uygula(); panel(); }
+        if (oynatT > STEPS.length * 1.6 + 1.2) { oynuyor = false; hepsi = true; el('#oynat').textContent = '▶ Montajı oynat'; el('#hepsi').classList.add('aktif'); adimlarCiz(); uygula(); }
+      }
+      if (!azaltilmis) dunya.rotation.z += dt * 0.055;
+      kameraKur();
+      renderer.render(scene, camera);
+      etiketler();
+      raf = requestAnimationFrame(kare);
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+      else if (!document.hidden && !raf) { son = 0; raf = requestAnimationFrame(kare); }
+    });
+
+    adimlarCiz(); sistemlerCiz(); butceCiz(); uygula(); panel(); boyutla(); kameraKur();
+    if (azaltilmis) { renderer.render(scene, camera); etiketler(); }
+    else raf = requestAnimationFrame(kare);
+
+    window.satIntegration = {
+      state: () => ({ adim, hepsi, patla, secili, kapali: [...kapali], ozet: describe() }),
+      parts: () => PARTS.map(p => ({ id: p.id, ad: p.ad, sistem: p.sistem, step: p.step, kg: partMass(p), mountsTo: p.mountsTo })),
+      setStep(n) { adim = n; hepsi = false; adimlarCiz(); uygula(); panel(); },
+      setExplode(k) { patla = k; patlaSurgu.value = String(Math.round(k * 100)); el('#patlaEt').textContent = `%${Math.round(k * 100)}`; uygula(); },
+      ready: true, reducedMotion: azaltilmis,
+    };
+  </script>
+</body>
+</html>
