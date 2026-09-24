@@ -111,7 +111,7 @@
     import { createExplodedView } from '../core/exploded-view.mjs';
     import { assemblyFromCatalog, groupsFromCatalog, nodesFromBuild } from './adapters/catalog.mjs';
     import { assemblyFromScene, assemblyFromCraft } from './adapters/scene.mjs';
-    import { createAssembly } from '../core/assembly.mjs';
+    import { createAssembly, IFACE_CLASSES } from '../core/assembly.mjs';
     import { buildSatellite } from '../satellite_integration/sat-build.mjs';
     import * as SAT from '../satellite_integration/sat-parts.mjs';
     import { buildHabitat } from '../habitat_blocks/hab-build.mjs';
@@ -317,7 +317,9 @@
 
     function kunyeYaz(id) {
       const k = el('#kunye');
-      const p = aktif.assembly.byId.get(id);
+      /* byId bir Map değil, İŞLEVdir. `byId.get(id)` yazmak sessizce
+         başarısız oluyordu: ışın parçayı buluyor, künye boş kalıyordu. */
+      const p = aktif.assembly.byId(id);
       if (!p) { k.textContent = 'Bir parçaya tıkla ya da soldan bir adım seç.'; el('#zincir').textContent = '—'; return; }
       k.innerHTML = '';
       const ekle = (baslik, metin, sinif = '') => {
@@ -328,10 +330,27 @@
       const b = document.createElement('b'); b.textContent = p.ad || p.id;
       k.appendChild(b);
       ekle('Neden böyle', p.why || '—');
-      ekle('Arayüz', p.iface + (p.arayuzTahmini ? '  (tahmin)' : ''), p.arayuzTahmini ? 'tahmin' : '');
+      ekle('Arayüz', (IFACE_CLASSES[p.iface] || p.iface) + (p.arayuzTahmini ? '  (tahmin)' : ''),
+        p.arayuzTahmini ? 'tahmin' : '');
       if (Number.isFinite(p.massKg)) {
         ekle('Kütle', p.tahmini ? `≈ ${p.massKg.toFixed(2)} kg  (tahmin)` : `${p.massKg} kg`,
           p.tahmini ? 'tahmin' : '');
+      }
+      /* Beyan edilmiş katalogdan gelen teknik künye. Türetilen cisimlerde
+         böyle bir künye YOKTUR ve uydurulmaz. */
+      const t = p.tech;
+      if (t) {
+        if (t.no) ekle('Parça no', t.no);
+        if (t.malzeme) ekle('Malzeme', t.malzeme);
+        if (t.guc_W) {
+          const n = p.qty ?? 1, toplam = t.guc_W * n;
+          ekle('Güç', toplam < 0 ? `${-toplam} W üretir` : `${toplam} W tüketir`);
+        }
+        if (t.veri_Mbps) ekle('Veri', `${t.veri_Mbps} Mbps`);
+        if (t.sicaklik_C) ekle('Çalışma sıcaklığı', `${t.sicaklik_C[0]} … ${t.sicaklik_C[1]} °C`);
+        if (t.baglanti) ekle('Bağlantı', t.baglanti);
+        if (t.isiYolu) ekle('Isı yolu', t.isiYolu);
+        if (t.detay) ekle('Ayrıntı', t.detay);
       }
       el('#zincir').textContent = aktif.assembly.chain(id).map(q => q.ad || q.id).join('  →  ');
     }

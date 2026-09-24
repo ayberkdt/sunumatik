@@ -182,5 +182,78 @@ console.log('== 7 determinizm');
     && d.kuruKg > 0 && d.firlatmaKg > d.kuruKg, `${d.parca} tür · ${d.adet} adet · ${d.adim} adım`);
 }
 
+/* ── 8) teknik künye ─────────────────────────────────────────────────
+   Künyedeki sayılar bir süs değil: toplandıklarında KAPANMAK zorunda.
+   Bu bölüm ilk koşumunda iki gerçek hata buldu — faydalı yük elektroniği
+   "radyatör paneline" diye künyelenmişken katalogda üst panele bağlıydı,
+   ve radyatör kapasitesi künyeye 340 W yazılmışken aynı panelin alanı ve
+   kaplaması 1252 W veriyordu. */
+console.log('== 8 teknik künye');
+{
+  /* 8a. Her parçanın künyesi var ve parça numarası benzersiz. */
+  const kunyesiz = S.PARTS.filter(p => !p.tech);
+  check('her parçanın teknik künyesi var', kunyesiz.length === 0,
+    kunyesiz.map(p => p.id).join(',') || `${S.PARTS.length} parça`);
+  const nolar = S.PARTS.map(p => p.tech?.no).filter(Boolean);
+  check('parça numaraları benzersiz', new Set(nolar).size === nolar.length, `${nolar.length} numara`);
+  check('parça numaraları biçimli (SD-XXX-000)',
+    nolar.every(n => /^SD-[A-Z]{3}-\d{3}$/.test(n)),
+    nolar.filter(n => !/^SD-[A-Z]{3}-\d{3}$/.test(n)).join(',') || 'hepsi');
+  check('her künyede malzeme ve bağlantı beyanı var',
+    S.PARTS.every(p => p.tech?.malzeme && p.tech?.baglanti));
+
+  /* 8b. Sıcaklık bantları anlamlı: alt sınır üst sınırdan küçük. */
+  const tersBant = S.PARTS.filter(p => p.tech?.sicaklik_C && p.tech.sicaklik_C[0] >= p.tech.sicaklik_C[1]);
+  check('sıcaklık bantları ters değil', tersBant.length === 0, tersBant.map(p => p.id).join(','));
+
+  /* 8c. Güç bütçesi kapanıyor ve payı gerçekçi. */
+  const g = S.powerBudget();
+  check('güç üretimi tüketimi karşılıyor', g.uretimW > g.tuketimW,
+    `${g.uretimW} W üretim, ${g.tuketimW} W tüketim`);
+  check('güç payı %20–%45 arasında (BOL için gerçekçi)', g.pay >= 0.20 && g.pay <= 0.45,
+    `%${(g.pay * 100).toFixed(1)}`);
+  const elleUretim = (S.partById('kanat-xp').tech.guc_W + S.partById('kanat-xn').tech.guc_W) * -1;
+  check('üretim yalnız kanatlardan geliyor', g.uretimW === elleUretim, `${elleUretim} W`);
+
+  /* 8d. Veri zinciri tutarlı: ham / sıkıştırma = verilen, indirme yeterli. */
+  const d = S.dataBudget();
+  check('sıkıştırılmış hız ham/oran ile tutuyor', d.tutarli,
+    `${d.hamMbps} / ${d.sikistirma} = ${(d.hamMbps / d.sikistirma).toFixed(1)} vs ${d.sikisikMbps} Mbps`);
+  check('indirme kapasitesi üretilen veriyi karşılıyor', d.yeterli,
+    `${d.indirmeMbps} ≥ ${d.sikisikMbps} Mbps, pay ${d.payMbps} Mbps`);
+  check('kurtarma yolu (LGA) var ve çok daha yavaş', d.kurtarmaMbps > 0 && d.kurtarmaMbps < d.indirmeMbps / 100,
+    `${d.kurtarmaMbps} Mbps`);
+
+  /* 8e. Isıl: her ısı kaynağının radyatöre giden bir yolu BEYAN edilmiş. */
+  const yollar = S.thermalPaths();
+  const yolsuz = yollar.filter(y => !y.ok);
+  check('her ısı kaynağının radyatöre yolu beyan edilmiş', yolsuz.length === 0,
+    yolsuz.map(y => `${y.id} (${y.W} W)`).join(',') || `${yollar.length} kaynak`);
+
+  /* 8f. Isıl kapanış: kapasite geometriden HESAPLANIR, künyeden okunmaz. */
+  const t = S.thermalClosure();
+  check('radyatör kapasitesi atılacak gücü karşılıyor', t.kapaniyor,
+    `${t.kapasiteW} W kapasite ≥ ${t.atilacakW} W atılacak, pay %${(t.pay * 100).toFixed(1)}`);
+  check('ısıl pay %10–%40 arasında', t.pay >= 0.10 && t.pay <= 0.40, `%${(t.pay * 100).toFixed(1)}`);
+  /* Künyeye yazılan sayı hesapla tutmalı: ikisi ayrışırsa beyan yalan olur. */
+  const yaziliW = /Atım kapasitesi (\d+) W/.exec(S.partById('radyator-yp').tech.detay);
+  check('künyeye yazılan radyatör kapasitesi hesapla aynı',
+    yaziliW && Math.abs(Number(yaziliW[1]) - t.paneller[0].W) <= 2,
+    yaziliW ? `künye ${yaziliW[1]} W vs hesap ${t.paneller[0].W} W` : 'künyede sayı yok');
+
+  /* 8g. Isıl tasarımı belirleyen bileşen: en dar sıcaklık bandı. */
+  const s2 = S.thermalDriver();
+  check('ısıl tasarımı faydalı yük optiği belirliyor', s2.id === 'faydali-yuk',
+    `${s2.ad}: ${s2.bant[0]}…${s2.bant[1]} °C (${s2.genislik} K)`);
+
+  /* 8h. TERS SINAV: bozulmuş bir künye yakalanmalı. */
+  const sahte = { ...S.partById('kanat-xp'), tech: { ...S.partById('kanat-xp').tech, guc_W: -100 } };
+  const sahteUretim = 100 + 1450;
+  check('TERS SINAV: üretim düşerse pay eşiğin altına iner',
+    (sahteUretim - S.powerBudget().tuketimW) / sahteUretim < 0.20,
+    `%${(100 * (sahteUretim - S.powerBudget().tuketimW) / sahteUretim).toFixed(1)}`);
+  void sahte;
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);

@@ -197,5 +197,23 @@ console.log('== 7 uydu kataloğu sözleşmeye çevriliyor');
     m.parts.filter(p => p.parent != null).every(p => uzunluk(of.get(p.id)) > 1e-6));
 }
 
+/* ── 8) genel yüzey sözleşmesi ───────────────────────────────────────
+   Bu bölüm, vitrin `byId.get(id)` yazıp sessizce boş künye ürettikten
+   sonra yazıldı: byId bir Map değil, işlevdir. Yüzeyin ŞEKLİ de bir
+   sözleşmedir ve sınanmazsa çağıran taraf yanlış kullanır. */
+console.log('== 8 genel yüzey sözleşmesi');
+{
+  const m = A.createAssembly(ORNEK);
+  check('byId bir işlev (Map değil)', typeof m.byId === 'function');
+  check('byId var olan kimliği getiriyor', m.byId(ORNEK.parts[1].id)?.id === ORNEK.parts[1].id);
+  check('byId bilinmeyen kimlikte null veriyor', m.byId('olmayan-parca') === null);
+  check('chain parça NESNELERİ veriyor (kimlik dizisi değil)',
+    Array.isArray(m.chain(ORNEK.parts[1].id)) && m.chain(ORNEK.parts[1].id).every(x => typeof x === 'object'));
+  check('explode Map veriyor', typeof m.explode === 'function' && m.explode(0.5) instanceof Map);
+  check('interfaceCensus DİZİ veriyor', Array.isArray(m.interfaceCensus()));
+  check('budget sayısal toplam veriyor', typeof m.budget().toplamKg === 'number');
+  check('integrationOrder dizi veriyor', Array.isArray(m.integrationOrder()));
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);

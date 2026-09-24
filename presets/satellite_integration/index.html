@@ -249,7 +249,34 @@
         + `<span class="e">Arayüz</span>${INTERFACES[p.arayuz]}`
         + `<span class="e">Montaj adımı</span>${p.step} — ${STEPS.find(s => s.no === p.step).ad}`
         + `<span class="e">Kütle</span>${p.qty ? `${p.qty} × ${p.massKg} = ${partMass(p)} kg` : `${p.massKg} kg`}`
-        + `<span class="e">Bağlanma zinciri</span><span class="zincir">${zincir}</span>`;
+        + `<span class="e">Bağlanma zinciri</span><span class="zincir">${zincir}</span>`
+        + teknikKunye(p);
+    }
+
+    /* Teknik künye: malzeme, güç, veri, sıcaklık, bağlantı elemanı, parça
+       numarası. Beyan edilmeyen alan YAZILMAZ — boş bir satır, olmayan bir
+       veriyi varmış gibi gösterir. */
+    function teknikKunye(p) {
+      const t = p.tech;
+      if (!t) return '';
+      const sat = [];
+      const ek = (baslik, deger) => { if (deger) sat.push(`<span class="e">${baslik}</span>${deger}`); };
+      ek('Parça no', t.no);
+      ek('Malzeme', t.malzeme);
+      if (t.guc_W) {
+        const n = p.qty ?? 1;
+        const toplam = t.guc_W * n;
+        ek('Güç', toplam < 0
+          ? `${-toplam} W ÜRETİR${n > 1 ? ` (${n} × ${-t.guc_W} W)` : ''}`
+          : `${toplam} W tüketir${n > 1 ? ` (${n} × ${t.guc_W} W)` : ''}`);
+      }
+      if (t.veri_Mbps) ek('Veri', `${t.veri_Mbps} Mbps${t.sikistirma ? ` (${t.sikistirma}:1 sıkıştırma sonrası)` : ''}`);
+      if (t.sicaklik_C) ek('Çalışma sıcaklığı', `${t.sicaklik_C[0]} … ${t.sicaklik_C[1]} °C`);
+      ek('Bağlantı', t.baglanti);
+      ek('Isı yolu', t.isiYolu);
+      ek('Ayrıntı', t.detay);
+      ek('Nitelik', t.kalite);
+      return sat.join('');
     }
 
     /* ---------- uygula ---------- */
