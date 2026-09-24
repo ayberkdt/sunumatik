@@ -72,6 +72,9 @@ jobs:
       - name: Nefes kütüphanesi (ölçüşmezlik, genlik/sahne bütçesi, hız sınırı, yasak sınıf)
         run: node scripts/validate-life-signs.mjs
 
+      - name: Işık fiziği çekirdeği (Planck eğrisi, ters kare, ortam kuralı, 1/f titreşim, pozlama)
+        run: node scripts/validate-light.mjs
+
       - name: Saha yerleşimi (kural kataloğu, çözücü, determinizm, araziye yazılan kapılar)
         run: node scripts/validate-site.mjs
 
