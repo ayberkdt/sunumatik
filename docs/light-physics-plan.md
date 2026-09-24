@@ -25,9 +25,19 @@
 > Birinci dereceden üstel sönüm hem aşımsız hem kadanstan tam bağımsız.
 > Ölçümün kendisi de ters sınava bağlandı: beyaz gürültüde eğim 0,031.
 >
-> HENÜZ YOK: light-rig (§6), yüzey ışığı ve heiligenschein parçası (§5),
-> far/IES (§5.4), sıcak metal (§5.5), plüm genişletmesi (§4), ateş (§3),
-> lens katmanı (§7) — plan §12 F1–F4.
+> **F1 UYGULANDI (25 Eylül 2026):** `presets/light_blocks/light-rig.mjs` —
+> Güneş gerçek aydınlatmasıyla ve blackbodyRGB(5772) rengiyle kurulur;
+> DOLGU HESAPLANIR (regolit sıçraması E·ρ·sin(irtifa)/π, Ay'da Dünya ışığı
+> ~12 lux) ve AmbientLight HİÇ kurulmaz — fiziksel karşılığı yok. Far
+> kandela ile (decay 2, distance 0; kesme yarıçapı eşik atlamasıdır), IES
+> benzeri 1B profil tablosu. `addBeam` huzmeyi yalnız saçan ortamda kurar
+> ve reddi nedeniyle birlikte döndürür. Vitrin `presets/light_blocks/`:
+> aynı lamba dört ortamda, ışık tablosu, zemin aydınlatması E = I/d² ile
+> ölçülü, reddedilen olgular gerekçe ve öneri kartlarıyla.
+>
+> HENÜZ YOK: heiligenschein parçasının arazi malzemesine bağlanması (§5.3
+> matematiği çekirdekte hazır), sıcak metal (§5.5), plüm genişletmesi (§4),
+> ateş (§3), lens katmanı (§7) — plan §12 F2–F4.
 >
 > `webgl-scene-contract.md` §1 ("olguyu
 > adlandır"), §3 (GLSL güvenliği) ve §4 (ışık disiplini) bu planın anayasasıdır.

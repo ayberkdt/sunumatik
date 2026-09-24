@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Işık Fiziği — light_blocks</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+    #stage { position: absolute; left: 0; top: 0; right: 380px; bottom: 0; }
+    header { position: absolute; left: 22px; top: 14px; right: 402px; z-index: 5; display: flex;
+      gap: 10px; align-items: flex-start; justify-content: space-between; pointer-events: none; }
+    h1 { margin: 0; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: #c9a35c; font-weight: 600; }
+    h1 small { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: .05em;
+      text-transform: none; color: #8a90a0; margin-top: 3px; }
+    .kumanda { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; pointer-events: auto; }
+    button, select { background: rgba(16,19,27,.9); color: #dfe3ea; border: 1px solid #2b303d;
+      border-radius: 8px; padding: 8px 11px; font-size: 12px; min-height: 40px; cursor: pointer; }
+    button:hover, select:hover { border-color: #c9a35c; }
+    button.aktif { border-color: #c9a35c; background: rgba(201,163,92,.14); color: #f0e2c4; }
+    aside { position: absolute; right: 0; top: 0; bottom: 0; width: 380px; overflow-y: auto;
+      background: #090b11; border-left: 1px solid #1c212c; padding: 16px 18px 24px; }
+    h2 { margin: 18px 0 6px; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase;
+      color: #c9a35c; font-weight: 600; }
+    h2:first-child { margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    td { padding: 5px 0; border-bottom: 1px solid #141821; vertical-align: top; line-height: 1.45; }
+    td.k { color: #7d8393; width: 44%; }
+    td.v { text-align: right; font-variant-numeric: tabular-nums; color: #e8dcc0; }
+    .kart { border: 1px solid #1c212c; border-radius: 8px; padding: 11px 12px; font-size: 11.5px;
+      line-height: 1.55; color: #aeb5c4; margin-bottom: 8px; }
+    .kart.red { border-color: #4a2b22; background: rgba(224,106,74,.06); }
+    .kart.red b { color: #e0a24a; }
+    .kart b { color: #e8dcc0; font-weight: 600; }
+    .kart .oneri { display: block; margin-top: 6px; color: #7d8393; }
+    .olgu { display: flex; gap: 8px; align-items: center; margin-bottom: 7px; font-size: 12px; min-height: 40px; }
+    .olgu input { accent-color: #c9a35c; width: 15px; height: 15px; }
+    #altyazi { position: absolute; left: 22px; right: 402px; bottom: 16px; z-index: 5; font-size: 11.5px;
+      line-height: 1.5; color: #b9bfcc; background: rgba(10,12,18,.76); border: 1px solid #232837;
+      border-radius: 8px; padding: 10px 14px; pointer-events: none; }
+    #altyazi b { color: #e8dcc0; }
+    #olcum { position: absolute; left: 22px; bottom: 86px; z-index: 5; font-size: 11px;
+      background: rgba(10,12,18,.76); border: 1px solid #232837; border-radius: 8px; padding: 9px 12px;
+      font-variant-numeric: tabular-nums; color: #aeb5c4; pointer-events: none; }
+    #olcum b { color: #e8dcc0; }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <header>
+    <h1>Işık Fiziği<small>light_blocks · aynı lamba, dört ortam · fark içeriğin kendisi</small></h1>
+    <div class="kumanda">
+      <button data-env="vacuum" class="aktif">Vakum · Ay</button>
+      <button data-env="mars">Mars</button>
+      <button data-env="earth">Dünya</button>
+      <button data-env="interior">İç mekân</button>
+      <button id="gece">Gece</button>
+      <select id="poz" title="Pozlama hedefi">
+        <option value="sahne">Pozlama: sahne</option>
+        <option value="kokpit">Pozlama: kokpit (300 lux)</option>
+      </select>
+    </div>
+  </header>
+
+  <div id="olcum"></div>
+  <div id="altyazi"></div>
+
+  <aside>
+    <h2>Işık tablosu</h2>
+    <table id="tablo"></table>
+    <h2>Olgular</h2>
+    <div id="olgular"></div>
+    <div id="kartlar"></div>
+    <h2>Neden böyle</h2>
+    <div class="kart">
+      <b>AmbientLight yok.</b> Fiziksel karşılığı olmadığı için rigde hiç kurulmaz.
+      Yerine iki gerçek kaynak var: regolit sıçraması (E·ρ·sin(irtifa)/π) ve Ay'da
+      Dünya ışığı. Sahne bu yüzden kararmıyor.
+      <span class="oneri">Işık şiddetleri three'nin fiziksel birimlerinde: yönlü ışık lux, spot kandela, decay 2.</span>
+    </div>
+  </aside>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { createLightRig, createHeadlamp, addBeam } from './light-rig.mjs';
+    import { ENVIRONMENTS, envAllows, blackbodyRGB, illuminanceAt, PROPELLANTS } from '../core/light-math.mjs';
+    import { cylGeoY } from '../core/geometry-axis.mjs';
+
+    const sorgu = new URLSearchParams(location.search);
+    const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const sabitT = sorgu.get('t') !== null ? parseFloat(sorgu.get('t')) : null;
+    const el = (s) => document.querySelector(s);
+    const hex = ([r, g, b]) => (Math.round(Math.min(1, Math.max(0, r)) * 255) << 16)
+      | (Math.round(Math.min(1, Math.max(0, g)) * 255) << 8) | Math.round(Math.min(1, Math.max(0, b)) * 255);
+
+    let ortam = ENVIRONMENTS[sorgu.get('ortam')] ? sorgu.get('ortam') : 'vacuum';
+    const olgular = { huzme: sorgu.get('huzme') !== '0', alev: false, duman: false };
+    let gece = sorgu.get('gece') === '1';
+
+    /* ---------- sahne ---------- */
+    const host = el('#stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    host.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, 1, .05, 400);
+    camera.position.set(4.6, 2.5, 6.4);
+    camera.lookAt(0, 1.0, 0);
+
+    /* zemin + iki blok: gölgeyi ve ışık desenini okutmak için */
+    const zeminMat = new THREE.MeshStandardMaterial({ color: 0x8d8880, roughness: 1, metalness: 0 });
+    const zemin = new THREE.Mesh(new THREE.PlaneGeometry(80, 80).rotateX(-Math.PI / 2), zeminMat);
+    zemin.receiveShadow = true; scene.add(zemin);
+    const blokMat = new THREE.MeshStandardMaterial({ color: 0xb8b2a6, roughness: .85, metalness: .05 });
+    for (const [x, z, s] of [[-1.6, -0.6, 0.9], [1.9, 0.8, 0.6]]) {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), blokMat);
+      b.position.set(x, s / 2, z); b.castShadow = true; b.receiveShadow = true; scene.add(b);
+    }
+    /* lamba direği */
+    const direkMat = new THREE.MeshStandardMaterial({ color: 0x6f7480, roughness: .5, metalness: .7 });
+    const direk = new THREE.Mesh(cylGeoY(0.055, 0.075, 3.0, 16), direkMat);
+    direk.position.set(0, 1.5, 0); direk.castShadow = true; scene.add(direk);
+    const basMat = new THREE.MeshStandardMaterial({ color: 0x9aa0aa, roughness: .4, metalness: .6 });
+    const bas = new THREE.Mesh(cylGeoY(0.16, 0.10, 0.20, 20), basMat);
+    bas.position.set(0, 3.02, 0); bas.castShadow = true; scene.add(bas);
+    const lensMat = new THREE.MeshBasicMaterial({ color: 0xfff0d0 });
+    const lens = new THREE.Mesh(new THREE.CircleGeometry(0.095, 20).rotateX(Math.PI / 2), lensMat);
+    lens.position.set(0, 2.915, 0); scene.add(lens);
+
+    let rig = null, lamba = null, huzme = null;
+    const LAMBA_Y = 2.95, KANDELA = 2400;
+
+    function kur() {
+      rig?.dispose(); rig = null;
+      if (lamba) { scene.remove(lamba.light, lamba.light.target); lamba.dispose(); lamba = null; }
+      if (huzme?.mesh) { scene.remove(huzme.mesh); huzme.dispose(); huzme = null; }
+
+      rig = createLightRig(THREE, scene, {
+        env: ortam,
+        sun: { elevDeg: ortam === 'interior' ? -1 : (gece ? -8 : 9), azDeg: 38 },
+        surface: { albedo: ortam === 'mars' ? 0.25 : 0.12 },
+        earthshine: ortam === 'vacuum' ? { lux: 12, elevDeg: 34, azDeg: 205 } : null,
+        shadows: { extent: 22, mapSize: 2048 },
+      });
+
+
+      lamba = createHeadlamp(THREE, { candela: KANDELA, angleDeg: 26, penumbra: .42, colorK: 4200, env: ortam });
+      lamba.light.position.set(0, LAMBA_Y, 0);
+      lamba.light.target.position.set(0, 0, 0);
+      scene.add(lamba.light, lamba.light.target);
+      lensMat.color.setHex(hex(blackbodyRGB(4200, { normalize: 'white' })));
+
+      huzme = addBeam(THREE, lamba, { env: ortam, lengthM: LAMBA_Y });
+      if (huzme.ok && olgular.huzme) { huzme.mesh.position.set(0, LAMBA_Y, 0); scene.add(huzme.mesh); }
+
+      zeminMat.color.setHex(ortam === 'mars' ? 0xa2705a : ortam === 'interior' ? 0x8a8f96 : 0x8d8880);
+      const bg = ortam === 'mars' ? 0x281a14 : ortam === 'earth' ? 0x0d1420 : ortam === 'interior' ? 0x0a0c10 : 0x05070b;
+      scene.background = new THREE.Color(bg);
+      panelCiz();
+    }
+
+    /* ---------- paneller ---------- */
+    const OLGU_ADI = { huzme: 'Görünür huzme', alev: 'Açık alev (meşale)', duman: 'Duman' };
+    const OLGU_KEY = { huzme: 'beam', alev: 'fire', duman: 'smoke' };
+
+    function panelCiz() {
+      const d = rig.describe();
+      const satir = (k, v) => `<tr><td class="k">${k}</td><td class="v">${v}</td></tr>`;
+      el('#tablo').innerHTML =
+        satir('Ortam', d.ortam)
+        + satir('Güneş', d.gunes.ufkunAltinda
+          ? `ufkun altında (${d.gunes.irtifaDeg}°)`
+          : `${d.gunes.lux.toLocaleString('tr-TR')} lux · ${d.gunes.irtifaDeg}°`)
+        + satir('Güneş rengi', `${d.gunes.sicaklikK} K`)
+        + satir('Gök ışığı', `${d.dolgu.gokLux.toLocaleString('tr-TR')} lux`)
+        + satir('Regolit sıçraması', `${d.dolgu.sicramaLux} lux`)
+        + satir('Albedo', d.dolgu.albedo)
+        + satir('AmbientLight', d.dolgu.ambient)
+        + (d.dunyaIsigi ? satir('Dünya ışığı', `${d.dunyaIsigi.lux} lux`) : '')
+        + satir('Lamba', `${KANDELA.toLocaleString('tr-TR')} cd · decay 2`)
+        + satir('EV100', d.pozlama.ev100)
+        + satir('Toplam', `${d.gonderim.toplamLux.toLocaleString('tr-TR')} lux`);
+
+      el('#olgular').innerHTML = Object.keys(OLGU_ADI).map(k => {
+        const izin = envAllows(OLGU_KEY[k], ortam);
+        return `<label class="olgu"><input type="checkbox" data-olgu="${k}" ${olgular[k] ? 'checked' : ''} ${izin.ok ? '' : 'disabled'}>`
+          + `<span>${OLGU_ADI[k]}${izin.ok ? '' : ' <span style="color:#e0a24a">· bu ortamda yok</span>'}</span></label>`;
+      }).join('');
+      el('#olgular').querySelectorAll('input').forEach(i => i.addEventListener('change', () => {
+        olgular[i.dataset.olgu] = i.checked; kur();
+      }));
+
+      const redler = Object.keys(OLGU_ADI).map(k => envAllows(OLGU_KEY[k], ortam)).filter(r => !r.ok);
+      el('#kartlar').innerHTML = redler.map(r =>
+        `<div class="kart red"><b>${OLGU_ADI[Object.keys(OLGU_KEY).find(k => OLGU_KEY[k] === r.olgu)]} reddedildi.</b> ${r.neden}`
+        + `<span class="oneri">Öneri: ${r.oneri}</span></div>`).join('');
+
+      const lampD = lamba.describe();
+      el('#olcum').innerHTML = `<b>Zemin aydınlatması</b> (E = I/d²)<br>`
+        + [1, 2, 3].map(m => `${m} m: ${illuminanceAt(KANDELA, m).toFixed(0)} lux`).join(' · ')
+        + `<br><span style="color:#7d8393">${lampD.huzme}</span>`;
+
+      el('#altyazi').innerHTML = `<b>${d.ortam}</b> · Güneş ${d.gunes.lux.toLocaleString('tr-TR')} lux @ ${d.gunes.irtifaDeg}°`
+        + ` · dolgu HESAPLANIR (${d.dolgu.formul}) · lamba ${KANDELA.toLocaleString('tr-TR')} cd`
+        + ` · pozlama EV100 ${d.pozlama.ev100} · ${d.pozlama.uyum}`;
+    }
+
+    /* ---------- kumandalar ---------- */
+    document.querySelectorAll('[data-env]').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('[data-env]').forEach(x => x.classList.toggle('aktif', x === b));
+      ortam = b.dataset.env; kur();
+    }));
+    el('#gece').addEventListener('click', () => {
+      gece = !gece;
+      el('#gece').classList.toggle('aktif', gece);
+      el('#gece').textContent = gece ? 'Gündüz' : 'Gece';
+      kur();
+    });
+    el('#poz').addEventListener('change', (e) => {
+      rig.setTargetLux(e.target.value === 'kokpit' ? 300 : ENVIRONMENTS[ortam].sunLux || 300);
+    });
+
+    /* ---------- döngü ---------- */
+    let t = sabitT ?? 0, son = 0, raf = 0;
+    function kare(now) {
+      const dt = son ? Math.min(.05, (now - son) / 1000) : 0;
+      son = now; t += dt;
+      rig.update(azaltilmis ? 1e3 : dt, renderer);
+      renderer.render(scene, camera);
+      el('#tablo').querySelector('tr:nth-last-child(2) .v').textContent = rig.ev.toFixed(2);
+      raf = requestAnimationFrame(kare);
+    }
+    function boyutla() {
+      const w = host.clientWidth, h = host.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
+    }
+    addEventListener('resize', () => { boyutla(); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+      else if (!document.hidden && !raf) { son = 0; raf = requestAnimationFrame(kare); }
+    });
+
+    kur();
+    boyutla();
+    if (azaltilmis || sabitT !== null) { rig.update(1e3, renderer); renderer.render(scene, camera); }
+    else raf = requestAnimationFrame(kare);
+
+    window.lightBlocks = {
+      state: () => ({ ortam, olgular: { ...olgular }, ev: rig.ev, tablo: rig.describe() }),
+      lamp: () => lamba.describe(),
+      beam: () => (huzme?.mesh ? { sahnede: !!huzme.mesh.parent, yogunluk: huzme.mat.uniforms.uYogunluk.value, kunye: huzme.describe() } : { sahnede: false, neden: huzme?.neden }),
+      setBeamDensity(v) { if (huzme?.mat) huzme.mat.uniforms.uYogunluk.value = v; },
+      setEnv(v) {
+        ortam = v; kur();
+        document.querySelectorAll('[data-env]').forEach(x => x.classList.toggle('aktif', x.dataset.env === v));
+      },
+      ready: true, reducedMotion: azaltilmis,
+    };
+  </script>
+</body>
+</html>

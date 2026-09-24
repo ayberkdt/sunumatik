@@ -1,0 +1,20 @@
+{
+  "preset": "light_blocks",
+  "motions": [
+    {
+      "id": "light-environment-compare",
+      "type": "comparison",
+      "truthLevel": "analytic",
+      "purpose": "Aynı lamba, aynı kandela, dört ortam. Vakumda huzme GÖRÜNMEZ çünkü saçacak ortam yoktur; Mars'ın ince atmosferinde soluk, Dünya'da belirgindir. Açık alev vakumda ve Mars'ta hiç yanmaz (oksijen yok). Sahne bu farkları bir üslup tercihi olarak değil, ortam kuralının sonucu olarak gösterir: her ret nedenini ve yerine ne konacağını yazar. Işık tablosu sahnenin gerçek birimlerini okur — Güneş lux, lamba kandela, dolgu hesaplanmış, AmbientLight yok.",
+      "loop": true,
+      "durationMs": 0,
+      "pauseControl": "Sürekli bir çevrim yoktur; sahne yalnız ortam, olgu ya da pozlama hedefi değişince yeniden kurulur. Pozlama uyumu zamana bağlı tek süreçtir ve hedefe oturunca durur.",
+      "reducedMotion": "prefers-reduced-motion: reduce altında pozlama uyumu anında hedefine gider ve tek kare işlenir; tablo, ölçüm şeridi ve ret kartları tamamen okunur.",
+      "exportState": "?ortam=vacuum|mars|earth|interior, ?huzme=0 huzmeyi kapatır, ?t=<sn> tek kare. Ret kartları ortamdan türer, elle yazılmaz.",
+      "accessibility": "Kumandalar yerel form öğeleridir, hedef boyutu ≥ 40 px. Bir olgunun reddedilmesi yalnız renkle değil, kapalı kutu ve yazılı gerekçeyle bildirilir. Sayılar tablo hâlinde ve birimleriyle verilir.",
+      "limitations": "Huzme TEK SAÇILMA yaklaşımıdır (Henyey-Greenstein g = 0,6); çoklu saçılma, gölgeden kesilen ışık şaftı ve toz etkileşimi yok. Yoğunluk ölçeği görünürlük için seçilmiş ve ilan edilmiştir, radyatif transfer çözümü değildir. Gölge tek haritadır: Güneş'in 0,53° açısal çapının mesafeye bağlı yumuşaması taklit edilir, kaskad yoktur. Alev ve duman bu turda ÇİZİLMEZ — yalnız ortam kuralı ve gerekçesi gösterilir (plan F4).",
+      "notes": "Çekirdek: presets/core/light-math.mjs (Planck → CIE 1931 → doğrusal sRGB; ortam kuralı; EV100 pozlaması; 1/f titreşim). Rig: presets/light_blocks/light-rig.mjs — Güneş gerçek aydınlatmasıyla (Ay 127 000 lux, Mars 55 000, Dünya 100 000) ve blackbodyRGB(5772) rengiyle kurulur; dolgu HESAPLANIR (regolit sıçraması E·ρ·sin(irtifa)/π, Ay'da Dünya ışığı ~12 lux), AmbientLight hiç kurulmaz çünkü fiziksel karşılığı yoktur. Far kandela ile, decay 2 ve distance 0 (kesme yarıçapı eşik atlamasıdır). Zemin aydınlatması E = I/d² olarak ekranda ölçülü yazar. Doğrulama: scripts/validate-light.mjs (57 denetim).",
+      "model": "Renk: Planck ışıması → CIE 1931 (yayımlanmış analitik uyum) → doğrusal sRGB; ölçülen renklilik yayımlanmış Planck eğrisine T ≥ 2856 K için Δxy < 0,0016. Aydınlatma: yönlü ışık lux, nokta/spot kandela ve decay 2, E = I/d². Dolgu: regolit sıçraması E·ρ·sin(irtifa)/π ve Ay'da Dünya ışığı ~12 lux; AmbientLight kurulmaz. Pozlama: EV100 = log2(L·100/12,5), toneMappingExposure = 1/(1,2·2^EV), uyum birinci dereceden üstel (ışığa 0,6 s, karanlığa 2,5 s — sinematik, ilan edilmiş). Huzme: tek saçılma, Henyey-Greenstein g = 0,6, yoğunluk ortamın saçılma katsayısıyla orantılı."
+    }
+  ]
+}

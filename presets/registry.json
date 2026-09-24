@@ -1,20 +1,20 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 68,
-    "presetsWithIndex": 61,
-    "animatedPresets": 54,
+    "presets": 69,
+    "presetsWithIndex": 62,
+    "animatedPresets": 55,
     "skills": 18,
-    "demoSlides": 84,
-    "demoCards": 71,
-    "demoSections": 11,
+    "demoSlides": 86,
+    "demoCards": 72,
+    "demoSections": 12,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 84,
-    "cards": 71,
-    "sections": 11,
+    "slides": 86,
+    "cards": 72,
+    "sections": 12,
     "coverSections": 10,
     "referencedPresets": [
       "aero_airfoil_flow",
@@ -51,6 +51,7 @@
       "launch_ascent",
       "launch_window",
       "life_signs",
+      "light_blocks",
       "low_thrust_transfer",
       "lunar_descent",
       "lunar_orbit",
@@ -359,6 +360,13 @@
     {
       "name": "life_signs",
       "title": "Nefes Kütüphanesi — life_signs",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "light_blocks",
+      "title": "Işık Fiziği — light_blocks",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true
