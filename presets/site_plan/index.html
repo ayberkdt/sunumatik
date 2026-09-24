@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Saha Yerleşimi — site_plan</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+    /* Tuval KAPSAYICI icinde durur: canvas'in width/height ozniteligi ayni
+       zamanda CSS genisligidir; mutlak konumda left+right+width birlikte
+       verilince tarayici `right`i yok sayar ve tuval 300x150'de kalir
+       (olculdu: 375x188 dev piksel, plan sol ust koseye sikismisti). */
+    #plan, #stage { position: absolute; left: 0; top: 0; right: 380px; bottom: 0; }
+    #plan { cursor: crosshair; }
+    #plan.suruklu { cursor: grabbing; }
+    #tuval { display: block; width: 100%; height: 100%; }
+    #stage { display: none; cursor: grab; }
+    body.arazi #plan { display: none; }
+    body.arazi #stage { display: block; }
+    header { position: absolute; top: 0; left: 0; right: 380px; z-index: 5; display: flex; align-items: flex-start;
+      justify-content: space-between; padding: 14px 22px; pointer-events: none; gap: 12px; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: #c9a35c; }
+    header h1 small { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: .06em; text-transform: none; color: #8a90a0; margin-top: 3px; }
+    .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; pointer-events: auto; max-width: 62%; }
+    select, button, input[type="number"], label.rng {
+      background: rgba(16, 19, 27, .85); color: #dfe3ea; border: 1px solid #2b303d; border-radius: 8px;
+      padding: 8px 11px; font-size: 12.5px; min-height: 40px; cursor: pointer; }
+    input[type="number"] { width: 108px; cursor: text; }
+    select:hover, button:hover, label.rng:hover { border-color: #c9a35c; }
+    button:disabled { opacity: .45; cursor: default; border-color: #2b303d; }
+    label.rng { display: flex; gap: 8px; align-items: center; user-select: none; }
+    label.rng input[type="range"] { width: 104px; accent-color: #c9a35c; }
+    label.rng b { font-weight: 500; min-width: 3.1em; font-variant-numeric: tabular-nums; text-align: right; }
+    #panel { position: absolute; right: 0; top: 0; bottom: 0; width: 380px; z-index: 6; overflow-y: auto;
+      background: #090b11; border-left: 1px solid #1c212c; padding: 16px 18px 22px; }
+    #panel h2 { margin: 0 0 4px; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #c9a35c; font-weight: 600; }
+    #panel h2:not(:first-child) { margin-top: 20px; }
+    #panel p.alt { margin: 0 0 10px; font-size: 11px; line-height: 1.5; color: #7d8393; }
+    table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    th { text-align: left; font-weight: 500; color: #7d8393; padding: 5px 0; border-bottom: 1px solid #1c212c; font-size: 10.5px;
+      letter-spacing: .05em; text-transform: uppercase; }
+    td { padding: 6px 0; border-bottom: 1px solid #141821; vertical-align: top; line-height: 1.4; }
+    td.sayi { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 8px; }
+    tr.gecti td.durum { color: #6fbf8f; } tr.kaldi td.durum { color: #e0a24a; }
+    tr.kaldi.sert td.durum { color: #e06a4a; }
+    tr.secili { background: rgba(201, 163, 92, .09); }
+    .rozet { display: inline-block; font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase; color: #6f7688;
+      border: 1px solid #262c39; border-radius: 4px; padding: 1px 5px; margin-left: 6px; }
+    .nokta { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: -1px; }
+    #kunye { font-size: 11px; line-height: 1.55; color: #868d9d; }
+    #kunye b { color: #cdd3de; font-weight: 600; }
+    #altyazi { position: absolute; left: 22px; right: 402px; bottom: 16px; z-index: 5; pointer-events: none;
+      font-size: 11.5px; line-height: 1.45; color: #b9bfcc; background: rgba(10, 12, 18, .72);
+      border: 1px solid #232837; border-radius: 12px; padding: 10px 14px; }
+    #altyazi b { color: #e8dcc0; font-weight: 600; }
+    #altyazi .uyari { color: #e0a24a; font-weight: 600; }
+    #scrim { position: absolute; left: 0; top: 0; right: 380px; bottom: 0; z-index: 9; display: flex; align-items: center; justify-content: center;
+      background: rgba(5, 7, 11, .78); color: #c9a35c; font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+      transition: opacity .18s ease; }
+    #scrim.gizli { opacity: 0; pointer-events: none; }
+    body.ui-yok header, body.ui-yok #panel, body.ui-yok #altyazi { display: none; }
+    body.ui-yok #plan, body.ui-yok #stage, body.ui-yok #scrim { right: 0; }
+    @media (prefers-reduced-motion: reduce) { #scrim { transition: none; } }
+  </style>
+</head>
+<body>
+  <div id="plan"><canvas id="tuval"></canvas></div>
+  <div id="stage"></div>
+  <div id="scrim" class="gizli">arazi kuruluyor…</div>
+  <header>
+    <h1>Saha Yerleşimi<small>site_plan · kural güdümlü üs planı · mesafeler metre, 1 arazi birimi = 100 m</small></h1>
+    <div class="controls">
+      <select id="ortam" title="Ortam">
+        <option value="moon" selected>Ay</option>
+        <option value="mars">Mars</option>
+      </select>
+      <input id="seed" type="number" title="Tohum (seed)" value="20260924" step="1">
+      <button id="yeniSeed" title="Yeni tohum ile yeniden çöz">⟳ Tohum</button>
+      <label class="rng" title="Güneş azimutu (derece, kuzeyden saat yönünde)">Güneş <input id="gunes" type="range" min="0" max="359" step="1" value="120"><b id="gunesDeg">120°</b></label>
+      <label class="rng" title="Hâkim rüzgâr yönü (yalnız Mars'ta bağlayıcı)">Rüzgâr <input id="ruzgar" type="range" min="0" max="359" step="1" value="250"><b id="ruzgarDeg">250°</b></label>
+      <select id="gorunum" title="Görünüm">
+        <option value="plan" selected>Plan (2B)</option>
+        <option value="arazi">Arazi (3B)</option>
+      </select>
+      <select id="profil" title="Arazi profili"></select>
+      <button id="sifirla" title="Elle taşınan modülleri geri al" disabled>Elle konumu sıfırla</button>
+    </div>
+  </header>
+
+  <aside id="panel">
+    <h2>Kural denetimi</h2>
+    <p class="alt">Her satır bir kazayı önler. <b>Sert</b> kural adayı eler, yumuşak kural puanlar. Ölçülen değer yerleşimden okunur, elle yazılmaz.</p>
+    <table><thead><tr><th>Kural</th><th style="text-align:right">Ölçülen</th><th style="text-align:right">Hedef</th></tr></thead><tbody id="kurallar"></tbody></table>
+    <h2>Modüller</h2>
+    <p class="alt">Plan üzerinde bir modülü <b>sürükleyerek</b> elle konumlandırabilirsiniz; kurallar anında yeniden ölçülür.</p>
+    <table><thead><tr><th>Modül</th><th style="text-align:right">Habitat'a</th><th style="text-align:right">Ayak izi</th></tr></thead><tbody id="moduller"></tbody></table>
+    <h2>Künye</h2>
+    <div id="kunye"></div>
+  </aside>
+
+  <div id="altyazi"></div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { planSite, MODULES } from '../terrain_blocks/site-plan.mjs';
+    import { PROFILES, PROFILE_IDS, buildProfile } from '../terrain_blocks/profiles/index.mjs';
+    import { buildHeightGrid, buildTerrainGeometry } from '../terrain_blocks/terrain-mesh.mjs';
+    import { createTerrainMaterial } from '../terrain_blocks/terrain-material.mjs';
+    import { cylY } from '../core/geometry-axis.mjs';
+
+    const sorgu = new URLSearchParams(location.search);
+    const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const disaAktarim = sorgu.get('export') === '1';
+    if (sorgu.get('ui') === '0') document.body.classList.add('ui-yok');
+
+    /* ---------- durum ---------- */
+    const el = (s) => document.querySelector(s);
+    const durum = {
+      ortam: sorgu.get('ortam') === 'mars' ? 'mars' : 'moon',
+      seed: Number.isFinite(parseInt(sorgu.get('seed'), 10)) ? parseInt(sorgu.get('seed'), 10) : 20260924,
+      gunes: Number.isFinite(parseFloat(sorgu.get('gunes'))) ? parseFloat(sorgu.get('gunes')) : 120,
+      ruzgar: Number.isFinite(parseFloat(sorgu.get('ruzgar'))) ? parseFloat(sorgu.get('ruzgar')) : 250,
+      profil: null, overrides: {}, secili: null, plan: null,
+    };
+    /* Varsayilan profil YAYLA: mare'de zemin zaten duz oldugundan kapilarin
+       (tesviye) etkisi 3B'de gorunmuyor. */
+    const AY_PROFIL = PROFILE_IDS.filter(id => PROFILES[id].planet === 'moon')
+      .sort((a, b) => (a === 'moon-highland' ? -1 : 0) - (b === 'moon-highland' ? -1 : 0));
+    const MARS_PROFIL = PROFILE_IDS.filter(id => PROFILES[id].planet === 'mars');
+    const RADIUS_M = 1600, UNIT_M = 100;
+
+    const ortamSec = el('#ortam'), profilSec = el('#profil'), gorunumSec = el('#gorunum');
+    ortamSec.value = durum.ortam;
+    el('#seed').value = String(durum.seed);
+    function profilleriDoldur() {
+      const liste = durum.ortam === 'mars' ? MARS_PROFIL : AY_PROFIL;
+      profilSec.textContent = '';
+      for (const id of liste) { const o = document.createElement('option'); o.value = id; o.textContent = PROFILES[id].title; profilSec.appendChild(o); }
+      if (!liste.includes(durum.profil)) durum.profil = liste[0];
+      profilSec.value = durum.profil;
+    }
+    if (PROFILE_IDS.includes(sorgu.get('profil'))) { durum.profil = sorgu.get('profil'); durum.ortam = PROFILES[durum.profil].planet; ortamSec.value = durum.ortam; }
+    profilleriDoldur();
+    if (sorgu.get('gorunum') === 'arazi') gorunumSec.value = 'arazi';
+
+    /* ---------- çözüm ---------- */
+    let arazi = null;                  // { field } — yalnız 3B görünümde kurulur
+    function coz() {
+      durum.plan = planSite({
+        seed: durum.seed, environment: durum.ortam, sunAzimuthDeg: durum.gunes, windDeg: durum.ruzgar,
+        radiusM: RADIUS_M, unitMeters: UNIT_M, overrides: durum.overrides,
+        terrain: arazi ? arazi.field : null, maxSlopeDeg: 8,
+      });
+      el('#sifirla').disabled = Object.keys(durum.overrides).length === 0;
+      tablolariYaz();
+      planCiz();
+    }
+
+    /* ---------- panel ---------- */
+    const kurallarEl = el('#kurallar'), modullerEl = el('#moduller'), kunyeEl = el('#kunye'), altyaziEl = el('#altyazi');
+    const yuvarla = (v, b) => v === null || v === undefined ? '—' : `${Math.round(v)}${b ? ' ' + b : ''}`;
+    function tablolariYaz() {
+      const p = durum.plan, ol = p.olcumler();
+      kurallarEl.textContent = '';
+      for (const o of ol) {
+        const tr = document.createElement('tr');
+        tr.className = `${o.gecti ? 'gecti' : 'kaldi'}${o.sert ? ' sert' : ''}`;
+        tr.title = p.rules.find(r => r.id === o.id).neden;
+        tr.innerHTML = `<td>${o.ad}${o.sert ? '<span class="rozet">sert</span>' : ''}</td>`
+          + `<td class="sayi durum">${o.gecti ? '✓ ' : '✗ '}${yuvarla(o.olculen, o.birim)}</td>`
+          + `<td class="sayi">${o.hedef}</td>`;
+        kurallarEl.appendChild(tr);
+      }
+      const hab = p.placements.find(q => q.id === 'habitat');
+      modullerEl.textContent = '';
+      for (const q of p.placements) {
+        const tr = document.createElement('tr');
+        if (q.id === durum.secili) tr.classList.add('secili');
+        tr.innerHTML = `<td><span class="nokta" style="background:${q.renk}"></span>${q.ad}`
+          + `${q.elle ? '<span class="rozet">elle</span>' : ''}${q.zorlandi ? '<span class="rozet">zorlandı</span>' : ''}</td>`
+          + `<td class="sayi">${q.id === 'habitat' ? '—' : yuvarla(Math.hypot(q.x - hab.x, q.z - hab.z), 'm')}</td>`
+          + `<td class="sayi">r ${q.r} m</td>`;
+        tr.addEventListener('click', () => { durum.secili = durum.secili === q.id ? null : q.id; tablolariYaz(); planCiz(); });
+        modullerEl.appendChild(tr);
+      }
+      const d = p.describe();
+      kunyeEl.innerHTML = `<b>Çözüm</b> tohumlu en-iyi-aday: modül başına 48 aday, sert kuralı çiğneyen elenir,`
+        + ` kalanlar yumuşak kural ağırlığıyla puanlanır. Aynı tohum → aynı yerleşim.<br><br>`
+        + `<b>Ejecta konisi</b> ${Math.round(p.ctx.ejectaAz)}° yönünde, ±30°, 900 m —`
+        + ` ${durum.ortam === 'mars' ? 'rüzgâr altı' : 'Ay\'da rüzgâr yok, Güneş azimutunun tersi'}.<br><br>`
+        + `<b>Hat toplamı</b> ${d.hatMetre} m · <b>modül</b> ${d.modul} · <b>tohum</b> ${d.seed}<br><br>`
+        + `<b>Eğim</b> DOĞAL zeminde ölçülür; kapılar (tesviye) ondan SONRA araziye yazılır.<br><br>`
+        + `<b>Sınır</b> Bu bir YERLEŞİM planıdır: kütle, güç bütçesi, ısıl denge ve inşa sırası modellenmez.`
+        + ` Ayak izleri dairesel kabul edilir; kurallar merkezden merkeze ölçülür.`;
+      const sert = p.violations.filter(v => v.sert), yumusak = p.violations.filter(v => !v.sert);
+      altyaziEl.innerHTML = `<b>${PROFILES[durum.profil].title}</b> · ${durum.ortam === 'mars' ? 'Mars' : 'Ay'} · tohum ${durum.seed}`
+        + ` · saha yarıçapı ${RADIUS_M} m · ${d.modul} modül, ${d.hatMetre} m hat`
+        + (sert.length ? ` · <span class="uyari">SERT İHLAL: ${sert.map(v => v.ad).join(', ')}</span>`
+          : yumusak.length ? ` · <span class="uyari">yumuşak ihlal: ${yumusak.map(v => v.ad).join(', ')}</span>`
+            : ' · <b>tüm kurallar sağlandı</b>');
+    }
+
+    /* ---------- 2B plan ---------- */
+    const planKap = el('#plan'), tuval = el('#tuval'), ctx2 = tuval.getContext('2d');
+    let olcek = 1, merkez = { x: 0, y: 0 };             // metre → piksel
+    function tuvaliBoyutla() {
+      const dpr = Math.min(window.devicePixelRatio, 2);
+      const w = planKap.clientWidth, h = planKap.clientHeight;
+      tuval.width = Math.round(w * dpr); tuval.height = Math.round(h * dpr);
+      ctx2.setTransform(dpr, 0, 0, dpr, 0, 0);
+      olcek = Math.min(w, h) / (RADIUS_M * 2.34);
+      merkez = { x: w / 2, y: h / 2 };
+    }
+    const mp = (x, z) => [merkez.x + x * olcek, merkez.y + z * olcek];
+    /* Metin, arkasina koyu bir plaka cizilerek yazilir: cizgi ve dolgu
+       uzerindeki ince yazi aksi halde okunmuyor (kontrast). */
+    function yaziCiz(metin, x, y) {
+      const w = ctx2.measureText(metin).width, sag = ctx2.textAlign !== 'right';
+      const renk = ctx2.fillStyle;                 // cagiranin rengi korunur
+      ctx2.fillStyle = 'rgba(5, 7, 11, .72)';
+      ctx2.fillRect((sag ? x : x - w) - 3, y - 10, w + 6, 13);
+      ctx2.fillStyle = renk;
+      ctx2.fillText(metin, x, y);
+    }
+    function planCiz() {
+      const p = durum.plan, w = planKap.clientWidth, h = planKap.clientHeight;
+      ctx2.clearRect(0, 0, w, h);
+      etiketler.length = 0;
+      /* mesafe halkaları: ölçeği okunur kılar */
+      ctx2.font = '10px "Segoe UI", system-ui, sans-serif';
+      for (const r of [500, 1000, 1500]) {
+        ctx2.beginPath(); ctx2.arc(merkez.x, merkez.y, r * olcek, 0, Math.PI * 2);
+        ctx2.strokeStyle = '#191d27'; ctx2.lineWidth = 1; ctx2.stroke();
+        ctx2.fillStyle = '#4b5263'; ctx2.fillText(`${r} m`, merkez.x + 4, merkez.y - r * olcek - 4);
+      }
+      /* ejecta konisi: pistten, ilan edilen azimutta, ±30°, 900 m */
+      const pad = p.placements.find(q => q.id === 'pad');
+      if (pad) {
+        const a0 = (p.ctx.ejectaAz - 90 - 30) * Math.PI / 180, a1 = (p.ctx.ejectaAz - 90 + 30) * Math.PI / 180;
+        const [px, py] = mp(pad.x, pad.z);
+        ctx2.beginPath(); ctx2.moveTo(px, py); ctx2.arc(px, py, 900 * olcek, a0, a1); ctx2.closePath();
+        ctx2.fillStyle = 'rgba(224, 106, 74, .10)'; ctx2.fill();
+        ctx2.strokeStyle = 'rgba(224, 106, 74, .38)'; ctx2.lineWidth = 1; ctx2.stroke();
+        ctx2.fillStyle = '#9a6152';
+        ctx2.fillText('ejecta konisi · yapı yok', px + Math.cos((a0 + a1) / 2) * 900 * olcek * .62 - 40, py + Math.sin((a0 + a1) / 2) * 900 * olcek * .62);
+      }
+      /* hatlar + uzunluk */
+      for (const l of p.links) {
+        const A = p.placements.find(q => q.id === l.a), B = p.placements.find(q => q.id === l.b);
+        const [ax, ay] = mp(A.x, A.z), [bx, by] = mp(B.x, B.z);
+        ctx2.beginPath(); ctx2.moveTo(ax, ay); ctx2.lineTo(bx, by);
+        const vurgu = durum.secili === l.a || durum.secili === l.b;
+        ctx2.strokeStyle = vurgu ? 'rgba(201, 163, 92, .85)' : 'rgba(201, 163, 92, .22)';
+        ctx2.lineWidth = vurgu ? 2 : 1.2; ctx2.stroke();
+        /* Uzunluk YALNIZ secili modulun hatlarinda yazilir: on hattin hepsini
+           birden etiketlemek plani okunmaz yapiyordu (ilk ekran goruntusu). */
+        if (vurgu) { ctx2.fillStyle = '#c9a35c'; yaziCiz(`${Math.round(l.uzunluk)} m`, (ax + bx) / 2 + 4, (ay + by) / 2 - 4); }
+      }
+      /* modüller */
+      for (const q of p.placements) {
+        const [x, y] = mp(q.x, q.z), r = Math.max(4, q.r * olcek);
+        ctx2.beginPath(); ctx2.arc(x, y, r, 0, Math.PI * 2);
+        ctx2.fillStyle = q.renk + '33'; ctx2.fill();
+        ctx2.strokeStyle = durum.secili === q.id ? '#ffffff' : q.renk;
+        ctx2.lineWidth = durum.secili === q.id ? 2.4 : 1.6; ctx2.stroke();
+        if (q.zorlandi) { ctx2.strokeStyle = '#e06a4a'; ctx2.lineWidth = 2; ctx2.beginPath(); ctx2.arc(x, y, r + 5, 0, Math.PI * 2); ctx2.stroke(); }
+        /* Etiket merkezden DISA kacar; cakisanlar ikinci gecisde ayristirilir. */
+        const dx = x - merkez.x, dy = y - merkez.y, L = Math.hypot(dx, dy) || 1;
+        const sag = dx >= 0;
+        etiketler.push({ metin: q.ad + (q.elle ? ' ✋' : ''), mx: x, my: y,
+          x: x + dx / L * (r + 9) + (sag ? 5 : -5), y: y + dy / L * (r + 9) + 3.5,
+          sag, renk: durum.secili === q.id ? '#ffffff' : '#aeb5c4' });
+      }
+      etiketleriCiz();
+      /* yön okları: Güneş ve (Mars'ta) rüzgâr */
+      okCiz(durum.gunes, '#c9a35c', 'Güneş');
+      if (durum.ortam === 'mars') okCiz(durum.ruzgar, '#5c7fa8', 'rüzgâr');
+      ctx2.fillStyle = '#4b5263'; ctx2.fillText('K', merkez.x - 3, merkez.y - RADIUS_M * 1.12 * olcek);
+    }
+    /* ETIKET AYRISTIRMA: habitat cevresindeki moduller 60-210 m'de toplanir,
+       1600 m'lik sahada bu 13-45 pikseldir ve etiketler ust uste biner
+       (olculdu: ilk ekran goruntusunde alti etiket okunamiyordu). Once
+       istenen yer, sonra dikeyde itme, sonra modulden etikete kilavuz
+       cizgisi — bilgi kaybolmadan okunur. */
+    const etiketler = [];
+    const SATIR = 13;
+    function etiketleriCiz() {
+      const kutu = (e) => { const w = ctx2.measureText(e.metin).width; return { x0: e.sag ? e.x - 3 : e.x - w - 3, x1: e.sag ? e.x + w + 3 : e.x + 3 }; };
+      for (const e of etiketler) Object.assign(e, kutu(e));
+      for (let gecis = 0; gecis < 24; gecis++) {
+        let itildi = false;
+        for (let i = 0; i < etiketler.length; i++) for (let j = i + 1; j < etiketler.length; j++) {
+          const a = etiketler[i], b = etiketler[j];
+          if (a.x1 < b.x0 || b.x1 < a.x0) continue;          // yatayda ayrik
+          const d = b.y - a.y;
+          if (Math.abs(d) >= SATIR) continue;
+          const it = (SATIR - Math.abs(d)) / 2 + .5;
+          if (d >= 0) { a.y -= it; b.y += it; } else { a.y += it; b.y -= it; }
+          itildi = true;
+        }
+        if (!itildi) break;
+      }
+      for (const e of etiketler) {
+        if (Math.hypot(e.x - e.mx, e.y - e.my) > 16) {       // kilavuz cizgisi
+          ctx2.beginPath(); ctx2.moveTo(e.mx, e.my); ctx2.lineTo(e.sag ? e.x - 3 : e.x + 3, e.y - 3);
+          ctx2.strokeStyle = 'rgba(174, 181, 196, .30)'; ctx2.lineWidth = 1; ctx2.stroke();
+        }
+        ctx2.textAlign = e.sag ? 'left' : 'right';
+        ctx2.fillStyle = e.renk;
+        yaziCiz(e.metin, e.x, e.y);
+      }
+      ctx2.textAlign = 'left';
+    }
+
+    function okCiz(azDeg, renk, etiket) {
+      const a = (azDeg - 90) * Math.PI / 180, R = RADIUS_M * 1.06 * olcek;
+      const [x0, y0] = [merkez.x + Math.cos(a) * R, merkez.y + Math.sin(a) * R];
+      const [x1, y1] = [merkez.x + Math.cos(a) * (R - 46), merkez.y + Math.sin(a) * (R - 46)];
+      ctx2.beginPath(); ctx2.moveTo(x0, y0); ctx2.lineTo(x1, y1);
+      ctx2.strokeStyle = renk; ctx2.lineWidth = 2; ctx2.stroke();
+      ctx2.beginPath(); ctx2.arc(x1, y1, 3.2, 0, Math.PI * 2); ctx2.fillStyle = renk; ctx2.fill();
+      ctx2.fillText(etiket, x0 + (Math.cos(a) > 0 ? 6 : -34), y0 + 3);
+    }
+
+    /* ---------- elle konumlandırma (sürükleme) ---------- */
+    let surukle = null;
+    const olay = (e) => { const b = planKap.getBoundingClientRect(); return { x: (e.clientX - b.left - merkez.x) / olcek, z: (e.clientY - b.top - merkez.y) / olcek }; };
+    planKap.addEventListener('pointerdown', (e) => {
+      const m = olay(e);
+      const hit = durum.plan.placements.find(q => Math.hypot(q.x - m.x, q.z - m.z) < Math.max(q.r, 26 / olcek));
+      durum.secili = hit ? hit.id : null;
+      if (hit) { surukle = hit.id; planKap.setPointerCapture(e.pointerId); planKap.classList.add('suruklu'); }
+      tablolariYaz(); planCiz();
+    });
+    planKap.addEventListener('pointermove', (e) => {
+      if (!surukle) return;
+      const m = olay(e), r = Math.hypot(m.x, m.z);
+      const k = r > RADIUS_M ? RADIUS_M / r : 1;        // saha dışına taşma yok
+      durum.overrides[surukle] = { x: m.x * k, z: m.z * k };
+      coz();
+    });
+    const birak = (e) => { if (!surukle) return; surukle = null; planKap.classList.remove('suruklu'); planKap.releasePointerCapture?.(e.pointerId); };
+    planKap.addEventListener('pointerup', birak);
+    planKap.addEventListener('pointercancel', birak);
+
+    /* ---------- 3B arazi ---------- */
+    const host = el('#stage'), scrim = el('#scrim');
+    let renderer = null, scene = null, camera = null, isaretler = null, kareBekliyor = false;
+    /* Varsayilan kadraj: saha 3,2 km; d=26 birim (2,6 km) ve yuksek bakis
+       acisi plani harita gibi okutur (d=46'da moduller nokta kaliyordu). */
+    let kamera = { az: -0.7, el: 0.88, d: 26 };
+    function kareIste() {
+      if (!renderer || kareBekliyor) return;
+      kareBekliyor = true;
+      requestAnimationFrame(() => { kareBekliyor = false; ciz3(); });
+    }
+    function ciz3() {
+      const r = kamera.d;
+      camera.position.set(Math.cos(kamera.az) * Math.cos(kamera.el) * r, Math.sin(kamera.el) * r, Math.sin(kamera.az) * Math.cos(kamera.el) * r);
+      camera.lookAt(0, 0, 0);
+      renderer.render(scene, camera);
+    }
+    function render3Kur() {
+      if (renderer) return;
+      renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      host.appendChild(renderer.domElement);
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(42, 1, .05, 4000);
+      const gunesIsik = new THREE.DirectionalLight('#fff2dc', 2.6);
+      const ga = (durum.gunes - 90) * Math.PI / 180;
+      gunesIsik.position.set(Math.cos(ga) * 40, 26, Math.sin(ga) * 40);
+      scene.add(gunesIsik, new THREE.AmbientLight('#8d95a8', .34), new THREE.HemisphereLight('#14161c', '#5f5b55', .5));
+      host.addEventListener('pointerdown', (e) => {
+        const p0 = { x: e.clientX, y: e.clientY, az: kamera.az, el: kamera.el };
+        const mv = (m) => { kamera.az = p0.az - (m.clientX - p0.x) * .006; kamera.el = Math.min(1.45, Math.max(.12, p0.el + (m.clientY - p0.y) * .004)); kareIste(); };
+        const up = () => { window.removeEventListener('pointermove', mv); window.removeEventListener('pointerup', up); };
+        window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
+      });
+      host.addEventListener('wheel', (e) => { e.preventDefault(); kamera.d = Math.min(140, Math.max(14, kamera.d * (1 + Math.sign(e.deltaY) * .12))); kareIste(); }, { passive: false });
+    }
+    function sok3() {
+      if (!isaretler) return;
+      scene.remove(isaretler);
+      isaretler.traverse(o => { if (o.isMesh || o.isLine) { o.geometry?.dispose(); const mm = Array.isArray(o.material) ? o.material : [o.material]; for (const m of mm) m?.dispose(); } });
+      isaretler = null;
+    }
+    async function arazicKur() {
+      scrim.classList.remove('gizli');
+      await new Promise(r => setTimeout(r, 20));
+      render3Kur();
+      sok3();
+      /* Eğim kuralı DOĞAL zeminde ölçülür, tesviye edilmiş zeminde değil:
+         kapıları yazıp sonra eğimi ölçmek kendi kendini doğrular (ölçüldü:
+         tesviyeli alanda her modülde 0,03° — kural anlamsızlaşıyordu). Önce
+         dokunulmamış arazi ile çözülür, sonra kapılar araziye GERİ yazılır. */
+      const dogal = buildProfile(durum.profil, durum.seed).field;
+      arazi = { field: dogal, dogal: true };
+      coz();
+      const { field } = buildProfile(durum.profil, durum.seed, { clearings: durum.plan.clearings });
+      /* Orgu cozunurlugu koridordan (0,24 birim) ince olmali, yoksa tesviye
+         edilen serit taraklanir: r=6'da tegetsel hucre 0,118 birim. */
+      const grid = buildHeightGrid(field, { angular: 320, r0: .04, ratio: 1.03, rMax: 240 });
+      const geo = buildTerrainGeometry(THREE, grid, { uvExtent: 400 });
+      const pal = PROFILES[durum.profil];
+      const matPack = createTerrainMaterial(THREE, { seed: durum.seed, dust: pal.material.dust, rock: pal.material.rock,
+        slopeAlbedo: pal.material.slopeAlbedo, planet: pal.planet });
+      isaretler = new THREE.Group();
+      isaretler.add(new THREE.Mesh(geo, matPack.material));
+      /* modül işaretleri: ayak izi yarıçapında alçak silindir, zemine oturur */
+      for (const q of durum.plan.placements) {
+        const x = q.x / UNIT_M, z = q.z / UNIT_M;
+        /* Isaret rengi BILGIDIR (plandaki nokta rengiyle ayni): isiga bagli
+           karartma okunurlugu bozar, bu yuzden Basic malzeme. */
+        const m = cylY(q.r / UNIT_M, q.r / UNIT_M, .035, 24,
+          new THREE.MeshBasicMaterial({ color: new THREE.Color(q.renk), transparent: true, opacity: .9 }));
+        m.position.set(x, field.height(x, z) + .018, z);
+        isaretler.add(m);
+        /* Ayak izi GERCEK olcektedir (8-32 m), 3 km'lik sahada birkac piksel
+           eder; bu yuzden ustune 30 m'lik bir ISARET cubugu konur. Cubuk
+           anotasyondur, yapinin boyu degildir. */
+        const pin = cylY(.006, .006, .3, 6, new THREE.MeshBasicMaterial({ color: new THREE.Color(q.renk) }));
+        pin.position.set(x, field.height(x, z) + .16, z);
+        isaretler.add(pin);
+      }
+      /* hatlar: zemin örneklenerek çizilir (havada asılı kalmaz) */
+      for (const l of durum.plan.links) {
+        const A = durum.plan.placements.find(q => q.id === l.a), B = durum.plan.placements.find(q => q.id === l.b);
+        const pts = [];
+        for (let i = 0; i <= 24; i++) {
+          const t = i / 24, x = (A.x + (B.x - A.x) * t) / UNIT_M, z = (A.z + (B.z - A.z) * t) / UNIT_M;
+          pts.push(new THREE.Vector3(x, field.height(x, z) + .02, z));
+        }
+        isaretler.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+          new THREE.LineBasicMaterial({ color: 0xc9a35c, transparent: true, opacity: .7 })));
+      }
+      scene.add(isaretler);
+      boyutla();
+      scrim.classList.add('gizli');
+      kareIste();
+    }
+
+    /* ---------- boyut ---------- */
+    function boyutla() {
+      tuvaliBoyutla();
+      if (renderer) {
+        const w = host.clientWidth, h = host.clientHeight;
+        /* updateStyle=false birakmak tuvali CIZIM TAMPONU boyutunda CSS px
+           yapar (1140x840) ve 760x560'lik kutuyu tasirir: gorunum sol ust
+           koseden kirpilmis gibi durur (olculdu). Stil guncellenmeli. */
+        renderer.setSize(w, h);
+        camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
+        kareIste();
+      }
+      planCiz();
+    }
+    window.addEventListener('resize', boyutla);
+
+    /* ---------- kumandalar ---------- */
+    ortamSec.addEventListener('change', async () => {
+      durum.ortam = ortamSec.value; durum.overrides = {}; arazi = null; profilleriDoldur();
+      coz(); if (gorunumSec.value === 'arazi') await arazicKur();
+    });
+    profilSec.addEventListener('change', async () => { durum.profil = profilSec.value; arazi = null; coz(); if (gorunumSec.value === 'arazi') await arazicKur(); });
+    el('#seed').addEventListener('change', async (e) => {
+      const v = parseInt(e.target.value, 10); if (!Number.isFinite(v)) return;
+      durum.seed = v; durum.overrides = {}; arazi = null; coz(); if (gorunumSec.value === 'arazi') await arazicKur();
+    });
+    el('#yeniSeed').addEventListener('click', async () => {
+      durum.seed = (durum.seed * 1664525 + 1013904223) >>> 8; el('#seed').value = String(durum.seed);
+      durum.overrides = {}; arazi = null; coz(); if (gorunumSec.value === 'arazi') await arazicKur();
+    });
+    const gunesSurgu = el('#gunes'), ruzgarSurgu = el('#ruzgar');
+    gunesSurgu.value = String(durum.gunes); el('#gunesDeg').textContent = `${durum.gunes}°`;
+    ruzgarSurgu.value = String(durum.ruzgar); el('#ruzgarDeg').textContent = `${durum.ruzgar}°`;
+    gunesSurgu.addEventListener('input', () => { durum.gunes = parseFloat(gunesSurgu.value); el('#gunesDeg').textContent = `${durum.gunes}°`; coz(); });
+    ruzgarSurgu.addEventListener('input', () => { durum.ruzgar = parseFloat(ruzgarSurgu.value); el('#ruzgarDeg').textContent = `${durum.ruzgar}°`; coz(); });
+    el('#sifirla').addEventListener('click', () => { durum.overrides = {}; coz(); });
+    gorunumSec.addEventListener('change', async () => {
+      const arazic = gorunumSec.value === 'arazi';
+      document.body.classList.toggle('arazi', arazic);
+      if (arazic) await arazicKur(); else boyutla();
+    });
+
+    /* ---------- açılış ---------- */
+    tuvaliBoyutla();
+    coz();
+    if (gorunumSec.value === 'arazi') { document.body.classList.add('arazi'); await arazicKur(); }
+
+    /* Sahne API'si: demo kabuğu ve ekran görüntüsü aracı için. */
+    window.sitePlan = {
+      state: () => durum.plan.describe(),
+      rules: () => durum.plan.olcumler(),
+      async setView(v) { gorunumSec.value = v; gorunumSec.dispatchEvent(new Event('change')); },
+      async setSeed(s) { el('#seed').value = String(s); el('#seed').dispatchEvent(new Event('change')); },
+      ready: true, reducedMotion: azaltilmis, exportMode: disaAktarim,
+    };
+  </script>
+</body>
+</html>

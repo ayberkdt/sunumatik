@@ -41,8 +41,19 @@ function normalizeClearing(c) {
       }
       return best;
     };
+    /* Koridorun REFERANSI en yakin eksen noktasidir: yol, araziyi takip
+       eder; sabit bir kota cekilirse tepelerde kanyon acar (olculdu). */
+    const refPt = (x, z) => {
+      let best = Infinity, bx = 0, bz = 0;
+      for (const g of segs) {
+        const t = clamp((x - g.ax) * g.ux + (z - g.az) * g.uz, 0, g.L);
+        const px = g.ax + g.ux * t, pz = g.az + g.uz * t, d = Math.hypot(x - px, z - pz);
+        if (d < best) { best = d; bx = px; bz = pz; }
+      }
+      return [bx, bz];
+    };
     return { type: 'corridor', w: c.w ?? 1.2, maxSlopeDeg: c.maxSlopeDeg ?? 15, keep: new Set(c.keep ?? ['microRelief']),
-      flatten: c.flatten ?? 'drivable', dist, segs,
+      flatten: c.flatten ?? 'drivable', dist, segs, refPt, sabitRef: false,
       inside: (x, z) => dist(x, z) <= (c.w ?? 1.2) / 2,
       /* kapı: koridor içinde 0, dışında 1 (yumuşak) */
       gate: (x, z) => smoothstep((c.w ?? 1.2) / 2, (c.w ?? 1.2) * 1.4, dist(x, z)) };
@@ -53,10 +64,12 @@ function normalizeClearing(c) {
     let cx = 0, cz = 0; for (const [px, pz] of poly) { cx += px / poly.length; cz += pz / poly.length; }
     const rad = Math.max(...poly.map(([px, pz]) => Math.hypot(px - cx, pz - cz)));
     return { type: 'site', x: cx, z: cz, r: rad, compaction: c.compaction ?? .6, keep: new Set(c.keep ?? []), flatten: c.flatten ?? 'graded',
+      refPt: () => [cx, cz], sabitRef: true,
       inside, gate: (x, z) => inside(x, z) ? 0 : smoothstep(rad, rad * 1.5, Math.hypot(x - cx, z - cz)) };
   }
   const [x0, z0] = c.at ?? [0, 0], r = c.r ?? 3.5;
   return { type: 'pad', x: x0, z: z0, r, keep: new Set(c.keep ?? ['microRelief']), flatten: c.flatten ?? 'large',
+    refPt: () => [x0, z0], sabitRef: true,
     inside: (x, z) => Math.hypot(x - x0, z - z0) <= r,
     /* surface-scene deseni: 2,2→6 birim yumuşak geçiş (r = 3,5 için) */
     gate: (x, z) => smoothstep(r * .63, r * 1.71, Math.hypot(x - x0, z - z0)) };
@@ -101,19 +114,28 @@ export function createTerrainField({
   const datum = gates.find(c => c.type === 'pad') ?? { x: 0, z: 0 };
   const gatedBy = L => gates.some(c => !c.keep.has(L.name) && !(c.flatten === 'large' && L.tags.includes('micro')));
   const ref = new Float64Array(ordered.map(L => gatedBy(L) ? L.h(datum.x, datum.z) : 0));
+  /* YEREL DATUM: bir kapi katmani SIFIRA degil, KENDI referans noktasindaki
+     degerine bastirir. Tek bir genel datum, orijinden 1 km otedeki bir
+     modulu orijinin kotasina kazir: 3B onizlemede koridorlar 30 m derin
+     kanyon, modul pedleri basamak oluyordu (olculdu, moon-highland).
+     Sabit referansli kapilarda (ped, saha) katman basina BIR kez hesaplanir;
+     koridorda referans nokta kaydigi icin cagri basina. */
+  const sabitRef = gates.map(c => (c.sabitRef ? ordered.map(L => L.h(...c.refPt())) : null));
   const raw = (x, z) => {
     for (let c = 0; c < gates.length; c++) gateVals[c] = gates[c].gate(x, z);
     let sum = 0;
     for (let i = 0; i < ordered.length; i++) {
       const L = ordered[i];
-      let g = 1;
+      let g = 1, kapi = -1;
       for (let c = 0; c < gates.length; c++) {
         const cl = gates[c];
         if (cl.keep.has(L.name)) continue;
         if (cl.flatten === 'large' && L.tags.includes('micro')) continue;
-        if (gateVals[c] < g) g = gateVals[c];
+        if (gateVals[c] < g) { g = gateVals[c]; kapi = c; }
       }
-      if (g > 0) sum += g * (L.h(x, z) - ref[i]);
+      if (g >= 1) { sum += L.h(x, z) - ref[i]; continue; }
+      const yerel = sabitRef[kapi] ? sabitRef[kapi][i] : L.h(...gates[kapi].refPt(x, z));
+      sum += g * (L.h(x, z) - ref[i]) + (1 - g) * (yerel - ref[i]);
     }
     return sum;
   };

@@ -11,6 +11,10 @@ import {
 
 const VISTA = { at: [0, 0], r: 3.5, flatten: 'large', keep: ['microRelief'] };
 const CORRIDOR = { path: [[0, 0], [12, -4], [30, -9]], w: 1.2, flatten: 'drivable', maxSlopeDeg: 15, keep: ['microRelief'] };
+/* Profil kendi pedini ve koridorunu getirir; ÇAĞIRAN ek kapı verebilir
+   (site-plan.mjs'in ürettiği saha kapıları gibi) — böylece yerleşim
+   çözücüsünün kararı arazide GERÇEKTEN tesviye olarak görünür. */
+const kapilar = (opt = {}) => [VISTA, CORRIDOR, ...(opt.clearings || [])];
 
 /* Ay krater halkaları: surface-scene reçetesiyle aynı bantlar, Pareto boy */
 const moonRings = (scale = 1) => [
@@ -40,7 +44,7 @@ export const PROFILES = {
         fbm({ seed, bands: [[520, 4.6], [120, 1.4], [26, .4]] }),
         microRelief({ seed }),
       ],
-      clearings: [VISTA, CORRIDOR],
+      clearings: kapilar(opt),
     }),
   },
   /** Güney yaylası: doygun krater alanı, havza halka masifleri. */
@@ -58,7 +62,7 @@ export const PROFILES = {
         fbm({ seed, bands: [[420, 6], [110, 2], [24, .5]] }),
         microRelief({ seed }),
       ],
-      clearings: [VISTA, CORRIDOR],
+      clearings: kapilar(opt),
     }),
   },
   /** Shackleton kenarı: dik yamaç, kalıcı gölge (Güneş irtifası ≤ 2°). */
@@ -77,7 +81,7 @@ export const PROFILES = {
         fbm({ seed, bands: [[380, 5], [90, 1.6], [22, .4]] }),
         microRelief({ seed }),
       ],
-      clearings: [VISTA, CORRIDOR],
+      clearings: kapilar(opt),
     }),
   },
   /** Gale/Jezero: yumuşak tepeler, kumul alanları, katmanlı mesa. */
@@ -85,7 +89,7 @@ export const PROFILES = {
     planet: 'mars', title: 'Mars · Ova', albedo: .2, palette: 'mars',
     material: { dust: 0xb0704a, rock: 0x8a5b42, slopeAlbedo: [20, 35], detail: 'sand' },
     scatter: { blocks: 14, rocks: 60, pebbles: 220, tone: 0x6e4a38 },
-    build: (seed) => createTerrainField({
+    build: (seed, opt = {}) => createTerrainField({
       seed, planet: 'mars',
       layers: [
         craterField({ seed, rings: [
@@ -98,7 +102,7 @@ export const PROFILES = {
         fbm({ seed, bands: [[600, 3.2], [140, 1.1], [30, .35]] }),
         microRelief({ seed }),
       ],
-      clearings: [VISTA, CORRIDOR],
+      clearings: kapilar(opt),
     }),
   },
   /** Valles Marineris kenarı: kanyon duvarı + heyelan yelpazeleri. */
@@ -106,7 +110,7 @@ export const PROFILES = {
     planet: 'mars', title: 'Mars · Kanyon', albedo: .18, palette: 'mars',
     material: { dust: 0xa8674a, rock: 0x7f5140, slopeAlbedo: [18, 34], detail: 'sand' },
     scatter: { blocks: 26, rocks: 80, pebbles: 200, tone: 0x684536 },
-    build: (seed) => createTerrainField({
+    build: (seed, opt = {}) => createTerrainField({
       seed, planet: 'mars',
       layers: [
         canyon({ seed, path: [[-1600, -220], [-400, -160], [700, -260], [1800, -140]], depth: 28, width: 120, wallSlopeDeg: 55 }),
@@ -119,7 +123,7 @@ export const PROFILES = {
         fbm({ seed, bands: [[520, 2.8], [120, 1], [28, .3]] }),
         microRelief({ seed }),
       ],
-      clearings: [VISTA, CORRIDOR],
+      clearings: kapilar(opt),
     }),
   },
   /** Gezegen bağımsız kayalık: ML/soyut sahneler için. */
@@ -127,7 +131,7 @@ export const PROFILES = {
     planet: 'generic', title: 'Genel · Kayalık', albedo: .12, palette: 'generic',
     material: { dust: 0x7d7d80, rock: 0x9a9a9d, slopeAlbedo: [20, 35], detail: 'regolith' },
     scatter: { blocks: 20, rocks: 60, pebbles: 160, tone: 0x6a6a6e },
-    build: (seed) => createTerrainField({
+    build: (seed, opt = {}) => createTerrainField({
       seed, planet: 'generic',
       layers: [
         craterField({ seed, rings: moonRings(.6), complexAbove: 70, clearings: [{ x: 0, z: 0, r: 3 }] }),
@@ -137,7 +141,7 @@ export const PROFILES = {
         fbm({ seed, bands: [[500, 5], [120, 1.6], [26, .45]] }),
         microRelief({ seed }),
       ],
-      clearings: [VISTA, CORRIDOR],
+      clearings: kapilar(opt),
     }),
   },
 };

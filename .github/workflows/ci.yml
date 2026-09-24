@@ -69,6 +69,9 @@ jobs:
       - name: physical_rigs eklem sürücüsü ve çözücüler (three'siz)
         run: node scripts/validate-rigs.mjs
 
+      - name: Saha yerleşimi (kural kataloğu, çözücü, determinizm, araziye yazılan kapılar)
+        run: node scripts/validate-site.mjs
+
       - name: motion-manifest şemaları
         shell: bash
         run: |

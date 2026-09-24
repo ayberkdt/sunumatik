@@ -13,6 +13,21 @@
 > Buradaki her modül/API adı 16 Eylül 2026'da depodan okunarak doğrulandı;
 > "varsayılan" bağımlılık yok.
 >
+> **SAHA YERLEŞİMİ (24 Eylül 2026):** §13 R2'nin `site` kapısı artık bir
+> ÇÖZÜCÜYLE besleniyor: `presets/terrain_blocks/site-plan.mjs` (three'siz,
+> deterministik) 11 adlandırılmış yerleşim kuralını — reaktör ≥ 1 km,
+> iniş pisti ≥ 500 m ve ±30° ejecta konisi, yakıt ↔ O₂ ≥ 50 m, radyatör
+> Güneş'e sırt, garaj ≤ 150 m, ISRU rüzgâr üstü (Mars), eğim eşiği,
+> çakışma — sert/yumuşak diye ayırıp yerleşimi çözer ve ürettiği
+> `clearings` listesini doğrudan `createTerrainField`'a verir. Vitrin:
+> `presets/site_plan/`. Doğrulama: `scripts/validate-site.mjs` (28 denetim,
+> CI). Bu tur `terrain-field.mjs`'de bir KUSURU da düzeltti: kapılar tek
+> genel datuma tesviye ediyordu, bu yüzden orijinden 1 km ötedeki bir
+> modül orijinin kotasına kazınıyor, koridorlar 30 m derin kanyon
+> açıyordu (ölçüldü, moon-highland). Artık her kapı KENDİ referans
+> noktasına tesviye eder; koridorun referansı en yakın eksen noktasıdır,
+> yani yol araziyi takip eder.
+>
 > Kardeş planlar: [physical-rigs-plan.md](physical-rigs-plan.md) (arazi
 > sorgusunu tüketen tekerlek/süspansiyon), [light-physics-plan.md](light-physics-plan.md)
 > (regolit BRDF, gölge, far ışığının zemine düşüşü),
