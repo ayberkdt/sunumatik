@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 64,
-    "presetsWithIndex": 57,
-    "animatedPresets": 50,
+    "presets": 65,
+    "presetsWithIndex": 58,
+    "animatedPresets": 51,
     "skills": 18,
-    "demoSlides": 80,
-    "demoCards": 67,
+    "demoSlides": 81,
+    "demoCards": 68,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 80,
-    "cards": 67,
+    "slides": 81,
+    "cards": 68,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -53,6 +53,7 @@
       "low_thrust_transfer",
       "lunar_descent",
       "lunar_orbit",
+      "mechanism_lab",
       "ml_attention_flow",
       "ml_conv_vision",
       "ml_layer_blocks",
@@ -369,6 +370,13 @@
     {
       "name": "lunar_orbit",
       "title": "Analytic Lunar Orbit Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "mechanism_lab",
+      "title": "Aksam Laboratuvarı — mechanism_lab",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

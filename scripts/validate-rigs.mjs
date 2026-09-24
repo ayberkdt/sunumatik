@@ -10,6 +10,7 @@
    Kullanım: node scripts/validate-rigs.mjs        Çıkış: HATA varsa 1 */
 
 import { pathToFileURL } from 'node:url';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..');
@@ -18,6 +19,7 @@ const { createRig, solveRockerBogie, ackermann, wheelAdvance, slipRatio, hashPos
 const { createProgram, PROGRAMS } = await mod('presets/physical_rigs/choreography.mjs');
 const { createTreadmill, loopClosure, periodicNoise, wrapZ } = await mod('presets/physical_rigs/terrain-treadmill.mjs');
 const { createRoverDrive, ROVER_GEOM, reconstructInclinations } = await mod('presets/physical_rigs/rover-drive.mjs');
+const { MECHANISMS, MECHANISM_IDS, resolveMechanism, limitText } = await mod('presets/physical_rigs/mechanism-index.mjs');
 
 let fails = 0, total = 0;
 const check = (name, ok, detail = '') => { total++; console.log(`  ${ok ? 'ok ' : 'HATA'} ${name}${detail ? '  (' + detail + ')' : ''}`); if (!ok) fails++; };
@@ -245,6 +247,54 @@ console.log('== 10 araziye bağlı sürüş (rover-drive)');
     for (let i = 0; i < 300; i++) o = dr.update(null, { sample: engebe, v: 0.5, dt: 1 / 60 }).odometer; return o; };
   check('aynı girdi → aynı odometre', kos() === kos(), kos().toFixed(9));
   check('ROVER_GEOM donmuş (tek doğruluk kaynağı)', Object.isFrozen(ROVER_GEOM));
+}
+
+console.log('== 11 aksam dizini (mechanism-index)');
+{
+  /* Kurucu kaynağı METİN olarak okunur: craft-blocks three ve canvas ister,
+     Node'da kurulamaz. Dizindeki her eklem adının kurucuda ÜRETİLDİĞİ,
+     şablon adları joker\'e çevrilerek sınanır — yanlış yazılmış tek bir ad
+     laboratuvarda sessizce boş satır olurdu. */
+  const src = readFileSync(path.join(root, 'presets/craft_blocks/craft-blocks.mjs'), 'utf8');
+  /* Eklem adları hem joints['…'] indekslerinde hem de satır içi
+     { 'rotor.lower': {…} } nesnelerinde geçer; bu yüzden dosyadaki TÜM
+     dizgi sabitleri toplanır. Şablonlardaki ${…} ÖNCE bir nişancıya
+     çevrilir, SONRA kaçış uygulanır: ters sırada kaçan `$`, köşeli
+     parantezi de kaçırıp hiçbir adı eşleştirmiyordu (ölçüldü). */
+  const NISAN = '';
+  const kalip = [...src.matchAll(/(['`])([A-Za-z0-9_.${}()\s]+?)\1/g)].map(m => m[2]);
+  const regexler = kalip.map(k => new RegExp('^' + k
+    .replace(/\$\{[^}]*\}/g, NISAN)
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .split(NISAN).join('[A-Za-z0-9]+') + '$'));
+  const uretilir = (ad) => regexler.some(r => r.test(ad));
+  let eksik = [];
+  for (const id of MECHANISM_IDS) for (const ad of MECHANISMS[id].joints) if (!uretilir(ad)) eksik.push(`${id}:${ad}`);
+  check('dizindeki her eklem adı kurucuda üretiliyor', eksik.length === 0, eksik.length ? eksik.join(' ') : `${MECHANISM_IDS.length} mekanizma`);
+
+  const zorunlu = ['craft', 'ad', 'tur', 'joints', 'iliski', 'neden', 'kanit', 'kapsam', 'odak'];
+  const eksikAlan = [];
+  for (const id of MECHANISM_IDS) for (const a of zorunlu) {
+    const v = MECHANISMS[id][a];
+    if (v == null || (Array.isArray(v) ? !v.length : String(v).trim() === '')) eksikAlan.push(`${id}.${a}`);
+  }
+  check('her mekanizma künyesi tam (tür, bağıntı, neden, kanıt, kapsam)', eksikAlan.length === 0, eksikAlan.join(' '));
+  check('kimlikler benzersiz ve craft adları bilinen kurucular',
+    new Set(MECHANISM_IDS).size === MECHANISM_IDS.length
+    && MECHANISM_IDS.every(id => ['rover', 'lander', 'rocket', 'cubesat', 'capsule', 'orbiter', 'starship', 'marshelicopter'].includes(MECHANISMS[id].craft)));
+
+  /* DOF rig haritasından TÜRETİLİR: iki eksenli gimbal 2, diğerleri 1. */
+  const sahte = { joints: { 'a.tek': { node: 'a', axis: 'y', range: [0, 10] },
+    'b.gimbal': { node: 'b', axis: ['y', 'z'], range: [-5, 5] },
+    'c.strok': { node: 'c', mode: 'translate', dir: [1, 0, 0], range: [0, 0.08], oneWay: true } } };
+  const r1 = resolveMechanism({ joints: ['a.tek', 'b.gimbal', 'c.strok'] }, sahte);
+  check('DOF türetimi: tek eksen 1, gimbal 2, prizmatik 1 → 4', r1.dof === 4, String(r1.dof));
+  const r2 = resolveMechanism({ joints: ['a.tek', 'yok.bu'] }, sahte);
+  check('bulunamayan eklem DOF\'a sayılmaz ve eksik listesine girer',
+    r2.dof === 1 && r2.eksik.length === 1 && r2.eksik[0] === 'yok.bu');
+  check('sınır metni prizmatikte cm, dönerde derece, spin\'de serbest yazar',
+    limitText(sahte.joints['c.strok']).includes('cm') && limitText(sahte.joints['a.tek']).includes('°')
+    && limitText({ spin: true, rpm: 2400, spokes: 2 }).includes('serbest'));
 }
 
 console.log('\n(7 kol IK: henüz yok — plan §5.2, F3.)');

@@ -780,7 +780,11 @@ export function buildRocket({ stages = 2, scale = 1, palette, boosters = 0, surf
     kabuk.material = m.body;
     yarim.add(kabuk);
     kap.add(yarim);
-    joints[`${ad === 'fairingL' ? 'fairing.L' : 'fairing.R'}.open`] = { node: ad, axis: 'z', range: [0, sgn * 60].sort((p, q) => p - q), rateDegS: 25 };
+    /* Eklem adı TEK PARÇA yazılır ('fairing.L.open'), parçalı kurulmaz:
+       ad greplenebilir kalsın ve dizin denetimi (validate-rigs §11) onu
+       kaynakta bulabilsin. */
+    const eklemAdi = ad === 'fairingL' ? 'fairing.L.open' : 'fairing.R.open';
+    joints[eklemAdi] = { node: ad, axis: 'z', range: [0, sgn * 60].sort((p, q) => p - q), rateDegS: 25 };
   }
   // Üst kademe umbilikal kapağı.
   const umb2 = box(0.04, 0.045, 0.018, m.dark);

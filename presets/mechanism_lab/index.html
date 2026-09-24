@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aksam Laboratuvarı — mechanism_lab</title>
+<script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; margin: 0; background: #06080c; overflow: hidden;
+    font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+  #stage { position: absolute; inset: 0 340px 0 0; }
+  header { position: absolute; top: 0; left: 0; right: 340px; z-index: 5;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 16px 20px; }
+  h1 { margin: 0; font-size: 14px; letter-spacing: .14em; text-transform: uppercase; color: #c9a35c; font-weight: 600; }
+  h1 small { display: block; margin-top: 4px; font-size: 11px; letter-spacing: .04em;
+    text-transform: none; color: #6f7688; font-weight: 400; }
+  select, button { font: inherit; font-size: 12.5px; min-height: 40px; padding: 0 14px;
+    background: rgba(16, 19, 27, .88); color: #dfe3ea; border: 1px solid #2b303d; border-radius: 8px; cursor: pointer; }
+  button:hover, select:hover { border-color: #3b4252; }
+  .controls { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  label.chk { display: flex; gap: 7px; align-items: center; font-size: 12.5px; color: #b9bfcc;
+    background: rgba(16, 19, 27, .88); border: 1px solid #2b303d; border-radius: 8px; min-height: 40px; padding: 0 13px; cursor: pointer; }
+  /* Sağ panel: mekanizmanın künyesi */
+  aside { position: absolute; top: 0; right: 0; bottom: 0; width: 340px; z-index: 6; overflow-y: auto;
+    background: rgba(9, 11, 16, .96); border-left: 1px solid #1d222c; padding: 18px 18px 26px; }
+  aside h2 { margin: 0 0 2px; font-size: 14.5px; color: #dfe3ea; font-weight: 600; }
+  aside .tur { font-size: 11.5px; color: #c9a35c; letter-spacing: .06em; text-transform: uppercase; }
+  aside section { margin-top: 16px; }
+  aside h3 { margin: 0 0 6px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #6f7688; font-weight: 600; }
+  aside p { margin: 0; font-size: 12.5px; line-height: 1.55; color: #b9bfcc; }
+  aside .formul { font-size: 12px; line-height: 1.6; color: #e3d7bd; background: rgba(201,163,92,.08);
+    border-left: 2px solid #c9a35c; padding: 7px 10px; border-radius: 0 6px 6px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 4px 4px 4px 0; border-bottom: 1px solid #191e27; vertical-align: top; }
+  th { color: #6f7688; font-weight: 600; }
+  td.deger { color: #dfe3ea; text-align: right; white-space: nowrap; }
+  .surgu { display: block; margin-top: 10px; }
+  .surgu span { display: flex; justify-content: space-between; font-size: 11.5px; color: #b9bfcc; margin-bottom: 3px; }
+  .surgu b { color: #c9a35c; font-weight: 600; font-variant-numeric: tabular-nums; }
+  input[type="range"] { width: 100%; accent-color: #c9a35c; }
+  #ipucu { position: absolute; left: 20px; bottom: 16px; z-index: 5; font-size: 11px; color: #5d6472; pointer-events: none; }
+  #stage { cursor: grab; } #stage.suruklu { cursor: grabbing; }
+</style>
+</head>
+<body>
+  <div id="stage"></div>
+  <header>
+    <h1>Aksam Laboratuvarı<small>mechanism_lab · patlatılmış görünüm, kinematik iskelet, hareket zarfı</small></h1>
+    <div class="controls">
+      <select id="mekanizma" title="Mekanizma"></select>
+      <label class="chk" title="Kinematik iskelet: pivotlar ve eksenler"><input type="checkbox" id="iskelet" checked> İskelet</label>
+      <label class="chk" title="Eklemin taradığı yol"><input type="checkbox" id="zarf" checked> Zarf</label>
+      <button id="oynat">Süpür</button>
+    </div>
+  </header>
+  <div id="ipucu">Sürükle: döndür · Tekerlek: yakınlaş · Sağ tık: kaydır</div>
+  <aside>
+    <div class="tur" id="pTur"></div>
+    <h2 id="pAd"></h2>
+    <section><h3>Yöneten bağıntı</h3><p class="formul" id="pIliski"></p></section>
+    <section><h3>Neden böyle</h3><p id="pNeden"></p></section>
+    <section><h3>Eklemler <span id="pDof" style="color:#c9a35c"></span></h3>
+      <table><thead><tr><th>Eklem</th><th>Tür</th><th class="deger">Sınır</th></tr></thead><tbody id="pTablo"></tbody></table>
+      <div id="pSurgular"></div>
+    </section>
+    <section><h3>Patlatma</h3>
+      <label class="surgu"><span>Parçaları ayır<b id="pPatlaDeger">0 %</b></span>
+        <input id="patla" type="range" min="0" max="100" step="1" value="0"></label>
+    </section>
+    <section><h3>Kanıt</h3><p id="pKanit" style="font-size:12px"></p></section>
+  </aside>
+
+<script type="module">
+import * as THREE from 'three';
+import { MECHANISMS, MECHANISM_IDS, resolveMechanism, limitText } from '../physical_rigs/mechanism-index.mjs';
+import { createRig } from '../physical_rigs/rig-core.mjs';
+
+const sorgu = new URLSearchParams(location.search);
+const DT = 1 / 60;
+const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const disaAktarim = document.documentElement.dataset.export === 'true' || sorgu.get('export') === '1';
+const sabitT = sorgu.has('t') ? Math.max(0, parseFloat(sorgu.get('t')) || 0) : null;
+const donmusMod = azaltilmis || disaAktarim || sabitT !== null;
+
+/* ---------- araç kütüphanesi (YUMUŞAK bağımlılık) ---------- */
+let CRAFT = null;
+try { CRAFT = await import('../craft_blocks/craft-blocks.mjs'); }
+catch (e) { console.warn('craft_blocks yüklenemedi; laboratuvar boş açılır.', e); }
+let OrbitControls = null;
+try { ({ OrbitControls } = await import('../moon_advanced/vendor/controls/OrbitControls.js')); } catch { /* sabit kamera */ }
+
+/* ---------- sahne: tek parçayı inceleme tezgâhı ---------- */
+const host = document.querySelector('#stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.25;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+host.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x06080c);
+const camera = new THREE.PerspectiveCamera(40, 1, 0.002, 200);
+scene.add(new THREE.HemisphereLight(0xa8b4c8, 0x14161c, 1.15));
+const anahtar = new THREE.DirectionalLight(0xfff1de, 2.6); anahtar.position.set(3, 5, 4); scene.add(anahtar);
+const jant = new THREE.DirectionalLight(0x9ca7bc, 1.0); jant.position.set(-4, 2, -3); scene.add(jant);
+/* Tezgâh ızgarası: ölçek referansı (bir kare = parçanın onda biri). */
+const izgara = new THREE.GridHelper(2, 20, 0x2a3140, 0x171c25);
+izgara.material.transparent = true; izgara.material.opacity = 0.5;
+scene.add(izgara);
+
+let controls = null, kameraKirli = false;
+if (OrbitControls) {
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.minDistance = 0.05; controls.maxDistance = 30;
+  controls.addEventListener('start', () => host.classList.add('suruklu'));
+  controls.addEventListener('end', () => host.classList.remove('suruklu'));
+  controls.addEventListener('change', () => { kameraKirli = true; kareIste(); });
+}
+
+/* ---------- durum ---------- */
+let arac = null, rig = null, tanim = null, cozum = null, kok = null;
+let iskeletGrup = null, zarfGrup = null;
+let patlaParcalari = [];          // { mesh, taban:Vector3, yon:Vector3 }
+let surguler = [];                // { ad, spec, el, deger }
+let supur = false, tSupur = 0;
+
+const ARAC_KESI = new Map();      // craft kind → kurulmuş araç (yeniden kurma yok)
+function aracAl(kind) {
+  if (ARAC_KESI.has(kind)) return ARAC_KESI.get(kind);
+  if (!CRAFT) return null;
+  /* Tezgah paleti KASITLI OLARAK ACIK: inceleme sahnesinde vurgulanan
+     parca okunmali; obsidyen govde koyu arka planda kayboluyordu. */
+  const opts = { scale: 1, palette: { body: 0x8d949c, panel: 0x39414b, accent: 0xd8b673, metal: 0xc8ced6 } };
+  const a = kind === 'rocket' ? CRAFT.buildRocket({ ...opts, stages: 2, boosters: 2 })
+    : kind === 'rover' ? CRAFT.buildRover({ ...opts, arm: true })
+    : CRAFT.buildCraft(kind, opts);
+  ARAC_KESI.set(kind, a);
+  return a;
+}
+
+/* ---------- patlatılmış görünüm ----------
+   Her parça, kapsam grubunun MERKEZİNDEN dışa doğru itilir. Yön, parçanın
+   kendi merkezinin gruba göre konumundan gelir; eksene çok yakın parçalar
+   (yön belirsiz) eksen boyunca itilir. Bu, teknik çizimdeki "exploded view"
+   kuralıdır: parçalar MONTAJ doğrultusunda ayrılır, rastgele dağılmaz. */
+function patlamaHazirla(hedefler) {
+  patlaParcalari = [];
+  const kutu = new THREE.Box3();
+  for (const h of hedefler) kutu.expandByObject(h);
+  const merkez = kutu.getCenter(new THREE.Vector3());
+  const boy = Math.max(1e-4, kutu.getSize(new THREE.Vector3()).length());
+  const v = new THREE.Vector3(), yon = new THREE.Vector3();
+  for (const h of hedefler) {
+    h.traverse(o => {
+      if (!o.isMesh) return;
+      o.getWorldPosition(v);
+      yon.copy(v).sub(merkez);
+      if (yon.lengthSq() < (boy * 0.02) ** 2) yon.set(0, 0, 1);   // eksende: eksen boyunca aç
+      yon.normalize();
+      patlaParcalari.push({ mesh: o, taban: o.position.clone(), yon: yon.clone().multiplyScalar(boy * 0.55) });
+    });
+  }
+}
+function patlamaUygula(k) {
+  const q = new THREE.Quaternion(), yerel = new THREE.Vector3();
+  for (const p of patlaParcalari) {
+    p.mesh.parent.getWorldQuaternion(q).invert();                  // dünya yönünü yerele çevir
+    yerel.copy(p.yon).applyQuaternion(q);
+    p.mesh.position.copy(p.taban).addScaledVector(yerel, k);
+  }
+}
+
+/* ---------- kinematik iskelet ----------
+   Her eklem düğümü için: pivot küresi + DÖNME EKSENİ oku (iki eksenli
+   gimbalde iki ok) + ebeveyn eklemle arasında bağlantı çizgisi. Eksen rengi
+   sözleşmedeki eksene bağlıdır: x kırmızı, y yeşil, z mavi (three geleneği). */
+const EKSEN_RENK = { x: 0xe06c5a, y: 0x7fc98a, z: 0x6f9fe0 };
+function iskeletKur() {
+  if (iskeletGrup) { scene.remove(iskeletGrup); iskeletGrup.traverse(o => { o.geometry?.dispose(); o.material?.dispose?.(); }); }
+  iskeletGrup = new THREE.Group();
+  if (!cozum || !arac) return;
+  const kutu = new THREE.Box3().setFromObject(kok || arac);
+  const olcek = Math.max(1e-4, kutu.getSize(new THREE.Vector3()).length()) * 0.09;
+  const v = new THREE.Vector3();
+  const noktalar = [];
+  for (const j of cozum.joints) {
+    if (!j.spec) continue;
+    const node = arac.getObjectByName(j.spec.node);
+    if (!node) continue;
+    node.getWorldPosition(v);
+    noktalar.push(v.clone());
+    const top = new THREE.Mesh(new THREE.SphereGeometry(olcek * 0.22, 14, 10),
+      new THREE.MeshBasicMaterial({ color: 0xc9a35c }));
+    top.position.copy(v);
+    iskeletGrup.add(top);
+    const eksenler = Array.isArray(j.spec.axis) ? j.spec.axis : [j.spec.axis || (j.spec.mode === 'translate' ? null : 'y')];
+    for (const eks of eksenler) {
+      if (!eks) continue;
+      const d = new THREE.Vector3(eks === 'x' ? 1 : 0, eks === 'y' ? 1 : 0, eks === 'z' ? 1 : 0);
+      d.applyQuaternion(node.getWorldQuaternion(new THREE.Quaternion()));
+      const ok = new THREE.ArrowHelper(d, v, olcek * 1.5, EKSEN_RENK[eks] ?? 0xcccccc, olcek * 0.45, olcek * 0.28);
+      iskeletGrup.add(ok);
+    }
+    if (j.spec.mode === 'translate' && j.spec.dir) {
+      const d = new THREE.Vector3(...j.spec.dir).normalize()
+        .applyQuaternion(node.getWorldQuaternion(new THREE.Quaternion()));
+      iskeletGrup.add(new THREE.ArrowHelper(d, v, olcek * 1.7, 0xe0c46f, olcek * 0.5, olcek * 0.3));
+    }
+  }
+  if (noktalar.length > 1) {
+    const g = new THREE.BufferGeometry().setFromPoints(noktalar);
+    iskeletGrup.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0x4a5568 })));
+  }
+  scene.add(iskeletGrup);
+}
+
+/* ---------- hareket zarfı ----------
+   Eklem sınırları arasında N örnek alınır ve SÜRÜLEN düğümün en uçtaki
+   çocuğu izlenir; çizilen yol, mekanizmanın taradığı gerçek yoldur —
+   elle çizilmiş bir yay değil. */
+function zarfKur() {
+  if (zarfGrup) { scene.remove(zarfGrup); zarfGrup.traverse(o => { o.geometry?.dispose(); o.material?.dispose?.(); }); }
+  zarfGrup = new THREE.Group();
+  if (!cozum || !rig || !arac) return;
+  const kaydet = rig.pose();
+  for (const j of cozum.joints) {
+    if (!j.spec || j.spec.spin) continue;
+    const node = arac.getObjectByName(j.spec.node);
+    if (!node) continue;
+    const uc = enUcNokta(node);
+    if (!uc) continue;
+    const [lo, hi] = j.spec.range || [0, 0];
+    const noktalar = [], v = new THREE.Vector3();
+    for (let i = 0; i <= 40; i++) {
+      const deger = lo + (hi - lo) * (i / 40);
+      rig.jump(j.ad, deger);
+      rig.apply(arac);
+      arac.updateMatrixWorld(true);
+      uc.getWorldPosition(v);
+      noktalar.push(v.clone());
+    }
+    if (noktalar.length > 1) {
+      const g = new THREE.BufferGeometry().setFromPoints(noktalar);
+      zarfGrup.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0x6f9fe0, transparent: true, opacity: 0.65 })));
+    }
+  }
+  for (const [ad, deger] of Object.entries(kaydet)) if (!Array.isArray(deger)) rig.jump(ad, deger);
+  rig.apply(arac);
+  scene.add(zarfGrup);
+}
+/** Düğümün en uzaktaki mesh çocuğu — zarfı o çizer. */
+function enUcNokta(node) {
+  let uzak = null, d2 = -1;
+  const p = node.getWorldPosition(new THREE.Vector3()), v = new THREE.Vector3();
+  node.traverse(o => {
+    if (!o.isMesh) return;
+    o.getWorldPosition(v);
+    const d = v.distanceToSquared(p);
+    if (d > d2) { d2 = d; uzak = o; }
+  });
+  return uzak;
+}
+
+/* ---------- mekanizma seçimi ---------- */
+const sec = document.querySelector('#mekanizma');
+for (const id of MECHANISM_IDS) {
+  const o = document.createElement('option');
+  o.value = id; o.textContent = MECHANISMS[id].ad;
+  sec.appendChild(o);
+}
+if (MECHANISMS[sorgu.get('mekanizma')]) sec.value = sorgu.get('mekanizma');
+
+function mekanizmaKur(id) {
+  tanim = MECHANISMS[id];
+  if (arac) scene.remove(arac);
+  arac = aracAl(tanim.craft);
+  if (!arac) { panelYaz(null); return; }
+  scene.add(arac);
+  rig = arac.userData.rig ? createRig(arac.userData.rig, { fps: 60 }) : null;
+  cozum = resolveMechanism(tanim, arac.userData.rig);
+  /* İnceleme kapsamı: yalnız bu mekanizmanın düğümleri; gerisi sönük kalır
+     ki göz aksamı bulsun (aracın tamamı görünür ama vurgulu değildir). */
+  const kapsam = (tanim.kapsam || []).map(n => arac.getObjectByName(n)).filter(Boolean);
+  kok = kapsam[0] || arac;
+  arac.traverse(o => { if (o.isMesh) o.userData._vurgu = false; });
+  for (const k of kapsam) k.traverse(o => { if (o.isMesh) o.userData._vurgu = true; });
+  vurguUygula();
+  patlamaHazirla(kapsam.length ? kapsam : [arac]);
+  patlamaUygula(0);
+  if (rig) rig.apply(arac);
+  arac.updateMatrixWorld(true);
+  iskeletKur();
+  if (document.querySelector('#zarf').checked) zarfKur(); else if (zarfGrup) zarfGrup.visible = false;
+  kadrajla(kapsam.length ? kapsam : [arac]);
+  surgulariKur();
+  panelYaz(tanim);
+  history.replaceState(null, '', `?mekanizma=${id}`);
+}
+
+/* Vurgu: kapsam dışı parçalar saydamlaşır — mekanizma öne çıkar. */
+const SOLUK = new Map();
+function vurguUygula() {
+  arac.traverse(o => {
+    if (!o.isMesh || !o.material) return;
+    const vurgu = o.userData._vurgu;
+    if (!SOLUK.has(o)) SOLUK.set(o, { opacity: o.material.opacity, transparent: o.material.transparent });
+    o.material.transparent = !vurgu;
+    o.material.opacity = vurgu ? 1 : 0.09;
+    o.material.depthWrite = !!vurgu;
+  });
+}
+
+function kadrajla(hedefler) {
+  const kutu = new THREE.Box3();
+  for (const h of hedefler) kutu.expandByObject(h);
+  const merkez = kutu.getCenter(new THREE.Vector3());
+  const boy = Math.max(1e-3, kutu.getSize(new THREE.Vector3()).length());
+  izgara.scale.setScalar(boy / 2);
+  izgara.position.set(merkez.x, kutu.min.y - boy * 0.06, merkez.z);
+  const uzak = boy / (2 * Math.tan(camera.fov * Math.PI / 360)) * 1.45;
+  camera.position.set(merkez.x + uzak * 0.62, merkez.y + uzak * 0.42, merkez.z + uzak * 0.72);
+  camera.near = Math.max(0.0015, boy / 400); camera.far = boy * 400;
+  camera.updateProjectionMatrix();
+  if (controls) { controls.target.copy(merkez); controls.update(); } else camera.lookAt(merkez);
+}
+
+/* ---------- eklem sürgüleri ---------- */
+function surgulariKur() {
+  const kap = document.querySelector('#pSurgular');
+  kap.replaceChildren();
+  surguler = [];
+  if (!cozum || !rig) return;
+  for (const j of cozum.joints) {
+    if (!j.spec || j.spec.spin) continue;
+    const [lo, hi] = j.spec.range || [0, 0];
+    const iki = Array.isArray(j.spec.axis);
+    const l = document.createElement('label');
+    l.className = 'surgu';
+    const s = document.createElement('span');
+    const ad = document.createElement('i'); ad.style.fontStyle = 'normal'; ad.textContent = j.ad;
+    const b = document.createElement('b');
+    s.append(ad, b);
+    const inp = document.createElement('input');
+    inp.type = 'range'; inp.min = String(lo); inp.max = String(hi);
+    inp.step = String(Math.max(1e-4, (hi - lo) / 200)); inp.value = '0';
+    l.append(s, inp);
+    kap.appendChild(l);
+    const kayit = { ad: j.ad, spec: j.spec, inp, b, iki };
+    inp.addEventListener('input', () => { supur = false; oynatYaz(); uygulaSurgu(kayit); ciz(); });
+    surguler.push(kayit);
+    yaziYaz(kayit, 0);
+  }
+}
+function yaziYaz(k, deger) {
+  k.b.textContent = k.spec.mode === 'translate' ? `${(deger * 100).toFixed(1)} cm` : `${deger.toFixed(1)}°`;
+}
+function uygulaSurgu(k) {
+  const deger = parseFloat(k.inp.value);
+  rig.jump(k.ad, k.iki ? [deger, 0] : deger);
+  rig.apply(arac);
+  arac.updateMatrixWorld(true);
+  yaziYaz(k, deger);
+  iskeletKur();
+}
+
+/* ---------- panel ---------- */
+function panelYaz(def) {
+  const q = (id) => document.querySelector(id);
+  if (!def) { q('#pAd').textContent = 'craft_blocks yüklenemedi'; return; }
+  q('#pTur').textContent = def.tur;
+  q('#pAd').textContent = def.ad;
+  q('#pIliski').textContent = def.iliski;
+  q('#pNeden').textContent = def.neden;
+  q('#pKanit').textContent = def.kanit;
+  q('#pDof').textContent = cozum ? `· ${cozum.dof} serbestlik` : '';
+  const tb = q('#pTablo');
+  tb.replaceChildren();
+  for (const j of (cozum ? cozum.joints : [])) {
+    const tr = document.createElement('tr');
+    const t1 = document.createElement('td'); t1.textContent = j.ad;
+    const t2 = document.createElement('td');
+    t2.textContent = !j.spec ? 'YOK' : j.spec.spin ? 'döner' : j.spec.mode === 'translate' ? 'prizmatik'
+      : Array.isArray(j.spec.axis) ? 'gimbal' : 'menteşe';
+    if (!j.spec) t2.style.color = '#e06c5a';
+    const t3 = document.createElement('td'); t3.className = 'deger'; t3.textContent = limitText(j.spec);
+    tr.append(t1, t2, t3);
+    tb.appendChild(tr);
+  }
+}
+
+/* ---------- süpürme (tüm eklemleri sınırdan sınıra) ---------- */
+function supurUygula(t) {
+  if (!rig || !surguler.length) return;
+  const u = 0.5 - 0.5 * Math.cos(Math.PI * 2 * (t % 6) / 6);      // 6 s'de gidiş-dönüş
+  for (const k of surguler) {
+    const [lo, hi] = k.spec.range || [0, 0];
+    const deger = lo + (hi - lo) * u;
+    k.inp.value = String(deger);
+    rig.jump(k.ad, k.iki ? [deger, 0] : deger);
+    yaziYaz(k, deger);
+  }
+  rig.apply(arac);
+  arac.updateMatrixWorld(true);
+  iskeletKur();
+}
+
+/* ---------- kumandalar ---------- */
+const patlaEl = document.querySelector('#patla');
+patlaEl.addEventListener('input', () => {
+  const k = parseFloat(patlaEl.value) / 100;
+  document.querySelector('#pPatlaDeger').textContent = `${Math.round(k * 100)} %`;
+  patlamaUygula(k);
+  arac.updateMatrixWorld(true);
+  iskeletKur();
+  ciz();
+});
+document.querySelector('#iskelet').addEventListener('change', (e) => { if (iskeletGrup) iskeletGrup.visible = e.target.checked; ciz(); });
+document.querySelector('#zarf').addEventListener('change', (e) => {
+  if (e.target.checked) { zarfKur(); } else if (zarfGrup) zarfGrup.visible = false;
+  ciz();
+});
+const oynatEl = document.querySelector('#oynat');
+const oynatYaz = () => { oynatEl.textContent = supur ? 'Durdur' : 'Süpür'; };
+oynatEl.addEventListener('click', () => { supur = !supur; oynatYaz(); kareIste(); });
+sec.addEventListener('change', () => { mekanizmaKur(sec.value); ciz(); kareIste(); });
+addEventListener('keydown', (e) => {
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+  if (e.key === ' ') { e.preventDefault(); oynatEl.click(); }
+});
+
+/* ---------- döngü ---------- */
+function boyutla() {
+  const w = host.clientWidth || 800, h = host.clientHeight || 600;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+function ciz() { renderer.render(scene, camera); kameraKirli = false; }
+let istekId = 0;
+function kareIste() { if (!istekId && !document.hidden) istekId = requestAnimationFrame(dongu); }
+function dongu() {
+  istekId = 0;
+  if (document.hidden) return;
+  const kameraDegisti = controls ? controls.update() : false;
+  if (supur) { tSupur += DT; supurUygula(tSupur); }
+  if (supur || kameraDegisti || kameraKirli) ciz();
+  if (supur || kameraDegisti) kareIste();
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) kareIste(); });
+addEventListener('resize', () => { boyutla(); ciz(); });
+
+boyutla();
+mekanizmaKur(sec.value);
+supur = !donmusMod && sorgu.get('supur') !== '0';
+if (sabitT !== null) { tSupur = sabitT; supurUygula(tSupur); supur = false; }
+oynatYaz();
+ciz();
+kareIste();
+
+window.__mech = {
+  scene, camera, renderer, get arac() { return arac; }, get rig() { return rig; },
+  mekanizmalar: MECHANISM_IDS,
+  sec(id) { sec.value = id; mekanizmaKur(id); ciz(); },
+  durum() {
+    return { id: sec.value, ad: tanim?.ad, craft: tanim?.craft, dof: cozum?.dof,
+      eksik: cozum?.eksik ?? [], eklem: cozum?.joints.length ?? 0,
+      parca: patlaParcalari.length, zarf: zarfGrup ? zarfGrup.children.length : 0,
+      surgu: surguler.length };
+  },
+  patla(k) { patlaEl.value = String(Math.round(k * 100)); patlaEl.dispatchEvent(new Event('input')); },
+  advance(sn) { const n = Math.max(1, Math.round(sn / DT)); for (let i = 0; i < n; i++) tSupur += DT; supurUygula(tSupur); ciz(); },
+};
+window.dispatchEvent(new CustomEvent('mech:hazir', { detail: window.__mech }));
+</script>
+</body>
+</html>

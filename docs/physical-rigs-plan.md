@@ -49,6 +49,14 @@
 > `userData.jettison` listesi verir — tüketicinin kütüphaneyi çatallaması
 > gerekmez.
 >
+> **AKSAM DİZİNİ ve LABORATUVARI (24 Eylül 2026):** `mechanism-index.mjs`
+> parça sözleşmesindeki eklemleri 16 MEKANİZMA olarak adlandırır (tür,
+> yöneten bağıntı, mühendislik gerekçesi, kanıt); `presets/mechanism_lab/`
+> bunları patlatılmış görünüm, kinematik iskelet ve hareket zarfıyla
+> inceletir. Serbestlik derecesi rig haritasından türetilir; validate-rigs
+> §11 her eklem adının kurucuda gerçekten üretildiğini sınar (yanlış
+> yazılmış tek ad laboratuvarda sessizce boş satır olurdu).
+>
 > HENÜZ YOK: toz (§3.4 ikinci yarısı), rota takibi (§4 `follow(path)`),
 > kol IK (§5.2), tracker/HGA takibi (§5.3–5.4), cinematic sürüş beat'i (F4),
 > terrain_blocks köprüsü (vitrin kendi treadmill alanını kullanıyor).
