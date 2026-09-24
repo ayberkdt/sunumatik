@@ -78,6 +78,9 @@ jobs:
       - name: Uydu entegrasyonu (kütle bütçesi, montaj ağacı, sıra, kütle merkezi)
         run: node scripts/validate-satellite.mjs
 
+      - name: Montaj çekirdeği (patlatma yönü, çakışma paketlemesi, bütçe, adaptör)
+        run: node scripts/validate-assembly.mjs
+
       - name: Saha yerleşimi (kural kataloğu, çözücü, determinizm, araziye yazılan kapılar)
         run: node scripts/validate-site.mjs
 
