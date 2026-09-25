@@ -12,6 +12,9 @@ const mod = (rel) => import(pathToFileURL(path.join(root, rel)).href);
 const A = await mod('presets/core/assembly.mjs');
 const KAT = await mod('presets/exploded_view/adapters/catalog.mjs');
 const SAT = await mod('presets/satellite_integration/sat-parts.mjs');
+const HAB = await mod('presets/habitat_blocks/hab-parts.mjs');
+const LV = await mod('presets/launch_vehicle/lv-parts.mjs');
+const XV = await mod('presets/core/exploded-view.mjs');
 
 let fails = 0, total = 0;
 const check = (name, ok, detail = '') => { total++; console.log(`  ${ok ? 'ok ' : 'HATA'} ${name}${detail ? '  (' + detail + ')' : ''}`); if (!ok) fails++; };
@@ -65,9 +68,26 @@ console.log('== 2 ayrılma doğrultusu montajın tersi');
   check('kutu-a +X\'e ayrılıyor (ebeveyne göre konumdan)',
     m.direction('kutu-a').dir[0] > 0.99 && m.direction('kutu-a').kaynak === 'konum');
   check('kutu-b −X\'e ayrılıyor', m.direction('kutu-b').dir[0] < -0.99);
-  /* İç içe parça: tank gövdenin TAM merkezinde → birincil eksene düşmeli. */
-  check('iç içe parça birincil eksene düşüyor',
-    m.direction('ic-tank').kaynak === 'eksen' && Math.abs(m.direction('ic-tank').dir[2] - 1) < 1e-9);
+  /* Nested part: the tank sits at the body's exact centre. It used to fall
+     back to the primary axis, which put every nested part in one collision
+     bucket and the packing pass then laid them end to end - the satellite
+     opened to 9.45x its own size. It now leaves PERPENDICULAR to the axis,
+     which is also the only way a tank actually comes out of a tube. */
+  const icYon = m.direction('ic-tank');
+  /* Sideways AND up. Purely perpendicular was the first attempt and the
+     habitat gate rejected it at once: a radial exit sweeps through
+     whatever sits beside the parent in the same plane. Lifting it clear
+     while pulling it out is how the part would really be removed. */
+  const yanalPay = Math.hypot(icYon.dir[0], icYon.dir[1]);
+  check('iç içe parça yana VE eksen boyunca ayrılıyor',
+    icYon.kaynak === 'ic' && yanalPay > 0.5 && icYon.dir[2] > 0.3
+      && Math.abs(uzunluk(icYon.dir) - 1) < 1e-9,
+    `[${icYon.dir.map(v => v.toFixed(2)).join(', ')}] · yanal ${yanalPay.toFixed(2)}`);
+  /* And it has to come all the way out: concentric start, so a gap is not
+     enough - it needs clearance. */
+  const icOf = m.explode(1).get('ic-tank');
+  check('iç içe parça ebeveyninden tamamen çıkıyor', uzunluk(icOf) >= (0.8 + 0.5) / 2,
+    `${uzunluk(icOf).toFixed(2)} m`);
   /* Beyan edilen yön her şeyin önünde gelir. */
   const m2 = A.createAssembly({ ...ORNEK, parts: ORNEK.parts.map(p => p.id === 'kutu-a' ? { ...p, dir: [0, 1, 0] } : p) });
   check('beyan edilen yön öncelikli', m2.direction('kutu-a').kaynak === 'beyan' && m2.direction('kutu-a').dir[1] > 0.99);
@@ -105,17 +125,43 @@ console.log('== 3 patlatma: monoton, çakışmasız, kipli');
   check('en küçük parça arası mesafe k ile monoton artıyor', monoton,
     `k=0: ${mesafe(0).toFixed(3)} → k=1: ${mesafe(1).toFixed(3)}`);
 
-  /* Aynı yönde giden parçalar üst üste binmemeli. */
+  /* Nothing may overlap at full explode. Tested as an axis-aligned BOX
+     intersection, not as spheres on each part's largest dimension: a
+     0.06 m lid sitting on a 1 m body has a largest dimension of 0.8 m
+     sideways, so the sphere test demanded 0.77 m of centre separation
+     between two parts that were never closer than 0.02 m along the only
+     axis that matters. The sphere test passed before only because every
+     part used to be flung much further than it needed to be. */
   const of = m.explode(1);
-  let cakisma = 0;
+  const binisiyor = (a, b) => {
+    const pa = A.add(a.pos, of.get(a.id)), pb = A.add(b.pos, of.get(b.id));
+    for (let i = 0; i < 3; i++) {
+      if (Math.abs(pa[i] - pb[i]) >= (a.size[i] + b.size[i]) / 2) return false;
+    }
+    return true;
+  };
+  const ciftler = [];
   for (let i = 0; i < m.parts.length; i++) for (let j = i + 1; j < m.parts.length; j++) {
     const a = m.parts[i], b = m.parts[j];
     if (a.wet || b.wet) continue;                       // yakıt tankın içinde kalır
-    const pa = A.add(a.pos, of.get(a.id)), pb = A.add(b.pos, of.get(b.id));
-    const gerek = (Math.max(...a.size) + Math.max(...b.size)) / 2 * 0.85;
-    if (uzunluk(A.sub(pa, pb)) < gerek) cakisma++;
+    if (binisiyor(a, b)) ciftler.push(`${a.id}/${b.id}`);
   }
-  check('tam patlatmada gabari çakışması yok', cakisma === 0, `${cakisma} çift`);
+  check('tam patlatmada kutu çakışması yok', ciftler.length === 0,
+    ciftler.join(', ') || `${m.parts.length} parça`);
+
+  /* And every joint has to OPEN: two parts bolted face to face must end up
+     further apart than they started, or the explosion showed nothing about
+     the interface between them. */
+  const of0 = m.explode(0);
+  let acilmayan = 0;
+  for (const p of m.parts) {
+    if (p.parent == null) continue;
+    const ust = m.byId(p.parent);
+    const d0 = uzunluk(A.sub(A.add(p.pos, of0.get(p.id)), A.add(ust.pos, of0.get(ust.id))));
+    const d1 = uzunluk(A.sub(A.add(p.pos, of.get(p.id)), A.add(ust.pos, of.get(ust.id))));
+    if (d1 <= d0 + 1e-6) acilmayan++;
+  }
+  check('her parça ebeveyninden UZAKLAŞIYOR', acilmayan === 0, `${acilmayan} parça yerinde`);
 
   check('kova yuvarlaması çalışıyor',
     A.directionBucket([0.99, 0.02, 0]) === '1,0,0' && A.directionBucket([0.1, 0.1, 0.9]) === '0,0,1'
@@ -219,6 +265,132 @@ console.log('== 8 genel yüzey sözleşmesi');
     cozulmeyen.map(x => x.iface).join(',') || `${m.interfaceCensus().length} sınıf`);
   check('budget sayısal toplam veriyor', typeof m.budget().toplamKg === 'number');
   check('integrationOrder dizi veriyor', Array.isArray(m.integrationOrder()));
+}
+
+/* ── N) the explosion stays readable ─────────────────────────────────── */
+console.log('== N patlatma okunur kalıyor');
+{
+  /* The travel used to be TABAN + depth*KADEME with nothing bounding it.
+     A three-deep spacecraft bus never showed the problem; an eight-deep
+     launch vehicle sent its payload 75 m off a 74 m vehicle and the
+     explosion became a needle. These two numbers are what the cap is for,
+     and they are measured on the real catalogues, not on the fixture. */
+  const CISIMLER = [
+    { ad: 'uydu', mod: SAT }, { ad: 'habitat', mod: HAB }, { ad: 'firlatici', mod: LV },
+  ];
+  for (const c of CISIMLER) {
+    const m = KAT.assemblyFromCatalog(c.mod, { axis: [0, 0, 1] });
+    const off = m.explode(1);
+    let enUzak = 0, enUzakId = '';
+    for (const [id, o] of off) {
+      const d = uzunluk(o);
+      if (d > enUzak) { enUzak = d; enUzakId = id; }
+    }
+    check(`${c.ad}: hiçbir parça gabarinin %50'sinden uzağa gitmiyor`,
+      enUzak <= m.gabari * 0.5 + 1e-6,
+      `${enUzakId} ${enUzak.toFixed(1)} m / gabari ${m.gabari.toFixed(1)} m`);
+
+    /* The exploded envelope against the assembled one, along each axis.
+       This is the number a reader actually feels: at 2.0x the object is
+       half the size on screen. */
+    const kutu = (uygula) => {
+      const mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
+      for (const p of m.parts) {
+        if (!p.pos || !p.size) continue;
+        const o = uygula ? (off.get(p.id) || [0, 0, 0]) : [0, 0, 0];
+        for (let i = 0; i < 3; i++) {
+          mn[i] = Math.min(mn[i], p.pos[i] + o[i] - p.size[i] / 2);
+          mx[i] = Math.max(mx[i], p.pos[i] + o[i] + p.size[i] / 2);
+        }
+      }
+      return mn.map((v, i) => mx[i] - v);
+    };
+    const kapali = kutu(false), acik = kutu(true);
+    /* The DIAGONAL, not the worst axis. A per-axis ratio is the wrong
+       criterion for a thin dimension: the satellite is 2.4 m through its
+       radiators, so opening it by a perfectly sensible 2.4 m reads as
+       "2.05x" while nothing about the view got harder to see. What a
+       reader actually feels is the diagonal, because that is what sets
+       how far the camera has to pull back. */
+    const kose = (v) => Math.hypot(v[0], v[1], v[2]);
+    const oran = kose(acik) / Math.max(kose(kapali), 1e-6);
+    check(`${c.ad}: açık zarfın köşegeni kapalının 1,8 katını aşmıyor`, oran <= 1.8,
+      `${oran.toFixed(2)}x · ${acik.map(v => v.toFixed(0)).join('x')} m`);
+    /* And no single axis may blow up in ABSOLUTE terms either, or a thin
+       axis could hide a large travel behind a healthy diagonal. */
+    const enCokBuyume = Math.max(...acik.map((v, i) => v - kapali[i]));
+    check(`${c.ad}: hiçbir eksen gabarinin %60'ından fazla büyümüyor`,
+      enCokBuyume <= m.gabari * 0.6,
+      `+${enCokBuyume.toFixed(1)} m / gabari ${m.gabari.toFixed(1)} m`);
+
+    /* Separation must still be real: every part has to end up outside the
+       envelope it started in, or the cap bought readability by not
+       exploding at all. */
+    const duran = m.parts.filter(p => p.parent !== null && uzunluk(off.get(p.id) || [0, 0, 0]) < 1e-6);
+    check(`${c.ad}: kök dışında her parça hareket ediyor`, duran.length === 0,
+      duran.map(p => p.id).join(', ') || `${m.parts.length - 1} parça`);
+  }
+}
+
+/* ── M) alt-montaj odağı ─────────────────────────────────────────────── */
+console.log('== M alt-montaj odağı');
+{
+  /* The rule is pure, so it is tested without a renderer - which is the
+     whole reason it is a function instead of living inside the view's
+     closure. */
+  const m = KAT.assemblyFromCatalog(SAT, { axis: [0, 0, 1] });
+  check('odak yokken kümesi yok', XV.focusSet(m, null) === null);
+  check('bilinmeyen kimlik odak olmuyor', XV.focusSet(m, 'boyle-bir-sey-yok') === null);
+
+  /* A radiator panel with equipment on it: its subtree is the equipment,
+     its chain is what it hangs from. */
+  const hedef = 'radyator-yp';
+  const kume = XV.focusSet(m, hedef);
+  const altAgac = m.subtree(hedef).map(p => p.id);
+  const zincir = m.chain(hedef).map(p => p.id);
+  check('odak kendisini içeriyor', kume.has(hedef));
+  check('odak bütün alt ağacını içeriyor', altAgac.every(id => kume.has(id)),
+    `${altAgac.length} parça`);
+  check('odak köke kadar zinciri içeriyor', zincir.every(id => kume.has(id)),
+    zincir.join(' < '));
+  check('odak kümesi alt ağaç ∪ zincir kadar, fazlası değil',
+    kume.size === new Set([...altAgac, ...zincir]).size, `${kume.size} parça`);
+
+  /* The point of a focus is that most of the object goes dim. If it does
+     not, the focus bought nothing. */
+  const sonen = m.parts.filter(p => !kume.has(p.id)).length;
+  check('odakta parçaların çoğu sönüyor', sonen > m.parts.length * 0.5,
+    `${sonen}/${m.parts.length} sönük`);
+
+  /* Focusing the root lights everything: the root's subtree IS the object,
+     so focusing it is the same as not focusing at all. */
+  const kokKume = XV.focusSet(m, m.root.id);
+  check('köke odaklanmak her şeyi yakıyor', kokKume.size === m.parts.length,
+    `${kokKume.size}/${m.parts.length}`);
+
+  /* A leaf lights only its own chain. */
+  const yaprak = m.parts.find(p => m.subtree(p.id).length === 1 && p.parent !== null);
+  const yaprakKume = XV.focusSet(m, yaprak.id);
+  check('yaprak yalnız kendi zincirini yakıyor',
+    yaprakKume.size === m.chain(yaprak.id).length,
+    `${yaprak.id}: ${yaprakKume.size} parça`);
+
+  /* Every object, not just the satellite: focusing anything must always
+     leave a lit set that is closed under "parent of". A hole in the chain
+     would put a lit part on a dimmed one. */
+  for (const c of [{ ad: 'uydu', mod: SAT }, { ad: 'habitat', mod: HAB }, { ad: 'firlatici', mod: LV }]) {
+    const a = KAT.assemblyFromCatalog(c.mod, { axis: [0, 0, 1] });
+    let kirik = 0;
+    for (const p of a.parts) {
+      const k = XV.focusSet(a, p.id);
+      for (const id of k) {
+        const q = a.byId(id);
+        if (q.parent != null && !k.has(q.parent) && !a.subtree(p.id).some(x => x.id === id)) kirik++;
+      }
+    }
+    check(`${c.ad}: her odak kümesi zincir boyunca kapalı`, kirik === 0,
+      `${a.parts.length} parça denendi`);
+  }
 }
 
 console.log(`\n${total - fails}/${total} geçti`);

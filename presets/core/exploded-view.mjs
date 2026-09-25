@@ -44,6 +44,25 @@ export function massText(kg, estimated = false) {
  *        BASE pose that explosion offsets are added to)
  * opts.labelHost: DOM layer labels are drawn into (no layer -> no labels)
  */
+/**
+ * Subassembly focus: which parts stay lit when one is focused.
+ *
+ * The focused part, everything mounted ON it, and the chain it hangs from.
+ * The chain is included deliberately - a sub-assembly shown with no context
+ * is a part the reader cannot place on the object.
+ *
+ * Pure on purpose: the rule is the thing worth testing, and testing it
+ * should not need a renderer.
+ *
+ * @returns Set of ids, or null when nothing is focused.
+ */
+export function focusSet(assembly, focusId) {
+  if (!focusId || !assembly.byId?.(focusId)) return null;
+  const lit = new Set(assembly.subtree(focusId).map(p => p.id));
+  for (const p of assembly.chain(focusId)) lit.add(p.id);
+  return lit;
+}
+
 export function createExplodedView(THREE, assembly, nodes, {
   labelHost = null, camera = null, renderer = null,
   labelRule = null, omega = 6, maxLabels = 12, inset = { top: 0, bottom: 0 },
@@ -113,6 +132,7 @@ export function createExplodedView(THREE, assembly, nodes, {
     step: null,              // null = show everything
     callout: null,           // subtree id to isolate
     selected: null,
+    focus: null,
     hover: null,
     section: null,           // { axis:'x'|'y'|'z', at: m, side: 1|-1 }
   };
@@ -154,7 +174,14 @@ export function createExplodedView(THREE, assembly, nodes, {
     }
     return true;
   }
-  const isDimmed = (p) => state.step !== null && (p.step ?? 1) < state.step;
+  /* The lit set is recomputed only when the focus changes, not per frame. */
+  let odakKume = null;
+  /* Dimmed by the step walk-through, or by being outside a focused
+     subassembly. Dimmed rather than HIDDEN (which is what setCallout
+     does): a part you cannot see teaches nothing about where the focused
+     one sits. */
+  const isDimmed = (p) => (state.step !== null && (p.step ?? 1) < state.step)
+    || (odakKume ? !odakKume.has(p.id) : false);
 
   /* -- apply ----------------------------------------------------------- */
   function apply() {
@@ -234,6 +261,10 @@ export function createExplodedView(THREE, assembly, nodes, {
       const n = nodes.get(p.id);
       if (!n || !n.visible) return false;
       if (p.id === state.selected) return true;
+      /* Inside a focus, the subassembly IS the subject: label all of it
+         and nothing else, instead of ranking by size across the whole
+         object and labelling parts the reader is not looking at. */
+      if (odakKume) return odakKume.has(p.id);
       if (state.step !== null) return (p.step ?? 1) === state.step;
       if (state.callout) return true;
       const bySize = p.size ? Math.max(...p.size) >= big : false;
@@ -450,6 +481,17 @@ export function createExplodedView(THREE, assembly, nodes, {
       }
     },
     setSection(section) { state.section = section; applySection(); },
+    /** Focus a subassembly; null clears it. */
+    setFocus(id) {
+      state.focus = id || null;
+      odakKume = focusSet(assembly, state.focus);
+      apply();
+    },
+    /** The lit ids, for a caller that needs to frame them. */
+    focusIds() { return odakKume ? [...odakKume] : null; },
+    /** The ANIMATED explode level, which is not the slider's value while
+        the view is still easing toward it. */
+    explodeK() { return state.k; },
     /** Called every frame. */
     update(dt) {
       clock += dt;

@@ -138,6 +138,19 @@ export function createAssembly(beyan) {
   }
   const gabari = len(sub(kutu.max, kutu.min)) || 1;
 
+  /* An orthonormal pair perpendicular to the primary axis, for the parts
+     that have no direction of their own. */
+  const yardimci = Math.abs(axis[2]) < 0.9 ? V(0, 0, 1) : V(1, 0, 0);
+  const dikU = norm([
+    axis[1] * yardimci[2] - axis[2] * yardimci[1],
+    axis[2] * yardimci[0] - axis[0] * yardimci[2],
+    axis[0] * yardimci[1] - axis[1] * yardimci[0]]);
+  const dikV = norm([
+    axis[1] * dikU[2] - axis[2] * dikU[1],
+    axis[2] * dikU[0] - axis[0] * dikU[2],
+    axis[0] * dikU[1] - axis[1] * dikU[0]]);
+  let icSayac = 0;
+
   /* ── AYRILMA DOĞRULTUSU (plan §4.1) ────────────────────────────────── */
   const yon = new Map();
   for (const p of ham) {
@@ -153,7 +166,29 @@ export function createAssembly(beyan) {
       const rel = sub(p.pos || V(), ust ? (ust.pos || V()) : V());
       if (len(rel) > gabari * 0.012) { d = norm(rel); kaynak = 'konum'; }
     }
-    if (!d) { d = axis.slice(); kaynak = 'eksen'; }     // iç içe parça (tank ↔ tüp)
+    if (!d) {
+      /* Concentric with its parent: a tank inside a thrust tube, propellant
+         inside a tank, a harness volume inside a bus. Sending every one of
+         them along the SAME axis put them all in one collision bucket,
+         where the non-overtaking pass below stacks parts end to end - and
+         that compounds. Measured before this change: the satellite's
+         exploded envelope was 9.45x its assembled one and the launch
+         vehicle's fairing nose ended 140 m off a 74 m vehicle.
+         A nested part now comes out SIDEWAYS, on a golden-angle fan so no
+         two of them share a direction. It is also how an exploded drawing
+         shows what is inside a vessel: you cannot pull a tank out of a tube
+         along the tube. */
+      const a = (icSayac++) * 2.39996322972865332;      // golden angle, rad
+      const yanal = add(mul(dikU, Math.cos(a)), mul(dikV, Math.sin(a)));
+      /* Sideways AND up: a purely radial exit sweeps through whatever
+         sits beside the parent in the same plane, which the habitat gate
+         caught at once (an interior rack passing 1.5 m through the
+         regolith cover at k = 0.05). Tilting toward the primary axis is
+         how the part would actually be removed - lift it clear, then take
+         it out - and it leaves the plane its siblings live in. */
+      d = norm(add(mul(yanal, 0.82), mul(axis, 0.57)));
+      kaynak = 'ic';
+    }
     yon.set(p.id, { dir: d, kaynak });
   }
 
@@ -165,6 +200,14 @@ export function createAssembly(beyan) {
     kova.get(b).push(p);
   }
   const TABAN = gabari * 0.10, KADEME = gabari * 0.11;
+  /* The depth stagger is CAPPED. `TABAN + depth*KADEME` grows without any
+     limit, which a spacecraft bus never exposed because its tree is three
+     deep; a launch vehicle exposed it at once. At depth 8 its payload was
+     sent 75 m off a 74 m vehicle, so the explosion became a 150 m needle
+     that no framing could make readable. Past the cap the non-overtaking
+     pass below still guarantees every part its own space - what the cap
+     removes is only empty distance. */
+  const DERINLIK_TAVANI = 3;
 
   /* Aynı doğrultuda giden parçalar için mesafe, YÖN ÜZERİNDEKİ İZDÜŞÜME
      göre paketlenir. Derinliğe göre paketlemek yanlıştı: derinde olan
@@ -182,15 +225,87 @@ export function createAssembly(beyan) {
     const d = yon.get(liste[0].id).dir;
     const proj = (p) => dot(p.pos || V(), d);
     liste.sort((a, b) => (proj(a) - proj(b)) || (a.id < b.id ? -1 : 1));
-    let oncekiHedef = -Infinity, oncekiYari = 0;
+
+    /* How far a part travels scales with the object's extent ALONG THAT
+       DIRECTION, not with its bounding-box diagonal. The diagonal of a
+       74 m x 3.7 m launch vehicle is 74 m, so a part leaving sideways was
+       thrown as far as one leaving along the stack - twenty times the
+       vehicle's own width. Measured per direction instead. */
+    /* Half-extent ALONG d, not half of the largest dimension. For a flat
+       panel leaving along its own normal the two differ by an order of
+       magnitude, and the loose one was being used both here and for
+       clearance below. */
+    const yariBoyu = (q) => {
+      const h = q.size || V(0.1, 0.1, 0.1);
+      return (Math.abs(d[0]) * h[0] + Math.abs(d[1]) * h[1] + Math.abs(d[2]) * h[2]) / 2;
+    };
+    let enAz = Infinity, enCok = -Infinity;
+    for (const q of ham) {
+      const c = dot(q.pos || V(), d);
+      const h = yariBoyu(q);
+      enAz = Math.min(enAz, c - h); enCok = Math.max(enCok, c + h);
+    }
+    const acilim = Math.max(enCok - enAz, gabari * 0.06);
+
+    /* The whole bucket may grow by this much, no matter how long it is. */
+    const buyumePay = (acilim * 0.12) / Math.max(1, liste.length - 1);
+
+    /* For a part leaving sideways, the scale that matters is its LATERAL
+       half-extent, converted into travel along d. A 22 m propellant column
+       pulled out of its tank needs one tank radius of clearance, not its
+       own height. */
+    const yanalPay = Math.hypot(d[0], d[1]) || 1e-6;
+    const u = [d[0] / yanalPay, d[1] / yanalPay, 0];
+    const yanalYari = (q) => {
+      const h = q.size || V(0.1, 0.1, 0.1);
+      return (Math.abs(u[0]) * h[0] + Math.abs(u[1]) * h[1]) / 2;
+    };
+
+    let oncekiHedef = -Infinity, oncekiS0 = -Infinity, oncekiYariD = 0;
     for (const p of liste) {
       const s0 = proj(p);
-      const yari = (p.size ? Math.max(...p.size) : gabari * 0.05) / 2;
-      let hedef = s0 + TABAN + depth(p.id) * KADEME;
-      const altSinir = oncekiHedef + (oncekiYari + yari) * 1.15;
+      const icMi = yon.get(p.id).kaynak === 'ic';
+      const yari = icMi ? yanalYari(p) / yanalPay : yariBoyu(p);
+      /* How far a part travels is set by ITS OWN size, not by the object's.
+         Deriving it from the object meant a 0.7 m pressurant bottle on a
+         74 m vehicle was thrown 18 m, because its direction happened to
+         have a component along the long axis. The object's extent only
+         supplies a floor, so a tiny part still moves visibly. */
+      const tabanP = Math.max(yari * 0.55, acilim * 0.02);
+      const kademeP = tabanP * 0.5;
+      let hedef = s0 + tabanP + Math.min(depth(p.id), DERINLIK_TAVANI) * kademeP;
+      /* A part that starts INSIDE its parent has to travel far enough to
+         actually come out of it. Everything else only needs a gap; this one
+         needs clearance, and it is the one case where the part's own size
+         is not the whole story. */
+      if (icMi) {
+        /* And it has to come all the way out of its parent, sideways. */
+        const ust = p.parent != null ? byId.get(p.parent) : null;
+        const gerek = (ust ? yanalYari(ust) : 0) + yanalYari(p);
+        hedef = Math.max(hedef, s0 + (gerek * 1.25) / yanalPay);
+      }
+      /* Keep the ORIGINAL spacing, do not re-lay the parts end to end.
+         The old rule demanded (r_prev + r)*1.15 of clearance between every
+         consecutive pair, which for a stack of ten tanks compounds into a
+         vehicle three times its own length - the parts in a stack were
+         never overlapping to begin with, so preserving their spacing is
+         already enough to guarantee that none of them passes another.
+         The small absolute term is for pairs that DID start close. */
+      /* The original spacing PLUS a share of a FIXED growth budget.
+         Preserving the spacing alone guarantees no part passes another,
+         but two parts bolted face to face then travel together and their
+         joint never opens - which is the one thing an exploded view exists
+         to show. Making the growth proportional to each pair instead
+         compounded down the chain: the launch vehicle's fairing nose ended
+         45 m out. A budget shared equally between the joints opens every
+         one of them and bounds the total by construction. */
+      const asgari = oncekiS0 > -Infinity
+        ? (s0 - oncekiS0) + buyumePay
+        : Math.max((oncekiYariD + yari) * 0.30, acilim * 0.02);
+      const altSinir = oncekiHedef + asgari;
       if (hedef < altSinir) hedef = altSinir;
       mesafeMap.set(p.id, hedef - s0);                  // yön boyunca öteleme
-      oncekiHedef = hedef; oncekiYari = yari;
+      oncekiHedef = hedef; oncekiS0 = s0; oncekiYariD = yari;
     }
   }
 

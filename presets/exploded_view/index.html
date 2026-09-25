@@ -286,6 +286,7 @@
       const k = Number(el('#explode').value) / 100;
       if (reduced) xv.jumpExplode(k); else xv.setExplode(k);
       framedAt = k;
+      odak = null;
       framedAt = k; izleme = IZLEME_S;
       frameCamera();
       objectList(); stepList(); rightPanel(); writeCaption(null);
@@ -302,6 +303,9 @@
        bottom. One declaration, read by the label placer AND the camera. */
     const INSET = { top: 62, bottom: 84 };
 
+    /* The part the view is focused on, if any. */
+    let odak = null;
+
     /* The explode level the camera was last framed for, and how much longer
        to keep re-framing. The parts ease into place over about a second, so
        a single re-frame at the moment the slider moves measures a body that
@@ -310,6 +314,23 @@
     const IZLEME_S = 1.4;
 
     function envelope() {
+      /* Focused: only the lit subassembly is framed, so clicking a part
+         actually takes you to it. */
+      if (odak) {
+        const ids = xv.focusIds?.() || [odak];
+        const kutu = new THREE.Box3();
+        for (const id of ids) {
+          const n = active.nodes.get(id);
+          if (n && n.visible) kutu.expandByObject(n);
+        }
+        if (!kutu.isEmpty()) {
+          /* A little air around it: a part filling the frame edge to edge
+             reads as a texture, not as a part. */
+          const yari = kutu.getSize(new THREE.Vector3()).multiplyScalar(0.18);
+          kutu.expandByVector(yari);
+          return kutu;
+        }
+      }
       /* The box of what is ON SCREEN, from the live world matrices.
          Framing on `assembly.explode(k)` instead looked right but was not:
          those are the TARGET offsets for level k, and the motion layer
@@ -564,9 +585,26 @@
       const r = renderer.domElement.getBoundingClientRect();
       ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
       ray.setFromCamera(ptr, camera);
-      const id = xv.pick(ray);
+      secimiUygula(xv.pick(ray));
+    });
+
+    /* One path for every way a part gets selected: the ray, the keyboard,
+       and the console handle. */
+    function secimiUygula(id) {
       xv.setSelected(id);
+      /* Selecting a part focuses its subassembly and takes the camera
+         there; selecting nothing comes back out. */
+      xv.setFocus(id);
+      odak = id;
+      izleme = IZLEME_S; frameCamera();
       writeCaption(id);
+    }
+
+    /* Escape is the way out of a focus, because it is the way out of
+       everything else. */
+    window.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || !odak) return;
+      secimiUygula(null);
     });
 
     el('#explode').addEventListener('input', (e) => {
@@ -696,6 +734,48 @@
       renderer.render(scene, camera);
       requestAnimationFrame(frame);
     }
+
+    /* A small handle for checks and for the browser console. The satellite
+       page exposes the same kind of thing; without it, verifying that a
+       selection focuses the right subassembly means guessing at pixel
+       coordinates and hoping the ray lands on geometry. */
+    window.explodedView = {
+      select(id) { secimiUygula(id); },
+      /* Jump straight to an explode level and redraw once, with no
+         animation. The reduced-motion path already does exactly this; it
+         is exposed because a check cannot rely on the animation running -
+         a hidden tab gets no requestAnimationFrame at all, which is a
+         whole afternoon of "the view looks broken" if you do not know it. */
+      jump(k) {
+        const v = Math.max(0, Math.min(1, Number(k) || 0));
+        el('#explode').value = String(Math.round(v * 100));
+        el('#explodeVal').textContent = Math.round(v * 100) + '%';
+        xv.jumpExplode(v);
+        xv.update(0);
+        frameCamera();
+        /* The camera EASES in the frame loop, which a hidden tab never
+           runs, so the target has to be applied here or a check would
+           measure the framing from before the jump. */
+        camera.position.copy(camWant);
+        controls.target.copy(targetWant);
+        camEasing = false;
+        camera.updateProjectionMatrix();
+        controls.update();
+        xv.update(0);
+      },
+      clear() { secimiUygula(null); },
+      objects: () => Object.keys(OBJECTS),
+      show: (k) => { if (OBJECTS[k]) { objectKey = k; load(k); } },
+      state: () => ({
+        object: objectKey,
+        explode: Number(el('#explode').value) / 100,
+        k: xv.explodeK?.() ?? null,
+        focus: odak,
+        parts: active.assembly.parts.length,
+        lit: xv.focusIds()?.length ?? null,
+        labels: el('#labels').querySelectorAll('.xv-leader polyline').length,
+      }),
+    };
 
     resize();
     load(objectKey);

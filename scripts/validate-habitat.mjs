@@ -325,24 +325,40 @@ bolum('7. Patlatma sistemiyle bütünleşme');
 
   /* Hiçbir parça bir diğerinin içinden geçmemeli: patlatma boyunca
      kardeşler arası en küçük açıklık ölçülür. */
+  /* Measured as a BOX separation, not as spheres on each part's largest
+     dimension. The sphere form asked a 1.5 m interior rack to stay 3.25 m
+     from the CENTRE of the 12 m regolith blanket it legitimately sits
+     under, and it passed only because the old explosion threw every part
+     much further than it needed to go. Negative here means real
+     interpenetration along every axis, which is what actually matters. */
+  const ayrilik = (a, b, ka, kb) => {
+    let enAz = Infinity;
+    for (let i = 0; i < 3; i++) {
+      const d = Math.abs(ka[i] - kb[i]) - (a.size[i] + b.size[i]) / 2;
+      enAz = Math.min(enAz, d);
+    }
+    return enAz;      // >= 0 ise ayrık; en büyük eksen boşluğu belirler
+  };
   let enKucuk = Infinity, ciftAd = '';
   for (let i = 1; i <= 20; i++) {
     const k = i / 20;
     const of = A.explode(k);
     const konum = A.parts.map(p => {
       const d = of.get(p.id) || [0, 0, 0];
-      return { p, x: p.pos[0] + d[0], y: p.pos[1] + d[1], z: p.pos[2] + d[2] };
+      return { p, c: [p.pos[0] + d[0], p.pos[1] + d[1], p.pos[2] + d[2]] };
     });
     for (let a = 0; a < konum.length; a++) {
       for (let b = a + 1; b < konum.length; b++) {
         const A1 = konum[a], B1 = konum[b];
         if (A1.p.parent !== B1.p.parent) continue;       // yalnız kardeşler
-        const mesafe = Math.hypot(A1.x - B1.x, A1.y - B1.y, A1.z - B1.z);
-        const yaricap = (Math.max(...A1.p.size) + Math.max(...B1.p.size)) / 2;
-        const aciklik = mesafe - yaricap * 0.5;
+        /* Boxes that overlap on every axis interpenetrate; the largest
+           per-axis gap is how far apart they really are. */
+        const aciklik = Math.max(...[0, 1, 2].map(j =>
+          Math.abs(A1.c[j] - B1.c[j]) - (A1.p.size[j] + B1.p.size[j]) / 2));
         if (aciklik < enKucuk) { enKucuk = aciklik; ciftAd = `${A1.p.id}/${B1.p.id} k=${k}`; }
       }
     }
+    void ayrilik;
   }
   ok(enKucuk > -0.5, 'kardeş parçalar patlatma boyunca üst üste binmiyor',
     `en küçük açıklık ${enKucuk.toFixed(3)} m (${ciftAd})`);
