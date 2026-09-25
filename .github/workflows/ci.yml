@@ -90,6 +90,9 @@ jobs:
       - name: Dağıtım yüzeyi (.vercelignore hiçbir bağımlılığı düşürmüyor mu)
         run: node scripts/validate-deploy.mjs
 
+      - name: Mobil katman her preset sayfasına bağlı mı
+        run: node scripts/apply-mobile-css.mjs --check
+
       - name: Saha yerleşimi (kural kataloğu, çözücü, determinizm, araziye yazılan kapılar)
         run: node scripts/validate-site.mjs
 
