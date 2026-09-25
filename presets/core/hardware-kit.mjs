@@ -634,6 +634,158 @@ export function cfrpTexture(THREE) {
   return t;
 }
 
+
+/**
+ * Bir basınçlı kabın SEHPASI: kuşak halkası, çatal payandalar, guseler,
+ * çapraz bağ ve ankrajlı pabuçlar.
+ *
+ * Dört düz silindir bir tankı taşımaz ve taşıyormuş gibi de görünmez.
+ * Ölçülen (düzeltme öncesi): ayaklar z 0..0,60 aralığında ve eksenden
+ * 1,05 m'de duruyordu, tankın O YARIÇAPTAKİ yüzeyi ise z 1,23'te — arada
+ * 0,63 m boşluk vardı, yani hiçbir şey hiçbir şeyi tutmuyordu.
+ *
+ * Gerçek sehpa kabı EKVATORUNDAN kavrar: yük oradan geçer, çünkü kap
+ * genleşip büzüldükçe merkez sabit kalır ve alt kapak serbest kalmalıdır.
+ * Payandalar çatal (A) düzenindedir; tek payanda yanal yükte devrilir.
+ *
+ * @param R    kabın yarıçapı
+ * @param ykZ  kuşak halkasının yüksekliği (kabın ekvatoru, taban düzleminden)
+ * @param opts n (bacak), disR (pabuç yarıçapı), acikAci (çatal açıklığı)
+ */
+export function tankSehpasi(THREE, kit, R, ykZ, opts = {}) {
+  const { n = 4, disR = R * 1.34, acikAci = 13 * Math.PI / 180, capraz = true } = opts;
+  const g = new THREE.Group();
+  const boru = R * 0.052;
+
+  /* Kuşak halkası: yükün kaba girdiği yer. */
+  const kusak = new THREE.Mesh(new THREE.TorusGeometry(R * 1.01, boru * 0.82, 8, 40), kit.aluDark);
+  kusak.position.z = ykZ;
+  g.add(kusak);
+
+  const ayakNoktalari = [];
+  for (let i = 0; i < n; i++) {
+    const a = i * TAU / n + Math.PI / n;
+    const pabucKon = new THREE.Vector3(Math.cos(a) * disR, Math.sin(a) * disR, 0);
+    ayakNoktalari.push(pabucKon);
+
+    /* Çatal: iki payanda, kuşakta teğet yönde ayrılır. */
+    for (const yan of [-1, 1]) {
+      const b = a + yan * acikAci;
+      const ust = new THREE.Vector3(Math.cos(b) * R * 1.01, Math.sin(b) * R * 1.01, ykZ);
+      const alt = pabucKon.clone().setZ(boru * 1.6);
+      const boy = ust.distanceTo(alt);
+      const p = new THREE.Mesh(cylGeoZ(boru, boru * 1.12, boy, 10), kit.metal);
+      p.position.copy(ust).add(alt).multiplyScalar(0.5);
+      /* İki nokta arasına oturan çubuk: yön tek adımda kurulur, Euler yok. */
+      p.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1),
+        ust.clone().sub(alt).normalize());
+      g.add(p);
+
+      /* Guse: payandanın kuşağa bindiği yerdeki üçgen plaka. */
+      const guse = new THREE.Mesh(
+        new THREE.BoxGeometry(boru * 0.28, R * 0.16, R * 0.2), kit.alu);
+      guse.position.copy(ust).addScaledVector(
+        new THREE.Vector3(Math.cos(b), Math.sin(b), 0), boru * 0.9);
+      guse.position.z -= R * 0.08;
+      guse.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(
+        new THREE.Vector3(Math.cos(b), Math.sin(b), 0),
+        new THREE.Vector3(-Math.sin(b), Math.cos(b), 0),
+        new THREE.Vector3(0, 0, 1)));
+      g.add(guse);
+    }
+
+    /* Pabuç: plaka, yükseltilmiş göbek ve dört ankraj cıvatası. */
+    const pabuc = new THREE.Mesh(cylGeoZ(R * 0.17, R * 0.2, boru * 1.1, 16), kit.aluDark);
+    pabuc.position.copy(pabucKon).setZ(boru * 0.55);
+    g.add(pabuc);
+    const gobek = new THREE.Mesh(cylGeoZ(R * 0.09, R * 0.09, boru * 2.2, 12), kit.metal);
+    gobek.position.copy(pabucKon).setZ(boru * 1.6);
+    g.add(gobek);
+    for (let j = 0; j < 4; j++) {
+      const c = j * TAU / 4 + Math.PI / 4;
+      const civ = new THREE.Mesh(cylGeoZ(R * 0.022, R * 0.022, boru * 1.8, 6), kit.gold);
+      civ.position.set(pabucKon.x + Math.cos(c) * R * 0.135,
+        pabucKon.y + Math.sin(c) * R * 0.135, boru * 1.1);
+      g.add(civ);
+    }
+  }
+
+  /* Çapraz bağ: ayaklar arası gergi. Olmadan çerçeve yanal yükte
+     paralelkenar olur - bir tankın sehpasında en görünür eleman budur. */
+  if (capraz) {
+    for (let i = 0; i < n; i++) {
+      const a = ayakNoktalari[i], b = ayakNoktalari[(i + 1) % n];
+      const ust = a.clone().lerp(b, 0.5).setZ(ykZ * 0.62);
+      for (const uc of [a, b]) {
+        const alt = uc.clone().setZ(boru * 2.2);
+        const boy = ust.distanceTo(alt);
+        const t = new THREE.Mesh(cylGeoZ(boru * 0.34, boru * 0.34, boy, 6), kit.aluDark);
+        t.position.copy(ust).add(alt).multiplyScalar(0.5);
+        t.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1),
+          ust.clone().sub(alt).normalize());
+        g.add(t);
+      }
+    }
+  }
+
+  g.userData.notes = { regime: 'yapı',
+    why: 'Yük kabın ekvatorundan geçer: kap soğuyup büzüldükçe merkezi sabit kalır, alt kapağı serbest kalmalıdır. Payandalar çatal, çerçeve çaprazdır; tek payanda yanal yükte devrilir.' };
+  return g;
+}
+
+
+/**
+ * Taşıyıcı KOLON: taban plakası, ankraj cıvataları, konik gövde, guseler ve
+ * başlık. Düz bir silindir yük taşımaz ve taşıyormuş gibi de görünmez —
+ * bir kolonun nereden tutunduğu ve neyi taşıdığı, tabanından ve başlığından
+ * okunur.
+ *
+ * @param boy  taban düzleminden başlık üstüne
+ * @param kal  gövde yarıçapı (tabanda; tepede %72'sine iner)
+ */
+export function tasiyiciKolon(THREE, kit, boy, kal, opts = {}) {
+  const { guse = 4, civata = 4, baslik = true } = opts;
+  const g = new THREE.Group();
+
+  /* Taban plakası: yükü regolite yayan şey. Kolonun kendisinden geniştir. */
+  const taban = new THREE.Mesh(cylGeoZ(kal * 2.6, kal * 2.9, boy * 0.035, 16), kit.aluDark);
+  taban.position.z = boy * 0.017;
+  g.add(taban);
+  for (let i = 0; i < civata; i++) {
+    const a = i * TAU / civata + Math.PI / civata;
+    const c = new THREE.Mesh(cylGeoZ(kal * 0.3, kal * 0.3, boy * 0.055, 6), kit.gold);
+    c.position.set(Math.cos(a) * kal * 2.05, Math.sin(a) * kal * 2.05, boy * 0.04);
+    g.add(c);
+  }
+
+  /* Gövde: yukarı doğru incelir, çünkü moment aşağıda büyüktür. */
+  const govde = new THREE.Mesh(cylGeoZ(kal * 0.72, kal, boy * 0.93, 14), kit.metal);
+  govde.position.z = boy * 0.5;
+  g.add(govde);
+
+  /* Guse: gövdeyi taban plakasına bağlayan üçgen kanatlar. */
+  for (let i = 0; i < guse; i++) {
+    const a = i * TAU / guse;
+    const gs = new THREE.Mesh(new THREE.BoxGeometry(kal * 0.16, kal * 1.5, boy * 0.16), kit.alu);
+    gs.position.set(Math.cos(a) * kal * 1.0, Math.sin(a) * kal * 1.0, boy * 0.1);
+    gs.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(
+      new THREE.Vector3(-Math.sin(a), Math.cos(a), 0),
+      new THREE.Vector3(Math.cos(a), Math.sin(a), 0),
+      new THREE.Vector3(0, 0, 1)));
+    g.add(gs);
+  }
+
+  /* Başlık: taşınan şeyin oturduğu yüzey. */
+  if (baslik) {
+    const bs = new THREE.Mesh(cylGeoZ(kal * 1.7, kal * 1.2, boy * 0.05, 14), kit.aluDark);
+    bs.position.z = boy * 0.965;
+    g.add(bs);
+  }
+  g.userData.notes = { regime: 'yapı',
+    why: 'Taban plakası yükü regolite yayar, gövde yukarı incelir çünkü moment aşağıda büyüktür, guseler eğilmeyi tabana aktarır.' };
+  return g;
+}
+
 /** Saddle mount for a spherical tank: two straps and a base. */
 export function tankSaddle(THREE, M, r) {
   const g = new THREE.Group();

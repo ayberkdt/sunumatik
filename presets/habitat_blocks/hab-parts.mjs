@@ -436,7 +436,12 @@ export const PARTS = Object.freeze([
     },
     why: 'CO2 + 4H2 gives CH4 + 2H2O. Return propellant and water come out of the same reaction, and electrolysing the water returns the hydrogen.' },
   { id: 'tank-o2', ad: 'O2 tank', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 260, pos: [2.1, -14.4, 1.5], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
+    /* `size` SEHPA DAHIL ayak izidir: kusak halkasindan inen catal payandalar
+       kabin capindan disariya oturur ve o zemin gercekten kaplanir. Kabin
+       kendi capi ayrica beyan edilir - tek alan ikisini birden anlatamaz ve
+       tam bu yuzden cizim ile beyan ayrisiyordu. */
+    kapCapM: 2.4,
+    massKg: 260, pos: [2.1, -14.4, 1.5], size: [3.7, 3.7, 3.0], sekil: 'tank-dikey',
     tech: {
       no: 'HB-ISR-090',
       malzeme: 'Ti liner with carbon overwrap, 30-layer MLI',
@@ -449,7 +454,8 @@ export const PARTS = Object.freeze([
     },
     why: 'Cryogenic and wrapped in MLI. It stands well clear of the fuel tank: putting oxidiser next to fuel turns one failure into a fire.' },
   { id: 'tank-ch4', ad: 'CH4 tank', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 240, pos: [7.3, -14.4, 1.5], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
+    kapCapM: 2.4,
+    massKg: 240, pos: [7.3, -14.4, 1.5], size: [3.7, 3.7, 3.0], sekil: 'tank-dikey',
     tech: {
       no: 'HB-ISR-091',
       malzeme: 'Ti liner with carbon overwrap, 30-layer MLI',
@@ -489,6 +495,71 @@ export const PARTS = Object.freeze([
       kalite: 'A tight cable snaps when it contracts - the slack is the allowance',
     },
     why: 'From the reactor to the base. It runs in a tray with slack: a cable pulled tight snaps when it contracts in the cold.' },
+  { id: 'gozlem-kubbesi', ad: 'Cupola', sistem: 'gecis', step: 4, mountsTo: 'dugum', arayuz: 'basincli',
+    massKg: 190, pos: [4.6, 0, 4.45], size: [2.2, 2.2, 1.4], sekil: 'kubbe',
+    tech: {
+      no: 'HB-PRS-037',
+      malzeme: 'Aluminium ring frame, 6 fused-silica panes with an outer debris shield',
+      guc_W: 90,
+      /* Pencere isiticisi yasam destegi degildir: firtinada kepenkler kapanir
+         ve bu yuk duser. */
+      kesilebilir: true,
+      sicaklik_C: [5, 30],
+      hacim_m3: 3.4,
+      koruma_gcm2: 0.4,
+      baglanti: 'Pressurised flange to the node roof, 12 x M10; each pane has its own shutter',
+      isiYolu: 'Heaters on every pane edge - a cold pane fogs and then a crew member cannot see out of it',
+      detay: 'dia 2.2 x 1.4 m. Six panes plus an overhead. Shutters close for dust storms and for the night, because glass is the worst radiation path on the base and nobody sleeps under it',
+      kalite: 'Each pane proof-tested to twice working pressure; shutter cycle life 10 000',
+    },
+    why: 'Somebody has to be able to SEE the yard: watching a rover dock or a crew member work is the difference between supervising and guessing. It is also why the shutters exist - the view costs shielding, so it is closed when it is not being used.' },
+  { id: 'depo', ad: 'Surface depot', sistem: 'yapi', step: 7, mountsTo: 'platform', arayuz: 'ayirma',
+    massKg: 640, pos: [-13.5, -14.5, 1.6], size: [7.0, 5.0, 3.2], sekil: 'depo',
+    tech: {
+      no: 'HB-STR-020',
+      malzeme: 'Aluminium frame, tensioned dust covers, standard 1.2 m cargo racks',
+      guc_W: 40,
+      kesilebilir: true,
+      sicaklik_C: [-120, 40],
+      baglanti: '12 x M16 into the pad; racks pin to the frame and come out on a pallet jack',
+      detay: '7.0 x 5.0 m, three rack bays. Unpressurised: spares, drill string, regolith bags and the ISRU consumables live here, and none of them need air',
+      kalite: 'Covers survive a 30 m/s dust storm with the bays loaded',
+    },
+    why: 'Everything that is not in use has to be SOMEWHERE, and on a surface base that place has to be reachable in a suit. Unpressurised because pressurising a warehouse costs mass for nothing.' },
+  { id: 'kasif-gezgini', ad: 'Exploration rover', sistem: 'yapi', step: 7, mountsTo: 'platform', arayuz: 'ayirma',
+    massKg: 780, pos: [-15.1, -2.0, 1.25], size: [3.4, 2.2, 2.5], sekil: 'gezgin',
+    tech: {
+      no: 'HB-VEH-030',
+      malzeme: 'CFRP chassis, six rocker-bogie wheels, 1.8 kWh battery',
+      /* Usun barasindan cekilen sey SARJ gucudur; 900 W seyir gucudur ve o
+         sirada gezgin zaten usten kilometrelerce uzaktadir. Ikisini
+         karistirmak, olmayan bir yuku butceye yazmaktir. */
+      guc_W: 250,
+      kesilebilir: true,
+      sicaklik_C: [-120, 60],
+      baglanti: 'Parks on the charge pad; umbilical to the canopy',
+      isiYolu: 'Battery heaters overnight; the radiator is the deck itself',
+      detay: '3.4 x 2.2 m, 2.5 m to the mast head. Rocker-bogie so it crosses an obstacle its own wheel height. 900 W at full traverse gives about 45 km on a charge; the 250 W here is what the charge pad draws from the base while it is parked',
+      kalite: 'Range is limited by walk-back, not by battery: the crew never goes further than they can walk home',
+    },
+    why: 'The reason the base is HERE rather than anywhere else is what the rover goes out to find. It parks at the edge on its charge pad, where it can be reached without crossing the yard.' },
+  { id: 'atolye', ad: 'Workshop and fabrication', sistem: 'yapi', step: 7, mountsTo: 'platform', arayuz: 'ayirma',
+    massKg: 820, pos: [13.8, 7.2, 1.7], size: [5.4, 4.2, 3.4], sekil: 'atolye',
+    tech: {
+      no: 'HB-STR-021',
+      malzeme: 'Aluminium frame, regolith-filled wall panels, roll-up door',
+      /* Surekli cekis. Sinterleme lazeri kW sinifindadir ama gorev suresi
+         boyunca acik kalmaz; butceye tepe gucu yazmak, hic olmayan bir
+         yuku her saniye odemektir. */
+      guc_W: 250,
+      kesilebilir: true,
+      sicaklik_C: [-40, 35],
+      baglanti: '10 x M16 into the pad; power from the fission bus',
+      isiYolu: 'Waste heat vents through the roof louvre - a shop that cuts metal makes heat',
+      detay: '5.4 x 4.2 m. Bench, vice, a printer that eats regolith feedstock, and a spares wall. The sintering laser peaks at 1.4 kW but runs on a duty cycle; 250 W is the continuous draw. Unpressurised but enclosed: dust stays out, a suited crew member works inside',
+      kalite: 'Door cycles 5000 times; the louvre is the only moving part in the wall',
+    },
+    why: 'A base ninety days from resupply repairs what breaks. Printing a bracket out of regolith is cheaper than carrying one, and the shop is where the drill bits and the wheel hubs get turned.' },
   { id: 'anten-direk', ad: 'Communications mast', sistem: 'iletisim', step: 7, mountsTo: 'platform', arayuz: 'ayirma',
     /* Zarf payi: gergi telleri direkten 2,9 m disariya, uc ankraja gider.
        `size` direk BORUSUNUN olcusudur ve oyle kalmali - tellerin altindan
