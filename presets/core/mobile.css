@@ -146,4 +146,97 @@
   body > #plan, body > #scene, body > #view, body > #canvasWrap {
     height: 56vh !important;
   }
+
+  /* -- 8. the lunaris-preset figure becomes a column -------------------
+     Seven pages share this component (aurora, cinematic_space,
+     cosmos_advanced, earth_advanced, moon_advanced, planets_advanced,
+     sun_advanced) and on a phone it was unusable. Measured at 375x812:
+     the figure is pinned to 640 px, the canvas is absolute at z 0, the
+     heading and the article caption at z 3, and `__controls` is absolute
+     at z 4 covering the WHOLE figure. The controls therefore sat on top
+     of the scene; the two panels inside them are static so they stacked
+     to 674 px in a 640 px box; and the heading and caption showed through
+     the gaps between the panels. The scene never appeared.
+
+     Rule 4 above was written for this and could not reach it: it targets
+     `body > #host` and here the host is `main > #host`.
+
+     Below the breakpoint the figure is an ordinary column - scene, title,
+     controls, text - and the page scrolls. */
+  .lunaris-preset {
+    position: relative !important;
+    height: auto !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  .lunaris-preset__canvas,
+  .lunaris-preset__heading,
+  .lunaris-preset__controls,
+  .lunaris-preset__truth,
+  figcaption.lunaris-preset__truth {
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    max-width: 100% !important;
+    transform: none !important;
+  }
+  /* The scene first and with a real height: a WebGL canvas in a zero-height
+     box renders nothing, which is what "no mobile layout" looked like. */
+  .lunaris-preset__canvas {
+    order: 1;
+    height: 54vh !important;
+    min-height: 260px !important;
+  }
+  .lunaris-preset__canvas > canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+  }
+  .lunaris-preset__heading { order: 2; }
+  .lunaris-preset__controls { order: 3; }
+  .lunaris-preset__truth { order: 4; }
+  /* The panels read one under another rather than pinned to two edges. */
+  .lunaris-preset__controls {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    pointer-events: auto !important;
+  }
+
+  /* -- 9. touch targets on the shared component ------------------------
+     Measured with the HIT area, not the control: a checkbox inside a label
+     is tapped through the label, so its own 19 px is not the target and
+     counting it overstates the problem. What is genuinely small is two
+     kinds of thing - range tracks and the collapsible panel titles - at
+     28 px each. aurora had 18 of 25 targets under the line, moon_advanced
+     5 of 13. */
+  input[type="range"] {
+    min-height: 44px !important;
+    background: transparent !important;
+  }
+  .lunaris-preset__panel-title,
+  [role="button"].lunaris-preset__panel-title {
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+  /* Preset chips are nav links with a query string behind them - aurora has
+     eight and every one measured 30 px tall. A nav link is the definition of
+     something that has to be tappable. */
+  nav a {
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+  /* A toggle is tapped through its label. One that wraps to two lines was
+     already 56 px; one that does not - Trail, Stars, Bloom - came out 28. */
+  .lunaris-preset__toggles label,
+  .lunaris-preset__toggle {
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
 }

@@ -51,7 +51,59 @@ for (const rel of pages) {
   }
   fs.writeFileSync(abs, src, 'utf8');
   added++;
+}/* ── the shared component must be COVERED, not merely linked ──────────
+   Seven preset pages are built on presets/moon_react_source/components,
+   whose figure pins its children with `position: absolute`. On a phone that
+   put the controls container over the whole scene - measured at 375x812,
+   the canvas never appeared and the article caption bled through the gaps
+   between the control panels - and this script still reported every page
+   green, because linking a stylesheet is not the same as being covered by
+   it.
+
+   So the list is DERIVED from the component stylesheet rather than written
+   out here: whatever it pins absolutely has to be either de-pinned below
+   the breakpoint or named below as a deliberate overlay. */
+const bilesenCss = path.join(root, 'presets/moon_react_source/components/moon_react_source.css');
+if (fs.existsSync(bilesenCss)) {
+  const css = fs.readFileSync(bilesenCss, 'utf8');
+  const mobil = fs.readFileSync(path.join(root, 'presets/core/mobile.css'), 'utf8');
+
+  /* Transient overlays are SUPPOSED to cover the scene; that is what they
+     are for. Named with the reason rather than silently skipped. */
+  const ortuler = new Map([
+    ['.lunaris-preset__loading', 'yükleme göstergesi — sahneyi örtmesi işinin ta kendisi'],
+    ['.lunaris-preset__help', 'yardım katmanı — istenerek sahnenin üstüne gelir'],
+  ]);
+
+  /* Every selector that carries `position: absolute` in the component. */
+  const mutlak = new Set();
+  const kurallar = css.split('}');
+  for (const k of kurallar) {
+    if (!/position\s*:\s*absolute/.test(k)) continue;
+    const basi = k.slice(0, k.lastIndexOf('{'));
+    for (const m of basi.matchAll(/\.(lunaris-preset[\w-]*)/g)) mutlak.add('.' + m[1]);
+  }
+
+  /* De-pinned below the breakpoint = named in a rule that sets position
+     static. The whole file is inside one media query, so presence is
+     enough; what matters is that the class is not forgotten. */
+  const acikta = [];
+  for (const sinif of mutlak) {
+    if (ortuler.has(sinif)) continue;
+    const kacis = new RegExp(sinif.replace('.', '\\.') + '\\b[^{]*\\{[^}]*position\\s*:\\s*static', 'm');
+    const bahsi = mobil.includes(sinif);
+    if (!bahsi || !kacis.test(mobil)) acikta.push(sinif);
+  }
+  if (acikta.length) {
+    console.error(`${acikta.length} lunaris-preset kapsayıcısı mobilde hâlâ sabitlenmiş:`);
+    for (const a of acikta) console.error(`  ${a} — core/mobile.css içinde position: static kuralı yok`);
+    console.error('Telefonda bu, sahnenin üstünü örten bir katman demektir.');
+    process.exit(1);
+  }
+  console.log(`lunaris-preset: ${mutlak.size} mutlak kapsayıcı, ${mutlak.size - ortuler.size} tanesi mobilde serbest, ${ortuler.size} bilinçli örtü.`);
 }
+
+
 
 if (check) {
   if (missing.length) {
