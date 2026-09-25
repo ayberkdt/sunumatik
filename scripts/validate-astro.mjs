@@ -782,6 +782,40 @@ const rel = (a, b, r) => Math.abs(a - b) <= r * Math.abs(b);
   check('soi', 'Sapma açısı δ = 2 asin(1/e), asimptot ν∞ = acos(−1/e) (Mars: δ ≈ 120°, ν∞ ≈ 150°)', near(d.turnDeg, 2 * Math.asin(1 / d.e) * 180 / Math.PI, 1e-9) && near(d.asymptoteDeg, Math.acos(-1 / d.e) * 180 / Math.PI, 1e-9) && d.turnDeg > 110 && d.turnDeg < 130);
 }
 
+/* ── Yan itici (SRB) kuşağı ─────────────────────────────────────────── */
+{
+  const am = await mod('presets/launch_ascent/ascent-model.mjs');
+  const bas = am.simulateAscent();
+  const srb = am.simulateAscent({ boosters: am.SRB_GEM63 }, am.SRB_PROFILE);
+  const srb4 = am.simulateAscent({ boosters: { ...am.SRB_GEM63, count: 4 } }, am.SRB_PROFILE);
+  const G = 'srb';
+  check(G, 'SRB yokken sonuç değişmedi (geriye uyum): MECO ve yörünge aynı',
+    Math.abs(bas.tMeco - 153.4) < 0.6 && bas.ok, `MECO ${bas.tMeco.toFixed(1)} s`);
+  check(G, 'SRB olayları sırayla: tükenme → ayrılma',
+    srb.tSrbOut != null && srb.tSrbSep != null && srb.tSrbSep > srb.tSrbOut,
+    `${srb.tSrbOut.toFixed(1)} s → ${srb.tSrbSep.toFixed(1)} s`);
+  check(G, 'ayrılma gecikmesi profildeki srbSepDelay kadar',
+    Math.abs((srb.tSrbSep - srb.tSrbOut) - srb.profile.srbSepDelay) < 0.1);
+  check(G, 'tükenme anı yakıt/kütle akışından türer (t = m_p / ṁ)', (() => {
+    const B = am.SRB_GEM63, g0 = 9.80665;
+    const mdot = B.count * B.thrustVac / (g0 * B.ispVac);
+    return Math.abs(srb.tSrbOut - (B.count * B.prop) / mdot) < 0.2;
+  })(), `${srb.tSrbOut.toFixed(1)} s`);
+  check(G, 'çekirdek yakıtını SRB tüketmez (MECO kaymaz)',
+    Math.abs(srb.tMeco - bas.tMeco) < 0.2, `${srb.tMeco.toFixed(1)} / ${bas.tMeco.toFixed(1)} s`);
+  check(G, 'SRB itkisi Max-Q yükseltir ve sayıyla artar',
+    srb.maxQ.q > bas.maxQ.q * 1.2 && srb4.maxQ.q > srb.maxQ.q,
+    `${(bas.maxQ.q / 1000).toFixed(0)} → ${(srb.maxQ.q / 1000).toFixed(0)} → ${(srb4.maxQ.q / 1000).toFixed(0)} kPa`);
+  check(G, 'SRB_PROFILE ile yörünge 200 km hedefine ±15 km',
+    srb.ok && Math.abs(srb.orbit.hp / 1000 - 200) < 15 && Math.abs(srb.orbit.ha / 1000 - 200) < 15,
+    srb.ok ? `${(srb.orbit.hp / 1000).toFixed(0)} × ${(srb.orbit.ha / 1000).toFixed(0)} km` : 'yörünge yok');
+  check(G, 'varsayılan pitch programı SRB ile YETMEZ (program araca özgüdür)',
+    !am.simulateAscent({ boosters: am.SRB_GEM63 }).ok);
+  check(G, 'kalkış kütlesi SRB kütlesini içerir',
+    Math.abs((srb.samples[0].m - bas.samples[0].m) - am.SRB_GEM63.count * (am.SRB_GEM63.dry + am.SRB_GEM63.prop)) < 1,
+    `${((srb.samples[0].m - bas.samples[0].m) / 1000).toFixed(1)} t`);
+}
+
 /* ───────────────────────── rapor */
 const failed = results.filter(r => !r.ok);
 if (process.argv.includes('--json')) console.log(JSON.stringify({ results, failed: failed.length }, null, 2));

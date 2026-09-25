@@ -55,6 +55,22 @@
       position: absolute; left: 22px; bottom: 62px; z-index: 5;
       font-size: 11px; color: #6f7688; letter-spacing: 0.03em; pointer-events: none;
     }
+    /* Odaklanan aracın mühendislik notu (userData.notes.why) + eklem sayısı */
+    #not {
+      position: absolute; left: 22px; bottom: 84px; z-index: 5; max-width: 400px;
+      font-size: 12px; line-height: 1.45; color: #b9bfcc;
+      background: rgba(10, 12, 18, 0.72); border: 1px solid #232837; border-radius: 10px; padding: 8px 12px;
+    }
+    #not:empty { display: none; }
+    #not b { color: #c9a35c; font-weight: 600; }
+    #not small { display: block; margin-top: 4px; color: #6f7688; font-size: 11px; letter-spacing: 0.03em; }
+    /* Teknik etiketler: odaklanan aracın adlı eklemleri, kameraya izdüşümle */
+    #etiketler { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+    #etiketler .et { position: absolute; transform: translate(-50%, -100%); white-space: nowrap;
+      font-size: 11px; letter-spacing: 0.04em; color: #dfe3ea; background: rgba(10, 12, 18, 0.78);
+      border: 1px solid #2b303d; border-radius: 6px; padding: 2px 7px; margin-top: -14px; }
+    #etiketler .et::after { content: ''; position: absolute; left: 50%; top: 100%; width: 1px; height: 12px; background: #c9a35c; }
+    #etiketler .et b { color: #c9a35c; font-weight: 600; }
     #stage { cursor: grab; }
     #stage.suruklu { cursor: grabbing; }
   </style>
@@ -70,25 +86,33 @@
         <option value="grafit">Grafit · Gümüş</option>
         <option value="fildisi">Fildişi · Petrol</option>
       </select>
+      <label class="chk" title="Eklemler koreografiyle sürülür (physical_rigs)"><input type="checkbox" id="mekanizma" checked> Mekanizma</label>
+      <label class="chk" title="Odaklanan aracın adlı eklemleri"><input type="checkbox" id="etiket"> Etiketler</label>
       <label class="chk"><input type="checkbox" id="tel"> Tel kafes</label>
       <button id="durdur">Duraklat</button>
       <button id="tamEkran" title="Tam ekran (F)">⤢ Tam ekran</button>
     </div>
   </header>
   <div id="ipucu">Sürükle: döndür · Tekerlek: yakınlaş · Sağ tık / iki parmak: kaydır · Çift tık: araca odaklan</div>
+  <div id="not"></div>
+  <div id="etiketler"></div>
   <div id="fxPanel" title="Motor ateşleme efekt sistemi">
     <span class="fx-baslik">Ateşleme</span>
     <select id="fxArac" title="Araç">
-      <option value="rocket" selected>Roket</option>
-      <option value="lander">İniş Aracı</option>
-      <option value="orbiter">Yörünge Aracı</option>
-      <option value="capsule">Kapsül + SM</option>
-      <option value="cubesat">CubeSat</option>
-      <option value="starship">Starship (gemi)</option>
-      <option value="stack">Starship (yığın)</option>
-      <option value="rover">Gezgin</option>
-      <option value="heli">Mars Helikopteri</option>
-      <option value="probe">Derin Uzay Sondası</option>
+      <optgroup label="Motorlu (plüm)">
+        <option value="rocket" selected>Roket</option>
+        <option value="lander">İniş Aracı</option>
+        <option value="orbiter">Yörünge Aracı</option>
+        <option value="capsule">Kapsül + SM</option>
+        <option value="cubesat">CubeSat</option>
+        <option value="starship">Starship (gemi)</option>
+        <option value="stack">Starship (yığın)</option>
+      </optgroup>
+      <optgroup label="Motorsuz (yüzey / uçuş)">
+        <option value="rover">Gezgin</option>
+        <option value="heli">Mars Helikopteri</option>
+        <option value="probe">Derin Uzay Sondası</option>
+      </optgroup>
     </select>
     <select id="fxTip" title="Motor tipi">
       <option value="atmosfer">Atmosfer</option>
@@ -111,6 +135,14 @@
     /* ---------- kamera kumandası (yumuşak bağımlılık) ---------- */
     // OrbitControls vendor'dan gelir (dış ağ YOK; importmap 'three'i çözer).
     // Yüklenemezse vitrin sabit kameralarla çalışmaya devam eder.
+    // physical_rigs (YUMUŞAK bağımlılık): eklem sürücüsü + koreografi. Yüklenemezse
+    // araçlar statik kalır — blok sözleşmesi (bloklar birbirine sert bağımlı olamaz).
+    let createRig = null, createProgram = null, LABELS = {}, LABEL_PRIORITY = {};
+    try {
+      const rc = await import('../physical_rigs/rig-core.mjs');
+      const ch = await import('../physical_rigs/choreography.mjs');
+      createRig = rc.createRig; createProgram = ch.createProgram; LABELS = ch.LABELS; LABEL_PRIORITY = ch.LABEL_PRIORITY;
+    } catch (e) { console.warn('physical_rigs yüklenemedi; mekanizmalar statik.', e); }
     let OrbitControls = null;
     try {
       ({ OrbitControls } = await import('../moon_advanced/vendor/controls/OrbitControls.js'));
@@ -230,7 +262,7 @@
       controls.maxDistance = 15;
       controls.minPolarAngle = 0.10;
       controls.maxPolarAngle = Math.PI / 2 - 0.045;   // zemin düzleminin üstünde kal
-      controls.maxTargetRadius = 6.0;                 // sehpa alanından uzaklaşma
+      controls.maxTargetRadius = YARIM + 1.5;         // sehpa alanından uzaklaşma — sıra genişliğinden türetilir (sabit 6 iken uç araçlar (±8) odaklanamıyordu)
       controls.target.set(0, 0.66, 0);
       const stageEl = host;
       controls.addEventListener('start', () => { gecis = null; stageEl.classList.add('suruklu'); });
@@ -260,6 +292,60 @@
     /* ---------- araçların kurulumu ---------- */
     const pivotlar = [];   // dönme sehpaları
     let araclar = [];      // canlı kök gruplar
+    /* ---------- mekanizma rig'leri (physical_rigs) ---------- */
+    const rigler = [], programlar = [], rigSonT = [];
+    let rigT = 0;                                   // koreografi zamanı (yalnız advance toplamı)
+    let mekanizmaAcik = true;                      // ?rig=0 aşağıda okunur (sorgu daha sonra tanımlanır)
+    const blurDiskler = [];                         // [{ node, disk }] — stroboskop kuralı (§3.3)
+    function rigKur(i, kok) {
+      rigler[i] = null; programlar[i] = null; rigSonT[i] = 0;
+      if (!createRig || !kok.userData.rig) return;
+      const rig = createRig(kok.userData.rig, { fps: 60 });
+      const prog = createProgram(kok.userData.kind);
+      if (prog.prime) prog.prime(rig);
+      rigler[i] = rig; programlar[i] = prog;
+      // Dönen eklemler (rotor): çıta frekansı 0,4·fps'i aşınca kanatlar gizlenir,
+      // yarı saydam bulanıklık diski görünür — wagon-wheel yanılsaması yerine
+      // gerçek algı (rotor bir disk olarak görülür).
+      for (const [ad, j] of Object.entries(kok.userData.rig.joints)) {
+        if (!j.spin || !j.spokes || j.spokes > 6) continue;
+        const node = kok.getObjectByName(j.node);
+        if (!node) continue;
+        const bb = new THREE.Box3().setFromObject(node);
+        const R = Math.max(bb.max.x - bb.min.x, bb.max.y - bb.min.y) / 2;
+        const disk = new THREE.Mesh(new THREE.CircleGeometry(R, 48),
+          new THREE.MeshStandardMaterial({ color: 0x9aa0ab, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false }));
+        disk.name = `${j.node}Blur`; disk.visible = false;
+        node.parent.add(disk); disk.position.copy(node.position); disk.quaternion.copy(node.quaternion);
+        blurDiskler.push({ node, disk, rig, ad });
+      }
+    }
+    function rigGuncelle(dt) {
+      if (!mekanizmaAcik) return;
+      for (let i = 0; i < araclar.length; i++) {
+        const rig = rigler[i], prog = programlar[i];
+        if (!rig || !prog) continue;
+        const tt = rigT % prog.period;
+        if (tt < rigSonT[i]) { rig.reset(); if (prog.reset) prog.reset(); if (prog.prime) prog.prime(rig); }
+        rigSonT[i] = tt;
+        prog.apply(rig, tt);
+        rig.advance(dt);
+        rig.apply(araclar[i]);
+      }
+      for (const b of blurDiskler) {
+        const blur = b.rig.blur(b.ad);
+        b.disk.visible = blur;
+        for (const c of b.node.children) c.visible = !blur;
+      }
+    }
+    function rigSifirla() {
+      rigT = 0;
+      for (let i = 0; i < araclar.length; i++) {
+        const rig = rigler[i]; if (!rig) continue;
+        rig.reset(); if (programlar[i].prime) programlar[i].prime(rig); rig.apply(araclar[i]); rigSonT[i] = 0;
+      }
+      for (const b of blurDiskler) { b.disk.visible = false; for (const c of b.node.children) c.visible = true; }
+    }
 
     function yonele(kok, yon) {
       // Sergi yönelimi: sözleşme eksenlerinden (X ileri, Z yukarı) dünya-yukarı (+Y) düzenine.
@@ -289,6 +375,7 @@
       for (const g of geoler) g.dispose();
       for (const m of malzemeler) m.dispose();
       araclar = [];
+      blurDiskler.length = 0;
       const p = PALETLER[paletAdi];
       TANIMLAR.forEach((t, i) => {
         let pivot = pivotlar[i];
@@ -317,6 +404,7 @@
         pivot.add(kok);
         pivot.position.y = tabanY[i];
         araclar.push(kok);
+        rigKur(i, kok);
         telUygula();
       });
       if (fxVardi) fxTak();
@@ -440,6 +528,53 @@
 
     /* ---------- kumandalar ---------- */
     const telKutu = document.querySelector('#tel');
+    const mekanizmaKutu = document.querySelector('#mekanizma');
+    mekanizmaAcik = sorgu.get('rig') !== '0';
+    mekanizmaKutu.checked = mekanizmaAcik;
+    mekanizmaKutu.addEventListener('change', () => {
+      mekanizmaAcik = mekanizmaKutu.checked;
+      if (!mekanizmaAcik) rigSifirla();
+      ciz(); kareIste();
+    });
+    const etiketKutu = document.querySelector('#etiket');
+    const etiketKat = document.querySelector('#etiketler');
+    etiketKutu.checked = sorgu.get('etiket') === '1';
+    etiketKutu.addEventListener('change', () => { ciz(); });
+    const _v = new THREE.Vector3();
+    // DOM'a yalnız değişince dokunulur (her karede replaceChildren, ekran
+    // yakalayıcıların "sayfa durulmadı" sayacını tetikliyordu — ölçüldü).
+    const etiketEl = new Map();               // düğüm adı → div
+    function etiketleriCiz() {
+      const i = TANIMLAR.findIndex((t) => t.id === etkinOdak);
+      const kok = i >= 0 ? araclar[i] : null;
+      if (!etiketKutu.checked || !kok || !kok.userData.rig) {
+        if (etiketEl.size) { etiketKat.replaceChildren(); etiketEl.clear(); }
+        return;
+      }
+      const sira = (LABEL_PRIORITY[kok.userData.kind] || []).slice(0, 8);
+      const r = renderer.domElement.getBoundingClientRect();
+      const joints = kok.userData.rig.joints;
+      const gorunen = new Set();
+      for (const ad of sira) {
+        const node = kok.getObjectByName(ad);
+        if (!node) continue;
+        node.getWorldPosition(_v).project(camera);
+        if (_v.z > 1 || Math.abs(_v.x) > 1.1 || Math.abs(_v.y) > 1.1) continue;
+        gorunen.add(ad);
+        let el = etiketEl.get(ad);
+        if (!el) { el = document.createElement('div'); el.className = 'et'; etiketKat.appendChild(el); etiketEl.set(ad, el); }
+        const left = `${Math.round((_v.x * 0.5 + 0.5) * r.width)}px`, top = `${Math.round((-_v.y * 0.5 + 0.5) * r.height)}px`;
+        if (el.style.left !== left) el.style.left = left;
+        if (el.style.top !== top) el.style.top = top;
+        const jAd = Object.keys(joints).find((k) => joints[k].node === ad);
+        const j = jAd ? joints[jAd] : null;
+        const deger = j && rigler[i] ? rigler[i].value(jAd) : null;
+        const fmt = (v) => Array.isArray(v) ? v.map((x) => x.toFixed(0)).join('/') + '°' : j.mode === 'translate' ? `${(v * 100).toFixed(1)} cm` : j.spin ? `${(v * 180 / Math.PI).toFixed(0)}°` : `${v.toFixed(0)}°`;
+        const html = `<b>${LABELS[ad] || ad}</b>${deger !== null && deger !== undefined ? ' · ' + fmt(deger) : ''}`;
+        if (el.innerHTML !== html) el.innerHTML = html;
+      }
+      for (const [ad, el] of etiketEl) if (!gorunen.has(ad)) { el.remove(); etiketEl.delete(ad); }
+    }
     function telUygula() {
       const acik = telKutu.checked;
       // FX parçaları (userData.fx) tel kafese dahil edilmez — additive alevde anlamsız.
@@ -566,9 +701,24 @@
     function cipleriIsaretle() {
       for (const [id, el] of cipler) el.classList.toggle('on', (etkinOdak || '') === id);
     }
+    // Odaklanan aracın notu: her ayrıntı bir mekanizma ya da kısıt anlatır;
+    // kurucunun userData.notes.why'ı ve rig eklem sayısı burada okunur.
+    const notEl = document.querySelector('#not');
+    function notuGuncelle() {
+      const i = TANIMLAR.findIndex((t) => t.id === etkinOdak);
+      const kok = i >= 0 ? araclar[i] : null;
+      if (!kok || !kok.userData.notes) { notEl.textContent = ''; return; }
+      const rig = kok.userData.rig;
+      const eklemler = rig ? Object.keys(rig.joints) : [];
+      const eksik = rig ? eklemler.filter((k) => !rig.joints[k].found) : [];
+      notEl.innerHTML = `<b>${TANIMLAR[i].ad}</b> · ${kok.userData.notes.regime}<br>${kok.userData.notes.why}`
+        + `<small>${kok.userData.parts} parça · ${eklemler.length} eklem${eklemler.length ? ': ' + eklemler.join(', ') : ''}`
+        + `${rig && rig.massClass ? ' · ' + rig.massClass : ''}${eksik.length ? ' · EKSİK DÜĞÜM: ' + eksik.join(', ') : ''}</small>`;
+    }
     function odaklan(id) {
       etkinOdak = id || '';
       cipleriIsaretle();
+      notuGuncelle();
       const url = etkinOdak ? `?focus=${etkinOdak}` : '?';
       // Sorgu dizgisi korunur ki paylaşılan bağlantı aynı kadrajı açsın.
       history.replaceState(null, '', url + location.hash);
@@ -584,6 +734,7 @@
     cipYap('', 'Genel bakış', '?');
     for (const t of TANIMLAR) cipYap(t.id, t.ad, `?focus=${t.id}`);
     cipleriIsaretle();
+    notuGuncelle();
 
     // Çift tık: tıklanan araca odaklan (boşluğa çift tık → genel bakış).
     const isinlayici = new THREE.Raycaster();
@@ -627,6 +778,7 @@
     }
 
     function ciz() {
+      etiketleriCiz();
       pivotlar.forEach((pv, i) => { pv.rotation.y = FAZLAR[i] + HIZ * t; });
       renderer.render(scene, camera);
       kameraKirli = false;
@@ -653,6 +805,7 @@
       if (akiyor) {
         t += DT;
         if (fx) fx.update(DT, { gaz: fxGaz, atesle: fxAtes });
+        rigGuncelle(DT); rigT += DT;
       }
       if (akiyor || gecisVar || kameraDegisti || kameraKirli) ciz();
       if (akiyor || gecisVar || kameraDegisti) kareIste();
@@ -664,6 +817,7 @@
     document.querySelector('#palet').value = baslangicPalet;
     kur(baslangicPalet);
     kamerayiKur();
+    notuGuncelle();          // araçlar kurulduktan sonra: not userData'dan okunur
 
 
     // Ateşleme açılış parametreleri: ?fx=1&arac=rocket&tip=atmosfer&gaz=0.8[&t=2.0]
@@ -694,6 +848,8 @@
       if (PALETLER[ad]) { paletSec.value = ad; paletiUygula(ad); }
     }
 
+    // Sabit-zaman tablosu (?t=): mekanizmalar da 1/60 sn adımlarla aynı âna sarılır.
+    if (sabitT !== null) { const n = Math.round(sabitT / DT); for (let k = 0; k < n; k++) { rigGuncelle(DT); rigT += DT; } }
     ciz();               // bildirilen tablo: t=0, fazlar başlangıç açılarında (senkron ilk kare)
     kareIste();          // donmuş modda da: zaman durur, kamera yaşar
     window.addEventListener('resize', () => { boyutla(); ciz(); });
@@ -706,13 +862,14 @@
         for (let k = 0; k < n; k++) {
           t += DT;
           if (fx) fx.update(DT, { gaz: fxGaz, atesle: fxAtes });
+        rigGuncelle(DT); rigT += DT;
         }
         ciz();
       },
       setPalette(ad) { paletSec.value = ad; paletiUygula(ad); },
       // Hata avı kancası: araçları gerçekten SÖKÜP yeniden kurar (normal
       // palet yolu artık bunu kullanmaz — yerinde renklendirme yapar).
-      rebuild(ad) { paletSec.value = ad; kur(ad); kamerayiKur(); ciz(); },
+      rebuild(ad) { paletSec.value = ad; kur(ad); kamerayiKur(); notuGuncelle(); ciz(); },
       focus(id) { odaklan(id || ''); },
       // Programatik kamera (doğrulama kareleri): {poz:[x,y,z], hedef:[x,y,z]}
       kamera({ poz, hedef } = {}) {
@@ -723,6 +880,11 @@
         ciz();
       },
       fxDurum() { return { fx: !!fx, arac: fxAracId, tip: fxTip, gaz: fxGaz, atesle: fxAtes }; },
+      // Mekanizma kancaları: rig durumu (determinizm imzası için) ve anahtar.
+      rigPose(i) { return rigler[i] ? rigler[i].pose() : null; },
+      rigT() { return rigT; },
+      setMekanizma(v) { mekanizmaKutu.checked = !!v; mekanizmaKutu.dispatchEvent(new Event('change')); },
+      setEtiket(v) { etiketKutu.checked = !!v; ciz(); },
     };
     // Modül üst düzey await kullandığı için 'load' olayı __craft hazır olmadan
     // atabilir; gömen sayfa/koşum bu olayı bekleyebilsin.

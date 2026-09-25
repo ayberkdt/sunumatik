@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Exploded View — exploded_view</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea;
+      -webkit-font-smoothing: antialiased; }
+    #stage { position: absolute; left: 288px; top: 0; right: 372px; bottom: 0; cursor: grab; }
+    #stage.dragging { cursor: grabbing; }
+    aside { position: absolute; top: 0; bottom: 0; width: 288px; overflow-y: auto; background: #080a0f;
+      border-right: 1px solid #1b202a; padding: 16px 16px 26px; }
+    #right { left: auto; right: 0; width: 372px; border-right: 0; border-left: 1px solid #1b202a; }
+    h1 { margin: 0 0 12px; font-size: 13px; letter-spacing: .15em; text-transform: uppercase;
+      color: #c9a35c; font-weight: 600; }
+    h1 small { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: .04em;
+      text-transform: none; color: #838a99; margin-top: 4px; line-height: 1.5; }
+    h2 { margin: 38px 0 8px; font-size: 10px; letter-spacing: .17em; text-transform: uppercase;
+      color: #c9a35c; font-weight: 600; }
+    h2:first-child { margin-top: 0; }
+    p.note { margin: 0 0 12px; font-size: 11px; line-height: 1.55; color: #767d8c; }
+    .obj { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; padding: 10px;
+      border-radius: 7px; cursor: pointer; border: 1px solid transparent; font-size: 11.5px;
+      line-height: 1.4; min-height: 44px; align-items: center; }
+    .obj:hover { border-color: #272d39; }
+    .obj.on { background: rgba(201,163,92,.09); border-color: #c9a35c; }
+    .obj b { font-weight: 600; color: #e9ecf2; }
+    .obj .n { font-variant-numeric: tabular-nums; color: #767d8c; font-size: 10.5px; }
+    .obj .src { grid-column: 1 / -1; color: #767d8c; font-size: 10.5px; }
+    .obj .src.est { color: #b98a4e; }
+    .step { display: grid; grid-template-columns: 20px 1fr; gap: 9px; padding: 8px;
+      border-radius: 7px; cursor: pointer; border: 1px solid transparent; font-size: 11.5px;
+      line-height: 1.4; min-height: 44px; align-items: start; }
+    .step:hover { border-color: #272d39; }
+    .step.on { background: rgba(201,163,92,.09); border-color: #c9a35c; }
+    .step .k { font-variant-numeric: tabular-nums; color: #c9a35c; font-weight: 600; }
+    .step b { color: #e9ecf2; font-weight: 600; }
+    .step .d { display: block; color: #767d8c; margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    td { padding: 6px 0; border-bottom: 1px solid #12161e; vertical-align: top; line-height: 1.5; }
+    td.k { color: #767d8c; padding-right: 10px; }
+    td.v { text-align: right; font-variant-numeric: tabular-nums; color: #e9ecf2; white-space: nowrap; }
+    td.v.est { color: #b98a4e; }
+    tr.total td { border-bottom: 0; border-top: 1px solid #2b3240; padding-top: 8px; font-weight: 600; }
+    .card { border: 1px solid #1b202a; border-radius: 7px; padding: 13px 14px; font-size: 11.5px;
+      line-height: 1.6; color: #a7aebd; }
+    .card b.t { display: block; color: #f0f2f6; font-size: 13px; font-weight: 600;
+      letter-spacing: .01em; margin-bottom: 2px; }
+    .card .sub { display: block; color: #767d8c; font-size: 10.5px;
+      font-variant-numeric: tabular-nums; letter-spacing: .03em; margin-bottom: 10px; }
+    .card .f { display: grid; grid-template-columns: 96px 1fr; gap: 3px 10px; margin-top: 7px; }
+    .card .f dt { color: #767d8c; font-size: 10px; text-transform: uppercase; letter-spacing: .07em;
+      padding-top: 1px; }
+    .card .f dd { margin: 0; color: #c3cad6; }
+    .card .lead { color: #c3cad6; }
+    .est { color: #b98a4e; }
+    header { position: absolute; left: 302px; right: 386px; top: 14px; z-index: 5;
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    button, select { background: rgba(14,17,24,.92); color: #dfe3ea; border: 1px solid #272d39;
+      border-radius: 7px; padding: 9px 12px; font-size: 12px; min-height: 44px; cursor: pointer; }
+    button:hover, select:hover { border-color: #c9a35c; }
+    button.on { border-color: #c9a35c; background: rgba(201,163,92,.13); color: #f2e6ca; }
+    label.rng { display: flex; gap: 10px; align-items: center; background: rgba(14,17,24,.92);
+      border: 1px solid #272d39; border-radius: 7px; padding: 8px 12px; font-size: 12px;
+      min-height: 44px; }
+    label.rng input { width: 186px; height: 22px; accent-color: #c9a35c; }
+    label.rng b { min-width: 3.2em; text-align: right; font-variant-numeric: tabular-nums;
+      font-weight: 600; color: #f2e6ca; }
+    #caption { position: absolute; left: 302px; right: 386px; bottom: 16px; z-index: 5;
+      font-size: 11.5px; line-height: 1.6; color: #b2b9c7; background: rgba(8,10,15,.80);
+      border: 1px solid #1f242f; border-radius: 7px; padding: 11px 15px; pointer-events: none; }
+    #caption b { color: #e9ecf2; }
+    #caption .est { color: #b98a4e; }
+    #labels { position: absolute; left: 288px; top: 0; right: 372px; bottom: 0;
+      pointer-events: none; z-index: 4; }
+    /* Label styling is injected from core/exploded-view.mjs (EXPLODED_CSS)
+       so the drawing language lives in exactly one place. */
+  </style>
+</head>
+<body>
+  <aside id="left">
+    <h1>Exploded View<small>exploded_view &middot; one assembly core, six different bodies &middot; declared catalogues and scene-derived graphs side by side</small></h1>
+    <h2>Object</h2>
+    <p class="note">The first two are DECLARED part by part: mass and interface come from a catalogue. The other four are DERIVED from the scene graph, where mass is estimated and is marked as such everywhere it appears.</p>
+    <div id="objects"></div>
+    <h2>Assembly steps</h2>
+    <div id="steps"></div>
+  </aside>
+
+  <header>
+    <label class="rng">Explode <input id="explode" type="range" min="0" max="100" value="0" aria-label="Explosion ratio"><b id="explodeVal">0%</b></label>
+    <button id="play">&#9654;&nbsp; Play assembly</button>
+    <select id="mode" aria-label="Explosion mode">
+      <option value="assembly">Along assembly</option>
+      <option value="axial">Axial</option>
+      <option value="radial">Radial</option>
+      <option value="layered">Layered</option>
+    </select>
+    <button id="section">Section</button>
+    <button id="turntable">Turntable</button>
+  </header>
+
+  <div id="stage"></div>
+  <div id="labels"></div>
+  <div id="caption"></div>
+
+  <aside id="right">
+    <h2>Part</h2>
+    <div class="card" id="part">Click a part in the scene, or pick an assembly step.</div>
+    <h2>Mounting chain</h2>
+    <div class="card" id="chain">&mdash;</div>
+    <h2>Mass budget</h2>
+    <table id="budget"></table>
+    <h2>Interfaces</h2>
+    <table id="interfaces"></table>
+  </aside>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
+    import { createExplodedView, massText, EXPLODED_CSS } from '../core/exploded-view.mjs';
+    import { createAssembly, IFACE_CLASSES } from '../core/assembly.mjs';
+    import { assemblyFromCatalog, groupsFromCatalog, nodesFromBuild } from './adapters/catalog.mjs';
+    import { assemblyFromCraft } from './adapters/scene.mjs';
+    import { buildSatellite } from '../satellite_integration/sat-build.mjs';
+    import * as SAT from '../satellite_integration/sat-parts.mjs';
+    import { buildHabitat } from '../habitat_blocks/hab-build.mjs';
+    import * as HAB from '../habitat_blocks/hab-parts.mjs';
+    import { buildCraft } from '../craft_blocks/craft-blocks.mjs';
+
+    document.head.appendChild(Object.assign(document.createElement('style'),
+      { textContent: EXPLODED_CSS }));
+
+    const el = (s) => document.querySelector(s);
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const query = new URLSearchParams(location.search);
+
+    /* -- object registry ------------------------------------------------
+       Two paths sit side by side and that is DELIBERATE: a declared body
+       carries a full spec, a derived one does not. What the showcase
+       demonstrates is that the explosion works identically on both. */
+    const OBJECTS = {
+      satellite: {
+        name: 'Satellite', source: 'declared catalogue', scale: 2.6,
+        build() {
+          const built = buildSatellite(THREE, { scale: 1 });
+          return { root: built.root, assembly: assemblyFromCatalog(SAT, { axis: [0, 0, 1] }),
+            nodes: nodesFromBuild(THREE, built), groups: groupsFromCatalog(SAT),
+            declared: true, dispose: () => built.dispose?.() };
+        },
+      },
+      habitat: {
+        name: 'Surface base', source: 'declared catalogue', scale: 0.42,
+        build() {
+          const built = buildHabitat(THREE, { env: 'mars' });
+          /* A component refused by the environment rule has no node; the
+             assembly graph still carries it and the explosion skips it. */
+          return { root: built.root, assembly: assemblyFromCatalog(HAB, { axis: [0, 0, 1] }),
+            nodes: built.nodes, groups: groupsFromCatalog(HAB), declared: true };
+        },
+      },
+      rover: { name: 'Rover', source: 'derived from scene', scale: 2.2, craft: 'rover' },
+      lander: { name: 'Lander', source: 'derived from scene', scale: 2.2, craft: 'lander' },
+      rocket: { name: 'Launch vehicle', source: 'derived from scene', scale: 2.2, craft: 'rocket' },
+      orbiter: { name: 'Orbiter', source: 'derived from scene', scale: 2.2, craft: 'orbiter' },
+    };
+    for (const [, c] of Object.entries(OBJECTS)) {
+      if (!c.craft) continue;
+      c.build = () => {
+        const root = buildCraft(c.craft, { scale: 2 });
+        /* Four levels deep with a small minimum size: the shallower
+           settings produced six parts for a launch vehicle, which is not
+           an exploded view, it is a stack. */
+        const t = assemblyFromCraft(THREE, root, { maxDepth: 4, minOran: 0.028 });
+        return { root, assembly: createAssembly({ units: 'design', axis: [0, 1, 0], parts: t.parts }),
+          nodes: t.nodes, groups: null, declared: false, estimate: t.tahmin };
+      };
+    }
+
+    /* -- scene ----------------------------------------------------------- */
+    const host = el('#stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    host.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    /* A flat background reads as a void and every object floats in it.
+       A shallow vertical gradient gives the eye a horizon to sit the
+       object against without drawing anything literal. */
+    scene.background = (() => {
+      const c = document.createElement('canvas');
+      c.width = 2; c.height = 256;
+      const g = c.getContext('2d');
+      const grad = g.createLinearGradient(0, 0, 0, 256);
+      grad.addColorStop(0, '#0d1118');
+      grad.addColorStop(0.55, '#080a10');
+      grad.addColorStop(1, '#04050a');
+      g.fillStyle = grad; g.fillRect(0, 0, 2, 256);
+      const t = new THREE.CanvasTexture(c);
+      t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    })();
+
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 500);
+    camera.up.set(0, 0, 1);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+
+    scene.add(new THREE.HemisphereLight(0x9db0cc, 0x141922, 0.55));
+    const key = new THREE.DirectionalLight(0xfff3e2, 2.3);
+    key.position.set(7, -9, 11);
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.bias = -0.0009;
+    const d = 16;
+    Object.assign(key.shadow.camera, { left: -d, right: d, top: d, bottom: -d, near: 0.5, far: 60 });
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(0x7f9bc4, 0.55);
+    fill.position.set(-8, 6, 3);
+    scene.add(fill);
+    /* Rim light from behind: it separates the silhouette from the
+       background, which is what makes a part readable once the body is
+       spread out and outlines start overlapping. */
+    const rim = new THREE.DirectionalLight(0xbcd2f0, 0.7);
+    rim.position.set(-3, 11, -6);
+    scene.add(rim);
+
+    /* Contact shadow. Without it a spread-out assembly has no ground and
+       depth ordering becomes guesswork. */
+    const shadowPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.ShadowMaterial({ opacity: 0.32 }));
+    shadowPlane.receiveShadow = true;
+    scene.add(shadowPlane);
+
+    /* -- state ------------------------------------------------------------ */
+    let active = null, xv = null, root = null, firstFrame = true;
+    let objectKey = OBJECTS[query.get('object')] ? query.get('object') : 'satellite';
+    let step = null, playing = false, playT = 0, sectionOn = false;
+
+    function load(keyName) {
+      if (active) { scene.remove(root); active.dispose?.(); xv?.dispose(); }
+      objectKey = keyName;
+      const c = OBJECTS[keyName];
+      active = c.build();
+      root = new THREE.Group();
+      root.scale.setScalar(c.scale);
+      root.add(active.root);
+      scene.add(root);
+      xv = createExplodedView(THREE, active.assembly, active.nodes, {
+        labelHost: el('#labels'), camera, renderer, omega: reduced ? 40 : 6, maxLabels: 12,
+        /* Under reduced motion the stagger and the separation attitude are
+           switched off, not softened: the view jumps to the same state with
+           the same geometry. Nothing is lost except the transit. */
+        motion: reduced ? { spread: 0, aMaxDeg: 0, glint: 0, pulse: 0 } : {},
+        /* The caption sits at the bottom of the same box; labels stay clear of it. */
+        inset: { top: 62, bottom: 84 },
+      });
+      step = null;
+      xv.setMode(el('#mode').value);
+      const k = Number(el('#explode').value) / 100;
+      if (reduced) xv.jumpExplode(k); else xv.setExplode(k);
+      frameCamera();
+      objectList(); stepList(); rightPanel(); writeCaption(null);
+    }
+
+    /* The camera is framed from the FULLY EXPLODED envelope, not the
+       assembled one: framing on the assembled body pushed parts off
+       screen as soon as the slider reached the end. */
+    function frameCamera() {
+      const box = new THREE.Box3().setFromObject(root);
+      const size = box.getSize(new THREE.Vector3());
+      const centre = box.getCenter(new THREE.Vector3());
+      let far = 0;
+      for (const o of active.assembly.explode(1, { mode: el('#mode').value }).values()) {
+        far = Math.max(far, Math.hypot(o[0], o[1], o[2]));
+      }
+      const r = (Math.max(size.x, size.y, size.z) * 0.5 + far * root.scale.x) || 1;
+      const dist = r / Math.tan(camera.fov * Math.PI / 360) * 1.02;
+      const want = centre.clone().add(new THREE.Vector3(0.62, -0.78, 0.42).normalize().multiplyScalar(dist));
+      if (firstFrame) {
+        controls.target.copy(centre);
+        camera.position.copy(want);
+        firstFrame = false;
+      } else {
+        /* Ease instead of cut when switching bodies. */
+        camWant.copy(want);
+        targetWant.copy(centre);
+        camEasing = true;
+      }
+      camera.near = Math.max(dist / 500, 0.01);
+      camera.far = dist * 12;
+      camera.updateProjectionMatrix();
+      controls.update();
+      shadowPlane.scale.setScalar(r * 6);
+      shadowPlane.position.set(centre.x, centre.y, box.min.z - r * 0.06);
+      Object.assign(key.shadow.camera, { left: -r * 2, right: r * 2, top: r * 2, bottom: -r * 2, far: dist * 6 });
+      key.shadow.camera.updateProjectionMatrix();
+      key.position.copy(centre).add(new THREE.Vector3(0.5, -0.7, 0.9).multiplyScalar(r * 2.6));
+      key.target.position.copy(centre);
+      key.target.updateMatrixWorld();
+      scene.add(key.target);
+    }
+
+    /* -- left panel -------------------------------------------------------- */
+    function objectList() {
+      const h = el('#objects');
+      h.innerHTML = '';
+      for (const [k, c] of Object.entries(OBJECTS)) {
+        const div = document.createElement('div');
+        div.className = 'obj' + (k === objectKey ? ' on' : '');
+        div.innerHTML = '<b></b><span class="n"></span><span class="src"></span>';
+        div.querySelector('b').textContent = c.name;
+        const src = div.querySelector('.src');
+        src.textContent = c.source;
+        if (!c.declared && c.craft) src.classList.add('est');
+        if (k === objectKey && active) div.querySelector('.n').textContent = `${active.assembly.parts.length} parts`;
+        div.onclick = () => load(k);
+        h.appendChild(div);
+      }
+    }
+
+    function stepList() {
+      const h = el('#steps');
+      h.innerHTML = '';
+      const steps = active.assembly.steps || [];
+      if (!steps.length) {
+        h.innerHTML = '<p class="note">This body is not declared step by step: its assembly order is derived from scene depth, so there is no step list.</p>';
+        return;
+      }
+      const add = (no, name, desc) => {
+        const div = document.createElement('div');
+        div.className = 'step' + (step === no ? ' on' : '');
+        div.innerHTML = '<span class="k"></span><span><b></b><span class="d"></span></span>';
+        div.querySelector('.k').textContent = no === null ? '◆' : String(no).padStart(2, '0');
+        div.querySelector('b').textContent = name;
+        div.querySelector('.d').textContent = desc;
+        div.onclick = () => { step = no; xv.setStep(no); stepList(); writeCaption(null); };
+        h.appendChild(div);
+      };
+      add(null, 'All parts', 'Nothing hidden.');
+      for (const s of steps) add(s.no, s.ad, s.aciklama || '');
+    }
+
+    /* -- right panel ------------------------------------------------------- */
+    function row(table, k, v, cls = '') {
+      const tr = document.createElement('tr');
+      const a = document.createElement('td'); a.className = 'k'; a.textContent = k;
+      const b = document.createElement('td'); b.className = 'v' + (cls ? ' ' + cls : ''); b.textContent = v;
+      tr.append(a, b); table.appendChild(tr);
+      return tr;
+    }
+
+    function rightPanel() {
+      const A = active.assembly;
+      const b = A.budget();
+      const t = el('#budget');
+      t.innerHTML = '';
+      if (active.declared) {
+        for (const g of b.gruplar || []) row(t, active.groups?.[g.grup]?.ad || g.grup, massText(g.kg));
+        if (b.islakKg) row(t, 'Propellant (wet)', massText(b.islakKg));
+        row(t, 'Total', massText(b.toplamKg)).className = 'total';
+      } else {
+        row(t, 'Parts', String(A.parts.length));
+        row(t, 'Depth levels', String(b.derinlik + 1));
+        row(t, 'Total (ESTIMATED)', massText(b.toplamKg, true), 'est').className = 'total';
+      }
+
+      const ti = el('#interfaces');
+      ti.innerHTML = '';
+      for (const x of A.interfaceCensus()) row(ti, x.ad, String(x.adet));
+      if (!active.declared) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 2; td.className = 'k est';
+        td.textContent = 'Inferred from node names, not declared.';
+        tr.appendChild(td); ti.appendChild(tr);
+      }
+    }
+
+    function writePart(id) {
+      const k = el('#part');
+      const p = id ? active.assembly.byId(id) : null;
+      if (!p) {
+        k.textContent = 'Click a part in the scene, or pick an assembly step.';
+        el('#chain').textContent = '—';
+        return;
+      }
+      k.innerHTML = '';
+      const title = document.createElement('b');
+      title.className = 't';
+      title.textContent = p.ad || p.id;
+      k.appendChild(title);
+
+      const sub = document.createElement('span');
+      sub.className = 'sub';
+      const bits = [];
+      if (p.tech?.no) bits.push(p.tech.no);
+      if (Number.isFinite(p.massKg)) bits.push(massText(p.massKg * (p.qty ?? 1), p.tahmini));
+      if (p.qty > 1) bits.push(`${p.qty} off`);
+      sub.textContent = bits.join('   ·   ');
+      if (p.tahmini) sub.classList.add('est');
+      k.appendChild(sub);
+
+      if (p.why) {
+        const lead = document.createElement('div');
+        lead.className = 'lead';
+        lead.textContent = p.why;
+        k.appendChild(lead);
+      }
+
+      const dl = document.createElement('dl');
+      dl.className = 'f';
+      const add = (label, value, cls = '') => {
+        if (value === null || value === undefined || value === '') return;
+        const dt = document.createElement('dt'); dt.textContent = label;
+        const dd = document.createElement('dd'); dd.textContent = value;
+        if (cls) dd.className = cls;
+        dl.append(dt, dd);
+      };
+      add('Interface', (IFACE_CLASSES[p.iface] || p.iface) + (p.arayuzTahmini ? '  (inferred)' : ''),
+        p.arayuzTahmini ? 'est' : '');
+      const t = p.tech;
+      if (t) {
+        add('Material', t.malzeme);
+        if (t.guc_W) {
+          const n = p.qty ?? 1, W = t.guc_W * n;
+          add('Power', W < 0 ? `${-W} W generated` : `${W} W drawn`);
+        }
+        if (t.veri_Mbps) add('Data', `${t.veri_Mbps} Mbps`);
+        if (t.hacim_m3) add('Volume', `${t.hacim_m3} m³`);
+        if (t.koruma_gcm2) add('Shielding', `${t.koruma_gcm2} g/cm²`);
+        if (t.sicaklik_C) add('Operating', `${t.sicaklik_C[0]} … ${t.sicaklik_C[1]} °C`);
+        add('Fastening', t.baglanti);
+        add('Heat path', t.isiYolu);
+        add('Detail', t.detay);
+        add('Qualification', t.kalite);
+      }
+      if (p.step !== undefined && p.step !== null) {
+        const s = (active.assembly.steps || []).find(x => x.no === p.step);
+        add('Step', s ? `${String(p.step).padStart(2, '0')} — ${s.ad}` : String(p.step));
+      }
+      k.appendChild(dl);
+
+      el('#chain').textContent = active.assembly.chain(id).map(q => q.ad || q.id).join('   →   ');
+    }
+
+    function writeCaption(id) {
+      if (id) writePart(id);
+      const a = el('#caption');
+      const c = OBJECTS[objectKey];
+      a.innerHTML = '';
+      const b = document.createElement('b');
+      b.textContent = c.name;
+      a.appendChild(b);
+      const s = document.createElement('span');
+      if (active.declared) {
+        s.textContent = ` — ${active.assembly.parts.length} parts declared; mass, interface and assembly order come from the catalogue. `
+          + 'Explosion direction is derived from each part’s position relative to the part it MOUNTS TO.';
+      } else {
+        s.textContent = ` — ${active.assembly.parts.length} parts derived from the scene graph. `;
+        const e = document.createElement('span');
+        e.className = 'est';
+        e.textContent = active.estimate?.not || 'Masses are estimated from bounding volume.';
+        a.appendChild(s); a.appendChild(e);
+        return;
+      }
+      a.appendChild(s);
+    }
+
+    /* -- interaction --------------------------------------------------------- */
+    const ray = new THREE.Raycaster();
+    const ptr = new THREE.Vector2();
+    let downAt = null;
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+      downAt = [e.clientX, e.clientY]; host.classList.add('dragging');
+    });
+    renderer.domElement.addEventListener('pointerup', (e) => {
+      host.classList.remove('dragging');
+      if (!downAt) return;
+      const dragged = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5;
+      downAt = null;
+      if (dragged) return;                        // a drag is not a selection
+      const r = renderer.domElement.getBoundingClientRect();
+      ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ptr, camera);
+      const id = xv.pick(ray);
+      xv.setSelected(id);
+      writeCaption(id);
+    });
+
+    el('#explode').addEventListener('input', (e) => {
+      const k = Number(e.target.value) / 100;
+      el('#explodeVal').textContent = `${e.target.value}%`;
+      playing = false; el('#play').classList.remove('on');
+      if (reduced) xv.jumpExplode(k); else xv.setExplode(k);
+    });
+    el('#mode').addEventListener('change', (e) => xv.setMode(e.target.value));
+    el('#section').addEventListener('click', () => {
+      sectionOn = !sectionOn;
+      el('#section').classList.toggle('on', sectionOn);
+      xv.setSection(sectionOn ? { axis: 'y', at: 0, side: -1 } : null);
+    });
+    el('#play').addEventListener('click', () => {
+      playing = !playing; playT = 0;
+      el('#play').classList.toggle('on', playing);
+      el('#play').innerHTML = playing ? '&#9208;&nbsp; Pause' : '&#9654;&nbsp; Play assembly';
+    });
+
+    /* -- turntable ------------------------------------------------------------
+       A still viewer otherwise sees one side of the object forever. Slow
+       enough to read a label, fast enough to show the far side in under a
+       minute. Any input stops it; it comes back after a while of nothing. */
+    const TURN_RATE = 0.08;          // rad/s
+    const IDLE_AFTER = 12;           // s of no input before it starts itself
+    let turntable = false, manualTurntable = false, idle = 0;
+    controls.autoRotateSpeed = TURN_RATE * 180 / Math.PI / (2 * Math.PI) * 60;
+
+    function setTurntable(on, manual) {
+      turntable = on && !reduced;
+      if (manual !== undefined) manualTurntable = manual && turntable;
+      controls.autoRotate = turntable;
+      el('#turntable').classList.toggle('on', turntable);
+    }
+    el('#turntable').addEventListener('click', () => setTurntable(!turntable, true));
+    for (const ev of ['pointerdown', 'wheel']) {
+      renderer.domElement.addEventListener(ev, () => {
+        idle = 0;
+        if (turntable && !manualTurntable) setTurntable(false);
+      }, { passive: true });
+    }
+
+    /* -- hover ----------------------------------------------------------------
+       Hover asks, selection answers; they must not look alike. The pick is
+       throttled because a raycast per pointermove is wasted work. */
+    let hoverAt = 0;
+    renderer.domElement.addEventListener('pointermove', (e) => {
+      idle = 0;
+      const now = performance.now();
+      if (now - hoverAt < 70 || downAt) return;
+      hoverAt = now;
+      const r = renderer.domElement.getBoundingClientRect();
+      ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ptr, camera);
+      const id = xv.pick(ray);
+      xv.setHover(id);
+      renderer.domElement.style.cursor = id ? 'pointer' : '';
+    });
+
+    /* -- camera transitions ---------------------------------------------------
+       Cutting between two bodies of different size costs the viewer the
+       sense of scale the exploded view exists to give. Position and target
+       are both driven by the same critically damped follower as the slider. */
+    const camWant = new THREE.Vector3();
+    const targetWant = new THREE.Vector3();
+    let camEasing = false;
+    function easeCamera(dt) {
+      if (!camEasing) return;
+      const w = 1 - Math.exp(-5.5 * dt);
+      camera.position.lerp(camWant, w);
+      controls.target.lerp(targetWant, w);
+      if (camera.position.distanceTo(camWant) < 1e-3) {
+        camera.position.copy(camWant);
+        controls.target.copy(targetWant);
+        camEasing = false;
+      }
+    }
+
+    /* -- loop ---------------------------------------------------------------- */
+    function resize() {
+      const w = host.clientWidth, h = host.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / Math.max(h, 1);
+      camera.updateProjectionMatrix();
+    }
+    addEventListener('resize', resize);
+
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min((now - last) / 1000, 0.05);
+      last = now;
+      if (playing) {
+        /* Playback walks the steps in order; each gets its own dwell and
+           the transition is critically damped, so stepping never snaps. */
+        const steps = active.assembly.steps || [];
+        const dwell = 1.5;
+        playT += dt;
+        const stop = () => {
+          playing = false; el('#play').classList.remove('on');
+          el('#play').innerHTML = '&#9654;&nbsp; Play assembly';
+        };
+        if (steps.length) {
+          const i = Math.floor(playT / dwell);
+          if (i >= steps.length) { playT = 0; step = null; xv.setStep(null); stop(); stepList(); }
+          else if (step !== steps[i].no) { step = steps[i].no; xv.setStep(step); stepList(); }
+        } else {
+          const k = Math.min(playT / 4, 1);
+          xv.setExplode(k);
+          el('#explode').value = String(Math.round(k * 100));
+          el('#explodeVal').textContent = `${Math.round(k * 100)}%`;
+          if (k >= 1) stop();
+        }
+      }
+      easeCamera(dt);
+      /* Idle turntable: only when nothing else is already moving the eye. */
+      if (!reduced && !playing) {
+        idle += dt;
+        if (!turntable && idle > IDLE_AFTER) setTurntable(true, false);
+      } else if (playing && turntable && !manualTurntable) setTurntable(false);
+      controls.update();
+      xv.update(dt);
+      renderer.render(scene, camera);
+      requestAnimationFrame(frame);
+    }
+
+    resize();
+    load(objectKey);
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

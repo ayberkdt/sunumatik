@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Arazi Blokları — terrain_blocks</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+    #stage { position: absolute; inset: 0; cursor: grab; }
+    #stage.suruklu { cursor: grabbing; }
+    header { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: flex-start;
+      justify-content: space-between; padding: 14px 22px; pointer-events: none; gap: 12px; }
+    header h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: #c9a35c; }
+    header h1 small { display: block; font-size: 10.5px; font-weight: 400; letter-spacing: .06em; text-transform: none; color: #8a90a0; margin-top: 3px; }
+    .controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; pointer-events: auto; max-width: 70vw; }
+    select, button, input[type="number"], label.chk, label.rng {
+      background: rgba(16, 19, 27, .85); color: #dfe3ea; border: 1px solid #2b303d; border-radius: 8px;
+      padding: 7px 10px; font-size: 12.5px; cursor: pointer; }
+    input[type="number"] { width: 110px; cursor: text; }
+    select:hover, button:hover, label.chk:hover { border-color: #c9a35c; }
+    label.chk, label.rng { display: flex; gap: 7px; align-items: center; user-select: none; }
+    label.rng input[type="range"] { width: 120px; accent-color: #c9a35c; }
+    label.rng b { font-weight: 500; min-width: 3.4em; font-variant-numeric: tabular-nums; text-align: right; }
+    #altyazi { position: absolute; left: 22px; right: 22px; bottom: 16px; z-index: 5; pointer-events: none;
+      display: flex; gap: 14px; align-items: flex-end; justify-content: space-between; }
+    #olcek { font-size: 11.5px; line-height: 1.45; color: #b9bfcc; background: rgba(10, 12, 18, .72);
+      border: 1px solid #232837; border-radius: 12px; padding: 10px 14px; max-width: 58vw; pointer-events: auto; }
+    #olcek b { color: #e8dcc0; font-weight: 600; }
+    #olcek .uyari { color: #e0a24a; font-weight: 600; }
+    #olcek .olgular { color: #8a90a0; }
+    #perf { font-size: 11px; color: #8a90a0; background: rgba(10, 12, 18, .72); border: 1px solid #232837; border-radius: 12px;
+      padding: 8px 12px; font-variant-numeric: tabular-nums; white-space: pre; display: none; }
+    #ipucu { position: absolute; left: 22px; top: 84px; z-index: 5; font-size: 11px; color: #6f7688; letter-spacing: .03em; pointer-events: none; }
+    #scrim { position: absolute; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center;
+      background: rgba(5, 7, 11, .78); color: #c9a35c; font-size: 13px; letter-spacing: .12em; text-transform: uppercase;
+      transition: opacity .18s ease; }
+    #scrim.gizli { opacity: 0; pointer-events: none; }
+    @media (prefers-reduced-motion: reduce) { #scrim { transition: none; } }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <header>
+    <h1>Arazi Blokları<small>terrain_blocks · olgu katmanlı, sorgulanabilir yüzey kütüphanesi · 1 birim = 100 m</small></h1>
+    <div class="controls">
+      <select id="profil" title="Profil"></select>
+      <input id="seed" type="number" title="Tohum (seed)" value="20260916" step="1">
+      <button id="yeniSeed" title="Yeni tohum">⟳ Tohum</button>
+      <label class="rng" title="Güneş irtifası (derece)">Güneş <input id="sun" type="range" min="0" max="60" step="0.5" value="14"><b id="sunDeg">14°</b></label>
+      <select id="gorunum" title="Görünüm">
+        <option value="shaded" selected>Gölgeli</option>
+        <option value="height">Yükseklik haritası</option>
+        <option value="slope">Eğim haritası</option>
+      </select>
+      <select id="golge" title="Gölge haritası alanı">
+        <option value="40">Gölge · 40 m</option>
+        <option value="600" selected>Gölge · 600 m</option>
+        <option value="6000">Gölge · 6 km</option>
+      </select>
+      <select id="kamera" title="Kamera kadrajı">
+        <option value="vista" selected>Vista</option>
+        <option value="wide">Geniş</option>
+        <option value="bird">Kuşbakışı</option>
+      </select>
+      <label class="chk" title="Yükseklik abartısı ×2 — kilitli varsayılan 1; açılırsa altyazı ilan eder"><input type="checkbox" id="abarti"> Abartı ×2</label>
+      <button id="durdur">Duraklat</button>
+      <button id="tamEkran" title="Tam ekran (F)">⤢ Tam ekran</button>
+    </div>
+  </header>
+  <div id="ipucu">Sürükle: döndür · Tekerlek: yakınlaş · Sağ tık: kaydır · Sürüklemek kamera turunu durdurur</div>
+  <div id="altyazi"><div id="olcek">Kuruluyor…</div><div id="perf"></div></div>
+  <div id="scrim">Arazi kuruluyor…</div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { PROFILES, PROFILE_IDS, buildProfile } from './profiles/index.mjs';
+    import { buildHeightGrid, applySlopeClamp, buildTerrainGeometry } from './terrain-mesh.mjs';
+    import { createTerrainMaterial, paintRegionAlbedo } from './terrain-material.mjs';
+    import { scatterRocks } from './terrain-scatter.mjs';
+    import { createTerrainQuery } from './terrain-query.mjs';
+    import { starfield } from '../core/lab-three.mjs';
+
+    /* ---------- yumuşak bağımlılıklar (bloklar birbirine sert bağımlı olamaz) ---------- */
+    let OrbitControls = null;
+    try { ({ OrbitControls } = await import('../moon_advanced/vendor/controls/OrbitControls.js')); }
+    catch (e) { console.warn('OrbitControls yüklenemedi; kamera kumandası devre dışı.', e); }
+    let buildRover = null;
+    try { ({ buildRover } = await import('../craft_blocks/craft-blocks.mjs')); }
+    catch (e) { console.warn('craft_blocks yüklenemedi; ölçek referansı gezginsiz.', e); }
+
+    /* ---------- URL sözleşmesi ---------- */
+    const sorgu = new URLSearchParams(location.search);
+    const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const disaAktarim = document.documentElement.dataset.export === 'true' || sorgu.get('export') === '1';
+    const sabitT = sorgu.has('t') ? Math.max(0, parseFloat(sorgu.get('t')) || 0) : null;
+    const donmusMod = azaltilmis || disaAktarim || sabitT !== null;
+    const perfAcik = sorgu.get('perf') === '1';
+
+    const profilSec = document.querySelector('#profil');
+    for (const id of PROFILE_IDS) { const o = document.createElement('option'); o.value = id; o.textContent = PROFILES[id].title; profilSec.appendChild(o); }
+    let profilId = PROFILE_IDS.includes(sorgu.get('profil')) ? sorgu.get('profil') : 'moon-mare';
+    let seed = Number.isFinite(parseInt(sorgu.get('seed'), 10)) ? parseInt(sorgu.get('seed'), 10) : 20260916;
+    profilSec.value = profilId;
+    document.querySelector('#seed').value = String(seed);
+    const gorunumSec = document.querySelector('#gorunum'); if (['shaded', 'height', 'slope'].includes(sorgu.get('view'))) gorunumSec.value = sorgu.get('view');
+    const kameraSec = document.querySelector('#kamera'); if (['vista', 'wide', 'bird'].includes(sorgu.get('cam'))) kameraSec.value = sorgu.get('cam');
+    const abartiKutu = document.querySelector('#abarti');
+
+    /* ---------- renderer / sahne ---------- */
+    const host = document.querySelector('#stage');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    host.appendChild(renderer.domElement);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(46, 1, .005, 80000);
+
+    const sun = new THREE.DirectionalLight('#fff2dc', 3.0);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.bias = -.00025;
+    scene.add(sun, sun.target);
+    const ambient = new THREE.AmbientLight('#8d95a8', .3);
+    const hemi = new THREE.HemisphereLight('#14161c', '#5f5b55', .5);
+    scene.add(ambient, hemi);
+    let stars = null;
+
+    let sunDeg = Number.isFinite(parseFloat(sorgu.get('sun'))) ? parseFloat(sorgu.get('sun')) : null;
+    const sunSurgu = document.querySelector('#sun'), sunEtiket = document.querySelector('#sunDeg');
+    function gunesiKur(deg) {
+      sunDeg = Math.min(60, Math.max(0, deg));
+      sunSurgu.value = String(sunDeg); sunEtiket.textContent = `${sunDeg.toFixed(1).replace('.0', '')}°`;
+      /* azimut sabit: kameranın arka-sağ omzu (surface-scene deseni) — uzun gölge kadrajın içine uzar */
+      const az = Math.atan2(31, 26), d = 39;
+      sun.position.set(Math.cos(az) * d, Math.tan(sunDeg * Math.PI / 180) * d, Math.sin(az) * d);
+      golgeAlaniKur();
+      kareIste();
+    }
+    const golgeSec = document.querySelector('#golge');
+    function golgeAlaniKur() {
+      const yarim = parseFloat(golgeSec.value) / 100 / 2;           // m → birim, yarı genişlik
+      const sc = sun.shadow.camera;
+      sc.left = -yarim; sc.right = yarim; sc.top = yarim; sc.bottom = -yarim;
+      const mesafe = sun.position.length();
+      sc.near = Math.max(.01, mesafe - yarim * 2 - 40); sc.far = mesafe + yarim * 2 + 40;
+      sc.updateProjectionMatrix();
+    }
+    sunSurgu.addEventListener('input', () => gunesiKur(parseFloat(sunSurgu.value)));
+    golgeSec.addEventListener('change', () => { golgeAlaniKur(); kareIste(); });
+
+    /* ---------- arazi kurulumu (bir kez; profil/seed değişince tam sökülüp yeniden kurulur — scrim altında) ---------- */
+    let dunya = null;      // { field, query, geo, mesh, mat, rocks, rover, stats }
+    const olcek = document.querySelector('#olcek'), perfEl = document.querySelector('#perf');
+    const scrim = document.querySelector('#scrim');
+    const moonTex = { albedo: null, disp: null, sample: null };
+    async function ayDokusu() {
+      if (moonTex.albedo !== null) return;
+      try {
+        const loader = new THREE.TextureLoader();
+        const base = '../moon_react_source/public/lunaris/textures';
+        const [alb, disp] = await Promise.all([loader.loadAsync(`${base}/aesthetic_moon_real.webp`), loader.loadAsync(`${base}/moon_disp_real.webp`)]);
+        alb.colorSpace = THREE.SRGBColorSpace; alb.anisotropy = 8;
+        moonTex.albedo = alb; moonTex.disp = disp;
+        /* yükseklik dokusunu Float32 örnekleyiciye çevir (displacementSample katmanı) */
+        const img = disp.image, cv = document.createElement('canvas'); cv.width = 512; cv.height = 256;
+        const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0, 512, 256);
+        const px = cx.getImageData(0, 0, 512, 256).data;
+        const arr = new Float32Array(512 * 256); for (let i = 0; i < arr.length; i++) arr[i] = px[i * 4] / 255;
+        moonTex.sample = (u, v) => { const x = Math.min(511, Math.max(0, Math.floor((u % 1 + 1) % 1 * 512))), y = Math.min(255, Math.max(0, Math.floor((v % 1 + 1) % 1 * 256))); return arr[y * 512 + x]; };
+      } catch { moonTex.albedo = false; }
+    }
+
+    function sok() {
+      if (!dunya) return;
+      scene.remove(dunya.mesh, dunya.rocks.group);
+      if (dunya.rover) scene.remove(dunya.rover);
+      dunya.geo.dispose(); dunya.mat.dispose(); dunya.rocks.dispose();
+      dunya.rover?.traverse(o => { if (o.isMesh) { o.geometry.dispose(); const mm = Array.isArray(o.material) ? o.material : [o.material]; for (const m of mm) m?.dispose(); } });
+      dunya = null;
+    }
+
+    async function kur() {
+      scrim.classList.remove('gizli');
+      await new Promise(r => setTimeout(r, 20));                    // scrim boyansın
+      sok();
+      const p = PROFILES[profilId];
+      const t0 = performance.now();
+      if (p.planet === 'moon') await ayDokusu();
+      const exaggeration = abartiKutu.checked ? 2 : 1;
+      const { field } = buildProfile(profilId, seed, { sample: p.planet === 'moon' ? moonTex.sample : null });
+      /* abartı: alanın kendi çarpanı (describe() ilan eder) */
+      const fieldEx = exaggeration === 1 ? field : Object.assign(Object.create(Object.getPrototypeOf(field)), field, {
+        exaggeration, height: (x, z) => field.sagitta(x, z) + exaggeration * field.raw(x, z) + (field.hasCorrection() ? 0 : 0),
+        describe: () => ({ ...field.describe(), exaggeration, exaggerationDeclared: `yükseklik ×${exaggeration} ABARTILI` }),
+      });
+      const tField = performance.now();
+      const grid = buildHeightGrid(fieldEx, { angular: 256, r0: .02, ratio: 1.03, rMax: 36000 });
+      const clampStat = applySlopeClamp(fieldEx, grid, { maxSlopeDeg: 35 });
+      const tGrid = performance.now();
+      const geo = buildTerrainGeometry(THREE, grid, { uvExtent: 10000 });
+      const region = paintRegionAlbedo(THREE, fieldEx, { seed, extent: 6500, planet: p.planet });
+      const matPack = createTerrainMaterial(THREE, {
+        seed, dust: p.material.dust, rock: p.material.rock, slopeAlbedo: p.material.slopeAlbedo, heightAlbedo: p.planet === 'moon' ? .004 : 0,
+        planet: p.planet, albedoTexture: p.planet === 'moon' && moonTex.albedo ? moonTex.albedo.clone() : null, region,
+      });
+      if (matPack.material.map) matPack.material.map.needsUpdate = true;
+      const mesh = new THREE.Mesh(geo, matPack.material);
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+      const rocks = scatterRocks(THREE, fieldEx, { seed, counts: { block: p.scatter.blocks, rock: p.scatter.rocks, pebble: p.scatter.pebbles }, tone: p.scatter.tone });
+      scene.add(rocks.group);
+      const query = createTerrainQuery(fieldEx, rocks);
+      const tScene = performance.now();
+
+      /* ölçek referansı: 3 m'lik gezgin (plan §11), vista pedinde; eksen sözleşmesi çevirisi + Box3 ile oturtma */
+      let rover = null;
+      if (buildRover) {
+        rover = new THREE.Group();
+        const r = buildRover({ scale: .03, arm: true });
+        r.rotation.x = -Math.PI / 2;                                  // +Z(yukarı) → +Y
+        r.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+        rover.add(r); rover.rotation.y = -.55; rover.updateMatrixWorld(true);
+        const bb = new THREE.Box3().setFromObject(rover);
+        const c = query.contact(0, 0, .0075);                          // 75 cm tekerlek: temas yüksekliği sorgudan
+        rover.position.set(0, c.y - .0075 - bb.min.y + .0002, 0);
+        scene.add(rover);
+      }
+      if (!stars) { stars = starfield(THREE, scene, { seed: 11, n: 1600, r0: 30000, r1: 34000, size: 1.4, opacity: .75 }); /* size piksel (sizeAttenuation yok) */ }
+      stars.visible = p.planet !== 'mars';
+      scene.background = new THREE.Color(p.planet === 'mars' ? 0x1a1310 : 0x05070b);
+      scene.fog = p.planet === 'mars' ? new THREE.FogExp2(0x6b4a38, .00035) : null;
+      sun.color.set(p.planet === 'mars' ? '#f2dcc4' : '#fff2dc');
+      hemi.color.set(p.planet === 'mars' ? '#3a2a22' : '#14161c'); hemi.groundColor.set(p.planet === 'mars' ? '#6b4a3a' : '#5f5b55');
+
+      dunya = { field: fieldEx, query, geo, mesh, mat: matPack, rocks, rover, grid, clampStat,
+        stats: { fieldMs: tField - t0, gridMs: tGrid - tField, sceneMs: tScene - tGrid, ...geo.userData.stats } };
+      gorunumUygula();
+      if (sunDeg === null) gunesiKur(p.sunElevDeg ?? (p.planet === 'mars' ? 22 : 14)); else gunesiKur(sunDeg);
+      altyaziYaz();
+      kamerayiKur();
+      scrim.classList.add('gizli');
+      ciz();
+    }
+
+    function altyaziYaz() {
+      const p = PROFILES[profilId], d = dunya.field.describe(), st = dunya.stats;
+      const olgular = d.layers.map(L => L.phenomenon.split(' (')[0]).join(' · ');
+      const Rkm = (d.radiusUnits / 10).toFixed(1);
+      olcek.innerHTML =
+        `<b>${p.title}</b> · tohum ${seed} · 1 birim = 100 m · cisim yarıçapı ${Rkm} km (ufuk eğriliği gerçek) · ` +
+        `gezgin referansı 3 m · Güneş ${sunDeg.toFixed(1)}° ` +
+        (d.exaggerationDeclared ? `· <span class="uyari">${d.exaggerationDeclared}</span>` : '· abartı yok') +
+        `<br><span class="olgular">Olgular: ${olgular}. Regolit eğimi 35°'ye kırpıldı (${dunya.clampStat.moved} hücre); sert kaya muaf. ` +
+        `Gölge haritası yalnız seçili alanda; dışında normal aydınlatması. Yükseklik/eğim haritası: lacivert → altın → fildişi.</span>`;
+      if (perfAcik) {
+        perfEl.style.display = 'block';
+        perfEl.textContent = `alan ${st.fieldMs.toFixed(0)} ms · örgü+kırpma ${st.gridMs.toFixed(0)} ms · sahne ${st.sceneMs.toFixed(0)} ms\n` +
+          `tepe ${st.vertices.toLocaleString('tr-TR')} · üçgen ${st.triangles.toLocaleString('tr-TR')} · halka ${st.rings}×${st.angular}\n` +
+          `kaya örneği ${dunya.rocks.instances.length} · çizim çağrısı ${renderer.info.render.calls}`;
+      }
+    }
+
+    /* görünüm: gölgeli / yükseklik / eğim — öznitelik TAKASI, örgü yeniden kurulmaz */
+    const haritaMat = new THREE.MeshBasicMaterial({ vertexColors: true });
+    function gorunumUygula() {
+      if (!dunya) return;
+      const g = gorunumSec.value;
+      if (g === 'shaded') { dunya.mesh.material = dunya.mat.material; dunya.rocks.group.visible = true; if (dunya.rover) dunya.rover.visible = true; }
+      else {
+        dunya.geo.setAttribute('color', dunya.geo.getAttribute(g === 'height' ? 'colorHeight' : 'colorSlope'));
+        dunya.mesh.material = haritaMat; dunya.rocks.group.visible = false; if (dunya.rover) dunya.rover.visible = false;
+      }
+      kareIste();
+    }
+    gorunumSec.addEventListener('change', gorunumUygula);
+
+    /* ---------- kamera ---------- */
+    let controls = null, kameraKirli = false, gecis = null;
+    if (OrbitControls) {
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true; controls.dampingFactor = .08;
+      controls.minDistance = .02; controls.maxDistance = 6000;
+      controls.maxPolarAngle = Math.PI / 2 - .02;
+      controls.addEventListener('start', () => { gecis = null; turAcik = false; host.classList.add('suruklu'); });
+      controls.addEventListener('end', () => host.classList.remove('suruklu'));
+      controls.addEventListener('change', () => { kameraKirli = true; kareIste(); });
+    }
+    let turAcik = !donmusMod;                     // vitrin turu: yalnız zaman akarken
+    let turA0 = 0, turR = 0, turH = 0;
+    function kadraj(id) {
+      const h = dunya ? dunya.query.height : () => 0;
+      if (id === 'bird') return { poz: new THREE.Vector3(0, 60, 90), hedef: new THREE.Vector3(0, h(0, 0), -20), fov: 40 };
+      if (id === 'wide') return { poz: new THREE.Vector3(2.2, h(2.2, 3) + 1.3, 3.2), hedef: new THREE.Vector3(0, h(0, 0) + .05, -40), fov: 44 };
+      return { poz: new THREE.Vector3(.085, h(.085, .11) + .017, .11), hedef: new THREE.Vector3(-.01, h(0, 0) + .012, -.02), fov: 46 };
+    }
+    function kamerayiKur() {
+      const k = kadraj(kameraSec.value);
+      camera.fov = k.fov; camera.updateProjectionMatrix();
+      camera.position.copy(k.poz);
+      if (controls) { controls.target.copy(k.hedef); controls.update(); } else camera.lookAt(k.hedef);
+      const dx = k.poz.x - k.hedef.x, dz = k.poz.z - k.hedef.z;
+      turA0 = Math.atan2(dz, dx); turR = Math.hypot(dx, dz); turH = k.poz.y - k.hedef.y;
+      kameraKirli = true;
+    }
+    kameraSec.addEventListener('change', () => { kamerayiKur(); turAcik = !donmusMod && calisiyor; ciz(); });
+
+    /* ---------- kumandalar ---------- */
+    profilSec.addEventListener('change', () => { profilId = profilSec.value; sunDeg = null; urlYaz(); kur(); });
+    document.querySelector('#seed').addEventListener('change', e => { seed = parseInt(e.target.value, 10) || 0; urlYaz(); kur(); });
+    document.querySelector('#yeniSeed').addEventListener('click', () => { seed = (seed * 1103515245 + 12345) % 2147483647; document.querySelector('#seed').value = String(seed); urlYaz(); kur(); });
+    abartiKutu.addEventListener('change', () => kur());
+    function urlYaz() { history.replaceState(null, '', `?profil=${profilId}&seed=${seed}${sunDeg !== null ? `&sun=${sunDeg}` : ''}`); }
+
+    let calisiyor = true;
+    const durButon = document.querySelector('#durdur');
+    durButon.addEventListener('click', () => { calisiyor = !calisiyor; durButon.textContent = calisiyor ? 'Duraklat' : 'Devam'; kareIste(); ciz(); });
+    if (donmusMod) {
+      durButon.disabled = true; durButon.textContent = 'Donmuş kare';
+      durButon.title = sabitT !== null ? `Sabit-zaman modu (?t=${sabitT})` : (disaAktarim ? 'Dışa aktarım modu' : 'Sistem "hareketi azalt" açık');
+      durButon.style.opacity = '.55'; durButon.style.cursor = 'default';
+    }
+    const tamEkranBtn = document.querySelector('#tamEkran');
+    function tamEkranEtiket() { const acik = !!document.fullscreenElement; tamEkranBtn.textContent = acik ? '⤡ Çık' : '⤢ Tam ekran'; }
+    function tamEkranDegistir() { if (document.fullscreenElement) document.exitFullscreen?.(); else document.documentElement.requestFullscreen?.().catch(() => {}); }
+    tamEkranBtn.addEventListener('click', tamEkranDegistir);
+    document.addEventListener('fullscreenchange', () => { tamEkranEtiket(); boyutla(); ciz(); });
+    window.addEventListener('keydown', e => { if ((e.key === 'f' || e.key === 'F') && !/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName || '')) tamEkranDegistir(); });
+
+    function boyutla() { const w = host.clientWidth, h = host.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+
+    /* ---------- deterministik döngü (sabit adım; duvar saati yok) ---------- */
+    let t = 0; const DT = 1 / 60;
+    const zamanAkiyor = () => calisiyor && !donmusMod;
+    function turUygula() {
+      if (!turAcik || !controls) return false;
+      const a = turA0 + .04 * t;
+      camera.position.set(controls.target.x + Math.cos(a) * turR, controls.target.y + turH, controls.target.z + Math.sin(a) * turR);
+      return true;
+    }
+    function ciz() { renderer.render(scene, camera); kameraKirli = false; if (perfAcik && dunya) perfEl.textContent = perfEl.textContent.replace(/çizim çağrısı \d+/, `çizim çağrısı ${renderer.info.render.calls}`); }
+    let istekId = 0;
+    function kareIste() { if (istekId || document.hidden) return; istekId = requestAnimationFrame(dongu); }
+    function dongu() {
+      istekId = 0;
+      if (document.hidden) return;
+      const akiyor = zamanAkiyor();
+      let degisti = false;
+      if (akiyor) { t += DT; degisti = turUygula(); }
+      const kameraDegisti = controls ? controls.update() : false;
+      if (akiyor || degisti || kameraDegisti || kameraKirli) ciz();
+      if (akiyor || kameraDegisti) kareIste();
+    }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) kareIste(); });
+
+    /* ---------- başlat ---------- */
+    boyutla();
+    await kur();
+    if (sabitT !== null) { t = sabitT; turAcik = true; turUygula(); turAcik = false; }
+    ciz(); kareIste();
+    window.addEventListener('resize', () => { boyutla(); ciz(); });
+
+    /* deterministik test/dışa aktarma kancası */
+    window.__terrain = {
+      scene, camera, renderer, controls,
+      get field() { return dunya?.field; }, get query() { return dunya?.query; }, get stats() { return dunya?.stats; },
+      advance(saniye) { const n = Math.max(1, Math.round(saniye / DT)); for (let k = 0; k < n; k++) { t += DT; } turUygula(); ciz(); },
+      setSun(deg) { gunesiKur(deg); ciz(); },
+      async setProfile(id, s) { if (PROFILES[id]) profilId = id; if (Number.isFinite(s)) seed = s; profilSec.value = profilId; document.querySelector('#seed').value = String(seed); await kur(); },
+      setView(v) { gorunumSec.value = v; gorunumUygula(); ciz(); },
+      kamera({ poz, hedef } = {}) { if (poz) camera.position.set(...poz); if (hedef && controls) controls.target.set(...hedef); gecis = null; turAcik = false; if (controls) controls.update(); ciz(); },
+    };
+    window.dispatchEvent(new CustomEvent('terrain:hazir', { detail: window.__terrain }));
+  </script>
+</body>
+</html>

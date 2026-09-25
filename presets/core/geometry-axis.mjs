@@ -43,6 +43,8 @@ export function cylZ(rPoz, rNeg, h, seg, mat, open = false) {
 export function coneGeoX(r, h, seg, open = false) { return eksenX(new THREE.ConeGeometry(r, h, seg, 1, open)); }
 export function coneGeoZ(r, h, seg, open = false) { return eksenZ(new THREE.ConeGeometry(r, h, seg, 1, open)); }
 export function cylGeoX(rPoz, rNeg, h, seg, open = false) { return eksenX(new THREE.CylinderGeometry(rPoz, rNeg, h, seg, 1, open)); }
+export function cylGeoY(rPoz, rNeg, h, seg, open = false) { return new THREE.CylinderGeometry(rPoz, rNeg, h, seg, 1, open); }
+export function cylGeoZ(rPoz, rNeg, h, seg, open = false) { return eksenZ(new THREE.CylinderGeometry(rPoz, rNeg, h, seg, 1, open)); }
 
 /* Koni — tepe eksenin POZİTİF ucunda. */
 export function coneX(r, h, seg, mat, open = false) {
@@ -63,13 +65,16 @@ export function coneZ(r, h, seg, mat, open = false) {
  * Burada artık imkânsız: sıra kontrol edilir, gerekirse ÇEVRİLİR. Çağıran
  * profili hangi sırada verdiğini düşünmek zorunda değil.
  */
-export function latheX(noktalar, seg, mat) {
+/* phiStart/phiLength: KISMİ lathe (yarım başlık, kabuk dilimi). Lathe uzayında
+   açı +Y ekseni etrafındadır; eksenX çevirisinden sonra phi=0 yarımı (lathe +x)
+   blok −Y tarafına düşer. Varsayılan tam tur — eski çağrılar değişmez. */
+export function latheX(noktalar, seg, mat, phiStart = 0, phiLength = Math.PI * 2) {
   const p = noktalar.slice();
   if (p.length > 1 && p[p.length - 1].y < p[0].y) p.reverse();
-  return new THREE.Mesh(eksenX(new THREE.LatheGeometry(p, seg)), mat);
+  return new THREE.Mesh(eksenX(new THREE.LatheGeometry(p, seg, phiStart, phiLength)), mat);
 }
-export function latheZ(noktalar, seg, mat) {
+export function latheZ(noktalar, seg, mat, phiStart = 0, phiLength = Math.PI * 2) {
   const p = noktalar.slice();
   if (p.length > 1 && p[p.length - 1].y < p[0].y) p.reverse();
-  return new THREE.Mesh(eksenZ(new THREE.LatheGeometry(p, seg)), mat);
+  return new THREE.Mesh(eksenZ(new THREE.LatheGeometry(p, seg, phiStart, phiLength)), mat);
 }

@@ -1,19 +1,19 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 62,
-    "presetsWithIndex": 55,
-    "animatedPresets": 48,
+    "presets": 72,
+    "presetsWithIndex": 65,
+    "animatedPresets": 58,
     "skills": 18,
-    "demoSlides": 78,
-    "demoCards": 65,
+    "demoSlides": 88,
+    "demoCards": 75,
     "demoSections": 11,
     "demoCoverSections": 10,
     "ornekDesteSlides": 20
   },
   "demo": {
-    "slides": 78,
-    "cards": 65,
+    "slides": 88,
+    "cards": 75,
     "sections": 11,
     "coverSections": 10,
     "referencedPresets": [
@@ -39,6 +39,7 @@
       "entry_dispersion",
       "equation_pen",
       "equation_steps",
+      "exploded_view",
       "figure_callouts",
       "formation_flight",
       "free_return",
@@ -46,13 +47,17 @@
       "gravity_assist",
       "gravity_field",
       "ground_track_3d",
+      "habitat_blocks",
       "halo_manifolds",
       "jwst_explorer",
       "launch_ascent",
       "launch_window",
+      "life_signs",
+      "light_blocks",
       "low_thrust_transfer",
       "lunar_descent",
       "lunar_orbit",
+      "mechanism_lab",
       "ml_attention_flow",
       "ml_conv_vision",
       "ml_layer_blocks",
@@ -65,12 +70,17 @@
       "orbit_determination",
       "orbit_perturbations",
       "orbital_stage",
+      "physical_rigs",
       "planets_advanced",
       "porkchop_explorer",
       "reentry_corridor",
       "rendezvous_docking",
+      "satellite_integration",
+      "site_plan",
       "soi_explorer",
+      "stage_separation",
       "sun_advanced",
+      "terrain_blocks",
       "three_body_states",
       "timeline_tree",
       "tisserand_graph",
@@ -274,6 +284,13 @@
       "hasMotionManifest": false
     },
     {
+      "name": "exploded_view",
+      "title": "Exploded View — exploded_view",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
       "name": "figure_callouts",
       "title": "Figure Callout Preset — figür üzerinde adım adım anlatım",
       "hasIndex": true,
@@ -323,6 +340,13 @@
       "hasMotionManifest": true
     },
     {
+      "name": "habitat_blocks",
+      "title": "Habitat Blocks — habitat_blocks",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
       "name": "halo_manifolds",
       "title": "Halo Yörüngeleri ve Değişmez Manifoldlar — halo_manifolds",
       "hasIndex": true,
@@ -351,6 +375,20 @@
       "hasMotionManifest": true
     },
     {
+      "name": "life_signs",
+      "title": "Nefes Kütüphanesi — life_signs",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "light_blocks",
+      "title": "Işık Fiziği — light_blocks",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
       "name": "low_thrust_transfer",
       "title": "Düşük İtkili Transfer Laboratuvarı — low_thrust_transfer",
       "hasIndex": true,
@@ -367,6 +405,13 @@
     {
       "name": "lunar_orbit",
       "title": "Analytic Lunar Orbit Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "mechanism_lab",
+      "title": "Aksam Laboratuvarı — mechanism_lab",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true
@@ -463,6 +508,13 @@
       "hasMotionManifest": true
     },
     {
+      "name": "physical_rigs",
+      "title": "Fiziksel Aksam — physical_rigs",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
       "name": "planets_advanced",
       "title": "Planetae Vanilla Preset",
       "hasIndex": true,
@@ -491,6 +543,20 @@
       "hasMotionManifest": true
     },
     {
+      "name": "satellite_integration",
+      "title": "Satellite Integration — satellite_integration",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "site_plan",
+      "title": "Saha Yerleşimi — site_plan",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
       "name": "soi_explorer",
       "title": "Etki Küresi Kâşifi — soi_explorer",
       "hasIndex": true,
@@ -498,8 +564,22 @@
       "hasMotionManifest": true
     },
     {
+      "name": "stage_separation",
+      "title": "Kademe Ayrılması — stage_separation",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
       "name": "sun_advanced",
       "title": "Sol Vanilla Preset",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "terrain_blocks",
+      "title": "Arazi Blokları — terrain_blocks",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

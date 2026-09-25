@@ -1,0 +1,19 @@
+{
+  "preset": "site_plan",
+  "motions": [
+    {
+      "id": "site-layout-solve",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Bir yüzey üssünde modüllerin yeri keyfi değildir; her mesafe bir kazayı ya da bir kaybı önler. Bu sahne o kuralları ADLANDIRIR (reaktör ≥ 1 km, iniş pisti ≥ 500 m ve ejecta konisinde yapı yok, yakıt ↔ O₂ ≥ 50 m, radyatör Güneş'e sırt, garaj habitat'a yakın…), tohumlu bir yerleşim çözer ve her kuralın ÖLÇÜLEN değerini hedefiyle yan yana gösterir. Hareket bir gösteri değil, bir denetim: kullanıcı bir modülü sürüklediğinde kurallar anında yeniden ölçülür ve ihlal bildirilir.",
+      "loop": false,
+      "durationMs": 0,
+      "pauseControl": "Sürekli bir çevrim yoktur: plan yalnız bir kumanda değiştiğinde ya da bir modül sürüklendiğinde yeniden çizilir; 3B arazi görünümü istek üzerine tek kare işler (render-on-demand).",
+      "reducedMotion": "prefers-reduced-motion: reduce altında davranış değişmez, çünkü zamana bağlı hareket yoktur — plan ve tablolar durağandır.",
+      "exportState": "?ortam=moon|mars, ?seed=<tam sayı>, ?profil=<arazi profili>, ?gunes=<derece>, ?ruzgar=<derece>, ?gorunum=plan|arazi, ?ui=0 (yalnız görsel), ?export=1 (donmuş kare).",
+      "accessibility": "Kumandalar yerel form öğeleridir, hedef boyutu ≥ 40 px. Modül rengi TEK BAŞINA bilgi taşımaz: aynı bilgi sağdaki tabloda adla ve sayıyla yazılıdır. Kural satırları geçti/kaldı durumunu hem renkle hem ✓/✗ imiyle verir. Plan üzerindeki her etiket, çakışma çözüldükten sonra kılavuz çizgisiyle modülüne bağlanır.",
+      "limitations": "Bu bir YERLEŞİM planıdır: kütle, güç bütçesi, ısıl denge, inşa sırası ve lojistik modellenmez. Ayak izleri dairesel kabul edilir ve kurallar merkezden merkeze ölçülür. Çözüm tohumlu en-iyi-aday örneklemesidir (modül başına 48 aday); eniyilenmiş bir yerleşim değil, kuralları sağlayan bir yerleşimdir — aynı tohum aynı sonucu verir. Eğim kuralı yalnız 3B arazi görünümünde ölçülebilir ve DOĞAL zeminde ölçülür; kapılar (tesviye) araziye ondan sonra yazılır. 3B önizlemedeki işaret çubukları anotasyondur, yapı boyu değildir.",
+      "notes": "Çözücü: presets/terrain_blocks/site-plan.mjs — three'siz, DOM'suz, deterministik; MODULES (ayak izi yarıçapı, tercih bandı) ve SITE_RULES (11 kural: 6 sert, 5 yumuşak; her birinde neden, ölçüm ve hedef). Sert kural adayı ELER, yumuşak kural ağırlıkla puanlar; hiçbir aday geçmezse modül yine konur ama 'zorlandı' olarak bildirilir — sessiz kabul yoktur. Çıktıdaki `clearings` doğrudan terrain_blocks'un createTerrainField({ clearings }) girdisidir: her modül bir altıgen saha çokgeni, her hat 24 m'lik bir koridor. Kapılar YEREL datuma tesviye eder (kapının kendi referans noktası); tek genel datum, 1 km ötedeki modülü orijinin kotasına kazıyordu. Doğrulama: scripts/validate-site.mjs (28 denetim) ve scripts/validate-terrain.mjs."
+    }
+  ]
+}

@@ -60,8 +60,41 @@ jobs:
       - name: Astrodinamik çözücüler (US76, tırmanış, CW, Lambert, CR3BP… bağımsız sayısal denetim)
         run: node scripts/validate-astro.mjs
 
+      - name: Arazi kütüphanesi (determinizm, sagitta, kapılar, eğim kırpma, Pareto krater eğimi, gezegen kısıtı)
+        run: node scripts/validate-terrain.mjs
+
       - name: Eksen ratchet'i (çıplak geometri kurucuları tabanı aşamaz)
         run: python scripts/eksen-denetimi.py
+
+      - name: physical_rigs eklem sürücüsü ve çözücüler (three'siz)
+        run: node scripts/validate-rigs.mjs
+
+      - name: Nefes kütüphanesi (ölçüşmezlik, genlik/sahne bütçesi, hız sınırı, yasak sınıf)
+        run: node scripts/validate-life-signs.mjs
+
+      - name: Işık fiziği çekirdeği (Planck eğrisi, ters kare, ortam kuralı, 1/f titreşim, pozlama)
+        run: node scripts/validate-light.mjs
+
+      - name: Uydu entegrasyonu (kütle bütçesi, montaj ağacı, sıra, kütle merkezi)
+        run: node scripts/validate-satellite.mjs
+
+      - name: Montaj çekirdeği (patlatma yönü, çakışma paketlemesi, bütçe, adaptör)
+        run: node scripts/validate-assembly.mjs
+
+      - name: Patlatma hareketi (kademe, yerleşme açısı, karma dağılımı)
+        run: node scripts/validate-exploded-motion.mjs
+
+      - name: Açılış sayfası envanterle eşleşiyor mu
+        run: node scripts/build-home.mjs --check
+
+      - name: Dağıtım yüzeyi (.vercelignore hiçbir bağımlılığı düşürmüyor mu)
+        run: node scripts/validate-deploy.mjs
+
+      - name: Saha yerleşimi (kural kataloğu, çözücü, determinizm, araziye yazılan kapılar)
+        run: node scripts/validate-site.mjs
+
+      - name: Habitat blokları (ortam kuralı, hat matematiği, ortamlı bütçe)
+        run: node scripts/validate-habitat.mjs
 
       - name: motion-manifest şemaları
         shell: bash

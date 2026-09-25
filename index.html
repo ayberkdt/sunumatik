@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sunumatik — scene catalogue</title>
+  <meta name="description" content="65 browser-native scenes for space, flight and machine-learning explanation. No build step, no tracking.">
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: #05070b; color: #dfe3ea; line-height: 1.6;
+      font-family: "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px 72px; }
+    header { padding: 56px 0 8px; }
+    h1 { margin: 0; font-size: 13px; letter-spacing: .16em; text-transform: uppercase;
+      color: #c9a35c; font-weight: 600; }
+    .lead { margin: 14px 0 0; font-size: 17px; line-height: 1.55; color: #eef1f6; max-width: 46em; }
+    .sub { margin: 10px 0 0; font-size: 13px; color: #767d8c; max-width: 46em; }
+    .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 26px 0 0; }
+    .btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px;
+      border-radius: 7px; font-size: 13px; font-weight: 600; border: 1px solid #272d39;
+      background: rgba(14,17,24,.9); }
+    .btn:hover { border-color: #c9a35c; }
+    .btn--go { background: #c9a35c; border-color: #c9a35c; color: #10131a; }
+    .btn--go:hover { background: #d9b978; }
+    input[type=search] { min-height: 44px; min-width: 240px; flex: 1 1 240px; padding: 0 14px;
+      border-radius: 7px; border: 1px solid #272d39; background: rgba(14,17,24,.9);
+      color: #dfe3ea; font-size: 13px; font-family: inherit; }
+    input[type=search]:focus { outline: none; border-color: #c9a35c; }
+    nav { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 30px 0 0;
+      font-size: 13px; color: #767d8c; }
+    nav a:hover { color: #c9a35c; }
+    .grp { margin: 52px 0 0; }
+    h2 { margin: 0; font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
+      color: #c9a35c; font-weight: 600; }
+    .grp__n { color: #767d8c; letter-spacing: 0; font-weight: 400; }
+    .grp__b { margin: 6px 0 0; font-size: 13px; color: #767d8c; }
+    .cards { display: grid; gap: 10px; margin: 16px 0 0;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+    .card { display: block; min-height: 44px; padding: 13px 15px 14px; border-radius: 7px;
+      border: 1px solid #1b202a; background: #080a0f; }
+    .card:hover { border-color: #c9a35c; background: #0c0f16; }
+    .card__t { display: block; font-size: 13px; font-weight: 600; color: #eef1f6; }
+    .card__n { display: block; margin-top: 3px; font-size: 12px; color: #767d8c;
+      font-variant-numeric: tabular-nums; }
+    .card__m { display: block; margin-top: 6px; font-size: 12px; color: #5d6472;
+      letter-spacing: .04em; }
+    .empty { display: none; margin: 40px 0 0; font-size: 13px; color: #767d8c; }
+    body.filtering .grp[hidden], body.filtering .card[hidden] { display: none; }
+    footer { margin: 64px 0 0; padding-top: 22px; border-top: 1px solid #1b202a;
+      font-size: 12px; color: #5d6472; }
+    @media (max-width: 640px) {
+      header { padding-top: 34px; }
+      .lead { font-size: 15px; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Sunumatik</h1>
+      <p class="lead">65 self-contained scenes for explaining space, flight and machine learning &mdash; each one a plain HTML page that runs in the browser with no build step, no framework and no tracking.</p>
+      <p class="sub">Every scene states what it models and, just as plainly, what it does not. Numbers come from declared catalogues or from computation, never from a picture; where a value is estimated, the page says so.</p>
+      <div class="bar">
+        <a class="btn btn--go" href="demo/index.html">Open the live deck</a>
+        <a class="btn" href="https://github.com/ayberkdt/sunumatik">Source on GitHub</a>
+        <input type="search" id="find" placeholder="Filter 65 scenes&hellip;" aria-label="Filter scenes">
+      </div>
+      <nav>
+        <a href="#orbits">Orbits and trajectories</a>
+        <a href="#flight">Launch, entry and staging</a>
+        <a href="#vehicles">Vehicles and assemblies</a>
+        <a href="#worlds">Worlds and environments</a>
+        <a href="#aero">Aerodynamics</a>
+        <a href="#ml">Machine learning</a>
+        <a href="#craftwork">Motion, light and layout</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="grp" id="orbits" data-group>
+        <h2>Orbits and trajectories <span class="grp__n">22</span></h2>
+        <p class="grp__b">Transfers, perturbations, three-body structure, determination and conjunction.</p>
+        <div class="cards">
+        <a class="card" href="presets/conjunction_covariance/index.html" data-find="yakın geçiş ve kovaryans conjunction_covariance">
+          <span class="card__t">Yakın Geçiş ve Kovaryans</span>
+          <span class="card__n">conjunction_covariance</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/constellation_coverage/index.html" data-find="takımyıldızı kapsaması constellation_coverage">
+          <span class="card__t">Takımyıldızı Kapsaması</span>
+          <span class="card__n">constellation_coverage</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/cr3bp_lagrange/index.html" data-find="cr3bp ve lagrange noktaları cr3bp_lagrange">
+          <span class="card__t">CR3BP ve Lagrange Noktaları</span>
+          <span class="card__n">cr3bp_lagrange</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/eclipse_geometry/index.html" data-find="tutulma, örtülme ve görünürlük eclipse_geometry">
+          <span class="card__t">Tutulma, Örtülme ve Görünürlük</span>
+          <span class="card__n">eclipse_geometry</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/formation_flight/index.html" data-find="formasyon uçuşu formation_flight">
+          <span class="card__t">Formasyon Uçuşu</span>
+          <span class="card__n">formation_flight</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/free_return/index.html" data-find="ay serbest dönüş yörüngesi free_return">
+          <span class="card__t">Ay Serbest Dönüş Yörüngesi</span>
+          <span class="card__n">free_return</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/geo_stationkeeping/index.html" data-find="geo i̇stasyon tutma bütçesi geo_stationkeeping">
+          <span class="card__t">GEO İstasyon Tutma Bütçesi</span>
+          <span class="card__n">geo_stationkeeping</span>
+          <span class="card__m">static</span>
+        </a>
+        <a class="card" href="presets/gravity_assist/index.html" data-find="yerçekimi yardımı ve b-düzlemi gravity_assist">
+          <span class="card__t">Yerçekimi Yardımı ve B-Düzlemi</span>
+          <span class="card__n">gravity_assist</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/gravity_field/index.html" data-find="küresel harmonik yerçekimi alanı gravity_field">
+          <span class="card__t">Küresel Harmonik Yerçekimi Alanı</span>
+          <span class="card__n">gravity_field</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/ground_track_3d/index.html" data-find="3b yörünge + 2b yer i̇zi ground_track_3d">
+          <span class="card__t">3B Yörünge + 2B Yer İzi</span>
+          <span class="card__n">ground_track_3d</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/halo_manifolds/index.html" data-find="halo yörüngeleri ve değişmez manifoldlar halo_manifolds">
+          <span class="card__t">Halo Yörüngeleri ve Değişmez Manifoldlar</span>
+          <span class="card__n">halo_manifolds</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/launch_window/index.html" data-find="fırlatma penceresi ve azimut launch_window">
+          <span class="card__t">Fırlatma Penceresi ve Azimut</span>
+          <span class="card__n">launch_window</span>
+          <span class="card__m">static</span>
+        </a>
+        <a class="card" href="presets/low_thrust_transfer/index.html" data-find="düşük i̇tkili transfer laboratuvarı low_thrust_transfer">
+          <span class="card__t">Düşük İtkili Transfer Laboratuvarı</span>
+          <span class="card__n">low_thrust_transfer</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/lunar_orbit/index.html" data-find="analytic lunar orbit preset lunar_orbit">
+          <span class="card__t">Analytic Lunar Orbit Preset</span>
+          <span class="card__n">lunar_orbit</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/orbit_determination/index.html" data-find="yörünge belirleme (ekf) laboratuvarı orbit_determination">
+          <span class="card__t">Yörünge Belirleme (EKF) Laboratuvarı</span>
+          <span class="card__n">orbit_determination</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/orbit_perturbations/index.html" data-find="yörünge pertürbasyonları orbit_perturbations">
+          <span class="card__t">Yörünge Pertürbasyonları</span>
+          <span class="card__n">orbit_perturbations</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/porkchop_explorer/index.html" data-find="porkchop / fırlatma penceresi porkchop_explorer">
+          <span class="card__t">Porkchop / Fırlatma Penceresi</span>
+          <span class="card__n">porkchop_explorer</span>
+          <span class="card__m">static</span>
+        </a>
+        <a class="card" href="presets/rendezvous_docking/index.html" data-find="randevu ve kenetlenme rendezvous_docking">
+          <span class="card__t">Randevu ve Kenetlenme</span>
+          <span class="card__n">rendezvous_docking</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/soi_explorer/index.html" data-find="etki küresi kâşifi soi_explorer">
+          <span class="card__t">Etki Küresi Kâşifi</span>
+          <span class="card__n">soi_explorer</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/three_body_states/index.html" data-find="üç-cisim durumları three_body_states">
+          <span class="card__t">Üç-Cisim Durumları</span>
+          <span class="card__n">three_body_states</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/tisserand_graph/index.html" data-find="tisserand grafiği tisserand_graph">
+          <span class="card__t">Tisserand Grafiği</span>
+          <span class="card__n">tisserand_graph</span>
+          <span class="card__m">static</span>
+        </a>
+        <a class="card" href="presets/transfer_explorer/index.html" data-find="lambert transfer kâşifi transfer_explorer">
+          <span class="card__t">Lambert Transfer Kâşifi</span>
+          <span class="card__n">transfer_explorer</span>
+          <span class="card__m">animated</span>
+        </a>
+        </div>
+      </section>
+      <section class="grp" id="flight" data-group>
+        <h2>Launch, entry and staging <span class="grp__n">7</span></h2>
+        <p class="grp__b">Getting off a surface, getting back onto one, and what separates in between.</p>
+        <div class="cards">
+        <a class="card" href="presets/attitude_gnc/index.html" data-find="yönelim / gnc laboratuvarı attitude_gnc">
+          <span class="card__t">Yönelim / GNC Laboratuvarı</span>
+          <span class="card__n">attitude_gnc</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/entry_dispersion/index.html" data-find="giriş dağılımı (monte carlo) entry_dispersion">
+          <span class="card__t">Giriş Dağılımı (Monte Carlo)</span>
+          <span class="card__n">entry_dispersion</span>
+          <span class="card__m">static</span>
+        </a>
+        <a class="card" href="presets/launch_ascent/index.html" data-find="fırlatma ve tırmanış launch_ascent">
+          <span class="card__t">Fırlatma ve Tırmanış</span>
+          <span class="card__n">launch_ascent</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/lunar_descent/index.html" data-find="ay'a motorlu i̇niş — lunar descent preseti lunar_descent">
+          <span class="card__t">Ay'a Motorlu İniş — Lunar Descent Preseti</span>
+          <span class="card__n">lunar_descent</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/orbital_stage/index.html" data-find="yörünge sahnesi orbital_stage">
+          <span class="card__t">Yörünge Sahnesi</span>
+          <span class="card__n">orbital_stage</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/reentry_corridor/index.html" data-find="giriş koridoru reentry_corridor">
+          <span class="card__t">Giriş Koridoru</span>
+          <span class="card__n">reentry_corridor</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/stage_separation/index.html" data-find="kademe ayrılması stage_separation">
+          <span class="card__t">Kademe Ayrılması</span>
+          <span class="card__n">stage_separation</span>
+          <span class="card__m">animated</span>
+        </a>
+        </div>
+      </section>
+      <section class="grp" id="vehicles" data-group>
+        <h2>Vehicles and assemblies <span class="grp__n">10</span></h2>
+        <p class="grp__b">Hardware: how it is built, what it mounts to, and what it is made of.</p>
+        <div class="cards">
+        <a class="card" href="presets/aircraft_blocks/index.html" data-find="uçak blokları aircraft_blocks">
+          <span class="card__t">Uçak Blokları</span>
+          <span class="card__n">aircraft_blocks</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/comms_antenna/index.html" data-find="anten ve yer i̇stasyonu comms_antenna">
+          <span class="card__t">Anten ve Yer İstasyonu</span>
+          <span class="card__n">comms_antenna</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/comms_link_budget/index.html" data-find="bağlantı bütçesi ve bantlar comms_link_budget">
+          <span class="card__t">Bağlantı Bütçesi ve Bantlar</span>
+          <span class="card__n">comms_link_budget</span>
+          <span class="card__m">static</span>
+        </a>
+        <a class="card" href="presets/craft_blocks/index.html" data-find="araç blokları craft_blocks">
+          <span class="card__t">Araç Blokları</span>
+          <span class="card__n">craft_blocks</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/exploded_view/index.html" data-find="exploded view exploded_view">
+          <span class="card__t">Exploded View</span>
+          <span class="card__n">exploded_view</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/habitat_blocks/index.html" data-find="habitat blocks habitat_blocks">
+          <span class="card__t">Habitat Blocks</span>
+          <span class="card__n">habitat_blocks</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/mechanism_lab/index.html" data-find="aksam laboratuvarı mechanism_lab">
+          <span class="card__t">Aksam Laboratuvarı</span>
+          <span class="card__n">mechanism_lab</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/physical_rigs/index.html" data-find="fiziksel aksam physical_rigs">
+          <span class="card__t">Fiziksel Aksam</span>
+          <span class="card__n">physical_rigs</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/satellite_integration/index.html" data-find="satellite integration satellite_integration">
+          <span class="card__t">Satellite Integration</span>
+          <span class="card__n">satellite_integration</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/site_plan/index.html" data-find="saha yerleşimi site_plan">
+          <span class="card__t">Saha Yerleşimi</span>
+          <span class="card__n">site_plan</span>
+          <span class="card__m">animated</span>
+        </a>
+        </div>
+      </section>
+      <section class="grp" id="worlds" data-group>
+        <h2>Worlds and environments <span class="grp__n">9</span></h2>
+        <p class="grp__b">Surfaces, atmospheres, skies and the light that falls on them.</p>
+        <div class="cards">
+        <a class="card" href="presets/aurora/index.html" data-find="aurora preset — emisyon çizgileri, yükseklik, aktivite aurora">
+          <span class="card__t">Aurora Preset — emisyon çizgileri, yükseklik, aktivite</span>
+          <span class="card__n">aurora</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/cinematic_space/index.html" data-find="sinematik uzay sahnesi cinematic_space">
+          <span class="card__t">Sinematik Uzay Sahnesi</span>
+          <span class="card__n">cinematic_space</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/cosmos_advanced/index.html" data-find="cosmos vanilla preset cosmos_advanced">
+          <span class="card__t">Cosmos Vanilla Preset</span>
+          <span class="card__n">cosmos_advanced</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/earth_advanced/index.html" data-find="terra vanilla preset earth_advanced">
+          <span class="card__t">Terra Vanilla Preset</span>
+          <span class="card__n">earth_advanced</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/jwst_explorer/index.html" data-find="jwst explorer preset jwst_explorer">
+          <span class="card__t">JWST Explorer Preset</span>
+          <span class="card__n">jwst_explorer</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/moon_advanced/index.html" data-find="lunaris vanilla preset moon_advanced">
+          <span class="card__t">Lunaris Vanilla Preset</span>
+          <span class="card__n">moon_advanced</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/planets_advanced/index.html" data-find="planetae vanilla preset planets_advanced">
+          <span class="card__t">Planetae Vanilla Preset</span>
+          <span class="card__n">planets_advanced</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/sun_advanced/index.html" data-find="sol vanilla preset sun_advanced">
+          <span class="card__t">Sol Vanilla Preset</span>
+          <span class="card__n">sun_advanced</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/terrain_blocks/index.html" data-find="arazi blokları terrain_blocks">
+          <span class="card__t">Arazi Blokları</span>
+          <span class="card__n">terrain_blocks</span>
+          <span class="card__m">animated</span>
+        </a>
+        </div>
+      </section>
+      <section class="grp" id="aero" data-group>
+        <h2>Aerodynamics <span class="grp__n">3</span></h2>
+        <p class="grp__b">Flow that can be drawn because it can be computed.</p>
+        <div class="cards">
+        <a class="card" href="presets/aero_airfoil_flow/index.html" data-find="kanat profili etrafında akım aero_airfoil_flow">
+          <span class="card__t">Kanat Profili Etrafında Akım</span>
+          <span class="card__n">aero_airfoil_flow</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/aero_shock_waves/index.html" data-find="şok ve genleşme dalgaları aero_shock_waves">
+          <span class="card__t">Şok ve Genleşme Dalgaları</span>
+          <span class="card__n">aero_shock_waves</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/aero_vortex_street/index.html" data-find="kármán vorteks caddesi aero_vortex_street">
+          <span class="card__t">Kármán Vorteks Caddesi</span>
+          <span class="card__n">aero_vortex_street</span>
+          <span class="card__m">animated</span>
+        </a>
+        </div>
+      </section>
+      <section class="grp" id="ml" data-group>
+        <h2>Machine learning <span class="grp__n">7</span></h2>
+        <p class="grp__b">Architectures and loss surfaces, shown rather than asserted.</p>
+        <div class="cards">
+        <a class="card" href="presets/ml_attention_flow/index.html" data-find="dikkat akışı preseti ml_attention_flow">
+          <span class="card__t">Dikkat Akışı Preseti</span>
+          <span class="card__n">ml_attention_flow</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/ml_conv_vision/index.html" data-find="evrişimli görü preseti ml_conv_vision">
+          <span class="card__t">Evrişimli Görü Preseti</span>
+          <span class="card__n">ml_conv_vision</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/ml_layer_blocks/index.html" data-find="katman blokları ml_layer_blocks">
+          <span class="card__t">Katman Blokları</span>
+          <span class="card__n">ml_layer_blocks</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/ml_loss_functions/index.html" data-find="kayıp fonksiyonları preseti ml_loss_functions">
+          <span class="card__t">Kayıp Fonksiyonları Preseti</span>
+          <span class="card__n">ml_loss_functions</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/ml_loss_landscape/index.html" data-find="ml loss landscape preset ml_loss_landscape">
+          <span class="card__t">ML Loss Landscape Preset</span>
+          <span class="card__n">ml_loss_landscape</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/ml_net_builder/index.html" data-find="mimari kurucu ml_net_builder">
+          <span class="card__t">Mimari Kurucu</span>
+          <span class="card__n">ml_net_builder</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/neural_network/index.html" data-find="neural network preset neural_network">
+          <span class="card__t">Neural Network Preset</span>
+          <span class="card__n">neural_network</span>
+          <span class="card__m">animated</span>
+        </a>
+        </div>
+      </section>
+      <section class="grp" id="craftwork" data-group>
+        <h2>Motion, light and layout <span class="grp__n">7</span></h2>
+        <p class="grp__b">The shared machinery: idle behaviour, physical light, equations, callouts, decks.</p>
+        <div class="cards">
+        <a class="card" href="presets/deck_starter/index.html" data-find="bilim sunumu başlangıcı deck_starter">
+          <span class="card__t">Bilim Sunumu Başlangıcı</span>
+          <span class="card__n">deck_starter</span>
+          <span class="card__m">static</span>
+        </a>
+        <a class="card" href="presets/equation_pen/index.html" data-find="equation writing preset equation_pen">
+          <span class="card__t">Equation Writing Preset</span>
+          <span class="card__n">equation_pen</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/equation_steps/index.html" data-find="equation steps preset — terim terim türetme equation_steps">
+          <span class="card__t">Equation Steps Preset — terim terim türetme</span>
+          <span class="card__n">equation_steps</span>
+          <span class="card__m">static</span>
+        </a>
+        <a class="card" href="presets/figure_callouts/index.html" data-find="figure callout preset — figür üzerinde adım adım anlatım figure_callouts">
+          <span class="card__t">Figure Callout Preset — figür üzerinde adım adım anlatım</span>
+          <span class="card__n">figure_callouts</span>
+          <span class="card__m">static</span>
+        </a>
+        <a class="card" href="presets/life_signs/index.html" data-find="nefes kütüphanesi life_signs">
+          <span class="card__t">Nefes Kütüphanesi</span>
+          <span class="card__n">life_signs</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/light_blocks/index.html" data-find="işık fiziği light_blocks">
+          <span class="card__t">Işık Fiziği</span>
+          <span class="card__n">light_blocks</span>
+          <span class="card__m">animated</span>
+        </a>
+        <a class="card" href="presets/timeline_tree/index.html" data-find="chronology timeline preset timeline_tree">
+          <span class="card__t">Chronology Timeline Preset</span>
+          <span class="card__n">timeline_tree</span>
+          <span class="card__m">static</span>
+        </a>
+        </div>
+      </section>
+      <p class="empty" id="empty">Nothing matches that. Clear the filter to see all 65 scenes.</p>
+    </main>
+
+    <footer>
+      65 scenes with a page &middot; 58 animated &middot; 18 skills &middot; deck of 88 slides.
+      Generated by <code>scripts/build-home.mjs</code> from <code>presets/registry.json</code>.
+    </footer>
+  </div>
+
+  <script>
+    /* Local filter. No network, no framework: the only thing it does is
+       hide cards whose declared search text does not contain the query,
+       and hide a group once every card inside it is hidden. */
+    var find = document.getElementById('find');
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
+    var groups = Array.prototype.slice.call(document.querySelectorAll('[data-group]'));
+    var empty = document.getElementById('empty');
+    find.addEventListener('input', function () {
+      var q = find.value.trim().toLowerCase();
+      document.body.classList.toggle('filtering', q.length > 0);
+      var shown = 0;
+      cards.forEach(function (c) {
+        var hit = !q || c.dataset.find.indexOf(q) !== -1;
+        c.hidden = !hit;
+        if (hit) shown++;
+      });
+      groups.forEach(function (g) {
+        g.hidden = !!q && !g.querySelector('.card:not([hidden])');
+      });
+      empty.style.display = q && shown === 0 ? 'block' : 'none';
+    });
+  </script>
+</body>
+</html>

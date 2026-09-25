@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fiziksel Aksam — physical_rigs</title>
+<script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+    font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
+  #stage { position: absolute; inset: 0; }
+  header { position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 18px 22px; }
+  h1 { margin: 0; font-size: 15px; letter-spacing: .14em; text-transform: uppercase; color: #c9a35c; font-weight: 600; }
+  h1 small { display: block; margin-top: 4px; font-size: 11px; letter-spacing: .05em;
+    text-transform: none; color: #6f7688; font-weight: 400; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  /* Hedef boyutu ≥ 40 px (ux-yasalari Y-02 Fitts): kumanda şeridi üstte, yer var. */
+  select, button { font: inherit; font-size: 12.5px; min-height: 40px; padding: 0 14px;
+    background: rgba(16, 19, 27, .85); color: #dfe3ea; border: 1px solid #2b303d; border-radius: 8px; cursor: pointer; }
+  button:hover, select:hover { border-color: #3b4252; }
+  label.chk { display: flex; gap: 7px; align-items: center; font-size: 12.5px; color: #b9bfcc;
+    background: rgba(16, 19, 27, .85); border: 1px solid #2b303d; border-radius: 8px; min-height: 40px; padding: 0 14px; cursor: pointer; }
+  label.rng { display: flex; gap: 8px; align-items: center; font-size: 12.5px; color: #b9bfcc;
+    background: rgba(16, 19, 27, .85); border: 1px solid #2b303d; border-radius: 8px; min-height: 40px; padding: 0 14px; }
+  input[type="range"] { width: 104px; accent-color: #c9a35c; }
+  #hud { position: absolute; left: 22px; bottom: 22px; z-index: 5; max-width: 430px;
+    font-size: 12px; line-height: 1.5; color: #b9bfcc;
+    background: rgba(10, 12, 18, .78); border: 1px solid #232837; border-radius: 10px; padding: 9px 13px; }
+  #hud b { color: #c9a35c; font-weight: 600; }
+  #hud .sayac { font-variant-numeric: tabular-nums; color: #dfe3ea; }
+  #perf { position: absolute; right: 22px; bottom: 22px; z-index: 5; font-size: 11px; color: #8a90a0;
+    background: rgba(10, 12, 18, .72); border: 1px solid #232837; border-radius: 10px; padding: 7px 11px;
+    font-variant-numeric: tabular-nums; }
+  #ipucu { position: absolute; left: 22px; top: 74px; z-index: 5; font-size: 11px; color: #6f7688; pointer-events: none; }
+  #stage { cursor: grab; } #stage.suruklu { cursor: grabbing; }
+</style>
+</head>
+<body>
+  <div id="stage"></div>
+  <header>
+    <h1>Fiziksel Aksam<small>physical_rigs · araziye bağlı rocker-bogie sürüşü, kesintisiz dönen zemin</small></h1>
+    <div class="controls">
+      <select id="kamera" title="Kamera">
+        <option value="takip" selected>Takip</option>
+        <option value="yan">Yan</option>
+        <option value="kus">Kuşbakışı</option>
+        <option value="teker">Tekerlek</option>
+      </select>
+      <label class="rng" title="Sürüş hızı (tasarım birimi/s)">Hız <input id="hiz" type="range" min="0" max="2" step="0.05" value="0.9"></label>
+      <label class="chk" title="Tekerlek izi"><input type="checkbox" id="iz" checked> İz</label>
+      <label class="chk" title="Eklem etiketleri"><input type="checkbox" id="etiket"> Etiket</label>
+      <button id="durdur">Duraklat</button>
+      <button id="tamEkran" title="Tam ekran (F)">⤢ Tam ekran</button>
+    </div>
+  </header>
+  <div id="ipucu">Sürükle: döndür · Tekerlek: yakınlaş · Sağ tık: kaydır</div>
+  <div id="hud"></div>
+  <div id="perf"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { createTreadmill, loopClosure } from './terrain-treadmill.mjs';
+import { buildTreadmillGround, buildTracks, contactShadow } from './ground-treadmill.mjs';
+import { createRig } from './rig-core.mjs';
+import { createRoverDrive, ROVER_GEOM } from './rover-drive.mjs';
+
+const sorgu = new URLSearchParams(location.search);
+const DT = 1 / 60, LOOP = 96;
+const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const disaAktarim = document.documentElement.dataset.export === 'true' || sorgu.get('export') === '1';
+const sabitT = sorgu.has('t') ? Math.max(0, parseFloat(sorgu.get('t')) || 0) : null;
+const donmusMod = azaltilmis || disaAktarim || sabitT !== null;
+
+/* ---------- araç kütüphanesi: YUMUŞAK bağımlılık (blok sözleşmesi) ---------- */
+let buildRover = null, buildMarsHelicopter = null, WHEEL_OUTER_RADIUS = ROVER_GEOM.wheelRadius;
+try {
+  const cb = await import('../craft_blocks/craft-blocks.mjs');
+  buildRover = cb.buildRover; buildMarsHelicopter = cb.buildMarsHelicopter;
+  WHEEL_OUTER_RADIUS = cb.WHEEL_OUTER_RADIUS ?? WHEEL_OUTER_RADIUS;
+} catch (e) { console.warn('craft_blocks yüklenemedi; yer tutucu araç.', e); }
+let OrbitControls = null;
+try { ({ OrbitControls } = await import('../moon_advanced/vendor/controls/OrbitControls.js')); } catch { /* sabit kamera */ }
+
+/* ---------- sahne ---------- */
+const host = document.querySelector('#stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));   // DPR sınırı (sözleşme)
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+host.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0c12);
+scene.fog = new THREE.FogExp2(0x1b1a20, 0.012);
+const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 400);
+
+/* Üç noktalı düzen: anahtar ışık kameraların BAKTIĞI yüzleri aydınlatır
+   (takip +Z, yan +X) — ilk denemede ışık −X'teydi ve yan kamerada gövde
+   düz gri bir levha olarak okunuyordu (ekran görüntüsüyle bulundu). */
+scene.add(new THREE.HemisphereLight(0xa8aeba, 0x291d1c, 1.25));
+const anahtar = new THREE.DirectionalLight(0xf3c49c, 2.45);
+anahtar.position.set(11, 15, 12);
+anahtar.castShadow = true;
+anahtar.shadow.mapSize.set(2048, 2048);
+anahtar.shadow.camera.left = -7; anahtar.shadow.camera.right = 7;
+anahtar.shadow.camera.top = 7; anahtar.shadow.camera.bottom = -7;
+anahtar.shadow.camera.near = 6; anahtar.shadow.camera.far = 46;
+anahtar.shadow.bias = -0.0006;
+scene.add(anahtar, anahtar.target);
+const jant = new THREE.DirectionalLight(0x9ca7bc, 1.05);   // arka jant ışığı: siluet ayrışsın
+jant.position.set(-9, 7, -13);
+scene.add(jant);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+
+/* ---------- araç + ölçek ---------- */
+function yerTutucu() {
+  const g = new THREE.Group();
+  const inner = new THREE.Group();
+  inner.add(new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.44, 0.26),
+    new THREE.MeshStandardMaterial({ color: 0x23252c, roughness: .6, metalness: .3 })));
+  inner.scale.setScalar(2.4 / 0.9);
+  g.add(inner);
+  g.userData = { kind: 'rover', parts: 1 };
+  return g;
+}
+const rover = buildRover ? buildRover({ scale: 2.4, arm: true,
+  palette: { body: 0xbcb6aa, panel: 0x2a3035, metal: 0xaab0ad, accent: 0xa87858 } }) : yerTutucu();
+const OLCEK = rover.children[0].scale.x;                       // tasarım birimi → dünya
+const rWorld = WHEEL_OUTER_RADIUS * OLCEK;                     // gerçek yuvarlanma yarıçapı (dünya)
+
+/* ---------- döngü kapanışı: tekerlek TAM SAYI devir atar ---------- */
+const kapanis = loopClosure({ wheelRadius: rWorld, revolutions: 28, loopSeconds: LOOP });
+const alan = createTreadmill({ period: kapanis.period, seed: 20260923, lane: 0, laneHalfWidth: 1.5 });
+const FLOOR = 0;
+const zemin = buildTreadmillGround(THREE, alan, { width: 46, tiles: 5, floor: FLOOR,
+  tile: kapanis.tile, palette: { base: [74, 58, 54], rock: 0x6f6058 }, rocks: 380, lane: 0, laneHalfWidth: 1.4 });
+scene.add(zemin.group);
+
+/* ---------- gezgin yerleşimi (eksen çevirisi) ----------
+   craft blokları +X ileri / +Z yukarı kurar; sahnenin yukarısı +Y.
+   stand: craft +Z → dünya +Y.  rig: craft +X → dünya −Z (araç uzağa bakar).
+   tilt: çözülen yunuslama/yalpa (dünya X ve Z eksenleri). */
+const stand = new THREE.Group(); stand.rotation.x = -Math.PI / 2; stand.add(rover);
+const rig3 = new THREE.Group(); rig3.rotation.y = Math.PI / 2; rig3.add(stand);
+const tilt = new THREE.Group(); tilt.add(rig3); scene.add(tilt);
+rover.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+
+const rig = rover.userData.rig ? createRig(rover.userData.rig, { fps: 60 }) : null;
+const drive = createRoverDrive({ wheelRadius: WHEEL_OUTER_RADIUS });
+
+/* AKS DÜZLEMİ ÖLÇÜLÜR, TAHMİN EDİLMEZ.
+   finalize() aracı kendi sınırlayıcı kutusunun MERKEZİNE oturtur; kök
+   orijini ne şasi tabanıdır ne de aks düzlemi. Sürüş çözümü ise "aks
+   düzlemi zeminden r kadar yukarıda" der. İkisi arasındaki sabit fark
+   nötr pozda BİR KEZ ölçülür — elle yazılsaydı kurucudaki her ölçü
+   değişikliğinde gezgin sessizce zemine gömülürdü. */
+let AKS_Y0 = 0;
+{
+  tilt.position.set(0, 0, 0); tilt.rotation.set(0, 0, 0);
+  tilt.updateMatrixWorld(true);
+  const v = new THREE.Vector3(); let toplam = 0, n = 0;
+  for (const ad of ['FL', 'ML', 'RL', 'FR', 'MR', 'RR']) {
+    const w = rover.getObjectByName(`wheel${ad}`); if (!w) continue;
+    w.getWorldPosition(v); toplam += v.y; n++;
+  }
+  AKS_Y0 = n ? toplam / n : 0;
+}
+
+/* ---------- helikopter ---------- */
+let heli = null, heliRig = null, heliTilt = null, tarama = null, heliGolge = null;
+if (buildMarsHelicopter) {
+  heli = buildMarsHelicopter({ scale: 1.15, palette: { body: 0xa7a2a0, panel: 0x333840, metal: 0xc9c6bf, accent: 0xdfa473 } });
+  heli.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  const hs = new THREE.Group(); hs.rotation.x = -Math.PI / 2; hs.add(heli);
+  heliTilt = new THREE.Group(); heliTilt.rotation.y = Math.PI / 2; heliTilt.add(hs);
+  scene.add(heliTilt);
+  heliRig = heli.userData.rig ? createRig(heli.userData.rig, { fps: 60 }) : null;
+  tarama = new THREE.SpotLight(0xbfe4ee, 46, 9, 0.30, 0.66, 2);
+  heliTilt.add(tarama);
+  scene.add(tarama.target);
+  heliGolge = contactShadow(THREE, { size: 2.2, opacity: 0.22 });
+  scene.add(heliGolge);
+}
+
+/* ---------- iz ---------- */
+const izler = buildTracks(THREE, { segments: 84, length: 30, halfWidth: 0.115 * OLCEK,
+  spacing: ROVER_GEOM.halfTrack * OLCEK, tile: kapanis.tile / 6 });
+scene.add(izler.group);
+
+/* ---------- sürüş durumu ---------- */
+let t = 0, mesafe = 0, izAcik = true;
+let vHedef = parseFloat(sorgu.get('hiz'));
+if (!Number.isFinite(vHedef)) vHedef = 0.9;                    // tasarım birimi/s
+const ROVER_X = 0, ROVER_Z = 0;
+/* yanal salınım: sürücünün rotayı düzeltmesi — periyodu LOOP'u tam böler */
+const yanal = (zaman) => Math.sin(Math.PI * 2 * zaman / 24) * 0.09 * OLCEK;
+
+/** Dünya noktasında zemin yüksekliği (zemin grubu ötelenmiş olduğu için
+    alan koordinatı wz − ofset). */
+const zeminOfset = () => zemin.group.position.z;
+const dunyaYukseklik = (wx, wz) => FLOOR + alan.height(wx, wz - zeminOfset());
+
+/** Gezgin yerel (lx: ileri, ly: yanal) → dünya; sonra tasarım birimine çevir. */
+function ornekle(lx, ly) {
+  const wx = roverX - ly * OLCEK;
+  const wz = ROVER_Z - lx * OLCEK;
+  return (dunyaYukseklik(wx, wz) - FLOOR) / OLCEK;
+}
+let roverX = ROVER_X;
+
+function adim(dt) {
+  t = (t + dt) % LOOP;
+  const v = vHedef;
+  mesafe += v * OLCEK * dt;                                    // dünya birimi yol
+  zemin.advance(mesafe);
+  roverX = ROVER_X + yanal(t);
+
+  const durum = rig ? drive.update(rig, { sample: ornekle, v, dt, arcRadius: Infinity }) : null;
+  if (durum) {
+    tilt.position.set(roverX, FLOOR + durum.height * OLCEK - AKS_Y0, ROVER_Z);
+    tilt.rotation.x = -durum.pitch;
+    tilt.rotation.z = -durum.roll;
+    rig.advance(dt);
+    rig.apply(rover);
+    son = durum;
+  }
+
+  /* iz: GEÇMİŞ yol — lag kadar geride, o andaki yanal düzeltmeyle */
+  if (izAcik) {
+    const hiz = Math.max(1e-4, v * OLCEK);
+    /* iz ARKA tekerleğin altından başlar (gövde ortasından değil): önde
+       başlayan bir iz, aracın kendi izine bastığı izlenimi verir. */
+    const arkaZ = -ROVER_GEOM.wheelX.R * OLCEK;
+    izler.update((lag) => ({ x: ROVER_X + yanal(t - lag / hiz), z: ROVER_Z + arkaZ + lag }), dunyaYukseklik);
+  }
+  izler.group.visible = izAcik;
+
+  if (heliTilt) {
+    const hx = -2.4 + Math.sin(Math.PI * 2 * t / 16) * 0.55;
+    const hy = 2.6 + Math.sin(Math.PI * 2 * t / 8) * 0.12;
+    const hz = -1.6 + Math.sin(Math.PI * 2 * t / 24) * 0.5;
+    heliTilt.position.set(hx, hy, hz);
+    heliTilt.rotation.z = Math.sin(Math.PI * 2 * t / 16) * 0.05;
+    if (heliRig) { heliRig.set('rotor.lower', 2400); heliRig.set('rotor.upper', 2400); heliRig.advance(dt); heliRig.apply(heli); }
+    const sx = hx + Math.sin(Math.PI * 2 * t / 12) * 1.2;
+    const sz = hz + 0.5 + Math.cos(Math.PI * 2 * t / 16) * 1.0;
+    tarama.target.position.set(sx, dunyaYukseklik(sx, sz) + 0.03, sz);
+    heliGolge.position.set(hx, dunyaYukseklik(hx, hz) + 0.02, hz);
+  }
+  anahtar.target.position.set(roverX, FLOOR, ROVER_Z);
+}
+let son = null;
+
+/* ---------- kamera ---------- */
+let controls = null, kameraKirli = false;
+if (OrbitControls) {
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.minDistance = 1.2; controls.maxDistance = 40;
+  controls.maxPolarAngle = Math.PI / 2 - 0.03;
+  controls.maxTargetRadius = 12;
+  controls.addEventListener('start', () => host.classList.add('suruklu'));
+  controls.addEventListener('end', () => host.classList.remove('suruklu'));
+  controls.addEventListener('change', () => { kameraKirli = true; kareIste(); });
+}
+const KADRAJ = {
+  takip: () => ({ poz: [roverX + 2.0, 2.3, 5.4], hedef: [roverX, 0.7, -0.6] }),
+  yan:   () => ({ poz: [roverX + 6.4, 1.5, 0.2], hedef: [roverX, 0.55, -0.2] }),
+  kus:   () => ({ poz: [roverX + 3.2, 8.4, 6.0], hedef: [roverX, 0, -1.6] }),
+  teker: () => ({ poz: [roverX + 1.35, 0.72, 1.55], hedef: [roverX + 0.15, 0.36, 0.35] }),
+};
+const kameraSec = document.querySelector('#kamera');
+if (KADRAJ[sorgu.get('kamera')]) kameraSec.value = sorgu.get('kamera');
+function kamerayiKur() {
+  const k = KADRAJ[kameraSec.value]();
+  camera.position.set(...k.poz);
+  if (controls) { controls.target.set(...k.hedef); controls.update(); } else camera.lookAt(...k.hedef);
+}
+kameraSec.addEventListener('change', () => { kamerayiKur(); ciz(); kareIste(); });
+
+/* ---------- etiketler / HUD ---------- */
+const etiketKutu = document.querySelector('#etiket');
+etiketKutu.checked = sorgu.get('etiket') === '1';
+const hud = document.querySelector('#hud'), perf = document.querySelector('#perf');
+const fmt = (v, n = 2) => (Math.abs(v) < 5e-3 ? 0 : v).toFixed(n);
+function hudYaz() {
+  if (!son) { hud.textContent = 'craft_blocks yüklenemedi — sürüş devre dışı, zemin akıyor.'; return; }
+  const omegaDev = son.omega * 60 / (Math.PI * 2);
+  hud.innerHTML = `<b>Rocker-bogie sürüşü</b> · araziye bağlı, tek geçişli çözüm<br>`
+    + `<span class="sayac">t ${fmt(t, 1)} / ${LOOP} s · yol ${fmt(mesafe, 2)} · odometre ${fmt(son.odometer * OLCEK, 2)}</span><br>`
+    + `<span class="sayac">yunuslama ${fmt(son.pitch * 180 / Math.PI, 1)}° · yalpa ${fmt(son.roll * 180 / Math.PI, 1)}° · diferansiyel ${fmt(son.differential * 180 / Math.PI, 1)}°</span><br>`
+    + `<span class="sayac">rocker L/R ${fmt(son.rocker.L * 180 / Math.PI, 1)}° / ${fmt(son.rocker.R * 180 / Math.PI, 1)}° · bogie ${fmt(son.bogie.L * 180 / Math.PI, 1)}° / ${fmt(son.bogie.R * 180 / Math.PI, 1)}°</span><br>`
+    + `<span class="sayac">eğim ${fmt(son.slopeRad * 180 / Math.PI, 1)}° · kayma ${(son.slip * 100).toFixed(0)}% · tekerlek ${fmt(omegaDev, 1)} dev/dk${son.stalled ? ' · <b>PATİNAJ</b>' : ''}</span><br>`
+    + `<span style="color:#6f7688">Yuvarlanma yarıçapı çıta dış köşesinden (${fmt(WHEEL_OUTER_RADIUS, 3)} tasarım birimi); döngü ${kapanis.revolutions} tam devirde kapanır.</span>`;
+}
+let etiketKat = null;
+const _v = new THREE.Vector3();
+const ETIKET = { rockerL: 'rocker', bogieL: 'bogie', differential: 'diferansiyel',
+  wheelFL: 'tekerlek', steerFL: 'direksiyon', mastTilt: 'direk', hgaEl: 'çanak' };
+function etiketleriCiz() {
+  if (!etiketKat) { etiketKat = document.createElement('div');
+    etiketKat.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:4'; host.appendChild(etiketKat); }
+  if (!etiketKutu.checked || !rig) { if (etiketKat.childElementCount) etiketKat.replaceChildren(); return; }
+  const r = renderer.domElement.getBoundingClientRect(), parcalar = [];
+  for (const [node, ad] of Object.entries(ETIKET)) {
+    const o = rover.getObjectByName(node); if (!o) continue;
+    o.getWorldPosition(_v).project(camera);
+    if (_v.z > 1 || Math.abs(_v.x) > 1.05 || Math.abs(_v.y) > 1.05) continue;
+    const el = document.createElement('div');
+    el.style.cssText = 'position:absolute;transform:translate(-50%,-140%);white-space:nowrap;font-size:11px;'
+      + 'color:#dfe3ea;background:rgba(10,12,18,.8);border:1px solid #2b303d;border-radius:6px;padding:2px 7px';
+    el.style.left = `${Math.round((_v.x * .5 + .5) * r.width)}px`;
+    el.style.top = `${Math.round((-_v.y * .5 + .5) * r.height)}px`;
+    el.textContent = ad;
+    parcalar.push(el);
+  }
+  etiketKat.replaceChildren(...parcalar);
+}
+
+/* ---------- çizim döngüsü ---------- */
+function boyutla() {
+  const w = host.clientWidth || 800, h = host.clientHeight || 600;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+function ciz() {
+  renderer.render(scene, camera);
+  kameraKirli = false;
+  hudYaz(); etiketleriCiz();
+  if (perfAcik) perf.textContent = `çizim çağrısı ${renderer.info.render.calls} · üçgen ${renderer.info.render.triangles.toLocaleString('tr')}`
+    + ` · zemin döşemesi ${zemin.group.children.length} · periyot ${kapanis.period.toFixed(2)}`;
+}
+const perfAcik = sorgu.get('perf') === '1' || true;
+let istekId = 0, duraklat = donmusMod;
+function kareIste() { if (!istekId && !document.hidden) istekId = requestAnimationFrame(dongu); }
+function dongu() {
+  istekId = 0;
+  if (document.hidden) return;
+  const akiyor = !duraklat;
+  const kameraDegisti = controls ? controls.update() : false;
+  if (akiyor) adim(DT);
+  if (akiyor || kameraDegisti || kameraKirli) ciz();
+  if (akiyor || kameraDegisti) kareIste();
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) kareIste(); });
+
+const durButon = document.querySelector('#durdur');
+function duraklatYaz() { durButon.textContent = duraklat ? 'Devam' : 'Duraklat'; }
+durButon.addEventListener('click', () => { duraklat = !duraklat; duraklatYaz(); kareIste(); ciz(); });
+document.querySelector('#hiz').addEventListener('input', (e) => { vHedef = parseFloat(e.target.value); ciz(); });
+document.querySelector('#hiz').value = String(vHedef);
+document.querySelector('#iz').addEventListener('change', (e) => { izAcik = e.target.checked; adim(0); ciz(); });
+etiketKutu.addEventListener('change', () => ciz());
+document.querySelector('#tamEkran').addEventListener('click', () => {
+  if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.();
+});
+addEventListener('keydown', (e) => {
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+  if (e.key === ' ') { e.preventDefault(); durButon.click(); }
+  if (e.key.toLowerCase() === 'f') document.querySelector('#tamEkran').click();
+});
+addEventListener('resize', () => { boyutla(); ciz(); });
+
+/* ---------- başlat ---------- */
+boyutla();
+adim(0);
+kamerayiKur();
+/* Sabit-zaman tablosu: t=0'dan 1/60 sn adımlarla deterministik sarma
+   (fx ve terrain ile aynı sözleşme). */
+if (sabitT !== null) { const n = Math.round(sabitT / DT); for (let k = 0; k < n; k++) adim(DT); }
+duraklatYaz();
+ciz();
+kareIste();
+
+window.__rigs = {
+  scene, camera, renderer, rover, rig, drive, alan, zemin, izler, controls,
+  advance(saniye) { const n = Math.max(1, Math.round(saniye / DT)); for (let k = 0; k < n; k++) adim(DT); ciz(); },
+  durum() { return { t, mesafe, olcek: OLCEK, wheelRadius: WHEEL_OUTER_RADIUS, kapanis, son }; },
+  /** Doğrulama: her tekerleğin ALTI ile zemin arasındaki artık (dünya birimi). */
+  temasArtigi() {
+    const out = {};
+    for (const ad of ['FL', 'ML', 'RL', 'FR', 'MR', 'RR']) {
+      const w = rover.getObjectByName(`wheel${ad}`); if (!w) continue;
+      w.getWorldPosition(_v);
+      out[ad] = +(_v.y - rWorld - dunyaYukseklik(_v.x, _v.z)).toFixed(4);
+    }
+    return out;
+  },
+  kamera(id) { if (KADRAJ[id]) { kameraSec.value = id; kamerayiKur(); ciz(); } },
+};
+window.dispatchEvent(new CustomEvent('rigs:hazir', { detail: window.__rigs }));
+</script>
+</body>
+</html>

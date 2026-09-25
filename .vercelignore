@@ -1,0 +1,27 @@
+# Not served: nothing under these paths is fetched by a page at runtime.
+# Verified by grepping every .html and .mjs under presets/ and demo/ for
+# references to them - the only cross-directory reference the deck makes is
+# ../presets. Excluding them keeps the deployment to what is actually
+# reachable from index.html.
+docs/
+skills/
+scripts/
+tasks/
+.claude/
+.github/
+PLANS/
+
+# Local development helpers, not part of the site.
+demo/serve.py
+demo/serve.ps1
+demo/*.cmd
+
+# Next.js project files for the React source of the moon scene. Its
+# public/lunaris textures and components/moon_react_source.css ARE served
+# (presets/core/lab-three.mjs and presets/aurora/index.html reference them),
+# so only the build scaffolding is dropped here - not the assets.
+presets/moon_react_source/app/
+presets/moon_react_source/package.json
+presets/moon_react_source/package-lock.json
+presets/moon_react_source/tsconfig.json
+presets/moon_react_source/next.config.mjs

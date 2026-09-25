@@ -1,0 +1,19 @@
+{
+  "preset": "mechanism_lab",
+  "motions": [
+    {
+      "id": "mechanism-sweep",
+      "type": "focus",
+      "truthLevel": "illustrative",
+      "purpose": "Bir aksamın mekaniğini İNCELETMEK: seçilen mekanizmanın eklemleri sınırdan sınıra süpürülür, kinematik iskelet (pivot küreleri, dönme ekseni okları, bağlantı çizgisi) ve HAREKET ZARFI (sürülen düğümün en uç parçasının taradığı gerçek yol) üstüne çizilir; parçalar montaj doğrultusunda patlatılabilir. Amaç gösteri değil okuma: hangi eklem, hangi eksende, hangi sınırda, hangi hızla ve neden.",
+      "loop": true,
+      "durationMs": 6000,
+      "pauseControl": "Süpür/Durdur düğmesi (Boşluk) taramayı durdurur; her eklemin kendi sürgüsü elle sürülebilir ve sürgüye dokunmak taramayı otomatik durdurur.",
+      "reducedMotion": "prefers-reduced-motion: reduce altında tarama hiç başlamaz: mekanizma sıfır pozunda, iskelet ve zarf çizili olarak tek kare gösterilir.",
+      "exportState": "?mekanizma=<id> seçer, ?t=<sn> tarama fazını dondurur, ?supur=0 taramayı kapatır, ?export=1 donmuş kare. Kimlikler: physical_rigs/mechanism-index.mjs (16 mekanizma).",
+      "accessibility": "Hareket kapatılabilir ve elle sürülebilir; durduğunda künye (bağıntı, neden, eklem tablosu, sınırlar) tamamen okunur kalır. Kumandalar yerel form öğeleridir, hedef boyutu ≥ 40 px. Eksen renkleri (x kırmızı, y yeşil, z mavi) tek başına bilgi taşımaz — aynı bilgi tabloda yazılıdır.",
+      "limitations": "Kinematik gösteridir: kuvvet, moment, sürtünme ve esneme YOKTUR; zarf yalnız sürülen düğümün EN UÇ parçasının yolunu çizer, süpürülmüş hacmin tamamını değil. Patlatma yönü parçanın kapsam merkezine göre konumundan türetilir (montaj doğrultusu tahminidir, üretim sırası değil). Serbest dönen eklemler (tekerlek, rotor) için sınır olmadığından zarf çizilmez. Bağıntı ve 'neden' metinleri küratörlüdür; her birinin yanında onu sınayan doğrulama adımı yazılıdır.",
+      "notes": "Dizin: presets/physical_rigs/mechanism-index.mjs — eklem kümeleri, tür, yöneten bağıntı, mühendislik gerekçesi ve KANIT (hangi doğrulama adımı sınıyor). Serbestlik derecesi elle yazılmaz, rig haritasından türetilir (iki eksenli gimbal 2, diğerleri 1). Araçlar craft_blocks'tan YUMUŞAK import edilir ve tür başına bir kez kurulup önbelleğe alınır (görünür geometri yeniden kurulmaz). Eklemler rig-core ile sürülür; jump() dinamiksiz yazar, bu yüzden sürgü ile zarf birebir aynı pozu verir. Doğrulama: scripts/validate-rigs.mjs §11 (dizindeki her eklem adının kurucuda üretildiği, künye tamlığı, DOF türetimi)."
+    }
+  ]
+}
