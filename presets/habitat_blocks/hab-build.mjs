@@ -11,6 +11,7 @@
 import { PARTS, SUBSYSTEMS, partById, envAllows, runEndpoints } from './hab-parts.mjs';
 import { cylGeoZ, cylGeoX, coneGeoZ, latheX } from '../core/geometry-axis.mjs';
 import * as D from './hab-detail.mjs';
+import { yuzeyAlbedoRGB } from '../core/scene-lighting.mjs';
 import { planRun, buildRun } from './routing.mjs';
 
 const TAU = Math.PI * 2;
@@ -19,7 +20,9 @@ export function habMaterials(THREE, tk = {}) {
   const std = (c, r, m, ek = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m, ...ek });
   /* Ayrıntı kiti kendi malzeme ailesini getirir: korkuluk sarısı, conta
      siyahı, cam ve bakır üs boyunca AYNI olsun diye tek yerde kurulur. */
-  const kit = D.detailMaterials(THREE);
+  /* Tokens are FORWARDED to the kit. They were not, so a scene that asked
+     for lunar-grey regolith got the default brown and nothing said so. */
+  const kit = D.detailMaterials(THREE, tk);
   return {
     kit,
     basincli: std(tk.basincli ?? 0xd8d4cc, .52, .28),
@@ -35,7 +38,10 @@ export function habMaterials(THREE, tk = {}) {
     iletisim: std(tk.iletisim ?? 0xb4a8c9, .42, .5),
     koyu: std(0x3a3f47, .8, .25),
     cam: std(0x2a3c4a, .15, .1, { transparent: true, opacity: .45 }),
-    regolit: std(0x6b5a48, .96, .02),
+    /* The one material whose colour is a MEASUREMENT: it is the surface
+       albedo, and it differs by a factor of two between the Moon and Mars.
+       It was hardcoded, so both bodies came out the same brown. */
+    regolit: std(tk.regolit ?? 0x6b5a48, .96, .02),
   };
 }
 
@@ -132,11 +138,29 @@ function govde(THREE, p, M, dok) {
       zeminMat.bumpScale = 0.35;
       const m = ekle(new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), zeminMat));
       m.castShadow = false;
-      /* yürüyüş yolu: sıkıştırılmış şeritler zemini okunur kılar */
-      for (const [ox, oy, w, h] of [[0, 0, sx * 0.72, 1.4], [3.2, 0, 1.4, sy * 0.66]]) {
-        const y = ekle(new THREE.Mesh(new THREE.BoxGeometry(w, h, sz * 0.4),
-          new THREE.MeshStandardMaterial({ color: 0x7d6b56, roughness: .98, metalness: .02 })));
+      /* Walkways are COMPACTED regolith, so they are the same material a
+         little brighter and a little smoother - not a separate brown. */
+      const yolMat = zeminMat.clone();
+      yolMat.color = zeminMat.color.clone().multiplyScalar(1.28);
+      yolMat.roughness = 0.9;
+      for (const [ox, oy, w, hh] of [[0, 0, sx * 0.72, 1.4], [3.2, 0, 1.4, sy * 0.66]]) {
+        const y = ekle(new THREE.Mesh(new THREE.BoxGeometry(w, hh, sz * 0.4), yolMat));
         y.position.set(ox, oy, sz * 0.5); y.castShadow = false;
+      }
+      /* Bearing plates. A module does not stand on loose regolith: the
+         load goes through plates that were levelled and compacted first,
+         and step 1 of the build order exists to put them there. */
+      for (const [px, py] of [[-4.4, -2.6], [-4.4, 2.6], [1.2, -3.2], [1.2, 3.2], [5.0, 0]]) {
+        const pl = ekle(new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.2, sz * 0.7), M.metal));
+        pl.position.set(px, py, sz * 0.55);
+        pl.receiveShadow = true; pl.castShadow = false;
+        /* Levelling screws, three per plate: the surface is never flat. */
+        for (let i = 0; i < 3; i++) {
+          const a = i * TAU / 3 + 0.5;
+          const v = ekle(new THREE.Mesh(cylGeoZ(0.09, 0.09, sz * 0.5, 8), M.koyu));
+          v.position.set(px + Math.cos(a) * 0.82, py + Math.sin(a) * 0.82, sz * 0.5);
+          v.castShadow = false;
+        }
       }
       break;
     }
@@ -567,23 +591,76 @@ function govde(THREE, p, M, dok) {
     }
     case 'direk': {
       ekle(new THREE.Mesh(cylGeoZ(sx * 0.34, sx * 0.5, sz, 10), mat));
+      /* Base flange and its hold-down bolts: the mast is the tallest thing
+         on the site and everything it carries lands here. */
+      const taban = ekle(new THREE.Mesh(cylGeoZ(sx * 0.95, sx * 0.95, sz * 0.02, 16), M.metal));
+      taban.position.z = -sz / 2;
+      for (let i = 0; i < 6; i++) {
+        const a = i * TAU / 6;
+        const civ = ekle(new THREE.Mesh(cylGeoZ(sx * 0.07, sx * 0.07, sz * 0.03, 6), M.koyu));
+        civ.position.set(Math.cos(a) * sx * 0.72, Math.sin(a) * sx * 0.72, -sz / 2 + sz * 0.012);
+      }
+      /* Guys run from near the top to anchors ON THE GROUND. They used to
+         be short stubs near the base, placed with rotation.set(sin, -cos, 0)
+         - which composes Z first and does not aim at anything. Built from
+         the two endpoints instead, so they land where the anchor is. */
+      const tepe = new THREE.Vector3(0, 0, sz * 0.38);
       for (let i = 0; i < 3; i++) {
         const a = i * TAU / 3;
-        const ger = ekle(new THREE.Mesh(cylGeoZ(0.012, 0.012, sz * 0.92, 5), M.koyu));
-        ger.position.set(Math.cos(a) * sz * 0.16, Math.sin(a) * sz * 0.16, -sz * 0.04);
-        ger.rotation.set(Math.sin(a) * 0.32, -Math.cos(a) * 0.32, 0);
+        const ankraj = new THREE.Vector3(Math.cos(a) * sz * 0.42, Math.sin(a) * sz * 0.42, -sz / 2);
+        const boy = tepe.distanceTo(ankraj);
+        const ger = ekle(new THREE.Mesh(cylGeoZ(0.012, 0.012, boy, 5), M.koyu));
+        ger.position.copy(tepe).add(ankraj).multiplyScalar(0.5);
+        ger.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1),
+          ankraj.clone().sub(tepe).normalize());
+        /* The anchor itself: a plate pinned into the regolith. */
+        const pl = ekle(new THREE.Mesh(new THREE.BoxGeometry(sx * 0.6, sx * 0.6, sz * 0.015), M.metal));
+        pl.position.copy(ankraj);
+        pl.position.z += sz * 0.008;
       }
       break;
     }
     case 'canak': {
       const r = sx / 2;
+      const kapMat = mat.clone();
+      kapMat.side = THREE.DoubleSide;
       const c = ekle(new THREE.Mesh(
-        new THREE.SphereGeometry(r * 1.5, 30, 16, 0, TAU, 0, Math.asin(r / (r * 1.5))), mat));
+        new THREE.SphereGeometry(r * 1.5, 30, 16, 0, TAU, 0, Math.asin(r / (r * 1.5))), kapMat));
       c.rotation.x = Math.PI;
       c.position.z = r * 0.62;
-      const bes = ekle(new THREE.Mesh(cylGeoZ(r * 0.09, r * 0.09, r * 0.62, 10), M.koyu));
+      /* Rim. A dish without one is a bowl: the edge is a rolled stiffener
+         and it is the part that survives being leaned on. */
+      const kenar = ekle(new THREE.Mesh(new THREE.TorusGeometry(r, r * 0.045, 8, 36), M.metal));
+      kenar.position.z = r * 0.62 - Math.sqrt(Math.max(0, (r * 1.5) ** 2 - r ** 2)) + r * 1.5;
+      /* Back ribs: a thin reflector holds its shape because of these, and
+         they are what you actually see from behind. */
+      for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 6;
+        const rib = ekle(new THREE.Mesh(new THREE.BoxGeometry(r * 1.9, r * 0.05, r * 0.11), M.koyu));
+        rib.position.z = r * 0.3;
+        rib.rotation.z = a;
+      }
+      /* Feed on a tripod, not on a floating stalk. */
+      const bes = ekle(new THREE.Mesh(cylGeoZ(r * 0.05, r * 0.05, r * 0.62, 10), M.koyu));
+      bes.position.z = r * 0.34;
+      for (let i = 0; i < 3; i++) {
+        const a = i * TAU / 3;
+        const p0 = new THREE.Vector3(Math.cos(a) * r * 0.86, Math.sin(a) * r * 0.86, r * 0.18);
+        const p1 = new THREE.Vector3(0, 0, r * 0.62);
+        const len = p0.distanceTo(p1);
+        const ayak = ekle(new THREE.Mesh(cylGeoZ(r * 0.022, r * 0.022, len, 6), M.metal));
+        ayak.position.copy(p0).add(p1).multiplyScalar(0.5);
+        ayak.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1),
+          p1.clone().sub(p0).normalize());
+      }
       const alici = ekle(new THREE.Mesh(cylGeoZ(r * 0.13, r * 0.09, r * 0.24, 12), M.koyu));
       alici.position.z = r * 0.7;
+      /* Two-axis mount: a dish that cannot be pointed is a decoration. */
+      const boyun = ekle(new THREE.Mesh(cylGeoZ(r * 0.1, r * 0.13, r * 0.3, 12), M.metal));
+      boyun.position.z = -r * 0.1;
+      const kardan = ekle(new THREE.Mesh(new THREE.TorusGeometry(r * 0.17, r * 0.04, 6, 18), M.koyu));
+      kardan.position.z = r * 0.05;
+      kardan.rotation.y = Math.PI / 2;
       break;
     }
     case 'ruzgar': {
@@ -657,7 +734,13 @@ function govde(THREE, p, M, dok) {
  * için ek bir adım gerekmez.
  */
 export function buildHabitat(THREE, { env = 'mars', tema = {} } = {}) {
-  const M = habMaterials(THREE, tema);
+  /* The ground is painted with the albedo the lighting reflects off, so the
+     two cannot disagree: 0.13 and nearly neutral on the Moon, 0.25 and
+     strongly red on Mars. Before this both bodies were the same brown. */
+  const yerRGB = yuzeyAlbedoRGB(env === 'moon' ? 'vacuum' : 'mars');
+  const M = habMaterials(THREE, {
+    regolit: new THREE.Color(yerRGB[0], yerRGB[1], yerRGB[2]).getHex(), ...tema,
+  });
   const dok = { zar: zarDokusu(THREE), hucre: hucreDokusu(THREE), regolit: D.regolitKabartma(THREE) };
   const root = new THREE.Group();
   root.name = 'habitat';

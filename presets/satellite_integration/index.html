@@ -103,6 +103,7 @@
 
   <script type="module">
     import * as THREE from 'three';
+    import { sceneLighting } from '../core/scene-lighting.mjs';
     import { buildSatellite } from './sat-build.mjs';
     import { PARTS, STEPS, SUBSYSTEMS, INTERFACES, massBudget, centerOfMass, mountChain, partById, partMass, describe } from './sat-parts.mjs';
 
@@ -130,13 +131,21 @@
     const camera = new THREE.PerspectiveCamera(38, 1, .05, 200);
     const dunya = new THREE.Group(); scene.add(dunya);
 
-    scene.add(new THREE.HemisphereLight(0x8ea3c4, 0x1a1c22, 1.1));
-    const key = new THREE.DirectionalLight(0xfff2e2, 2.6); key.position.set(5, 6, 7);
-    key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
-    key.shadow.camera.left = -6; key.shadow.camera.right = 6;
-    key.shadow.camera.top = 6; key.shadow.camera.bottom = -6; key.shadow.bias = -0.0009;
-    scene.add(key);
-    const rim = new THREE.DirectionalLight(0x9cb4d6, 1.0); rim.position.set(-6, 2, -5); scene.add(rim);
+    /* In orbit there is no sky, so there is no ambient term. The rig gives
+       the Sun at 1 AU and ONE fill - earthshine, arriving from nadir at 21%
+       of the Sun, because the planet below reflects 30% of the sunlight it
+       receives over a view factor of 0.70. What this replaced was a uniform
+       HemisphereLight at 42% of the key and a rim light from behind with
+       nothing emitting it: 42% of the illumination had no source, and it
+       was flattening the terminator, which in vacuum is the hardest edge
+       in the picture. */
+    const rig = sceneLighting(THREE, scene, 'orbit', {
+      anahtarYogunluk: 3.1, golgeAlan: 6, golgeUzak: 40,
+    });
+    const key = rig.gunes;
+    key.position.set(5, 6, 7);
+    /* Nadir is -Z in this body frame: the launch axis points up. */
+    rig.yorungeyeAyarla([0, 0, -1]);
 
     const uydu = buildSatellite(THREE, { scale: 1 });
     dunya.add(uydu.root);

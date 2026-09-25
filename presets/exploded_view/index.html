@@ -132,6 +132,7 @@
     import * as SAT from '../satellite_integration/sat-parts.mjs';
     import { buildHabitat } from '../habitat_blocks/hab-build.mjs';
     import { buildObject } from '../core/object-build.mjs';
+    import { sceneLighting } from '../core/scene-lighting.mjs';
     import * as LV from '../launch_vehicle/lv-parts.mjs';
     import * as HAB from '../habitat_blocks/hab-parts.mjs';
     import { buildCraft } from '../craft_blocks/craft-blocks.mjs';
@@ -231,24 +232,19 @@
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
 
-    scene.add(new THREE.HemisphereLight(0x9db0cc, 0x141922, 0.55));
-    const key = new THREE.DirectionalLight(0xfff3e2, 2.3);
+    /* These bodies are spacecraft, so they are lit the way a spacecraft is:
+       one Sun and one fill, and the fill is earthshine from nadir at 21% of
+       the Sun (planet albedo 0.30 over a view factor of 0.70). The rig
+       replaced a HemisphereLight, a fill and a rim - three sources, two of
+       which nothing emitted, carrying 54% of the illumination between them.
+       A technical illustration is allowed to be lit for legibility, but
+       then it should not also claim to be showing you vacuum. */
+    const rig = sceneLighting(THREE, scene, 'orbit', {
+      anahtarYogunluk: 2.9, golgeAlan: 16, golgeUzak: 60,
+    });
+    const key = rig.gunes;
     key.position.set(7, -9, 11);
-    key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
-    key.shadow.bias = -0.0009;
-    const d = 16;
-    Object.assign(key.shadow.camera, { left: -d, right: d, top: d, bottom: -d, near: 0.5, far: 60 });
-    scene.add(key);
-    const fill = new THREE.DirectionalLight(0x7f9bc4, 0.55);
-    fill.position.set(-8, 6, 3);
-    scene.add(fill);
-    /* Rim light from behind: it separates the silhouette from the
-       background, which is what makes a part readable once the body is
-       spread out and outlines start overlapping. */
-    const rim = new THREE.DirectionalLight(0xbcd2f0, 0.7);
-    rim.position.set(-3, 11, -6);
-    scene.add(rim);
+    rig.yorungeyeAyarla([0, 0, -1]);
 
     /* Contact shadow. Without it a spread-out assembly has no ground and
        depth ordering becomes guesswork. */

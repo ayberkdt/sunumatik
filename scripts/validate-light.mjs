@@ -9,6 +9,8 @@ import path from 'node:path';
 
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..');
 const L = await import(pathToFileURL(path.join(root, 'presets/core/light-math.mjs')).href);
+const S = await import(pathToFileURL(path.join(root, 'presets/core/scene-lighting.mjs')).href);
+const fs = await import('node:fs');
 
 let fails = 0, total = 0;
 const check = (name, ok, detail = '') => { total++; console.log(`  ${ok ? 'ok ' : 'HATA'} ${name}${detail ? '  (' + detail + ')' : ''}`); if (!ok) fails++; };
@@ -274,6 +276,101 @@ console.log('== 9 ortam tablosu');
   check('vakumda gök ışığı YOK (AmbientLight\'ın fiziksel karşılığı yok)', E.vacuum.skyLux === 0);
   check('yalnız Dünya ve iç mekânda oksijen var', E.earth.oxygen && E.interior.oxygen && !E.vacuum.oxygen && !E.mars.oxygen);
   check('saçılma sırası vakum < mars < dünya', E.vacuum.scattering < E.mars.scattering && E.mars.scattering < E.earth.scattering);
+}
+
+/* ── S) sahne aydınlatması: her ışığın kaynağı var mı ────────────────── */
+console.log('== S sahne aydınlatması kaynağa bağlı');
+{
+  /* The photometry has to agree with the measured table that was already
+     in the repository, or one of the two is wrong and nobody would know. */
+  const ay = S.isikButcesi('vacuum'), mars = S.isikButcesi('mars'), yor = S.isikButcesi('orbit');
+  const olculen = L.ENVIRONMENTS;
+  check('1 AU güneş aydınlığı ölçülen tabloyla uyuşuyor',
+    Math.abs(ay.gunesLux - olculen.vacuum.sunLux) / olculen.vacuum.sunLux < 0.02,
+    `${ay.gunesLux} vs ${olculen.vacuum.sunLux} lx`);
+  check('Mars güneş aydınlığı ölçülen tabloyla uyuşuyor',
+    Math.abs(mars.gunesLux - olculen.mars.sunLux) / olculen.mars.sunLux < 0.02,
+    `${mars.gunesLux} vs ${olculen.mars.sunLux} lx`);
+  /* The inverse square law, stated as a number rather than as a habit. */
+  const oran = S.sunLuxAt(S.AU.mars) / S.sunLuxAt(S.AU.earth);
+  check('Mars/Dünya güneş oranı ters kare yasasına uyuyor',
+    Math.abs(oran - 1 / (S.AU.mars ** 2)) < 1e-9, `${oran.toFixed(4)}`);
+
+  /* The defining property of an airless body: shadows have nothing to open
+     them except the ground. A non-zero sky term here is the single error
+     that made every one of these scenes look wrong. */
+  check('havasız gövdede GÖK terimi tam sıfır', ay.gokLux === 0 && yor.gokLux === 0,
+    `Ay ${ay.gokLux} lx · yörünge ${yor.gokLux} lx`);
+  check('Mars\'ta gök terimi var ama küçük', mars.gokPay > 0.05 && mars.gokPay < 0.12,
+    `%${(100 * mars.gokPay).toFixed(1)}`);
+  check('Ay\'da tek dolgu regolit sekmesi (%5–8)', ay.yerPay > 0.05 && ay.yerPay < 0.08,
+    `%${(100 * ay.yerPay).toFixed(1)}`);
+  check('yörüngede tek dolgu yeryüzü ışığı (%15–25)', yor.yerPay > 0.15 && yor.yerPay < 0.25,
+    `%${(100 * yor.yerPay).toFixed(1)}`);
+
+  /* Colour is reflectance, not preference. Earthshine has to come back
+     COOLER than the Sun that made it and regolith WARMER; if a scene has
+     those the wrong way round it is painting, not lighting. */
+  const yer = S.bounceColorRGB(S.SAHNELER.orbit.yerAlbedo3);
+  const reg = S.bounceColorRGB(S.SAHNELER.vacuum.yerAlbedo3);
+  check('yeryüzü ışığı güneşten SOĞUK', yer[2] > yer[0],
+    `[${yer.map(v => v.toFixed(2)).join(', ')}]`);
+  check('regolit sekmesi güneşten SICAK', reg[0] > reg[2],
+    `[${reg.map(v => v.toFixed(2)).join(', ')}]`);
+  check('beyaz dengesi güneşi beyaz noktaya alıyor',
+    S.sunColorRGB().every(v => v === 1),
+    `D65\'e göre [${S.sunColorRGB(false).map(v => v.toFixed(2)).join(', ')}]`);
+
+  /* Reverse exam: if the sky term were restored on an airless body the
+     shadow-side illumination would jump by the factor below. That number
+     is why the check above exists. */
+  const sahte = 0.42;                                 // the satellite page's old hemisphere share
+  check('TERS SINAV: kaynaksız gök terimi gölgeyi kaç kat açardı',
+    sahte / yor.yerPay > 1.5, `${(sahte / yor.yerPay).toFixed(1)}x`);
+
+  /* A camera in a brighter place stops down. Intensity times exposure has
+     to come out the same in every scene, or the render is saying that Mars
+     is sunnier than the Moon - which the habitat page was saying, because
+     it held intensity fixed and changed exposure instead. */
+  let carpimSabit = true, carpimlar = [];
+  for (const k of ['vacuum', 'mars', 'orbit']) {
+    const b = S.isikButcesi(k);
+    const yog = b.gunesLux / S.REFERANS_LUX;
+    const poz = S.REFERANS_LUX / b.gunesLux;
+    carpimlar.push(`${k} ${(yog * poz).toFixed(3)}`);
+    if (Math.abs(yog * poz - 1) > 1e-9) carpimSabit = false;
+  }
+  check('yoğunluk × pozlama her sahnede sabit (kamera modeli)', carpimSabit,
+    carpimlar.join(' · '));
+
+  check('bilinmeyen sahne adı hata veriyor', (() => {
+    try { S.isikButcesi('yok'); return false; } catch { return true; }
+  })());
+}
+
+/* ── T) sahneler artık elle ışık kurmuyor ────────────────────────────── */
+console.log('== T sahneler rig kullanıyor');
+{
+  /* A page that builds its own HemisphereLight is inventing a sky. These
+     three were the ones doing it, and this is what stops them doing it
+     again quietly. */
+  const SAYFALAR = [
+    'presets/satellite_integration/index.html',
+    'presets/habitat_blocks/index.html',
+    'presets/exploded_view/index.html',
+  ];
+  for (const rel of SAYFALAR) {
+    const metin = fs.readFileSync(path.join(root, rel), 'utf8');
+    /* Comments explain what was removed, so only real constructor calls
+       count. */
+    const kod = metin.replace(/\/\*[\s\S]*?\*\//g, '');
+    const hemi = (kod.match(/new THREE\.HemisphereLight\(/g) || []).length;
+    const dir = (kod.match(/new THREE\.DirectionalLight\(/g) || []).length;
+    const ad = rel.split('/')[1];
+    check(`${ad}: kendi HemisphereLight'ını kurmuyor`, hemi === 0, `${hemi} adet`);
+    check(`${ad}: kendi DirectionalLight'ını kurmuyor`, dir === 0, `${dir} adet`);
+    check(`${ad}: rig'i çağırıyor`, /sceneLighting\(/.test(kod));
+  }
 }
 
 console.log(`\n${total - fails}/${total} geçti`);

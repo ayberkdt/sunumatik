@@ -241,20 +241,43 @@ function govde(THREE, p, mat, dokular) {
          the OSR tile pattern instead of bare aluminium. */
       const radyator = p.sistem === 'isil' && /radyator/.test(p.id);
       const [w, h, t] = sy < sx && sy < sz ? [sx, sz, sy] : [sx, sy, sz];
+      /* Inserts on the radiator too. The catalogue bolts the battery, the
+         PCDU and the transponder onto radiator panels, and the panel was
+         being drawn WITHOUT the insert grid those bolts go into - the
+         drawing and the mounting tree disagreed. */
       const pan = D.honeycombPanel(THREE, KIT, w, h, Math.max(t, 0.02), {
-        inserts: !radyator,
+        inserts: true,
         osrMap: radyator ? dokular.osr.clone() : null,
       });
       if (sy < sx && sy < sz) pan.rotation.x = Math.PI / 2;
       pan.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
       g.add(pan);
       if (radyator) {
-        /* Embedded heat-pipe headers: the reason the panel can move heat
-           at all. They run along the long edge. */
+        const yatay = sy < sx && sy < sz;
+        const koy = (m, a, b) => { m.position.set(0, yatay ? t * 0.6 : a, yatay ? a : t * 0.6); void b; };
+        /* Two headers along the edges and the transport pipes between them.
+           Two headers alone cannot move heat ACROSS a panel; the runs are
+           what actually carry it from the box footprint to the radiating
+           area, and on real hardware they are the visible feature. */
         for (const e of [-1, 1]) {
           const hdr = ekle(new THREE.Mesh(cylGeoX(0.016, 0.016, w * 0.96, 10), KIT.aluDark));
-          hdr.position.set(0, e * h * 0.42, t * 0.6);
-          if (sy < sx && sy < sz) { hdr.position.set(0, t * 0.6, e * h * 0.42); }
+          koy(hdr, e * h * 0.42);
+        }
+        for (let i = 0; i < 6; i++) {
+          const x = (i / 5 - 0.5) * w * 0.86;
+          const boru = ekle(new THREE.Mesh(
+            yatay ? cylGeoZ(0.009, 0.009, h * 0.84, 8) : cylGeoY(0.009, 0.009, h * 0.84, 8),
+            KIT.mliSilver));
+          boru.position.set(x, yatay ? t * 0.55 : 0, yatay ? 0 : t * 0.55);
+        }
+        /* Doubler plates under the equipment footprints: the panel is
+           thickened where a box bolts on, because the insert alone would
+           punch through a 25 mm core. */
+        for (const [dx, dy] of [[-w * 0.22, h * 0.18], [w * 0.24, -h * 0.2]]) {
+          const dbl = ekle(new THREE.Mesh(
+            new THREE.BoxGeometry(w * 0.3, yatay ? t * 0.5 : h * 0.26, yatay ? h * 0.26 : t * 0.5),
+            KIT.alu));
+          dbl.position.set(dx, yatay ? -t * 0.5 : dy, yatay ? dy : -t * 0.5);
         }
       }
       break;

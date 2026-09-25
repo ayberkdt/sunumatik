@@ -99,6 +99,7 @@
     import * as THREE from 'three';
     import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
     import { buildHabitat } from './hab-build.mjs';
+    import { sceneLighting } from '../core/scene-lighting.mjs';
     import { PARTS, STEPS, SUBSYSTEMS, HAB_ENV, INTERFACES,
              massBudget, runEndpoints, partById,
              powerBudget, volumeBudget, isruBudget, thermalBudget } from './hab-parts.mjs';
@@ -125,21 +126,18 @@
     kontrol.dampingFactor = 0.08;
     kontrol.maxPolarAngle = Math.PI * 0.49;          // yerin altına inilmez
 
-    const gokyuzu = new THREE.HemisphereLight(0xffffff, 0x000000, 1);
-    scene.add(gokyuzu);
-    const gunes = new THREE.DirectionalLight(0xffffff, 1);
-    gunes.castShadow = true;
-    gunes.shadow.mapSize.set(2048, 2048);
-    gunes.shadow.bias = -0.0008;
-    Object.assign(gunes.shadow.camera, { left: -26, right: 26, top: 26, bottom: -26, near: 1, far: 90 });
-    scene.add(gunes);
-    /* Karşı dolgu. Tek kaynakla aydınlatılan sahnede gölge tarafı tamamen
-       kapanıyor ve bütün modüller tek bir turuncu kütleye dönüşüyordu;
-       korkuluk, levha ve konnektör okunmaz oluyordu. Dolgu SOĞUK: gerçek
-       yüzeyde gölge tarafını dolduran şey gökyüzü saçılmasıdır ve o,
-       doğrudan güneşten her zaman daha mavidir. */
-    const dolgu = new THREE.DirectionalLight(0xffffff, 1);
-    scene.add(dolgu);
+    /* The rig is built from illuminance, not from taste: core/scene-lighting
+       reads the Sun's distance and the surface albedo and sets the ratios.
+       What it removed here was a white HemisphereLight at full intensity -
+       a bright sky on a body that has no atmosphere at all - and a second
+       "cold fill" from the anti-sun side with nothing emitting it. */
+    const rig = sceneLighting(THREE, scene, 'vacuum', {
+      anahtarYogunluk: 3.2, golgeAlan: 26, golgeUzak: 90,
+    });
+    const gunes = rig.gunes, gokyuzu = rig.gokYer;
+    /* What the rig resolved to, shown with the environment so the numbers
+       are checkable from the page rather than only from the gate. */
+    let isikOzeti = '';
 
     let kok = null, hatGrup = null;
 
@@ -150,22 +148,21 @@
     function ortamUygula() {
       const mars = ortam === 'mars';
       scene.background = new THREE.Color(mars ? 0x3a2a20 : 0x04060c);
-      /* Gökyüzü saçılması: Mars'ta tozdan dolayı somon, Ay'da YOK.
-         Renk doygunluğu düşük tutulur — doygun turuncu bütün malzemeyi
-         aynı renge boyuyor ve yüzeyler birbirinden ayırt edilemiyordu. */
-      gokyuzu.color.set(mars ? 0xc4a894 : 0x2a3444);
-      gokyuzu.groundColor.set(mars ? 0x5a4436 : 0x141a22);
-      gokyuzu.intensity = mars ? 0.85 : 0.22;
-      gunes.color.set(mars ? 0xffe6c8 : 0xfffaf0);
-      gunes.intensity = mars ? 2.6 : 3.4;
-      gunes.position.set(mars ? 18 : 24, mars ? -16 : -8, mars ? 17 : 9);
-      /* Dolgu güneşin karşısından, soğuk ve zayıf: gölgeyi açar, ikinci
-         bir güneş izlenimi vermez. */
-      dolgu.color.set(mars ? 0xa8c0d8 : 0x8aa0c0);
-      dolgu.intensity = mars ? 0.75 : 0.35;
-      dolgu.position.set(mars ? -14 : -18, mars ? 16 : 12, mars ? 9 : 6);
-      renderer.toneMappingExposure = mars ? 1.05 : 0.95;
-      el('#ortam').textContent = `Environment: ${HAB_ENV[ortam].ad}`;
+      /* Every number below is now a consequence, not a preference. The Sun
+         at Mars is 1/1.524^2 = 0.431 of its strength at the Moon; the sky
+         term is 7.7% of the Sun on Mars and EXACTLY ZERO on the Moon, where
+         the only thing opening a shadow is regolith bounce at 6.5%. */
+      const b = rig.uygula(mars ? 'mars' : 'vacuum');
+      gunes.position.set(mars ? 18 : -8, mars ? -16 : -8, mars ? 17 : 9);
+      /* The Sun's INTENSITY already carries the 2.3x; the exposure undoes
+         it so both scenes are well exposed, exactly as a camera would.
+         What is left on screen is the true difference: how dark the shadow
+         side is, and what colour opens it. */
+      renderer.toneMappingExposure = 1.0 * rig.pozlamaCarpani();
+      isikOzeti = mars
+        ? `Sun ${(b.gunesLux / 1000).toFixed(0)} klx · sky ${(100 * b.gokPay).toFixed(1)}% · ground bounce ${(100 * b.yerPay).toFixed(1)}%`
+        : `Sun ${(b.gunesLux / 1000).toFixed(0)} klx · no sky (airless) · ground bounce ${(100 * b.yerPay).toFixed(1)}%`;
+      el('#ortam').textContent = `Environment: ${HAB_ENV[ortam].ad} · ${isikOzeti}`;
     }
 
     function kur() {

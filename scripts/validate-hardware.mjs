@@ -274,6 +274,37 @@ section('shape grammar');
   }
 }
 
+/* ── the ground is painted with its albedo ───────────────────────────── */
+section('surface albedo');
+{
+  const H = await load('presets/habitat_blocks/hab-build.mjs');
+  const SL = await load('presets/core/scene-lighting.mjs');
+  const zeminRengi = (env) => {
+    const built = H.buildHabitat(THREE, { env });
+    let c = null;
+    built.nodes.get('platform').traverse(o => { if (!c && o.isMesh && o.material?.color) c = o.material.color; });
+    return c;
+  };
+  const ay = zeminRengi('moon'), mars = zeminRengi('mars');
+  /* Two bodies whose surfaces differ by a factor of two in albedo were
+     drawn in exactly the same brown, because the material ignored its own
+     token. The colour IS the albedo, so it has to follow it. */
+  ok(ay.getHexString() !== mars.getHexString(), 'Moon and Mars ground are not the same colour',
+    `#${ay.getHexString()} vs #${mars.getHexString()}`);
+  ok(mars.r > ay.r, 'Mars ground is brighter (albedo 0.25 vs 0.13)',
+    `${mars.r.toFixed(3)} vs ${ay.r.toFixed(3)}`);
+  /* Lunar regolith is very nearly neutral; Mars is strongly red. */
+  const kanalFark = (c) => (c.r - c.b) / Math.max(c.r, 1e-6);
+  ok(kanalFark(ay) < kanalFark(mars), 'Mars ground is redder than lunar regolith',
+    `Ay ${kanalFark(ay).toFixed(2)} · Mars ${kanalFark(mars).toFixed(2)}`);
+  ok(kanalFark(ay) < 0.30, 'lunar regolith stays close to neutral',
+    `${kanalFark(ay).toFixed(2)}`);
+  ok(typeof SL.yuzeyAlbedoRGB === 'function'
+    && SL.yuzeyAlbedoRGB('vacuum')[0] < SL.yuzeyAlbedoRGB('mars')[0],
+    'the albedo the lighting reflects off is the one the ground is painted with',
+    `${SL.yuzeyAlbedoRGB('vacuum')[0].toFixed(2)} vs ${SL.yuzeyAlbedoRGB('mars')[0].toFixed(2)}`);
+}
+
 /* ── kit conformance ─────────────────────────────────────────────────── */
 section('hardware kit');
 {
