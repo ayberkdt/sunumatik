@@ -109,7 +109,7 @@
     import { sceneLighting } from '../core/scene-lighting.mjs';
     import { createOrbitDrag, orbitPosition } from '../core/orbit-drag.mjs';
     import { buildSatellite } from './sat-build.mjs';
-    import { PARTS, STEPS, SUBSYSTEMS, INTERFACES, massBudget, centerOfMass, mountChain, partById, partMass, describe } from './sat-parts.mjs';
+    import { PARTS, STEPS, SUBSYSTEMS, INTERFACES, massBudget, centerOfMass, mountChain, partById, partMass, describe, GUNES_YONU, sadaAcisi, kanatGucu } from './sat-parts.mjs';
 
     const sorgu = new URLSearchParams(location.search);
     const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -147,7 +147,10 @@
       anahtarYogunluk: 3.1, golgeAlan: 6, golgeUzak: 40,
     });
     const key = rig.gunes;
-    key.position.set(5, 6, 7);
+    /* The Sun direction is DECLARED next to the catalogue, because the wing's
+       drive angle is computed from it. Writing it here as well is how the
+       cell face ended up 48 deg off the light in the first place. */
+    key.position.set(...GUNES_YONU);
     /* Nadir is -Z in this body frame: the launch axis points up. */
     rig.yorungeyeAyarla([0, 0, -1]);
 
@@ -170,8 +173,84 @@
        a touchscreen the browser took the gesture, the model barely turned, a
        lifted finger could leave the drag stuck, and there was no way to zoom
        at all. */
+    /* ---------- canlı mekanizmalar ----------
+       Üçü de katalogda YAZILI ve sayfada karşılığı yoktu. */
+    const kanatlar = [], rotorlar = [];
+    uydu.root.traverse(o => {
+      if (o.userData?.sada) kanatlar.push(o);
+      if (o.userData?.rotor) rotorlar.push(o.userData.rotor);
+    });
+    /* Güneş yönü DÜNYA çerçevesinde sabit; gövde `dunya` ile döndüğü için
+       gövde çerçevesindeki yönü her karede değişir, ve sürücünün işi tam
+       olarak bunu karşılamaktır. "Sürekli dönüş; günde 1 tur" satırı bunu
+       söylüyordu. */
+    const gunesDunya = new THREE.Vector3(...GUNES_YONU).normalize();
+    const gunesGovde = new THREE.Vector3();
+    const tersQ = new THREE.Quaternion();
+    let izlemeKos = 0, izlemeBeta = 0, rotorAci = 0;
+    const izlemeMetni = () =>
+      `array cos ${izlemeKos.toFixed(3)} (beta ${izlemeBeta.toFixed(1)}\u00b0)`;
+    function sadaIzle() {
+      if (!kanatlar.length) return;
+      kanatlar[0].parent.getWorldQuaternion(tersQ).invert();
+      gunesGovde.copy(gunesDunya).applyQuaternion(tersQ);
+      const r = sadaAcisi([gunesGovde.x, gunesGovde.y, gunesGovde.z]);
+      for (const k of kanatlar) k.rotation.x = r.aci;
+      izlemeKos = r.kosinus; izlemeBeta = r.betaDeg;
+    }
+    sadaIzle();
+
+    /* Mekanizmaları ilerleten TEK yer. Çizen döngü de buradan geçer, dışarı
+       açılan kanca da: ikisi ayrı yazıldığında biri sessizce ötekinden
+       ayrılır, ve requestAnimationFrame koşmayan bir sayfada "tekerlek
+       dönüyor" arkasında hiçbir şey olmayan bir iddiadır. */
+    function mekanizmaIlerlet(dt) {
+      dunya.rotation.z += dt * 0.055;
+      /* Gövde döndü: sürücü karşılık veriyor. Kanadın kendiliğinden dönüyor
+         görünmesinin sebebi bu. */
+      sadaIzle();
+      rotorAci = (rotorAci + dt * TEKER_TUR_S * Math.PI * 2) % (Math.PI * 2);
+      for (const r of rotorlar) r.rotation.z = rotorAci;
+      /* Sayı izleme ilerledikçe değişiyor; onu yazan şey de aynı yerde
+         koşmalı, yoksa ekranda duran rakam çizilenle ilgisiz kalır.
+         innerHTML değil textContent: her karede yeniden ayrıştırılacak bir
+         işaretleme değil bu. */
+      const kutu = el('#izleme');
+      if (kutu) kutu.textContent = izlemeMetni();
+    }
+
+    /* Tekerlek 6000 rpm beyan ediyor ve o hız 60 Hz'de ÇİZİLEMEZ: altı
+       katlı ağ deseni saniyede ~5 turun üstünde strobe yapıp geriye dönüyor
+       görünür (Nyquist). Bu yüzden okunur bir hızda çizilir ve sayfa bunu
+       hız GÖSTERGESİ olarak değil, "bu şey dönüyor" bilgisi olarak sunar. */
+    const TEKER_TUR_S = 0.8;
+
+    /* Kadraj modelin kendi ölçüsünden gelir. Sabit 9,5 m, 12,2 m
+       açıklığındaki bir aracın kanatlarını görüntünün iki yanından da
+       taşırıyordu.
+
+       Ölçü olarak sınır küresi DEĞİL, orijinden en uzak köşe alınır: kamera
+       (0,0,0)'a bakıyor, kutunun merkezine değil, ve bu modelde ikisi 0,33 m
+       ayrı. Mesafenin kendisi burada hesaplanmaz — bu satırlar koştuğunda
+       `host` henüz yerleşmemiş oluyor ve en-boy oranı 0 geliyor; ilk denemede
+       bu, 21,4°'lik sahte bir yatay görüş açısı ve 37,9 m açılış mesafesi
+       üretti. Hesap, elemanın ilk kez ölçüsü olduğu yere taşındı. */
+    const kutu = new THREE.Box3().setFromObject(uydu.root);
+    let modelYari = 0;
+    for (const x of [kutu.min.x, kutu.max.x]) for (const y of [kutu.min.y, kutu.max.y])
+      for (const z of [kutu.min.z, kutu.max.z]) modelYari = Math.max(modelYari, Math.hypot(x, y, z));
+    const sigdir = modelYari * 3.2;   // yerleşim gelene kadarki emniyetli taban
+    /* Açılış açısı da türetilir: dizinin AYDINLIK yüzü kameraya dönük
+       olmalı, yoksa karenin çoğunu gölgede kalan altlık doldurur - fiziği
+       düzeltip resmi bozmak düzeltme sayılmaz. 0,6 rad kaydırma üç-çeyrek
+       görünüm içindir, tam karşıdan bakınca gövde yassılıyor. */
+    const dizNormal = kanatlar.length
+      ? new THREE.Vector3(0, 0, 1).applyQuaternion(kanatlar[0].getWorldQuaternion(new THREE.Quaternion()))
+      : new THREE.Vector3(0, 1, 0);
+    const acilisAz = Math.atan2(dizNormal.z, dizNormal.x) - 0.6;
+
     const surukleyici = createOrbitDrag(host, {
-      az: -0.9, el: 0.42, dist: 9.5, minDist: 3.4, maxDist: 26,
+      az: acilisAz, el: 0.42, dist: sigdir, minDist: 3.4, maxDist: Math.max(26, sigdir * 1.6),
       onChange: () => kameraKur(),
       onTap: (ev) => sec(ev),
     });
@@ -300,6 +379,7 @@
         ? `<b>Fully assembled</b> · ${d.parca} types, ${d.adet} units · `
           + `${d.kuruKg} kg dry + ${d.iticiKg} kg propellant = ${d.firlatmaKg} kg at launch · `
           + `CoM ${d.eksendenSapmaMm} mm off axis · explode ${Math.round(patla * 100)}%`
+          + ` · <span id="izleme">${izlemeMetni()}</span>`
         : `<b>Step ${String(s.no).padStart(2, '0')}/${STEPS.length} — ${s.ad}</b> · ${s.aciklama}`;
     }
 
@@ -389,10 +469,22 @@
     });
 
     /* ---------- döngü ---------- */
+    let kadrajKuruldu = false;
     function boyutla() {
       const w = host.clientWidth, h = host.clientHeight;
       renderer.setSize(w, h);
       camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix();
+      /* İlk gerçek ölçüde kadrajı kur. Sonrakilerde DOKUNMA: kullanıcı o
+         ana kadar yakınlaştırmış olabilir ve pencereyi yeniden boyutlandırmak
+         onun kararını geri almak değildir. */
+      if (!kadrajKuruldu && w > 0 && h > 0) {
+        kadrajKuruldu = true;
+        const dik = camera.fov * Math.PI / 180;
+        const en = 2 * Math.atan(Math.tan(dik / 2) * camera.aspect);
+        kam.dist = Math.min(surukleyici.maxDist ?? 1e9,
+          modelYari / Math.sin(Math.min(dik, en) / 2) * 1.06);
+        kameraKur();
+      }
     }
     addEventListener('resize', boyutla);
     let son = 0, raf = 0;
@@ -405,7 +497,7 @@
         if (yeni !== adim) { adim = yeni; adimlarCiz(); uygula(); panel(); }
         if (oynatT > STEPS.length * 1.6 + 1.2) { oynuyor = false; hepsi = true; el('#oynat').textContent = '▶ Montajı oynat'; el('#hepsi').classList.add('aktif'); adimlarCiz(); uygula(); }
       }
-      if (!azaltilmis) dunya.rotation.z += dt * 0.055;
+      if (!azaltilmis) mekanizmaIlerlet(dt);
       /* Coast after the finger lifts: a view that stops dead the instant
          you let go feels like it is fighting you. */
       surukleyici.update();
@@ -428,7 +520,18 @@
          the touch behaviour gets checked at all: a drag that does not turn
          the camera looks exactly like a drag that does, in a screenshot. */
       state: () => ({ adim, hepsi, patla, secili, kapali: [...kapali],
-        kamera: { az: kam.az, el: kam.el, dist: kam.dist }, ozet: describe() }),
+        kamera: { az: kam.az, el: kam.el, dist: kam.dist }, ozet: describe(),
+        /* Mekanizmalar dışarı açılır, çünkü dönen bir tekerlek ile duran bir
+           tekerlek ekran görüntüsünde birbirinin aynıdır. Kamera durumu da
+           tam bu gerekçeyle açıktı. */
+        mekanizma: {
+          sadaAci: kanatlar.length ? kanatlar[0].rotation.x : null,
+          kanatSayisi: kanatlar.length, izlemeKos, izlemeBeta,
+          rotorAci, rotorSayisi: rotorlar.length, rotorTurSaniye: TEKER_TUR_S,
+        } }),
+      /* Mekanizmaları `dt` saniye ilerlet ve çiz. Çizen döngünün kullandığı
+         yolun AYNISI. */
+      ilerlet: (dt = 1 / 60) => { mekanizmaIlerlet(dt); renderer.render(scene, camera); etiketler(); },
       parts: () => PARTS.map(p => ({ id: p.id, ad: p.ad, sistem: p.sistem, step: p.step, kg: partMass(p), mountsTo: p.mountsTo })),
       setStep(n) { adim = n; hepsi = false; adimlarCiz(); uygula(); panel(); },
       setExplode(k) { patla = k; patlaSurgu.value = String(Math.round(k * 100)); el('#patlaEt').textContent = `%${Math.round(k * 100)}`; uygula(); },

@@ -260,5 +260,123 @@ console.log('== 8 teknik künye');
   void sahte;
 }
 
+/* ══ NİŞANGÂH: NEREYE BAKIYOR, VE O YÖN İŞE YARIYOR MU ════════════════
+   İki parçanın tek işi bir yöne bakmaktı ve ikisi de yanlış yöne bakıyordu.
+   Ölçülen (düzeltme öncesi, kurulmuş sahnede): güneş dizisinin hücre normali
+   (0,0,1), güneş (5,6,7) — arada 48,03°, kosinüs 0,667, yani satırın kendi
+   hesabındaki 2585 W'ın 1725 W'ı. Yüksek kazançlı antenin boresight'ı da
+   (0,0,1), nadir ise (0,0,-1): tam 180,0°, yani 1,6°'lik hüzme derin uzaya.
+
+   Buradaki sınavların hepsi KİMLİKTİR ve her birinin ters sınavı vardır:
+   eski hâl YAKALANMAK zorunda, yoksa sınav bir şey ölçmüyordur. */
+console.log('== 9 nişangâh: nereye bakıyor, ve o yön işe yarıyor mu');
+{
+  const bir = (v) => { const n = Math.hypot(...v); return v.map(x => x / n); };
+  const nok = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const aciDeg = (a, b) => Math.acos(Math.max(-1, Math.min(1, nok(bir(a), bir(b))))) * 180 / Math.PI;
+
+  /* ── güneş dizisi ── */
+  const r = S.sadaAcisi(S.GUNES_YONU);
+  /* Tek eksenli bir sürücünün ulaşabileceği en iyi kosinüs, güneşin mil
+     eksenine dik düzlemdeki izdüşümünün BOYUDUR. Bu bir kimlik: ayrı yoldan
+     hesaplayıp aynı sayıyı vermek zorunda. */
+  const s0 = bir(S.GUNES_YONU);
+  const beklenenKos = Math.hypot(s0[1], s0[2]);          // mil = x
+  check('dizi kosinüsü tek eksenli optimumla aynı',
+    Math.abs(r.kosinus - beklenenKos) < 1e-12,
+    `${r.kosinus.toFixed(6)} vs ${beklenenKos.toFixed(6)}`);
+  /* Kalan açı beta açısıdır: güneşin mil eksenine olan eğimi. İkinci bir
+     eksen olmadan kapanmaz ve kapanıyormuş gibi çizmek güç bütçesini
+     yalan yapar. */
+  check('kalan sapma beta açısına eşit (mil eksenine eğim)',
+    Math.abs(r.betaDeg - Math.asin(Math.abs(s0[0])) * 180 / Math.PI) < 1e-9,
+    `${r.betaDeg.toFixed(3)}°`);
+  /* Mili `aci` kadar dondurdugunde sifir normali (0,0,1) hedefe gitmeli.
+     X ekseni etrafinda donme: (0,0,1) -> (0, -sin, cos). Kapali form. */
+  const donmus = [0, -Math.sin(r.aci), Math.cos(r.aci)];
+  const sapma = Math.hypot(donmus[0] - r.hedefNormal[0],
+    donmus[1] - r.hedefNormal[1], donmus[2] - r.hedefNormal[2]);
+  check('surucu acisi hucre normalini hedefe oturtuyor', sapma < 1e-12,
+    `mil ${(r.aci * 180 / Math.PI).toFixed(2)} derece, sapma ${sapma.toExponential(1)}`);
+  /* TERS SINAV: mil sıfırda bırakılırsa — çizimin eski hâli — yakalanmalı. */
+  const sifirKos = Math.abs(nok(s0, [0, 0, 1]));
+  check('TERS SINAV: mil sıfırda bırakılan dizi yakalanıyor',
+    sifirKos < beklenenKos - 0.1,
+    `sıfırda ${sifirKos.toFixed(3)} < optimum ${beklenenKos.toFixed(3)}`);
+
+  /* Beyan edilen güç DİK GELİŞ içindir; sayfanın gösterdiği üretim
+     kosinüsle çarpılmış olan. İkisini karıştırmak 313 W'lık bir hata. */
+  for (const id of ['kanat-xp', 'kanat-xn']) {
+    const k = S.kanatGucu(S.partById(id));
+    check(`${id}: gerçek üretim = beyan × kosinüs`,
+      Math.abs(k.gercekW - k.dikW * k.kosinus) < 1e-9,
+      `${k.dikW.toFixed(0)} W dik → ${k.gercekW.toFixed(0)} W`);
+  }
+
+  /* Gövde savruldukça mil ekseni dünya XY düzleminde döner, güneş ise sabit
+     kalır: bu yüzden beta açısı bir ÇEVRİM yapar ve kosinüs bir en küçük ile
+     1,000 arasında gidip gelir. Sahnede ölçülen (çizen döngünün kendi yolu
+     sürülerek, 18 s): 0,879 → 0,826 → 0,673. Kapalı formu burada: mil ekseni
+     düzlemde dönerken s·a en çok güneşin O DÜZLEMDEKİ bileşeni kadar olur. */
+  const duzlemBilesen = Math.hypot(s0[0], s0[1]);
+  /* Uc noktalari TARAMAKLA aramak yanlis aletti: 0,5 derecelik adimla en
+     buyuk 0,999997 cikiyor ve 1e-9 esigi kendi ornekleme hatasini hata
+     sayiyor. Ikisi de kapali formda biliniyor - |s.a| duzlemde en cok
+     guneşin o duzlemdeki bileseni kadar olur, ve bu deger phi* =
+     atan2(s_y, s_x) azimutunda gerceklesir; ona dik azimutta ise sifir. */
+  const fi = Math.atan2(s0[1], s0[0]);
+  const kosinusFi = (f) => S.sadaAcisi(S.GUNES_YONU, {
+    eksen: [Math.cos(f), Math.sin(f), 0],
+    sifirNormal: [-Math.sin(f), Math.cos(f), 0] }).kosinus;
+  const enAz = kosinusFi(fi);                    // gunes mile en yakin
+  const enCok = kosinusFi(fi + Math.PI / 2);     // gunes mile dik
+  check('cevrimin en iyisi tam dik gelis (beyan edilen guc oradadir)',
+    Math.abs(enCok - 1) < 1e-12, `en cok kosinus ${enCok.toFixed(12)}`);
+  check('cevrimin en kotusu gunesin mil duzlemindeki bileseninden geliyor',
+    Math.abs(enAz - Math.sqrt(1 - duzlemBilesen * duzlemBilesen)) < 1e-12,
+    `en az ${enAz.toFixed(6)} · kapali form ${Math.sqrt(1 - duzlemBilesen ** 2).toFixed(6)}`);
+  /* TERS SINAV: tek eksen yetseydi cevrim duz bir cizgi olurdu. */
+  check('TERS SINAV: tek eksen yetmiyor (cevrim duz degil)',
+    enCok - enAz > 0.2, `salinim ${(enCok - enAz).toFixed(3)}`);
+
+  /* ── yüksek kazançlı anten ── */
+  const hga = S.partById('hga');
+  check('HGA nişangâhını beyan ediyor', !!hga.nis, JSON.stringify(hga.nis ?? null));
+  const bore = S.boresightYonu(hga.nis);
+  const nadirAci = aciDeg(bore, S.NADIR);
+  check('HGA boresight nadir YARIM KÜRESİNDE (uzaya değil)',
+    nadirAci < 90, `nadirden ${nadirAci.toFixed(1)}°`);
+  check('HGA eğimi beyan edilen değere eşit',
+    Math.abs(nadirAci - hga.nis.egimDeg) < 1e-9, `${nadirAci.toFixed(2)}°`);
+
+  /* Hüzme kendi uydusunun içinden geçmemeli. Boom satırı bunu ZATEN
+     söylüyor — "hüzme hiç engellenmesin diye çanağı gövdeden uzak tutar" —
+     ve dik aşağı bakan bir hüzme için doğru değildi. */
+  const govde = ['ust-panel', 'alt-panel', 'yan-panel-xp', 'yan-panel-xn',
+    'itki-tupu', 'govde-iskeleti', 'mli', 'radyator-yp', 'radyator-yn'];
+  const kutu = { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
+  for (const id of govde) {
+    const q = S.partById(id);
+    if (!q) continue;
+    for (let k = 0; k < 3; k++) {
+      kutu.min[k] = Math.min(kutu.min[k], q.pos[k] - q.size[k] / 2);
+      kutu.max[k] = Math.max(kutu.max[k], q.pos[k] + q.size[k] / 2);
+    }
+  }
+  const acik = S.huzmeAcikligi(hga.pos, bore, kutu);
+  check('hüzme gövdeyi sıyırıyor (boom satırının iddiası)', acik.acik,
+    `ayak izinden çıkış z ${acik.z.toFixed(3)} m ≥ gövde tepesi ${kutu.max[2].toFixed(2)} m`);
+  /* TERS SINAV: çanak gövde köşesinin ÜSTÜNDE durduğu için dik aşağı bakan
+     hüzme ayak izinden hiç çıkmaz — yakalanmak zorunda. */
+  check('TERS SINAV: dik nadire bakan hüzme yakalanıyor',
+    !S.huzmeAcikligi(hga.pos, [0, 0, -1], kutu).acik,
+    'dik aşağı: ayak izini hiç terk etmiyor');
+  /* Ve eğim, çanağın kendi genişliğini de geçirecek kadar olmalı: sıfır
+     paylı bir sıyırma, çanağın kenarının çarpması demektir. */
+  check('sıyırma payı çanağın yarıçapından büyük',
+    acik.z - kutu.max[2] > hga.size[0] / 2 * 0.4,
+    `pay ${(acik.z - kutu.max[2]).toFixed(2)} m`);
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);

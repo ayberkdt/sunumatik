@@ -195,8 +195,15 @@ export const PARTS = Object.freeze([
     why: 'Holds the dish clear of the body so the beam is never blocked. Its first mode is placed above the wheel speed band so the two never couple.' },
   { id: 'hga', ad: 'High-gain antenna (1.2 m)', sistem: 'haberlesme', step: 7,
     mountsTo: 'hga-boom', arayuz: 'mentese', massKg: 13, pos: [0.85, -0.85, 1.5], size: [1.2, 1.2, 0.3], sekil: 'canak',
-    tech: { no: 'SD-TTC-092', malzeme: 'CFRP shell, mesh reflector', guc_W: 26, sicaklik_C: [-140, 120], baglanti: 'Two-axis gimbal, M5; rotary waveguide joint', detay: '1.2 m dish; 43 dBi at X band; 1.6 deg beamwidth', veri_Mbps: 150, kalite: 'If the gimbal seizes, telemetry continues through the LGA' },
-    why: 'A 1.6 degree beam is what makes 150 Mbps possible, and a beam that narrow has to be pointed, which is why it sits on a two-axis gimbal.' },
+    /* Where the beam actually goes, in the BODY frame: 22 deg off nadir,
+       out over the +X/-Y corner. It was drawn at (0,0,1) - 180 deg from the
+       ground station - and straight nadir does not work either, because the
+       dish sits above the bus corner and the beam would pass through the
+       spacecraft. 22 deg puts it clear of the footprint at z 1.325, against
+       a bus that stops at 0.90. */
+    nis: { egimDeg: 22, azimutDeg: -45 },
+    tech: { no: 'SD-TTC-092', malzeme: 'CFRP shell, mesh reflector', guc_W: 26, sicaklik_C: [-140, 120], baglanti: 'Two-axis gimbal, M5; rotary waveguide joint', detay: '1.2 m dish; 43 dBi at X band; 1.6 deg beamwidth; f/D 0.35 with the feed at the focus. Drawn at 22 deg off nadir, which is where the beam clears the bus', veri_Mbps: 150, kalite: 'If the gimbal seizes, telemetry continues through the LGA' },
+    why: 'A 1.6 degree beam is what makes 150 Mbps possible, and a beam that narrow has to be pointed, which is why it sits on a two-axis gimbal. Pointed AWAY from Earth it is worth nothing at all.' },
   { id: 'lga', ad: 'Low-gain antenna', sistem: 'haberlesme', step: 7, qty: 2,
     mountsTo: 'yan-panel-xp', arayuz: 'civata', massKg: 1.1, pos: [0.9, 0.5, 0.75], size: [0.08, 0.08, 0.26], sekil: 'cubuk',
     tech: { no: 'SD-TTC-093', malzeme: 'Helical antenna under a radome', guc_W: 2, sicaklik_C: [-120, 110], baglanti: '3 x M4 into the panel', detay: 'Near-hemispherical coverage; commandable even with the HGA lost', veri_Mbps: 0.064, kalite: 'The always-available command path - recovery mode' },
@@ -275,6 +282,93 @@ export function massBudget() {
  * Kütle merkezi (gövde koordinatı, metre). Ayırma halkası ekseni x=y=0'dır;
  * merkez bu eksenden kayarsa apogee yakışı uyduyu döndürür.
  */
+/* Sahnenin güneş yönü. Işık kurulumunda da, geometride de, kapıda da AYNI
+   vektör olmak zorunda: kanadın nereye baktığı ile güneşin nerede olduğu
+   iki ayrı yerde yazıldığında biri sessizce yanlış olur ve tam bu oldu —
+   hücre yüzü (0,0,1)'e, güneş (5,6,7)'ye bakıyordu, arada 48,03°. */
+export const GUNES_YONU = Object.freeze([5, 6, 7]);
+
+/* Nadir — gövde çerçevesinde. Fırlatma ekseni yukarı bakar, yer aşağıdadır.
+   Işık kurulumu bunu zaten söylüyordu; yüksek kazançlı anten ise tam TERSİNE,
+   (0,0,1)'e nişan almıştı: ölçülen sapma 180,0°. */
+export const NADIR = Object.freeze([0, 0, -1]);
+
+/**
+ * Bir yön anteninin gövde çerçevesindeki boresight'ı.
+ *
+ * `egimDeg` nadirden açı, `azimutDeg` gövde XY düzleminde +X'ten saat yönünün
+ * TERSİNE. Sıfır eğim doğrudan yere bakar — ki bu anten için ÇALIŞMAZ: çanak
+ * gövde köşesinin üstünde durur ve dik aşağı bakan hüzme uydunun içinden
+ * geçer. Boom satırı bunu zaten söylüyor, "hüzme hiç engellenmesin diye
+ * çanağı gövdeden uzak tutar"; eğim o cümlenin sayısıdır.
+ */
+export function boresightYonu({ egimDeg = 0, azimutDeg = 0 } = {}) {
+  const e = egimDeg * Math.PI / 180, a = azimutDeg * Math.PI / 180;
+  const s = Math.sin(e);
+  return [s * Math.cos(a), s * Math.sin(a), -Math.cos(e)];
+}
+
+/**
+ * Hüzme gövdeyi sıyırıyor mu? Çanağın merkezinden boresight boyunca giden
+ * ışın, gövde kutusunun ayak izinden hangi yükseklikte çıkıyor — o yükseklik
+ * gövdenin tepesinden aşağıdaysa hüzme kendi uydusunun içinden geçiyordur.
+ */
+export function huzmeAcikligi(cikis, yon, kutu) {
+  /* Işın kutudan çıkana kadar yürü; kapalı formda: her eksende çıkış
+     parametresinin EN KÜÇÜĞÜ ışının ayak izini terk ettiği yerdir. */
+  let tCik = Infinity;
+  for (let k = 0; k < 2; k++) {                 // yalnız x ve y: ayak izi
+    if (Math.abs(yon[k]) < 1e-12) continue;
+    const t = ((yon[k] > 0 ? kutu.max[k] : kutu.min[k]) - cikis[k]) / yon[k];
+    if (t > 0) tCik = Math.min(tCik, t);
+  }
+  if (!isFinite(tCik)) return { z: -Infinity, acik: false };
+  const z = cikis[2] + yon[2] * tCik;
+  return { z, acik: z >= kutu.max[2] };
+}
+
+/**
+ * Güneş dizisi sürücüsünün (SADA) süreceği açı — TEK türetme.
+ *
+ * SADA TEK eksenli bir sürücüdür. Bu yüzden hücre normalini güneşe tam
+ * oturtmak genel olarak MÜMKÜN DEĞİLDİR: yapılabilecek en iyi şey, güneşi
+ * mil eksenine dik düzleme izdüşürmek ve normali oraya çevirmektir. Geriye
+ * kalan açı beta açısı kaybıdır; ikinci bir eksen olmadan kapanmaz ve
+ * kapanıyormuş gibi çizmek katalogdaki güç sayısını yalan yapar.
+ *
+ * `gunes` gövde çerçevesinde güneş yönü, `eksen` mil ekseni, `sifirNormal`
+ * mil sıfırdayken hücre yüzünün baktığı yön (mile dik olmak zorunda).
+ * Döndürülen açı radyandır ve mile doğrudan uygulanır.
+ */
+export function sadaAcisi(gunes, { eksen = [1, 0, 0], sifirNormal = [0, 0, 1] } = {}) {
+  const bir = (v) => { const n = Math.hypot(v[0], v[1], v[2]); return n < 1e-12 ? [0, 0, 0] : [v[0] / n, v[1] / n, v[2] / n]; };
+  const nok = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const capraz = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const s = bir(gunes), a = bir(eksen), n0 = bir(sifirNormal);
+  /* Mile paralel bileşen sürücünün ulaşamadığı kısımdır: çıkar. */
+  const ka = nok(s, a);
+  const dik = [s[0] - ka * a[0], s[1] - ka * a[1], s[2] - ka * a[2]];
+  const boy = Math.hypot(dik[0], dik[1], dik[2]);
+  if (boy < 1e-9) return { aci: 0, kosinus: 0, betaDeg: 90, hedefNormal: n0 };
+  const hedef = [dik[0] / boy, dik[1] / boy, dik[2] / boy];
+  /* Mil sıfırdayken normal n0; n0 ve a×n0 düzlemin dik tabanıdır. */
+  const t0 = capraz(a, n0);
+  const aci = Math.atan2(nok(hedef, t0), nok(hedef, n0));
+  /* Ulaşılan kosinüs güneşin düzlemdeki izdüşümünün boyudur — bu bir kimlik,
+     ayrı hesap değil: s·hedef = |dik|. */
+  return { aci, kosinus: boy, betaDeg: Math.acos(Math.min(1, boy)) * 180 / Math.PI, hedefNormal: hedef };
+}
+
+/**
+ * Bir kanadın ürettiği güç, mil açısı verildiğinde.
+ * Beyan edilen `guc_W` DİK GELİŞ içindir; gerçek üretim kosinüsle çarpılır.
+ */
+export function kanatGucu(p, gunes = GUNES_YONU) {
+  const dik = Math.abs(p.tech?.guc_W ?? 0);
+  const { kosinus, betaDeg } = sadaAcisi(gunes);
+  return { dikW: dik, gercekW: dik * kosinus, kosinus, betaDeg };
+}
+
 export function centerOfMass({ yakitli = true } = {}) {
   let M = 0, x = 0, y = 0, z = 0;
   for (const p of PARTS) {

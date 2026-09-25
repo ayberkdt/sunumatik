@@ -600,6 +600,40 @@ export function hingeLatch(THREE, M, s = 1) {
   return g;
 }
 
+
+/** CFRP facesheet: a 2x2 twill weave with the tow lines over it.
+ *
+ * The back of a solar wing is the largest single surface on a spacecraft of
+ * this class - two wings at 5.11 x 1.70 m - and it was being drawn as one
+ * flat grey fill, which is what made the whole vehicle read as cardboard from
+ * the usual viewing angle. A weave reads as structure at a glance; the
+ * diagonal is the part that makes carbon look like carbon rather than paint.
+ */
+export function cfrpTexture(THREE) {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 256;
+  const g = c.getContext('2d');
+  g.fillStyle = '#4c515b'; g.fillRect(0, 0, 256, 256);
+  const s = 16;
+  for (let y = 0; y < 256; y += s) {
+    for (let x = 0; x < 256; x += s) {
+      /* 2x2 twill: two over, two under, stepped one each row. */
+      const ust = ((x / s + y / s) % 4) < 2;
+      g.fillStyle = ust ? 'rgba(255,255,255,.085)' : 'rgba(0,0,0,.12)';
+      g.fillRect(x, y, s, s);
+    }
+  }
+  g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = 1;
+  for (let i = 0; i <= 256; i += s) {
+    g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 256); g.stroke();
+    g.beginPath(); g.moveTo(0, i); g.lineTo(256, i); g.stroke();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+
 /** Saddle mount for a spherical tank: two straps and a base. */
 export function tankSaddle(THREE, M, r) {
   const g = new THREE.Group();
@@ -1348,18 +1382,31 @@ export function reactionWheel(THREE, kit, r, h, opts = {}) {
   /* Rotor: a thin web carrying a heavy rim. Momentum goes as m*r^2, so
      the same mass out at the rim stores several times what it would at
      the hub - which is why the middle is empty. */
+  /* The spinning parts go in their OWN group, exposed as userData.rotor, so a
+     scene can turn them. A wheel drawn stationary is the one part of an
+     attitude system whose whole job is visible motion, and the row declares a
+     speed - 6000 rpm - that nothing on the page was using. */
+  const rotor = new THREE.Group();
+  g.add(rotor);
+  g.userData.rotor = rotor;
   const web = new THREE.Mesh(cylGeoZ(r * 0.74, r * 0.74, h * 0.1, 26), kit.white);
-  g.add(web);
+  rotor.add(web);
   const jant = new THREE.Mesh(new THREE.TorusGeometry(r * 0.76, r * 0.13, 10, 34), kit.koyuMetal);
   jant.scale.z = 0.72;
-  g.add(jant);
-  /* Lightening holes in the web: mass that is not at the rim is wasted. */
+  rotor.add(jant);
+  /* Lightening holes in the web: mass that is not at the rim is wasted. They
+     are also what makes the spin READABLE - a featureless disc turning about
+     its own axis looks identical to a disc standing still. */
   for (let i = 0; i < 6; i++) {
     const a = i * TAU / 6;
     const delik = new THREE.Mesh(cylGeoZ(r * 0.13, r * 0.13, h * 0.12, 12), kit.black);
     delik.position.set(Math.cos(a) * r * 0.44, Math.sin(a) * r * 0.44, 0);
-    g.add(delik);
+    rotor.add(delik);
   }
+  /* A balance mark on the rim: how a spinning wheel shows its speed. */
+  const isaret = new THREE.Mesh(new THREE.BoxGeometry(r * 0.1, r * 0.05, h * 0.16), kit.gold);
+  isaret.position.set(r * 0.76, 0, h * 0.06);
+  rotor.add(isaret);
 
   /* Shaft and a preloaded pair of bearing cartridges. A single bearing
      cannot take axial load in both directions; the pair is the reason the

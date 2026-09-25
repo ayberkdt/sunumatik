@@ -8,7 +8,7 @@
  * `core/geometry-axis.mjs` yardımcıları kullanılır (eksen ratchet'i sınar).
  */
 
-import { PARTS, SUBSYSTEMS, partById, depth } from './sat-parts.mjs';
+import { PARTS, SUBSYSTEMS, partById, depth, GUNES_YONU, sadaAcisi, boresightYonu } from './sat-parts.mjs';
 import { cylGeoY, cylGeoX, cylGeoZ, coneGeoZ, latheZ } from '../core/geometry-axis.mjs';
 import * as D from './sat-detail.mjs';
 import { buildShape, knowsKind } from '../core/hardware-shapes.mjs';
@@ -535,14 +535,34 @@ function govde(THREE, p, mat, dokular) {
       break;
     }
     case 'kanat': {
-      /* Three panels with the cell grid on the sunward face only - the back
-         is substrate, and a wing lit identically on both sides reads as a
-         sheet of blue card. Hinges between panels, a yoke to the drive. */
+      /* The wing TRACKS, and it was drawn not tracking. Measured on the built
+         scene, the cell face normal was (0, 0, 1) while the Sun sits at
+         (5, 6, 7): 48.03 deg apart, cosine 0.667. The row above computes
+         338 W/m2 x 7.65 m2 = 2585 W at NORMAL incidence, so the drawing was
+         throwing away 547 W a wing - and the drive bolted right underneath it
+         says what it is for in as many words: "lets the wing track the Sun
+         while the body points at the target".
+         A SADA has ONE axis. It can swing the normal onto the projection of
+         the Sun into the plane square to its shaft and no further; the 28.5
+         deg that remains is beta-angle loss, and drawing it away would make
+         the power budget a lie. So the shaft goes to the single-axis optimum
+         and the wing collects 0.879, not 1.000 and not 0.667. */
+      const surucu = sadaAcisi(GUNES_YONU);
+      g.rotation.x = surucu.aci;
+      g.userData.sada = surucu;
+
       const tex = dokular.hucreKit.clone();
       tex.needsUpdate = true;
       tex.repeat.set(2.6, 2.2);
       const on = new THREE.MeshStandardMaterial({ map: tex, roughness: .32, metalness: .42 });
-      const arka = KIT.aluDark;
+      /* The back is what you see from most angles and it was a flat fill.
+         A substrate is a woven facesheet with the string harness taped down
+         it, and those two things are the whole read. */
+      const arkaDoku = dokular.cfrp.clone();
+      arkaDoku.needsUpdate = true;
+      arkaDoku.repeat.set(5, 2.4);
+      const arka = new THREE.MeshStandardMaterial({
+        map: arkaDoku, color: 0x9aa1ab, roughness: .82, metalness: .16 });
       const w = sx / 3;
       for (let i = 0; i < 3; i++) {
         /* Front face carries the cells, the rest is the CFRP substrate. */
@@ -551,17 +571,80 @@ function govde(THREE, p, mat, dokular) {
         m.position.x = (i - 1) * w;
         /* Substrate frame: the panel edge is a stiffener, not a raw cut. */
         for (const e of [-1, 1]) {
-          const kenar = ekle(new THREE.Mesh(new THREE.BoxGeometry(w * .97, sy * 0.06, sz * 1.5), arka));
+          const kenar = ekle(new THREE.Mesh(new THREE.BoxGeometry(w * .97, sy * 0.06, sz * 1.5), KIT.aluDark));
           kenar.position.set((i - 1) * w, e * sy * 0.47, 0);
         }
+        for (const e of [-1, 1]) {
+          const dikme = ekle(new THREE.Mesh(new THREE.BoxGeometry(w * 0.022, sy * 0.94, sz * 1.5), KIT.aluDark));
+          dikme.position.set((i - 1) * w + e * w * 0.475, 0, 0);
+        }
+        /* Cell STRINGS. A wing is wired in series strings and the gap between
+           them is visible on the lit face; each string ends in a blocking
+           diode, which is what stops one shadowed string draining the rest. */
+        for (let j = 1; j < 4; j++) {
+          const ayrim = ekle(new THREE.Mesh(
+            new THREE.BoxGeometry(w * 0.94, sy * 0.014, sz * 0.25), KIT.aluDark));
+          ayrim.position.set((i - 1) * w, (j / 4 - 0.5) * sy * 0.92, sz * 0.56);
+        }
+        for (let j = 0; j < 4; j++) {
+          const diyot = ekle(new THREE.Mesh(
+            new THREE.BoxGeometry(w * 0.04, sy * 0.05, sz * 0.5), KIT.gold));
+          diyot.position.set((i - 1) * w - w * 0.44, (j / 4 - 0.375) * sy * 0.92, -sz * 0.6);
+        }
+        /* String harness on the BACK, clipped down every so often. Taped runs
+           are the thing you actually see on the back of a real wing. */
+        for (let j = 0; j < 2; j++) {
+          const hat = ekle(new THREE.Mesh(
+            cylGeoX(sz * 0.16, sz * 0.16, w * 0.9, 8), KIT.bakir));
+          hat.position.set((i - 1) * w, (j - 0.5) * sy * 0.46, -sz * 0.74);
+          for (let c2 = 0; c2 < 3; c2++) {
+            const kelepce = ekle(new THREE.Mesh(
+              new THREE.BoxGeometry(sz * 0.14, sz * 0.5, sz * 0.5), KIT.mliSilver));
+            kelepce.position.set((i - 1) * w + (c2 - 1) * w * 0.3,
+              (j - 0.5) * sy * 0.46, -sz * 0.74);
+          }
+        }
+        /* Corner brackets: four per panel, where the frame members meet. */
+        for (const ex of [-1, 1]) for (const ey of [-1, 1]) {
+          const kose = ekle(new THREE.Mesh(
+            new THREE.BoxGeometry(w * 0.07, sy * 0.07, sz * 1.6), KIT.alu));
+          kose.position.set((i - 1) * w + ex * w * 0.44, ey * sy * 0.44, 0);
+        }
         if (i < 2) {
-          const men = D.hingeLatch(THREE, KIT, 0.7);
-          men.position.set((i - 0.5) * w, 0, sz * 0.9);
-          g.add(men);
+          /* Hinges live on BOTH faces of the joint - one line of knuckles is
+             a drawing, two is a hinge that could carry the panel. */
+          for (const ez of [1, -1]) {
+            const men = D.hingeLatch(THREE, KIT, 0.7);
+            men.position.set((i - 0.5) * w, 0, ez * sz * 0.9);
+            if (ez < 0) men.rotation.y = Math.PI;
+            g.add(men);
+          }
+          for (const ey of [-1, 1]) {
+            const yay = ekle(new THREE.Mesh(
+              cylGeoX(sz * 0.5, sz * 0.5, w * 0.1, 10), KIT.aluDark));
+            yay.position.set((i - 0.5) * w, ey * sy * 0.36, sz * 0.9);
+          }
+        }
+        /* Tie-down cups: where the stack is clamped for launch and where the
+           pyro cutter releases it. The row says "redundant pyro release" and
+           there was nothing on the wing to release. */
+        for (const ey of [-1, 1]) {
+          const kup = ekle(new THREE.Mesh(
+            cylGeoZ(sz * 0.9, sz * 1.2, sz * 1.1, 12), KIT.aluDark));
+          kup.position.set((i - 1) * w + w * 0.3, ey * sy * 0.38, -sz * 1.1);
+          const pim = ekle(new THREE.Mesh(
+            cylGeoZ(sz * 0.3, sz * 0.3, sz * 2.2, 8), KIT.gold));
+          pim.position.set((i - 1) * w + w * 0.3, ey * sy * 0.38, -sz * 1.1);
         }
       }
       const boyunduruk = ekle(new THREE.Mesh(cylGeoX(0.03, 0.03, sx * 0.14, 10), KIT.alu));
       boyunduruk.position.x = -sx / 2 - sx * 0.07;
+      /* Yoke fork: two arms off the shaft, not a single stick. */
+      for (const ey of [-1, 1]) {
+        const kol = ekle(new THREE.Mesh(
+          new THREE.BoxGeometry(sx * 0.1, sy * 0.05, sz * 1.6), KIT.alu));
+        kol.position.set(-sx / 2 - sx * 0.02, ey * sy * 0.22, 0);
+      }
       /* Harness down the back of the wing to the drive. */
       const kablo = D.harnessRun(THREE, KIT, sx * 0.92, { r: 0.012, axis: 'x' });
       kablo.position.set(0, -sy * 0.42, -sz * 1.6);
@@ -569,10 +652,29 @@ function govde(THREE, p, mat, dokular) {
       break;
     }
     case 'canak': {
+      /* An antenna is drawn POINTED. This one was built along +Z while the
+         body frame puts nadir at -Z: measured 180.0 deg from the ground
+         station, for the dish whose row says a 1.6 deg beam "has to be
+         pointed". The pointing comes from the catalogue so the drawing and
+         the spec cannot drift apart. */
+      if (p.nis) {
+        const yon = boresightYonu(p.nis);
+        g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1),
+          new THREE.Vector3(yon[0], yon[1], yon[2]));
+        g.userData.boresight = yon;
+      }
+      /* f/D was 0.1375. A reflector that deep is not a spacecraft antenna, it
+         is a wok: the rim curled 0.45 x its own diameter forward and the feed
+         sat at sz * 0.62, which is nowhere near the focus. Spacecraft HGAs run
+         f/D around 0.35, and the feed goes AT the focus because that is the
+         one place a paraboloid brings the wavefront to. */
+      const cap = sx, fD = 0.35, odak = fD * cap;
+      const R = cap / 2;
+      const derinlik = (R * R) / (4 * odak);     // sagitta at the rim
       const pts = [];
-      for (let i = 0; i <= 14; i++) {
-        const u = i / 14, r = (sx / 2) * u;
-        pts.push(new THREE.Vector2(r, (r * r) / (sx * 0.55)));
+      for (let i = 0; i <= 16; i++) {
+        const u = i / 16, r = R * u;
+        pts.push(new THREE.Vector2(r, (r * r) / (4 * odak)));
       }
       /* Çanak: eksen yardımcısıyla (+Z) — çıplak LatheGeometry eksen
          ratchet'ine takılır ve lathe normalleri profil sırasına duyarlıdır. */
@@ -581,27 +683,36 @@ function govde(THREE, p, mat, dokular) {
       /* Rim stiffener, radial ribs on the back, a subreflector on three
          struts, and the waveguide that actually feeds it. A bare paraboloid
          with a stick in the middle says none of that. */
-      const R = sx / 2;
       const kenar = ekle(new THREE.Mesh(new THREE.TorusGeometry(R * 0.995, R * 0.03, 6, 44), KIT.alu));
-      kenar.position.z = (R * R) / (sx * 0.55);
+      kenar.position.z = derinlik;
       for (let i = 0; i < 8; i++) {
         const a = i * Math.PI / 4;
         const kaburga = ekle(new THREE.Mesh(new THREE.BoxGeometry(R * 0.92, R * 0.03, R * 0.05), KIT.aluDark));
         kaburga.position.set(Math.cos(a) * R * 0.48, Math.sin(a) * R * 0.48, -R * 0.06);
         kaburga.rotation.z = a;
       }
-      const besleme = ekle(new THREE.Mesh(cylGeoZ(0.032, 0.026, sz * 0.5, 14), KIT.gold));
-      besleme.position.z = sz * 0.62;
-      const alt = ekle(new THREE.Mesh(cylGeoZ(R * 0.13, R * 0.06, sz * 0.14, 16), KIT.alu));
-      alt.position.z = sz * 0.9;
+      /* Cassegrain: the sub-reflector sits just short of the prime focus and
+         the feed horn looks up at it through the vertex. */
+      const altZ = odak * 0.86;
+      const besleme = ekle(new THREE.Mesh(cylGeoZ(R * 0.05, R * 0.09, odak * 0.34, 14), KIT.gold));
+      besleme.position.z = odak * 0.17;
+      const alt = ekle(new THREE.Mesh(cylGeoZ(R * 0.19, R * 0.07, odak * 0.16, 20), KIT.alu));
+      alt.position.z = altZ;
       for (let i = 0; i < 3; i++) {
         const a = i * 2 * Math.PI / 3;
-        const ayak = ekle(new THREE.Mesh(cylGeoZ(0.014, 0.014, sz * 0.95, 8), KIT.aluDark));
-        ayak.position.set(Math.cos(a) * R * 0.42, Math.sin(a) * R * 0.42, sz * 0.5);
-        ayak.rotation.set(Math.sin(a) * 0.42, -Math.cos(a) * 0.42, 0);
+        const p0 = new THREE.Vector3(Math.cos(a) * R * 0.78, Math.sin(a) * R * 0.78,
+          (R * 0.78) * (R * 0.78) / (4 * odak));
+        const p1 = new THREE.Vector3(0, 0, altZ - odak * 0.09);
+        const boy = p0.distanceTo(p1);
+        const ayak = ekle(new THREE.Mesh(cylGeoZ(0.014, 0.014, boy, 8), KIT.aluDark));
+        ayak.position.copy(p0).add(p1).multiplyScalar(0.5);
+        /* Struts converge on the sub-reflector. Composing this from two Euler
+           terms only works for small angles and these are not small. */
+        ayak.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1),
+          p1.clone().sub(p0).normalize());
       }
-      const dalga = D.waveguide(THREE, KIT, sz * 0.7, { w: 0.04, h: 0.02, axis: 'z' });
-      dalga.position.set(R * 0.2, 0, -sz * 0.2);
+      const dalga = D.waveguide(THREE, KIT, R * 0.7, { w: 0.04, h: 0.02, axis: 'z' });
+      dalga.position.set(R * 0.2, 0, -R * 0.25);
       g.add(dalga);
       void m;
       break;
@@ -684,6 +795,7 @@ export function buildSatellite(THREE, { tokens = {}, scale = 1, lod = 'shop' } =
   const dokular = {
     hucre: hucreDokusu(THREE),
     hucreKit: D.cellTexture(THREE),
+    cfrp: D.cfrpTexture(THREE),
     mli: D.mliTexture(THREE),
     osr: D.osrTexture(THREE),
     kit,
