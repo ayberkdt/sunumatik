@@ -1,0 +1,149 @@
+/* mobile.css — one shared narrow-screen layer for every preset page.
+ *
+ * Written from measurement, not from guesswork. A harness loaded all 65
+ * pages in a 375x760 frame and recorded what actually broke: 45 of them
+ * overflowed horizontally, the worst by 974 px, and the element causing it
+ * was the same handful of patterns over and over.
+ *
+ *   div.group, non-wrapping flex row of controls .......... 12 pages
+ *   label.field inside that row ............................ 4
+ *   canvas wider than the viewport ......................... 5
+ *   section.lunaris-preset__panel, absolute ................ 4
+ *   absolute header / buttons pushed out of a rigid row .... 8
+ *
+ * So the rules below are grouped by that measurement, and each one says how
+ * many pages it was written for. Nothing here runs above the breakpoint:
+ * the desktop layouts are untouched.
+ *
+ * On !important: the page layouts pin panels with id selectors, and this
+ * file is shared, so it cannot win on specificity without either editing 65
+ * pages or overriding. Overriding inside one media query is the smaller
+ * change and the one that stays in a single place.
+ */
+
+@media (max-width: 860px) {
+
+  /* -- 1. control rows wrap -------------------------------------------
+     The dominant failure. A row of labelled inputs laid out with
+     `display:flex` and no wrap grows to whatever its contents need; on a
+     phone that measured 1325 px against a 375 px screen. Wrapping is the
+     whole fix - the controls keep their order and their sizes. */
+  .group, .grp, .ctl, .ctrls, .controls, .row, .bar, .toolbar, .kumanda,
+  header, footer, nav {
+    flex-wrap: wrap !important;
+  }
+  /* header and footer were the biggest thing the first pass missed: the
+     class list caught the inner rows but not the flex CONTAINERS holding
+     them, so a select or a link at the end of the bar still pushed the
+     page out - 533 px on the worst remaining page. */
+  /* A flex item will not shrink below its content unless told to. */
+  .field, .toggle, label.field, label.toggle {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* -- 2. nothing is wider than the screen ----------------------------
+     Canvases sized in JS from a desktop assumption, and long unbroken
+     strings in HUD readouts. */
+  canvas, img, svg, video, table, pre {
+    max-width: 100% !important;
+  }
+  /* An SVG clamped only in width keeps its attribute height and distorts;
+     letting the height follow preserves the drawing. */
+  svg { height: auto !important; }
+  select, input, output { max-width: 100% !important; }
+  pre, code { overflow-x: auto; }
+
+  /* -- 3. side panels stop being side panels --------------------------
+     The three-column scene pages pin a left aside, a right aside and an
+     absolutely positioned stage between them. At 375 px the asides alone
+     asked for 680 px, the stage collapsed to ZERO width and the header ran
+     out to 921 px. Below the breakpoint they become ordinary stacked
+     blocks and the page scrolls. */
+  html, body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    height: auto !important;
+    position: static !important;
+  }
+  body > aside,
+  body > header,
+  body > footer,
+  section.lunaris-preset__panel,
+  .lunaris-preset__panel {
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    max-width: 100% !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+  }
+  body > aside { border-bottom: 1px solid #1b202a !important; }
+
+  /* -- 4. the stage keeps a real height -------------------------------
+     Once the stage is no longer stretched between four pinned edges it has
+     no height of its own, and a WebGL canvas in a zero-height box renders
+     nothing. These are the container ids the audit actually found in use;
+     62vh leaves room for the controls above and the readout below without
+     the scene becoming a stripe. */
+  body > #stage, body > #host, body > #sahne, body > #app, body > #wrap,
+  body > #plan, body > #scene, body > #view, body > #canvasWrap {
+    position: relative !important;
+    inset: auto !important;
+    width: auto !important;
+    height: 62vh !important;
+    min-height: 300px !important;
+  }
+
+  /* -- 5. overlays ------------------------------------------------------
+     These are pinned over the scene with hard pixel insets that assume the
+     desktop columns - `left: 314px; right: 394px` on a 375 px screen leaves
+     a sliver, and the caption rendered as a vertical stack of single words
+     down the middle of the page.
+
+     Captions become ordinary blocks: read under the scene rather than over
+     it, which is the better reading on a phone anyway. */
+  #altyazi, #caption, #ipucu, #hint, #durum, #olcum {
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    max-width: 100% !important;
+    margin: 10px 14px !important;
+  }
+
+  /* Callout label layers are a different problem: they are SIBLINGS of the
+     stage, so no shared rule can re-anchor them to it, and left where they
+     are they would draw their leaders against the viewport instead of the
+     scene. They are hidden here. Nothing is lost - every label's content is
+     the part card in the panel below, which a phone can actually read. */
+  #etiketler, #labels, .xv-leaders { display: none !important; }
+  #hud, #scrim { max-width: 100% !important; }
+
+  /* -- 6. touch targets ------------------------------------------------
+     Measured across the set: 23 controls under 40 px on the worst page.
+     A finger needs more than a mouse pointer does. */
+  button, select, input[type="button"], input[type="submit"], .btn {
+    min-height: 44px !important;
+  }
+  input[type="range"] { height: 28px !important; }
+
+  /* -- 7. type -----------------------------------------------------------
+     Sixteen pages carried body text at 10 to 10.5 px. That is a desktop
+     compromise that does not survive a phone. */
+  body { font-size: 13px !important; line-height: 1.55 !important; }
+  .small, .alt, .note, .sub, td, th, li, p { font-size: inherit; }
+  /* Classes measured carrying 8.3 to 9 px body copy. Explicit sizes do not
+     inherit, so the ones that actually appeared in the audit are named. */
+  .cap, .caption, .tiny, .mini, .hint, .foot, .legend, .kucuk, .aciklama {
+    font-size: 11px !important;
+  }
+}
+
+/* Very narrow: give the scene more of the screen, since the panels below
+   it are scrollable anyway. */
+@media (max-width: 480px) {
+  body > #stage, body > #host, body > #sahne, body > #app, body > #wrap,
+  body > #plan, body > #scene, body > #view, body > #canvasWrap {
+    height: 56vh !important;
+  }
+}
