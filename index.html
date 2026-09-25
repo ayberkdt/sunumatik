@@ -39,6 +39,10 @@
     .grp__b { margin: 6px 0 0; font-size: 13px; color: #767d8c; }
     /* Language switch. Two segments, one accent, 44 px targets - it is a
        setting, not an action, so it does not compete with the filter. */
+    /* Tür süzgeci tek bir denetim: dört düğme, dil anahtarıyla birlikte
+       eylem bütçesini şişirirdi ve bu bir eylem değil, bir ayar. */
+    #kind { min-height: 44px; padding: 0 10px; border: 1px solid #272d39; border-radius: 7px;
+      background: #0a0d14; color: #c8cede; font: inherit; font-size: 12.5px; cursor: pointer; }
     .lang { display: inline-flex; border: 1px solid #272d39; border-radius: 7px; overflow: hidden; }
     .lang button { min-height: 44px; min-width: 52px; padding: 0 14px; border: 0; cursor: pointer;
       background: transparent; color: #9aa2b1; font: inherit; font-size: 12.5px; letter-spacing: .04em; }
@@ -46,7 +50,17 @@
     .lang button + button { border-left: 1px solid #272d39; }
     .cards { display: grid; gap: 10px; margin: 16px 0 0;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
-    .card { display: block; min-height: 44px; padding: 13px 15px 14px; border-radius: 7px;
+    /* Ikon solda, metin sağda: kart üç satır metinden ibaretken ızgara bir
+       ad duvarı gibi okunuyordu. Tek kontur kalınlığı, tek renk, ayrı palet
+       yok - amaç süslemek değil, satır okumadan ayırt edebilmek. */
+    .card__i { grid-row: 1 / span 3; width: 22px; height: 22px; margin-top: 2px;
+      fill: none; stroke: currentColor; stroke-width: 1.35;
+      stroke-linecap: round; stroke-linejoin: round; color: #79818f; }
+    .card:hover .card__i { color: #c9a35c; }
+    .kind { display: inline-block; padding: 1px 6px; border: 1px solid #2b3240;
+      border-radius: 4px; color: #8a92a2; letter-spacing: .03em; }
+    .card { display: grid; grid-template-columns: 22px 1fr; column-gap: 11px;
+      align-content: start; min-height: 44px; padding: 13px 15px 14px; border-radius: 7px;
       border: 1px solid #1b202a; background: #080a0f; }
     .card:hover { border-color: #c9a35c; background: #0c0f16; }
     .card__t { display: block; font-size: 13px; font-weight: 600; color: #eef1f6; }
@@ -62,6 +76,11 @@
       header { padding-top: 34px; }
       .lead { font-size: 15px; }
       .cards { grid-template-columns: 1fr; }
+      /* Grup gezintisi telefonda 21 px yuksekligindeydi. core/mobile.css
+         bunu kapatiyor ama o dosya YALNIZ preset sayfalarina uygulaniyor;
+         kok sayfa kendi medya sorgusunu tasiyor, dolayisiyla kural burada
+         da yazilmak zorunda. Olculen: 7 baglantinin 7'si esigin altinda. */
+      nav a { min-height: 44px; display: inline-flex; align-items: center; }
     }
   </style>
 </head>
@@ -75,6 +94,12 @@
         <a class="btn btn--go" href="demo/index.html">Open the live deck</a>
         <a class="btn" href="https://github.com/ayberkdt/sunumatik">Source on GitHub</a>
         <input type="search" id="find" placeholder="Filter 65 scenes&hellip;" aria-label="Filter scenes">
+      <select id="kind" aria-label="Scene kind">
+        <option value="">All kinds</option>
+        <option value="olcum">Instrument</option>
+        <option value="gorsel">Visual</option>
+        <option value="arac">Toolkit</option>
+      </select>
       <div class="lang" role="group" aria-label="Catalogue language">
         <button type="button" data-lang="en" aria-pressed="true">EN</button>
         <button type="button" data-lang="tr" aria-pressed="false">TR</button>
@@ -96,115 +121,137 @@
         <h2>Orbits and trajectories <span class="grp__n">22</span></h2>
         <p class="grp__b">Transfers, perturbations, three-body structure, determination and conjunction.</p>
         <div class="cards">
-        <a class="card" href="presets/conjunction_covariance/index.html" data-find="yakın geçiş ve kovaryans conjunction and covariance conjunction_covariance">
+        <a class="card" href="presets/conjunction_covariance/index.html" data-kind="olcum" data-find="yakın geçiş ve kovaryans conjunction and covariance conjunction_covariance">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.6"/><circle cx="8" cy="8" r="2"/><path d="M8 0.8v2.6M8 12.6v2.6M0.8 8h2.6M12.6 8h2.6"/></svg>
           <span class="card__t" data-en="Conjunction and Covariance" data-tr="Yakın Geçiş ve Kovaryans">Conjunction and Covariance</span>
           <span class="card__n">conjunction_covariance</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/constellation_coverage/index.html" data-find="takımyıldızı kapsaması constellation coverage constellation_coverage">
+        <a class="card" href="presets/constellation_coverage/index.html" data-kind="olcum" data-find="takımyıldızı kapsaması constellation coverage constellation_coverage">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12M6 2v12M10 2v12"/></svg>
           <span class="card__t" data-en="Constellation Coverage" data-tr="Takımyıldızı Kapsaması">Constellation Coverage</span>
           <span class="card__n">constellation_coverage</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/cr3bp_lagrange/index.html" data-find="cr3bp ve lagrange noktaları cr3bp and lagrange points cr3bp_lagrange">
+        <a class="card" href="presets/cr3bp_lagrange/index.html" data-kind="olcum" data-find="cr3bp ve lagrange noktaları cr3bp and lagrange points cr3bp_lagrange">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4" cy="11" r="1.5"/><circle cx="12" cy="11" r="1.5"/><circle cx="8" cy="4" r="1.5"/><path d="M4 11h8M4 11l4-7M12 11l-4-7"/></svg>
           <span class="card__t" data-en="CR3BP and Lagrange Points" data-tr="CR3BP ve Lagrange Noktaları">CR3BP and Lagrange Points</span>
           <span class="card__n">cr3bp_lagrange</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/eclipse_geometry/index.html" data-find="tutulma, örtülme ve görünürlük eclipse, occultation and visibility eclipse_geometry">
+        <a class="card" href="presets/eclipse_geometry/index.html" data-kind="olcum" data-find="tutulma, örtülme ve görünürlük eclipse, occultation and visibility eclipse_geometry">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.2"/><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3"/></svg>
           <span class="card__t" data-en="Eclipse, Occultation and Visibility" data-tr="Tutulma, Örtülme ve Görünürlük">Eclipse, Occultation and Visibility</span>
           <span class="card__n">eclipse_geometry</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/formation_flight/index.html" data-find="formasyon uçuşu formation flight formation_flight">
+        <a class="card" href="presets/formation_flight/index.html" data-kind="olcum" data-find="formasyon uçuşu formation flight formation_flight">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><rect x="6" y="6" width="4" height="4" rx="0.6"/><path d="M6 8H1.5M10 8H14.5M1.5 6.2v3.6M14.5 6.2v3.6"/></svg>
           <span class="card__t" data-en="Formation Flight" data-tr="Formasyon Uçuşu">Formation Flight</span>
           <span class="card__n">formation_flight</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/free_return/index.html" data-find="ay serbest dönüş yörüngesi lunar free-return trajectory free_return">
+        <a class="card" href="presets/free_return/index.html" data-kind="olcum" data-find="ay serbest dönüş yörüngesi lunar free-return trajectory free_return">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 11a6 6 0 0 1 12-3"/><path d="M11 5l3 0 0 3"/><circle cx="2.5" cy="11" r="1.2"/></svg>
           <span class="card__t" data-en="Lunar Free-Return Trajectory" data-tr="Ay Serbest Dönüş Yörüngesi">Lunar Free-Return Trajectory</span>
           <span class="card__n">free_return</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/geo_stationkeeping/index.html" data-find="geo i̇stasyon tutma bütçesi geo station-keeping budget geo_stationkeeping">
+        <a class="card" href="presets/geo_stationkeeping/index.html" data-kind="olcum" data-find="geo i̇stasyon tutma bütçesi geo station-keeping budget geo_stationkeeping">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="8" rx="7" ry="3.4"/><circle cx="8" cy="8" r="1.7"/></svg>
           <span class="card__t" data-en="GEO Station-Keeping Budget" data-tr="GEO İstasyon Tutma Bütçesi">GEO Station-Keeping Budget</span>
           <span class="card__n">geo_stationkeeping</span>
-          <span class="card__m">static</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · static</span>
         </a>
-        <a class="card" href="presets/gravity_assist/index.html" data-find="yerçekimi yardımı ve b-düzlemi gravity assist and the b-plane gravity_assist">
+        <a class="card" href="presets/gravity_assist/index.html" data-kind="olcum" data-find="yerçekimi yardımı ve b-düzlemi gravity assist and the b-plane gravity_assist">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 11a6 6 0 0 1 12-3"/><path d="M11 5l3 0 0 3"/><circle cx="2.5" cy="11" r="1.2"/></svg>
           <span class="card__t" data-en="Gravity Assist and the B-Plane" data-tr="Yerçekimi Yardımı ve B-Düzlemi">Gravity Assist and the B-Plane</span>
           <span class="card__n">gravity_assist</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/gravity_field/index.html" data-find="küresel harmonik yerçekimi alanı spherical-harmonic gravity field gravity_field">
+        <a class="card" href="presets/gravity_field/index.html" data-kind="olcum" data-find="küresel harmonik yerçekimi alanı spherical-harmonic gravity field gravity_field">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12M6 2v12M10 2v12"/></svg>
           <span class="card__t" data-en="Spherical-Harmonic Gravity Field" data-tr="Küresel Harmonik Yerçekimi Alanı">Spherical-Harmonic Gravity Field</span>
           <span class="card__n">gravity_field</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/ground_track_3d/index.html" data-find="3b yörünge + 2b yer i̇zi 3d orbit and 2d ground track ground_track_3d">
+        <a class="card" href="presets/ground_track_3d/index.html" data-kind="olcum" data-find="3b yörünge + 2b yer i̇zi 3d orbit and 2d ground track ground_track_3d">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M1.8 8h12.4"/><ellipse cx="8" cy="8" rx="2.8" ry="6.2"/></svg>
           <span class="card__t" data-en="3D Orbit and 2D Ground Track" data-tr="3B Yörünge + 2B Yer İzi">3D Orbit and 2D Ground Track</span>
           <span class="card__n">ground_track_3d</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/halo_manifolds/index.html" data-find="halo yörüngeleri ve değişmez manifoldlar halo orbits and invariant manifolds halo_manifolds">
+        <a class="card" href="presets/halo_manifolds/index.html" data-kind="olcum" data-find="halo yörüngeleri ve değişmez manifoldlar halo orbits and invariant manifolds halo_manifolds">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4" cy="11" r="1.5"/><circle cx="12" cy="11" r="1.5"/><circle cx="8" cy="4" r="1.5"/><path d="M4 11h8M4 11l4-7M12 11l-4-7"/></svg>
           <span class="card__t" data-en="Halo Orbits and Invariant Manifolds" data-tr="Halo Yörüngeleri ve Değişmez Manifoldlar">Halo Orbits and Invariant Manifolds</span>
           <span class="card__n">halo_manifolds</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/launch_window/index.html" data-find="fırlatma penceresi ve azimut launch window and azimuth launch_window">
+        <a class="card" href="presets/launch_window/index.html" data-kind="olcum" data-find="fırlatma penceresi ve azimut launch window and azimuth launch_window">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8h13"/><path d="M4 5.5v5M8 4.5v7M12 5.5v5"/></svg>
           <span class="card__t" data-en="Launch Window and Azimuth" data-tr="Fırlatma Penceresi ve Azimut">Launch Window and Azimuth</span>
           <span class="card__n">launch_window</span>
-          <span class="card__m">static</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · static</span>
         </a>
-        <a class="card" href="presets/low_thrust_transfer/index.html" data-find="düşük i̇tkili transfer laboratuvarı low-thrust transfer laboratory low_thrust_transfer">
+        <a class="card" href="presets/low_thrust_transfer/index.html" data-kind="olcum" data-find="düşük i̇tkili transfer laboratuvarı low-thrust transfer laboratory low_thrust_transfer">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 11a6 6 0 0 1 12-3"/><path d="M11 5l3 0 0 3"/><circle cx="2.5" cy="11" r="1.2"/></svg>
           <span class="card__t" data-en="Low-Thrust Transfer Laboratory" data-tr="Düşük İtkili Transfer Laboratuvarı">Low-Thrust Transfer Laboratory</span>
           <span class="card__n">low_thrust_transfer</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/lunar_orbit/index.html" data-find="analytic lunar orbit preset analytic lunar orbit preset lunar_orbit">
-          <span class="card__t" data-en="Analytic Lunar Orbit Preset" data-tr="Analytic Lunar Orbit Preset">Analytic Lunar Orbit Preset</span>
+        <a class="card" href="presets/lunar_orbit/index.html" data-kind="olcum" data-find="analytic lunar orbit preset analytic lunar orbit lunar_orbit">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="8" rx="7" ry="3.4"/><circle cx="8" cy="8" r="1.7"/></svg>
+          <span class="card__t" data-en="Analytic Lunar Orbit" data-tr="Analytic Lunar Orbit Preset">Analytic Lunar Orbit</span>
           <span class="card__n">lunar_orbit</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/orbit_determination/index.html" data-find="yörünge belirleme (ekf) laboratuvarı orbit determination (ekf) laboratory orbit_determination">
+        <a class="card" href="presets/orbit_determination/index.html" data-kind="olcum" data-find="yörünge belirleme (ekf) laboratuvarı orbit determination (ekf) laboratory orbit_determination">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.6"/><circle cx="8" cy="8" r="2"/><path d="M8 0.8v2.6M8 12.6v2.6M0.8 8h2.6M12.6 8h2.6"/></svg>
           <span class="card__t" data-en="Orbit Determination (EKF) Laboratory" data-tr="Yörünge Belirleme (EKF) Laboratuvarı">Orbit Determination (EKF) Laboratory</span>
           <span class="card__n">orbit_determination</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/orbit_perturbations/index.html" data-find="yörünge pertürbasyonları orbit perturbations orbit_perturbations">
+        <a class="card" href="presets/orbit_perturbations/index.html" data-kind="olcum" data-find="yörünge pertürbasyonları orbit perturbations orbit_perturbations">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="8" rx="7" ry="3.4"/><circle cx="8" cy="8" r="1.7"/></svg>
           <span class="card__t" data-en="Orbit Perturbations" data-tr="Yörünge Pertürbasyonları">Orbit Perturbations</span>
           <span class="card__n">orbit_perturbations</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/porkchop_explorer/index.html" data-find="porkchop / fırlatma penceresi porkchop and launch window porkchop_explorer">
+        <a class="card" href="presets/porkchop_explorer/index.html" data-kind="olcum" data-find="porkchop / fırlatma penceresi porkchop and launch window porkchop_explorer">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12M6 2v12M10 2v12"/></svg>
           <span class="card__t" data-en="Porkchop and Launch Window" data-tr="Porkchop / Fırlatma Penceresi">Porkchop and Launch Window</span>
           <span class="card__n">porkchop_explorer</span>
-          <span class="card__m">static</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · static</span>
         </a>
-        <a class="card" href="presets/rendezvous_docking/index.html" data-find="randevu ve kenetlenme randevu ve kenetlenme rendezvous_docking">
-          <span class="card__t" data-en="Randevu ve Kenetlenme" data-tr="Randevu ve Kenetlenme">Randevu ve Kenetlenme</span>
+        <a class="card" href="presets/rendezvous_docking/index.html" data-kind="olcum" data-find="randevu ve kenetlenme rendezvous and docking rendezvous_docking">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><rect x="6" y="6" width="4" height="4" rx="0.6"/><path d="M6 8H1.5M10 8H14.5M1.5 6.2v3.6M14.5 6.2v3.6"/></svg>
+          <span class="card__t" data-en="Rendezvous and Docking" data-tr="Randevu ve Kenetlenme">Rendezvous and Docking</span>
           <span class="card__n">rendezvous_docking</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/soi_explorer/index.html" data-find="etki küresi kâşifi sphere-of-influence explorer soi_explorer">
+        <a class="card" href="presets/soi_explorer/index.html" data-kind="olcum" data-find="etki küresi kâşifi sphere-of-influence explorer soi_explorer">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="8" cy="8" rx="7" ry="3.4"/><circle cx="8" cy="8" r="1.7"/></svg>
           <span class="card__t" data-en="Sphere-of-Influence Explorer" data-tr="Etki Küresi Kâşifi">Sphere-of-Influence Explorer</span>
           <span class="card__n">soi_explorer</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/three_body_states/index.html" data-find="üç-cisim durumları three-body states three_body_states">
+        <a class="card" href="presets/three_body_states/index.html" data-kind="olcum" data-find="üç-cisim durumları three-body states three_body_states">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4" cy="11" r="1.5"/><circle cx="12" cy="11" r="1.5"/><circle cx="8" cy="4" r="1.5"/><path d="M4 11h8M4 11l4-7M12 11l-4-7"/></svg>
           <span class="card__t" data-en="Three-Body States" data-tr="Üç-Cisim Durumları">Three-Body States</span>
           <span class="card__n">three_body_states</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/tisserand_graph/index.html" data-find="tisserand grafiği tisserand graph tisserand_graph">
+        <a class="card" href="presets/tisserand_graph/index.html" data-kind="olcum" data-find="tisserand grafiği tisserand graph tisserand_graph">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13c3 0 3-9 6-9s3 9 6 9"/><path d="M2 13h12"/></svg>
           <span class="card__t" data-en="Tisserand Graph" data-tr="Tisserand Grafiği">Tisserand Graph</span>
           <span class="card__n">tisserand_graph</span>
-          <span class="card__m">static</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · static</span>
         </a>
-        <a class="card" href="presets/transfer_explorer/index.html" data-find="lambert transfer kâşifi lambert transfer explorer transfer_explorer">
+        <a class="card" href="presets/transfer_explorer/index.html" data-kind="olcum" data-find="lambert transfer kâşifi lambert transfer explorer transfer_explorer">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 11a6 6 0 0 1 12-3"/><path d="M11 5l3 0 0 3"/><circle cx="2.5" cy="11" r="1.2"/></svg>
           <span class="card__t" data-en="Lambert Transfer Explorer" data-tr="Lambert Transfer Kâşifi">Lambert Transfer Explorer</span>
           <span class="card__n">transfer_explorer</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
         </div>
       </section>
@@ -212,40 +259,47 @@
         <h2>Launch, entry and staging <span class="grp__n">7</span></h2>
         <p class="grp__b">Getting off a surface, getting back onto one, and what separates in between.</p>
         <div class="cards">
-        <a class="card" href="presets/attitude_gnc/index.html" data-find="yönelim / gnc laboratuvarı attitude and gnc laboratory attitude_gnc">
+        <a class="card" href="presets/attitude_gnc/index.html" data-kind="olcum" data-find="yönelim / gnc laboratuvarı attitude and gnc laboratory attitude_gnc">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.6"/><circle cx="8" cy="8" r="2"/><path d="M8 0.8v2.6M8 12.6v2.6M0.8 8h2.6M12.6 8h2.6"/></svg>
           <span class="card__t" data-en="Attitude and GNC Laboratory" data-tr="Yönelim / GNC Laboratuvarı">Attitude and GNC Laboratory</span>
           <span class="card__n">attitude_gnc</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/entry_dispersion/index.html" data-find="giriş dağılımı (monte carlo) entry dispersion entry_dispersion">
+        <a class="card" href="presets/entry_dispersion/index.html" data-kind="olcum" data-find="giriş dağılımı (monte carlo) entry dispersion entry_dispersion">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4c4 4 8 6 12 6"/><path d="M4 12l2-2M7 13.5l2-2M10 14.5l2-2"/></svg>
           <span class="card__t" data-en="Entry Dispersion" data-tr="Giriş Dağılımı (Monte Carlo)">Entry Dispersion</span>
           <span class="card__n">entry_dispersion</span>
-          <span class="card__m">static</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · static</span>
         </a>
-        <a class="card" href="presets/launch_ascent/index.html" data-find="fırlatma ve tırmanış launch and ascent launch_ascent">
+        <a class="card" href="presets/launch_ascent/index.html" data-kind="olcum" data-find="fırlatma ve tırmanış launch and ascent launch_ascent">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c2.2 2 3.2 4.4 3.2 7L8 12 4.8 9c0-2.6 1-5 3.2-7z"/><path d="M5.6 12.4L4 14.6M10.4 12.4L12 14.6"/></svg>
           <span class="card__t" data-en="Launch and Ascent" data-tr="Fırlatma ve Tırmanış">Launch and Ascent</span>
           <span class="card__n">launch_ascent</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/lunar_descent/index.html" data-find="ay'a motorlu i̇niş — lunar descent preseti powered lunar descent lunar_descent">
+        <a class="card" href="presets/lunar_descent/index.html" data-kind="olcum" data-find="ay'a motorlu i̇niş — lunar descent preseti powered lunar descent lunar_descent">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c2.2 2 3.2 4.4 3.2 7L8 12 4.8 9c0-2.6 1-5 3.2-7z"/><path d="M5.6 12.4L4 14.6M10.4 12.4L12 14.6"/></svg>
           <span class="card__t" data-en="Powered Lunar Descent" data-tr="Ay'a Motorlu İniş — Lunar Descent Preseti">Powered Lunar Descent</span>
           <span class="card__n">lunar_descent</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/orbital_stage/index.html" data-find="yörünge sahnesi orbital stage orbital_stage">
+        <a class="card" href="presets/orbital_stage/index.html" data-kind="olcum" data-find="yörünge sahnesi orbital stage orbital_stage">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="1.8" width="6" height="5" rx="1"/><rect x="5" y="9.2" width="6" height="5" rx="1"/><path d="M2.5 8h11"/></svg>
           <span class="card__t" data-en="Orbital Stage" data-tr="Yörünge Sahnesi">Orbital Stage</span>
           <span class="card__n">orbital_stage</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/reentry_corridor/index.html" data-find="giriş koridoru re-entry corridor reentry_corridor">
+        <a class="card" href="presets/reentry_corridor/index.html" data-kind="olcum" data-find="giriş koridoru re-entry corridor reentry_corridor">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4c4 4 8 6 12 6"/><path d="M4 12l2-2M7 13.5l2-2M10 14.5l2-2"/></svg>
           <span class="card__t" data-en="Re-entry Corridor" data-tr="Giriş Koridoru">Re-entry Corridor</span>
           <span class="card__n">reentry_corridor</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/stage_separation/index.html" data-find="kademe ayrılması stage separation stage_separation">
+        <a class="card" href="presets/stage_separation/index.html" data-kind="olcum" data-find="kademe ayrılması stage separation stage_separation">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="1.8" width="6" height="5" rx="1"/><rect x="5" y="9.2" width="6" height="5" rx="1"/><path d="M2.5 8h11"/></svg>
           <span class="card__t" data-en="Stage Separation" data-tr="Kademe Ayrılması">Stage Separation</span>
           <span class="card__n">stage_separation</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
         </div>
       </section>
@@ -253,55 +307,65 @@
         <h2>Vehicles and assemblies <span class="grp__n">10</span></h2>
         <p class="grp__b">Hardware: how it is built, what it mounts to, and what it is made of.</p>
         <div class="cards">
-        <a class="card" href="presets/aircraft_blocks/index.html" data-find="uçak blokları aircraft blocks aircraft_blocks">
+        <a class="card" href="presets/aircraft_blocks/index.html" data-kind="arac" data-find="uçak blokları aircraft blocks aircraft_blocks">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 9.5c4-4 9-5.5 13-4-3 3-8 5-13 4z"/><path d="M4 9l6-2"/></svg>
           <span class="card__t" data-en="Aircraft Blocks" data-tr="Uçak Blokları">Aircraft Blocks</span>
           <span class="card__n">aircraft_blocks</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="toolkit" data-tr="araç">toolkit</span> · animated</span>
         </a>
-        <a class="card" href="presets/comms_antenna/index.html" data-find="anten ve yer i̇stasyonu antenna and ground station comms_antenna">
+        <a class="card" href="presets/comms_antenna/index.html" data-kind="olcum" data-find="anten ve yer i̇stasyonu antenna and ground station comms_antenna">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 12a6 6 0 0 1 9.4-7"/><path d="M7.5 9.2L13 3.2"/><path d="M3 12h4"/></svg>
           <span class="card__t" data-en="Antenna and Ground Station" data-tr="Anten ve Yer İstasyonu">Antenna and Ground Station</span>
           <span class="card__n">comms_antenna</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/comms_link_budget/index.html" data-find="bağlantı bütçesi ve bantlar link budget and bands comms_link_budget">
+        <a class="card" href="presets/comms_link_budget/index.html" data-kind="olcum" data-find="bağlantı bütçesi ve bantlar link budget and bands comms_link_budget">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 12a6 6 0 0 1 9.4-7"/><path d="M7.5 9.2L13 3.2"/><path d="M3 12h4"/></svg>
           <span class="card__t" data-en="Link Budget and Bands" data-tr="Bağlantı Bütçesi ve Bantlar">Link Budget and Bands</span>
           <span class="card__n">comms_link_budget</span>
-          <span class="card__m">static</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · static</span>
         </a>
-        <a class="card" href="presets/craft_blocks/index.html" data-find="araç blokları spacecraft blocks craft_blocks">
+        <a class="card" href="presets/craft_blocks/index.html" data-kind="arac" data-find="araç blokları spacecraft blocks craft_blocks">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l6 3.1v6.2l-6 3.1-6-3.1V4.9z"/><path d="M2 4.9l6 3.1 6-3.1M8 8v6.2"/></svg>
           <span class="card__t" data-en="Spacecraft Blocks" data-tr="Araç Blokları">Spacecraft Blocks</span>
           <span class="card__n">craft_blocks</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="toolkit" data-tr="araç">toolkit</span> · animated</span>
         </a>
-        <a class="card" href="presets/exploded_view/index.html" data-find="exploded view exploded view exploded_view">
+        <a class="card" href="presets/exploded_view/index.html" data-kind="olcum" data-find="exploded view exploded view exploded_view">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l6 3.1v6.2l-6 3.1-6-3.1V4.9z"/><path d="M2 4.9l6 3.1 6-3.1M8 8v6.2"/></svg>
           <span class="card__t" data-en="Exploded View" data-tr="Exploded View">Exploded View</span>
           <span class="card__n">exploded_view</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/habitat_blocks/index.html" data-find="habitat blocks habitat blocks habitat_blocks">
+        <a class="card" href="presets/habitat_blocks/index.html" data-kind="olcum" data-find="habitat blocks habitat blocks habitat_blocks">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 12V8.5a5.5 5.5 0 0 1 11 0V12z"/><path d="M2.5 12h11M8 8.5V12"/></svg>
           <span class="card__t" data-en="Habitat Blocks" data-tr="Habitat Blocks">Habitat Blocks</span>
           <span class="card__n">habitat_blocks</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/mechanism_lab/index.html" data-find="aksam laboratuvarı mechanism laboratory mechanism_lab">
+        <a class="card" href="presets/mechanism_lab/index.html" data-kind="olcum" data-find="aksam laboratuvarı mechanism laboratory mechanism_lab">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.6v2M8 12.4v2M1.6 8h2M12.4 8h2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M12.5 3.5l-1.4 1.4M4.9 11.1l-1.4 1.4"/></svg>
           <span class="card__t" data-en="Mechanism Laboratory" data-tr="Aksam Laboratuvarı">Mechanism Laboratory</span>
           <span class="card__n">mechanism_lab</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/physical_rigs/index.html" data-find="fiziksel aksam fiziksel aksam physical_rigs">
-          <span class="card__t" data-en="Fiziksel Aksam" data-tr="Fiziksel Aksam">Fiziksel Aksam</span>
+        <a class="card" href="presets/physical_rigs/index.html" data-kind="olcum" data-find="fiziksel aksam physical rigs physical_rigs">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.6v2M8 12.4v2M1.6 8h2M12.4 8h2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M12.5 3.5l-1.4 1.4M4.9 11.1l-1.4 1.4"/></svg>
+          <span class="card__t" data-en="Physical Rigs" data-tr="Fiziksel Aksam">Physical Rigs</span>
           <span class="card__n">physical_rigs</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/satellite_integration/index.html" data-find="satellite integration satellite integration satellite_integration">
+        <a class="card" href="presets/satellite_integration/index.html" data-kind="olcum" data-find="satellite integration satellite integration satellite_integration">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><rect x="6" y="6" width="4" height="4" rx="0.6"/><path d="M6 8H1.5M10 8H14.5M1.5 6.2v3.6M14.5 6.2v3.6"/></svg>
           <span class="card__t" data-en="Satellite Integration" data-tr="Satellite Integration">Satellite Integration</span>
           <span class="card__n">satellite_integration</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/site_plan/index.html" data-find="saha yerleşimi site layout site_plan">
+        <a class="card" href="presets/site_plan/index.html" data-kind="olcum" data-find="saha yerleşimi site layout site_plan">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12M6 2v12M10 2v12"/></svg>
           <span class="card__t" data-en="Site Layout" data-tr="Saha Yerleşimi">Site Layout</span>
           <span class="card__n">site_plan</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
         </div>
       </section>
@@ -309,50 +373,59 @@
         <h2>Worlds and environments <span class="grp__n">9</span></h2>
         <p class="grp__b">Surfaces, atmospheres, skies and the light that falls on them.</p>
         <div class="cards">
-        <a class="card" href="presets/aurora/index.html" data-find="aurora preset — emisyon çizgileri, yükseklik, aktivite aurora - emission lines, altitude, activity aurora">
+        <a class="card" href="presets/aurora/index.html" data-kind="gorsel" data-find="aurora preset — emisyon çizgileri, yükseklik, aktivite aurora - emission lines, altitude, activity aurora">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13c1.5-5 3-8 4.5-8S8 11 9.5 11 12 6 14 3"/><path d="M4 13.5V10M7 13.5V8M10 13.5V9.5"/></svg>
           <span class="card__t" data-en="Aurora - emission lines, altitude, activity" data-tr="Aurora Preset — emisyon çizgileri, yükseklik, aktivite">Aurora - emission lines, altitude, activity</span>
           <span class="card__n">aurora</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="visual" data-tr="görsel">visual</span> · animated</span>
         </a>
-        <a class="card" href="presets/cinematic_space/index.html" data-find="sinematik uzay sahnesi sinematik uzay sahnesi cinematic_space">
-          <span class="card__t" data-en="Sinematik Uzay Sahnesi" data-tr="Sinematik Uzay Sahnesi">Sinematik Uzay Sahnesi</span>
+        <a class="card" href="presets/cinematic_space/index.html" data-kind="gorsel" data-find="sinematik uzay sahnesi cinematic space scene cinematic_space">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.7 4.4 4.8.3-3.7 3 1.2 4.6L8 11.2 4 13.8l1.2-4.6-3.7-3 4.8-.3z"/></svg>
+          <span class="card__t" data-en="Cinematic Space Scene" data-tr="Sinematik Uzay Sahnesi">Cinematic Space Scene</span>
           <span class="card__n">cinematic_space</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="visual" data-tr="görsel">visual</span> · animated</span>
         </a>
-        <a class="card" href="presets/cosmos_advanced/index.html" data-find="cosmos vanilla preset cosmos vanilla preset cosmos_advanced">
-          <span class="card__t" data-en="Cosmos Vanilla Preset" data-tr="Cosmos Vanilla Preset">Cosmos Vanilla Preset</span>
+        <a class="card" href="presets/cosmos_advanced/index.html" data-kind="gorsel" data-find="cosmos vanilla preset deep sky - stars, nebulae, galaxies cosmos_advanced">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.7 4.4 4.8.3-3.7 3 1.2 4.6L8 11.2 4 13.8l1.2-4.6-3.7-3 4.8-.3z"/></svg>
+          <span class="card__t" data-en="Deep Sky - stars, nebulae, galaxies" data-tr="Cosmos Vanilla Preset">Deep Sky - stars, nebulae, galaxies</span>
           <span class="card__n">cosmos_advanced</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="visual" data-tr="görsel">visual</span> · animated</span>
         </a>
-        <a class="card" href="presets/earth_advanced/index.html" data-find="terra vanilla preset terra vanilla preset earth_advanced">
-          <span class="card__t" data-en="Terra Vanilla Preset" data-tr="Terra Vanilla Preset">Terra Vanilla Preset</span>
+        <a class="card" href="presets/earth_advanced/index.html" data-kind="gorsel" data-find="terra vanilla preset earth - terrain, atmosphere, city lights earth_advanced">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M1.8 8h12.4"/><ellipse cx="8" cy="8" rx="2.8" ry="6.2"/></svg>
+          <span class="card__t" data-en="Earth - terrain, atmosphere, city lights" data-tr="Terra Vanilla Preset">Earth - terrain, atmosphere, city lights</span>
           <span class="card__n">earth_advanced</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="visual" data-tr="görsel">visual</span> · animated</span>
         </a>
-        <a class="card" href="presets/jwst_explorer/index.html" data-find="jwst explorer preset jwst explorer preset jwst_explorer">
-          <span class="card__t" data-en="JWST Explorer Preset" data-tr="JWST Explorer Preset">JWST Explorer Preset</span>
+        <a class="card" href="presets/jwst_explorer/index.html" data-kind="olcum" data-find="jwst explorer preset jwst explorer jwst_explorer">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 10.5l8-6 3 3-8 6z"/><path d="M4.5 12.5l-2 2M9.5 7.5l2.2 2.2"/></svg>
+          <span class="card__t" data-en="JWST Explorer" data-tr="JWST Explorer Preset">JWST Explorer</span>
           <span class="card__n">jwst_explorer</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/moon_advanced/index.html" data-find="lunaris vanilla preset lunaris vanilla preset moon_advanced">
-          <span class="card__t" data-en="Lunaris Vanilla Preset" data-tr="Lunaris Vanilla Preset">Lunaris Vanilla Preset</span>
+        <a class="card" href="presets/moon_advanced/index.html" data-kind="gorsel" data-find="lunaris vanilla preset the moon - surface, relief, orbit moon_advanced">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="4"/><ellipse cx="8" cy="8" rx="7" ry="2.4" transform="rotate(-20 8 8)"/></svg>
+          <span class="card__t" data-en="The Moon - surface, relief, orbit" data-tr="Lunaris Vanilla Preset">The Moon - surface, relief, orbit</span>
           <span class="card__n">moon_advanced</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="visual" data-tr="görsel">visual</span> · animated</span>
         </a>
-        <a class="card" href="presets/planets_advanced/index.html" data-find="planetae vanilla preset planetae vanilla preset planets_advanced">
-          <span class="card__t" data-en="Planetae Vanilla Preset" data-tr="Planetae Vanilla Preset">Planetae Vanilla Preset</span>
+        <a class="card" href="presets/planets_advanced/index.html" data-kind="gorsel" data-find="planetae vanilla preset the planets - orbits and surfaces planets_advanced">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="4"/><ellipse cx="8" cy="8" rx="7" ry="2.4" transform="rotate(-20 8 8)"/></svg>
+          <span class="card__t" data-en="The Planets - orbits and surfaces" data-tr="Planetae Vanilla Preset">The Planets - orbits and surfaces</span>
           <span class="card__n">planets_advanced</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="visual" data-tr="görsel">visual</span> · animated</span>
         </a>
-        <a class="card" href="presets/sun_advanced/index.html" data-find="sol vanilla preset sol vanilla preset sun_advanced">
-          <span class="card__t" data-en="Sol Vanilla Preset" data-tr="Sol Vanilla Preset">Sol Vanilla Preset</span>
+        <a class="card" href="presets/sun_advanced/index.html" data-kind="gorsel" data-find="sol vanilla preset the sun - granulation, flares, corona sun_advanced">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.2"/><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3"/></svg>
+          <span class="card__t" data-en="The Sun - granulation, flares, corona" data-tr="Sol Vanilla Preset">The Sun - granulation, flares, corona</span>
           <span class="card__n">sun_advanced</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="visual" data-tr="görsel">visual</span> · animated</span>
         </a>
-        <a class="card" href="presets/terrain_blocks/index.html" data-find="arazi blokları terrain blocks terrain_blocks">
+        <a class="card" href="presets/terrain_blocks/index.html" data-kind="olcum" data-find="arazi blokları terrain blocks terrain_blocks">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 12.5l4-6 3 4 2-2.6 4 4.6z"/></svg>
           <span class="card__t" data-en="Terrain Blocks" data-tr="Arazi Blokları">Terrain Blocks</span>
           <span class="card__n">terrain_blocks</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
         </div>
       </section>
@@ -360,20 +433,23 @@
         <h2>Aerodynamics <span class="grp__n">3</span></h2>
         <p class="grp__b">Flow that can be drawn because it can be computed.</p>
         <div class="cards">
-        <a class="card" href="presets/aero_airfoil_flow/index.html" data-find="kanat profili etrafında akım flow around an aerofoil aero_airfoil_flow">
+        <a class="card" href="presets/aero_airfoil_flow/index.html" data-kind="olcum" data-find="kanat profili etrafında akım flow around an aerofoil aero_airfoil_flow">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 9.5c4-4 9-5.5 13-4-3 3-8 5-13 4z"/><path d="M4 9l6-2"/></svg>
           <span class="card__t" data-en="Flow Around an Aerofoil" data-tr="Kanat Profili Etrafında Akım">Flow Around an Aerofoil</span>
           <span class="card__n">aero_airfoil_flow</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/aero_shock_waves/index.html" data-find="şok ve genleşme dalgaları shock and expansion waves aero_shock_waves">
+        <a class="card" href="presets/aero_shock_waves/index.html" data-kind="olcum" data-find="şok ve genleşme dalgaları shock and expansion waves aero_shock_waves">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h3l2-4 2 8 2-4h3"/></svg>
           <span class="card__t" data-en="Shock and Expansion Waves" data-tr="Şok ve Genleşme Dalgaları">Shock and Expansion Waves</span>
           <span class="card__n">aero_shock_waves</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/aero_vortex_street/index.html" data-find="kármán vorteks caddesi kármán vorteks caddesi aero_vortex_street">
-          <span class="card__t" data-en="Kármán Vorteks Caddesi" data-tr="Kármán Vorteks Caddesi">Kármán Vorteks Caddesi</span>
+        <a class="card" href="presets/aero_vortex_street/index.html" data-kind="olcum" data-find="kármán vorteks caddesi karman vortex street aero_vortex_street">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 8a2 2 0 1 1-2-2 4 4 0 1 1 4 4 6 6 0 1 1-6-6"/></svg>
+          <span class="card__t" data-en="Karman Vortex Street" data-tr="Kármán Vorteks Caddesi">Karman Vortex Street</span>
           <span class="card__n">aero_vortex_street</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
         </div>
       </section>
@@ -381,40 +457,47 @@
         <h2>Machine learning <span class="grp__n">7</span></h2>
         <p class="grp__b">Architectures and loss surfaces, shown rather than asserted.</p>
         <div class="cards">
-        <a class="card" href="presets/ml_attention_flow/index.html" data-find="dikkat akışı preseti attention flow ml_attention_flow">
+        <a class="card" href="presets/ml_attention_flow/index.html" data-kind="olcum" data-find="dikkat akışı preseti attention flow ml_attention_flow">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.4"/><circle cx="3" cy="12" r="1.4"/><circle cx="13" cy="8" r="1.4"/><circle cx="8" cy="4" r="1.4"/><circle cx="8" cy="12" r="1.4"/><path d="M4.4 4H6.6M4.4 12H6.6M9.3 4.6l2.5 2.6M9.3 11.4l2.5-2.6"/></svg>
           <span class="card__t" data-en="Attention Flow" data-tr="Dikkat Akışı Preseti">Attention Flow</span>
           <span class="card__n">ml_attention_flow</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/ml_conv_vision/index.html" data-find="evrişimli görü preseti convolutional vision ml_conv_vision">
+        <a class="card" href="presets/ml_conv_vision/index.html" data-kind="olcum" data-find="evrişimli görü preseti convolutional vision ml_conv_vision">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12M6 2v12M10 2v12"/></svg>
           <span class="card__t" data-en="Convolutional Vision" data-tr="Evrişimli Görü Preseti">Convolutional Vision</span>
           <span class="card__n">ml_conv_vision</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/ml_layer_blocks/index.html" data-find="katman blokları layer blocks ml_layer_blocks">
+        <a class="card" href="presets/ml_layer_blocks/index.html" data-kind="olcum" data-find="katman blokları layer blocks ml_layer_blocks">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="2.6" rx="0.6"/><rect x="2" y="6.7" width="12" height="2.6" rx="0.6"/><rect x="2" y="10.4" width="12" height="2.6" rx="0.6"/></svg>
           <span class="card__t" data-en="Layer Blocks" data-tr="Katman Blokları">Layer Blocks</span>
           <span class="card__n">ml_layer_blocks</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/ml_loss_functions/index.html" data-find="kayıp fonksiyonları preseti loss functions ml_loss_functions">
+        <a class="card" href="presets/ml_loss_functions/index.html" data-kind="olcum" data-find="kayıp fonksiyonları preseti loss functions ml_loss_functions">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13c3 0 3-9 6-9s3 9 6 9"/><path d="M2 13h12"/></svg>
           <span class="card__t" data-en="Loss Functions" data-tr="Kayıp Fonksiyonları Preseti">Loss Functions</span>
           <span class="card__n">ml_loss_functions</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/ml_loss_landscape/index.html" data-find="ml loss landscape preset ml loss landscape preset ml_loss_landscape">
-          <span class="card__t" data-en="ML Loss Landscape Preset" data-tr="ML Loss Landscape Preset">ML Loss Landscape Preset</span>
+        <a class="card" href="presets/ml_loss_landscape/index.html" data-kind="olcum" data-find="ml loss landscape preset loss landscape ml_loss_landscape">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13c3 0 3-9 6-9s3 9 6 9"/><path d="M2 13h12"/></svg>
+          <span class="card__t" data-en="Loss Landscape" data-tr="ML Loss Landscape Preset">Loss Landscape</span>
           <span class="card__n">ml_loss_landscape</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/ml_net_builder/index.html" data-find="mimari kurucu mimari kurucu ml_net_builder">
-          <span class="card__t" data-en="Mimari Kurucu" data-tr="Mimari Kurucu">Mimari Kurucu</span>
+        <a class="card" href="presets/ml_net_builder/index.html" data-kind="olcum" data-find="mimari kurucu architecture builder ml_net_builder">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.4"/><circle cx="3" cy="12" r="1.4"/><circle cx="13" cy="8" r="1.4"/><circle cx="8" cy="4" r="1.4"/><circle cx="8" cy="12" r="1.4"/><path d="M4.4 4H6.6M4.4 12H6.6M9.3 4.6l2.5 2.6M9.3 11.4l2.5-2.6"/></svg>
+          <span class="card__t" data-en="Architecture Builder" data-tr="Mimari Kurucu">Architecture Builder</span>
           <span class="card__n">ml_net_builder</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/neural_network/index.html" data-find="neural network preset neural network preset neural_network">
-          <span class="card__t" data-en="Neural Network Preset" data-tr="Neural Network Preset">Neural Network Preset</span>
+        <a class="card" href="presets/neural_network/index.html" data-kind="olcum" data-find="neural network preset neural network neural_network">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="4" r="1.4"/><circle cx="3" cy="12" r="1.4"/><circle cx="13" cy="8" r="1.4"/><circle cx="8" cy="4" r="1.4"/><circle cx="8" cy="12" r="1.4"/><path d="M4.4 4H6.6M4.4 12H6.6M9.3 4.6l2.5 2.6M9.3 11.4l2.5-2.6"/></svg>
+          <span class="card__t" data-en="Neural Network" data-tr="Neural Network Preset">Neural Network</span>
           <span class="card__n">neural_network</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
         </div>
       </section>
@@ -422,40 +505,47 @@
         <h2>Motion, light and layout <span class="grp__n">7</span></h2>
         <p class="grp__b">The shared machinery: idle behaviour, physical light, equations, callouts, decks.</p>
         <div class="cards">
-        <a class="card" href="presets/deck_starter/index.html" data-find="bilim sunumu başlangıcı science deck starter deck_starter">
+        <a class="card" href="presets/deck_starter/index.html" data-kind="arac" data-find="bilim sunumu başlangıcı science deck starter deck_starter">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.8" y="3" width="12.4" height="8" rx="0.8"/><path d="M4.5 13.4h7"/></svg>
           <span class="card__t" data-en="Science Deck Starter" data-tr="Bilim Sunumu Başlangıcı">Science Deck Starter</span>
           <span class="card__n">deck_starter</span>
-          <span class="card__m">static</span>
+          <span class="card__m"><span class="kind" data-en="toolkit" data-tr="araç">toolkit</span> · static</span>
         </a>
-        <a class="card" href="presets/equation_pen/index.html" data-find="equation writing preset equation writing preset equation_pen">
-          <span class="card__t" data-en="Equation Writing Preset" data-tr="Equation Writing Preset">Equation Writing Preset</span>
+        <a class="card" href="presets/equation_pen/index.html" data-kind="arac" data-find="equation writing preset equation pen - writing a formula out equation_pen">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h7l-4 5 4 5H3"/><path d="M12.5 6.5v5"/></svg>
+          <span class="card__t" data-en="Equation Pen - writing a formula out" data-tr="Equation Writing Preset">Equation Pen - writing a formula out</span>
           <span class="card__n">equation_pen</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="toolkit" data-tr="araç">toolkit</span> · animated</span>
         </a>
-        <a class="card" href="presets/equation_steps/index.html" data-find="equation steps preset — terim terim türetme equation steps - term by term equation_steps">
+        <a class="card" href="presets/equation_steps/index.html" data-kind="arac" data-find="equation steps preset — terim terim türetme equation steps - term by term equation_steps">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h7l-4 5 4 5H3"/><path d="M12.5 6.5v5"/></svg>
           <span class="card__t" data-en="Equation Steps - term by term" data-tr="Equation Steps Preset — terim terim türetme">Equation Steps - term by term</span>
           <span class="card__n">equation_steps</span>
-          <span class="card__m">static</span>
+          <span class="card__m"><span class="kind" data-en="toolkit" data-tr="araç">toolkit</span> · static</span>
         </a>
-        <a class="card" href="presets/figure_callouts/index.html" data-find="figure callout preset — figür üzerinde adım adım anlatım figure callouts - step by step on a figure figure_callouts">
+        <a class="card" href="presets/figure_callouts/index.html" data-kind="arac" data-find="figure callout preset — figür üzerinde adım adım anlatım figure callouts - step by step on a figure figure_callouts">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.6"/><circle cx="8" cy="8" r="2"/><path d="M8 0.8v2.6M8 12.6v2.6M0.8 8h2.6M12.6 8h2.6"/></svg>
           <span class="card__t" data-en="Figure Callouts - step by step on a figure" data-tr="Figure Callout Preset — figür üzerinde adım adım anlatım">Figure Callouts - step by step on a figure</span>
           <span class="card__n">figure_callouts</span>
-          <span class="card__m">static</span>
+          <span class="card__m"><span class="kind" data-en="toolkit" data-tr="araç">toolkit</span> · static</span>
         </a>
-        <a class="card" href="presets/life_signs/index.html" data-find="nefes kütüphanesi breathing library life_signs">
+        <a class="card" href="presets/life_signs/index.html" data-kind="arac" data-find="nefes kütüphanesi breathing library life_signs">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.6v2M8 12.4v2M1.6 8h2M12.4 8h2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M12.5 3.5l-1.4 1.4M4.9 11.1l-1.4 1.4"/></svg>
           <span class="card__t" data-en="Breathing Library" data-tr="Nefes Kütüphanesi">Breathing Library</span>
           <span class="card__n">life_signs</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="toolkit" data-tr="araç">toolkit</span> · animated</span>
         </a>
-        <a class="card" href="presets/light_blocks/index.html" data-find="işık fiziği light physics light_blocks">
+        <a class="card" href="presets/light_blocks/index.html" data-kind="olcum" data-find="işık fiziği light physics light_blocks">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8v2M8 9.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M5 12.5h6l-1.5 2h-3z"/></svg>
           <span class="card__t" data-en="Light Physics" data-tr="Işık Fiziği">Light Physics</span>
           <span class="card__n">light_blocks</span>
-          <span class="card__m">animated</span>
+          <span class="card__m"><span class="kind" data-en="instrument" data-tr="ölçüm">instrument</span> · animated</span>
         </a>
-        <a class="card" href="presets/timeline_tree/index.html" data-find="chronology timeline preset chronology timeline preset timeline_tree">
-          <span class="card__t" data-en="Chronology Timeline Preset" data-tr="Chronology Timeline Preset">Chronology Timeline Preset</span>
+        <a class="card" href="presets/timeline_tree/index.html" data-kind="arac" data-find="chronology timeline preset chronology timeline timeline_tree">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 8h13"/><path d="M4 5.5v5M8 4.5v7M12 5.5v5"/></svg>
+          <span class="card__t" data-en="Chronology Timeline" data-tr="Chronology Timeline Preset">Chronology Timeline</span>
           <span class="card__n">timeline_tree</span>
-          <span class="card__m">static</span>
+          <span class="card__m"><span class="kind" data-en="toolkit" data-tr="araç">toolkit</span> · static</span>
         </a>
         </div>
       </section>
@@ -476,20 +566,29 @@
     var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
     var groups = Array.prototype.slice.call(document.querySelectorAll('[data-group]'));
     var empty = document.getElementById('empty');
-    find.addEventListener('input', function () {
+    var kindSel = document.getElementById('kind');
+    /* Metin ve tur BIRLIKTE suzer: ikisi ayri ayri yazildiginda biri otekini
+       geri aliyor ve kullanici neyin gizlendigini anlamiyor. Bos sonuc
+       ekrani her iki sebep icin de ayni yerden gelir. */
+    function uygulaSuzgec() {
       var q = find.value.trim().toLowerCase();
-      document.body.classList.toggle('filtering', q.length > 0);
+      var k = kindSel ? kindSel.value : '';
+      var etkin = q.length > 0 || k.length > 0;
+      document.body.classList.toggle('filtering', etkin);
       var shown = 0;
       cards.forEach(function (c) {
-        var hit = !q || c.dataset.find.indexOf(q) !== -1;
+        var hit = (!q || c.dataset.find.indexOf(q) !== -1)
+          && (!k || c.dataset.kind === k);
         c.hidden = !hit;
         if (hit) shown++;
       });
       groups.forEach(function (g) {
-        g.hidden = !!q && !g.querySelector('.card:not([hidden])');
+        g.hidden = etkin && !g.querySelector('.card:not([hidden])');
       });
-      empty.style.display = q && shown === 0 ? 'block' : 'none';
-    });
+      empty.style.display = etkin && shown === 0 ? 'block' : 'none';
+    }
+    find.addEventListener('input', uygulaSuzgec);
+    if (kindSel) kindSel.addEventListener('change', uygulaSuzgec);
   </script>
   <script>
     /* Scene titles ship in both languages; this only chooses which one is

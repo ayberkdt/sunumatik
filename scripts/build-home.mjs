@@ -57,6 +57,133 @@ const GROUPS = [
       'light_blocks', 'timeline_tree'] },
 ];
 
+/* ── küçük ikonlar ────────────────────────────────────────────────────
+   Altmış beş kart, her biri üç satır metin ve tek bir resim yok: ızgara bir
+   ad duvarı gibi okunuyordu. İkonlar 16x16 bir viewBox'ta, konturlu ve
+   `currentColor` ile çizilir - tek renk, tek kalınlık, ayrı bir palet yok.
+   Amaç süslemek değil, tararken satır okumadan ayırt edebilmek. */
+const ICONS = {
+  yorunge: '<ellipse cx="8" cy="8" rx="7" ry="3.4"/><circle cx="8" cy="8" r="1.7"/>',
+  aktarim: '<path d="M2 11a6 6 0 0 1 12-3"/><path d="M11 5l3 0 0 3"/><circle cx="2.5" cy="11" r="1.2"/>',
+  lagrange: '<circle cx="4" cy="11" r="1.5"/><circle cx="12" cy="11" r="1.5"/><circle cx="8" cy="4" r="1.5"/><path d="M4 11h8M4 11l4-7M12 11l-4-7"/>',
+  firlatma: '<path d="M8 2c2.2 2 3.2 4.4 3.2 7L8 12 4.8 9c0-2.6 1-5 3.2-7z"/><path d="M5.6 12.4L4 14.6M10.4 12.4L12 14.6"/>',
+  giris: '<path d="M2 4c4 4 8 6 12 6"/><path d="M4 12l2-2M7 13.5l2-2M10 14.5l2-2"/>',
+  uydu: '<rect x="6" y="6" width="4" height="4" rx="0.6"/><path d="M6 8H1.5M10 8H14.5M1.5 6.2v3.6M14.5 6.2v3.6"/>',
+  habitat: '<path d="M2.5 12V8.5a5.5 5.5 0 0 1 11 0V12z"/><path d="M2.5 12h11M8 8.5V12"/>',
+  anten: '<path d="M3 12a6 6 0 0 1 9.4-7"/><path d="M7.5 9.2L13 3.2"/><path d="M3 12h4"/>',
+  arazi: '<path d="M1.5 12.5l4-6 3 4 2-2.6 4 4.6z"/>',
+  gunes: '<circle cx="8" cy="8" r="3.2"/><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3"/>',
+  gezegen: '<circle cx="8" cy="8" r="4"/><ellipse cx="8" cy="8" rx="7" ry="2.4" transform="rotate(-20 8 8)"/>',
+  yildiz: '<path d="M8 1.5l1.7 4.4 4.8.3-3.7 3 1.2 4.6L8 11.2 4 13.8l1.2-4.6-3.7-3 4.8-.3z"/>',
+  aurora: '<path d="M2 13c1.5-5 3-8 4.5-8S8 11 9.5 11 12 6 14 3"/><path d="M4 13.5V10M7 13.5V8M10 13.5V9.5"/>',
+  sok: '<path d="M2 8h3l2-4 2 8 2-4h3"/>',
+  kanat: '<path d="M1.5 9.5c4-4 9-5.5 13-4-3 3-8 5-13 4z"/><path d="M4 9l6-2"/>',
+  girdap: '<path d="M8 8a2 2 0 1 1-2-2 4 4 0 1 1 4 4 6 6 0 1 1-6-6"/>',
+  ag: '<circle cx="3" cy="4" r="1.4"/><circle cx="3" cy="12" r="1.4"/><circle cx="13" cy="8" r="1.4"/><circle cx="8" cy="4" r="1.4"/><circle cx="8" cy="12" r="1.4"/><path d="M4.4 4H6.6M4.4 12H6.6M9.3 4.6l2.5 2.6M9.3 11.4l2.5-2.6"/>',
+  katman: '<rect x="2" y="3" width="12" height="2.6" rx="0.6"/><rect x="2" y="6.7" width="12" height="2.6" rx="0.6"/><rect x="2" y="10.4" width="12" height="2.6" rx="0.6"/>',
+  egri: '<path d="M2 13c3 0 3-9 6-9s3 9 6 9"/><path d="M2 13h12"/>',
+  denklem: '<path d="M3 3h7l-4 5 4 5H3"/><path d="M12.5 6.5v5"/>',
+  zaman: '<path d="M1.5 8h13"/><path d="M4 5.5v5M8 4.5v7M12 5.5v5"/>',
+  isik: '<path d="M8 1.8v2M8 9.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M5 12.5h6l-1.5 2h-3z"/>',
+  deste: '<rect x="1.8" y="3" width="12.4" height="8" rx="0.8"/><path d="M4.5 13.4h7"/>',
+  mekanizma: '<circle cx="8" cy="8" r="2.4"/><path d="M8 1.6v2M8 12.4v2M1.6 8h2M12.4 8h2M3.5 3.5l1.4 1.4M11.1 11.1l1.4 1.4M12.5 3.5l-1.4 1.4M4.9 11.1l-1.4 1.4"/>',
+  gezgin: '<rect x="3" y="6" width="10" height="3.4" rx="0.8"/><circle cx="5" cy="11.6" r="1.6"/><circle cx="11" cy="11.6" r="1.6"/><path d="M6 6V4h4v2"/>',
+  dunya: '<circle cx="8" cy="8" r="6.2"/><path d="M1.8 8h12.4"/><ellipse cx="8" cy="8" rx="2.8" ry="6.2"/>',
+  izgara: '<rect x="2" y="2" width="12" height="12" rx="1"/><path d="M2 6h12M2 10h12M6 2v12M10 2v12"/>',
+  teleskop: '<path d="M2.5 10.5l8-6 3 3-8 6z"/><path d="M4.5 12.5l-2 2M9.5 7.5l2.2 2.2"/>',
+  hedef: '<circle cx="8" cy="8" r="5.6"/><circle cx="8" cy="8" r="2"/><path d="M8 0.8v2.6M8 12.6v2.6M0.8 8h2.6M12.6 8h2.6"/>',
+  ayrilma: '<rect x="5" y="1.8" width="6" height="5" rx="1"/><rect x="5" y="9.2" width="6" height="5" rx="1"/><path d="M2.5 8h11"/>',
+  kutu: '<path d="M8 1.8l6 3.1v6.2l-6 3.1-6-3.1V4.9z"/><path d="M2 4.9l6 3.1 6-3.1M8 8v6.2"/>',
+};
+
+/* ── tür ──────────────────────────────────────────────────────────────
+   Katalog iki ayrı şeyi karıştırıyordu ve bunu hiçbir yerde söylemiyordu.
+   Kimi sahnenin arkasında bir model KOŞAR, bütçeler kapanır ve bir
+   doğrulayıcı sayıları ispatlar; kimi sahne DOĞRU GÖRÜNSÜN diye kurulmuştur
+   ve fizik orada resmin hizmetindedir; kimi de ötekilerin içe aktardığı
+   ortak takımdır. Izgarada hangisinin hangisi olduğu okunamıyordu. */
+const KINDS = {
+  olcum: { en: 'instrument', tr: 'ölçüm',
+    aciklamaEn: 'a model runs behind it and the numbers are checked',
+    aciklamaTr: 'arkasında bir model koşar ve sayılar denetlenir' },
+  gorsel: { en: 'visual', tr: 'görsel',
+    aciklamaEn: 'built to look right; the physics serves the picture',
+    aciklamaTr: 'doğru görünsün diye kurulmuş; fizik resmin hizmetinde' },
+  arac: { en: 'toolkit', tr: 'araç',
+    aciklamaEn: 'shared machinery the other scenes import',
+    aciklamaTr: 'öteki sahnelerin içe aktardığı ortak takım' },
+};
+
+/* Sahne başına tür ve ikon. Ikisi de ZORUNLU: eksik olan yapıyı düşürür,
+   böylece yeni bir sahne sınıflandırılmadan katalogda görünemez. */
+const SCENE = {
+  aero_airfoil_flow: ['olcum', 'kanat'],
+  aero_shock_waves: ['olcum', 'sok'],
+  aero_vortex_street: ['olcum', 'girdap'],
+  aircraft_blocks: ['arac', 'kanat'],
+  attitude_gnc: ['olcum', 'hedef'],
+  aurora: ['gorsel', 'aurora'],
+  cinematic_space: ['gorsel', 'yildiz'],
+  comms_antenna: ['olcum', 'anten'],
+  comms_link_budget: ['olcum', 'anten'],
+  conjunction_covariance: ['olcum', 'hedef'],
+  constellation_coverage: ['olcum', 'izgara'],
+  cosmos_advanced: ['gorsel', 'yildiz'],
+  cr3bp_lagrange: ['olcum', 'lagrange'],
+  craft_blocks: ['arac', 'kutu'],
+  deck_starter: ['arac', 'deste'],
+  earth_advanced: ['gorsel', 'dunya'],
+  eclipse_geometry: ['olcum', 'gunes'],
+  entry_dispersion: ['olcum', 'giris'],
+  equation_pen: ['arac', 'denklem'],
+  equation_steps: ['arac', 'denklem'],
+  exploded_view: ['olcum', 'kutu'],
+  figure_callouts: ['arac', 'hedef'],
+  formation_flight: ['olcum', 'uydu'],
+  free_return: ['olcum', 'aktarim'],
+  geo_stationkeeping: ['olcum', 'yorunge'],
+  gravity_assist: ['olcum', 'aktarim'],
+  gravity_field: ['olcum', 'izgara'],
+  ground_track_3d: ['olcum', 'dunya'],
+  habitat_blocks: ['olcum', 'habitat'],
+  halo_manifolds: ['olcum', 'lagrange'],
+  jwst_explorer: ['olcum', 'teleskop'],
+  launch_ascent: ['olcum', 'firlatma'],
+  launch_window: ['olcum', 'zaman'],
+  life_signs: ['arac', 'mekanizma'],
+  light_blocks: ['olcum', 'isik'],
+  low_thrust_transfer: ['olcum', 'aktarim'],
+  lunar_descent: ['olcum', 'firlatma'],
+  lunar_orbit: ['olcum', 'yorunge'],
+  mechanism_lab: ['olcum', 'mekanizma'],
+  ml_attention_flow: ['olcum', 'ag'],
+  ml_conv_vision: ['olcum', 'izgara'],
+  ml_layer_blocks: ['olcum', 'katman'],
+  ml_loss_functions: ['olcum', 'egri'],
+  ml_loss_landscape: ['olcum', 'egri'],
+  ml_net_builder: ['olcum', 'ag'],
+  moon_advanced: ['gorsel', 'gezegen'],
+  neural_network: ['olcum', 'ag'],
+  orbit_determination: ['olcum', 'hedef'],
+  orbit_perturbations: ['olcum', 'yorunge'],
+  orbital_stage: ['olcum', 'ayrilma'],
+  physical_rigs: ['olcum', 'mekanizma'],
+  planets_advanced: ['gorsel', 'gezegen'],
+  porkchop_explorer: ['olcum', 'izgara'],
+  reentry_corridor: ['olcum', 'giris'],
+  rendezvous_docking: ['olcum', 'uydu'],
+  satellite_integration: ['olcum', 'uydu'],
+  site_plan: ['olcum', 'izgara'],
+  soi_explorer: ['olcum', 'yorunge'],
+  stage_separation: ['olcum', 'ayrilma'],
+  sun_advanced: ['gorsel', 'gunes'],
+  terrain_blocks: ['olcum', 'arazi'],
+  three_body_states: ['olcum', 'lagrange'],
+  timeline_tree: ['arac', 'zaman'],
+  tisserand_graph: ['olcum', 'egri'],
+  transfer_explorer: ['olcum', 'aktarim'],
+};
+
 const withPage = registry.presets.filter(p => p.hasIndex);
 const byName = new Map(withPage.map(p => [p.name, p]));
 
@@ -116,6 +243,25 @@ const TITLE_EN = {
   three_body_states: 'Three-Body States',
   tisserand_graph: 'Tisserand Graph',
   transfer_explorer: 'Lambert Transfer Explorer',
+  aero_vortex_street: 'Karman Vortex Street',
+  cinematic_space: 'Cinematic Space Scene',
+  cosmos_advanced: 'Deep Sky - stars, nebulae, galaxies',
+  earth_advanced: 'Earth - terrain, atmosphere, city lights',
+  equation_pen: 'Equation Pen - writing a formula out',
+  exploded_view: 'Exploded View',
+  habitat_blocks: 'Habitat Blocks',
+  jwst_explorer: 'JWST Explorer',
+  lunar_orbit: 'Analytic Lunar Orbit',
+  ml_loss_landscape: 'Loss Landscape',
+  ml_net_builder: 'Architecture Builder',
+  moon_advanced: 'The Moon - surface, relief, orbit',
+  neural_network: 'Neural Network',
+  physical_rigs: 'Physical Rigs',
+  planets_advanced: 'The Planets - orbits and surfaces',
+  rendezvous_docking: 'Rendezvous and Docking',
+  satellite_integration: 'Satellite Integration',
+  sun_advanced: 'The Sun - granulation, flares, corona',
+  timeline_tree: 'Chronology Timeline',
 };
 
 const filed = GROUPS.flatMap(g => g.members);
@@ -138,13 +284,37 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 /* A scene whose own title is Turkish must declare an English one, or the
    catalogue goes out half-translated and nobody notices until a reader
    does. */
-const trHarf = /[\u011f\u011e\u015f\u015e\u0131\u0130\u00e7\u00c7\u00f6\u00d6\u00fc\u00dc]/;
-const ceviriYok = withPage
-  .filter(p => trHarf.test(cleanTitle(p.title, p.name)) && !TITLE_EN[p.name])
-  .map(p => p.name);
+/* This used to test for Turkish DIACRITICS and only demand a translation
+   when it found one. "Sinematik Uzay Sahnesi", "Mimari Kurucu", "Fiziksel
+   Aksam", "Randevu ve Kenetlenme" and "Karman Vorteks Caddesi" contain none,
+   so five scenes shipped their Turkish titles inside the English catalogue
+   and the check reported clean. Spelling is the wrong thing to detect. Every
+   scene DECLARES an English name; that is a rule and it cannot be spelled
+   around. */
+/* Tür ve ikon da eksiksiz olmak zorunda: sınıflandırılmamış bir sahne,
+   okuyucunun ayırt edemediği bir sahnedir. */
+const tursuz = withPage.filter(p => !SCENE[p.name]).map(p => p.name);
+if (tursuz.length) {
+  console.error(`build-home: ${tursuz.length} scene(s) have no kind/icon: ${tursuz.join(', ')}`);
+  console.error('Add them to SCENE in scripts/build-home.mjs.');
+  process.exit(2);
+}
+const kotuTur = withPage.filter(p => !KINDS[SCENE[p.name][0]] || !ICONS[SCENE[p.name][1]]).map(p => p.name);
+if (kotuTur.length) {
+  console.error(`build-home: unknown kind or icon: ${kotuTur.join(', ')}`);
+  process.exit(2);
+}
+const ceviriYok = withPage.filter(p => !TITLE_EN[p.name]).map(p => p.name);
 if (ceviriYok.length) {
-  console.error(`build-home: ${ceviriYok.length} Turkish-titled scene(s) have no English name: ${ceviriYok.join(', ')}`);
+  console.error(`build-home: ${ceviriYok.length} scene(s) have no declared English name: ${ceviriYok.join(', ')}`);
   console.error('Add them to TITLE_EN in scripts/build-home.mjs.');
+  process.exit(2);
+}
+/* And a declared English name that is still Turkish helps nobody. */
+const trHarf = /[\u011f\u011e\u015f\u015e\u0131\u0130\u00e7\u00c7\u00f6\u00d6\u00fc\u00dc]/;
+const trKalan = Object.entries(TITLE_EN).filter(([, v]) => trHarf.test(v)).map(([k]) => k);
+if (trKalan.length) {
+  console.error(`build-home: English name still contains Turkish letters: ${trKalan.join(', ')}`);
   process.exit(2);
 }
 
@@ -155,10 +325,16 @@ const cards = (g) => g.members.map(name => {
   const en = TITLE_EN[name] || tr;
   /* The filter searches BOTH, so a reader typing in either language finds
      the scene whichever way the page happens to be showing it. */
-  return `        <a class="card" href="presets/${name}/index.html" data-find="${esc((tr + ' ' + en + ' ' + name).toLowerCase())}">
+  const [tur, ikon] = SCENE[name];
+  const K = KINDS[tur];
+  /* The kind is one badge style for all three: the WORD carries the meaning.
+     Three colours would have spent the accent tone on decoration, and the
+     accent belongs to the active state and nothing else. */
+  return `        <a class="card" href="presets/${name}/index.html" data-kind="${tur}" data-find="${esc((tr + ' ' + en + ' ' + name).toLowerCase())}">
+          <svg class="card__i" viewBox="0 0 16 16" aria-hidden="true">${ICONS[ikon]}</svg>
           <span class="card__t" data-en="${esc(en)}" data-tr="${esc(tr)}">${esc(en)}</span>
           <span class="card__n">${esc(name)}</span>
-          <span class="card__m">${tags.join(' · ')}</span>
+          <span class="card__m"><span class="kind" data-en="${esc(K.en)}" data-tr="${esc(K.tr)}">${esc(K.en)}</span> · ${tags.join(' · ')}</span>
         </a>`;
 }).join('\n');
 
@@ -214,6 +390,10 @@ const html = `<!doctype html>
     .grp__b { margin: 6px 0 0; font-size: 13px; color: #767d8c; }
     /* Language switch. Two segments, one accent, 44 px targets - it is a
        setting, not an action, so it does not compete with the filter. */
+    /* Tür süzgeci tek bir denetim: dört düğme, dil anahtarıyla birlikte
+       eylem bütçesini şişirirdi ve bu bir eylem değil, bir ayar. */
+    #kind { min-height: 44px; padding: 0 10px; border: 1px solid #272d39; border-radius: 7px;
+      background: #0a0d14; color: #c8cede; font: inherit; font-size: 12.5px; cursor: pointer; }
     .lang { display: inline-flex; border: 1px solid #272d39; border-radius: 7px; overflow: hidden; }
     .lang button { min-height: 44px; min-width: 52px; padding: 0 14px; border: 0; cursor: pointer;
       background: transparent; color: #9aa2b1; font: inherit; font-size: 12.5px; letter-spacing: .04em; }
@@ -221,7 +401,17 @@ const html = `<!doctype html>
     .lang button + button { border-left: 1px solid #272d39; }
     .cards { display: grid; gap: 10px; margin: 16px 0 0;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
-    .card { display: block; min-height: 44px; padding: 13px 15px 14px; border-radius: 7px;
+    /* Ikon solda, metin sağda: kart üç satır metinden ibaretken ızgara bir
+       ad duvarı gibi okunuyordu. Tek kontur kalınlığı, tek renk, ayrı palet
+       yok - amaç süslemek değil, satır okumadan ayırt edebilmek. */
+    .card__i { grid-row: 1 / span 3; width: 22px; height: 22px; margin-top: 2px;
+      fill: none; stroke: currentColor; stroke-width: 1.35;
+      stroke-linecap: round; stroke-linejoin: round; color: #79818f; }
+    .card:hover .card__i { color: #c9a35c; }
+    .kind { display: inline-block; padding: 1px 6px; border: 1px solid #2b3240;
+      border-radius: 4px; color: #8a92a2; letter-spacing: .03em; }
+    .card { display: grid; grid-template-columns: 22px 1fr; column-gap: 11px;
+      align-content: start; min-height: 44px; padding: 13px 15px 14px; border-radius: 7px;
       border: 1px solid #1b202a; background: #080a0f; }
     .card:hover { border-color: #c9a35c; background: #0c0f16; }
     .card__t { display: block; font-size: 13px; font-weight: 600; color: #eef1f6; }
@@ -237,6 +427,11 @@ const html = `<!doctype html>
       header { padding-top: 34px; }
       .lead { font-size: 15px; }
       .cards { grid-template-columns: 1fr; }
+      /* Grup gezintisi telefonda 21 px yuksekligindeydi. core/mobile.css
+         bunu kapatiyor ama o dosya YALNIZ preset sayfalarina uygulaniyor;
+         kok sayfa kendi medya sorgusunu tasiyor, dolayisiyla kural burada
+         da yazilmak zorunda. Olculen: 7 baglantinin 7'si esigin altinda. */
+      nav a { min-height: 44px; display: inline-flex; align-items: center; }
     }
   </style>
 </head>
@@ -250,6 +445,12 @@ const html = `<!doctype html>
         <a class="btn btn--go" href="demo/index.html">Open the live deck</a>
         <a class="btn" href="https://github.com/ayberkdt/sunumatik">Source on GitHub</a>
         <input type="search" id="find" placeholder="Filter ${c.presetsWithIndex} scenes&hellip;" aria-label="Filter scenes">
+      <select id="kind" aria-label="Scene kind">
+        <option value="">All kinds</option>
+        <option value="olcum">Instrument</option>
+        <option value="gorsel">Visual</option>
+        <option value="arac">Toolkit</option>
+      </select>
       <div class="lang" role="group" aria-label="Catalogue language">
         <button type="button" data-lang="en" aria-pressed="true">EN</button>
         <button type="button" data-lang="tr" aria-pressed="false">TR</button>
@@ -279,20 +480,29 @@ ${sections}
     var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
     var groups = Array.prototype.slice.call(document.querySelectorAll('[data-group]'));
     var empty = document.getElementById('empty');
-    find.addEventListener('input', function () {
+    var kindSel = document.getElementById('kind');
+    /* Metin ve tur BIRLIKTE suzer: ikisi ayri ayri yazildiginda biri otekini
+       geri aliyor ve kullanici neyin gizlendigini anlamiyor. Bos sonuc
+       ekrani her iki sebep icin de ayni yerden gelir. */
+    function uygulaSuzgec() {
       var q = find.value.trim().toLowerCase();
-      document.body.classList.toggle('filtering', q.length > 0);
+      var k = kindSel ? kindSel.value : '';
+      var etkin = q.length > 0 || k.length > 0;
+      document.body.classList.toggle('filtering', etkin);
       var shown = 0;
       cards.forEach(function (c) {
-        var hit = !q || c.dataset.find.indexOf(q) !== -1;
+        var hit = (!q || c.dataset.find.indexOf(q) !== -1)
+          && (!k || c.dataset.kind === k);
         c.hidden = !hit;
         if (hit) shown++;
       });
       groups.forEach(function (g) {
-        g.hidden = !!q && !g.querySelector('.card:not([hidden])');
+        g.hidden = etkin && !g.querySelector('.card:not([hidden])');
       });
-      empty.style.display = q && shown === 0 ? 'block' : 'none';
-    });
+      empty.style.display = etkin && shown === 0 ? 'block' : 'none';
+    }
+    find.addEventListener('input', uygulaSuzgec);
+    if (kindSel) kindSel.addEventListener('change', uygulaSuzgec);
   </script>
   <script>
     /* Scene titles ship in both languages; this only chooses which one is
