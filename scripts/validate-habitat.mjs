@@ -424,8 +424,20 @@ bolum('8. Teknik künye ve bütçeler');
   ok(g.firtina.payW > 0 && g.firtina.pay > 0.2,
     'TOZ FIRTINASI: panel %20\'ye düşse de kritik yük karşılanıyor',
     `${Math.round(g.firtina.uretimW)} W / ${g.firtina.yukW} W, pay %${(g.firtina.pay * 100).toFixed(1)}`);
-  ok(g.kesilebilirW > 0 && H.KESILEBILIR.length === 4,
-    'kesilebilir yükler beyan edilmiş', H.KESILEBILIR.join(','));
+  /* Sayiyi sabitlemek sihirli bir rakamdi ve us buyuyunce yanlis oldu.
+     Sorulmasi gereken sey SAYI degil, kesilebilir diye isaretlenen her
+     yukun gercekten kesilebilir olmasi: basincli bir hacmi ya da yasam
+     destegini firtinada kapatamazsin. */
+  ok(g.kesilebilirW > 0, 'kesilebilir yükler beyan edilmiş',
+    `${H.KESILEBILIR.length} yük · ${g.kesilebilirW} W`);
+  const yanlisKesilebilir = H.PARTS.filter(q => q.tech?.kesilebilir
+    && (q.arayuz === 'basincli' && !/sera|kubbe/.test(q.id)));
+  ok(yanlisKesilebilir.length === 0,
+    'hiçbir basınçlı yaşam hacmi kesilebilir işaretli değil',
+    yanlisKesilebilir.map(q => q.id).join(', ') || H.KESILEBILIR.join(', '));
+  /* TERS SINAV: habitat silindirini kesilebilir saysan yakalanmali. */
+  ok(!(partById('hab-silindir').tech?.kesilebilir),
+    'TERS SINAV: çekirdek hacim kesilebilir değil', 'hab-silindir kritik');
   /* Kesilebilir olanlar gerçekten hayati OLMAYANLAR olmalı: basınçlı
      hacmin ve yaşam desteğinin kesilebilir sayılması ölümcül olurdu. */
   const hayati = ['hab-silindir', 'hab-ic-raf', 'dugum', 'sisme-modul', 'hava-kilidi'];

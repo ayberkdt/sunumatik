@@ -99,6 +99,8 @@
     import * as THREE from 'three';
     import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
     import { buildHabitat, buildCevre } from './hab-build.mjs';
+    import { buildAstronaut } from '../astronaut_blocks/astro-build.mjs';
+    import { BOY_M as ASTRO_BOY } from '../astronaut_blocks/astro-parts.mjs';
     import { sceneLighting } from '../core/scene-lighting.mjs';
     import { PARTS, STEPS, SUBSYSTEMS, HAB_ENV, INTERFACES,
              massBudget, runEndpoints, partById,
@@ -121,6 +123,35 @@
 
     const scene = new THREE.Scene();
     let cevre = null;
+    let murettebat = null;
+
+    /* MÜRETTEBAT. İçinde kimse olmayan bir üssün ne ölçeği vardır ne amacı.
+       Figürler astronot presetinden gelir - aynı katalog, aynı beyan edilen
+       giysili boy - yani habitat kapıları ve tutamak aralıkları, gerçekten
+       içinden geçmesi gereken şeye göre ölçülmüş oluyor.
+       Durdukları yer de süs değil: biri kriyojenik tankın sehpa birleşimine
+       çömelmiş (her transfer öncesi denetlenen yer), öteki atölye duvarında
+       yukarı uzanıyor. İkisi de pedin üstünde, ikisi de kubbeden görünür ve
+       ikisi de reaktörün beyan ettiği yasak yarıçapın dışında. */
+    const MURETTEBAT = [
+      { ad: 'EV1', poz: 'egilme', konum: [2.1, -11.3, 0], yon: -80, serit: 0xc23b3b,
+        is: 'O2 tankının sehpa birleşimini denetliyor' },
+      { ad: 'EV2', poz: 'uzanma', konum: [11.4, 6.2, 0], yon: 12, serit: 0x3b6fc2,
+        is: 'Atölye duvar panelini yerine alıyor' },
+    ];
+    function murettebatKur() {
+      if (murettebat) scene.remove(murettebat);
+      murettebat = new THREE.Group();
+      for (const k of MURETTEBAT) {
+        const { root } = buildAstronaut(THREE, { poz: k.poz, seritRenk: k.serit });
+        root.position.set(k.konum[0], k.konum[1], k.konum[2]);
+        root.rotation.z = k.yon * Math.PI / 180;
+        root.userData.notes = { regime: 'mürettebat', why: k.is };
+        root.userData.murettebat = k.ad;
+        murettebat.add(root);
+      }
+      scene.add(murettebat);
+    }
     const camera = new THREE.PerspectiveCamera(40, 1, 0.2, 800);
     camera.up.set(0, 0, 1);
     const kontrol = new OrbitControls(camera, renderer.domElement);
@@ -156,6 +187,7 @@
       if (cevre) { scene.remove(cevre.group); }
       cevre = buildCevre(THREE, { env: mars ? 'mars' : 'ay', ped: partById('platform').size });
       scene.add(cevre.group);
+      murettebatKur();
       scene.background = new THREE.Color(cevre.ufukRengi);
       /* Pus yalnız atmosfer varken: uzaklık Mars'ta ufka karışır, Ay'da
          karışmaz ve bu iki gökcismi arasındaki en görünür farklardan biridir. */
