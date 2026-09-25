@@ -27,6 +27,7 @@ Envanter elle sayılmaz: `presets/registry.json` taramayla üretilir (`node scri
 | ![Ay — yörünge izli uydu uçuşu](docs/media/moon.jpg) | ![Grafik motoru — palet uyumlu seri renkleri, belirsizlik bandı, eşik](docs/media/chart.jpg) | ![23 bilim ikonu](docs/media/icons.jpg) |
 | **Lunaris** — yörüngede uydu | **Chart** — spec ver, grafik al | **İkonlar** — 23 bilim ikonu |
 
+
 ## Laboratuvar galerisi
 
 Astrodinamik ve GNC laboratuvarları: her biri saf bir model modülü, üstünde bir sahne. Görüntüler `?export=1` deterministik karesinden alınmıştır — sunumda göreceğiniz kare budur. Her görsel ilgili sayfaya bağlıdır (yerel sunucuda açın).
@@ -291,6 +292,40 @@ kuralları uygular. Öne çıkanlar:
 
 Beceri dokümanlarındaki `/presets/...` yolları bu deponun köküne göredir.
 
+## Yayına alma (Vercel)
+
+Depo **statiktir**: derleme adımı, paket kurulumu ve sunucu tarafı kodu
+yoktur. Vercel'de yapılacak tek şey depoyu bağlamak; framework olarak
+**Other**, build komutu **boş**, output directory **`.`** (bunlar
+`vercel.json` içinde zaten yazılı, arayüzde değiştirmeye gerek yok).
+
+Bağlamadan önce eksik olan iki şey vardı ve ikisi de eklendi:
+
+- **Kök `index.html`** — Vercel dizin listesi vermez, bu yüzden köke bir
+  sayfa konmazsa `/` 404 döner ve 65 sahneye ulaşmanın hiçbir yolu kalmaz.
+  Sayfa elle yazılmıyor: `scripts/build-home.mjs` envanterden üretiyor ve
+  CI `--check` ile bayatlamayı yakalıyor, yoksa yeni bir preset eklendiğinde
+  sayfa "çalışıyor" görünüp sahneyi sessizce dışarıda bırakırdı.
+- **`vercel.json` ve `.vercelignore`** — `.mjs` için açık içerik türü,
+  varlıklar için önbellek başlıkları, ve çalışma anında hiçbir sayfanın
+  çekmediği dizinlerin (`docs/`, `skills/`, `scripts/`, `.github/`) dağıtım
+  dışında bırakılması. `cleanUrls` **kapalı**: açık olsaydı `/a/index.html`
+  adresi `/a` hâline gelir ve sahnelerdeki her göreli yol bir üst dizine
+  kayardı.
+
+Dışlama listesi tahmine bırakılmadı. `scripts/validate-deploy.mjs`
+`.vercelignore`'dan dağıtılacak dosya kümesini KURUYOR, sonra sunulan her
+sayfanın yaptığı her göreli atıfı tarayıcının yaptığı gibi çözüyor: 602
+atıf, 39 importmap girdisi ve 65 açılış bağlantısı. Ters sınavı da var —
+vendored three yanlışlıkla dışlansa 39 importmap girdisi boşa düşer ve
+denetim bunu yakalar. Ölçülen sonuç: 573 dosya / 61 MB dağıtılıyor, 245
+dosya dışarıda kalıyor.
+
+```bash
+node scripts/build-home.mjs        # açılış sayfasını yeniden üret
+node scripts/validate-deploy.mjs   # dağıtım yüzeyini doğrula
+```
+
 ## Doğrulama ve CI
 
 Depo, "sahne güzel görünüyor" ile yetinmez; her push'ta [`.github/workflows/ci.yml`](.github/workflows/ci.yml) şu bekçileri çalıştırır:
@@ -327,6 +362,9 @@ demo/                   canlı katalog (build-demo.py üretir), örnek deste, ye
 scripts/                CI bekçileri: registry, invariants, astro, syntax, imports, eksen ratchet'i
 docs/media/             README görselleri (deterministik export karelerinden)
 KATALOG.md              her varlığın yolu ve kullanım notu
+index.html              açılış/katalog sayfası — scripts/build-home.mjs üretir, elle düzenlenmez
+vercel.json             statik yayın: derleme yok, .mjs içerik türü, önbellek başlıkları
+.vercelignore           çalışma anında çekilmeyen dizinler (validate-deploy.mjs doğrular)
 ```
 
 ## demo/

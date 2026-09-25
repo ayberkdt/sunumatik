@@ -84,6 +84,12 @@ jobs:
       - name: Patlatma hareketi (kademe, yerleşme açısı, karma dağılımı)
         run: node scripts/validate-exploded-motion.mjs
 
+      - name: Açılış sayfası envanterle eşleşiyor mu
+        run: node scripts/build-home.mjs --check
+
+      - name: Dağıtım yüzeyi (.vercelignore hiçbir bağımlılığı düşürmüyor mu)
+        run: node scripts/validate-deploy.mjs
+
       - name: Saha yerleşimi (kural kataloğu, çözücü, determinizm, araziye yazılan kapılar)
         run: node scripts/validate-site.mjs
 
