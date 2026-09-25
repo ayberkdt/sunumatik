@@ -255,7 +255,15 @@ export function sceneLighting(THREE, scene, ad = 'orbit', {
     const yerR = bounceColorRGB(SAHNELER[ad].yerAlbedo3, beyazDenge);
     yansima.color.setRGB(yerR[0], yerR[1], yerR[2]);
     yansima.intensity = anahtarYogunluk * b.yerPay;
-    yansima.position.set(-nadir[0], -nadir[1], -nadir[2]);
+    /* Işık KAYNAĞI gezegenin bulunduğu yerdedir. three'de DirectionalLight
+       `position`dan `target`a doğru ilerler, dolayısıyla nadir yüzünü
+       aydınlatacak dolgunun nadirde DURMASI gerekir. Burada işaret ters
+       konmuştu: nadir (0,0,-1) ile çağrıldığında dolgu (0,0,+1)'e gidiyor ve
+       gezegene DÖNÜK yüz karanlıkta kalırken uzaya bakan yüz aydınlanıyordu.
+       Yörüngede gök terimi tam sıfır olduğu için (tasarım böyle) bu dolgu
+       gölgeyi açan TEK şeydi ve iki sahnenin de gölge tarafı siyah
+       çıkıyordu. */
+    yansima.position.set(nadir[0], nadir[1], nadir[2]);
     return b;
   }
 

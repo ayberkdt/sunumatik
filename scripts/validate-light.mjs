@@ -378,5 +378,69 @@ console.log('== T sahneler rig kullanıyor');
   }
 }
 
-console.log(`\n${total - fails}/${total} geçti`);
+/* == yorunge dolgusu hangi yuzu aydinlatiyor =========================
+   Yorungede gok terimi tam sifirdir, yani golgeyi acan TEK sey gezegen
+   isigidir. O dolgu ters tarafa konuldugunda sahnenin golge yuzu SIYAH
+   kalir - ve tam bu oluyordu: nadir (0,0,-1) ile cagrilan kurulum dolguyu
+   (0,0,+1)'e koyuyordu, yani gezegene donuk yuz karanlikta, uzaya bakan yuz
+   aydinlik. Modulun kendi yorumu dogrusunu zaten yaziyordu ("earthshine
+   arrives from nadir and leaves the anti-nadir side dark"); 79 denetimin
+   hicbiri yone bakmiyordu. */
+console.log('== U yorunge dolgusu nadirden geliyor');
+{
+  /* Bu dosya bugune kadar yalniz saf matematik sinadi; kurulumun KENDISINI
+     sinamak icin bir three gerekiyor. scene-lighting.mjs ucunden fazlasini
+     kullanmiyor, o yuzden sahtesi kisa - ve sahte olmasi denetimi
+     zayiflatmiyor, cunku sorulan sey isigin NEREYE konuldugu. */
+  const V3 = () => ({ x: 0, y: 0, z: 0, set(x, y, z) { this.x = x; this.y = y; this.z = z; } });
+  class SahteRenk {
+    constructor(r = 1, g = 1, b = 1) { this.r = r; this.g = g; this.b = b; }
+    setRGB(r, g, b) { this.r = r; this.g = g; this.b = b; return this; }
+  }
+  const sahte = {
+    Color: SahteRenk,
+    DirectionalLight: class {
+      constructor(renk, yogunluk) {
+        this.color = renk instanceof SahteRenk ? renk : new SahteRenk();
+        this.intensity = yogunluk; this.position = V3(); this.userData = {};
+        this.castShadow = false;
+        this.shadow = { mapSize: { set() {} }, camera: {}, bias: 0 };
+      }
+    },
+    HemisphereLight: class {
+      constructor(gok, yer, yogunluk) {
+        this.color = new SahteRenk(); this.groundColor = new SahteRenk();
+        this.intensity = yogunluk; this.position = V3(); this.userData = {};
+        void gok; void yer;
+      }
+    },
+  };
+  const rig = S.sceneLighting(sahte, { add() {} }, 'orbit', { anahtarYogunluk: 3.1 });
+
+  /* Uc farkli nadir yonu: tek bir yon, isaret hatasini eksen secimiyle
+     gizleyebilir. */
+  for (const nadir of [[0, 0, -1], [0, -1, 0], [0.6, 0, -0.8]]) {
+    rig.yorungeyeAyarla(nadir);
+    const q = rig.yansima.position;
+    const nok = q.x * nadir[0] + q.y * nadir[1] + q.z * nadir[2];
+    check(`dolgu gezegenin bulundugu yonde duruyor [${nadir.join(", ")}]`, nok > 0,
+      `konum (${q.x}, ${q.y}, ${q.z}) - nadirle ic carpim ${nok.toFixed(2)}`);
+  }
+
+  rig.yorungeyeAyarla([0, 0, -1]);
+  check('yorungede gok terimi kapali (bosluk ta gok yok)',
+    rig.gokYer.intensity === 0, String(rig.gokYer.intensity));
+  check('gezegen isigi golgeyi acacak kadar var',
+    rig.yansima.intensity > 0, rig.yansima.intensity.toFixed(3));
+
+  /* TERS SINAV: isaret cevrildiginde ic carpim negatife doner - yani bu
+     sinav gercekten YONU olcuyor, varligi degil. */
+  const q = rig.yansima.position;
+  const cevrik = (-q.z) * (-1);
+  check('TERS SINAV: ters isaret yakalaniyor', cevrik < 0,
+    `cevrilmis konum nadirle ${cevrik.toFixed(2)} veriyor`);
+}
+
+console.log(`
+${total - fails}/${total} gecti`);
 process.exit(fails ? 1 : 0);
