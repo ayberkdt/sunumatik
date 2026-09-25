@@ -407,6 +407,9 @@ const KINDS = {
       pigtail: d.pigtail !== false && at(lod, 'shop'),
       cube: d.cube !== false && at(lod, 'shop'),
       bolts: at(lod, 'flight'),
+      /* The windings are most of this part's triangles, so 'block' - a wide
+         shot or a thumbnail - drops them. */
+      windings: at(lod, 'shop') ? 8 : 0,
     }));
     return g;
   },

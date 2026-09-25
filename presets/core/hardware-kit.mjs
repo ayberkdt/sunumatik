@@ -916,7 +916,7 @@ export function hallThruster(THREE, kit, rOut, len, opts = {}) {
  * is how the triad's axes are tied to the spacecraft's frame on the ground.
  */
 export function magnetometerHead(THREE, kit, s, opts = {}) {
-  const { shade = true, pigtail = true, cube = true, bolts = false } = opts;
+  const { shade = true, pigtail = true, cube = true, bolts = false, windings = 8 } = opts;
   const g = new THREE.Group();
   /* Non-magnetic housing: pale composite, not aluminium - a steel screw
      near the sensor is a bias error nobody can calibrate out in flight. */
@@ -948,8 +948,8 @@ export function magnetometerHead(THREE, kit, s, opts = {}) {
     g.add(core);
     /* Sense winding: eight turns of copper, so a core reads as wound rather
        than as a plain ring. */
-    for (let i = 0; i < 8; i++) {
-      const a = i * TAU / 8;
+    for (let i = 0; i < windings; i++) {
+      const a = i * TAU / windings;
       const turn = new THREE.Mesh(new THREE.TorusGeometry(s * 0.062, s * 0.014, 5, 10), kit.bakir);
       turn.position.set(Math.cos(a) * rc, Math.sin(a) * rc, 0);
       turn.rotation.y = Math.PI / 2;
