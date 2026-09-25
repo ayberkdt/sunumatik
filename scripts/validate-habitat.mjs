@@ -372,6 +372,106 @@ bolum('7. Patlatma sistemiyle bütünleşme');
     `${bt.toplamKg} vs ${H.massBudget().toplamKg} kg`);
 }
 
+/* ══ 8. TEKNİK KÜNYE VE KAPANAN BÜTÇELER ══════════════════════════ */
+bolum('8. Teknik künye ve bütçeler');
+{
+  /* 8a. Künye bütünlüğü. */
+  const kunyesiz = H.PARTS.filter(p => !p.tech);
+  ok(kunyesiz.length === 0, 'her bileşenin teknik künyesi var',
+    kunyesiz.map(p => p.id).join(',') || `${H.PARTS.length} bileşen`);
+  const nolar = H.PARTS.map(p => p.tech?.no).filter(Boolean);
+  ok(new Set(nolar).size === nolar.length, 'parça numaraları benzersiz', `${nolar.length} numara`);
+  ok(nolar.every(n => /^HB-[A-Z]{3}-\d{3}$/.test(n)), 'parça numaraları biçimli (HB-XXX-000)',
+    nolar.filter(n => !/^HB-[A-Z]{3}-\d{3}$/.test(n)).join(',') || 'hepsi');
+  ok(H.PARTS.every(p => p.tech.malzeme && p.tech.baglanti && p.tech.detay),
+    'her künyede malzeme, bağlantı ve ayrıntı var');
+  const tersBant = H.PARTS.filter(p => p.tech.sicaklik_C && p.tech.sicaklik_C[0] >= p.tech.sicaklik_C[1]);
+  ok(tersBant.length === 0, 'sıcaklık bantları ters değil', tersBant.map(p => p.id).join(','));
+
+  /* 8b. Güç: üç durumda da kapanmalı. Asıl sınav FIRTINA. */
+  const g = H.powerBudget();
+  ok(g.gunduz.payW > 0, 'gündüz üretim yükü karşılıyor',
+    `${g.gunduz.uretimW} W / ${g.gunduz.yukW} W, pay %${(g.gunduz.pay * 100).toFixed(1)}`);
+  ok(g.gece.payW > 0 && g.gece.pay > 0.2, 'gece kritik yük fisyonla karşılanıyor',
+    `${g.uretimFisyonW} W / ${g.kritikW} W, pay %${(g.gece.pay * 100).toFixed(1)}`);
+  ok(g.firtina.payW > 0 && g.firtina.pay > 0.2,
+    'TOZ FIRTINASI: panel %20\'ye düşse de kritik yük karşılanıyor',
+    `${Math.round(g.firtina.uretimW)} W / ${g.firtina.yukW} W, pay %${(g.firtina.pay * 100).toFixed(1)}`);
+  ok(g.kesilebilirW > 0 && H.KESILEBILIR.length === 4,
+    'kesilebilir yükler beyan edilmiş', H.KESILEBILIR.join(','));
+  /* Kesilebilir olanlar gerçekten hayati OLMAYANLAR olmalı: basınçlı
+     hacmin ve yaşam desteğinin kesilebilir sayılması ölümcül olurdu. */
+  const hayati = ['hab-silindir', 'hab-ic-raf', 'dugum', 'sisme-modul', 'hava-kilidi'];
+  ok(!H.KESILEBILIR.some(id => hayati.includes(id)),
+    'yaşam desteği ve basınçlı hacim kesilebilir sayılmıyor');
+  /* Panel gücü DİZİ BAŞINA yazılmalı; qty ile çarpılınca tarla çıkar. */
+  const panel = partById('panel-tarlasi');
+  ok(Math.abs(-panel.tech.guc_W * (panel.qty ?? 1) - g.uretimGunesW) < 1,
+    'güneş üretimi dizi başına güç × dizi sayısı',
+    `${-panel.tech.guc_W} W × ${panel.qty} = ${g.uretimGunesW} W`);
+
+  /* 8c. Isıl kapanış — kapasite GEOMETRİDEN, künyeden değil. */
+  for (const e of ['mars', 'moon']) {
+    const t = H.thermalBudget({ env: e });
+    ok(t.kapaniyor && t.pay > 0.15 && t.pay < 0.6, `${e}: radyatör kapasitesi ısı yükünü karşılıyor`,
+      `${t.kapasiteW} W ≥ ${t.atilacakW} W, pay %${(t.pay * 100).toFixed(1)}`);
+  }
+  const t0 = H.thermalBudget({ env: 'mars' });
+  const d = partById('radyator-dizisi');
+  ok(t0.kanatSayisi === (d.tech.kanat * (d.qty ?? 1)),
+    'kanat sayısı künyeden geliyor (çizimle aynı kaynak)', `${t0.kanatSayisi} kanat`);
+  /* Ortamın geri ışıması hesaba GİRMELİ: atlanırsa kapasite şişer. */
+  const ortamsiz = 0.85 * H.SIGMA * Math.pow(300.15, 4) * t0.alanM2;
+  ok(ortamsiz > t0.kapasiteW * 1.1, 'ortam geri ışıması kapasiteyi anlamlı ölçüde düşürüyor',
+    `ortamsız ${Math.round(ortamsiz)} W vs gerçek ${t0.kapasiteW} W`);
+
+  /* 8d. Hacim: yaşanabilir hacim geçiş ve üretim hacmini içermez. */
+  const v = H.volumeBudget();
+  ok(v.yasanabilirM3 < v.toplamM3, 'yaşanabilir hacim toplamdan küçük',
+    `${v.yasanabilirM3} / ${v.toplamM3} m³`);
+  ok(v.kisiBasiM3 >= 25, 'kişi başı hacim uzun süreli görev alt sınırının üstünde',
+    `${v.kisiBasiM3} m³/kişi`);
+  const geciss = v.kalemler.filter(x => x.sinif === 'geçiş').map(x => x.id);
+  ok(geciss.includes('hava-kilidi') && geciss.includes('tunel'),
+    'hava kilidi ve tünel geçiş hacmi sayılıyor', geciss.join(','));
+
+  /* 8e. ISRU: üretilen oksijen solunumu karşılamalı. */
+  const i = H.isruBudget();
+  ok(i.O2Yeterli, 'üretilen O₂ mürettebatın solunumunu karşılıyor',
+    `${i.O2UretimKgGun} ≥ ${i.O2SolunumKgGun} kg/gün, pay ${i.O2PayKgGun}`);
+  ok(Math.abs(i.O2SolunumKgGun - i.kisi * H.O2_KISI_GUN) < 1e-9,
+    'solunum kişi sayısı × 0,84 kg/gün');
+  ok(i.CH4KgGun > 0 && i.H2OKgGun > 0, 'Sabatier hem yakıt hem su üretiyor',
+    `CH₄ ${i.CH4KgGun}, H₂O ${i.H2OKgGun} kg/gün`);
+  /* Sabatier stokiyometrisi: CO₂ + 4H₂ → CH₄ + 2H₂O.
+     Molce 1 CH₄ (16,04 g) başına 2 H₂O (36,03 g) ⇒ kütlece 2,246 kat. */
+  const sab = partById('sabatier').tech.uretim;
+  const oran = sab.H2O_kg_gun / sab.CH4_kg_gun;
+  ok(Math.abs(oran - 2 * 18.015 / 16.043) < 0.06,
+    'Sabatier su/metan oranı stokiyometriye uyuyor',
+    `${oran.toFixed(3)} vs beklenen ${(2 * 18.015 / 16.043).toFixed(3)}`);
+
+  /* 8f. Isı yolu: anlamlı ısı üreten her kutu ısısını nereye attığını
+        söylemeli — radyatöre bağlı değilse yolunu BEYAN etmeli. */
+  const isiKaynaklari = H.PARTS.filter(p => (p.tech.guc_W ?? 0) >= 300);
+  const yolsuz = isiKaynaklari.filter(p => !p.tech.isiYolu);
+  ok(yolsuz.length === 0, 'her büyük ısı kaynağı ısı yolunu beyan ediyor',
+    yolsuz.map(p => `${p.id} (${p.tech.guc_W} W)`).join(',') || `${isiKaynaklari.length} kaynak`);
+
+  /* 8g. TERS SINAVLAR. */
+  ok(H.powerBudget().uretimGunesW !== H.powerBudget().uretimFisyonW,
+    'güneş ve fisyon ayrı sayılıyor (tek toplamda erimiyor)');
+  const sahteFirtina = (g.uretimFisyonW + g.uretimGunesW * 0.2 - (g.kritikW + g.kesilebilirW));
+  ok(sahteFirtina < 0,
+    'TERS SINAV: kesilebilir yük kapanmazsa fırtınada bütçe AÇIK veriyor',
+    `${Math.round(sahteFirtina)} W eksik — bu yüzden kesilebilir sınıfı var`);
+  const darBant = H.PARTS.filter(p => p.tech.sicaklik_C)
+    .sort((a, b) => (a.tech.sicaklik_C[1] - a.tech.sicaklik_C[0]) - (b.tech.sicaklik_C[1] - b.tech.sicaklik_C[0]))[0];
+  ok(darBant.id === 'sera' || darBant.id === 'faydali-yuk' || darBant.tech.sicaklik_C[1] - darBant.tech.sicaklik_C[0] <= 6,
+    'ısıl tasarımı en dar bantlı bileşen belirliyor',
+    `${darBant.ad}: ${darBant.tech.sicaklik_C[0]}…${darBant.tech.sicaklik_C[1]} °C`);
+}
+
 /* ══ ÖZET ══════════════════════════════════════════════════════════ */
 console.log(`\n${'═'.repeat(62)}`);
 console.log(kaldi === 0 ? `HABİTAT DENETİMİ: ${gecti}/${gecti} geçti` : `HABİTAT DENETİMİ: ${gecti} geçti, ${kaldi} KALDI`);

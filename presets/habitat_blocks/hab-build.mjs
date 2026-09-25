@@ -10,14 +10,22 @@
 
 import { PARTS, SUBSYSTEMS, partById, envAllows } from './hab-parts.mjs';
 import { cylGeoZ, cylGeoX, coneGeoZ, latheX } from '../core/geometry-axis.mjs';
+import * as D from './hab-detail.mjs';
 
 const TAU = Math.PI * 2;
 
 export function habMaterials(THREE, tk = {}) {
   const std = (c, r, m, ek = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m, ...ek });
+  /* Ayrıntı kiti kendi malzeme ailesini getirir: korkuluk sarısı, conta
+     siyahı, cam ve bakır üs boyunca AYNI olsun diye tek yerde kurulur. */
+  const kit = D.detailMaterials(THREE);
   return {
+    kit,
     basincli: std(tk.basincli ?? 0xd8d4cc, .52, .28),
-    gecis: std(tk.gecis ?? 0xc9a35c, .48, .42),
+    /* Altın rengi bir TRİM rengidir. Bütün kilidi onunla boyadığımda
+   modül pirinç bir fıçıya dönüşüyordu; gövde yapısal beyaza yakın
+   durur, altın yalnız tutunma ve kumanda yüzeylerinde kalır. */
+    gecis: std(tk.gecis ?? 0xcfc8bc, .55, .35),
     yapi: std(tk.yapi ?? 0x9aa0aa, .72, .38),
     guc: std(tk.guc ?? 0xe0b25a, .45, .35),
     isil: std(tk.isil ?? 0x8fa2b4, .38, .62),
@@ -35,12 +43,16 @@ function zarDokusu(THREE, renk = '#d8d4cc') {
   const c = document.createElement('canvas'); c.width = 256; c.height = 256;
   const g = c.getContext('2d');
   g.fillStyle = renk; g.fillRect(0, 0, 256, 256);
-  g.strokeStyle = 'rgba(70,64,56,.36)'; g.lineWidth = 2;
-  for (let x = 0; x <= 256; x += 32) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 256); g.stroke(); }
-  g.strokeStyle = 'rgba(70,64,56,.18)'; g.lineWidth = 1;
-  for (let y = 0; y <= 256; y += 16) { g.beginPath(); g.moveTo(0, y); g.lineTo(256, y); g.stroke(); }
-  g.fillStyle = 'rgba(255,255,255,.05)';
-  for (let i = 0; i < 90; i++) g.fillRect((i * 61) % 256, (i * 97) % 256, 9, 5);
+  /* MLI yorganı bir DOKUMA değil: ayırıcı dikişler tek yönde uzanır,
+     enine olan yalnız katman ek yeridir. İlk sürümde iki yön de eşit
+     koyuydu ve yüzey hasır gibi görünüyordu. */
+  g.strokeStyle = 'rgba(78,71,62,.20)'; g.lineWidth = 2;
+  for (let x = 0; x <= 256; x += 42) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 256); g.stroke(); }
+  g.strokeStyle = 'rgba(78,71,62,.07)'; g.lineWidth = 1;
+  for (let y = 0; y <= 256; y += 22) { g.beginPath(); g.moveTo(0, y); g.lineTo(256, y); g.stroke(); }
+  /* battaniyenin buruşukluğu: rastgele açık lekeler */
+  g.fillStyle = 'rgba(255,255,255,.035)';
+  for (let i = 0; i < 70; i++) g.fillRect((i * 61) % 256, (i * 97) % 256, 13, 6);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
@@ -61,22 +73,34 @@ function hucreDokusu(THREE) {
   return t;
 }
 
-/** Kapı: basınçlı modüllerin üstünde görünen kapak halkası. */
-function kapak(THREE, r, mat, koyu) {
-  const g = new THREE.Group();
-  const halka = new THREE.Mesh(new THREE.TorusGeometry(r, r * 0.16, 8, 22), mat);
-  g.add(halka);
-  const govde = new THREE.Mesh(cylGeoZ(r * 0.88, r * 0.88, r * 0.32, 22), koyu);
-  g.add(govde);
-  for (let i = 0; i < 8; i++) {
-    const a = i * TAU / 8;
-    const kilit = new THREE.Mesh(new THREE.BoxGeometry(r * 0.16, r * 0.1, r * 0.4), mat);
-    kilit.position.set(Math.cos(a) * r * 0.92, Math.sin(a) * r * 0.92, 0);
-    kilit.rotation.z = a;
-    g.add(kilit);
-  }
-  return g;
+/**
+ * Bir nesneyi DÜŞEY silindirin yüzeyine oturtur.
+ *
+ * Bunu bir yardımcıya çevirdim çünkü elle yaptığımda yanlış yaptım:
+ * tutamakları (x = ±0,62 r, y = −0,98 r) diye koymuştum, yani yüzeyi
+ * DÜZLEM sanmıştım. O noktada silindir yüzeyi y = −√(r² − x²) = −0,78 r
+ * olduğu için tutamaklar gövdenin 23 cm dışında havada duruyordu.
+ * Silindirde konum açıdan gelir, koordinattan değil.
+ *
+ * @param aci  0 = −Y yönü (ön yüz), saat yönünde artar
+ * @param z    silindir ekseni boyunca yükseklik
+ */
+function silindireOturt(THREE, nesne, r, aci, z, { disari = 0, egim = 0 } = {}) {
+  const R = r + disari;
+  nesne.position.set(Math.sin(aci) * R, -Math.cos(aci) * R, z);
+  /* Dönüşü Euler ile kurmak YANLIŞTI: `rotation.set(π/2, 0, aci)` three'nin
+     XYZ sırasında Z'yi ÖNCE uygular, bu yüzden dışarı bakması gereken yerel
+     +Z her açıda −Y'de kalıyordu ve çubuklar yüzeyden eğik fırlıyordu.
+     Doğrusu üç birim vektörden taban kurmak: +X teğet, +Y silindir ekseni,
+     +Z dışarı normal. */
+  const tegen = new THREE.Vector3(Math.cos(aci), Math.sin(aci), 0);
+  const eksen = new THREE.Vector3(0, 0, 1);
+  const normal = new THREE.Vector3(Math.sin(aci), -Math.cos(aci), 0);
+  nesne.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(tegen, eksen, normal));
+  if (egim) nesne.rotateOnAxis(new THREE.Vector3(0, 0, 1), egim);
+  return nesne;
 }
+
 
 /** Tek parçanın gövdesi. Grup parçanın MERKEZİNDE oturur. */
 function govde(THREE, p, M, dok) {
@@ -87,7 +111,14 @@ function govde(THREE, p, M, dok) {
 
   switch (p.sekil) {
     case 'platform': {
-      const m = ekle(new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), M.regolit));
+      /* Düz bir kutu toprağa benzemez. Kabartma haritası ışığı kırar ve
+         yüzeyi taneli gösterir; sıkıştırılmış platform ile doğal regolit
+         arasındaki fark ancak böyle görünür. */
+      const zeminMat = M.regolit.clone();
+      zeminMat.bumpMap = dok.regolit;
+      zeminMat.bumpMap.repeat.set(14, 11);
+      zeminMat.bumpScale = 0.35;
+      const m = ekle(new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), zeminMat));
       m.castShadow = false;
       /* yürüyüş yolu: sıkıştırılmış şeritler zemini okunur kılar */
       for (const [ox, oy, w, h] of [[0, 0, sx * 0.72, 1.4], [3.2, 0, 1.4, sy * 0.66]]) {
@@ -99,33 +130,146 @@ function govde(THREE, p, M, dok) {
     }
     case 'plaka': {
       ekle(new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat));
-      const c = ekle(new THREE.Mesh(cylGeoZ(sx * 0.1, sx * 0.1, sz * 2.4, 12), M.koyu));
-      c.position.z = sz * 0.9;
+      const pabuc = D.ayakPabucu(THREE, M.kit, sx * 0.34, { regolitMat: M.regolit });
+      pabuc.position.z = sz * 0.5;
+      g.add(pabuc);
+      /* regolit vidası: plakayı zemine bağlayan tek şey */
+      for (let i = 0; i < 4; i++) {
+        const a = i * TAU / 4 + Math.PI / 4;
+        const vida = ekle(new THREE.Mesh(cylGeoZ(sx * 0.05, sx * 0.05, sz * 3.2, 8), M.koyu));
+        vida.position.set(Math.cos(a) * sx * 0.36, Math.sin(a) * sx * 0.36, -sz * 0.9);
+      }
       break;
     }
     case 'silindir-yatay': {
-      const r = sy / 2, boy = sx - sy;              // uçlar küresel kapak
-      const govdeM = ekle(new THREE.Mesh(cylGeoX(r, r, boy, 36), mat));
-      govdeM.material = mat.clone(); govdeM.material.map = dok.zar;
-      govdeM.material.map.repeat.set(4, 2);
+      /* Uçlar YARIM KÜRE DEĞİL. Yarım küreyle çizdiğimde modül bir
+         habitat değil zeplin gibi duruyordu ve haklı olarak öyle
+         duruyordu: Ø4,4 m gövdede her kapak 2,2 m uzunluk yiyor, 7,6 m
+         modülün yalnız 3,2 m'si silindir kalıyordu.
+
+         Gerçek basınç kabı TORİSFERİK kapak kullanır: derinliği yarıçapın
+         yarısı kadar, göbeği küresel, kenarı küçük yarıçaplı bir kavis
+         (knuckle) ile silindire bağlanır. Aynı basıncı daha kısa boyda
+         taşır — bu yüzden her tank ve her modül böyle görünür. */
+      const r = sy / 2;
+      const kapakD = r * 0.52;                      // kapak derinliği
+      const boy = Math.max(sx - 2 * kapakD, r * 0.6);
+      const govdeM = ekle(new THREE.Mesh(cylGeoX(r, r, boy, 44), mat));
+      govdeM.material = mat.clone();
+      govdeM.material.map = dok.zar.clone();
+      govdeM.material.map.needsUpdate = true;
+      govdeM.material.map.repeat.set(7, 3);
       for (const s of [-1, 1]) {
-        const k = ekle(new THREE.Mesh(new THREE.SphereGeometry(r, 28, 18, 0, TAU, 0, Math.PI / 2), mat));
-        k.rotation.z = s > 0 ? -Math.PI / 2 : Math.PI / 2;
+        /* Kapak profili lathe ile: göbek küresel, kenar knuckle. */
+        const nokta = [];
+        const ADIM = 14;
+        for (let i = 0; i <= ADIM; i++) {
+          const t = i / ADIM;
+          const yariCap = r * Math.cos(t * Math.PI / 2) ** 0.62;
+          const derin = kapakD * Math.sin(t * Math.PI / 2);
+          nokta.push(new THREE.Vector2(Math.max(yariCap, 0.004), derin));
+        }
+        const k = ekle(latheX(nokta, 44, mat));
+        k.scale.x = s;
         k.position.x = s * boy / 2;
+        /* Kapak ayrıntısı. İlk denemede meridyen dikişleri sabit yarıçapa
+           koymuştum ve hepsi kubbenin İÇİNDE kaldı — görünmediler. Kapak
+           bir küre değil, profili yukarıda tanımlanan bir dönel yüzey;
+           halka nereye oturacaksa yarıçapı o profilden okunmalı. */
+        const profilde = (t) => ({
+          rr: r * Math.pow(Math.cos(t * Math.PI / 2), 0.62),
+          dd: kapakD * Math.sin(t * Math.PI / 2),
+        });
+        /* knuckle halkası: kapağın silindire bağlandığı kavis */
+        const kn = profilde(0.16);
+        const knuckle = ekle(new THREE.Mesh(new THREE.TorusGeometry(kn.rr, r * 0.018, 6, 34), M.yapi));
+        knuckle.position.x = s * (boy / 2 + kn.dd);
+        knuckle.rotation.y = Math.PI / 2;
+        /* orta kuşak: dilim eklerinin çevresel dikişi */
+        const or = profilde(0.58);
+        const orta = ekle(new THREE.Mesh(new THREE.TorusGeometry(or.rr, r * 0.013, 6, 30), M.yapi));
+        orta.position.x = s * (boy / 2 + or.dd);
+        orta.rotation.y = Math.PI / 2;
+        /* kutup göbeği: dilimlerin birleştiği kapak plakası */
+        const gobek = ekle(new THREE.Mesh(cylGeoX(r * 0.11, r * 0.11, r * 0.035, 16), M.yapi));
+        gobek.position.x = s * (boy / 2 + kapakD * 0.97);
       }
-      /* kuşak kaburgaları: basınç kabuğunun burkulmasını tutan halkalar */
-      const n = Math.max(3, Math.round(boy / 1.1));
+      /* Kuşak kaburgaları: burkulmayı tutan halkalar. İnce ve SIK olur —
+         kalın birkaç bant kemer gibi duruyordu; gerçekte kaburga cidarın
+         birkaç katı kalınlıkta, aralığı ise çapın çeyreği kadardır. */
+      const n = Math.max(4, Math.round(boy / (r * 0.5)));
       for (let i = 0; i < n; i++) {
         const t = (i + 0.5) / n - 0.5;
-        const kab = ekle(new THREE.Mesh(new THREE.TorusGeometry(r * 1.012, r * 0.035, 6, 30), M.koyu));
+        const kab = ekle(new THREE.Mesh(new THREE.TorusGeometry(r * 1.008, r * 0.016, 6, 34), M.yapi));
         kab.position.x = t * boy; kab.rotation.y = Math.PI / 2;
       }
+      /* Boyuna sertleştirici: kaburgaları birbirine bağlar. */
+      for (let i = 0; i < 8; i++) {
+        const a = i * TAU / 8 + Math.PI / 16;
+        const ser = ekle(new THREE.Mesh(new THREE.BoxGeometry(boy * 0.98, r * 0.03, r * 0.022), M.yapi));
+        ser.position.set(0, Math.cos(a) * r * 1.006, Math.sin(a) * r * 1.006);
+        ser.rotation.x = a;
+      }
       for (const q of (p.ports || [])) {
-        const kp = kapak(THREE, r * 0.34, mat, M.koyu);
+        const kp = D.kapak(THREE, M.kit, r * 0.34);
         kp.position.set(q.pos[0], q.pos[1], q.pos[2]);
         const d = new THREE.Vector3(...q.dir);
         kp.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), d);
         g.add(kp);
+      }
+
+      /* ── donanım ──────────────────────────────────────────────────
+         Kabuk tek başına bir maket; modülü gerçek yapan üstündeki
+         işlerdir. Her biri bir gereksinimden doğar. */
+
+      /* Sırt korkuluğu: EVA'da modül üstünde yürünür, tutunacak yer şart.
+         Kaburgaların üstünde durur (r × 1,03) yoksa içlerinde kayboluyor. */
+      for (const yan of [-1, 1]) {
+        const kork = D.korkuluk(THREE, M.kit, boy * 0.92);
+        const a = yan * 0.42;
+        kork.position.set(0, Math.sin(a) * r * 1.03, Math.cos(a) * r * 1.03);
+        kork.rotation.x = a;
+        g.add(kork);
+      }
+
+      /* Gözlem penceresi: yan yüzde, göz hizasında. */
+      /* Pencere, basınçlı kapağın açılma alanından UZAKTA durur: kapak
+         çarkını çeviren kolun süpürdüğü yere pencere konmaz. */
+      const pen = D.pencere(THREE, M.kit, r * 0.3);
+      pen.position.set(-boy * 0.3, -r * 0.93, r * 0.28);
+      pen.rotation.set(Math.PI / 2, 0, 0);
+      pen.rotateX(-0.3);
+      g.add(pen);
+
+      /* Göbek bağı paneli: hatlar buraya gelir. */
+      const kon = D.konnektorPaneli(THREE, M.kit, r * 0.46, r * 0.34);
+      kon.position.set(-boy * 0.36, -r * 0.98, -r * 0.34);
+      kon.rotation.x = Math.PI / 2;
+      g.add(kon);
+
+      /* Kablo tavası: sırt boyunca, korkuluğun altında. */
+      const tava = D.kabloTavasi(THREE, M.kit, boy * 0.92);
+      tava.position.set(0, 0, r * 1.02);
+      g.add(tava);
+
+      /* MLI dikiş şeridi: battaniye ayırıcılarla kabuktan uzak durur. */
+      for (const yan of [-1, 1]) {
+        const ml = D.mliSeridi(THREE, M.kit, boy * 0.9);
+        const a = yan * 1.05;
+        ml.position.set(0, Math.sin(a) * r * 1.02, Math.cos(a) * r * 1.02);
+        ml.rotation.x = a;
+        g.add(ml);
+      }
+
+      /* Künye levhası ve seyrüsefer fenerleri. */
+      const lv = D.levha(THREE, M.kit, [p.tech?.no || p.id, p.ad], { w: r * 0.7, h: r * 0.34 });
+      lv.position.set(boy * 0.26, -r * 0.99, -r * 0.2);
+      lv.rotation.x = Math.PI / 2;
+      g.add(lv);
+      for (const s2 of [-1, 1]) {
+        const f = D.fener(THREE, M.kit);
+        f.position.set(s2 * boy * 0.46, 0, r * 1.03);
+        g.add(f);
       }
       break;
     }
@@ -137,11 +281,43 @@ function govde(THREE, p, M, dok) {
         h.position.z = z;
       }
       for (const q of (p.ports || [])) {
-        const kp = kapak(THREE, r * 0.52, mat, M.koyu);
+        const kp = D.kapak(THREE, M.kit, r * 0.52);
         kp.position.set(q.pos[0], q.pos[1], q.pos[2]);
         kp.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(...q.dir));
         g.add(kp);
       }
+      /* Dış kapının altına merdiven: zemin ile eşik arasında 1,5 m var. */
+      const mer = D.merdiven(THREE, M.kit, sz * 0.58);
+      mer.position.set(0, -r * 1.02, -sz * 0.5);
+      g.add(mer);
+      /* Kapı yanında tutamak — eldivenli el kapağı çevirirken tutunur.
+         Konum AÇIdan gelir: silindir yüzeyi düzlem değildir. */
+      for (const yan of [-1, 1]) {
+        const t = D.tutamak(THREE, M.kit, { uzunluk: r * 0.34 });
+        silindireOturt(THREE, t, r, yan * 0.62, sz * 0.05);
+        g.add(t);
+      }
+      /* Kuşak kaburgaları: kilit de bir basınç kabıdır, çıplak tüp değil. */
+      const nk = 4;
+      for (let i = 0; i < nk; i++) {
+        const kb = ekle(new THREE.Mesh(new THREE.TorusGeometry(r * 1.008, r * 0.02, 6, 30), M.yapi));
+        kb.position.z = ((i + 0.5) / nk - 0.5) * sz * 0.86;
+      }
+      /* Arka yüzde battaniye şeridi ve boşaltma pompası kutusu. */
+      const mlk = D.mliSeridi(THREE, M.kit, sz * 0.7, { n: 3 });
+      silindireOturt(THREE, mlk, r, Math.PI * 0.82, 0, { disari: 0.01, egim: Math.PI / 2 });
+      g.add(mlk);
+      const pompa = ekle(new THREE.Mesh(new THREE.BoxGeometry(r * 0.5, r * 0.34, r * 0.44), M.koyu));
+      silindireOturt(THREE, pompa, r, Math.PI * 0.55, -sz * 0.18, { disari: r * 0.16 });
+      /* İkaz levhası: basınç boşaltma uyarısı, kırmızı şeritli. */
+      const ikaz = D.levha(THREE, M.kit, ['BASINÇLI HACİM', 'boşaltmadan açma'],
+        { w: r * 0.9, h: r * 0.42, seritRenk: '#c9563f' });
+      ikaz.position.set(0, -r * 1.01, sz * 0.3);
+      ikaz.rotation.x = Math.PI / 2;
+      g.add(ikaz);
+      const f2 = D.fener(THREE, M.kit, { renk: 0xff6a4a });
+      f2.position.set(0, 0, sz * 0.52);
+      g.add(f2);
       break;
     }
     case 'tunel': {
@@ -159,6 +335,13 @@ function govde(THREE, p, M, dok) {
       }
       const ic = ekle(new THREE.Mesh(cylGeoX(r * 0.92, r * 0.92, boy, 24), M.koyu));
       ic.position.x = 0;
+      /* Tünelin üstünden de yürünür: iki yanda korkuluk. */
+      for (const yan of [-1, 1]) {
+        const kork = D.korkuluk(THREE, M.kit, sx * 0.86);
+        kork.position.set(0, yan * r * 0.5, r * 0.84);
+        kork.rotation.x = yan * 0.55;
+        g.add(kork);
+      }
       break;
     }
     case 'dugum': {
@@ -171,11 +354,22 @@ function govde(THREE, p, M, dok) {
         const v = new THREE.Vector3(...d);
         kol.position.copy(v).multiplyScalar(r * 0.92);
         kol.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), v);
-        const kp = kapak(THREE, r * 0.42, mat, M.koyu);
+        const kp = D.kapak(THREE, M.kit, r * 0.42);
         kp.position.copy(v).multiplyScalar(r * 1.26);
         kp.quaternion.copy(kol.quaternion);
         g.add(kp);
       }
+      /* Kapılar arası geçiş korkuluğu: kürenin çevresinde dört yay. */
+      for (let i = 0; i < 4; i++) {
+        const a = i * TAU / 4 + Math.PI / 4;
+        const kork = D.korkuluk(THREE, M.kit, r * 0.9, { ayakSayisi: 2 });
+        kork.position.set(Math.cos(a) * r * 0.92, Math.sin(a) * r * 0.92, r * 0.3);
+        kork.rotation.z = a + Math.PI / 2;
+        g.add(kork);
+      }
+      const fd = D.fener(THREE, M.kit);
+      fd.position.z = r * 1.08;
+      g.add(fd);
       break;
     }
     case 'toroid': {
@@ -196,6 +390,18 @@ function govde(THREE, p, M, dok) {
         j.position.set(Math.cos(a) * R * 0.7, Math.sin(a) * R * 0.7, 0);
         j.rotation.z = a;
       }
+      /* Çekirdek çevresinde tutunma rayı ve künye. */
+      for (let i = 0; i < 3; i++) {
+        const a = i * TAU / 3;
+        const kork = D.korkuluk(THREE, M.kit, R * 0.7, { ayakSayisi: 2 });
+        kork.position.set(Math.cos(a) * R * 0.44, Math.sin(a) * R * 0.44, sz * 0.45);
+        kork.rotation.z = a + Math.PI / 2;
+        g.add(kork);
+      }
+      const lv4 = D.levha(THREE, M.kit, [p.tech?.no || p.id, 'ŞİŞME HACİM'], { w: R * 0.5, h: R * 0.24 });
+      lv4.position.set(0, -R * 0.46, sz * 0.5);
+      lv4.rotation.x = Math.PI / 2;
+      g.add(lv4);
       break;
     }
     case 'ortu': {
@@ -248,6 +454,27 @@ function govde(THREE, p, M, dok) {
         const a = i * TAU / 4;
         const bac = ekle(new THREE.Mesh(cylGeoZ(r * 0.06, r * 0.06, sz * 0.5, 10), M.koyu));
         bac.position.set(Math.cos(a) * r * 0.82, Math.sin(a) * r * 0.82, -sz * 0.6);
+        const pb = D.ayakPabucu(THREE, M.kit, r * 0.2, { regolitMat: M.regolit });
+        pb.position.set(Math.cos(a) * r * 0.82, Math.sin(a) * r * 0.82, -sz * 0.85);
+        g.add(pb);
+      }
+      /* Dolum-boşaltım paneli ve akışkan künyesi: hangi tank ne taşıyor,
+         gövdenin üstünden okunur. Kriyojenikte yanlış hat ölümcüldür. */
+      const kp2 = D.konnektorPaneli(THREE, M.kit, r * 0.7, r * 0.5);
+      kp2.position.set(0, -r * 1.02, sz * 0.05);
+      kp2.rotation.x = Math.PI / 2;
+      g.add(kp2);
+      const akis = p.id.includes('o2') ? ['O₂', 'KRİYOJENİK'] : ['CH₄', 'YANICI'];
+      const lv2 = D.levha(THREE, M.kit, akis,
+        { w: r * 0.85, h: r * 0.5, seritRenk: p.id.includes('o2') ? '#5aa86a' : '#c95a5a' });
+      lv2.position.set(0, -r * 1.02, sz * 0.3);
+      lv2.rotation.x = Math.PI / 2;
+      g.add(lv2);
+      for (let i = 0; i < 3; i++) {
+        const ml2 = D.mliSeridi(THREE, M.kit, r * 1.5, { n: 4 });
+        ml2.position.set(0, 0, (i - 1) * sz * 0.26);
+        ml2.rotation.z = i * 1.1;
+        g.add(ml2);
       }
       break;
     }
@@ -263,16 +490,30 @@ function govde(THREE, p, M, dok) {
         const dir = ekle(new THREE.Mesh(cylGeoZ(0.05, 0.05, sz, 8), M.koyu));
         dir.position.set(0, pan.position.y, 0);
       }
+      /* Dizi kablosu tavada toplanır: yerde sürünen kablo toza gömülür. */
+      const tv = D.kabloTavasi(THREE, M.kit, sy * 0.92, { kablo: 2 });
+      tv.position.set(-sx * 0.42, 0, 0.1);
+      tv.rotation.z = Math.PI / 2;
+      g.add(tv);
       break;
     }
     case 'radyator': {
-      const n = 4;
+      /* Kanat sayısı künyeden okunur: bütçe ile çizim aynı sayıyı kullanır. */
+      const n = p.tech?.kanat ?? 2;
       for (let i = 0; i < n; i++) {
         const k = ekle(new THREE.Mesh(new THREE.BoxGeometry(sx, 0.03, sz), mat));
         k.position.y = (i / (n - 1) - 0.5) * sy * 4;
       }
       const t = ekle(new THREE.Mesh(cylGeoX(0.06, 0.06, sx * 1.02, 10), M.koyu));
       t.position.z = -sz / 2;
+      /* Dönüş hattı ve künye: akışkan amonyak, dokunma sınırı yazılı. */
+      const t2 = ekle(new THREE.Mesh(cylGeoX(0.045, 0.045, sx * 1.02, 10), M.koyu));
+      t2.position.set(0, 0.09, -sz / 2);
+      const lv3 = D.levha(THREE, M.kit, ['NH₃ SOĞUTUCU', 'dokunma'],
+        { w: 0.58, h: 0.28, seritRenk: '#d68a4a' });
+      lv3.position.set(sx * 0.32, 0.12, -sz * 0.3);
+      lv3.rotation.x = Math.PI / 2;
+      g.add(lv3);
       break;
     }
     case 'semsiye': {
@@ -298,6 +539,18 @@ function govde(THREE, p, M, dok) {
         const bor = ekle(new THREE.Mesh(cylGeoZ(r * 0.05, r * 0.05, sz * 0.8, 8), M.isil));
         bor.position.set(Math.cos(a) * r * 0.72, Math.sin(a) * r * 0.72, sz * 0.1);
       }
+      /* Radyasyon ikazı dört yüzde: hangi yönden gelinirse gelinsin okunur. */
+      for (let i = 0; i < 4; i++) {
+        const a = i * TAU / 4;
+        const ik = D.levha(THREE, M.kit, ['RADYASYON', '14 m yaklaşma sınırı'],
+          { w: r * 0.8, h: r * 0.42, seritRenk: '#d6a24a', zemin: '#e0cf9a' });
+        ik.position.set(Math.cos(a) * r * 0.64, Math.sin(a) * r * 0.64, sz * 0.05);
+        ik.rotation.set(Math.PI / 2, 0, a + Math.PI / 2);
+        g.add(ik);
+      }
+      const fr = D.fener(THREE, M.kit, { renk: 0xff5a3c });
+      fr.position.z = sz * 0.42;
+      g.add(fr);
       break;
     }
     case 'direk': {
@@ -347,6 +600,18 @@ function govde(THREE, p, M, dok) {
         const kir = ekle(new THREE.Mesh(cylGeoX(0.03, 0.03, sx, 6), M.koyu));
         kir.position.set(0, (i / 4 - 0.5) * sy * 0.9, sz * 0.5 - 0.05);
       }
+      /* Şarj kablosu tentenin altından gelir; ayaklar pabuçlu. */
+      const tv2 = D.kabloTavasi(THREE, M.kit, sx * 0.8, { kablo: 2 });
+      tv2.position.set(0, sy * 0.4, 0.06);
+      g.add(tv2);
+      for (let i = 0; i < 4; i++) {
+        const pb2 = D.ayakPabucu(THREE, M.kit, 0.2, { regolitMat: M.regolit });
+        pb2.position.set((i % 2 ? 1 : -1) * sx * 0.44, (i < 2 ? 1 : -1) * sy * 0.44, -sz * 0.5);
+        g.add(pb2);
+      }
+      const ft = D.fener(THREE, M.kit);
+      ft.position.set(0, -sy * 0.44, sz * 0.52);
+      g.add(ft);
       break;
     }
     case 'hat':
@@ -366,7 +631,7 @@ function govde(THREE, p, M, dok) {
  */
 export function buildHabitat(THREE, { env = 'mars', tema = {} } = {}) {
   const M = habMaterials(THREE, tema);
-  const dok = { zar: zarDokusu(THREE), hucre: hucreDokusu(THREE) };
+  const dok = { zar: zarDokusu(THREE), hucre: hucreDokusu(THREE), regolit: D.regolitKabartma(THREE) };
   const root = new THREE.Group();
   root.name = 'habitat';
   const nodes = new Map();

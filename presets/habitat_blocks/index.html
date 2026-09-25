@@ -78,6 +78,13 @@
   <div id="altyazi"></div>
 
   <aside id="sag">
+    <h2>Parça künyesi</h2>
+    <div class="kart" id="kunye">Sahnede bir bileşene tıkla.</div>
+    <h2>Güç bütçesi</h2>
+    <table id="gucTablo"></table>
+    <p class="alt" id="gucNot"></p>
+    <h2>Yaşam ve ISRU</h2>
+    <table id="yasamTablo"></table>
     <h2>Ortam</h2>
     <div class="kart" id="ortamKart"></div>
     <h2>Hat hesabı</h2>
@@ -91,8 +98,9 @@
     import * as THREE from 'three';
     import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
     import { buildHabitat } from './hab-build.mjs';
-    import { PARTS, STEPS, SUBSYSTEMS, HAB_ENV,
-             massBudget, runEndpoints, partById } from './hab-parts.mjs';
+    import { PARTS, STEPS, SUBSYSTEMS, HAB_ENV, INTERFACES,
+             massBudget, runEndpoints, partById,
+             powerBudget, volumeBudget, isruBudget, thermalBudget } from './hab-parts.mjs';
     import { planRun, buildRun } from './routing.mjs';
 
     const el = (s) => document.querySelector(s);
@@ -121,8 +129,16 @@
     const gunes = new THREE.DirectionalLight(0xffffff, 1);
     gunes.castShadow = true;
     gunes.shadow.mapSize.set(2048, 2048);
+    gunes.shadow.bias = -0.0008;
     Object.assign(gunes.shadow.camera, { left: -26, right: 26, top: 26, bottom: -26, near: 1, far: 90 });
     scene.add(gunes);
+    /* Karşı dolgu. Tek kaynakla aydınlatılan sahnede gölge tarafı tamamen
+       kapanıyor ve bütün modüller tek bir turuncu kütleye dönüşüyordu;
+       korkuluk, levha ve konnektör okunmaz oluyordu. Dolgu SOĞUK: gerçek
+       yüzeyde gölge tarafını dolduran şey gökyüzü saçılmasıdır ve o,
+       doğrudan güneşten her zaman daha mavidir. */
+    const dolgu = new THREE.DirectionalLight(0xffffff, 1);
+    scene.add(dolgu);
 
     let kok = null, hatGrup = null;
 
@@ -132,14 +148,22 @@
        ışığı saçar ve gölgeyi yumuşatır. */
     function ortamUygula() {
       const mars = ortam === 'mars';
-      scene.background = new THREE.Color(mars ? 0x2a1c16 : 0x02030a);
-      gokyuzu.color.set(mars ? 0xb59277 : 0x1b2430);
-      gokyuzu.groundColor.set(mars ? 0x3a2418 : 0x0d1016);
-      gokyuzu.intensity = mars ? 0.48 : 0.16;        // Ay'da saçılma yok
-      gunes.color.set(mars ? 0xffd9b0 : 0xfff6e6);
-      gunes.intensity = mars ? 2.0 : 3.1;            // Ay daha yakın, atmosfer süzmüyor
-      gunes.position.set(mars ? 16 : 24, mars ? -20 : -8, mars ? 20 : 9);
-      renderer.toneMappingExposure = mars ? 0.82 : 0.78;
+      scene.background = new THREE.Color(mars ? 0x3a2a20 : 0x04060c);
+      /* Gökyüzü saçılması: Mars'ta tozdan dolayı somon, Ay'da YOK.
+         Renk doygunluğu düşük tutulur — doygun turuncu bütün malzemeyi
+         aynı renge boyuyor ve yüzeyler birbirinden ayırt edilemiyordu. */
+      gokyuzu.color.set(mars ? 0xc4a894 : 0x2a3444);
+      gokyuzu.groundColor.set(mars ? 0x5a4436 : 0x141a22);
+      gokyuzu.intensity = mars ? 0.85 : 0.22;
+      gunes.color.set(mars ? 0xffe6c8 : 0xfffaf0);
+      gunes.intensity = mars ? 2.6 : 3.4;
+      gunes.position.set(mars ? 18 : 24, mars ? -16 : -8, mars ? 17 : 9);
+      /* Dolgu güneşin karşısından, soğuk ve zayıf: gölgeyi açar, ikinci
+         bir güneş izlenimi vermez. */
+      dolgu.color.set(mars ? 0xa8c0d8 : 0x8aa0c0);
+      dolgu.intensity = mars ? 0.75 : 0.35;
+      dolgu.position.set(mars ? -14 : -18, mars ? 16 : 12, mars ? 9 : 6);
+      renderer.toneMappingExposure = mars ? 1.05 : 0.95;
       el('#ortam').textContent = `Ortam: ${HAB_ENV[ortam].ad}`;
     }
 
@@ -288,7 +312,50 @@
         sh.appendChild(div);
       }
 
+      butceler();
+      kunyeYaz(secili);
       altyazi(reddedilen);
+    }
+
+    /* Güç, yaşam ve ISRU bütçeleri. Üç durum ayrı yazılır çünkü asıl soru
+       "gündüz yetiyor mu" değil, "toz fırtınasında ne oluyor". */
+    function butceler() {
+      const g = powerBudget(), v = volumeBudget(), i = isruBudget(), t = thermalBudget({ env: ortam });
+      const yaz = (tablo, satirlar) => {
+        const el2 = el(tablo); el2.innerHTML = '';
+        for (const [a, c] of satirlar) {
+          const tr = document.createElement('tr');
+          const x = document.createElement('td'); x.className = 'k'; x.textContent = a;
+          const y = document.createElement('td'); y.className = 'v'; y.textContent = c;
+          tr.append(x, y); el2.appendChild(tr);
+        }
+      };
+      const kw = (w) => `${(w / 1000).toFixed(2)} kW`;
+      yaz('#gucTablo', [
+        ['Güneş (dizi × 4)', kw(g.uretimGunesW)],
+        ['Fisyon ünitesi', kw(g.uretimFisyonW)],
+        ['Kritik yük', kw(g.kritikW)],
+        ['Kesilebilir yük', kw(g.kesilebilirW)],
+        ['Gündüz payı', `%${(g.gunduz.pay * 100).toFixed(0)}`],
+        ['Gece payı', `%${(g.gece.pay * 100).toFixed(0)}`],
+        ['Toz fırtınası payı', `%${(g.firtina.pay * 100).toFixed(0)}`],
+        ['Isıl atım kapasitesi', kw(t.kapasiteW)],
+        ['Atılacak ısı', kw(t.atilacakW)],
+      ]);
+      el('#gucNot').textContent =
+        `Fırtınada panel %20'ye düşer ve sera, MOXIE, Sabatier, toz temizleme KAPANIR; ` +
+        `kritik ${kw(g.kritikW)} yükü yalnız fisyon taşır (${kw(g.firtina.uretimW)}). ` +
+        `Radyatör kapasitesi beyan edilen kanat alanından εσ(T⁴ − ortam) ile hesaplanır.`;
+      yaz('#yasamTablo', [
+        [`Yaşanabilir hacim (${v.kisi} kişi)`, `${v.yasanabilirM3} m³  ·  kişi başı ${v.kisiBasiM3} m³`],
+        ['Toplam basınçlı hacim', `${v.toplamM3} m³`],
+        ['O₂ üretimi', `${i.O2UretimKgGun} kg/gün`],
+        ['O₂ solunumu', `${i.O2SolunumKgGun} kg/gün`],
+        ['O₂ payı', `${i.O2PayKgGun} kg/gün`],
+        ['CH₄ (dönüş yakıtı)', `${i.CH4KgGun} kg/gün`],
+        ['Su (Sabatier)', `${i.H2OKgGun} kg/gün`],
+        ['Gıda (sera)', `${i.gidaKgGun} kg/gün`],
+      ]);
     }
 
     function altyazi(reddedilen) {
@@ -304,6 +371,69 @@
           ? `${reddedilen.length} bileşen bu ortamda gerçek olmadığı için kurulmadı; gerekçeleri sağda.`
           : 'Regolit örtüsü ve platform yerinde üretildiği için kütle bütçesinde görünmez.');
       a.append(baslik, s);
+    }
+
+    /* ── seçim ─────────────────────────────────────────────────────── */
+    const isin = new THREE.Raycaster();
+    const fare = new THREE.Vector2();
+    let basladi = null, secili = null;
+    renderer.domElement.addEventListener('pointerdown', (e) => { basladi = [e.clientX, e.clientY]; });
+    renderer.domElement.addEventListener('pointerup', (e) => {
+      if (!basladi) return;
+      const kaydi = Math.hypot(e.clientX - basladi[0], e.clientY - basladi[1]) > 5;
+      basladi = null;
+      if (kaydi) return;                       // sürükleme seçim değildir
+      const b = renderer.domElement.getBoundingClientRect();
+      fare.set(((e.clientX - b.left) / b.width) * 2 - 1, -((e.clientY - b.top) / b.height) * 2 + 1);
+      isin.setFromCamera(fare, camera);
+      const vur = isin.intersectObject(kok, true);
+      let o = vur.find(x => x.object.visible)?.object || null;
+      while (o && !o.userData.partId) o = o.parent;
+      secili = o?.userData?.partId || null;
+      kunyeYaz(secili);
+    });
+
+    function kunyeYaz(id) {
+      const k = el('#kunye');
+      const q = id ? partById(id) : null;
+      k.innerHTML = '';
+      if (!q) { k.textContent = 'Sahnede bir bileşene tıkla.'; return; }
+      const ekle = (baslik, metin) => {
+        if (!metin && metin !== 0) return;
+        const e = document.createElement('span'); e.className = 'e'; e.textContent = baslik;
+        const v = document.createElement('div'); v.textContent = metin;
+        k.append(e, v);
+      };
+      const b = document.createElement('b');
+      b.textContent = q.ad + (q.qty ? `  × ${q.qty}` : '');
+      k.appendChild(b);
+      ekle('Neden var', q.why);
+      const t = q.tech || {};
+      ekle('Parça no', t.no);
+      ekle('Sistem', SUBSYSTEMS[q.sistem]?.ad);
+      ekle('Malzeme', t.malzeme);
+      ekle('Kütle', `${q.qty ? `${q.qty} × ${q.massKg} = ${q.qty * q.massKg}` : q.massKg} kg` +
+        (q.massKg === 0 ? '  (yerinde üretilir)' : ''));
+      if (t.guc_W) {
+        const n = q.qty ?? 1, W = t.guc_W * n;
+        ekle('Güç', (W < 0 ? `${-W} W ÜRETİR` : `${W} W tüketir`) +
+          (t.kesilebilir ? '  — fırtınada kesilebilir' : ''));
+      }
+      if (t.hacim_m3) ekle('Basınçlı hacim', `${t.hacim_m3} m³`);
+      if (t.koruma_gcm2) ekle('Radyasyon koruması', `${t.koruma_gcm2} g/cm² sütun yoğunluğu`);
+      if (t.veri_Mbps) ekle('Veri', `${t.veri_Mbps} Mbps`);
+      if (t.sicaklik_C) ekle('Çalışma sıcaklığı', `${t.sicaklik_C[0]} … ${t.sicaklik_C[1]} °C`);
+      if (t.uretim) {
+        ekle('Üretim', Object.entries(t.uretim)
+          .map(([kk, vv]) => `${kk.replace('_kg_gun', '')} ${vv} kg/gün`).join('  ·  '));
+      }
+      ekle('Bağlanır', q.mountsTo ? partById(q.mountsTo).ad : 'zemin (kök)');
+      ekle('Arayüz', INTERFACES[q.arayuz]);
+      ekle('Bağlantı', t.baglanti);
+      ekle('Isı yolu', t.isiYolu);
+      ekle('Ayrıntı', t.detay);
+      ekle('Nitelik', t.kalite);
+      ekle('Kurulum adımı', `${q.step} — ${STEPS.find(x => x.no === q.step).ad}`);
     }
 
     /* ── etkileşim ─────────────────────────────────────────────────── */
