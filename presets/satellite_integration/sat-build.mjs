@@ -279,7 +279,17 @@ function govde(THREE, p, mat, dokular) {
          the insert grid equipment actually bolts into. Radiator panels get
          the OSR tile pattern instead of bare aluminium. */
       const radyator = p.sistem === 'isil' && /radyator/.test(p.id);
-      const [w, h, t] = sy < sx && sy < sz ? [sx, sz, sy] : [sx, sy, sz];
+      /* Hangi eksenin INCE oldugu panelin nasil yattigini belirler. Eski
+         satir yalniz Y'de ince paneli taniyordu; X'te ince bir panel
+         (yan-panel-xp, [0.03, 1.72, 1.9]) kosulu saglamadigi icin 0,03 m
+         GENIS ve 1,9 m KALIN ciziliyordu. Olculen: yan paneller beyan
+         ettikleri kutuyu z'de 1,17 m, radyatorler y'de 0,88 m asiyordu.
+         Ince eksen artik uc boyutun en kucugudur; digerleri duzlem icidir. */
+      const olculer = [sx, sy, sz];
+      const ince = olculer.indexOf(Math.min(...olculer));
+      const [w, h, t] = ince === 0 ? [sz, sy, sx]
+        : ince === 1 ? [sx, sz, sy]
+          : [sx, sy, sz];
       /* Inserts on the radiator too. The catalogue bolts the battery, the
          PCDU and the transponder onto radiator panels, and the panel was
          being drawn WITHOUT the insert grid those bolts go into - the
@@ -288,7 +298,25 @@ function govde(THREE, p, mat, dokular) {
         inserts: true,
         osrMap: radyator ? dokular.osr.clone() : null,
       });
-      if (sy < sx && sy < sz) pan.rotation.x = Math.PI / 2;
+      /* honeycombPanel ince yonu +Z'de kurar; tek eksenli ceyrek tur onu
+         ince eksene cevirir. Sira tuzagi yok. */
+      if (ince === 0) pan.rotation.y = Math.PI / 2;
+      else if (ince === 1) pan.rotation.x = Math.PI / 2;
+      pan.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+      g.add(pan);
+
+      /* Panele civatalanan her sey PANELIN cercevesinde kurulur.
+         Eskiden her cocuk `sy < sx && sy < sz` diye kendi ekseni test
+         ediyor ve GRUBUN cercevesinde yerlesiyordu; X'te ince bir panelde
+         bu, 1,9 m'lik bir kollektoru 0,03 m kalinliktaki panelin icinden
+         X boyunca geciriyordu. Olculen: yan panel 0,859 m, radyatorler
+         0,88 m tasiyordu. Her cocukta eksen testi yapmak, hatanin kendisi.
+         Burada konvansiyon tektir: x enine, y boyuna, z kalinlik boyunca. */
+      const yuz = new THREE.Group();
+      yuz.rotation.copy(pan.rotation);
+      g.add(yuz);
+      const ekleY = (m) => { m.castShadow = true; m.receiveShadow = true; yuz.add(m); return m; };
+
       /* The rails this panel's declared interface is made of. Four panels
          say `kizak` - built on a bench, slid on, then locked - and not one
          rail was drawn anywhere, so the interface existed only in the
@@ -296,39 +324,33 @@ function govde(THREE, p, mat, dokular) {
       if (p.arayuz === 'kizak') {
         for (const e of [-1, 1]) {
           const ray = D.slideRail(THREE, KIT, h * 0.92, { locks: 2, en: 0.05 });
-          if (sy < sx && sy < sz) { ray.position.set(e * w * 0.44, -t * 0.7, 0); ray.rotation.x = Math.PI / 2; }
-          else ray.position.set(e * w * 0.44, 0, -t * 0.7);
-          g.add(ray);
+          /* slideRail uzunlugunu Z'de kurar; panel cercevesinde ray panelin
+             BOYUNCA, yani y'de uzanir. Tek eksenli ceyrek tur. */
+          ray.rotation.x = Math.PI / 2;
+          ray.position.set(e * w * 0.44, 0, -t * 0.7);
+          yuz.add(ray);
         }
       }
-      pan.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-      g.add(pan);
       if (radyator) {
-        const yatay = sy < sx && sy < sz;
-        const koy = (m, a, b) => { m.position.set(0, yatay ? t * 0.6 : a, yatay ? a : t * 0.6); void b; };
         /* Two headers along the edges and the transport pipes between them.
            Two headers alone cannot move heat ACROSS a panel; the runs are
            what actually carry it from the box footprint to the radiating
            area, and on real hardware they are the visible feature. */
         for (const e of [-1, 1]) {
-          const hdr = ekle(new THREE.Mesh(cylGeoX(0.016, 0.016, w * 0.96, 10), KIT.aluDark));
-          koy(hdr, e * h * 0.42);
+          const hdr = ekleY(new THREE.Mesh(cylGeoX(0.016, 0.016, w * 0.96, 10), KIT.aluDark));
+          hdr.position.set(0, e * h * 0.42, t * 0.6);
         }
         for (let i = 0; i < 6; i++) {
-          const x = (i / 5 - 0.5) * w * 0.86;
-          const boru = ekle(new THREE.Mesh(
-            yatay ? cylGeoZ(0.009, 0.009, h * 0.84, 8) : cylGeoY(0.009, 0.009, h * 0.84, 8),
-            KIT.mliSilver));
-          boru.position.set(x, yatay ? t * 0.55 : 0, yatay ? 0 : t * 0.55);
+          const boru = ekleY(new THREE.Mesh(cylGeoY(0.009, 0.009, h * 0.84, 8), KIT.mliSilver));
+          boru.position.set((i / 5 - 0.5) * w * 0.86, 0, t * 0.55);
         }
         /* Doubler plates under the equipment footprints: the panel is
            thickened where a box bolts on, because the insert alone would
            punch through a 25 mm core. */
         for (const [dx, dy] of [[-w * 0.22, h * 0.18], [w * 0.24, -h * 0.2]]) {
-          const dbl = ekle(new THREE.Mesh(
-            new THREE.BoxGeometry(w * 0.3, yatay ? t * 0.5 : h * 0.26, yatay ? h * 0.26 : t * 0.5),
-            KIT.alu));
-          dbl.position.set(dx, yatay ? -t * 0.5 : dy, yatay ? dy : -t * 0.5);
+          const dbl = ekleY(new THREE.Mesh(
+            new THREE.BoxGeometry(w * 0.3, h * 0.26, t * 0.5), KIT.alu));
+          dbl.position.set(dx, dy, -t * 0.5);
         }
       }
       break;

@@ -490,6 +490,12 @@ export const PARTS = Object.freeze([
     },
     why: 'From the reactor to the base. It runs in a tray with slack: a cable pulled tight snaps when it contracts in the cold.' },
   { id: 'anten-direk', ad: 'Communications mast', sistem: 'iletisim', step: 7, mountsTo: 'platform', arayuz: 'ayirma',
+    /* Zarf payi: gergi telleri direkten 2,9 m disariya, uc ankraja gider.
+       `size` direk BORUSUNUN olcusudur ve oyle kalmali - tellerin altindan
+       yurunur, ankrajlar ise nokta engeldir; 6,4 m'lik dolu bir ayak izi
+       beyan etmek yanlis olurdu. Pay burada YAZILI, kapinin icine gizli
+       degil: ne kadar tastigi gorunur ve buyudugunde fark edilir. */
+    zarfPay: 3.0,
     massKg: 210, pos: [-2.3, -12.2, 3.6], size: [0.5, 0.5, 7.2], sekil: 'direk',
     tech: {
       no: 'HB-COM-110',

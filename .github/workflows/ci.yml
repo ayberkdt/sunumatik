@@ -105,6 +105,9 @@ jobs:
       - name: Habitat blokları (ortam kuralı, hat matematiği, ortamlı bütçe)
         run: node scripts/validate-habitat.mjs
 
+      - name: Çizilen geometri beyan edilen kutuda (yön ve hizalama)
+        run: node scripts/validate-geometry.mjs
+
       - name: motion-manifest şemaları
         shell: bash
         run: |
