@@ -9,7 +9,8 @@
  */
 
 import { PARTS, SUBSYSTEMS, partById, envAllows, runEndpoints, canakGeo,
-  PANEL_EGIM_DEG } from './hab-parts.mjs';
+  PANEL_EGIM_DEG, YOLLAR, yolSeritleri, yolCukurlari, yolKoseleri,
+  cukurRampaM, cukurAcikligiM, CUKUR_TABAN_M } from './hab-parts.mjs';
 import { cylGeoZ, cylGeoY, cylGeoX, coneGeoZ, latheX } from '../core/geometry-axis.mjs';
 import * as D from './hab-detail.mjs';
 import { yuzeyAlbedoRGB } from '../core/scene-lighting.mjs';
@@ -123,7 +124,7 @@ export const LOCAL_KINDS = Object.freeze(new Set([
   'kubbe', 'depo', 'gezgin', 'atolye',
 ]));
 
-function govde(THREE, p, M, dok) {
+function govde(THREE, p, M, dok, env = 'mars') {
   /* Cogaltilan bir parcada `size` DIZININ zarfidir; gövde ise TEK birimi
      cizer. Birimin olcusu zarftan cogaltma acikligi dusulerek bulunur.
      Bu ayrim yapilmayinca panel tarlasinin kablo tavasi `-sx * 0.42` ile
@@ -153,14 +154,167 @@ function govde(THREE, p, M, dok) {
       zeminMat.bumpScale = 0.35;
       const m = ekle(new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), zeminMat));
       m.castShadow = false;
-      /* Walkways are COMPACTED regolith, so they are the same material a
-         little brighter and a little smoother - not a separate brown. */
+      /* YÜRÜME YOLLARI, beyan edilen rotalardan kurulur.
+         Eskisi iki elle yazılmış parlak kutuydu: `sx * 0.72` ve `sy * 0.66`
+         uzunluğunda, keyfî bir noktada kesişen, hiçbir şeye bağlı olmayan ve
+         ped büyüdükçe büyüyen. Şimdi rota PARÇA ÇİFTİ olarak beyan edilir,
+         KIRIKLI YOL'dur (düz doğru habitat silindirinin içinden geçiyordu)
+         ve şeritler BİRLEŞTİRİLİR - üç ana yol aynı caddeyi paylaşır, her
+         biri kendi kutusunu çizse aynı düzlemde üç kutu üst üste gelirdi. */
       const yolMat = zeminMat.clone();
-      yolMat.color = zeminMat.color.clone().multiplyScalar(1.28);
-      yolMat.roughness = 0.9;
-      for (const [ox, oy, w, hh] of [[0, 0, sx * 0.72, 1.4], [3.2, 0, 1.4, sy * 0.66]]) {
-        const y = ekle(new THREE.Mesh(new THREE.BoxGeometry(w, hh, sz * 0.4), yolMat));
-        y.position.set(ox, oy, sz * 0.5); y.castShadow = false;
+      yolMat.color = zeminMat.color.clone().multiplyScalar(1.22);
+      yolMat.roughness = 0.94;
+      /* Bot izi: şeridin basılan ortası kenarından daha çok parlar. */
+      const izMat = zeminMat.clone();
+      izMat.color = zeminMat.color.clone().multiplyScalar(1.44);
+      izMat.roughness = 0.8;
+      const ustZ = sz * 0.5;
+      const kal = sz * 0.34;
+      const yerel = (x, y) => [x - p.pos[0], y - p.pos[1]];
+
+      const seritler = yolSeritleri(env);
+      const cukurlar = yolCukurlari(env);
+
+      for (const g of seritler) {
+        /* Bu şeridin üstündeki çukurlar, yay uzunluğu aralığı olarak: çukur
+           bir BOŞLUK'tur, yoksa düz şerit onu örter ve hiçbir şey görünmez. */
+        const bosluk = [];
+        for (const c of cukurlar) {
+          const dx = c.nokta[0] - g.a[0], dy = c.nokta[1] - g.a[1];
+          /* Nokta bu doğrunun üstünde mi (dik uzaklık) ve aralığın içinde mi. */
+          if (Math.abs(-g.uy * dx + g.ux * dy) > 1e-6) continue;
+          const d = g.ux * dx + g.uy * dy;
+          if (d < -1e-6 || d > g.uzunluk + 1e-6) continue;
+          const yari = cukurAcikligiM(c.cukurM) / 2;
+          bosluk.push([Math.max(0, d - yari), Math.min(g.uzunluk, d + yari), c, d]);
+        }
+        bosluk.sort((a, b2) => a[0] - b2[0]);
+
+        const dilim = (s0, s1) => {
+          const L = s1 - s0;
+          if (L <= 0.05) return;
+          const tm = (s0 + s1) / 2;
+          const [cx, cy] = yerel(g.a[0] + g.ux * tm, g.a[1] + g.uy * tm);
+          const serit = ekle(new THREE.Mesh(
+            new THREE.BoxGeometry(L, g.genislik, kal), yolMat));
+          serit.position.set(cx, cy, ustZ + 0.01);
+          serit.rotation.z = g.aci;
+          serit.castShadow = false; serit.receiveShadow = true;
+          const iz = ekle(new THREE.Mesh(
+            new THREE.BoxGeometry(L - 0.1, g.genislik * 0.62, kal), izMat));
+          iz.position.set(cx, cy, ustZ + 0.02);
+          iz.rotation.z = g.aci;
+          iz.castShadow = false; iz.receiveShadow = true;
+        };
+        let imlec = 0;
+        for (const [a1, b1] of bosluk) {
+          if (a1 > imlec) dilim(imlec, a1);
+          imlec = Math.max(imlec, b1);
+        }
+        if (imlec < g.uzunluk) dilim(imlec, g.uzunluk);
+
+        /* ÇUKUR: alçaltılmış taban ve iki 1:8 rampa. Hatlar üssün tek
+           doğu-batı koridorunu 1,93 ve 1,95 m'de kesiyor, giysili boy ise
+           1,95 m - tesviye etmek, iki sabit bağlantı noktasını oynatmaktan da
+           caddeyi kaydırmaktan da ucuz. Derinlik ölçümden çıkar. */
+        for (const [, , c, d] of bosluk) {
+          const ramp = cukurRampaM(c.cukurM);
+          const [cx, cy] = yerel(g.a[0] + g.ux * d, g.a[1] + g.uy * d);
+          const tab = ekle(new THREE.Mesh(new THREE.BoxGeometry(
+            CUKUR_TABAN_M, g.genislik, kal), izMat));
+          tab.position.set(cx, cy, ustZ + 0.01 - c.cukurM);
+          tab.rotation.z = g.aci;
+          tab.castShadow = false; tab.receiveShadow = true;
+          for (const yon of [-1, 1]) {
+            const dd = yon * (CUKUR_TABAN_M / 2 + ramp / 2);
+            const r = ekle(new THREE.Mesh(new THREE.BoxGeometry(
+              Math.hypot(ramp, c.cukurM), g.genislik, kal), yolMat));
+            r.position.set(cx + g.ux * dd, cy + g.uy * dd, ustZ + 0.01 - c.cukurM / 2);
+            r.rotation.z = g.aci;
+            /* Sol normal etrafında döndürmek +X'i AŞAĞI yatırır (n × u = -z),
+               o yüzden +u yönünde YÜKSELEN rampanın açısı eksi işaretli. */
+            r.rotateOnWorldAxis(new THREE.Vector3(-g.uy, g.ux, 0),
+              -yon * Math.atan2(c.cukurM, ramp));  // euler-ok: tek dünya ekseni
+            r.castShadow = false; r.receiveShadow = true;
+            /* Alçak geçit uyarısı: çukur bir SEBEPTEN var ve sebebi hemen
+               üstünde. İşaret YOLUN kendisine aittir - boruya takılan bir
+               bilezik, patlatmada boru uçarken havada kalırdı. */
+            for (const yan of [-1, 1]) {
+              const ex = cx + g.ux * yon * (CUKUR_TABAN_M / 2 + ramp)
+                - g.uy * yan * g.genislik * 0.56;
+              const ey = cy + g.uy * yon * (CUKUR_TABAN_M / 2 + ramp)
+                + g.ux * yan * g.genislik * 0.56;
+              const dk = ekle(new THREE.Mesh(cylGeoZ(0.045, 0.06, 0.95, 6), M.kit.aluDark));
+              dk.position.set(ex, ey, ustZ + 0.48);
+              dk.castShadow = false;
+              const bs = ekle(new THREE.Mesh(cylGeoZ(0.075, 0.075, 0.18, 6), M.kit.gold));
+              bs.position.set(ex, ey, ustZ + 1.04);
+              bs.castShadow = false;
+            }
+          }
+        }
+      }
+
+      /* Dönüş önlüğü: iki şerit köşede dik birleşince içeri çentik kalır ve
+         giysili bir mürettebatın dönüş yarıçapı o çentiğe sığmaz. */
+      for (const k of yolKoseleri(env)) {
+        const [cx, cy] = yerel(k.nokta[0], k.nokta[1]);
+        const don = ekle(new THREE.Mesh(
+          cylGeoZ(k.genislik * 0.62, k.genislik * 0.62, kal, 16), yolMat));
+        don.position.set(cx, cy, ustZ + 0.012);
+        don.castShadow = false; don.receiveShadow = true;
+      }
+
+      /* Kenar işaretleri. Toz her şeyi aynı renge boyar; yolun nerede
+         bittiğini kenar belli eder. Bir rotanın ucuna 1,8 m'den yakın dikme
+         konmaz, yoksa binanın duvarının içine girer. */
+      const uclar = [...new Set(YOLLAR.flatMap(y => [y.a, y.b]))]
+        .map(partById).filter(Boolean).map(q => [q.pos[0], q.pos[1]]);
+      const konan = new Set();
+      for (const g of seritler) {
+        const n = Math.max(1, Math.round(g.uzunluk / 4.0));
+        for (let i = 0; i <= n; i++) {
+          const d = (i / n) * g.uzunluk;
+          const cx = g.a[0] + g.ux * d, cy = g.a[1] + g.uy * d;
+          if (uclar.some(([ux2, uy2]) => Math.hypot(cx - ux2, cy - uy2) < 1.8)) continue;
+          /* Çukurun ağzındaki yüksek dikmeler zaten kenarı işaretler. */
+          if (cukurlar.some(c => Math.hypot(cx - c.nokta[0], cy - c.nokta[1])
+            < cukurAcikligiM(c.cukurM) / 2 + 0.6)) continue;
+          for (const yan of [-1, 1]) {
+            const px = cx - g.uy * yan * g.genislik * 0.56;
+            const py = cy + g.ux * yan * g.genislik * 0.56;
+            const anahtar = `${px.toFixed(1)}|${py.toFixed(1)}`;
+            if (konan.has(anahtar)) continue;
+            konan.add(anahtar);
+            const [lx, ly] = yerel(px, py);
+            const dik = ekle(new THREE.Mesh(cylGeoZ(0.04, 0.055, 0.42, 6), M.kit.aluDark));
+            dik.position.set(lx, ly, ustZ + 0.21);
+            dik.castShadow = false;
+            /* Yansıtıcı başlık sırayla iki renk: yönü olan bir işaret
+               yönsüz bir çubuktan daha okunur. */
+            const bas = ekle(new THREE.Mesh(
+              cylGeoZ(0.058, 0.058, 0.08, 6), i % 2 ? M.kit.white : M.kit.gold));
+            bas.position.set(lx, ly, ustZ + 0.44);
+            bas.castShadow = false;
+          }
+        }
+      }
+
+      /* Kavşak önlüğü: iki yoldan fazlasının buluştuğu kapı önünde zemin
+         genişler, çünkü orada durulur, dönülür ve yük bırakılır. */
+      const kavsak = new Map();
+      for (const y of YOLLAR) {
+        if (!envAllows(y.a, env).ok || !envAllows(y.b, env).ok) continue;
+        for (const uc of [y.a, y.b]) kavsak.set(uc, (kavsak.get(uc) ?? 0) + 1);
+      }
+      for (const [id, n] of kavsak) {
+        if (n < 2) continue;
+        const q = partById(id);
+        if (!q) continue;
+        const [cx, cy] = yerel(q.pos[0], q.pos[1]);
+        const onluk = ekle(new THREE.Mesh(cylGeoZ(2.0, 2.2, kal, 20), yolMat));
+        onluk.position.set(cx, cy, ustZ + 0.011);
+        onluk.castShadow = false; onluk.receiveShadow = true;
       }
       /* Bearing plates. A module does not stand on loose regolith: the load
          goes through plates that were levelled and compacted first, and
@@ -1266,7 +1420,7 @@ export function buildHabitat(THREE, { env = 'mars', tema = {} } = {}) {
   for (const p of PARTS) {
     const izin = envAllows(p.id, env);
     if (!izin.ok) { reddedilen.push({ id: p.id, neden: izin.neden, oneri: izin.oneri }); continue; }
-    const g = govde(THREE, p, M, dok);
+    const g = govde(THREE, p, M, dok, env);
     g.name = p.id;
     g.position.set(p.pos[0], p.pos[1], p.pos[2]);
     g.userData.partId = p.id;

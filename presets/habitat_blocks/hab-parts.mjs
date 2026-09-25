@@ -78,13 +78,19 @@ export const PARTS = Object.freeze([
   /* ADIM 1 — zemin hazırlığı ve temel */
   { id: 'platform', ad: 'Compacted pad', sistem: 'yapi', step: 1, mountsTo: null, arayuz: 'ayirma',
     massKg: 0, pos: [0, 0, -0.08], size: [54, 44, 0.16], sekil: 'platform',
+    /* Ped 0,16 m'lik bir plaka, ama üstünde YOL DONANIMI taşıyor: kenar
+       dikmeleri ve alçak geçit uyarı işaretleri. En yükseği, hattın 1,93 m'de
+       geçtiği yeri işaretleyen uyarı dikmesi - pedin üstünde 1,13 m. Pay bu
+       ölçümden seçildi: 0,65 + 0,55 = 1,20 m eşik, 0,07 m boşluk. İşarete
+       yeter, yanlış yerleştirilmiş bir pedi saklamaya yetmez. */
+    zarfPay: 0.55,
     tech: {
       no: 'HB-CIV-001',
       malzeme: 'Compacted regolith with polyurethane binder infiltration',
       guc_W: 0,
       sicaklik_C: [-140, 30],
       baglanti: 'None - laid and compacted in place',
-      detay: '26 x 20 m; compacted to 1.9 g/cm3, bearing capacity 180 kPa. Binder only soaks the top 40 mm: it fixes the dust without preventing excavation',
+      detay: '54 x 44 m (the number followed `size` when the pad was widened; the text said 26 x 20 m until it was measured); compacted to 1.9 g/cm3, bearing capacity 180 kPa. Binder only soaks the top 40 mm: it fixes the dust without preventing excavation',
       kalite: 'Made on site - zero launched mass',
     },
     why: 'Regolith is compacted and levelled so modules sit true, dust stays down, and walking routes are obvious. It has no mass because it is made on site - the cheapest form of ISRU there is.' },
@@ -661,6 +667,284 @@ export function panelKosinus(egimDeg, envKey = 'mars') {
   /* Rx(t) uygulanmış +Z: (0, -sin t, cos t). */
   return (g[1] * -Math.sin(t) + g[2] * Math.cos(t)) / n;
 }
+
+/* YÜRÜME YOLLARI. Bir yol, birisi oradan yürüdüğü için vardır.
+ *
+ * Eskiden iki elle yazılmış çubuk vardı - `sx * 0.72` ve `sy * 0.66`
+ * uzunluğunda, keyfî bir noktada kesişen. Hiçbir şeye bağlı değillerdi:
+ * saha yeniden yerleşince yerlerinde kaldılar, ped büyüyünce onlar da büyüdü.
+ *
+ * Rotalar artık PARÇA ÇİFTİ olarak beyan edilir, yani yol sahayı izler ve
+ * saha oynayınca birlikte oynar. Ama düz çizgi de yetmez: ilk yazışta
+ * hava kilidinden atölyeye çekilen doğru, habitat silindirinin, düğümün ve
+ * şişme modülün İÇİNDEN geçiyordu - denetim sekiz engel saydı. Bir yol
+ * binanın etrafından döner, o yüzden rota bir KIRIKLI YOL'dur ve ara
+ * noktaları beyan edilir.
+ *
+ * Genişlik keyfî değil: giysili omuz 0,84 m (astronaut_blocks OMUZ_M) ve iki
+ * mürettebatın yan yana geçebilmesi için 2,0 m gerekir. Tek kişilik
+ * ayrımlar 1,2 m.
+ */
+export const YOL_GENISLIK_M = Object.freeze({ ana: 2.0, tali: 1.2 });
+
+/* ANA CADDE. Hava kilidinin çıkışı ile tank çiftliği arasındaki koridor
+ * üssün tek doğu-batı geçidi: kuzeyi habitat kümesi, güneyi ISRU ve tanklar
+ * kapatır. Bütün ana yollar oradan geçer, çünkü başka yerden geçemezler. */
+export const CADDE_Y = -5.9;
+
+/* Yolun üstünden geçebileceği şeyler. Bir yol her cismin etrafından dolaşmaz:
+ * ped ve temel plakası zeminin kendisidir, toz fırçası ise BİLEREK yolun
+ * üstündedir - çıkışta botlar orada fırçalanır. */
+export const YOL_ZEMIN = Object.freeze(['platform', 'temel-hab', 'toz-firca']);
+
+/* Baş boşluğu: hattın altından geçen yolda giysili boy + pay kadar yer olmalı.
+ * Sayı astronaut_blocks'un beyan ettiği boydur, tahmin değil. */
+export const GIYSILI_BOY_M = 1.95;
+export const BAS_PAYI_M = 0.15;
+
+export const YOLLAR = Object.freeze([
+  { id: 'yol-tank', a: 'hava-kilidi', b: 'tank-o2', sinif: 'ana',
+    ara: [[-3.1, CADDE_Y], [2.1, CADDE_Y]],
+    neden: 'Transfer öncesi her tankın sehpa birleşimi denetlenir; üssün en sık yürünen yolu bu.' },
+  { id: 'yol-tank-arasi', a: 'tank-o2', b: 'tank-ch4', sinif: 'tali', ara: [],
+    neden: 'İki tank arasındaki kısa geçiş - hat denetimi ikisini birden kapsar.' },
+  { id: 'yol-isru', a: 'hava-kilidi', b: 'moxie', sinif: 'ana',
+    ara: [[-3.1, CADDE_Y], [4.8, CADDE_Y]],
+    neden: 'ISRU her vardiyada denetlenir: üssün oksijeni oradan gelir.' },
+  { id: 'yol-garaj', a: 'hava-kilidi', b: 'garaj', sinif: 'ana',
+    ara: [[-3.1, CADDE_Y], [-15.1, CADDE_Y]],
+    neden: 'Gezgin kanopiye park eder; mürettebat oraya giysiyle gider.' },
+  { id: 'yol-depo', a: 'garaj', b: 'depo', sinif: 'tali', ara: [],
+    neden: 'Yük deponun rafından kanopiye taşınır, habitatın içinden değil.' },
+  { id: 'yol-atolye', a: 'hava-kilidi', b: 'atolye', sinif: 'ana',
+    ara: [[-3.1, CADDE_Y], [15.5, CADDE_Y], [15.5, 7.2]],
+    neden: 'Kırılan şey atölyede onarılır. Doğrusu habitatın içinden geçtiği için yol serayı doğudan dolanır.' },
+]);
+
+/** Bir rotanın kırıklı yol köşeleri: başlangıç parçası, ara noktalar, bitiş parçası. */
+export function yolNoktalari(yol) {
+  const a = partById(yol.a), b = partById(yol.b);
+  if (!a || !b) return null;
+  return [[a.pos[0], a.pos[1]], ...(yol.ara ?? []).map(q => [q[0], q[1]]), [b.pos[0], b.pos[1]]];
+}
+
+/** Rotanın düz parçaları; her biri orta noktası, uzunluğu ve açısıyla. */
+export function yolSegmentleri(yol) {
+  const n = yolNoktalari(yol);
+  if (!n) return [];
+  const gen = YOL_GENISLIK_M[yol.sinif] ?? YOL_GENISLIK_M.tali;
+  const out = [];
+  for (let i = 0; i + 1 < n.length; i++) {
+    const [x1, y1] = n[i], [x2, y2] = n[i + 1];
+    const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy);
+    if (L < 1e-6) continue;
+    out.push({
+      a: [x1, y1], b: [x2, y2], orta: [(x1 + x2) / 2, (y1 + y2) / 2],
+      uzunluk: L, aci: Math.atan2(dy, dx), genislik: gen,
+    });
+  }
+  return out;
+}
+
+/** Bütün yolların toplam uzunluğu (m). */
+export function yolToplamM() {
+  return YOLLAR.reduce((s, y) => s + yolSegmentleri(y).reduce((a, g) => a + g.uzunluk, 0), 0);
+}
+
+/* Döndürülmüş dikdörtgenin köşeleri ve ayrık eksen sınaması: bir şeridin bir
+   ayak izine girip girmediği başka türlü ölçülemez. */
+function kutuKose(cx, cy, w, h, a) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]]
+    .map(([x, y]) => [cx + x * c - y * s, cy + x * s + y * c]);
+}
+function kutuCakisir(A, B) {
+  for (const P of [A, B]) {
+    for (let i = 0; i < 4; i++) {
+      const [x1, y1] = P[i], [x2, y2] = P[(i + 1) % 4];
+      const nx = -(y2 - y1), ny = x2 - x1;
+      let aMin = Infinity, aMax = -Infinity, bMin = Infinity, bMax = -Infinity;
+      for (const [x, y] of A) { const d = x * nx + y * ny; aMin = Math.min(aMin, d); aMax = Math.max(aMax, d); }
+      for (const [x, y] of B) { const d = x * nx + y * ny; bMin = Math.min(bMin, d); bMax = Math.max(bMax, d); }
+      if (aMax < bMin - 1e-9 || bMax < aMin - 1e-9) return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Yolun İÇİNDEN geçtiği katı cisimler. Boş olmalı: bir yol duvarın içinden
+ * geçmez. Hatlar buraya girmez - onlar havada, ayrı sınanır (yolAltGecisleri).
+ */
+export function yolEngelleri(yol, envKey = 'mars') {
+  const uclar = new Set([yol.a, yol.b, ...YOL_ZEMIN]);
+  const out = [];
+  for (const s of yolSegmentleri(yol)) {
+    const S = kutuKose(s.orta[0], s.orta[1], s.uzunluk, s.genislik, s.aci);
+    for (const q of PARTS) {
+      if (uclar.has(q.id) || q.boru) continue;
+      if (!q.pos || !q.size) continue;
+      if (!envAllows(q.id, envKey).ok) continue;
+      /* Tabanı giysili boyun üstünde olan cisim yolu kapatmaz: altından geçilir. */
+      if (q.pos[2] - q.size[2] / 2 >= GIYSILI_BOY_M + BAS_PAYI_M) continue;
+      const Q = kutuKose(q.pos[0], q.pos[1], q.size[0], q.size[1], 0);
+      if (kutuCakisir(S, Q)) out.push({ engel: q.id, segment: s });
+    }
+  }
+  return out;
+}
+
+/* İki 2B doğru parçasının kesişimi; paralel ya da kesişmiyorsa null.
+   t1/t2 kesişimin her parça üzerindeki normalize konumu. */
+function dogruKesisim(p1, p2, p3, p4) {
+  const d1x = p2[0] - p1[0], d1y = p2[1] - p1[1];
+  const d2x = p4[0] - p3[0], d2y = p4[1] - p3[1];
+  const det = d1x * d2y - d1y * d2x;
+  if (Math.abs(det) < 1e-12) return null;
+  const t1 = ((p3[0] - p1[0]) * d2y - (p3[1] - p1[1]) * d2x) / det;
+  const t2 = ((p3[0] - p1[0]) * d1y - (p3[1] - p1[1]) * d1x) / det;
+  if (t1 < 0 || t1 > 1 || t2 < 0 || t2 > 1) return null;
+  return { t1, t2, nokta: [p1[0] + d1x * t1, p1[1] + d1y * t1] };
+}
+
+/**
+ * Yolun bir hattın ALTINDAN geçtiği yerler ve orada kalan baş boşluğu.
+ *
+ * Hattın eksen çizgisi `runEndpoints`'ten gelir - yani `planRun`'ın gerçekten
+ * çizdiği doğru - çünkü hat satırlarının beyan ettiği kutu çizilenle
+ * TUTMUYOR: `hat-o2` kutusu y = -7,2'de düz bir doğu-batı koşusu ilan eder,
+ * çizilen ise tanktan habitata çapraz gidip z 1,50 .. 2,70 arasında durur.
+ * Ölçülen geometri kazanır.
+ */
+export function yolAltGecisleri(yol, envKey = 'mars') {
+  const out = [];
+  for (const q of PARTS) {
+    if (!q.boru || !envAllows(q.id, envKey).ok) continue;
+    const uc = runEndpoints(q.id);
+    if (!uc) continue;
+    for (const s of yolSegmentleri(yol)) {
+      const k = dogruKesisim(s.a, s.b, [uc.a[0], uc.a[1]], [uc.b[0], uc.b[1]]);
+      if (!k) continue;
+      const ekZ = uc.a[2] + (uc.b[2] - uc.a[2]) * k.t2;
+      const altZ = ekZ - (q.boru.odM ?? 0.1) / 2;
+      /* UÇ BAĞLANTISI kesişme değildir. Hat tankın üstünde biter, yol da
+         tankta biter, yani ikisi aynı noktada buluşur - orada kimse hattın
+         altından yürümez, tankın önünde durur. Bunu ayırmayan ölçüm tankın
+         kendi bağlantısını 1,46 m'lik bir çarpma sayıyordu. */
+      const ucParca = q.boru.ucNoktalar ?? [];
+      const terminal = [yol.a, yol.b].some((rid) => {
+        const rp = partById(rid);
+        return rp && ucParca.includes(rid)
+          && Math.hypot(k.nokta[0] - rp.pos[0], k.nokta[1] - rp.pos[1]) < 1.5;
+      });
+      /* Gereken çukur: hattı yükseltmek iki sabit bağlantı noktasını
+         değiştirmek demek, caddeyi kaydırmak ise imkânsız - kuzeyi habitat
+         kümesi, güneyi tank çiftliği kapatır. Regolitte 0,2 m tesviye etmek
+         ikisinden de ucuz, ve gerçek sahalarda yapılan tam bu. */
+      const gereken = GIYSILI_BOY_M + BAS_PAYI_M;
+      const cukurM = terminal ? 0 : Math.max(0, Math.ceil((gereken - altZ) * 20) / 20);
+      out.push({
+        hat: q.id, nokta: k.nokta, ekZ, altZ, terminal, cukurM, seg: s,
+        bosluk: altZ + cukurM - GIYSILI_BOY_M,
+      });
+    }
+  }
+  return out;
+}
+
+/* ÇAKIŞMAYAN ŞERİT KÜMESİ.
+ *
+ * Üç ana yol aynı caddeyi paylaşır: hava kilidinden çıkan yol tanka, ISRU'ya
+ * ve atölyeye giderken x = -3,1 .. 2,1 arasını üç kez kat eder. Her rota
+ * kendi şeridini çizerse aynı düzlemde üç kutu üst üste gelir - z-fighting -
+ * ve aynı hat kesişimine üç çukur kazılır. Şerit rotanın değil SAHANIN
+ * özelliğidir, o yüzden aynı doğru üzerindeki aralıklar birleştirilir.
+ */
+export function yolSeritleri(envKey = 'mars') {
+  const grup = new Map();
+  for (const yol of YOLLAR) {
+    if (!envAllows(yol.a, envKey).ok || !envAllows(yol.b, envKey).ok) continue;
+    for (const s of yolSegmentleri(yol)) {
+      /* Kanonik yön: aynı doğrunun ileri ve geri hâli tek grup olmalı.
+         Bileşenler EŞİKLE sıfırlanır, çünkü Math.atan2(0, -12) tam pi verir ve
+         sin(pi) = 1,22e-16'dır: batıya giden cadde yarısı -1,22e-16 açı alıp
+         `(-1.22e-16).toFixed(4)` = "-0.0000" anahtarına düşüyor, doğuya giden
+         yarı ise "0.0000" alıyordu. İki yarı aynı doğru üstünde olmasına
+         rağmen ayrı grupta kaldı ve tek cadde 18,6 + 12,0 m'ye bölündü. */
+      const sifirla = (v) => (Math.abs(v) < 1e-9 ? 0 : v);
+      let ux = sifirla(Math.cos(s.aci)), uy = sifirla(Math.sin(s.aci));
+      if (ux < 0 || (ux === 0 && uy < 0)) { ux = sifirla(-ux); uy = sifirla(-uy); }
+      const aci = Math.atan2(uy, ux);
+      const perp = -uy * s.a[0] + ux * s.a[1];
+      /* Math.round(-1e-12) = -0 ve (-0).toFixed(n) = "0.0000", o yüzden
+         yuvarlama eksi sıfırı da toparlar. */
+      const kanon = (v, n) => (Math.round(v * 10 ** n) / 10 ** n + 0).toFixed(n);
+      const k = `${kanon(aci, 4)}|${kanon(perp, 3)}|${kanon(s.genislik, 2)}`;
+      if (!grup.has(k)) grup.set(k, { aci, ux, uy, perp, genislik: s.genislik, ara: [] });
+      const t0 = ux * s.a[0] + uy * s.a[1], t1 = ux * s.b[0] + uy * s.b[1];
+      grup.get(k).ara.push([Math.min(t0, t1), Math.max(t0, t1)]);
+    }
+  }
+  const nokta = (g, tt) => [g.ux * tt - g.uy * g.perp, g.uy * tt + g.ux * g.perp];
+  const out = [];
+  for (const g of grup.values()) {
+    g.ara.sort((a, b) => a[0] - b[0]);
+    const birlesik = [];
+    for (const [a, b] of g.ara) {
+      const son = birlesik[birlesik.length - 1];
+      if (son && a <= son[1] + 1e-6) son[1] = Math.max(son[1], b);
+      else birlesik.push([a, b]);
+    }
+    for (const [a, b] of birlesik) {
+      out.push({
+        aci: g.aci, ux: g.ux, uy: g.uy, genislik: g.genislik, uzunluk: b - a,
+        a: nokta(g, a), b: nokta(g, b), orta: nokta(g, (a + b) / 2),
+      });
+    }
+  }
+  return out;
+}
+
+/** Çakışmayan çukur kümesi: aynı kesişime üç rota da gelse çukur bir tanedir. */
+export function yolCukurlari(envKey = 'mars') {
+  const m = new Map();
+  for (const yol of YOLLAR) {
+    if (!envAllows(yol.a, envKey).ok || !envAllows(yol.b, envKey).ok) continue;
+    for (const c of yolAltGecisleri(yol, envKey)) {
+      if (c.cukurM <= 0) continue;
+      const k = `${c.hat}|${c.nokta[0].toFixed(2)}|${c.nokta[1].toFixed(2)}`;
+      if (!m.has(k)) m.set(k, c);
+    }
+  }
+  return [...m.values()];
+}
+
+/** Çakışmayan dönüş köşesi kümesi (ara noktalar). */
+export function yolKoseleri(envKey = 'mars') {
+  const m = new Map();
+  for (const yol of YOLLAR) {
+    if (!envAllows(yol.a, envKey).ok || !envAllows(yol.b, envKey).ok) continue;
+    for (const q of yol.ara ?? []) {
+      const k = `${q[0].toFixed(2)}|${q[1].toFixed(2)}`;
+      if (!m.has(k)) m.set(k, { nokta: [q[0], q[1]], genislik: YOL_GENISLIK_M[yol.sinif] ?? YOL_GENISLIK_M.tali });
+      else m.get(k).genislik = Math.max(m.get(k).genislik, YOL_GENISLIK_M[yol.sinif] ?? 0);
+    }
+  }
+  return [...m.values()];
+}
+
+/** Birleştirilmiş şeritlerin toplam uzunluğu — kaplanan gerçek zemin. */
+export function yolKaplananM(envKey = 'mars') {
+  return yolSeritleri(envKey).reduce((s, g) => s + g.uzunluk, 0);
+}
+
+/* Çukurun iniş rampası: 1:8 eğim, giysili ve yüklü bir mürettebatın
+   yürüyebildiği en dik makul meyil. Uzunluk derinlikten çıkar, elle yazılmaz. */
+export const CUKUR_EGIM = 8;
+export const CUKUR_TABAN_M = 1.4;
+export const cukurRampaM = (derinlikM) => derinlikM * CUKUR_EGIM;
+/** Çukurun yol üzerinde kapattığı toplam uzunluk (taban + iki rampa). */
+export const cukurAcikligiM = (derinlikM) => CUKUR_TABAN_M + 2 * cukurRampaM(derinlikM);
 
 export const FITTINGS_FACTOR = 1.45;
 
