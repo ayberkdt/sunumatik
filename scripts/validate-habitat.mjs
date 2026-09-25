@@ -703,5 +703,116 @@ bolum('Tutum: çember dizileri ve anten nişangâhı');
   }
 }
 
+/* ══ SAHA: YASAK BÖLGE, GÜNEŞ YÖNÜ, YÜRÜME PAYI ═════════════════════
+   Üçü de katalogda YAZILI ve yerleşim üçüyle de çelişiyordu. */
+bolum('Saha: yasak bölge, güneş yönü, yürüme payı');
+{
+  /* ── 1. reaktörün kendi yasak yarıçapı ──
+     Reaktör satırı "recessed emplacement 14 m from the base" diyor, detayı
+     "14 m plus the shadow shield keeps the base side under 5 mSv a year"
+     diyor, ve gövdesine çizilen levha "14 m yaklaşma sınırı" yazıyor.
+     Ölçülen (düzeltme öncesi): 11 basınçlı hacmin 7'si sınırın İÇİNDE,
+     sera 5,3 m'de, düğüm 9,2 m'de. */
+  const r = partById('reaktor');
+  const R = r.yasakYaricapM;
+  ok(typeof R === 'number' && R > 0, 'reaktör yasak yarıçapını beyan ediyor', `${R} m`);
+  const yarıÇap = (q) => Math.hypot(q.size[0], q.size[1]) / 2;
+  const yuzeyMesafe = (q) => Math.max(0,
+    Math.hypot(q.pos[0] - r.pos[0], q.pos[1] - r.pos[1]) - yarıÇap(q) - yarıÇap(r));
+  const basincli = H.PARTS.filter(q => q.arayuz === 'basincli'
+    || /^(hab-silindir|sera|dugum|sisme-modul|kilit-boyun|tunel)$/.test(q.id));
+  const icerde = basincli.filter(q => yuzeyMesafe(q) < R)
+    .map(q => `${q.id} ${yuzeyMesafe(q).toFixed(1)} m`);
+  const enYakin = basincli.reduce((a, q) => Math.min(a, yuzeyMesafe(q)), Infinity);
+  ok(icerde.length === 0, 'hiçbir basınçlı hacim yasak yarıçapın içinde değil',
+    icerde.join(', ') || `${basincli.length} hacim · en yakını ${enYakin.toFixed(1)} m ≥ ${R} m`);
+  /* TERS SINAV: yarıçapı en yakın hacmin ötesine çıkarsan yakalanmalı. */
+  const sahteR = enYakin + 1;
+  ok(basincli.some(q => yuzeyMesafe(q) < sahteR),
+    'TERS SINAV: yarıçap büyütülse ihlal yakalanır', `${sahteR.toFixed(1)} m ile 1 ihlal`);
+
+  /* Gölge kalkanı arada durmuyorsa yarıçap tek başına yetmez: doz hem
+     mesafeden hem kalkandan gelir ve satır ikisini birlikte söylüyor. */
+  const kalkan = partById('golge-kalkani');
+  const kesisir = (p0, p1, b) => {
+    const d = [p1[0] - p0[0], p1[1] - p0[1]];
+    let t0 = 0, t1 = 1;
+    for (let a = 0; a < 2; a++) {
+      const mn = b.pos[a] - b.size[a] / 2, mx = b.pos[a] + b.size[a] / 2;
+      if (Math.abs(d[a]) < 1e-12) { if (p0[a] < mn || p0[a] > mx) return false; continue; }
+      let ta = (mn - p0[a]) / d[a], tb = (mx - p0[a]) / d[a];
+      if (ta > tb) { const q = ta; ta = tb; tb = q; }
+      t0 = Math.max(t0, ta); t1 = Math.min(t1, tb);
+      if (t0 > t1) return false;
+    }
+    return true;
+  };
+  const korunan = basincli.filter(q => kesisir(r.pos, q.pos, kalkan)).length;
+  ok(korunan === basincli.length, 'kalkan her basınçlı hacmin önünde duruyor',
+    `${korunan}/${basincli.length}`);
+  ok(!kesisir(r.pos, [r.pos[0] + 5, r.pos[1] - 5], kalkan),
+    'TERS SINAV: kalkanın ARKASINA giden yol korunmuyor', 'ters yön açık');
+
+  /* ── 2. güneş yönü ile panel eğimi ──
+     Eğim işareti aynalanmıştı: ölçülen kosinüs 0,201, paneli hiç eğmesen
+     0,577. Yani eğim, eğmemekten %65 daha kötüydü. */
+  for (const env of ['mars', 'ay']) {
+    const dogru = H.panelKosinus(H.PANEL_EGIM_DEG, env);
+    const duz = H.panelKosinus(0, env);
+    const ayna = H.panelKosinus(-H.PANEL_EGIM_DEG, env);
+    ok(dogru > duz, `${env}: eğim panel için düz durmaktan İYİ`,
+      `${dogru.toFixed(3)} > ${duz.toFixed(3)}`);
+    ok(ayna < duz, `TERS SINAV (${env}): aynalanmış eğim düzden kötü, yakalanır`,
+      `${ayna.toFixed(3)} < ${duz.toFixed(3)}`);
+  }
+
+  /* ── 3. yürüme payı ──
+     Kural yalnız FARKLI sistemler arasında geçerlidir: kalkanın reaktöre
+     yapışık olması tasarımdır ve aynı basınçlı hacmin içindeki raf ile
+     tünel arasında kimse yürümez. İlk denemem bunu ayırmadı ve 16 sahte
+     ihlal saydı. */
+  const PAY = 1.5;
+  const MUAF_HAT = new Set(['hat-o2', 'hat-guc', 'regolit-ortu', 'platform']);
+  /* Reaktor tesisi: govde, golge kalkani, radyator diregi ve semsiyesi TEK
+     kurulumdur. Kalkanin reaktore 0,10 m'de olmasi tasarimdir - korudugu
+     seye yaslanmayan bir kalkan koruma yapmaz - ve reaktorun kendisi bu
+     haritada yoksa kendi kalkaniyla 'farkli sistem' sayilip yakalaniyor. */
+  const tesis = new Map([['reaktor', 'reaktor'], ['golge-kalkani', 'reaktor'],
+    ['reaktor-radyator', 'reaktor'], ['radyator-direk', 'reaktor']]);
+  /* Ayni YAPININ parcalari da muaftir: temel plakasi ile ustundeki modul,
+     ya da dugum ile ona baglanan gecis tuneli ebeveyn-cocuktur ve aralarinda
+     kimse yurumez. Bir parcanin yapisi, pede kadar giden baglanti zincirinin
+     kokudur. Ilk yazisimda yalniz `sistem` vardi ve 11 sahte ihlal verdi. */
+  const ebeveynAd = new Map(H.PARTS.map(q => [q.id, q.mountsTo]));
+  const kokYapi = (id) => {
+    let n = id, g = 0;
+    while (ebeveynAd.get(n) && ebeveynAd.get(n) !== 'platform' && g++ < 12) n = ebeveynAd.get(n);
+    return n;
+  };
+  const grup = (q) => tesis.get(q.id) || q.sistem;
+  const liste = H.PARTS.filter(q => !MUAF_HAT.has(q.id));
+  const acikMesafe = (a, b) => {
+    let m = -Infinity;
+    for (let k = 0; k < 3; k++) {
+      const d = Math.abs(a.pos[k] - b.pos[k]) - (a.size[k] + b.size[k]) / 2;
+      if (d > m) m = d;
+    }
+    return m;
+  };
+  const dar = [];
+  let enDar = Infinity;
+  for (let i = 0; i < liste.length; i++) for (let j = i + 1; j < liste.length; j++) {
+    const a = liste[i], b = liste[j];
+    if (grup(a) === grup(b) || kokYapi(a.id) === kokYapi(b.id)) continue;
+    const d = acikMesafe(a, b);
+    if (d < enDar) enDar = d;
+    if (d < PAY) dar.push(`${a.id}/${b.id} ${d.toFixed(2)} m`);
+  }
+  ok(dar.length === 0, `farklı sistemler arasında en az ${PAY} m yürüme payı var`,
+    dar.join(', ') || `en dar ${enDar.toFixed(2)} m`);
+  ok(enDar < 40, 'TERS SINAV: pay ölçümü gerçekten çalışıyor (sonsuz değil)',
+    `en dar ${enDar.toFixed(2)} m`);
+}
+
 console.log(kaldi === 0 ? `HABİTAT DENETİMİ: ${gecti}/${gecti} geçti` : `HABİTAT DENETİMİ: ${gecti} geçti, ${kaldi} KALDI`);
 process.exit(kaldi === 0 ? 0 : 1);

@@ -102,7 +102,8 @@
     import { sceneLighting } from '../core/scene-lighting.mjs';
     import { PARTS, STEPS, SUBSYSTEMS, HAB_ENV, INTERFACES,
              massBudget, runEndpoints, partById,
-             powerBudget, volumeBudget, isruBudget, thermalBudget } from './hab-parts.mjs';
+             powerBudget, volumeBudget, isruBudget, thermalBudget,
+             GUNES_YONU } from './hab-parts.mjs';
     import { planRun, buildRun } from './routing.mjs';
 
     const el = (s) => document.querySelector(s);
@@ -153,7 +154,10 @@
          term is 7.7% of the Sun on Mars and EXACTLY ZERO on the Moon, where
          the only thing opening a shadow is regolith bounce at 6.5%. */
       const b = rig.uygula(mars ? 'mars' : 'vacuum');
-      gunes.position.set(mars ? 18 : -8, mars ? -16 : -8, mars ? 17 : 9);
+      /* Güneş yönü katalogda BEYAN edilir; panel tarlasının eğimi ondan
+         hesaplanır ve kapı ikisini karşılaştırır. Burada elle yazılıyken
+         paneller güneşten uzağa bakıyordu ve bunu kimse ölçemiyordu. */
+      gunes.position.set(...GUNES_YONU[mars ? 'mars' : 'ay']);
       /* The Sun's INTENSITY already carries the 2.3x; the exposure undoes
          it so both scenes are well exposed, exactly as a camera would.
          What is left on screen is the true difference: how dark the shadow

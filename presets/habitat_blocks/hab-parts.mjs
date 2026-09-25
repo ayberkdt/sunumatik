@@ -77,7 +77,7 @@ const ENV_RULE = {
 export const PARTS = Object.freeze([
   /* ADIM 1 — zemin hazırlığı ve temel */
   { id: 'platform', ad: 'Compacted pad', sistem: 'yapi', step: 1, mountsTo: null, arayuz: 'ayirma',
-    massKg: 0, pos: [0, 0, -0.08], size: [40, 32, 0.16], sekil: 'platform',
+    massKg: 0, pos: [0, 0, -0.08], size: [54, 44, 0.16], sekil: 'platform',
     tech: {
       no: 'HB-CIV-001',
       malzeme: 'Compacted regolith with polyurethane binder infiltration',
@@ -297,7 +297,7 @@ export const PARTS = Object.freeze([
 
   /* ADIM 5 — güç */
   { id: 'panel-tarlasi', ad: 'Solar array field', sistem: 'guc', step: 5, qty: 4, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 310, pos: [-11.8, 7.6, 0.8], size: [5.0, 3.0, 1.6], sekil: 'panel-tarla',
+    massKg: 310, pos: [-16.3, 9.6, 0.8], size: [5.0, 3.0, 1.6], sekil: 'panel-tarla',
     tech: {
       no: 'HB-PWR-050',
       malzeme: 'IMM triple-junction cells, aluminium truss substrate',
@@ -309,7 +309,7 @@ export const PARTS = Object.freeze([
     },
     why: 'Dust settles on Mars, so the panels are TILTED: dust slides off and cleaning is easier. The same field at a lunar pole would stand vertical, because there the Sun runs around the horizon.' },
   { id: 'batarya-kabini', ad: 'Battery cabin', sistem: 'guc', step: 5, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 780, pos: [-10.4, 3.4, 0.8], size: [2.6, 1.8, 1.6], sekil: 'kutu',
+    massKg: 780, pos: [-14.9, 5.4, 0.8], size: [2.6, 1.8, 1.6], sekil: 'kutu',
     tech: {
       no: 'HB-PWR-051',
       malzeme: 'Li-ion NMC cells in an insulated cabin',
@@ -322,7 +322,12 @@ export const PARTS = Object.freeze([
     },
     why: 'For night and dust storms. Insulated: a cold battery loses capacity, a hot one loses life.' },
   { id: 'reaktor', ad: 'Fission power unit', sistem: 'guc', step: 5, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 1520, pos: [13.6, -9.6, 1.4], size: [2.2, 2.2, 2.8], sekil: 'reaktor',
+    massKg: 1520, pos: [22.6, -16.6, 1.4], size: [2.2, 2.2, 2.8], sekil: 'reaktor',
+    /* Yaklaşma sınırı: üç ayrı cümlede yazılıydı (bağlantı metni, detay,
+       ve gövdeye çizilen levha) ve YERLEŞİM üçüyle de çelişiyordu — 11
+       basınçlı hacmin 7'si sınırın içindeydi, sera 5,3 m'de. Tek sayı,
+       tek yerde; levha da kapı da buradan okur. */
+    yasakYaricapM: 14,
     tech: {
       no: 'HB-PWR-060',
       malzeme: 'UO2 fuel, Na heat pipes, Stirling convertors',
@@ -331,11 +336,11 @@ export const PARTS = Object.freeze([
       baglanti: '6 x M20 to the pad; recessed emplacement 14 m from the base',
       isiYolu: 'Stirling reject heat -> umbrella radiator (reactor radiator)',
       detay: '10 kWe; 43 kWt thermal, 23% conversion efficiency. Dose falls with the square of distance: 14 m plus the shadow shield keeps the base side under 5 mSv a year',
-      kalite: 'The base survives even when a dust storm takes the Sun',
+      kalite: 'The base survives even when a dust storm takes the Sun. Emplacement verified against the 14 m limit the placard on it declares - measured surface to surface, the nearest pressurised volume is the greenhouse',
     },
     why: 'Solar is not enough in a dust storm. It sits well away from the base with a shadow shield between: dose falls with the square of distance, and the shield takes the rest.' },
   { id: 'golge-kalkani', ad: 'Reactor shadow shield', sistem: 'guc', step: 5, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 420, pos: [12.1, -8.1, 1.5], size: [3.2, 0.6, 3.0], sekil: 'kalkan',
+    massKg: 420, pos: [21.1, -15.1, 1.5], size: [3.2, 0.6, 3.0], sekil: 'kalkan',
     tech: {
       no: 'HB-PWR-062',
       malzeme: 'Steel frame, borated polyethylene panels, regolith-filled on site',
@@ -347,7 +352,7 @@ export const PARTS = Object.freeze([
     },
     why: 'Step 5 already said the reactor sits behind its shadow shield, and there was no shield. Shielding a reactor all the way round costs mass that does not exist; shielding only the cone that points at the crew is why it is called a shadow shield.' },
   { id: 'radyator-direk', ad: 'Radiator mast', sistem: 'guc', step: 5, mountsTo: 'reaktor', arayuz: 'civata',
-    massKg: 60, pos: [13.6, -9.6, 3.0], size: [0.4, 0.4, 0.6], sekil: 'direk',
+    massKg: 60, pos: [22.6, -16.6, 3.0], size: [0.4, 0.4, 0.6], sekil: 'direk',
     tech: {
       no: 'HB-PWR-063',
       malzeme: 'Titanium column with a thermally isolating collar',
@@ -359,7 +364,7 @@ export const PARTS = Object.freeze([
     },
     why: 'The umbrella radiator was floating 0.4 m above the reactor it declares as its parent. This is what holds it there, and the isolating collar is why the radiator radiates the loop heat rather than the reactor head.' },
   { id: 'reaktor-radyator', ad: 'Reactor umbrella radiator', sistem: 'isil', step: 5, mountsTo: 'radyator-direk', arayuz: 'civata',
-    massKg: 340, pos: [13.6, -9.6, 3.4], size: [5.2, 5.2, 0.4], sekil: 'semsiye',
+    massKg: 340, pos: [22.6, -16.6, 3.4], size: [5.2, 5.2, 0.4], sekil: 'semsiye',
     tech: {
       no: 'HB-THR-061',
       malzeme: 'Carbon-carbon panels, Na-K loop',
@@ -373,7 +378,7 @@ export const PARTS = Object.freeze([
 
   /* ADIM 6 — ısıl ve ISRU */
   { id: 'radyator-dizisi', ad: 'Base radiator array', sistem: 'isil', step: 6, qty: 2, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 290, pos: [-3.6, 9.2, 1.3], size: [6.0, 0.3, 2.6], sekil: 'radyator',
+    massKg: 290, pos: [-3.6, 12.7, 1.3], size: [6.0, 0.3, 2.6], sekil: 'radyator',
     tech: {
       no: 'HB-THR-070',
       malzeme: 'Aluminium fins, OSR coating, ammonia loop',
@@ -387,7 +392,7 @@ export const PARTS = Object.freeze([
     },
     why: 'Where the habitat heat is radiated away. It stands with its BACK to the Sun; a sunlit face would zero out the net rejection.' },
   { id: 'moxie', ad: 'MOXIE (CO2 to O2)', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 420, pos: [6.8, -7.4, 0.9], size: [2.2, 1.8, 1.8], sekil: 'kutu',
+    massKg: 420, pos: [4.8, -8.9, 0.9], size: [2.2, 1.8, 1.8], sekil: 'kutu',
     tech: {
       kesilebilir: true,
       no: 'HB-ISR-080',
@@ -402,7 +407,7 @@ export const PARTS = Object.freeze([
     },
     why: '95% of the Martian atmosphere is CO2. Solid oxide electrolysis makes oxygen on site, so breathing and burning oxygen never has to be shipped.' },
   { id: 'sabatier', ad: 'Sabatier reactor', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 380, pos: [9.4, -7.4, 0.9], size: [2.0, 1.6, 1.8], sekil: 'kutu',
+    massKg: 380, pos: [7.4, -8.9, 0.9], size: [2.0, 1.6, 1.8], sekil: 'kutu',
     tech: {
       kesilebilir: true,
       no: 'HB-ISR-081',
@@ -417,7 +422,7 @@ export const PARTS = Object.freeze([
     },
     why: 'CO2 + 4H2 gives CH4 + 2H2O. Return propellant and water come out of the same reaction, and electrolysing the water returns the hydrogen.' },
   { id: 'tank-o2', ad: 'O2 tank', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 260, pos: [4.6, -11.4, 1.5], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
+    massKg: 260, pos: [2.1, -14.4, 1.5], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
     tech: {
       no: 'HB-ISR-090',
       malzeme: 'Ti liner with carbon overwrap, 30-layer MLI',
@@ -430,7 +435,7 @@ export const PARTS = Object.freeze([
     },
     why: 'Cryogenic and wrapped in MLI. It stands well clear of the fuel tank: putting oxidiser next to fuel turns one failure into a fire.' },
   { id: 'tank-ch4', ad: 'CH4 tank', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 240, pos: [9.8, -11.4, 1.5], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
+    massKg: 240, pos: [7.3, -14.4, 1.5], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
     tech: {
       no: 'HB-ISR-091',
       malzeme: 'Ti liner with carbon overwrap, 30-layer MLI',
@@ -445,7 +450,7 @@ export const PARTS = Object.freeze([
 
   /* ADIM 7 — hatlar, iletişim, saha */
   { id: 'hat-o2', ad: 'O2 line', sistem: 'hat', step: 7, mountsTo: 'tank-o2', arayuz: 'akiskan',
-    massKg: 75, pos: [2.4, -6.4, 0.9], size: [11.0, 0.24, 0.24], sekil: 'hat', akiskan: 'O2',
+    massKg: 91, pos: [-0.75, -7.2, 0.9], size: [15.5, 0.24, 0.24], sekil: 'hat', akiskan: 'O2',
     boru: { odM: 0.08, wallM: 0.002, malzeme: 'paslanmaz', ucNoktalar: ['tank-o2', 'hab-silindir'] },
     tech: {
       no: 'HB-FLU-100',
@@ -453,12 +458,12 @@ export const PARTS = Object.freeze([
       guc_W: 90,
       sicaklik_C: [-120, 60],
       baglanti: 'Dry-break couplings at tank and habitat; intermediate joints welded',
-      detay: '12.9 m; 90 W of trace heating against freezing. 4 supports at 4.30 m, 0.93 mm sag, 1 expansion loop (110 K gives 22.7 mm)',
+      detay: '15.5 m; 90 W of trace heating against freezing. 5 supports at 3.88 m, 1 expansion loop. The run grew when the tanks moved clear of the reactor - routing.mjs computes it from the two endpoints, so the length and the 91 kg follow the layout rather than being typed in (75 kg before, and the fittings factor is part of it)',
       kalite: 'The colour band is information, not decoration',
     },
     why: 'From the tank to the habitat. Raised off the ground (dust), cradled every 4 m, and looped every 30 m for expansion: the day-night swing exceeds 100 K and a straight run would pull itself apart.' },
   { id: 'hat-guc', ad: 'Power line', sistem: 'hat', step: 7, mountsTo: 'reaktor', arayuz: 'elektrik',
-    massKg: 180, pos: [5.0, -5.2, 0.7], size: [17.0, 0.18, 0.18], sekil: 'hat', akiskan: 'DC',
+    massKg: 284, pos: [9.5, -8.3, 0.7], size: [31.0, 0.18, 0.18], sekil: 'hat', akiskan: 'DC',
     boru: { odM: 0.06, wallM: 0.004, malzeme: 'bakir', ucNoktalar: ['reaktor', 'hab-silindir'] },
     tech: {
       no: 'HB-ELE-101',
@@ -466,12 +471,12 @@ export const PARTS = Object.freeze([
       guc_W: 0,
       sicaklik_C: [-140, 90],
       baglanti: 'Connectors at reactor and habitat; slack in a cable tray',
-      detay: '16.9 m; 10 kWe at 600 V DC is 16.7 A, 42 W of conductor loss (0.4%). 7 supports at 4.22 m, 1 expansion loop',
+      detay: '31.0 m; 10 kWe at 600 V DC is 16.7 A. 12 supports at 2.82 m, 1 expansion loop. The run grew from 19.7 m when the reactor went out past its own 14 m exclusion zone, and 104 kg of copper and fittings is what that costs - the number comes from routing.mjs and the two endpoints, not from this line',
       kalite: 'A tight cable snaps when it contracts - the slack is the allowance',
     },
     why: 'From the reactor to the base. It runs in a tray with slack: a cable pulled tight snaps when it contracts in the cold.' },
   { id: 'anten-direk', ad: 'Communications mast', sistem: 'iletisim', step: 7, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 210, pos: [0.2, -10.2, 3.6], size: [0.5, 0.5, 7.2], sekil: 'direk',
+    massKg: 210, pos: [-2.3, -12.2, 3.6], size: [0.5, 0.5, 7.2], sekil: 'direk',
     tech: {
       no: 'HB-COM-110',
       malzeme: 'CFRP tube, Ti base joint',
@@ -484,7 +489,7 @@ export const PARTS = Object.freeze([
     why: 'Height buys horizon directly: 7 m of mast pushes the line of sight out by kilometres on flat ground.',
     ports: [{ ad: 'tepe', pos: [0, 0, 3.6], dir: [0, 0, 1], tur: 'DATA' }] },
   { id: 'anten-canak', ad: 'Earth dish (2.4 m)', sistem: 'iletisim', step: 7, mountsTo: 'anten-direk', arayuz: 'mentese',
-    massKg: 95, pos: [0.2, -10.2, 8.65], size: [2.9, 2.9, 2.9], sekil: 'canak',
+    massKg: 95, pos: [-2.3, -12.2, 8.65], size: [2.9, 2.9, 2.9], sekil: 'canak',
     /* `size` is the ENVELOPE, and for a two-axis dish that envelope is the
        sphere it sweeps - so it is a cube of side 2 x canakGeo().erim centred
        on the elevation axis, not the aperture. The aperture lives here with
@@ -506,7 +511,7 @@ export const PARTS = Object.freeze([
     },
     why: 'Tracks Earth; a two-axis gimbal holds lock as the planet turns. A narrow beam is what buys the data rate.' },
   { id: 'ruzgar-olcer', ad: 'Anemometer', sistem: 'iletisim', step: 7, mountsTo: 'anten-direk', arayuz: 'civata',
-    massKg: 8, pos: [0.2, -10.7, 6.2], size: [0.6, 0.6, 0.5], sekil: 'ruzgar',
+    massKg: 8, pos: [-2.3, -12.7, 6.2], size: [0.6, 0.6, 0.5], sekil: 'ruzgar',
     tech: {
       no: 'HB-MET-112',
       malzeme: 'Hot-wire anemometer, ceramic body',
@@ -518,7 +523,7 @@ export const PARTS = Object.freeze([
     },
     why: 'For dust storm warning and landing windows. Only real on a planet with an atmosphere; on the Moon there is no wind to measure.' },
   { id: 'garaj', ad: 'Rover canopy', sistem: 'yapi', step: 7, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 520, pos: [-11.6, -5.8, 1.7], size: [6.0, 4.4, 3.4], sekil: 'tente',
+    massKg: 520, pos: [-15.1, -7.3, 1.7], size: [6.0, 4.4, 3.4], sekil: 'tente',
     tech: {
       no: 'HB-STR-120',
       malzeme: 'Aluminium frame, fabric cover, dia 0.12 m legs',
@@ -544,6 +549,28 @@ export const STEPS = Object.freeze([
 /** Bağlantı katsayısı: çıplak borunun üstüne vana, flanş, yalıtım ve
  * askı gelir. Beyan edilen hat kütlesi = birim kütle × boy × bu katsayı;
  * denetim ikisinin ayrışmasına izin vermez. */
+/* Sahnenin güneş yönü, ortam başına. Sayfa ışığı buradan kurar, geometri
+   panelleri buna göre eğer, kapı ikisinin aynı yönü kastettiğini sınar.
+   Yalnız sayfada yazılıyken hiçbiri sınanamıyordu ve panel tarlası güneşten
+   32° UZAĞA eğik çizilmişti: ölçülen kosinüs 0,201, hiç eğmesen 0,577. */
+export const GUNES_YONU = Object.freeze({
+  mars: Object.freeze([18, -16, 17]),
+  ay: Object.freeze([-8, -8, 9]),
+});
+
+/* Panel tarlasının eğimi. Toz atsın diye eğilir — ve eğim güneşe DOĞRU
+   olduğunda toz da atılır, güç de gelir. */
+export const PANEL_EGIM_DEG = 32;
+
+/** Güneş yönüne göre bir yüzeyin kosinüsü; eğim işareti burada sınanır. */
+export function panelKosinus(egimDeg, envKey = 'mars') {
+  const g = GUNES_YONU[envKey];
+  const n = Math.hypot(g[0], g[1], g[2]);
+  const t = egimDeg * Math.PI / 180;
+  /* Rx(t) uygulanmış +Z: (0, -sin t, cos t). */
+  return (g[1] * -Math.sin(t) + g[2] * Math.cos(t)) / n;
+}
+
 export const FITTINGS_FACTOR = 1.45;
 
 /** Hat bileşenlerinin uç noktaları — yönlendirme buradan plan üretir. */

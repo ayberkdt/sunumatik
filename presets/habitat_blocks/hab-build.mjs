@@ -8,7 +8,8 @@
  * `core/geometry-axis.mjs`. Saha koordinatı +Z yukarı.
  */
 
-import { PARTS, SUBSYSTEMS, partById, envAllows, runEndpoints, canakGeo } from './hab-parts.mjs';
+import { PARTS, SUBSYSTEMS, partById, envAllows, runEndpoints, canakGeo,
+  PANEL_EGIM_DEG } from './hab-parts.mjs';
 import { cylGeoZ, cylGeoY, cylGeoX, coneGeoZ, latheX } from '../core/geometry-axis.mjs';
 import * as D from './hab-detail.mjs';
 import { yuzeyAlbedoRGB } from '../core/scene-lighting.mjs';
@@ -594,7 +595,14 @@ function govde(THREE, p, M, dok) {
         pan.material = new THREE.MeshStandardMaterial({ map: dok.hucre, roughness: .3, metalness: .5 });
         pan.material.map.repeat.set(3, 1);
         pan.position.set(0, (i - (sira - 1) / 2) * sy / sira, sz * 0.5);
-        pan.rotation.x = -32 * Math.PI / 180;
+        /* Egim isareti aynalanmisti. Sahnenin gunesi HER IKI ortamda da
+           negatif Y'de - Mars (18, -16, 17), Ay (-8, -8, 9) - ve -32 derece
+           hucre yuzunu +Y'ye cevirdigi icin paneller gunesten UZAGA bakiyordu.
+           Olculen kosinus 0,201; ayni paneli hic egmesen 0,577, dogru yone
+           egsen 0,777. Yani egim, egmemekten %65 daha kotuydu; aynalanmis bir
+           isaretin tanimi budur. Satirin egim gerekcesi toz atmak ve gunese
+           dogru egmek tozu da ayni sekilde atar. */
+        pan.rotation.x = PANEL_EGIM_DEG * Math.PI / 180;
         const dir = ekle(new THREE.Mesh(cylGeoZ(0.05, 0.05, sz, 8), M.koyu));
         dir.position.set(0, pan.position.y, 0);
       }
@@ -660,7 +668,9 @@ function govde(THREE, p, M, dok) {
       /* Radyasyon ikazı dört yüzde: hangi yönden gelinirse gelinsin okunur. */
       for (let i = 0; i < 4; i++) {
         const a = i * TAU / 4;
-        const ik = D.levha(THREE, M.kit, ['RADYASYON', '14 m yaklaşma sınırı'],
+        /* Levhadaki sayı da katalogdan gelir: bir uyarı levhasının, uyardığı
+           şeyin kendi beyanından farklı bir rakam yazması mümkün olmamalı. */
+        const ik = D.levha(THREE, M.kit, ['RADYASYON', `${p.yasakYaricapM ?? 14} m yaklaşma sınırı`],
           { w: r * 0.8, h: r * 0.42, seritRenk: '#d6a24a', zemin: '#e0cf9a' });
         ik.position.set(Math.cos(a) * r * 0.64, Math.sin(a) * r * 0.64, sz * 0.05);
         /* The comment above is the specification: readable from whichever side
