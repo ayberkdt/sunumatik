@@ -75,6 +75,12 @@ function census(node) {
    translucent close-out blanket are not "basic"; they are what they are. */
 const MUAF = new Set(['itici-yakit', 'kablaj']);
 
+/* Grammar kinds that are legitimately one mesh. Named rather than handled by
+   lowering the threshold, and the kind must ALSO declare itself a volume in
+   `userData.notes.regime` - so the exemption is a property of the thing, not
+   of its name, and cannot be claimed by a kind that is merely unfinished. */
+const SEKILSIZ = new Set(['volume']);
+
 /* Minimum meshes for a part to count as built rather than blocked out.
    Three is deliberate: a body, a feature and an interface. */
 const EN_AZ_MESH = 3;
@@ -84,6 +90,12 @@ const OBJECTS = [
     build: 'presets/satellite_integration/sat-build.mjs', fn: 'buildSatellite', opts: { scale: 1 } },
   { ad: 'habitat', parts: 'presets/habitat_blocks/hab-parts.mjs',
     build: 'presets/habitat_blocks/hab-build.mjs', fn: 'buildHabitat', opts: { env: 'mars' } },
+  /* The launch vehicle has NO builder of its own. It goes through
+     core/object-build.mjs, which is the whole point of it being here: the
+     same density gate that measures two hand-written objects measures one
+     that is only a catalogue. */
+  { ad: 'launch vehicle', parts: 'presets/launch_vehicle/lv-parts.mjs',
+    build: 'presets/core/object-build.mjs', fn: 'buildObject', genel: true, opts: { scale: 1 } },
 ];
 
 const ozet = [];
@@ -91,7 +103,9 @@ for (const o of OBJECTS) {
   section(`${o.ad}`);
   const P = await load(o.parts);
   const B = await load(o.build);
-  const built = B[o.fn](THREE, o.opts);
+  /* The generic builder takes the catalogue MODULE; a per-object builder
+     already knows its own catalogue. */
+  const built = o.genel ? B[o.fn](THREE, P, o.opts) : B[o.fn](THREE, o.opts);
 
   /* Both builders expose their bodies differently; normalise to id -> node. */
   const nodes = new Map();
@@ -110,10 +124,12 @@ for (const o of OBJECTS) {
   sayim.sort((a, b) => a.meshes - b.meshes);
 
   /* 1. Nothing ships as a bare primitive. */
-  const ciplak = sayim.filter(x => x.meshes < EN_AZ_MESH && !MUAF.has(x.id));
+  const sekli = new Map(P.PARTS.map(q => [q.id, q.sekil]));
+  const bagisik = (id) => MUAF.has(id) || SEKILSIZ.has(sekli.get(id));
+  const ciplak = sayim.filter(x => x.meshes < EN_AZ_MESH && !bagisik(x.id));
   ok(ciplak.length === 0, `no part is a bare primitive (>= ${EN_AZ_MESH} meshes)`,
     ciplak.length ? ciplak.map(x => `${x.id}(${x.meshes})`).join(', ')
-      : `thinnest: ${sayim.filter(x => !MUAF.has(x.id)).slice(0, 3).map(x => `${x.id} ${x.meshes}`).join(', ')}`);
+      : `thinnest: ${sayim.filter(x => !bagisik(x.id)).slice(0, 3).map(x => `${x.id} ${x.meshes}`).join(', ')}`);
 
   /* 2. The catalogue and the geometry agree on what exists. */
   const katalog = new Set(P.PARTS.map(q => q.id));
@@ -130,7 +146,7 @@ for (const o of OBJECTS) {
     `${enAgir.id} is ${(100 * enAgir.tris / toplamTri).toFixed(0)}%`);
 
   /* 4. Determinism: building twice gives the same geometry. */
-  const ikinci = B[o.fn](THREE, o.opts);
+  const ikinci = o.genel ? B[o.fn](THREE, P, o.opts) : B[o.fn](THREE, o.opts);
   const n2 = new Map();
   if (ikinci.parts) for (const q of ikinci.parts) { const id = String(q.id).split('#')[0]; if (!n2.has(id)) n2.set(id, q.group); }
   else if (ikinci.nodes) for (const [id, n] of ikinci.nodes) n2.set(id, n);
@@ -145,7 +161,7 @@ for (const o of OBJECTS) {
 
   ozet.push({ ad: o.ad, parca: sayim.length, tris: toplamTri,
     ortMesh: (sayim.reduce((s, x) => s + x.meshes, 0) / sayim.length).toFixed(1),
-    enInce: sayim.filter(x => !MUAF.has(x.id))[0] });
+    enInce: sayim.filter(x => !bagisik(x.id))[0] });
 }
 
 /* ── the shape grammar ───────────────────────────────────────────────
@@ -175,7 +191,9 @@ section('shape grammar');
         row[lod] = c.meshes;
         row[lod + 'T'] = c.tris;
         if (lod === 'shop') {
-          if (row[lod] < EN_AZ_MESH) hepsiKuruldu = false;
+          const muaf = SEKILSIZ.has(kind) && group.userData?.notes?.regime === 'volume';
+          if (row[lod] < EN_AZ_MESH && !muaf) hepsiKuruldu = false;
+          row.muaf = muaf;
           if (group.userData?.notes?.why) gerekce++;
         }
       } catch (e) {
@@ -192,7 +210,8 @@ section('shape grammar');
     tablo.push(row);
   }
   ok(hepsiKuruldu, `every kind builds at 'shop' with >= ${EN_AZ_MESH} meshes`,
-    tablo.filter(r => typeof r.shop !== 'number' || r.shop < EN_AZ_MESH).map(r => r.kind).join(', ') || 'all');
+    tablo.filter(r => !r.muaf && (typeof r.shop !== 'number' || r.shop < EN_AZ_MESH)).map(r => r.kind).join(', ')
+      || `all (${[...SEKILSIZ].join(', ')} exempt as declared volumes)`);
   ok(artan, 'LOD is monotone in triangles (block <= shop <= flight)',
     tablo.map(r => `${r.kind} ${r.blockT}/${r.shopT}/${r.flightT}`).join('  '));
 
@@ -226,11 +245,15 @@ section('shape grammar');
      It only applies to rows that ACTUALLY route to the grammar: an object
      may keep a richer local case under the same name, and asking those rows
      for `detay` was the wrong criterion (it flagged seven healthy panels). */
-  const BEKLENEN_GOLGE = { satellite: ['panel', 'tank'], habitat: [] };
+  const BEKLENEN_GOLGE = { satellite: ['panel', 'tank'], habitat: [], 'launch vehicle': [] };
   for (const o of OBJECTS) {
     const P = await load(o.parts);
     const B = await load(o.build);
     const yerel = B.LOCAL_KINDS instanceof Set ? B.LOCAL_KINDS : new Set();
+    if (o.genel) {
+      ok(yerel.size === 0, `${o.ad}: pure catalogue - the builder has no local shapes`,
+        `${new Set(P.PARTS.map(q => q.sekil)).size} distinct kinds, all from the grammar`);
+    }
 
     /* Names an object handles itself AND the grammar also knows. Declared,
        bounded, and checked - so a new collision is a failure, not a

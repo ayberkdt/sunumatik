@@ -99,21 +99,31 @@ const KINDS = {
     const g = new THREE.Group();
     const r = sx / 2;
     const mat = d.mat || kit.alu;
-    const barrel = new THREE.Mesh(cylGeoZ(r, r, sz * 0.7, segments(lod, 32)), mat);
+    /* Dome depth as a fraction of the radius. 1.0 is a hemisphere, which is
+       what a pressurant sphere wants; a launch vehicle's tank uses an
+       ellipsoidal dome at about 0.7, and the difference is not cosmetic -
+       hemispherical domes made a 411 t kerolox stage 4.5 m longer than the
+       propellant actually needs. `size[2]` is the OVERALL length either
+       way, so a row states the tank's envelope and the geometry fits
+       inside it. */
+    const dr = d.domeRatio ?? 1;
+    const govde = Math.max(sz * 0.05, sz - 2 * r * dr);
+    const barrel = new THREE.Mesh(cylGeoZ(r, r, govde, segments(lod, 32)), mat);
     barrel.castShadow = true;
     g.add(barrel);
     for (const e of [1, -1]) {
       const dome = new THREE.Mesh(
         new THREE.SphereGeometry(r, segments(lod, 28), segments(lod, 14), 0, TAU, 0, Math.PI / 2), mat);
-      dome.position.z = e * sz * 0.35;
+      dome.position.z = e * govde / 2;
+      dome.scale.z = dr;
       dome.rotation.x = e > 0 ? 0 : Math.PI;
       dome.castShadow = true;
       g.add(dome);
       if (at(lod, 'shop')) {
-        /* Girth weld: on a titanium tank this is the most inspected line
-           on the vehicle, and it is visible. */
+        /* Girth weld: on a flight tank this is the most inspected line on
+           the vehicle, and it is visible. */
         const weld = new THREE.Mesh(new THREE.TorusGeometry(r * 1.004, r * 0.018, 6, segments(lod, 32)), kit.mliSilver);
-        weld.position.z = e * sz * 0.35;
+        weld.position.z = e * govde / 2;
         g.add(weld);
       }
     }
@@ -184,6 +194,23 @@ const KINDS = {
     });
     if (thin) pan.rotation.x = Math.PI / 2;
     g.add(pan);
+    if (d.lattice && at(lod, 'shop')) {
+      /* Grid-fin cells. A lattice keeps working at hypersonic speed where a
+         flat fin of the same area stalls, so drawing it as a slab throws
+         away the only interesting thing about the part. */
+      const n = d.lattice;
+      for (let i = 0; i <= n; i++) {
+        for (const [uzun, kisa, ex, ey] of [[w, t * 0.9, 0, 1], [h, t * 0.9, 1, 0]]) {
+          const c = (i / n - 0.5) * (ey ? h : w);
+          const bar = new THREE.Mesh(
+            new THREE.BoxGeometry(ex ? kisa : uzun, ex ? uzun : kisa, t * 1.4),
+            kit.aluDark);
+          bar.position.set(ex ? c : 0, ex ? 0 : c, 0);
+          if (thin) { bar.position.set(bar.position.x, 0, bar.position.y); bar.rotation.x = Math.PI / 2; }
+          g.add(bar);
+        }
+      }
+    }
     if (d.headers && at(lod, 'shop')) {
       for (const e of [-1, 1]) {
         const hdr = new THREE.Mesh(cylGeoX(0.016, 0.016, w * 0.96, 10), kit.aluDark);
@@ -387,6 +414,38 @@ const KINDS = {
     return g;
   },
 
+  /**
+   * A declared VOLUME rather than a piece of hardware: propellant inside a
+   * tank, a pressurised bay, a harness envelope. It is translucent and
+   * writes no depth, so it never hides the hardware around it.
+   */
+  volume(THREE, kit, [sx, sy, sz], d, lod) {
+    const g = new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({
+      color: d.renk ?? 0x6f8fb4, roughness: 0.6, metalness: 0.1,
+      transparent: true, opacity: d.opacity ?? 0.24, depthWrite: false });
+    const m = d.silindir
+      ? new THREE.Mesh(cylGeoZ(sx / 2, sx / 2, sz, segments(lod, 24)), mat)
+      : new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat);
+    g.add(m);
+    g.userData.notes = { regime: 'volume',
+      why: 'What occupies the space, drawn so the layout can be read without pretending it is hardware.' };
+    return g;
+  },
+
+  /** Liquid rocket engine. Geometry lives in the kit. */
+  engine(THREE, kit, [sx, , sz], d, lod) {
+    const g = new THREE.Group();
+    g.add(K.rocketEngine(THREE, kit, sx / 2, sz, {
+      hoops: at(lod, 'shop') ? (d.hoops ?? 5) : 0,
+      turbopump: d.turbopump !== false && at(lod, 'shop'),
+      gimbal: d.gimbal !== false && at(lod, 'shop'),
+      feedLines: at(lod, 'flight') ? (d.feedLines ?? 2) : 0,
+      rThroat: d.rThroat ?? null,
+    }));
+    return g;
+  },
+
   /** Hall-effect thruster pod. Geometry lives in the kit. */
   hall(THREE, kit, [sx, , sz], d, lod) {
     const g = new THREE.Group();
@@ -418,14 +477,16 @@ const KINDS = {
 /** Defaults per kind, so a row can declare only what differs. */
 const VARSAYILAN = {
   tube: { endRings: true, bolts: 24, ringFrames: 3, longerons: 8, passThroughs: 2 },
-  tank: { lugs: 4, valve: true, blanket: false },
+  tank: { lugs: 4, valve: true, blanket: false, domeRatio: 1 },
   sphere: { bands: 5, boss: true, saddle: true },
-  panel: { inserts: true, headers: false },
+  panel: { inserts: true, headers: false, lattice: 0 },
   box: { connectors: 4, fins: false },
   rod: { turns: 14, clamps: 2, coreRatio: 0.55 },
   truss: { bays: 3, posts: 4 },
   cone: { hoops: 3, open: true, splitLine: false },
   busFrame: { webs: 4, struts: 4 },
+  volume: { silindir: false, opacity: 0.24 },
+  engine: { hoops: 5, turbopump: true, gimbal: true, feedLines: 2 },
   hall: { coils: 4, bolts: 12, cathode: true, feed: true },
   magnetometer: { shade: true, pigtail: true, cube: true },
 };

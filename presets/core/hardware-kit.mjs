@@ -20,7 +20,7 @@
  * three is passed in; this module never imports it.
  */
 
-import { cylGeoX, cylGeoY, cylGeoZ, coneGeoZ, latheX } from './geometry-axis.mjs';
+import { cylGeoX, cylGeoY, cylGeoZ, coneGeoZ, latheX, latheZ } from './geometry-axis.mjs';
 
 const TAU = Math.PI * 2;
 
@@ -285,8 +285,15 @@ export function equipmentBox(THREE, M, w, h, d, { connectors = 4, decal = null, 
  */
 export function blanketWrap(THREE, M, r, len, map, { seams = 6, axis = 'z' } = {}) {
   const g = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ map, roughness: .6, metalness: .5 });
-  map.repeat.set(4, 2);
+  /* The texture is optional: a caller that has no canvas (a Node-side gate)
+     or a row that just says `blanket: true` still gets a blanket. Passing
+     `map: undefined` into a material and then setting map.repeat threw, so
+     `blanket: true` without a texture used to be a crash rather than a
+     plainer blanket. */
+  const mat = map
+    ? new THREE.MeshStandardMaterial({ map, roughness: .6, metalness: .5 })
+    : new THREE.MeshStandardMaterial({ color: M.mli.color, roughness: .62, metalness: .5 });
+  if (map) map.repeat.set(4, 2);
   const geo = axis === 'x' ? cylGeoX(r, r, len, 28, true) : cylGeoZ(r, r, len, 28, true);
   const skin = new THREE.Mesh(geo, mat);
   skin.castShadow = true;
@@ -1000,6 +1007,108 @@ export function magnetometerHead(THREE, kit, s, opts = {}) {
   }
   g.userData.notes = { regime: 'sensing',
     why: 'Three orthogonal ring cores give the field vector; the composite housing and three-point mount exist so the instrument does not corrupt its own measurement.' };
+  return g;
+}
+
+/**
+ * Liquid rocket engine — bell, throat, chamber, and the machinery that
+ * feeds it.
+ *
+ * Drawn as a cone, an engine loses everything that makes it one. The
+ * nozzle is a BELL, not a cone: the contour turns over so the flow leaves
+ * axially instead of spreading, and the difference is a few per cent of
+ * thrust. Above the throat sit the chamber and the injector; beside it the
+ * turbopump, which is the part that actually makes a pump-fed engine hard;
+ * and underneath the gimbal block, because the engine has to steer.
+ *
+ * Exit plane at -z, mount at +z.
+ */
+export function rocketEngine(THREE, kit, rExit, len, opts = {}) {
+  const { hoops = 5, turbopump = true, gimbal = true, feedLines = 2, rThroat = null } = opts;
+  const g = new THREE.Group();
+  const rT = rThroat ?? rExit * 0.28;
+  const yari = len / 2;
+
+  /* Bell contour, sampled as a lathe profile. A parabolic approximation is
+     what a real bell is: fast expansion after the throat, then a turn-over
+     so the exhaust leaves nearly axial. A straight cone would spread it. */
+  const nokta = [];
+  const N = 14;
+  for (let i = 0; i <= N; i++) {
+    const u = i / N;
+    /* r grows as sqrt(u) - steep at the throat, flattening toward the exit. */
+    const r = rT + (rExit - rT) * Math.sqrt(u);
+    nokta.push(new THREE.Vector2(r, -yari + u * len * 0.78));
+  }
+  const bellMat = (kit.koyuMetal || kit.aluDark).clone();
+  bellMat.side = THREE.DoubleSide;
+  /* latheZ, not a bare LatheGeometry: it puts the axis on +Z and, more to
+     the point, it reverses a descending profile so the normals face out.
+     That reversal is why three earlier surfaces rendered black. */
+  const bell = latheZ(nokta, 30, bellMat);
+  bell.castShadow = true;
+  g.add(bell);
+
+  /* Regenerative cooling tubes read as stiffening hoops down the bell. */
+  for (let i = 1; i <= hoops; i++) {
+    const u = i / (hoops + 1);
+    const r = rT + (rExit - rT) * Math.sqrt(u);
+    const hoop = new THREE.Mesh(new THREE.TorusGeometry(r * 1.01, rExit * 0.022, 6, 26), kit.metal);
+    hoop.position.z = -yari + u * len * 0.78;
+    g.add(hoop);
+  }
+  /* Exit lip: the one edge of an engine that is always visible. */
+  const lip = new THREE.Mesh(new THREE.TorusGeometry(rExit, rExit * 0.035, 8, 30), kit.alu);
+  lip.position.z = -yari + len * 0.78;
+  g.add(lip);
+
+  /* Throat and combustion chamber. */
+  const bogaz = new THREE.Mesh(cylGeoZ(rT, rT * 1.18, len * 0.06, 20), kit.metal);
+  bogaz.position.z = -yari - len * 0.03;
+  g.add(bogaz);
+  const oda = new THREE.Mesh(cylGeoZ(rT * 1.45, rT * 1.45, len * 0.14, 22), kit.alu);
+  oda.position.z = -yari - len * 0.13;
+  g.add(oda);
+  const enjektor = new THREE.Mesh(cylGeoZ(rT * 1.6, rT * 1.6, len * 0.05, 22), kit.koyuMetal);
+  enjektor.position.z = -yari - len * 0.22;
+  g.add(enjektor);
+
+  if (turbopump) {
+    /* Two volutes on a common shaft: one for each propellant, which is why
+       an engine of this class has one pump and two inlets. */
+    for (const [e, mat] of [[1, kit.alu], [-1, kit.aluDark]]) {
+      const volut = new THREE.Mesh(new THREE.TorusGeometry(rT * 0.52, rT * 0.3, 8, 18), mat);
+      volut.position.set(e * rT * 1.5, 0, -yari - len * 0.3);
+      volut.rotation.y = Math.PI / 2;
+      g.add(volut);
+    }
+    const mil = new THREE.Mesh(cylGeoX(rT * 0.2, rT * 0.2, rT * 3.4, 12), kit.metal);
+    mil.position.z = -yari - len * 0.3;
+    g.add(mil);
+  }
+  for (let i = 0; i < feedLines; i++) {
+    const a = i * Math.PI + Math.PI / 2;
+    const hat = new THREE.Mesh(cylGeoZ(rT * 0.18, rT * 0.18, len * 0.3, 10), kit.mliSilver);
+    hat.position.set(Math.cos(a) * rT * 1.7, Math.sin(a) * rT * 1.7, -yari - len * 0.2);
+    g.add(hat);
+  }
+  if (gimbal) {
+    /* The gimbal block is the single point the whole stage's thrust passes
+       through, and it is the reason the engine can steer at all. */
+    const blok = new THREE.Mesh(new THREE.BoxGeometry(rT * 1.5, rT * 1.5, len * 0.08), kit.alu);
+    blok.position.z = yari - len * 0.06;
+    g.add(blok);
+    for (const e of [-1, 1]) {
+      const boss = new THREE.Mesh(cylGeoX(rT * 0.3, rT * 0.3, rT * 2.0, 12), kit.koyuMetal);
+      boss.position.set(0, e * rT * 0.75, yari - len * 0.06);
+      g.add(boss);
+    }
+    const boyun = new THREE.Mesh(cylGeoZ(rT * 1.0, rT * 1.3, len * 0.2, 16), kit.aluDark);
+    boyun.position.z = yari - len * 0.2;
+    g.add(boyun);
+  }
+  g.userData.notes = { regime: 'propulsion',
+    why: 'The bell turns over so the exhaust leaves axially; a straight cone would spread it and lose several per cent of the thrust.' };
   return g;
 }
 

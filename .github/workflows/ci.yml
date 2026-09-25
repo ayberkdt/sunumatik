@@ -87,6 +87,9 @@ jobs:
       - name: Donanım yoğunluğu (çıplak ilkel kalmadı, üçgen bütçesi, determinizm)
         run: node scripts/validate-hardware.mjs
 
+      - name: Fırlatıcı kapanıyor (roket denklemi, itki, tank)
+        run: node scripts/validate-launch-vehicle.mjs
+
       - name: Açılış sayfası envanterle eşleşiyor mu
         run: node scripts/build-home.mjs --check
 

@@ -1,7 +1,7 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 72,
+    "presets": 73,
     "presetsWithIndex": 65,
     "animatedPresets": 58,
     "skills": 18,
@@ -366,6 +366,13 @@
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true
+    },
+    {
+      "name": "launch_vehicle",
+      "title": null,
+      "hasIndex": false,
+      "animated": false,
+      "hasMotionManifest": false
     },
     {
       "name": "launch_window",

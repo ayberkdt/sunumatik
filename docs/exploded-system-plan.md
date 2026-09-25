@@ -146,9 +146,47 @@ launch vehicle should be step 1 to 4 and nothing else.
   on a boom, and a real bus primary structure — four shear webs, four
   corner posts, four base struts — added as CATALOGUE ROWS ONLY. No builder
   code was written for any of them, which was the point.
-- **F3** — habitat migrated onto the grammar (its `LOCAL_KINDS` list is
-  what has to shrink); launch vehicle as the proof that steps 1 to 4 are
-  the whole procedure.
+- **F3** — launch vehicle DONE; habitat still to migrate (its `LOCAL_KINDS`
+  list is what has to shrink).
+
+## 6. The proof: a launch vehicle, and no builder
+
+`presets/launch_vehicle/lv-parts.mjs` is the whole object. There is no
+`lv-build.mjs`, and `scripts/validate-launch-vehicle.mjs` asserts that
+there is not — importing one is a failure, so the claim cannot quietly
+stop being true.
+
+What made it possible was one more file: `core/object-build.mjs`, a builder
+with no cases that reads any catalogue and hands every shape to the
+grammar. The per-object builders (`sat-build`, `hab-build`) stay for the
+specialised cases they already carry; a NEW object does not need one.
+
+The grammar gained four things on the way, each once, for everyone:
+
+| addition | why the rocket needed it |
+|---|---|
+| `domeRatio` on `tank` | hemispherical domes made a 411 t kerolox stage 4.5 m longer than its propellant needs |
+| `volume` kind | propellant and pressurised bays are volumes, not hardware |
+| `engine` kind | a bell turns the flow over; a cone spreads it, and loses several per cent of thrust |
+| `lattice` on `panel` | a grid fin drawn as a slab throws away the only interesting thing about it |
+| `dizilim` in the builder | nine engines on a thrust structure are a ring, not the bus default of "four means corners" |
+
+The vehicle's own numbers are gated the way the satellite's are: ideal
+delta-v by the rocket equation, liftoff thrust-to-weight, mass flow from
+thrust and specific impulse, burn time from mass flow, tank volume from the
+geometry that is actually drawn, mixture ratio, and a contiguity check on
+the axial stack that catches a length edited without its position.
+
+### What the density gate says about it
+
+    satellite       38 parts   69,100 tris   avg 25.2 meshes/part
+    habitat         26 parts  104,514 tris   avg 43.0 meshes/part
+    launch vehicle  27 parts   48,048 tris   avg 11.6 meshes/part
+
+The rocket is the thinnest of the three, and that is the gate doing its
+job: a launch vehicle is genuinely made of simpler shapes, but 11.6 is a
+number to bring up, not a result to be satisfied with. Raising it is step 3
+of the procedure - more `detay` on the rows - and needs no code.
 
 ### Dispatch order, and the one ambiguity in it
 

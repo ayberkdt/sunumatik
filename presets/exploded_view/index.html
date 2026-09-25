@@ -131,6 +131,8 @@
     import { buildSatellite } from '../satellite_integration/sat-build.mjs';
     import * as SAT from '../satellite_integration/sat-parts.mjs';
     import { buildHabitat } from '../habitat_blocks/hab-build.mjs';
+    import { buildObject } from '../core/object-build.mjs';
+    import * as LV from '../launch_vehicle/lv-parts.mjs';
     import * as HAB from '../habitat_blocks/hab-parts.mjs';
     import { buildCraft } from '../craft_blocks/craft-blocks.mjs';
 
@@ -167,7 +169,20 @@
       },
       rover: { name: 'Rover', source: 'derived from scene', scale: 2.2, craft: 'rover' },
       lander: { name: 'Lander', source: 'derived from scene', scale: 2.2, craft: 'lander' },
-      rocket: { name: 'Launch vehicle', source: 'derived from scene', scale: 2.2, craft: 'rocket' },
+      /* The launch vehicle is a declared catalogue with NO builder of its
+         own: `buildObject` reads its rows and the shape grammar draws them.
+         It used to be a scene-derived body like the rover below, and the
+         difference between the two entries is the whole argument for the
+         grammar. */
+      rocket: {
+        name: 'Launch vehicle', source: 'declared catalogue, no builder', scale: 0.14,
+        build() {
+          const built = buildObject(THREE, LV, { scale: 1 });
+          return { root: built.root, assembly: assemblyFromCatalog(LV, { axis: [0, 0, 1], wetIds: [...LV.ITICI_IDS] }),
+            nodes: nodesFromBuild(THREE, built), groups: groupsFromCatalog(LV),
+            declared: true, dispose: () => built.dispose?.() };
+        },
+      },
       orbiter: { name: 'Orbiter', source: 'derived from scene', scale: 2.2, craft: 'orbiter' },
     };
     for (const [, c] of Object.entries(OBJECTS)) {
@@ -264,30 +279,85 @@
            the same geometry. Nothing is lost except the transit. */
         motion: reduced ? { spread: 0, aMaxDeg: 0, glint: 0, pulse: 0 } : {},
         /* The caption sits at the bottom of the same box; labels stay clear of it. */
-        inset: { top: 62, bottom: 84 },
+        inset: INSET,
       });
       step = null;
       xv.setMode(el('#mode').value);
       const k = Number(el('#explode').value) / 100;
       if (reduced) xv.jumpExplode(k); else xv.setExplode(k);
+      framedAt = k;
+      framedAt = k; izleme = IZLEME_S;
       frameCamera();
       objectList(); stepList(); rightPanel(); writeCaption(null);
     }
 
-    /* The camera is framed from the FULLY EXPLODED envelope, not the
-       assembled one: framing on the assembled body pushed parts off
-       screen as soon as the slider reached the end. */
+    /* The envelope at a given explode level, from the DECLARED boxes rather
+       than from world matrices, so it does not depend on where the parts
+       happen to be mid-animation.
+       Earlier this took max(size)/2 plus the longest travel, which treats
+       an explosion that runs along one axis as if it ran in every
+       direction. On a 74 m launch vehicle that reserved so much empty
+       space the vehicle filled a third of the frame. */
+    /* The toolbar sits over the top of the stage and the caption over the
+       bottom. One declaration, read by the label placer AND the camera. */
+    const INSET = { top: 62, bottom: 84 };
+
+    /* The explode level the camera was last framed for, and how much longer
+       to keep re-framing. The parts ease into place over about a second, so
+       a single re-frame at the moment the slider moves measures a body that
+       has not finished moving; this tracks it until it settles. */
+    let framedAt = 0, izleme = 0;
+    const IZLEME_S = 1.4;
+
+    function envelope() {
+      /* The box of what is ON SCREEN, from the live world matrices.
+         Framing on `assembly.explode(k)` instead looked right but was not:
+         those are the TARGET offsets for level k, and the motion layer
+         staggers each part's start, so at k = 0.6 most parts have not gone
+         that far yet. The camera reserved room for a spread that did not
+         exist and the vehicle rendered at 56% of the size it could have. */
+      return new THREE.Box3().setFromObject(root);
+    }
+
+    /* Framed for the CURRENT explode level and eased, so opening the view
+       dollies the camera out instead of starting zoomed out and waiting for
+       the parts to catch up. */
     function frameCamera() {
-      const box = new THREE.Box3().setFromObject(root);
-      const size = box.getSize(new THREE.Vector3());
+      const box = envelope();
       const centre = box.getCenter(new THREE.Vector3());
-      let far = 0;
-      for (const o of active.assembly.explode(1, { mode: el('#mode').value }).values()) {
-        far = Math.max(far, Math.hypot(o[0], o[1], o[2]));
+
+      /* The box is PROJECTED onto the camera's own axes rather than reduced
+         to a bounding sphere. A sphere is isotropic, so it has to be fitted
+         against whichever half-angle is narrower - and in a tall, narrow
+         stage that is the horizontal one, which pushed a 74 m vehicle so
+         far away it shrank as it opened. Measuring width and height
+         separately is what a slender body needs. */
+      const bakis = new THREE.Vector3(0.62, -0.78, 0.42).normalize();
+      const sag = new THREE.Vector3().crossVectors(bakis, camera.up).normalize();
+      const yukari = new THREE.Vector3().crossVectors(sag, bakis).normalize();
+      let yariEn = 0, yariBoy = 0, derin = 0;
+      const mn = box.min, mx = box.max;
+      for (const x of [mn.x, mx.x]) for (const y of [mn.y, mx.y]) for (const z of [mn.z, mx.z]) {
+        const v = new THREE.Vector3(x, y, z).sub(centre);
+        yariEn = Math.max(yariEn, Math.abs(v.dot(sag)));
+        yariBoy = Math.max(yariBoy, Math.abs(v.dot(yukari)));
+        derin = Math.max(derin, Math.abs(v.dot(bakis)));
       }
-      const r = (Math.max(size.x, size.y, size.z) * 0.5 + far * root.scale.x) || 1;
-      const dist = r / Math.tan(camera.fov * Math.PI / 360) * 1.02;
-      const want = centre.clone().add(new THREE.Vector3(0.62, -0.78, 0.42).normalize().multiplyScalar(dist));
+      const vFov = camera.fov * Math.PI / 180;
+      const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
+      /* The toolbar and the caption cover the top and bottom of the stage,
+         so the usable band is shorter than the canvas. Taken from the same
+         inset numbers the labels use rather than guessed at with a margin
+         factor - a guess left the fairing nose behind the toolbar. */
+      const H = renderer.domElement.clientHeight || 1;
+      const kullanilir = Math.max(0.4, (H - INSET.top - INSET.bottom) / H);
+      /* Plus the near half-depth: the closest corner has to clear the
+         frustum too, or a deep body clips at its nearest edge. */
+      const dist = Math.max((yariBoy / kullanilir) / Math.tan(vFov / 2),
+        yariEn / Math.tan(hFov / 2)) * 1.04 + derin;
+      const want = centre.clone().add(bakis.clone().multiplyScalar(dist));
+      /* Characteristic size, for the shadow frustum and the key light. */
+      const r = Math.max(yariEn, yariBoy, derin) || 1;
       if (firstFrame) {
         controls.target.copy(centre);
         camera.position.copy(want);
@@ -504,6 +574,8 @@
       el('#explodeVal').textContent = `${e.target.value}%`;
       playing = false; el('#play').classList.remove('on');
       if (reduced) xv.jumpExplode(k); else xv.setExplode(k);
+      /* The eye follows the opening; the ease does the smoothing. */
+      framedAt = k; izleme = IZLEME_S; frameCamera();
     });
     el('#mode').addEventListener('change', (e) => xv.setMode(e.target.value));
     el('#section').addEventListener('click', () => {
@@ -608,9 +680,11 @@
           xv.setExplode(k);
           el('#explode').value = String(Math.round(k * 100));
           el('#explodeVal').textContent = `${Math.round(k * 100)}%`;
+          if (Math.abs(k - framedAt) > 0.04) { framedAt = k; izleme = IZLEME_S; frameCamera(); }
           if (k >= 1) stop();
         }
       }
+      if (izleme > 0) { izleme -= dt; frameCamera(); }
       easeCamera(dt);
       /* Idle turntable: only when nothing else is already moving the eye. */
       if (!reduced && !playing) {
