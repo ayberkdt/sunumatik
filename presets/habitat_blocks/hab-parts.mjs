@@ -77,7 +77,7 @@ const ENV_RULE = {
 export const PARTS = Object.freeze([
   /* ADIM 1 — zemin hazırlığı ve temel */
   { id: 'platform', ad: 'Compacted pad', sistem: 'yapi', step: 1, mountsTo: null, arayuz: 'ayirma',
-    massKg: 0, pos: [0, 0, -0.08], size: [26, 20, 0.16], sekil: 'platform',
+    massKg: 0, pos: [0, 0, -0.08], size: [40, 32, 0.16], sekil: 'platform',
     tech: {
       no: 'HB-CIV-001',
       malzeme: 'Compacted regolith with polyurethane binder infiltration',
@@ -151,7 +151,7 @@ export const PARTS = Object.freeze([
 
   /* ADIM 3 — geçişler */
   { id: 'hava-kilidi', ad: 'Airlock', sistem: 'gecis', step: 3, mountsTo: 'hab-silindir', arayuz: 'basincli',
-    massKg: 890, pos: [-3.1, -3.6, 1.5], size: [2.4, 2.4, 2.6], sekil: 'silindir-dikey',
+    massKg: 890, pos: [-3.1, -4.4, 1.5], size: [2.4, 2.4, 2.6], sekil: 'silindir-dikey',
     tech: {
       no: 'HB-EVA-030',
       malzeme: '2219-T87 shell, double door',
@@ -168,7 +168,7 @@ export const PARTS = Object.freeze([
     ports: [{ ad: 'ic', pos: [0, 1.2, -0.4], dir: [0, 1, 0], tur: 'basincli' },
             { ad: 'dis', pos: [0, -1.2, -0.4], dir: [0, -1, 0], tur: 'basincli' }] },
   { id: 'toz-firca', ad: 'Dust removal station', sistem: 'gecis', step: 3, mountsTo: 'hava-kilidi', arayuz: 'civata',
-    massKg: 65, pos: [-3.1, -5.1, 0.9], size: [1.6, 1.0, 1.8], sekil: 'kutu',
+    massKg: 65, pos: [-3.1, -6.3, 0.9], size: [1.6, 1.0, 1.8], sekil: 'kutu',
     tech: {
       kesilebilir: true,
       no: 'HB-EVA-031',
@@ -219,7 +219,7 @@ export const PARTS = Object.freeze([
 
   /* ADIM 4 — şişme hacim ve sera */
   { id: 'sisme-modul', ad: 'Inflatable habitat (toroid)', sistem: 'basincli', step: 4, mountsTo: 'dugum', arayuz: 'basincli',
-    massKg: 2900, pos: [4.6, 5.4, 2.4], size: [7.2, 7.2, 3.6], sekil: 'toroid',
+    massKg: 2900, pos: [5.6, 7.4, 2.4], size: [7.2, 7.2, 3.6], sekil: 'toroid',
     tech: {
       no: 'HB-PRS-040',
       malzeme: 'Vectran restraint webbing, urethane bladder, Nextel debris layer',
@@ -234,7 +234,7 @@ export const PARTS = Object.freeze([
     },
     why: 'Folded for launch, inflated on site: three times the volume per kilogram of a rigid module. The webbing straps and the bulge are the stress path made visible.' },
   { id: 'sera', ad: 'Greenhouse module', sistem: 'basincli', step: 4, mountsTo: 'dugum', arayuz: 'basincli',
-    massKg: 1650, pos: [9.2, 0, 1.9], size: [5.6, 3.2, 3.2], sekil: 'silindir-yatay',
+    massKg: 1650, pos: [10.6, 0.0, 1.9], size: [5.6, 3.2, 3.2], sekil: 'silindir-yatay',
     tech: {
       kesilebilir: true,
       no: 'HB-BIO-041',
@@ -252,7 +252,7 @@ export const PARTS = Object.freeze([
 
   /* ADIM 5 — güç */
   { id: 'panel-tarlasi', ad: 'Solar array field', sistem: 'guc', step: 5, qty: 4, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 310, pos: [-9.5, 6.0, 0.9], size: [5.0, 3.0, 1.6], sekil: 'panel-tarla',
+    massKg: 310, pos: [-11.8, 7.6, 0.9], size: [5.0, 3.0, 1.6], sekil: 'panel-tarla',
     tech: {
       no: 'HB-PWR-050',
       malzeme: 'IMM triple-junction cells, aluminium truss substrate',
@@ -264,7 +264,7 @@ export const PARTS = Object.freeze([
     },
     why: 'Dust settles on Mars, so the panels are TILTED: dust slides off and cleaning is easier. The same field at a lunar pole would stand vertical, because there the Sun runs around the horizon.' },
   { id: 'batarya-kabini', ad: 'Battery cabin', sistem: 'guc', step: 5, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 780, pos: [-8.0, 2.2, 0.8], size: [2.6, 1.8, 1.6], sekil: 'kutu',
+    massKg: 780, pos: [-10.4, 3.4, 0.8], size: [2.6, 1.8, 1.6], sekil: 'kutu',
     tech: {
       no: 'HB-PWR-051',
       malzeme: 'Li-ion NMC cells in an insulated cabin',
@@ -277,7 +277,7 @@ export const PARTS = Object.freeze([
     },
     why: 'For night and dust storms. Insulated: a cold battery loses capacity, a hot one loses life.' },
   { id: 'reaktor', ad: 'Fission power unit', sistem: 'guc', step: 5, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 1520, pos: [11.5, -7.5, 1.4], size: [2.2, 2.2, 2.8], sekil: 'reaktor',
+    massKg: 1520, pos: [13.6, -9.6, 1.4], size: [2.2, 2.2, 2.8], sekil: 'reaktor',
     tech: {
       no: 'HB-PWR-060',
       malzeme: 'UO2 fuel, Na heat pipes, Stirling convertors',
@@ -290,7 +290,7 @@ export const PARTS = Object.freeze([
     },
     why: 'Solar is not enough in a dust storm. It sits well away from the base with a shadow shield between: dose falls with the square of distance, and the shield takes the rest.' },
   { id: 'reaktor-radyator', ad: 'Reactor umbrella radiator', sistem: 'isil', step: 5, mountsTo: 'reaktor', arayuz: 'civata',
-    massKg: 340, pos: [11.5, -7.5, 3.4], size: [5.2, 5.2, 0.4], sekil: 'semsiye',
+    massKg: 340, pos: [13.6, -9.6, 3.4], size: [5.2, 5.2, 0.4], sekil: 'semsiye',
     tech: {
       no: 'HB-THR-061',
       malzeme: 'Carbon-carbon panels, Na-K loop',
@@ -304,7 +304,7 @@ export const PARTS = Object.freeze([
 
   /* ADIM 6 — ısıl ve ISRU */
   { id: 'radyator-dizisi', ad: 'Base radiator array', sistem: 'isil', step: 6, qty: 2, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 290, pos: [-1.0, 7.6, 1.6], size: [6.0, 0.3, 2.6], sekil: 'radyator',
+    massKg: 290, pos: [-3.6, 9.2, 1.6], size: [6.0, 0.3, 2.6], sekil: 'radyator',
     tech: {
       no: 'HB-THR-070',
       malzeme: 'Aluminium fins, OSR coating, ammonia loop',
@@ -318,7 +318,7 @@ export const PARTS = Object.freeze([
     },
     why: 'Where the habitat heat is radiated away. It stands with its BACK to the Sun; a sunlit face would zero out the net rejection.' },
   { id: 'moxie', ad: 'MOXIE (CO2 to O2)', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 420, pos: [6.5, -6.2, 1.0], size: [2.2, 1.8, 1.8], sekil: 'kutu',
+    massKg: 420, pos: [6.8, -7.4, 1.0], size: [2.2, 1.8, 1.8], sekil: 'kutu',
     tech: {
       kesilebilir: true,
       no: 'HB-ISR-080',
@@ -333,7 +333,7 @@ export const PARTS = Object.freeze([
     },
     why: '95% of the Martian atmosphere is CO2. Solid oxide electrolysis makes oxygen on site, so breathing and burning oxygen never has to be shipped.' },
   { id: 'sabatier', ad: 'Sabatier reactor', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 380, pos: [8.6, -6.2, 1.0], size: [2.0, 1.6, 1.8], sekil: 'kutu',
+    massKg: 380, pos: [9.4, -7.4, 1.0], size: [2.0, 1.6, 1.8], sekil: 'kutu',
     tech: {
       kesilebilir: true,
       no: 'HB-ISR-081',
@@ -348,7 +348,7 @@ export const PARTS = Object.freeze([
     },
     why: 'CO2 + 4H2 gives CH4 + 2H2O. Return propellant and water come out of the same reaction, and electrolysing the water returns the hydrogen.' },
   { id: 'tank-o2', ad: 'O2 tank', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 260, pos: [5.2, -9.4, 1.6], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
+    massKg: 260, pos: [4.6, -11.4, 1.6], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
     tech: {
       no: 'HB-ISR-090',
       malzeme: 'Ti liner with carbon overwrap, 30-layer MLI',
@@ -361,7 +361,7 @@ export const PARTS = Object.freeze([
     },
     why: 'Cryogenic and wrapped in MLI. It stands well clear of the fuel tank: putting oxidiser next to fuel turns one failure into a fire.' },
   { id: 'tank-ch4', ad: 'CH4 tank', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 240, pos: [9.8, -9.4, 1.6], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
+    massKg: 240, pos: [9.8, -11.4, 1.6], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
     tech: {
       no: 'HB-ISR-091',
       malzeme: 'Ti liner with carbon overwrap, 30-layer MLI',
@@ -376,7 +376,7 @@ export const PARTS = Object.freeze([
 
   /* ADIM 7 — hatlar, iletişim, saha */
   { id: 'hat-o2', ad: 'O2 line', sistem: 'hat', step: 7, mountsTo: 'tank-o2', arayuz: 'akiskan',
-    massKg: 75, pos: [0.8, -4.8, 0.9], size: [9.0, 0.24, 0.24], sekil: 'hat', akiskan: 'O2',
+    massKg: 75, pos: [2.4, -6.4, 0.9], size: [11.0, 0.24, 0.24], sekil: 'hat', akiskan: 'O2',
     boru: { odM: 0.08, wallM: 0.002, malzeme: 'paslanmaz', ucNoktalar: ['tank-o2', 'hab-silindir'] },
     tech: {
       no: 'HB-FLU-100',
@@ -389,7 +389,7 @@ export const PARTS = Object.freeze([
     },
     why: 'From the tank to the habitat. Raised off the ground (dust), cradled every 4 m, and looped every 30 m for expansion: the day-night swing exceeds 100 K and a straight run would pull itself apart.' },
   { id: 'hat-guc', ad: 'Power line', sistem: 'hat', step: 7, mountsTo: 'reaktor', arayuz: 'elektrik',
-    massKg: 154, pos: [4.0, -4.0, 0.7], size: [14.0, 0.18, 0.18], sekil: 'hat', akiskan: 'DC',
+    massKg: 180, pos: [5.0, -5.2, 0.7], size: [17.0, 0.18, 0.18], sekil: 'hat', akiskan: 'DC',
     boru: { odM: 0.06, wallM: 0.004, malzeme: 'bakir', ucNoktalar: ['reaktor', 'hab-silindir'] },
     tech: {
       no: 'HB-ELE-101',
@@ -402,7 +402,7 @@ export const PARTS = Object.freeze([
     },
     why: 'From the reactor to the base. It runs in a tray with slack: a cable pulled tight snaps when it contracts in the cold.' },
   { id: 'anten-direk', ad: 'Communications mast', sistem: 'iletisim', step: 7, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 210, pos: [-0.5, -8.4, 3.6], size: [0.5, 0.5, 7.2], sekil: 'direk',
+    massKg: 210, pos: [0.2, -10.2, 3.6], size: [0.5, 0.5, 7.2], sekil: 'direk',
     tech: {
       no: 'HB-COM-110',
       malzeme: 'CFRP tube, Ti base joint',
@@ -415,7 +415,7 @@ export const PARTS = Object.freeze([
     why: 'Height buys horizon directly: 7 m of mast pushes the line of sight out by kilometres on flat ground.',
     ports: [{ ad: 'tepe', pos: [0, 0, 3.6], dir: [0, 0, 1], tur: 'DATA' }] },
   { id: 'anten-canak', ad: 'Earth dish (2.4 m)', sistem: 'iletisim', step: 7, mountsTo: 'anten-direk', arayuz: 'mentese',
-    massKg: 95, pos: [-0.5, -8.4, 7.6], size: [2.4, 2.4, 0.7], sekil: 'canak',
+    massKg: 95, pos: [0.2, -10.2, 7.6], size: [2.4, 2.4, 0.7], sekil: 'canak',
     tech: {
       no: 'HB-COM-111',
       malzeme: 'CFRP shell, mesh reflector',
@@ -429,7 +429,7 @@ export const PARTS = Object.freeze([
     },
     why: 'Tracks Earth; a two-axis gimbal holds lock as the planet turns. A narrow beam is what buys the data rate.' },
   { id: 'ruzgar-olcer', ad: 'Anemometer', sistem: 'iletisim', step: 7, mountsTo: 'anten-direk', arayuz: 'civata',
-    massKg: 8, pos: [-0.5, -8.9, 6.2], size: [0.6, 0.6, 0.5], sekil: 'ruzgar',
+    massKg: 8, pos: [0.2, -10.7, 6.2], size: [0.6, 0.6, 0.5], sekil: 'ruzgar',
     tech: {
       no: 'HB-MET-112',
       malzeme: 'Hot-wire anemometer, ceramic body',
@@ -441,7 +441,7 @@ export const PARTS = Object.freeze([
     },
     why: 'For dust storm warning and landing windows. Only real on a planet with an atmosphere; on the Moon there is no wind to measure.' },
   { id: 'garaj', ad: 'Rover canopy', sistem: 'yapi', step: 7, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 520, pos: [-9.8, -4.6, 1.8], size: [6.0, 4.4, 3.4], sekil: 'tente',
+    massKg: 520, pos: [-11.6, -5.8, 1.8], size: [6.0, 4.4, 3.4], sekil: 'tente',
     tech: {
       no: 'HB-STR-120',
       malzeme: 'Aluminium frame, fabric cover, dia 0.12 m legs',

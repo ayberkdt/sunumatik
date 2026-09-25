@@ -147,10 +147,19 @@ function govde(THREE, p, M, dok) {
         const y = ekle(new THREE.Mesh(new THREE.BoxGeometry(w, hh, sz * 0.4), yolMat));
         y.position.set(ox, oy, sz * 0.5); y.castShadow = false;
       }
-      /* Bearing plates. A module does not stand on loose regolith: the
-         load goes through plates that were levelled and compacted first,
-         and step 1 of the build order exists to put them there. */
-      for (const [px, py] of [[-4.4, -2.6], [-4.4, 2.6], [1.2, -3.2], [1.2, 3.2], [5.0, 0]]) {
+      /* Bearing plates. A module does not stand on loose regolith: the load
+         goes through plates that were levelled and compacted first, and
+         step 1 of the build order exists to put them there.
+         Their positions are DERIVED from the heaviest ground-mounted parts
+         rather than written down, because written-down ones go stale the
+         moment the site is re-laid - these were still sitting under the
+         previous layout. */
+      const tasiyicilar = PARTS
+        .filter(q => q.id !== 'platform' && (q.massKg ?? 0) >= 900 && Math.abs(q.pos[2]) < 6)
+        .sort((x, y) => (y.massKg ?? 0) - (x.massKg ?? 0))
+        .slice(0, 6)
+        .map(q => [q.pos[0] - p.pos[0], q.pos[1] - p.pos[1]]);
+      for (const [px, py] of tasiyicilar) {
         const pl = ekle(new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.2, sz * 0.7), M.metal));
         pl.position.set(px, py, sz * 0.55);
         pl.receiveShadow = true; pl.castShadow = false;
