@@ -13,17 +13,35 @@ import { cylGeoY, cylGeoX, cylGeoZ, coneGeoZ, latheZ } from '../core/geometry-ax
 import * as D from './sat-detail.mjs';
 import { buildShape, knowsKind } from '../core/hardware-shapes.mjs';
 
-const renkler = (THREE, tk = {}) => ({
-  yapi: new THREE.MeshStandardMaterial({ color: tk.yapi ?? 0x9aa0aa, roughness: .55, metalness: .65 }),
-  itki: new THREE.MeshStandardMaterial({ color: tk.itki ?? 0xc98a5c, roughness: .5, metalness: .55 }),
-  guc: new THREE.MeshStandardMaterial({ color: tk.guc ?? 0xe0b25a, roughness: .45, metalness: .35 }),
-  adcs: new THREE.MeshStandardMaterial({ color: tk.adcs ?? 0x7fb0c9, roughness: .4, metalness: .5 }),
-  haberlesme: new THREE.MeshStandardMaterial({ color: tk.haberlesme ?? 0xb4a8c9, roughness: .4, metalness: .5 }),
-  isil: new THREE.MeshStandardMaterial({ color: tk.isil ?? 0x8fa2b4, roughness: .7, metalness: .3 }),
-  faydali: new THREE.MeshStandardMaterial({ color: tk.faydali ?? 0x9ec98a, roughness: .35, metalness: .45 }),
-  kablaj: new THREE.MeshStandardMaterial({ color: tk.kablaj ?? 0x6f7688, roughness: .8, metalness: .2,
-    transparent: true, opacity: .34 }),
-});
+/* Subsystem colour is a LABEL, not a paint job.
+ *
+ * Every body was rendering in a fully saturated subsystem hue, so a star
+ * tracker came out baby blue and a payload came out mint green, and the
+ * whole spacecraft read as coloured plastic. Flight hardware is aluminium
+ * with anodising, tape and blanket on it; the hue is still there to group
+ * parts in the exploded view, but it is mixed most of the way back to
+ * metal and the surface properties are a metal's.
+ */
+const METAL = 0xa8aeb8;
+const TINT = 0.42;                    // how much subsystem hue survives
+const renkler = (THREE, tk = {}) => {
+  const mat = (hex, r, m, ek = {}) => {
+    const c = new THREE.Color(hex).lerp(new THREE.Color(METAL), 1 - TINT);
+    return new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m, ...ek });
+  };
+  return {
+    yapi: mat(tk.yapi ?? 0x9aa0aa, .52, .72),
+    itki: mat(tk.itki ?? 0xc98a5c, .48, .68),
+    guc: mat(tk.guc ?? 0xe0b25a, .46, .6),
+    adcs: mat(tk.adcs ?? 0x7fb0c9, .44, .68),
+    haberlesme: mat(tk.haberlesme ?? 0xb4a8c9, .44, .66),
+    isil: mat(tk.isil ?? 0x8fa2b4, .62, .5),
+    faydali: mat(tk.faydali ?? 0x9ec98a, .4, .62),
+    /* The harness volume stays a declared volume, so it keeps its hue. */
+    kablaj: new THREE.MeshStandardMaterial({ color: tk.kablaj ?? 0x6f7688, roughness: .8, metalness: .2,
+      transparent: true, opacity: .34 }),
+  };
+};
 
 /* Güneş paneli yüzü: hücre deseni prosedürel (doku ÇEKİLMEZ). */
 function hucreDokusu(THREE, seed = 7) {
@@ -321,6 +339,11 @@ function govde(THREE, p, mat, dokular) {
       break;
     }
     case 'kutu': {
+      /* Which machine this box IS. Power, battery and RF boxes were
+         rendering identically because nothing said they were different. */
+      const kutuTipi = /batarya/.test(p.id) ? 'batarya'
+        : (p.sistem === 'guc' || /ppu|pcdu/.test(p.id)) ? 'guc'
+          : (p.sistem === 'haberlesme' || /transponder/.test(p.id)) ? 'rf' : 'genel';
       /* Chassis, machined lid, standoff feet, a keyed connector bank and
          the part number painted on the face. Fins only where the unit has
          to reject its own heat locally. */
@@ -328,6 +351,7 @@ function govde(THREE, p, mat, dokular) {
         connectors: konnektorSayisi(p),
         decal: p.tech?.no ? dokular.decal(p.tech.no) : null,
         fins: (p.tech?.guc_W ?? 0) >= 200,
+        tip: kutuTipi,
       });
       kutu.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
       g.add(kutu);
@@ -354,7 +378,22 @@ function govde(THREE, p, mat, dokular) {
     case 'bafil': {
       /* Optics head on an isostatic three-point mount, behind a stepped
          baffle whose internal vanes each kill one stray-light path. */
-      const head = ekle(new THREE.Mesh(new THREE.BoxGeometry(sx * .8, sy * .8, sz * .5), mat));
+      /* The optics head is a machined housing, not a plain block: a lid
+         with its fastener line, a shoulder, and the connector. It was one
+         coloured box and it read as one. */
+      const head = ekle(new THREE.Mesh(new THREE.BoxGeometry(sx * .8, sy * .8, sz * .44), mat));
+      head.position.z = -sz * 0.04;
+      const basKapak = ekle(new THREE.Mesh(
+        new THREE.BoxGeometry(sx * 0.72, sy * 0.72, sz * 0.06), KIT.metal));
+      basKapak.position.z = -sz * 0.28;
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4;
+        const v = ekle(new THREE.Mesh(cylGeoZ(sx * 0.018, sx * 0.018, sz * 0.03, 6), KIT.koyuMetal));
+        v.position.set(Math.cos(a) * sx * 0.3, Math.sin(a) * sy * 0.3, -sz * 0.31);
+      }
+      const omuz = ekle(new THREE.Mesh(
+        new THREE.BoxGeometry(sx * 0.84, sy * 0.84, sz * 0.04), KIT.aluDark));
+      omuz.position.z = sz * 0.17;
       const baf = D.baffle(THREE, KIT, sx * 0.5, sz * 0.62);
       baf.position.z = sz * 0.5;
       g.add(baf);
@@ -372,9 +411,21 @@ function govde(THREE, p, mat, dokular) {
         bipod.position.copy(ucNokta).add(ayakUcu).multiplyScalar(0.5);
         bipod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1),
           ayakUcu.clone().sub(ucNokta).normalize());
+        /* Rod ends, not bare sticks: a kinematic leg carries load through a
+           spherical joint at each end, and the pads bolt down. */
+        for (const uc of [ucNokta, ayakUcu]) {
+          const kure = ekle(new THREE.Mesh(
+            new THREE.SphereGeometry(sx * 0.052, 12, 8), KIT.koyuMetal));
+          kure.position.copy(uc);
+        }
         const pabuc = ekle(new THREE.Mesh(
-          new THREE.BoxGeometry(sx * 0.16, sy * 0.16, sz * 0.05), KIT.aluDark));
+          new THREE.BoxGeometry(sx * 0.2, sy * 0.2, sz * 0.05), KIT.aluDark));
         pabuc.position.copy(ayakUcu);
+        pabuc.position.z -= sz * 0.03;
+        const civata = ekle(new THREE.Mesh(
+          cylGeoZ(sx * 0.022, sx * 0.022, sz * 0.03, 6), KIT.gold));
+        civata.position.copy(ayakUcu);
+        civata.position.z -= sz * 0.055;
       }
       /* The detector needs to be cold and the baffle needs to be warm, so
          there is a strap to one and a heater on the other. Both are on
@@ -382,9 +433,11 @@ function govde(THREE, p, mat, dokular) {
       const serit = ekle(new THREE.Mesh(
         new THREE.BoxGeometry(sx * 0.1, sy * 0.5, sz * 0.02), KIT.bakir));
       serit.position.set(-sx * 0.3, 0, -sz * 0.22);
+      /* Heater band at the baffle ROOT, thin and dark: on the lip it read
+         as a bright toy ring, and a heater does not live at the aperture. */
       const isitici = ekle(new THREE.Mesh(
-        new THREE.TorusGeometry(sx * 0.46, sx * 0.02, 5, 20), KIT.ikaz));
-      isitici.position.z = sz * 0.68;
+        new THREE.TorusGeometry(sx * 0.44, sx * 0.012, 5, 22), KIT.bakir));
+      isitici.position.z = sz * 0.3;
       const kon = ekle(new THREE.Mesh(cylGeoX(sx * 0.07, sx * 0.06, sx * 0.14, 10), KIT.connector));
       kon.position.set(sx * 0.44, 0, -sz * 0.2);
       void head;

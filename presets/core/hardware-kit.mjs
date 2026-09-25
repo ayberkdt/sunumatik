@@ -232,47 +232,192 @@ export function honeycombPanel(THREE, M, w, h, t, { inserts = true, osrMap = nul
  * that draws 340 W and moves 420 Mbps does not leave the bench with two
  * plugs on it.
  */
-export function equipmentBox(THREE, M, w, h, d, { connectors = 4, decal = null, fins = false } = {}) {
+export function equipmentBox(THREE, M, w, h, d, opts = {}) {
+  const {
+    connectors = 4, decal = null, fins = false, tip = 'genel',
+    kapakVida = 14, flans = true, dolgu = true,
+  } = opts;
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M.alu);
-  body.castShadow = body.receiveShadow = true;
-  g.add(body);
-  /* Machined lid with its own fastener line. */
-  const lid = new THREE.Mesh(new THREE.BoxGeometry(w * 0.9, h * 0.05, d * 0.9), M.aluDark);
-  lid.position.y = h / 2;
-  g.add(lid);
-  /* Mounting feet: the box stands off the panel so the interface gap
-     filler has somewhere to be. */
-  for (let i = 0; i < 4; i++) {
-    const f = new THREE.Mesh(new THREE.BoxGeometry(w * 0.14, h * 0.1, d * 0.14), M.aluDark);
-    f.position.set((i % 2 ? 1 : -1) * w * 0.42, -h / 2, (i < 2 ? 1 : -1) * d * 0.42);
-    g.add(f);
-  }
-  /* Connector bank on one face, different diameters so a harness cannot be
-     plugged into the wrong socket. */
-  const n = Math.max(1, connectors);
+  const ek = (m) => { m.castShadow = true; m.receiveShadow = true; g.add(m); return m; };
+
+  /* The housing is three plates, not one block. A milled shell has a
+     shoulder where the lid lands and a flange where it bolts down, and
+     those two steps are most of what tells the eye it was machined
+     rather than extruded. One BoxGeometry cannot say any of it. */
+  const govdeY = h * 0.78;
+  const govde = ek(new THREE.Mesh(new THREE.BoxGeometry(w, govdeY, d), M.alu));
+  govde.position.y = -h * 0.06;
+
+  /* Shoulder: a thin proud band at the lid joint. This is the chamfer
+     substitute - a real bevel would cost a custom geometry per box, and
+     the step reads the same at every distance that matters here. */
+  const omuz = ek(new THREE.Mesh(new THREE.BoxGeometry(w * 1.02, h * 0.05, d * 1.02), M.aluDark));
+  omuz.position.y = govdeY / 2 - h * 0.06;
+
+  /* Lid, inset, with the gap that says it comes off. */
+  const kapak = ek(new THREE.Mesh(new THREE.BoxGeometry(w * 0.94, h * 0.1, d * 0.94), M.metal));
+  kapak.position.y = govdeY / 2 + h * 0.02;
+
+  /* Closure screws right round the lid. On real hardware this line is the
+     single most recognisable feature of an equipment box. */
+  const cevre = 2 * (w * 0.94 + d * 0.94);
+  const n = Math.max(6, kapakVida);
   for (let i = 0; i < n; i++) {
-    const r = 0.012 + (i % 3) * 0.004;
-    const c = new THREE.Mesh(cylGeoZ(r, r * 0.9, 0.022, 10), M.connector);
-    c.position.set((i / Math.max(1, n - 1) - 0.5) * w * 0.7, -h * 0.1, d / 2 + 0.011);
-    g.add(c);
-    const shell = new THREE.Mesh(new THREE.TorusGeometry(r * 1.25, r * 0.22, 6, 12), M.aluDark);
-    shell.position.copy(c.position);
-    g.add(shell);
+    const t = (i / n) * cevre;
+    let x, z;
+    const a = w * 0.94, b = d * 0.94;
+    if (t < a) { x = -a / 2 + t; z = -b / 2; }
+    else if (t < a + b) { x = a / 2; z = -b / 2 + (t - a); }
+    else if (t < 2 * a + b) { x = a / 2 - (t - a - b); z = b / 2; }
+    else { x = -a / 2; z = b / 2 - (t - 2 * a - b); }
+    const v = ek(new THREE.Mesh(cylGeoY(Math.min(w, d) * 0.018, Math.min(w, d) * 0.018, h * 0.03, 6), M.koyuMetal));
+    v.position.set(x * 0.94, govdeY / 2 + h * 0.07, z * 0.94);
   }
-  if (fins) {
-    /* Fins on a box that has to dump its own heat locally. */
-    for (let i = 0; i < 5; i++) {
-      const fin = new THREE.Mesh(new THREE.BoxGeometry(w * 0.96, h * 0.5, 0.004), M.aluDark);
-      fin.position.set(0, h * 0.05, (i / 4 - 0.5) * d * 0.8);
-      g.add(fin);
+
+  if (flans) {
+    /* Mounting flange: wider than the body, because the bolts have to go
+       somewhere that is not the pressure shell of the box. */
+    const fl = ek(new THREE.Mesh(new THREE.BoxGeometry(w * 1.18, h * 0.06, d * 1.06), M.aluDark));
+    fl.position.y = -h * 0.45;
+    for (const ex of [-1, 1]) for (const ez of [-1, 0, 1]) {
+      const boss = ek(new THREE.Mesh(cylGeoY(Math.min(w, d) * 0.055, Math.min(w, d) * 0.06, h * 0.09, 10), M.alu));
+      boss.position.set(ex * w * 0.55, -h * 0.43, ez * d * 0.4);
+      const bas = ek(new THREE.Mesh(cylGeoY(Math.min(w, d) * 0.035, Math.min(w, d) * 0.035, h * 0.025, 6), M.gold));
+      bas.position.set(ex * w * 0.55, -h * 0.37, ez * d * 0.4);
     }
   }
+  if (dolgu) {
+    /* Thermal gap filler. The box does not touch the panel; this does, and
+       it is why the flange stands off at all. */
+    const pad = ek(new THREE.Mesh(new THREE.BoxGeometry(w * 0.92, h * 0.02, d * 0.9), M.conta));
+    pad.position.y = -h * 0.5;
+  }
+
+  /* Lightening pockets on the two large faces. A milled housing has mass
+     taken out wherever the load does not need it, and the ribs left
+     between the pockets are the structure. A large face with nothing on it
+     is the single strongest "this is a primitive" signal a box can send,
+     and both long walls were bare. */
+  {
+    const sut = Math.max(2, Math.round(w / 0.085));
+    const sir = Math.max(1, Math.round(govdeY / 0.075));
+    const px = (w * 0.86) / sut, py = (govdeY * 0.72) / sir;
+    for (const ez of [-1, 1]) {
+      for (let i = 0; i < sut; i++) {
+        for (let j = 0; j < sir; j++) {
+          const cep = ek(new THREE.Mesh(
+            new THREE.BoxGeometry(px * 0.76, py * 0.72, d * 0.03), M.koyuMetal));
+          cep.position.set((i - (sut - 1) / 2) * px,
+            -h * 0.06 + (j - (sir - 1) / 2) * py,
+            ez * (d / 2 - d * 0.012));
+        }
+      }
+    }
+  }
+
+  /* Connector bezel: a raised lip around the shells, not a panel over the
+     face. The first attempt filled most of the front with a dark plate and
+     the box read as a screen - the protection a connector bank actually
+     has is a rim standing proud of it, so that is what is drawn. */
+  {
+    const bw = w * 0.82, bh = govdeY * 0.30, kal = Math.min(w, d) * 0.022;
+    for (const [sw, sh, px, py] of [
+      [bw, kal, 0, bh / 2], [bw, kal, 0, -bh / 2],
+      [kal, bh + kal, -bw / 2, 0], [kal, bh + kal, bw / 2, 0],
+    ]) {
+      const cer = ek(new THREE.Mesh(new THREE.BoxGeometry(sw, sh, d * 0.05), M.aluDark));
+      cer.position.set(px, -h * 0.08 + py, d / 2 + d * 0.012);
+    }
+  }
+  const nk = Math.max(1, connectors);
+  for (let i = 0; i < nk; i++) {
+    const r = 0.012 + (i % 3) * 0.004;
+    const x = (nk === 1 ? 0 : (i / (nk - 1) - 0.5)) * w * 0.68;
+    const c = ek(new THREE.Mesh(cylGeoZ(r, r * 0.9, 0.022, 12), M.connector));
+    c.position.set(x, -h * 0.08, d / 2 + 0.011);
+    const shell = ek(new THREE.Mesh(new THREE.TorusGeometry(r * 1.25, r * 0.22, 6, 14), M.aluDark));
+    shell.position.copy(c.position);
+    /* Backshell and its strain relief: the harness does not hang off the
+       pins, it hangs off this. */
+    const arka = ek(new THREE.Mesh(cylGeoZ(r * 1.15, r * 1.3, 0.016, 10), M.aluDark));
+    arka.position.set(x, -h * 0.08, d / 2 + 0.028);
+    /* Keyway: the notch that stops the wrong plug going in. */
+    const anahtar = ek(new THREE.Mesh(new THREE.BoxGeometry(r * 0.5, r * 0.5, 0.006), M.gold));
+    anahtar.position.set(x, -h * 0.08 + r * 1.2, d / 2 + 0.02);
+  }
+
+  /* Identification: the big decal, plus the small plate every flight box
+     carries with its serial on it. */
   if (decal) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.6, w * 0.6 * 96 / 256),
-      new THREE.MeshStandardMaterial({ map: decal, roughness: .8, metalness: .05 }));
-    m.position.set(0, h * 0.28, d / 2 + 0.002);
-    g.add(m);
+    const m = ek(new THREE.Mesh(new THREE.PlaneGeometry(w * 0.6, w * 0.6 * 96 / 256),
+      new THREE.MeshStandardMaterial({ map: decal, roughness: .8, metalness: .05 })));
+    m.position.set(0, govdeY / 2 + h * 0.075, 0);
+    m.rotation.x = -Math.PI / 2;
+  }
+  const kunye = ek(new THREE.Mesh(new THREE.BoxGeometry(w * 0.2, h * 0.008, d * 0.12), M.white));
+  kunye.position.set(-w * 0.3, govdeY / 2 + h * 0.075, d * 0.3);
+
+  if (fins) {
+    for (let i = 0; i < 7; i++) {
+      const fin = ek(new THREE.Mesh(new THREE.BoxGeometry(w * 0.96, govdeY * 0.5, 0.004), M.aluDark));
+      fin.position.set(0, -h * 0.02, (i / 6 - 0.5) * d * 0.82);
+    }
+  }
+
+  /* What the box IS. Three machines were rendering identically because
+     nothing distinguished them; these are the features you would use to
+     tell them apart on a bench. */
+  if (tip === 'guc') {
+    /* Heavy power connectors and the fuse bank behind them. */
+    for (const e of [-1, 1]) {
+      const agir = ek(new THREE.Mesh(cylGeoZ(0.026, 0.024, 0.03, 14), M.bakir));
+      agir.position.set(e * w * 0.3, h * 0.12, d / 2 + 0.015);
+      const kelep = ek(new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.006, 6, 16), M.aluDark));
+      kelep.position.copy(agir.position);
+    }
+    for (let i = 0; i < 6; i++) {
+      const sig = ek(new THREE.Mesh(new THREE.BoxGeometry(w * 0.07, h * 0.05, d * 0.14), M.ikaz));
+      sig.position.set((i / 5 - 0.5) * w * 0.7, govdeY / 2 + h * 0.065, -d * 0.28);
+    }
+    /* Bus bar: the only thing in the box that carries the whole load. */
+    const bara = ek(new THREE.Mesh(new THREE.BoxGeometry(w * 0.8, h * 0.03, d * 0.05), M.bakir));
+    bara.position.set(0, -h * 0.28, d * 0.36);
+  } else if (tip === 'batarya') {
+    /* Cells, seen through a cut-away wall. A battery is a box full of
+       cylinders and nothing else about it matters as much. */
+    const pencere = ek(new THREE.Mesh(new THREE.BoxGeometry(w * 0.86, govdeY * 0.7, d * 0.02),
+      new THREE.MeshStandardMaterial({ color: 0x8aa0b4, roughness: .3, metalness: .2,
+        transparent: true, opacity: .26, depthWrite: false })));
+    pencere.position.set(0, -h * 0.06, -d / 2 + d * 0.01);
+    const sut = Math.max(3, Math.round(w / 0.055));
+    for (let i = 0; i < sut; i++) {
+      for (const sy of [-1, 1]) {
+        const hucre = ek(new THREE.Mesh(cylGeoY(0.017, 0.017, govdeY * 0.6, 12), M.koyuMetal));
+        hucre.position.set((i / (sut - 1) - 0.5) * w * 0.78, -h * 0.06, sy * d * 0.2);
+      }
+    }
+    /* Vent port: a cell that goes runaway has to have somewhere to go. */
+    const vent = ek(new THREE.Mesh(cylGeoY(0.014, 0.014, h * 0.06, 12), M.koyuMetal));
+    vent.position.set(w * 0.33, govdeY / 2 + h * 0.05, d * 0.25);
+    const izgara = ek(new THREE.Mesh(new THREE.TorusGeometry(0.016, 0.004, 6, 14), M.alu));
+    izgara.position.set(w * 0.33, govdeY / 2 + h * 0.08, d * 0.25);
+  } else if (tip === 'rf') {
+    /* Waveguide flange: the output does not leave on a coax, it leaves on
+       a rectangular pipe with a bolt pattern around it. */
+    const bayrak = ek(new THREE.Mesh(new THREE.BoxGeometry(w * 0.22, h * 0.22, d * 0.04), M.gold));
+    bayrak.position.set(w * 0.28, h * 0.1, -d / 2 - d * 0.02);
+    for (let i = 0; i < 4; i++) {
+      const a = i * TAU / 4 + Math.PI / 4;
+      const c = ek(new THREE.Mesh(cylGeoZ(0.004, 0.004, d * 0.05, 6), M.koyuMetal));
+      c.position.set(w * 0.28 + Math.cos(a) * w * 0.085, h * 0.1 + Math.sin(a) * h * 0.085, -d / 2 - d * 0.02);
+    }
+    const agiz = ek(new THREE.Mesh(new THREE.BoxGeometry(w * 0.1, h * 0.05, d * 0.03), M.koyuMetal));
+    agiz.position.set(w * 0.28, h * 0.1, -d / 2 - d * 0.035);
+    /* Heat spreader: a TWTA is 38% efficient and the rest leaves here. */
+    for (let i = 0; i < 5; i++) {
+      const kaburga = ek(new THREE.Mesh(new THREE.BoxGeometry(w * 0.9, govdeY * 0.14, d * 0.035), M.metal));
+      kaburga.position.set(0, -h * 0.3 + i * govdeY * 0.14, -d * 0.35);
+    }
   }
   return g;
 }
@@ -348,18 +493,48 @@ export function thruster(THREE, M, scale = 1) {
  */
 export function baffle(THREE, M, r, len) {
   const g = new THREE.Group();
-  const tube = new THREE.Mesh(cylGeoZ(r, r * 1.08, len, 22, true), M.aluDark);
-  g.add(tube);
-  const n = 4;
+  /* A stray-light baffle is a STEPPED tube: each section is wider than the
+     one behind it so the vane edges are the only thing a grazing ray can
+     see. Drawn as one smooth cone it read as a length of pipe. */
+  const kademe = 3;
+  for (let i = 0; i < kademe; i++) {
+    const t0 = i / kademe, t1 = (i + 1) / kademe;
+    const r0 = r * (0.86 + t0 * 0.26), r1 = r * (0.86 + t1 * 0.26);
+    const boy = len / kademe;
+    const bolum = new THREE.Mesh(cylGeoZ(r1, r0, boy, 26, true), M.aluDark);
+    bolum.material.side = THREE.DoubleSide;
+    bolum.position.z = (t0 + t1) / 2 * len - len / 2;
+    g.add(bolum);
+    /* Joint ring at every step, with its fastener line. */
+    const bilezik = new THREE.Mesh(new THREE.TorusGeometry(r1 * 1.03, r * 0.035, 6, 24), M.alu);
+    bilezik.position.z = t1 * len - len / 2;
+    g.add(bilezik);
+  }
+  /* External stiffening: the tube is long and thin and it carries the
+     alignment of the optic behind it. */
+  for (let i = 0; i < 4; i++) {
+    const a = i * TAU / 4 + Math.PI / 4;
+    const kaburga = new THREE.Mesh(new THREE.BoxGeometry(r * 0.05, r * 0.03, len * 0.92), M.metal);
+    kaburga.position.set(Math.cos(a) * r * 1.06, Math.sin(a) * r * 1.06, 0);
+    kaburga.rotation.z = a;
+    g.add(kaburga);
+  }
+  const n = 5;
   for (let i = 0; i < n; i++) {
     const t = (i + 0.5) / n;
-    const vane = new THREE.Mesh(new THREE.TorusGeometry(r * (0.92 - t * 0.22), r * 0.05, 5, 20), M.black);
+    /* Knife-edged vanes, narrowing toward the aperture. */
+    const vane = new THREE.Mesh(new THREE.TorusGeometry(r * (0.94 - t * 0.3), r * 0.04, 5, 22), M.black);
     vane.position.z = (t - 0.5) * len * 0.9;
     g.add(vane);
   }
-  const lip = new THREE.Mesh(new THREE.TorusGeometry(r * 1.08, r * 0.06, 6, 22), M.alu);
+  const lip = new THREE.Mesh(new THREE.TorusGeometry(r * 1.13, r * 0.05, 8, 26), M.alu);
   lip.position.z = len / 2;
   g.add(lip);
+  /* The aperture cover's hinge bracket: it comes off on orbit and the
+     bracket stays. */
+  const mentese = new THREE.Mesh(new THREE.BoxGeometry(r * 0.3, r * 0.12, r * 0.16), M.koyuMetal);
+  mentese.position.set(r * 1.1, 0, len / 2 - r * 0.1);
+  g.add(mentese);
   g.userData.notes = { regime: 'attitude',
     why: 'Internal vanes each kill one stray-light path; that is why the baffle is longer than the optic.' };
   return g;
@@ -1132,26 +1307,48 @@ export function reactionWheel(THREE, kit, r, h, opts = {}) {
   const { isolators = 3, bolts = 8, launchLock = true, cutaway = true } = opts;
   const g = new THREE.Group();
 
-  /* Housing: it is also the vacuum enclosure, because a wheel spinning in
-     air would heat its own bearings. */
-  const kasaMat = cutaway ? kit.alu.clone() : kit.alu;
-  if (cutaway) { kasaMat.transparent = true; kasaMat.opacity = 0.42; kasaMat.depthWrite = false; }
-  const kasa = new THREE.Mesh(cylGeoZ(r, r, h, 30, true), kasaMat);
+  /* Housing: also the vacuum enclosure, because a rotor spinning in air
+     would cook its own bearings. Drawn as a 300-degree wall with the last
+     60 cut away, NOT as a translucent shell: fogging the whole can made
+     every internal part grey and unreadable, where an opened sector lets
+     the rotor be seen sharply and still says "there is a wall here". */
+  const acik = cutaway ? Math.PI * 1.68 : TAU;
+  const kasa = new THREE.Mesh(cylGeoZ(r, r, h, 34, true, -acik / 2, acik), kit.alu.clone());
+  kasa.material.side = THREE.DoubleSide;
   g.add(kasa);
-  for (const e of [-1, 1]) {
-    const kapak = new THREE.Mesh(cylGeoZ(r, r, h * 0.06, 30), kit.aluDark);
-    kapak.position.z = e * h * 0.47;
-    g.add(kapak);
+  /* Stiffening ribs down the wall: a thin can this size would oil-can. */
+  for (let i = 0; i < 8; i++) {
+    const a = -acik / 2 + (i + 0.5) * acik / 8;
+    const kaburga = new THREE.Mesh(new THREE.BoxGeometry(r * 0.05, r * 0.03, h * 0.88), kit.aluDark);
+    kaburga.position.set(Math.cos(a) * r * 1.02, Math.sin(a) * r * 1.02, 0);
+    kaburga.rotation.z = a;
+    g.add(kaburga);
   }
-  /* Bolt ring on the mounting face. */
-  const bc = boltCircle(THREE, kit, r * 0.86, bolts);
-  bc.position.z = -h * 0.5;
+  /* Top cover with its own fastener line, and the mounting face below. */
+  const ust = new THREE.Mesh(cylGeoZ(r * 0.94, r * 0.94, h * 0.07, 30), kit.metal);
+  ust.position.z = h * 0.47;
+  g.add(ust);
+  const ustVida = boltCircle(THREE, kit, r * 0.82, 12);
+  ustVida.position.z = h * 0.52;
+  g.add(ustVida);
+  /* Mounting flange, proud of the can so the bolts have metal to sit on. */
+  const flans = new THREE.Mesh(cylGeoZ(r * 1.16, r * 1.16, h * 0.07, 32), kit.aluDark);
+  flans.position.z = -h * 0.5;
+  g.add(flans);
+  for (let i = 0; i < bolts; i++) {
+    const a = i * TAU / bolts;
+    const boss = new THREE.Mesh(cylGeoZ(r * 0.1, r * 0.11, h * 0.1, 10), kit.alu);
+    boss.position.set(Math.cos(a) * r * 1.02, Math.sin(a) * r * 1.02, -h * 0.48);
+    g.add(boss);
+  }
+  const bc = boltCircle(THREE, kit, r * 1.02, bolts);
+  bc.position.z = -h * 0.42;
   g.add(bc);
 
   /* Rotor: a thin web carrying a heavy rim. Momentum goes as m*r^2, so
      the same mass out at the rim stores several times what it would at
      the hub - which is why the middle is empty. */
-  const web = new THREE.Mesh(cylGeoZ(r * 0.74, r * 0.74, h * 0.1, 26), kit.metal);
+  const web = new THREE.Mesh(cylGeoZ(r * 0.74, r * 0.74, h * 0.1, 26), kit.white);
   g.add(web);
   const jant = new THREE.Mesh(new THREE.TorusGeometry(r * 0.76, r * 0.13, 10, 34), kit.koyuMetal);
   jant.scale.z = 0.72;

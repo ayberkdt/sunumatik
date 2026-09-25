@@ -44,7 +44,13 @@ export function coneGeoX(r, h, seg, open = false) { return eksenX(new THREE.Cone
 export function coneGeoZ(r, h, seg, open = false) { return eksenZ(new THREE.ConeGeometry(r, h, seg, 1, open)); }
 export function cylGeoX(rPoz, rNeg, h, seg, open = false) { return eksenX(new THREE.CylinderGeometry(rPoz, rNeg, h, seg, 1, open)); }
 export function cylGeoY(rPoz, rNeg, h, seg, open = false) { return new THREE.CylinderGeometry(rPoz, rNeg, h, seg, 1, open); }
-export function cylGeoZ(rPoz, rNeg, h, seg, open = false) { return eksenZ(new THREE.CylinderGeometry(rPoz, rNeg, h, seg, 1, open)); }
+/* thetaStart/thetaLength: a PARTIAL wall - a housing opened so its insides
+   can be seen, a shell segment. Default is a full turn, so existing calls
+   are untouched. Added here rather than reached for with a bare
+   CylinderGeometry, which is what the axis ratchet exists to prevent. */
+export function cylGeoZ(rPoz, rNeg, h, seg, open = false, thetaStart = 0, thetaLength = Math.PI * 2) {
+  return eksenZ(new THREE.CylinderGeometry(rPoz, rNeg, h, seg, 1, open, thetaStart, thetaLength));
+}
 
 /* Koni — tepe eksenin POZİTİF ucunda. */
 export function coneX(r, h, seg, mat, open = false) {
