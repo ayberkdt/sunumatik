@@ -34,6 +34,35 @@ KURAL
 
 Yardımcıların kendi tanımları muaftır (onlar zaten çeviriyi yapan yer).
 
+KURAL 2 — EULER SIRASI TUZAĞI
+─────────────────────────────
+three, Euler'i XYZ sırasında R = Rx·Ry·Rz diye kurar; yani Z terimi vektöre
+ÖNCE çarpar. Bu yüzden
+
+    nesne.rotation.set(Math.PI / 2, 0, aci);
+
+"ayağa kaldır, sonra `aci` kadar çevir" DEMEZ. Ardından gelen Rx(π/2) bütün
+örnekleri tek bir eksene yatırır. Çember üzerine dizilmiş parçalarda sonuç
+görünür: bütün parçalar aynı yöne bakar.
+
+Dört yerde ölçüldü (vendored three ile, düzeltme öncesi):
+
+  şişme habitat şerit halkaları  12 şeridin hepsi tek normalde, 90° sapma
+  reaktör şemsiye radyatörü      koni yürüdükçe düzleşiyor: +0,242 → 0,000
+  reaktör ikaz levhaları         dördü de aynı yöne bakıyor, 90° sapma
+  gezgin ızgara parmakları       eksen x'te aynalanmış: a'da durup π−a'ya bakıyor
+
+Bu yüzden `rotation.set(...)` çağrısında X ve Z terimlerinin İKİSİ de sıfırdan
+farklıysa YASAK. Doğrusu dönüşü tek adımda, sırasız kurmaktır:
+
+    quaternion.setFromUnitVectors(yerelEksen, hedefYon)   — tek eksen hizala
+    quaternion.setFromRotationMatrix(makeBasis(u, v, w))  — üç eksen birlikte
+    rotateOnWorldAxis(eksen, aci)                          — açıkça sırala
+
+Sıranın gerçekten önemsiz olduğu yerler var (rastgele yuvarlanmış kaya, küçük
+açılı boşta salınım). Orada satıra gerekçesiyle `euler-ok:` işareti konur —
+sessiz bir taban sayısı değil, okunabilir bir gerekçe.
+
 KULLANIM
 ────────
     python scripts/eksen-denetimi.py             # rapor + taban karşılaştırması
@@ -81,6 +110,42 @@ YARDIMCI_IMZA = re.compile(
 
 # Bu dosyalar tarama dışı: satıcı (vendor) kodu bize ait değil.
 DISARIDA = ("vendor", "node_modules", ".git", "moon_react_source")
+
+# ── KURAL 2: Euler sırası tuzağı ──────────────────────────────────────
+# Üç argümanlı `rotation.set(x, y, z)` çağrısında x ve z'nin İKİSİ de
+# sıfırdan farklıysa, bu "eğ ve çevir"i tek Euler çağrısında söyleme
+# denemesidir ve three'nin sırası onu hiçbir zaman o anlama getirmez.
+EULER_CAGRI = re.compile(r"\.rotation\.set\(([^;]*?)\)\s*;")
+EULER_SIFIR = re.compile(r"^\s*(?:-\s*)?0(?:\.0+)?\s*$")
+# Sıranın gerçekten önemsiz olduğu yer: satıra gerekçesiyle işaret konur.
+EULER_KACIS = re.compile(r"euler-ok\s*:")
+
+
+def euler_denetle(yol):
+    """(satır no, satır) listesi — X ve Z birlikte sıfırdan farklı olanlar."""
+    try:
+        metin = io.open(yol, encoding="utf-8").read()
+    except (UnicodeDecodeError, OSError):
+        return []
+    bulgular = []
+    satirlar = metin.splitlines()
+    for i, s in enumerate(satirlar, 1):
+        # Gerekcesi cagrinin USTUNDEKI yorum blogunda olabilir; isareti
+        # kucuk bir pencerede ara, yoksa gerekce yazmak icin tek satira
+        # sigdirmak gerekir ve gerekce kisalir.
+        pencere = chr(10).join(satirlar[max(0, i - 6):i])
+        if EULER_KACIS.search(pencere):
+            continue
+        m = EULER_CAGRI.search(s)
+        if not m:
+            continue
+        args = [a.strip() for a in m.group(1).split(",")]
+        if len(args) != 3:
+            continue
+        if EULER_SIFIR.match(args[0]) or EULER_SIFIR.match(args[2]):
+            continue
+        bulgular.append((i, s.strip()[:96]))
+    return bulgular
 
 
 def dosyalar():
@@ -144,6 +209,22 @@ def main():
             print(f"{ozet[k]:5d}  {k}")
     print(f"\nÇIPLAK KURUCU: {toplam} adet, {dosya_sayisi} dosyada.")
 
+    # ── KURAL 2: Euler sırası ──
+    euler = []
+    for yol in sorted(dosyalar()):
+        for n, satir in euler_denetle(yol):
+            euler.append((os.path.relpath(yol, DEPO).replace(os.sep, "/"), n, satir))
+    if euler:
+        print("\nEULER SIRASI TUZAĞI — X ve Z birlikte veriliyor:")
+        for d, n, satir in euler:
+            print(f"  {d}:{n}  {satir}")
+        print("three Euler'i Rx·Ry·Rz kurar, yani Z ÖNCE uygulanır: bu çağrı"
+              "\n\"eğ, sonra çevir\" demez. setFromUnitVectors /"
+              "\nmakeBasis / rotateOnWorldAxis kullanın. Sıra gerçekten"
+              "\nönemsizse satıra gerekçesiyle `euler-ok:` işaretini koyun.")
+    else:
+        print("EULER SIRASI: temiz — X ve Z birlikte verilen çağrı yok.")
+
     if taban_yaz:
         with io.open(TABAN_DOSYA, "w", encoding="utf-8", newline="\n") as f:
             json.dump(ozet, f, ensure_ascii=False, indent=2, sort_keys=True)
@@ -173,6 +254,8 @@ def main():
               "\nÇALIŞTIĞI DOĞRULANMIŞ kod, yalnız o dosyaya dokunulduğunda"
               "\ntaşınır — çalışan geometriyi toplu hâlde yeniden yazmak,"
               "\nkapatmaya çalıştığımız hatanın ta kendisini üretir.")
+        return 1
+    if euler:
         return 1
     if dusen:
         print(f"\nSayı tabana göre {dusen} düştü — ilerlemeyi kilitlemek için "

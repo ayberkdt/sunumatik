@@ -104,6 +104,9 @@ export function buildTreadmillGround(THREE, field, {
       const z = (rnd() - 0.5) * P;
       const s = 0.05 + Math.pow(rnd(), 4.2) * 0.40;
       o.position.set(x, floor + field.height(x, z) + s * 0.30, z);
+      /* euler-ok: yuvarlanmış kaya. Rastgele bir yön arıyoruz, belirli
+         bir hedef yok, bu yüzden bileşenlerin hangi sırada uygulandığı
+         sonucu değiştirmiyor. */
       o.rotation.set(0.15, rnd() * 6.283, -0.08);
       o.scale.set(s * 1.65, s * 0.48, s);
       o.updateMatrix(); mesh.setMatrixAt(i, o.matrix);

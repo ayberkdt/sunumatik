@@ -1126,7 +1126,13 @@ function tekerlek(m, { r = 0.132, w = 0.095, cita = 48, parmak = 10 } = {}) {
       const ic = 0.030, dis = r * 0.89;
       const uzun = dis - ic, orta = (dis + ic) / 2;
       yer.position.set(Math.cos(a) * orta, yuz, Math.sin(a) * orta);
-      yer.rotation.set(Math.PI / 2, 0, -a + Math.PI / 2);   // silindir ekseni radyale döner
+      /* The old comment claimed the cylinder axis turned radial. Measured,
+         it came out MIRRORED in x: the axis pointed at PI - a while the finger
+         sat at a, so only the pair near x = 0 was right and the rest fanned
+         wrongly - 90 deg off at a = 45 deg. Rotate the geometry's own +Y onto
+         the radial direction instead of composing two Euler terms. */
+      yer.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(Math.cos(a), 0, Math.sin(a)));
       yer.scale.set(1, uzun, 1);
       yer.updateMatrix();
       p.setMatrixAt(i, yer.matrix);

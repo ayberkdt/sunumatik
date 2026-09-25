@@ -626,6 +626,9 @@ export async function mountCinematicSpace(host, options = {}) {
       CRAFT_POS.x + s.craft.x * idleOlcek,
       CRAFT_POS.y + s.craft.y * idleOlcek,
       CRAFT_POS.z + s.craft.z * idleOlcek);
+    /* euler-ok: boşta salınım. Üç açı da küçük ve idleOlcek ile
+       ölçekleniyor; bu bantta sıra farkı ikinci mertebeden kalıyor ve
+       hedeflenen sözleşme zaten pitch/yaw/roll üçlüsü. */
     craftPivot.rotation.set(s.craft.pitch * idleOlcek, s.craft.yaw * idleOlcek, s.craft.roll * idleOlcek);
     /* solunum: paralaksın yerini alan yaşam belirtisi — tekdüze ölçek,
        eşiğe yaklaşırken idle ile birlikte sıfıra rampalanır */

@@ -10,6 +10,7 @@
  * Koşum: node scripts/validate-habitat.mjs
  */
 
+import * as THREE from '../presets/moon_advanced/vendor/three.module.min.js';
 import * as H from '../presets/habitat_blocks/hab-parts.mjs';
 const { massBudget, partById } = H;
 import * as R from '../presets/habitat_blocks/routing.mjs';
@@ -569,6 +570,137 @@ console.log('\n== hizalama');
   const payX = ped.size[0] / 2 - Math.max(-x0, x1), payY = ped.size[1] / 2 - Math.max(-y0, y1);
   ok(payX > 1 && payY > 1, 'üs kendi pedinden taşmıyor (en az 1 m pay)',
     `x ${payX.toFixed(1)} m · y ${payY.toFixed(1)} m`);
+}
+
+/* ══ TUTUM: ÇEMBER ÜZERİNE DİZİLMİŞ PARÇALAR ════════════════════════
+   Bir dizinin her parçası KENDİ açısına göre dönmek zorundadır. three
+   Euler'i XYZ sırasında Rx·Ry·Rz diye kurar, yani Z terimi vektöre ÖNCE
+   çarpar; bu yüzden `rotation.set(π/2, 0, a)` hiçbir zaman "ayağa kaldır,
+   sonra a açısına çevir" demez ve ardından gelen Rx bütün örnekleri tek bir
+   eksene yatırır. Ölçülen (düzeltme öncesi): şerit halkalarında 12 parçanın
+   hepsi tek normalde, 90°'ye kadar sapma; şemsiye dilimlerinde koni
+   yürüdükçe düzleşiyor (dış uç +0,242 → +0,171 → 0,000); reaktör
+   levhalarının dördü de aynı yöne bakıyor.
+
+   Buradaki sınavlar formülün KİMLİĞİNİ ölçer. Kaynağın hâlâ bu formülü
+   kullandığını `scripts/eksen-denetimi.py` ayrıca tarar — ikisi ayrı şey ve
+   ikisi de gerekli. */
+bolum('Tutum: çember dizileri ve anten nişangâhı');
+{
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const Z = () => V(0, 0, 1);
+  /* Bir şerit ile ters çevrilmişi AYNI şeritttir: karşılaştırmadan önce
+     ekseni yarım küreye katla, yoksa doğru kurulum 180° yanlış okunur. */
+  const sapma = (a, b) => Math.min(a.angleTo(b), a.angleTo(b.clone().negate())) * 180 / Math.PI;
+  const enBuyuk = (n, kur, hedef, yerelEksen) => {
+    let en = 0;
+    for (let i = 0; i < n; i++) {
+      const a = i * Math.PI * 2 / n;
+      const o = new THREE.Object3D();
+      kur(o, a);
+      en = Math.max(en, sapma(yerelEksen.clone().applyQuaternion(o.quaternion), hedef(a)));
+    }
+    return en;
+  };
+
+  /* Şerit halkası: torusun normali büyük halkanın TEĞETİ olmalı. */
+  const seritSapma = enBuyuk(12,
+    (o, a) => o.quaternion.setFromUnitVectors(Z(), V(-Math.sin(a), Math.cos(a), 0)),
+    (a) => V(-Math.sin(a), Math.cos(a), 0), Z());
+  ok(seritSapma < 1e-6, 'şerit halkalarının normali teğete oturuyor',
+    `en büyük sapma ${seritSapma.toExponential(1)}°`);
+  /* TERS SINAV: eski Euler biçimi YAKALANMAK zorunda. */
+  const seritEski = enBuyuk(12,
+    (o, a) => o.rotation.set(Math.PI / 2, 0, a + Math.PI / 2),
+    (a) => V(-Math.sin(a), Math.cos(a), 0), Z());
+  ok(seritEski > 45, 'ters sınav: eski Euler biçimi yakalanıyor',
+    `sapma ${seritEski.toFixed(1)}° (eşik 45°)`);
+
+  /* Şemsiye dilimi: her dilim KENDİ teğet ekseni etrafında eğilir, dış ucu
+     aşağıda, ve eğim çember boyunca AYNI kalır. */
+  const egim = 14 * Math.PI / 180;
+  const dilimHedef = (a) => V(Math.cos(a) * Math.cos(egim), Math.sin(a) * Math.cos(egim),
+    -Math.sin(egim));
+  const dilimSapma = enBuyuk(8,
+    (o, a) => { o.rotation.set(0, egim, 0); o.rotateOnWorldAxis(Z(), a); },
+    dilimHedef, V(1, 0, 0));
+  ok(dilimSapma < 1e-6, 'şemsiye dilimleri tek koni kuruyor, dış uç aşağıda',
+    `en büyük sapma ${dilimSapma.toExponential(1)}°`);
+  const dilimEski = enBuyuk(8,
+    (o, a) => { o.rotation.z = a; o.rotation.y = -egim; }, dilimHedef, V(1, 0, 0));
+  ok(dilimEski > 20, 'ters sınav: dünya ekseninde eğim yakalanıyor',
+    `sapma ${dilimEski.toFixed(1)}° (eşik 20°)`);
+
+  /* İkaz levhası: yüzü (+Z) DIŞA, metni (+Y) YUKARI. İki eksen birlikte
+     sınanır; yalnız yüzü sınamak levhayı yan yatmış hâlde geçirir. */
+  const levhaTaban = (o, a) => o.quaternion.setFromRotationMatrix(
+    new THREE.Matrix4().makeBasis(V(-Math.sin(a), Math.cos(a), 0), Z(),
+      V(Math.cos(a), Math.sin(a), 0)));
+  const levhaYuz = enBuyuk(4, levhaTaban, (a) => V(Math.cos(a), Math.sin(a), 0), Z());
+  const levhaUst = enBuyuk(4, levhaTaban, () => Z(), V(0, 1, 0));
+  ok(levhaYuz < 1e-6 && levhaUst < 1e-6, 'ikaz levhaları dışa bakıyor ve metni yukarı',
+    `yüz ${levhaYuz.toExponential(1)}° · üst ${levhaUst.toExponential(1)}°`);
+  const levhaEski = enBuyuk(4, (o, a) => o.rotation.set(Math.PI / 2, 0, a + Math.PI / 2),
+    (a) => V(Math.cos(a), Math.sin(a), 0), Z());
+  ok(levhaEski > 45, 'ters sınav: dördü aynı yöne bakan biçim yakalanıyor',
+    `sapma ${levhaEski.toFixed(1)}° (eşik 45°)`);
+
+  /* Anten: nişangâh katalogda BEYAN edilir, çizim onu izler. Üç şey ayrı
+     ayrı sınanır — beyanın kendisi tutarlı mı, açı ufkun üstünde mi, ve
+     çanak beyan ettiği yol boyunca kendi direğine çarpmadan dönebiliyor mu.
+     Son soru bu düzeltmenin ORTAYA ÇIKARDIĞI hataydı: 7,2 m direk başına
+     hizalı takılmış 2,4 m'lik çanak 38°'ye çıkarken kenarını direğin içinden
+     geçiriyordu. */
+  const nisanli = H.PARTS.filter(q => q.nis);
+  ok(nisanli.length > 0, 'nişangâh beyan eden parça var', nisanli.map(q => q.id).join(', '));
+  for (const q of nisanli) {
+    const az = q.nis.azimut * Math.PI / 180, yuk = q.nis.yukseklik * Math.PI / 180;
+    const bore = V(Math.sin(az) * Math.cos(yuk), Math.cos(az) * Math.cos(yuk), Math.sin(yuk));
+    /* Gidiş-dönüş: sözleşme (azimut 0 = +Y, saat yönünde) kendini doğruluyor. */
+    const geriYuk = Math.asin(Math.max(-1, Math.min(1, bore.z))) * 180 / Math.PI;
+    const geriAz = ((Math.atan2(bore.x, bore.y) * 180 / Math.PI) + 360) % 360;
+    ok(yakin(geriYuk, q.nis.yukseklik, 1e-9) && yakin(geriAz, q.nis.azimut, 1e-9),
+      `${q.id}: nişangâh gidiş-dönüş kapanıyor`,
+      `${geriAz.toFixed(1)}° az · ${geriYuk.toFixed(1)}° yük`);
+    ok(q.nis.yukseklik > 0 && q.nis.yukseklik < 90,
+      `${q.id}: boresight ufkun üstünde ve zenitte değil`, `${q.nis.yukseklik}°`);
+    ok(q.nis.yukseklik >= q.nis.enAz,
+      `${q.id}: nominal açı kendi seyir sınırının içinde`,
+      `${q.nis.yukseklik}° ≥ ${q.nis.enAz}°`);
+
+    /* İki eksende dönen bir çanak KÜRE süpürür, dolayısıyla ilan edilmesi
+       gereken zarf dönüş ekseni merkezli bir küptür. Buradaki erimi kapalı
+       formla ikinci kez yazmak bağımsız bir denetim değil, ikinci kez yanlış
+       olma şansıydı: çanağı düz plaka sayan ilk deneme 1,24 m dedi, canlı
+       sahnede ölçülen 2,36 m çıktı ve çanak direğin 0,72 m içinde dönerken
+       kapı onay veriyordu. Artık türetme geometriyi kuran yerle ORTAK, ve
+       burada sınanan şey ortak formülün taklit edemeyeceği şey: beyan edilen
+       zarfın süpürülen küreyi kapsayıp ebeveyni boşaltması. */
+    const G = H.canakGeo(q.nis.cap);
+    const kupMu = yakin(q.size[0], q.size[1], 1e-9) && yakin(q.size[1], q.size[2], 1e-9);
+    ok(kupMu, `${q.id}: zarf bir küp (süpürülen hacim yönden bağımsız)`,
+      q.size.map(v => v.toFixed(2)).join(' × ') + ' m');
+    ok(Math.min(...q.size) >= 2 * G.erim - 1e-9,
+      `${q.id}: zarf süpürülen küreyi kapsıyor`,
+      `${Math.min(...q.size).toFixed(2)} m ≥ 2 × ${G.erim.toFixed(3)} m`);
+    /* Açıklık artık `nis` içinde beyan edilir. `size` bir zamanlar hem açıklık
+       hem zarftı ve bu yüzden ilan edilecek dürüst bir sayı yoktu. */
+    ok(q.nis.cap > 0 && q.nis.cap < Math.min(...q.size),
+      `${q.id}: açıklık zarfın içinde ve ayrıca beyan edilmiş`,
+      `açıklık ${q.nis.cap} m · zarf ${Math.min(...q.size)} m`);
+    const ebeveyn = partById(q.mountsTo);
+    if (ebeveyn) {
+      const ebeveynUst = ebeveyn.pos[2] + ebeveyn.size[2] / 2;
+      const altUc = q.pos[2] - G.erim;
+      ok(altUc >= ebeveynUst - 1e-9,
+        `${q.id}: bütün seyir boyunca ${q.mountsTo} başını boşaltıyor`,
+        `süpürme alt ucu ${altUc.toFixed(3)} m ≥ direk başı ${ebeveynUst.toFixed(2)} m`);
+      /* TERS SINAV: kardanı direk başına hizalasan yakalanmak zorunda. */
+      ok(!(ebeveynUst - G.erim >= ebeveynUst),
+        `${q.id}: ters sınav — direk başına hizalı kardan yakalanıyor`,
+        `hizalı olsa alt uç ${(ebeveynUst - G.erim).toFixed(2)} m olurdu`);
+    }
+  }
 }
 
 console.log(kaldi === 0 ? `HABİTAT DENETİMİ: ${gecti}/${gecti} geçti` : `HABİTAT DENETİMİ: ${gecti} geçti, ${kaldi} KALDI`);

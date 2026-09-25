@@ -484,17 +484,25 @@ export const PARTS = Object.freeze([
     why: 'Height buys horizon directly: 7 m of mast pushes the line of sight out by kilometres on flat ground.',
     ports: [{ ad: 'tepe', pos: [0, 0, 3.6], dir: [0, 0, 1], tur: 'DATA' }] },
   { id: 'anten-canak', ad: 'Earth dish (2.4 m)', sistem: 'iletisim', step: 7, mountsTo: 'anten-direk', arayuz: 'mentese',
-    massKg: 95, pos: [0.2, -10.2, 7.6], size: [2.4, 2.4, 0.7], sekil: 'canak',
+    massKg: 95, pos: [0.2, -10.2, 8.65], size: [2.9, 2.9, 2.9], sekil: 'canak',
+    /* `size` is the ENVELOPE, and for a two-axis dish that envelope is the
+       sphere it sweeps - so it is a cube of side 2 x canakGeo().erim centred
+       on the elevation axis, not the aperture. The aperture lives here with
+       the pointing, because `size` doing both jobs is what left the drawn
+       dish 0.72 m inside its own mast with no honest number to declare.
+       Angles in degrees: azimuth 0 is north and runs clockwise, elevation is
+       from the horizon. */
+    nis: { cap: 2.4, azimut: 205, yukseklik: 38, enAz: 25 },
     tech: {
       no: 'HB-COM-111',
       malzeme: 'CFRP shell, mesh reflector',
       guc_W: 310,
       sicaklik_C: [-140, 90],
       veri_Mbps: 4.2,
-      baglanti: 'Two-axis gimbal at the mast head, 4 x M10',
+      baglanti: 'Two-axis gimbal on a yoke at the mast head, 4 x M10. Elevation 25 to 85 deg, azimuth continuous',
       isiYolu: 'TWTA heat to the body radiator',
-      detay: 'dia 2.4 m, X band, 46.5 dBi, 0.9 deg beam. 4.2 Mbps with Earth at 2.7 AU; 24 Mbps at closest approach',
-      kalite: 'The gimbal holds lock as the planet turns',
+      detay: 'dia 2.4 m, X band, 46.5 dBi, 0.9 deg beam. 4.2 Mbps with Earth at 2.7 AU; 24 Mbps at closest approach. Drawn at its nominal pointing, azimuth 205 deg and 38 deg up, not stowed. The envelope is the 2.9 m cube the dish sweeps about its elevation axis, which is what the yoke has to lift clear of the 7.2 m mast head',
+      kalite: 'The gimbal holds lock as the planet turns, and it can complete its travel without the rim touching the mast',
     },
     why: 'Tracks Earth; a two-axis gimbal holds lock as the planet turns. A narrow beam is what buys the data rate.' },
   { id: 'ruzgar-olcer', ad: 'Anemometer', sistem: 'iletisim', step: 7, mountsTo: 'anten-direk', arayuz: 'civata',
@@ -562,6 +570,41 @@ export function envAllows(id, envKey = 'mars') {
   return { ok, id, env: e, neden: ok ? null : k.neden, oneri: ok ? null : k.oneri };
 }
 export const ENV_RULED = Object.freeze(Object.keys(ENV_RULE));
+
+/**
+ * Bir kardanlı çanağın geometrisi — TEK türetme.
+ *
+ * Çanak iki eksende döndüğü için süpürdüğü hacim bir KÜREDİR: dolayısıyla
+ * ilan edilmesi gereken zarf, dönüş ekseni merkezli kenar uzunluğu 2·erim
+ * olan bir küptür. Bu sayı hem geometriyi kuran yerde hem de kapıda gerekli,
+ * ve iki yerde ayrı yazıldığında biri sessizce yanlış olur: ilk denemede
+ * çanağı düz bir plaka sayan kapalı form 1,24 m dedi, canlı sahnede ölçülen
+ * 2,36 m çıktı ve çanak direğin 0,72 m içinde dönüyordu.
+ *
+ * `cap` açıklık ÇAPI (m). Yansıtıcı, yarıçapı 1,5·r olan bir küre kapağıdır;
+ * odak küresel aynada R/2'dedir ve besleme oraya oturur.
+ */
+export function canakGeo(cap) {
+  const r = cap / 2;
+  const R = r * 1.5;                       // kapağın küre yarıçapı
+  const alfa = Math.asin(r / R);            // kapağın yarım açısı
+  const sehim = R * (1 - Math.cos(alfa));   // kapak derinliği (sagitta)
+  const vTepe = r * 0.10;                   // tepe, dönüş ekseninin önünde
+  const odak = vTepe + R / 2;               // küresel aynanın odağı
+  const besleBoy = r * 0.24;                // besleme kutusunun uzunluğu
+  const kenarEt = r * 0.045;                // kenar takviyesinin boru yarıçapı
+  const kenarZ = vTepe + sehim;
+  /* Erim: dönüş ekseninden en uzak nokta. İki aday var — kenar takviyesi ve
+     beslemenin ucu — ve hangisinin kazandığı açıklık/derinlik oranına bağlı,
+     bu yüzden ikisi de hesaplanır. En dış nokta kenar ÇEMBERİ değil, o çemberin
+     etrafına sarılmış borunun dışıdır: et payı yazılmadığında canlı sahnede
+     ölçülen 1,383 m, vaat edilen 1,332 m'yi aşıyordu. Zarf bir ÜST SINIR
+     olmak zorunda, yoksa zarf değildir. */
+  const erim = Math.max(
+    Math.hypot(r + kenarEt, kenarZ + kenarEt),
+    odak + besleBoy / 2);
+  return { r, R, alfa, sehim, vTepe, odak, besleBoy, kenarEt, kenarZ, erim };
+}
 
 /**
  * Kütle bütçesi ORTAMA bağlıdır. Ortamsız çağrı bütün katalogu toplar ve

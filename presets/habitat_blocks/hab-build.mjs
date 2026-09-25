@@ -8,7 +8,7 @@
  * `core/geometry-axis.mjs`. Saha koordinatı +Z yukarı.
  */
 
-import { PARTS, SUBSYSTEMS, partById, envAllows, runEndpoints } from './hab-parts.mjs';
+import { PARTS, SUBSYSTEMS, partById, envAllows, runEndpoints, canakGeo } from './hab-parts.mjs';
 import { cylGeoZ, cylGeoY, cylGeoX, coneGeoZ, latheX } from '../core/geometry-axis.mjs';
 import * as D from './hab-detail.mjs';
 import { yuzeyAlbedoRGB } from '../core/scene-lighting.mjs';
@@ -483,7 +483,14 @@ function govde(THREE, p, M, dok) {
         const a = i * TAU / 12;
         const serit = ekle(new THREE.Mesh(new THREE.TorusGeometry(r * 1.03, r * 0.05, 5, 18), M.koyu));
         serit.position.set(Math.cos(a) * R, Math.sin(a) * R, 0);
-        serit.rotation.set(Math.PI / 2, 0, a + Math.PI / 2);
+        /* A strap wraps the TUBE, so its plane holds the tube's cross section
+           and its normal lies along the big ring's TANGENT. Euler cannot say
+           that: three composes XYZ as Rx*Ry*Rz, so the Z term hits the vector
+           first and the following Rx(PI/2) drops every normal onto -Y.
+           Measured, all 12 straps shared one normal, up to 90 deg off, so the
+           ring read as a stack of hoops in a single plane. */
+        serit.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1),
+          new THREE.Vector3(-Math.sin(a), Math.cos(a), 0));
       }
       for (let i = 0; i < 4; i++) {
         const a = i * TAU / 4 + Math.PI / 8;
@@ -619,12 +626,22 @@ function govde(THREE, p, M, dok) {
     }
     case 'semsiye': {
       const n = 8;
+      /* An umbrella slopes outward and DOWN: the outer end of every petal
+         sits lower than its root, by the same amount all the way round. The
+         old pair of assignments composed as Ry(-14)*Rz(a), which tilts every
+         petal about the same WORLD axis - measured, the outer end rose 0.242
+         at i=0, 0.171 at i=1 and 0.000 at i=2, so the cone flattened as it
+         went round and the thing was only an umbrella at one petal in eight.
+         Tilt first about the petal's own tangential axis, THEN carry it round.
+         The sign matters and it is the name that fixes it: -14 lifted the
+         outer end, which is a bowl. */
+      const egim = 14 * Math.PI / 180;
       for (let i = 0; i < n; i++) {
         const a = i * TAU / n;
         const dilim = ekle(new THREE.Mesh(new THREE.BoxGeometry(sx * 0.46, sx * 0.17, 0.03), mat));
         dilim.position.set(Math.cos(a) * sx * 0.27, Math.sin(a) * sx * 0.27, 0);
-        dilim.rotation.z = a;
-        dilim.rotation.y = -14 * Math.PI / 180;
+        dilim.rotation.set(0, egim, 0);
+        dilim.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), a);
       }
       ekle(new THREE.Mesh(cylGeoZ(sx * 0.07, sx * 0.07, sz * 2, 12), M.koyu));
       break;
@@ -646,7 +663,17 @@ function govde(THREE, p, M, dok) {
         const ik = D.levha(THREE, M.kit, ['RADYASYON', '14 m yaklaşma sınırı'],
           { w: r * 0.8, h: r * 0.42, seritRenk: '#d6a24a', zemin: '#e0cf9a' });
         ik.position.set(Math.cos(a) * r * 0.64, Math.sin(a) * r * 0.64, sz * 0.05);
-        ik.rotation.set(Math.PI / 2, 0, a + Math.PI / 2);
+        /* The comment above is the specification: readable from whichever side
+           you walk up. It was not true. The Z term went in first, so all four
+           placards faced -Y - measured 90 deg off radial on two of them, and
+           the two that read at all were the ones that happened to line up. A
+           placard's face is +Z and its text runs up +Y, so the basis is
+           tangent / world up / outward, and there is no order left to get
+           wrong. */
+        ik.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(
+          new THREE.Vector3(-Math.sin(a), Math.cos(a), 0),
+          new THREE.Vector3(0, 0, 1),
+          new THREE.Vector3(Math.cos(a), Math.sin(a), 0)));
         g.add(ik);
       }
       const fr = D.fener(THREE, M.kit, { renk: 0xff5a3c });
@@ -686,46 +713,92 @@ function govde(THREE, p, M, dok) {
       break;
     }
     case 'canak': {
-      const r = sx / 2;
+      /* A dish is drawn AIMED, and its envelope is the sphere it sweeps.
+         Two errors were measured here, one hiding behind the other. The
+         boresight sat at 90 deg elevation - straight up - while the row says
+         the thing tracks Earth. And the reflector was a cap around three's +Y
+         pole turned by Rx(PI), which only moves the pole to -Y: the bowl
+         opened sideways while the rim, ribs, feed and tripod were all built
+         around +Z. On the live scene the assembly's furthest point measured
+         2.36 m from the gimbal for a dish of 1.2 m radius, and its local box
+         ran y -1.80..1.25 against z -0.45..1.94.
+         Everything below hangs off canakGeo(), which the gate imports too, so
+         the declared envelope and the drawn one cannot drift apart. */
+      const nis = p.nis || { cap: sx, azimut: 0, yukseklik: 90, enAz: 90 };
+      const G = canakGeo(nis.cap ?? sx);
+      const r = G.r;
+      const az = nis.azimut * Math.PI / 180;
+      const yuk = nis.yukseklik * Math.PI / 180;
+      /* Azimuth 0 is +Y and runs clockwise; elevation is from the horizon. */
+      const bore = new THREE.Vector3(Math.sin(az) * Math.cos(yuk),
+        Math.cos(az) * Math.cos(yuk), Math.sin(yuk));
+      /* Elevation axis: horizontal, square across the line of sight. The
+         gimbal ring is drawn about THIS, so the mount reads the angle the
+         dish is actually at instead of a ring fixed at 90 deg. */
+      const yukEkseni = new THREE.Vector3(Math.cos(az), -Math.sin(az), 0);
+
+      /* Everything that moves hangs off the elevation axis, which is the part
+         centre; everything that holds it up stays on the part group. */
+      const tabak = new THREE.Group();
+      tabak.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), bore);
+      g.add(tabak);
+      const ekleT = (m) => { m.castShadow = true; m.receiveShadow = true; tabak.add(m); return m; };
+
+      /* Reflector: a spherical cap, concave toward the boresight. The sphere
+         centre sits one radius BEYOND the vertex, so the surface we want is
+         the cap nearest the origin - the one around the sphere's -Z pole.
+         three caps around +Y, and it is Rx(-90 deg) that takes +Y to -Z;
+         Rx(+90 deg) caps the far side instead and puts the reflector 3.72 m
+         out, which is how this was measured wrong the first time. */
       const kapMat = mat.clone();
       kapMat.side = THREE.DoubleSide;
-      const c = ekle(new THREE.Mesh(
-        new THREE.SphereGeometry(r * 1.5, 30, 16, 0, TAU, 0, Math.asin(r / (r * 1.5))), kapMat));
-      c.rotation.x = Math.PI;
-      c.position.z = r * 0.62;
+      const c = ekleT(new THREE.Mesh(
+        new THREE.SphereGeometry(G.R, 30, 16, 0, TAU, 0, G.alfa), kapMat));
+      c.rotation.x = -Math.PI / 2;
+      c.position.z = G.vTepe + G.R;
       /* Rim. A dish without one is a bowl: the edge is a rolled stiffener
          and it is the part that survives being leaned on. */
-      const kenar = ekle(new THREE.Mesh(new THREE.TorusGeometry(r, r * 0.045, 8, 36), M.metal));
-      kenar.position.z = r * 0.62 - Math.sqrt(Math.max(0, (r * 1.5) ** 2 - r ** 2)) + r * 1.5;
+      const kenar = ekleT(new THREE.Mesh(new THREE.TorusGeometry(r, r * 0.045, 8, 36), M.metal));
+      kenar.position.z = G.kenarZ;
       /* Back ribs: a thin reflector holds its shape because of these, and
          they are what you actually see from behind. */
       for (let i = 0; i < 6; i++) {
         const a = i * Math.PI / 6;
-        const rib = ekle(new THREE.Mesh(new THREE.BoxGeometry(r * 1.9, r * 0.05, r * 0.11), M.koyu));
-        rib.position.z = r * 0.3;
+        const rib = ekleT(new THREE.Mesh(new THREE.BoxGeometry(r * 1.9, r * 0.05, r * 0.11), M.koyu));
+        rib.position.z = G.vTepe + G.sehim * 0.35;
         rib.rotation.z = a;
       }
-      /* Feed on a tripod, not on a floating stalk. */
-      const bes = ekle(new THREE.Mesh(cylGeoZ(r * 0.05, r * 0.05, r * 0.62, 10), M.koyu));
-      bes.position.z = r * 0.34;
+      /* Feed at the FOCUS, on a tripod rather than a floating stalk. A
+         spherical mirror focuses at R/2, so that is where it goes. */
+      const alici = ekleT(new THREE.Mesh(cylGeoZ(r * 0.13, r * 0.09, G.besleBoy, 12), M.koyu));
+      alici.position.z = G.odak;
       for (let i = 0; i < 3; i++) {
         const a = i * TAU / 3;
-        const p0 = new THREE.Vector3(Math.cos(a) * r * 0.86, Math.sin(a) * r * 0.86, r * 0.18);
-        const p1 = new THREE.Vector3(0, 0, r * 0.62);
+        const p0 = new THREE.Vector3(Math.cos(a) * r * 0.86,
+          Math.sin(a) * r * 0.86, G.vTepe + G.sehim * 0.8);
+        const p1 = new THREE.Vector3(0, 0, G.odak - G.besleBoy / 2);
         const len = p0.distanceTo(p1);
-        const ayak = ekle(new THREE.Mesh(cylGeoZ(r * 0.022, r * 0.022, len, 6), M.metal));
+        const ayak = ekleT(new THREE.Mesh(cylGeoZ(r * 0.022, r * 0.022, len, 6), M.metal));
         ayak.position.copy(p0).add(p1).multiplyScalar(0.5);
         ayak.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1),
           p1.clone().sub(p0).normalize());
       }
-      const alici = ekle(new THREE.Mesh(cylGeoZ(r * 0.13, r * 0.09, r * 0.24, 12), M.koyu));
-      alici.position.z = r * 0.7;
-      /* Two-axis mount: a dish that cannot be pointed is a decoration. */
-      const boyun = ekle(new THREE.Mesh(cylGeoZ(r * 0.1, r * 0.13, r * 0.3, 12), M.metal));
-      boyun.position.z = -r * 0.1;
+
+      /* The yoke: it lifts the elevation axis clear of the mast head, which
+         is the only reason the dish can be pointed at all. */
+      const yokeBoy = sz / 2;
+      const boyun = ekle(new THREE.Mesh(cylGeoZ(r * 0.11, r * 0.14, yokeBoy, 14), M.metal));
+      boyun.position.z = -sz / 2 + yokeBoy / 2;
+      /* Trunnion arms straddle the elevation axis, so they lie ALONG it. */
+      for (const ex of [-1, 1]) {
+        const kol = ekle(new THREE.Mesh(new THREE.BoxGeometry(r * 0.07, r * 0.07, r * 0.34), M.metal));
+        kol.position.set(yukEkseni.x * ex * r * 0.2, yukEkseni.y * ex * r * 0.2, -r * 0.15);
+      }
       const kardan = ekle(new THREE.Mesh(new THREE.TorusGeometry(r * 0.17, r * 0.04, 6, 18), M.koyu));
-      kardan.position.z = r * 0.05;
-      kardan.rotation.y = Math.PI / 2;
+      kardan.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), yukEkseni);
+      /* Azimuth bearing at the mast head: the other of the two axes. */
+      const yatak = ekle(new THREE.Mesh(cylGeoZ(r * 0.2, r * 0.2, r * 0.1, 16), M.koyu));
+      yatak.position.z = -sz / 2 + r * 0.05;
       break;
     }
     case 'ruzgar': {
