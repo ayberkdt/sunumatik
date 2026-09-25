@@ -143,6 +143,13 @@
       const az = Math.atan2(31, 26), d = 39;
       sun.position.set(Math.cos(az) * d, Math.tan(sunDeg * Math.PI / 180) * d, Math.sin(az) * d);
       golgeAlaniKur();
+      /* The caption and the URL have to follow the slider. Without these
+         two lines the caption kept whatever the last profile load wrote -
+         so dragging the sun to 48 degrees still read "Gunes 14.0" - and
+         because the URL never gained `?sun=`, the next profile change
+         re-read the query, found nothing, and silently threw the chosen
+         angle away. One omission, three symptoms. */
+      if (dunya) { altyaziYaz(); urlYaz(); }
       kareIste();
     }
     const golgeSec = document.querySelector('#golge');
