@@ -58,6 +58,15 @@ function ok(cond, name, detail = '') {
 installDomShim();
 const THREE = await load('presets/moon_advanced/vendor/three.module.min.js');
 
+/* Built bodies by catalogue id, kept so a later check can ask for one
+   instead of rebuilding the object. */
+const __govdeler = new Map();
+function nodesOf(ad) {
+  const n = __govdeler.get(ad);
+  if (!n) throw new Error(`validate-hardware: '${ad}' not built yet`);
+  return n;
+}
+
 /** Meshes and triangles under a node. */
 function census(node) {
   let meshes = 0, tris = 0;
@@ -117,6 +126,7 @@ for (const o of OBJECTS) {
   } else if (built.nodes) {
     for (const [id, n] of built.nodes) nodes.set(id, n);
   }
+  __govdeler.set(o.ad, nodes);
   ok(nodes.size > 0, 'bodies were built', `${nodes.size} parts`);
 
   const sayim = [];
@@ -272,6 +282,63 @@ section('shape grammar');
     ok(bildirimsiz.length === 0, `${o.ad}: grammar rows declare their detail`,
       bildirimsiz.join(', ') || 'all declared');
   }
+}
+
+/* ── the spec drives the drawing ─────────────────────────────────────── */
+section('spec drives geometry');
+{
+  /* Four times now a part's spec line has declared hardware the geometry
+     did not have: insert grids under equipment that the catalogue bolts to
+     a radiator, "8 runs" of heat pipe drawn as two, a `kizak` slide-rail
+     interface with no rail anywhere, and a grounding tab at every seam of a
+     blanket that had none. A number in the text that the drawing
+     contradicts is worse than no number, so the numbers are now READ. */
+  const SB = await load('presets/satellite_integration/sat-build.mjs');
+  const SP = await load('presets/satellite_integration/sat-parts.mjs');
+
+  ok(typeof SB.cikarHatSayisi === 'function' && typeof SB.cikarBoltSayisi === 'function',
+    'the builder exposes its spec readers');
+  ok(SB.cikarHatSayisi({ tech: { detay: '8 runs; 120 W.m capacity each' } }, 2) === 8,
+    'run count comes out of the spec line', '"8 runs" -> 8');
+  ok(SB.cikarHatSayisi({ tech: { detay: 'no count here' } }, 2) === 2,
+    'a spec with no count falls back to the default');
+  ok(SB.cikarBoltSayisi({ tech: { baglanti: '24 x M8 A286 bolts' } }, 8) === 24,
+    'bolt count comes out of the fastening line', '"24 x M8" -> 24');
+
+  /* And the drawing has to follow it. The heat-pipe row declares 8 runs;
+     the body must carry at least that many pieces. */
+  const hp = SP.partById('isi-borulari');
+  const beyanHat = SB.cikarHatSayisi(hp, 2);
+  const govde = nodesOf('satellite').get('isi-borulari');
+  const sayim = census(govde);
+  ok(beyanHat === 8, 'heat-pipe row still declares 8 runs', `${beyanHat}`);
+  ok(sayim.meshes >= beyanHat, 'the heat-pipe body has at least as many pieces as runs declared',
+    `${sayim.meshes} meshes / ${beyanHat} runs`);
+
+  /* Every panel that declares a slide-rail interface must carry rails. A
+     panel with no rail has 37 meshes; one with them has more, and the
+     check is that the two groups differ in the right direction. */
+  const rayli = SP.PARTS.filter(q => q.arayuz === 'kizak');
+  ok(rayli.length === 4, 'four panels declare a slide-rail interface', `${rayli.length}`);
+  /* Comparing mesh counts between panels was the wrong question: the lower
+     deck is four times the area of a side panel and carries a bigger insert
+     grid, so it wins on count while having no rail at all. Ask whether the
+     RAIL IS THERE - the kit marks it as a mechanism - not whether the part
+     is busy. */
+  const rayVar = (id) => {
+    let bulundu = false;
+    nodesOf('satellite').get(id)?.traverse(o => {
+      if (o.userData?.notes?.regime === 'mechanism') bulundu = true;
+    });
+    return bulundu;
+  };
+  const raysiz = rayli.filter(q => !rayVar(q.id)).map(q => q.id);
+  ok(raysiz.length === 0, 'every panel that declares a slide rail has one',
+    raysiz.join(', ') || rayli.map(q => q.id).join(', '));
+  const civatali = SP.PARTS.filter(q => q.sekil === 'panel' && q.arayuz === 'civata');
+  const fazladan = civatali.filter(q => rayVar(q.id)).map(q => q.id);
+  ok(fazladan.length === 0, 'a bolted panel does NOT get a rail it never declared',
+    fazladan.join(', ') || `${civatali.length} bolted panels`);
 }
 
 /* ── the ground is painted with its albedo ───────────────────────────── */

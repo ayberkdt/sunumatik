@@ -1112,4 +1112,209 @@ export function rocketEngine(THREE, kit, rExit, len, opts = {}) {
   return g;
 }
 
+/* ══ attitude hardware and panel interfaces ═══════════════════════ */
+
+/**
+ * Reaction wheel assembly — a flywheel is the least of it.
+ *
+ * The wheel stores angular momentum, so the mass belongs at the RIM; the
+ * centre of a reaction wheel is empty on purpose. Everything else exists
+ * because the rotor spins at six thousand rpm a metre from an optical
+ * bench: two bearing cartridges in a preloaded pair, a brushless stator
+ * whose windings are the only thing that touches the rotor magnetically,
+ * a hall sensor to know where it is, a launch lock so it does not brinell
+ * its own bearings on the pad, and isolator feet so its residual imbalance
+ * does not get written straight into the payload.
+ *
+ * Spin axis is +Z; the mounting feet are at -Z.
+ */
+export function reactionWheel(THREE, kit, r, h, opts = {}) {
+  const { isolators = 3, bolts = 8, launchLock = true, cutaway = true } = opts;
+  const g = new THREE.Group();
+
+  /* Housing: it is also the vacuum enclosure, because a wheel spinning in
+     air would heat its own bearings. */
+  const kasaMat = cutaway ? kit.alu.clone() : kit.alu;
+  if (cutaway) { kasaMat.transparent = true; kasaMat.opacity = 0.42; kasaMat.depthWrite = false; }
+  const kasa = new THREE.Mesh(cylGeoZ(r, r, h, 30, true), kasaMat);
+  g.add(kasa);
+  for (const e of [-1, 1]) {
+    const kapak = new THREE.Mesh(cylGeoZ(r, r, h * 0.06, 30), kit.aluDark);
+    kapak.position.z = e * h * 0.47;
+    g.add(kapak);
+  }
+  /* Bolt ring on the mounting face. */
+  const bc = boltCircle(THREE, kit, r * 0.86, bolts);
+  bc.position.z = -h * 0.5;
+  g.add(bc);
+
+  /* Rotor: a thin web carrying a heavy rim. Momentum goes as m*r^2, so
+     the same mass out at the rim stores several times what it would at
+     the hub - which is why the middle is empty. */
+  const web = new THREE.Mesh(cylGeoZ(r * 0.74, r * 0.74, h * 0.1, 26), kit.metal);
+  g.add(web);
+  const jant = new THREE.Mesh(new THREE.TorusGeometry(r * 0.76, r * 0.13, 10, 34), kit.koyuMetal);
+  jant.scale.z = 0.72;
+  g.add(jant);
+  /* Lightening holes in the web: mass that is not at the rim is wasted. */
+  for (let i = 0; i < 6; i++) {
+    const a = i * TAU / 6;
+    const delik = new THREE.Mesh(cylGeoZ(r * 0.13, r * 0.13, h * 0.12, 12), kit.black);
+    delik.position.set(Math.cos(a) * r * 0.44, Math.sin(a) * r * 0.44, 0);
+    g.add(delik);
+  }
+
+  /* Shaft and a preloaded pair of bearing cartridges. A single bearing
+     cannot take axial load in both directions; the pair is the reason the
+     rotor stays where it is under launch. */
+  const mil = new THREE.Mesh(cylGeoZ(r * 0.09, r * 0.09, h * 0.86, 16), kit.metal);
+  g.add(mil);
+  for (const e of [-1, 1]) {
+    const yatak = new THREE.Mesh(cylGeoZ(r * 0.18, r * 0.18, h * 0.14, 18), kit.aluDark);
+    yatak.position.z = e * h * 0.3;
+    g.add(yatak);
+    const bilezik = new THREE.Mesh(new THREE.TorusGeometry(r * 0.185, r * 0.022, 6, 18), kit.gold);
+    bilezik.position.z = e * h * 0.3;
+    g.add(bilezik);
+  }
+
+  /* Brushless stator: the windings are what actually turn the wheel. */
+  for (let i = 0; i < 8; i++) {
+    const a = i * TAU / 8;
+    const sargi = new THREE.Mesh(new THREE.TorusGeometry(r * 0.055, r * 0.028, 5, 10), kit.bakir);
+    sargi.position.set(Math.cos(a) * r * 0.26, Math.sin(a) * r * 0.26, -h * 0.08);
+    sargi.rotation.y = Math.PI / 2;
+    sargi.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), a);
+    g.add(sargi);
+  }
+  /* Hall sensor: without it the drive does not know where the rotor is. */
+  const hall = new THREE.Mesh(new THREE.BoxGeometry(r * 0.12, r * 0.08, h * 0.08), kit.black);
+  hall.position.set(r * 0.42, 0, -h * 0.12);
+  g.add(hall);
+
+  if (launchLock) {
+    /* Launch lock: it clamps the rotor for the ride up. A wheel free to
+       rattle brinells its own races before it ever spins. */
+    const kilit = new THREE.Mesh(cylGeoZ(r * 0.1, r * 0.1, h * 0.3, 10), kit.gold);
+    kilit.position.set(-r * 0.5, 0, h * 0.28);
+    g.add(kilit);
+    const pim = new THREE.Mesh(cylGeoZ(r * 0.04, r * 0.04, h * 0.5, 8), kit.koyuMetal);
+    pim.position.set(-r * 0.5, 0, h * 0.1);
+    g.add(pim);
+  }
+
+  for (let i = 0; i < isolators; i++) {
+    const a = i * TAU / isolators + 0.4;
+    const iso = new THREE.Mesh(cylGeoZ(r * 0.1, r * 0.13, h * 0.34, 12), kit.black);
+    iso.position.set(Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.8, -h * 0.62);
+    g.add(iso);
+    const pabuc = new THREE.Mesh(new THREE.BoxGeometry(r * 0.26, r * 0.26, h * 0.06), kit.alu);
+    pabuc.position.set(Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.8, -h * 0.8);
+    g.add(pabuc);
+  }
+
+  const kon = new THREE.Mesh(cylGeoX(r * 0.1, r * 0.09, r * 0.18, 10), kit.connector);
+  kon.position.set(r * 1.05, 0, -h * 0.2);
+  g.add(kon);
+
+  g.userData.notes = { regime: 'attitude',
+    why: 'Momentum goes as mass times radius squared, so the rotor is a heavy rim on a light web and the middle is deliberately empty.' };
+  return g;
+}
+
+/**
+ * Inertial measurement unit — the gyros have to be visible or it is a box.
+ *
+ * Three ring laser gyros in a block, each sensing one axis, plus an
+ * optical alignment cube that ties their axes to the spacecraft's frame
+ * on the ground. The housing is hermetic because a ring laser gyro is a
+ * sealed optical cavity and a leak ends it.
+ */
+export function gyroBlock(THREE, kit, sx, sy, sz, opts = {}) {
+  const { cube = true, connectors = 2, cutaway = true } = opts;
+  const g = new THREE.Group();
+  const govdeMat = cutaway ? kit.alu.clone() : kit.alu;
+  if (cutaway) { govdeMat.transparent = true; govdeMat.opacity = 0.4; govdeMat.depthWrite = false; }
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), govdeMat));
+
+  /* Three cavities, one per axis. A ring laser gyro is a closed triangular
+     light path; drawn as a ring because that is what the block shows. */
+  const yol = new THREE.MeshStandardMaterial({ color: 0x7a5fd0, roughness: 0.3, metalness: 0.2,
+    emissive: 0x3a2870, emissiveIntensity: 0.7 });
+  const r = Math.min(sx, sy, sz) * 0.3;
+  for (const [rx, ry] of [[0, 0], [Math.PI / 2, 0], [0, Math.PI / 2]]) {
+    const eksen = new THREE.Group();
+    eksen.rotation.set(rx, ry, 0);
+    /* The cavity is a triangular light path, so it is drawn as three
+       BORES between three mirrors rather than as a three-segment torus -
+       the torus rendered as a wireframe star and read as a symbol, not as
+       a block of glass-ceramic with holes in it. */
+    for (let i = 0; i < 3; i++) {
+      const a0 = i * TAU / 3, a1 = (i + 1) * TAU / 3;
+      const p0 = new THREE.Vector3(Math.cos(a0) * r, Math.sin(a0) * r, 0);
+      const p1 = new THREE.Vector3(Math.cos(a1) * r, Math.sin(a1) * r, 0);
+      const boy = p0.distanceTo(p1);
+      const bore = new THREE.Mesh(cylGeoZ(r * 0.1, r * 0.1, boy, 10), yol);
+      bore.position.copy(p0).add(p1).multiplyScalar(0.5);
+      bore.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1),
+        p1.clone().sub(p0).normalize());
+      eksen.add(bore);
+      /* Corner mirror: the precision part, and the one that ages. */
+      const ayna = new THREE.Mesh(cylGeoZ(r * 0.18, r * 0.18, r * 0.12, 10), kit.mliSilver);
+      ayna.position.copy(p0);
+      eksen.add(ayna);
+    }
+    g.add(eksen);
+  }
+  if (cube) {
+    const kup = new THREE.Mesh(new THREE.BoxGeometry(sx * 0.16, sx * 0.16, sx * 0.16), kit.gold);
+    kup.position.set(0, 0, sz * 0.58);
+    g.add(kup);
+  }
+  for (let i = 0; i < connectors; i++) {
+    const k = new THREE.Mesh(cylGeoX(sx * 0.07, sx * 0.06, sx * 0.14, 10), kit.connector);
+    k.position.set(sx * 0.56, (i - (connectors - 1) / 2) * sy * 0.34, -sz * 0.18);
+    g.add(k);
+  }
+  /* Hard-mounted, not isolated: an IMU on soft feet measures the feet. */
+  for (const ex of [-1, 1]) for (const ey of [-1, 1]) {
+    const ayak = new THREE.Mesh(new THREE.BoxGeometry(sx * 0.14, sy * 0.14, sz * 0.1), kit.aluDark);
+    ayak.position.set(ex * sx * 0.42, ey * sy * 0.42, -sz * 0.52);
+    g.add(ayak);
+  }
+  g.userData.notes = { regime: 'attitude',
+    why: 'Three sealed optical cavities, one per axis, and an alignment cube that ties them to the spacecraft frame.' };
+  return g;
+}
+
+/**
+ * Slide rail and its lock.
+ *
+ * Four panels in this catalogue declare a `kizak` interface - they slide
+ * onto the bus at panel level and then lock - and nothing was drawn. A rail
+ * is a pair of guides and a latch at the end of the travel; without it the
+ * interface exists only in the text.
+ */
+export function slideRail(THREE, kit, uzunluk, opts = {}) {
+  const { locks = 2, en = 0.05 } = opts;
+  const g = new THREE.Group();
+  for (const e of [-1, 1]) {
+    const kanal = new THREE.Mesh(new THREE.BoxGeometry(en, en * 0.55, uzunluk), kit.metal);
+    kanal.position.set(0, e * en * 0.9, 0);
+    g.add(kanal);
+  }
+  for (let i = 0; i < locks; i++) {
+    const z = (i / Math.max(1, locks - 1) - 0.5) * uzunluk * 0.72;
+    const kilit = new THREE.Mesh(new THREE.BoxGeometry(en * 1.5, en * 2.4, en * 1.6), kit.aluDark);
+    kilit.position.set(0, 0, z);
+    g.add(kilit);
+    const kol = new THREE.Mesh(cylGeoY(en * 0.22, en * 0.22, en * 3.0, 8), kit.gold);
+    kol.position.set(en * 0.5, 0, z);
+    g.add(kol);
+  }
+  g.userData.notes = { regime: 'mechanism',
+    why: 'The panel is built and tested on a bench, then slides on and locks; working inside a closed satellite is what this avoids.' };
+  return g;
+}
+
 export { TAU };

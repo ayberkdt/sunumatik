@@ -361,7 +361,13 @@
         derin = Math.max(derin, Math.abs(v.dot(bakis)));
       }
       const vFov = camera.fov * Math.PI / 180;
-      const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
+      /* A stage that has not been laid out yet reports width 0, so
+         camera.aspect is 0, hFov is 0 and the distance below comes out
+         INFINITE - the camera goes to infinity, every projection is NaN,
+         and the label layer writes NaN into the leader SVG a few hundred
+         times. Guarded at the one place the zero can enter. */
+      const en = Number.isFinite(camera.aspect) && camera.aspect > 0 ? camera.aspect : 1;
+      const hFov = 2 * Math.atan(Math.tan(vFov / 2) * en);
       /* The toolbar and the caption cover the top and bottom of the stage,
          so the usable band is shorter than the canvas. Taken from the same
          inset numbers the labels use rather than guessed at with a margin
@@ -372,6 +378,7 @@
          frustum too, or a deep body clips at its nearest edge. */
       const dist = Math.max((yariBoy / kullanilir) / Math.tan(vFov / 2),
         yariEn / Math.tan(hFov / 2)) * 1.04 + derin;
+      if (!Number.isFinite(dist) || dist <= 0) return;      // nothing to frame yet
       const want = centre.clone().add(bakis.clone().multiplyScalar(dist));
       /* Characteristic size, for the shadow frustum and the key light. */
       const r = Math.max(yariEn, yariBoy, derin) || 1;

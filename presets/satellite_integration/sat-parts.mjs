@@ -132,7 +132,7 @@ export const PARTS = Object.freeze([
     tech: { no: 'SD-ACS-081', malzeme: 'Ti optical bench, aluminium baffle', guc_W: 12, sicaklik_C: [-30, 45], baglanti: 'Isostatic three-point, M4 - panel bending must not reach the optics', detay: '2 off, boresights 90 deg apart; 2 arcsec cross-axis, 12 arcsec about roll', kalite: '30 deg Sun exclusion angle' },
     why: 'Two heads 90 degrees apart, so a Sun or Earth intrusion into one never blinds both at once.' },
   { id: 'imu', ad: 'Inertial measurement unit', sistem: 'adcs', step: 4,
-    mountsTo: 'itki-tupu', arayuz: 'civata', massKg: 4.2, pos: [0.25, 0.25, 0.1], size: [0.2, 0.2, 0.16], sekil: 'kutu',
+    mountsTo: 'itki-tupu', arayuz: 'civata', massKg: 4.2, pos: [0.25, 0.25, 0.1], size: [0.2, 0.2, 0.16], sekil: 'jiroskop',
     tech: { no: 'SD-ACS-082', malzeme: 'Ring laser gyro block', guc_W: 18, sicaklik_C: [-20, 55], baglanti: 'Near the centre of mass, 4 x M5', detay: 'Drift 0.003 deg/hour; carries attitude while the trackers are out', kalite: 'Redundant dual block' },
     why: 'Bridges the gaps when the star trackers are blinded. Mounted near the centre of mass so rotation and translation stay separable.' },
   { id: 'manyetik-cubuk', ad: 'Magnetorquers (3)', sistem: 'adcs', step: 4, qty: 3,

@@ -56,7 +56,7 @@ function konnektorSayisi(p) {
 
 /* Bolt count is read out of the fastening text where the catalogue states
    one, so the drawing cannot disagree with the spec. */
-function cikarBoltSayisi(p, varsayilan) {
+export function cikarBoltSayisi(p, varsayilan) {
   const m = /(\d+)\s*[x\u00d7]\s*M\d/.exec(p.tech?.baglanti || '');
   return m ? Math.min(Number(m[1]), 48) : varsayilan;
 }
@@ -69,8 +69,17 @@ function cikarBoltSayisi(p, varsayilan) {
  * quietly changing which geometry a row gets. */
 export const LOCAL_KINDS = Object.freeze(new Set([
   'halka', 'silindir', 'tank', 'kure', 'nozul', 'panel', 'kutu', 'tekerlek',
+  'jiroskop',
   'bafil', 'cubuk', 'boru', 'kanat', 'canak', 'kabuk', 'gizli',
 ]));
+
+/* Run count read out of the spec line, the same way the bolt count is.
+   The heat-pipe row says "8 runs" and the drawing had two; a number in the
+   text that the geometry contradicts is worse than no number. */
+export function cikarHatSayisi(p, varsayilan) {
+  const m = /(\d+)\s*runs?\b/i.exec(p.tech?.detay || '');
+  return m ? Math.min(Number(m[1]), 16) : varsayilan;
+}
 
 function govde(THREE, p, mat, dokular) {
   /* The kit's material family, resolved once per body. */
@@ -209,16 +218,28 @@ function govde(THREE, p, mat, dokular) {
       const bogaz = ekle(new THREE.Mesh(cylGeoZ(sx * 0.22, sx * 0.3, sz * 0.4, 22), KIT.aluDark));
       bogaz.position.z = sz * 0.28;
       const canMat = mat.clone(); canMat.side = THREE.DoubleSide;
-      const can = ekle(new THREE.Mesh(coneGeoZ(sx / 2, sz * 0.7, 28, true), canMat));
-      can.rotation.x = Math.PI;
-      can.position.z = -sz * 0.1;
+      /* A nozzle contour is not a straight cone: it expands fast after the
+         throat and then turns over so the exhaust leaves nearly axial. The
+         cone was throwing that away, and the turn-over is worth several
+         per cent of thrust. */
+      const rBogaz = sx * 0.22, rCikis = sx / 2, boyCan = sz * 0.7;
+      const profil = [];
+      for (let i = 0; i <= 14; i++) {
+        const u = i / 14;
+        profil.push(new THREE.Vector2(rBogaz + (rCikis - rBogaz) * Math.sqrt(u),
+          sz * 0.25 - u * boyCan));
+      }
+      const can = latheZ(profil, 30, canMat);
+      can.castShadow = true; can.receiveShadow = true;
+      g.add(can);
       /* Stiffening hoops on the bell: a thin radiatively cooled skirt
          needs them or it flutters. */
-      for (let i = 1; i <= 3; i++) {
-        const t = i / 4;
+      for (let i = 1; i <= 5; i++) {
+        const u = i / 6;
+        const rh = rBogaz + (rCikis - rBogaz) * Math.sqrt(u);
         const hoop = ekle(new THREE.Mesh(
-          new THREE.TorusGeometry((sx / 2) * t * 1.02, sx * 0.012, 5, 26), KIT.aluDark));
-        hoop.position.z = -sz * 0.1 - (t - 0.5) * sz * 0.7;
+          new THREE.TorusGeometry(rh * 1.02, sx * 0.012, 5, 26), KIT.aluDark));
+        hoop.position.z = sz * 0.25 - u * boyCan;
       }
       /* Injector head and its two propellant inlets - fuel and oxidiser
          arrive separately and meet for the first time inside. */
@@ -250,6 +271,18 @@ function govde(THREE, p, mat, dokular) {
         osrMap: radyator ? dokular.osr.clone() : null,
       });
       if (sy < sx && sy < sz) pan.rotation.x = Math.PI / 2;
+      /* The rails this panel's declared interface is made of. Four panels
+         say `kizak` - built on a bench, slid on, then locked - and not one
+         rail was drawn anywhere, so the interface existed only in the
+         text. Same defect the radiator inserts had. */
+      if (p.arayuz === 'kizak') {
+        for (const e of [-1, 1]) {
+          const ray = D.slideRail(THREE, KIT, h * 0.92, { locks: 2, en: 0.05 });
+          if (sy < sx && sy < sz) { ray.position.set(e * w * 0.44, -t * 0.7, 0); ray.rotation.x = Math.PI / 2; }
+          else ray.position.set(e * w * 0.44, 0, -t * 0.7);
+          g.add(ray);
+        }
+      }
       pan.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
       g.add(pan);
       if (radyator) {
@@ -282,6 +315,11 @@ function govde(THREE, p, mat, dokular) {
       }
       break;
     }
+    case 'jiroskop': {
+      /* An IMU drawn as a box is a box. The gyros are the instrument. */
+      g.add(D.gyroBlock(THREE, KIT, sx, sy, sz, { cube: true, connectors: 2 }));
+      break;
+    }
     case 'kutu': {
       /* Chassis, machined lid, standoff feet, a keyed connector bank and
          the part number painted on the face. Fins only where the unit has
@@ -296,24 +334,21 @@ function govde(THREE, p, mat, dokular) {
       break;
     }
     case 'tekerlek': {
-      /* Housing, rim-weighted rotor, bearing hub, the isolator feet that
-         keep wheel vibration out of the optics, and its connector. */
-      const r = sx / 2;
-      const m = ekle(new THREE.Mesh(cylGeoY(r, r, sz, 30), mat));
-      m.rotation.x = Math.PI / 2;
-      const rim = ekle(new THREE.Mesh(new THREE.TorusGeometry(r * 0.96, r * 0.07, 8, 30), KIT.aluDark));
-      const hub = ekle(new THREE.Mesh(cylGeoZ(r * 0.16, r * 0.16, sz * 1.3, 16), KIT.alu));
-      const kapak = ekle(new THREE.Mesh(cylGeoZ(r * 0.62, r * 0.62, sz * 0.18, 24), KIT.aluDark));
-      kapak.position.z = sz * 0.5;
-      for (let i = 0; i < 3; i++) {
-        const a = i * 2 * Math.PI / 3;
-        /* Vibration isolators, not rigid feet: a wheel bolted hard to the
-           panel writes its own imbalance straight into the payload. */
-        const iso = ekle(new THREE.Mesh(cylGeoZ(r * 0.09, r * 0.11, sz * 0.5, 10), KIT.black));
-        iso.position.set(Math.cos(a) * r * 0.78, Math.sin(a) * r * 0.78, -sz * 0.6);
-      }
-      const kon = ekle(new THREE.Mesh(cylGeoX(r * 0.1, r * 0.09, r * 0.16, 10), KIT.connector));
-      kon.position.set(r * 1.02, 0, 0);
+      /* The whole assembly, from the kit: rim-weighted rotor on a light
+         web, a preloaded bearing pair, the brushless stator that drives
+         it, a hall sensor, the launch lock that stops it brinelling its
+         own races on the pad, and isolator feet. The sketch this replaced
+         was a housing, a rim and three feet - nothing in it explained why
+         a reaction wheel is hard. */
+      g.add(D.reactionWheel(THREE, KIT, sx / 2, sz, {
+        isolators: 3, bolts: 8, launchLock: true, cutaway: true,
+      }));
+      /* Pyramid bracket. Four wheels on a pyramid is the layout the
+         catalogue declares, and it is the reason one can fail. */
+      const brk = ekle(new THREE.Mesh(
+        new THREE.BoxGeometry(sx * 0.9, sy * 0.9, sz * 0.12), KIT.alu));
+      brk.position.z = -sz * 0.9;
+      brk.rotation.z = Math.PI / 4;
       break;
     }
     case 'bafil': {
@@ -323,12 +358,35 @@ function govde(THREE, p, mat, dokular) {
       const baf = D.baffle(THREE, KIT, sx * 0.5, sz * 0.62);
       baf.position.z = sz * 0.5;
       g.add(baf);
+      /* Isostatic three-point mount, built from the two endpoints. The
+         legs used to be aimed with rotation.set(sin, -cos, 0), which
+         composes Z first and therefore points at nothing in particular;
+         they now actually run from the optics housing down to their
+         footprints on the panel. */
+      const ucNokta = new THREE.Vector3(0, 0, -sz * 0.18);
       for (let i = 0; i < 3; i++) {
         const a = i * 2 * Math.PI / 3 + 0.4;
-        const bipod = ekle(new THREE.Mesh(cylGeoZ(sx * 0.035, sx * 0.035, sz * 0.4, 8), KIT.alu));
-        bipod.position.set(Math.cos(a) * sx * 0.36, Math.sin(a) * sy * 0.36, -sz * 0.4);
-        bipod.rotation.set(Math.sin(a) * 0.3, -Math.cos(a) * 0.3, 0);
+        const ayakUcu = new THREE.Vector3(Math.cos(a) * sx * 0.52, Math.sin(a) * sy * 0.52, -sz * 0.62);
+        const boy = ucNokta.distanceTo(ayakUcu);
+        const bipod = ekle(new THREE.Mesh(cylGeoZ(sx * 0.035, sx * 0.035, boy, 8), KIT.alu));
+        bipod.position.copy(ucNokta).add(ayakUcu).multiplyScalar(0.5);
+        bipod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1),
+          ayakUcu.clone().sub(ucNokta).normalize());
+        const pabuc = ekle(new THREE.Mesh(
+          new THREE.BoxGeometry(sx * 0.16, sy * 0.16, sz * 0.05), KIT.aluDark));
+        pabuc.position.copy(ayakUcu);
       }
+      /* The detector needs to be cold and the baffle needs to be warm, so
+         there is a strap to one and a heater on the other. Both are on
+         every real star tracker and neither was drawn. */
+      const serit = ekle(new THREE.Mesh(
+        new THREE.BoxGeometry(sx * 0.1, sy * 0.5, sz * 0.02), KIT.bakir));
+      serit.position.set(-sx * 0.3, 0, -sz * 0.22);
+      const isitici = ekle(new THREE.Mesh(
+        new THREE.TorusGeometry(sx * 0.46, sx * 0.02, 5, 20), KIT.ikaz));
+      isitici.position.z = sz * 0.68;
+      const kon = ekle(new THREE.Mesh(cylGeoX(sx * 0.07, sx * 0.06, sx * 0.14, 10), KIT.connector));
+      kon.position.set(sx * 0.44, 0, -sz * 0.2);
       void head;
       break;
     }
@@ -357,21 +415,68 @@ function govde(THREE, p, mat, dokular) {
       break;
     }
     case 'boru': {
-      /* Two welded runs with support clamps, an expansion loop and an
-         isolation valve on each. Straight bare rods said none of that. */
-      for (const e of [-1, 1]) {
+      /* Two completely different things were sharing one drawing: titanium
+         propellant tubing that is welded, valved and trace-heated, and
+         grooved aluminium heat pipes that are embedded in a panel and have
+         no valves at all. They now look like what they are. */
+      const isiBorusu = p.sistem === 'isil';
+      const hat = cikarHatSayisi(p, isiBorusu ? 8 : 2);
+      const yayil = (i) => (hat === 1 ? 0 : (i / (hat - 1) - 0.5)) * sy * 0.62;
+
+      if (isiBorusu) {
+        for (let i = 0; i < hat; i++) {
+          const y = yayil(i);
+          /* Grooved, so flattened: a heat pipe is bonded into the panel
+             face, not hung off it, and a round rod could not be. */
+          const hp = ekle(new THREE.Mesh(cylGeoX(0.011, 0.011, sx * 0.94, 10), KIT.alu));
+          hp.position.set(0, y, 0);
+          hp.scale.z = 0.55;
+          /* Saddle bond at each end: where the heat goes in and out. */
+          for (const e of [-1, 1]) {
+            const eyer = ekle(new THREE.Mesh(
+              new THREE.BoxGeometry(sx * 0.07, 0.03, 0.016), KIT.aluDark));
+            eyer.position.set(e * sx * 0.44, y, 0);
+          }
+        }
+        /* The two manifolds the runs terminate into. */
+        for (const e of [-1, 1]) {
+          const man = ekle(new THREE.Mesh(cylGeoY(0.015, 0.015, sy * 0.72, 10), KIT.koyuMetal));
+          man.position.set(e * sx * 0.47, 0, 0);
+        }
+        break;
+      }
+
+      for (let i = 0; i < hat; i++) {
+        const y = yayil(i);
         const m = ekle(new THREE.Mesh(cylGeoX(0.016, 0.016, sx * .9, 12), KIT.mliSilver));
-        m.position.set(0, e * sy * 0.22, 0);
-        for (let i = 0; i < 4; i++) {
+        m.position.set(0, y, 0);
+        for (let j = 0; j < 4; j++) {
           const cl = ekle(new THREE.Mesh(new THREE.TorusGeometry(0.023, 0.006, 5, 12), KIT.alu));
-          cl.position.set((i / 3 - 0.5) * sx * 0.8, e * sy * 0.22, 0);
+          cl.position.set((j / 3 - 0.5) * sx * 0.8, y, 0);
           cl.rotation.y = Math.PI / 2;
         }
         const valf = ekle(new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.034), KIT.aluDark));
-        valf.position.set(sx * 0.3, e * sy * 0.22, 0);
+        valf.position.set(sx * 0.3, y, 0);
+        /* Filter upstream of the valve: one particle is enough to hold a
+           thruster seat open, and that ends the mission slowly. */
+        const filtre = ekle(new THREE.Mesh(cylGeoX(0.021, 0.021, 0.05, 10), KIT.metal));
+        filtre.position.set(sx * 0.12, y, 0);
+        /* Trace heaters. The row declares 24 W of them because MMH freezes
+           at -52 C; nothing was drawn. */
+        for (let j = 0; j < 3; j++) {
+          const is = ekle(new THREE.Mesh(new THREE.TorusGeometry(0.019, 0.004, 4, 12), KIT.ikaz));
+          is.position.set((j / 2 - 0.5) * sx * 0.5, y, 0);
+          is.rotation.y = Math.PI / 2;
+        }
+        /* Orbital weld beads: the row says every one is radiographed. */
+        for (const e of [-1, 1]) {
+          const kaynak = ekle(new THREE.Mesh(new THREE.TorusGeometry(0.0175, 0.0035, 4, 12), KIT.white));
+          kaynak.position.set(e * sx * 0.4, y, 0);
+          kaynak.rotation.y = Math.PI / 2;
+        }
         /* Expansion loop: the run cannot be straight across a 100 K swing. */
         const loop = ekle(new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.016, 6, 18, Math.PI * 1.4), KIT.mliSilver));
-        loop.position.set(-sx * 0.25, e * sy * 0.22, 0.03);
+        loop.position.set(-sx * 0.25, y, 0.03);
         loop.rotation.set(0, Math.PI / 2, 0);
       }
       break;
@@ -472,6 +577,15 @@ function govde(THREE, p, mat, dokular) {
         const tape = ekle(new THREE.Mesh(new THREE.BoxGeometry(w, h, d2), KIT.mliSilver));
         tape.position.set(pos[0], pos[1], pos[2]);
         void ax;
+      }
+      /* Grounding tab at every seam. The row says so - an ungrounded
+         blanket charges up and discharges into whatever it is lying on,
+         which is how a spacecraft kills its own electronics - and not one
+         was drawn. */
+      for (const ex of [-1, 1]) for (const ey of [-1, 1]) for (const ez of [-1, 1]) {
+        const tirnak = ekle(new THREE.Mesh(
+          new THREE.BoxGeometry(sx * 0.05, sy * 0.05, sz * 0.012), KIT.bakir));
+        tirnak.position.set(ex * sx * 0.42, ey * sy * 0.42, ez * sz * 0.5);
       }
       /* Vent scallops, four to a face. */
       for (let i = 0; i < 4; i++) {
