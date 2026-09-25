@@ -290,9 +290,10 @@
       const d = describe();
       const s = STEPS.find(x => x.no === adim);
       el('#altyazi').innerHTML = hepsi
-        ? `<b>Fully assembled</b> · ${d.parca} tür, ${d.adet} parça · kuru ${d.kuruKg} kg, itici ${d.iticiKg} kg, fırlatma ${d.firlatmaKg} kg`
-        + ` · kütle merkezi eksenden ${d.eksendenSapmaMm} mm · patlatma %${Math.round(patla * 100)}`
-        : `<b>Adım ${s.no}/${STEPS.length} — ${s.ad}</b> · ${s.aciklama}`;
+        ? `<b>Fully assembled</b> · ${d.parca} types, ${d.adet} units · `
+          + `${d.kuruKg} kg dry + ${d.iticiKg} kg propellant = ${d.firlatmaKg} kg at launch · `
+          + `CoM ${d.eksendenSapmaMm} mm off axis · explode ${Math.round(patla * 100)}%`
+        : `<b>Step ${String(s.no).padStart(2, '0')}/${STEPS.length} — ${s.ad}</b> · ${s.aciklama}`;
     }
 
     /* ---------- etiketler ---------- */

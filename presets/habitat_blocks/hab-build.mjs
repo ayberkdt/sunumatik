@@ -8,9 +8,10 @@
  * `core/geometry-axis.mjs`. Saha koordinatı +Z yukarı.
  */
 
-import { PARTS, SUBSYSTEMS, partById, envAllows } from './hab-parts.mjs';
+import { PARTS, SUBSYSTEMS, partById, envAllows, runEndpoints } from './hab-parts.mjs';
 import { cylGeoZ, cylGeoX, coneGeoZ, latheX } from '../core/geometry-axis.mjs';
 import * as D from './hab-detail.mjs';
+import { planRun, buildRun } from './routing.mjs';
 
 const TAU = Math.PI * 2;
 
@@ -614,9 +615,24 @@ function govde(THREE, p, M, dok) {
       g.add(ft);
       break;
     }
-    case 'hat':
-      /* Hatlar routing.mjs tarafından kurulur; burada yer tutucu yok. */
+    case 'hat': {
+      /* The run used to be built only by the showcase page, so in the
+         exploded view these two parts were EMPTY groups: they got a label
+         and a leader pointing at nothing. The hardware gate caught it
+         (0 meshes). The geometry now comes from the same routing solver the
+         page uses, so the line exists wherever the part does. */
+      const uc = runEndpoints(p.id);
+      if (!uc) break;
+      const plan = planRun(uc.a, uc.b, {
+        akiskan: uc.akiskan, env: 'mars', odM: uc.odM, wallM: uc.wallM, malzeme: uc.malzeme,
+      });
+      const run = buildRun(THREE, plan);
+      /* The catalogue places the part at its own centre, but planRun works
+         in site coordinates, so the run is shifted back onto the origin. */
+      run.position.set(-p.pos[0], -p.pos[1], -p.pos[2]);
+      g.add(run);
       break;
+    }
     default:
       ekle(new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat));
   }

@@ -84,6 +84,9 @@ jobs:
       - name: Patlatma hareketi (kademe, yerleşme açısı, karma dağılımı)
         run: node scripts/validate-exploded-motion.mjs
 
+      - name: Donanım yoğunluğu (çıplak ilkel kalmadı, üçgen bütçesi, determinizm)
+        run: node scripts/validate-hardware.mjs
+
       - name: Açılış sayfası envanterle eşleşiyor mu
         run: node scripts/build-home.mjs --check
 
