@@ -11,6 +11,7 @@
 import { PARTS, SUBSYSTEMS, partById, depth } from './sat-parts.mjs';
 import { cylGeoY, cylGeoX, cylGeoZ, coneGeoZ, latheZ } from '../core/geometry-axis.mjs';
 import * as D from './sat-detail.mjs';
+import { buildShape, knowsKind } from '../core/hardware-shapes.mjs';
 
 const renkler = (THREE, tk = {}) => ({
   yapi: new THREE.MeshStandardMaterial({ color: tk.yapi ?? 0x9aa0aa, roughness: .55, metalness: .65 }),
@@ -59,6 +60,17 @@ function cikarBoltSayisi(p, varsayilan) {
   const m = /(\d+)\s*[x\u00d7]\s*M\d/.exec(p.tech?.baglanti || '');
   return m ? Math.min(Number(m[1]), 48) : varsayilan;
 }
+
+/* Shapes the satellite builds ITSELF, before the shared grammar is asked.
+ * Declared rather than inferred so the dispatch order is visible from
+ * outside: these names SHADOW any grammar kind of the same name.
+ * `scripts/validate-hardware.mjs` asserts the shadow list is exactly
+ * {panel, tank}, so a new accidental collision fails the gate instead of
+ * quietly changing which geometry a row gets. */
+export const LOCAL_KINDS = Object.freeze(new Set([
+  'halka', 'silindir', 'tank', 'kure', 'nozul', 'panel', 'kutu', 'tekerlek',
+  'bafil', 'cubuk', 'boru', 'kanat', 'canak', 'kabuk', 'gizli',
+]));
 
 function govde(THREE, p, mat, dokular) {
   /* The kit's material family, resolved once per body. */
@@ -452,7 +464,19 @@ function govde(THREE, p, mat, dokular) {
       g.add(m);
       break;
     }
-    default: ekle(new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat));
+    /* Anything the satellite has no special case for goes to the shared
+       shape grammar (core/hardware-shapes.mjs), so a new catalogue row can
+       declare `sekil` + `detay` and need NO code here. This used to fall
+       back to a plain box, which is how "some sections are still basic"
+       became possible in the first place. */
+    default: {
+      if (!knowsKind(p.sekil)) {
+        throw new Error(`sat-build: '${p.sekil}' is neither a satellite case `
+          + `nor a grammar kind (part ${p.id}). Declare it in hardware-shapes.mjs.`);
+      }
+      const { group } = buildShape(THREE, p, { kit: KIT, lod: dokular.lod || 'shop' });
+      g.add(group);
+    }
   }
   return g;
 }
@@ -462,7 +486,7 @@ function govde(THREE, p, mat, dokular) {
  * Dönen `parcalar`: { id, part, group, taban, yon, derinlik } — patlatma ve
  * entegrasyon sırası bu listeden sürülür.
  */
-export function buildSatellite(THREE, { tokens = {}, scale = 1 } = {}) {
+export function buildSatellite(THREE, { tokens = {}, scale = 1, lod = 'shop' } = {}) {
   const mats = renkler(THREE, tokens);
   /* Detail-kit materials and textures are built ONCE and shared. A fresh
      material per greeble would multiply draw calls for no visual gain. */
@@ -473,6 +497,8 @@ export function buildSatellite(THREE, { tokens = {}, scale = 1 } = {}) {
     mli: D.mliTexture(THREE),
     osr: D.osrTexture(THREE),
     kit,
+    /* Level of detail for grammar-built parts: block | shop | flight. */
+    lod,
     /* Part-number decals are cached: 33 parts, but only the boxes ask. */
     __decal: new Map(),
     decal(no) {

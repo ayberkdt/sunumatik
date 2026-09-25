@@ -134,12 +134,31 @@ launch vehicle should be step 1 to 4 and nothing else.
 
 ## 5. Phases
 
-- **F0** — promote the two kits into `core/hardware-kit.mjs`; old modules
-  re-export so nothing breaks. Density gate with the bare-primitive check.
-- **F1** — `hardware-shapes.mjs` grammar, satellite migrated onto it, and
-  the parts the gate flags get their `detay`.
-- **F2** — new satellite hardware the catalogue does not yet carry: Hall
-  thruster pod, magnetometer boom, and a real bus primary structure
-  (shear panels, corner posts and struts) instead of a box.
-- **F3** — habitat migrated onto the grammar; LOD switch; launch vehicle
-  as the proof that steps 1 to 4 are the whole procedure.
+- **F0** — DONE. Both kits promoted into `core/hardware-kit.mjs`; the old
+  modules re-export, so the satellite and habitat render identically (same
+  triangle counts before and after). Density gate with the bare-primitive
+  check.
+- **F1** — DONE. `hardware-shapes.mjs` carries eleven kinds, each built at
+  every LOD by the gate. `sat-build.mjs`'s `default:` case no longer falls
+  back to a box: it dispatches to the grammar, and throws if the grammar
+  does not know the kind either. LOD is wired through `buildSatellite`.
+- **F2** — DONE. Hall thruster pod (x2) with its PPU, fluxgate magnetometer
+  on a boom, and a real bus primary structure — four shear webs, four
+  corner posts, four base struts — added as CATALOGUE ROWS ONLY. No builder
+  code was written for any of them, which was the point.
+- **F3** — habitat migrated onto the grammar (its `LOCAL_KINDS` list is
+  what has to shrink); launch vehicle as the proof that steps 1 to 4 are
+  the whole procedure.
+
+### Dispatch order, and the one ambiguity in it
+
+An object's own `LOCAL_KINDS` are tried first, then the grammar. Two names
+are in both: `panel` and `tank` on the satellite, where the local case is
+the richer one. That overlap is DECLARED and the gate asserts the shadow
+list is exactly those two, so a new collision fails instead of silently
+changing which geometry a row gets.
+
+The first version of the "undeclared detail" check asked every row whose
+`sekil` the grammar knows for a `detay` block. It flagged seven healthy
+panels, because it was asking about the name rather than about the route
+actually taken. The check now asks the builder.

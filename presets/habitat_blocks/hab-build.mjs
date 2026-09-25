@@ -104,6 +104,17 @@ function silindireOturt(THREE, nesne, r, aci, z, { disari = 0, egim = 0 } = {}) 
 
 
 /** Tek parçanın gövdesi. Grup parçanın MERKEZİNDE oturur. */
+/* Shapes the habitat builds itself. Declared for the same reason as the
+ * satellite's list: the gate can then tell a row that routes to the shared
+ * grammar from one that has a local case, and no name collides by accident.
+ * The habitat is not on the grammar yet (plan phase F3); this list is what
+ * will shrink as it moves over. */
+export const LOCAL_KINDS = Object.freeze(new Set([
+  'platform', 'plaka', 'silindir-yatay', 'silindir-dikey', 'tunel', 'dugum',
+  'toroid', 'ortu', 'raf', 'kutu', 'tank-dikey', 'panel-tarla', 'radyator',
+  'semsiye', 'reaktor', 'direk', 'canak', 'ruzgar', 'tente', 'hat',
+]));
+
 function govde(THREE, p, M, dok) {
   const [sx, sy, sz] = p.size;
   const g = new THREE.Group();

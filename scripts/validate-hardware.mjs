@@ -148,6 +148,109 @@ for (const o of OBJECTS) {
     enInce: sayim.filter(x => !MUAF.has(x.id))[0] });
 }
 
+/* ── the shape grammar ───────────────────────────────────────────────
+   This is the part that decides whether a NEW object is cheap. If a kind
+   only works for the one row that happened to use it, the grammar is a
+   switch with extra steps, so every kind is built at every LOD here. */
+section('shape grammar');
+{
+  const S = await load('presets/core/hardware-shapes.mjs');
+  const KIT = (await load('presets/core/hardware-kit.mjs')).hardwareMaterials(THREE);
+  /* One size for all kinds on purpose: a kind that needs a particular
+     aspect ratio to produce anything is not reusable. */
+  const OLCU = [0.6, 0.6, 0.9];
+
+  ok(S.KINDS_AVAILABLE.length >= 8, 'grammar carries a usable vocabulary',
+    S.KINDS_AVAILABLE.join(', '));
+
+  const tablo = [];
+  let hepsiKuruldu = true, artan = true, gerekce = 0;
+  for (const kind of S.KINDS_AVAILABLE) {
+    const row = { kind };
+    for (const lod of S.LODS) {
+      try {
+        const { group } = S.buildShape(THREE, { id: `t-${kind}`, sekil: kind, size: OLCU },
+          { kit: KIT, lod });
+        const c = census(group);
+        row[lod] = c.meshes;
+        row[lod + 'T'] = c.tris;
+        if (lod === 'shop') {
+          if (row[lod] < EN_AZ_MESH) hepsiKuruldu = false;
+          if (group.userData?.notes?.why) gerekce++;
+        }
+      } catch (e) {
+        row[lod] = `ERR ${e.message.slice(0, 40)}`;
+        row[lod + 'T'] = Infinity;
+        hepsiKuruldu = false;
+      }
+    }
+    /* Monotone in TRIANGLES, not mesh count: mesh count is what a reader
+       sees, triangles are what the GPU pays, and only the second one is the
+       claim LOD makes. Measuring meshes passed trivially for seven kinds
+       whose 'flight' level added nothing at all. */
+    if (!(row.blockT <= row.shopT && row.shopT <= row.flightT)) artan = false;
+    tablo.push(row);
+  }
+  ok(hepsiKuruldu, `every kind builds at 'shop' with >= ${EN_AZ_MESH} meshes`,
+    tablo.filter(r => typeof r.shop !== 'number' || r.shop < EN_AZ_MESH).map(r => r.kind).join(', ') || 'all');
+  ok(artan, 'LOD is monotone in triangles (block <= shop <= flight)',
+    tablo.map(r => `${r.kind} ${r.blockT}/${r.shopT}/${r.flightT}`).join('  '));
+
+  /* The whole point of 'block' is that a wide shot costs less. If the
+     vocabulary as a whole does not get materially cheaper, the level is
+     decoration and a 200-part vehicle is still unaffordable. */
+  const topla = (lod) => tablo.reduce((a, r) => a + (r[lod + 'T'] || 0), 0);
+  const [bl, sh, fl] = ['block', 'shop', 'flight'].map(topla);
+  ok(bl <= sh * 0.6, "'block' costs at most 60% of 'shop' across the vocabulary",
+    `${bl} / ${sh} = ${(100 * bl / sh).toFixed(0)}%`);
+  ok(fl >= sh * 1.2, "'flight' adds at least 20% over 'shop'",
+    `${fl} / ${sh} = ${(100 * fl / sh).toFixed(0)}%`);
+  ok(gerekce >= 5, 'kinds carry a rationale (userData.notes.why)', `${gerekce}/${S.KINDS_AVAILABLE.length}`);
+
+  /* Reverse test: an unknown kind must FAIL, or the dispatch is silently
+     falling back to something and "basic" can ship again. */
+  let attı = false;
+  try { S.buildShape(THREE, { sekil: 'hicbiri', size: OLCU }, { kit: KIT }); }
+  catch { attı = true; }
+  ok(attı, 'an unknown kind throws instead of falling back to a box');
+
+  /* Determinism at the grammar level, independent of any one object. */
+  const a = census(S.buildShape(THREE, { sekil: 'tube', size: OLCU }, { kit: KIT }).group);
+  const b = census(S.buildShape(THREE, { sekil: 'tube', size: OLCU }, { kit: KIT }).group);
+  ok(a.meshes === b.meshes && a.tris === b.tris, 'the grammar is deterministic',
+    `${a.meshes} meshes, ${a.tris} tris`);
+
+  /* Plan check 2 - undeclared detail. A row that names a grammar kind and
+     leaves `detay` out took whatever the default was and moved on, which is
+     how a part ends up looking generic while the catalogue looks full.
+     It only applies to rows that ACTUALLY route to the grammar: an object
+     may keep a richer local case under the same name, and asking those rows
+     for `detay` was the wrong criterion (it flagged seven healthy panels). */
+  const BEKLENEN_GOLGE = { satellite: ['panel', 'tank'], habitat: [] };
+  for (const o of OBJECTS) {
+    const P = await load(o.parts);
+    const B = await load(o.build);
+    const yerel = B.LOCAL_KINDS instanceof Set ? B.LOCAL_KINDS : new Set();
+
+    /* Names an object handles itself AND the grammar also knows. Declared,
+       bounded, and checked - so a new collision is a failure, not a
+       surprise about which geometry a row gets. */
+    const golge = [...yerel].filter(k => S.knowsKind(k)).sort();
+    const beklenen = (BEKLENEN_GOLGE[o.ad] || []).slice().sort();
+    ok(golge.join(',') === beklenen.join(','), `${o.ad}: shadowed kind list is the declared one`,
+      golge.length ? golge.join(', ') : 'none');
+
+    /* Every shape a row names must be buildable by one path or the other. */
+    const yetim = P.PARTS.filter(p => !yerel.has(p.sekil) && !S.knowsKind(p.sekil)).map(p => p.id);
+    ok(yetim.length === 0, `${o.ad}: every row's shape has a builder`, yetim.join(', ') || 'all');
+
+    const bildirimsiz = P.PARTS
+      .filter(p => !yerel.has(p.sekil) && S.knowsKind(p.sekil) && !p.detay).map(p => p.id);
+    ok(bildirimsiz.length === 0, `${o.ad}: grammar rows declare their detail`,
+      bildirimsiz.join(', ') || 'all declared');
+  }
+}
+
 /* ── kit conformance ─────────────────────────────────────────────────── */
 section('hardware kit');
 {

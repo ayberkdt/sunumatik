@@ -60,6 +60,11 @@ export const PARTS = Object.freeze([
     mountsTo: 'ayirma-halkasi', arayuz: 'civata', massKg: 62, pos: [0, 0, -0.1], size: [0.86, 0.86, 1.96], sekil: 'silindir',
     tech: { no: 'SD-STR-002', malzeme: 'M55J/cyanate ester CFRP layup, aluminium honeycomb end rings', guc_W: 0, sicaklik_C: [-150, 130], baglanti: '48 x M6 Ti rivet-bolts into the end rings', detay: '2.4 mm wall; axial load path 6.2 g x 1124 kg = 68 kN', kalite: 'Buckling margin 1.8' },
     why: 'The main load path down to the separation ring. The tank sits inside it; every panel hangs off it.' },
+  { id: 'govde-iskeleti', ad: 'Bus primary structure (shear webs + corner posts)', sistem: 'yapi', step: 1,
+    mountsTo: 'itki-tupu', arayuz: 'civata', massKg: 46, pos: [0, 0, -0.1], size: [1.7, 1.7, 1.9],
+    sekil: 'busFrame', detay: { webs: 4, struts: 4, tubeR: 0.43 },
+    tech: { no: 'SD-STR-004', malzeme: 'CFRP shear webs on 7075-T73 posts, bonded and bolted', guc_W: 0, sicaklik_C: [-120, 120], baglanti: '32 x M6 to tube flanges and deck frames', detay: '4 radial shear webs, 4 corner posts, 4 base struts', kalite: 'Static-tested to 1.25 x limit load' },
+    why: 'The tube alone carries axial load. These webs carry the LATERAL load and stop the equipment panels racking - the reason a bus is not a box.' },
   { id: 'alt-panel', ad: 'Lower panel (thrust deck)', sistem: 'yapi', step: 1,
     mountsTo: 'itki-tupu', arayuz: 'civata', massKg: 31, pos: [0, 0, -1.04], size: [1.72, 1.72, 0.03], sekil: 'panel',
     tech: { no: 'SD-STR-010', malzeme: '25 mm Al honeycomb core, 0.5 mm CFRP facesheets', guc_W: 0, sicaklik_C: [-140, 150], baglanti: '32 x M5 into the thrust tube, with corner brackets', detay: 'Inserts are clustered under the engine and thruster footprints', kalite: 'Plume-compatible aluminium finish' },
@@ -163,7 +168,7 @@ export const PARTS = Object.freeze([
     tech: { no: 'SD-THR-063', malzeme: '20-layer aluminised Kapton with Dacron netting', guc_W: 0, sicaklik_C: [-160, 150], baglanti: 'Hook-and-loop and tape; goes on LAST', detay: 'Effective emissivity 0.02; a grounding tab at every seam', kalite: 'Nothing underneath can be touched again' },
     why: 'Twenty layers of metallised film; it cuts radiative exchange. It goes on LAST because once it is on, every bolt underneath is unreachable.' },
   { id: 'kablaj', ad: 'Harness', sistem: 'kablaj', step: 6,
-    mountsTo: 'itki-tupu', arayuz: 'elektrik', massKg: 34, pos: [0, 0, -0.2], size: [1.5, 1.5, 1.6], sekil: 'gizli',
+    mountsTo: 'itki-tupu', arayuz: 'elektrik', massKg: 38, pos: [0, 0, -0.2], size: [1.5, 1.5, 1.6], sekil: 'gizli',
     tech: { no: 'SD-HAR-110', malzeme: 'Silver-plated copper, PTFE insulation, Kapton lacing', guc_W: 0, sicaklik_C: [-60, 85], baglanti: 'D-sub and circular connectors; cable trays and P-clamps', detay: '1420 terminations; prime and redundant paths take PHYSICALLY separate routes', kalite: '100% continuity and insulation tested' },
     why: '1420 terminations. Prime and redundant runs go down PHYSICALLY separate routes, so one damaged bundle cannot take both.' },
 
@@ -177,12 +182,12 @@ export const PARTS = Object.freeze([
     tech: { no: 'SD-PWR-073', malzeme: 'Slip ring, harmonic drive', guc_W: 14, sicaklik_C: [-45, 70], baglanti: '6 x M6 into the side panel; slide rail interface', detay: 'Opposite wing; the two drives are independent', kalite: 'Brush life 3x mission' },
     why: 'The opposite drive, independently commanded, so one seized bearing does not cost both wings.' },
   { id: 'kanat-xp', ad: 'Solar wing +X (3 panels)', sistem: 'guc', step: 7,
-    mountsTo: 'sada-xp', arayuz: 'mentese', massKg: 31, pos: [3.0, 0, 0.35], size: [3.6, 1.5, 0.03], sekil: 'kanat',
-    tech: { no: 'SD-PWR-074', malzeme: 'GaAs triple-junction cells, CFRP substrate', guc_W: -1450, sicaklik_C: [-150, 110], baglanti: '4 x M6 to the SADA shaft; hinge and spring deployment', detay: '3 panels, 8.4 m2; 30% efficient at BOL, 26% at EOL; one-way latching deployment', kalite: 'Redundant pyro release' },
+    mountsTo: 'sada-xp', arayuz: 'mentese', massKg: 44, pos: [3.55, 0, 0.35], size: [4.5, 1.7, 0.03], sekil: 'kanat',
+    tech: { no: 'SD-PWR-074', malzeme: 'GaAs triple-junction cells, CFRP substrate', guc_W: -2585, sicaklik_C: [-150, 110], baglanti: '4 x M6 to the SADA shaft; hinge and spring deployment', detay: '3 panels, 7.65 m2; 1361 W/m2 x 30% cells x 0.90 packing x 0.92 temperature derate = 338 W/m2, so 2585 W at BOL (26% at EOL); one-way latching deployment', kalite: 'Redundant pyro release' },
     why: 'Generates 1450 W at beginning of life. It launches folded because nothing this size fits inside a fairing deployed.' },
   { id: 'kanat-xn', ad: 'Solar wing -X (3 panels)', sistem: 'guc', step: 7,
-    mountsTo: 'sada-xn', arayuz: 'mentese', massKg: 31, pos: [-3.0, 0, 0.35], size: [3.6, 1.5, 0.03], sekil: 'kanat',
-    tech: { no: 'SD-PWR-075', malzeme: 'GaAs triple-junction cells, CFRP substrate', guc_W: -1450, sicaklik_C: [-150, 110], baglanti: '4 x M6 to the SADA shaft; hinge and spring deployment', detay: 'Opposite wing; 2900 W generated in total at BOL', kalite: 'Redundant pyro release' },
+    mountsTo: 'sada-xn', arayuz: 'mentese', massKg: 44, pos: [-3.55, 0, 0.35], size: [4.5, 1.7, 0.03], sekil: 'kanat',
+    tech: { no: 'SD-PWR-075', malzeme: 'GaAs triple-junction cells, CFRP substrate', guc_W: -2585, sicaklik_C: [-150, 110], baglanti: '4 x M6 to the SADA shaft; hinge and spring deployment', detay: 'Opposite wing; 5170 W generated in total at BOL, which is what electric propulsion costs', kalite: 'Redundant pyro release' },
     why: 'The matching wing. Two wings balance the solar pressure torque that a single one would impose.' },
   { id: 'hga-boom', ad: 'HGA boom', sistem: 'haberlesme', step: 7,
     mountsTo: 'ust-panel', arayuz: 'mentese', massKg: 6, pos: [0.55, -0.55, 1.1], size: [0.08, 0.08, 0.7], sekil: 'cubuk',
@@ -196,6 +201,28 @@ export const PARTS = Object.freeze([
     mountsTo: 'yan-panel-xp', arayuz: 'civata', massKg: 1.1, pos: [0.9, 0.5, 0.75], size: [0.08, 0.08, 0.26], sekil: 'cubuk',
     tech: { no: 'SD-TTC-093', malzeme: 'Helical antenna under a radome', guc_W: 2, sicaklik_C: [-120, 110], baglanti: '3 x M4 into the panel', detay: 'Near-hemispherical coverage; commandable even with the HGA lost', veri_Mbps: 0.064, kalite: 'The always-available command path - recovery mode' },
     why: 'Near-hemispherical coverage at a trickle rate. It is the reason a tumbling spacecraft can still be commanded.' },
+
+  /* ADIM 6 — elektrikli itki ve manyetik ölçüm */
+  { id: 'hall-itici', ad: 'Hall thruster (1.5 kW, xenon)', sistem: 'itki', step: 6, qty: 2,
+    mountsTo: 'alt-panel', arayuz: 'civata', massKg: 5.6, pos: [0.52, 0, -0.96], size: [0.26, 0.26, 0.22],
+    sekil: 'hall', detay: { coils: 4, bolts: 12, cathode: true, feed: true },
+    tech: { no: 'SD-EPS-001', malzeme: 'Boron nitride discharge channel, ferromagnetic poles', guc_W: 0, sicaklik_C: [-30, 300], baglanti: '12 x M5 through a titanium thermal standoff', detay: 'Isp 1600 s, thrust 90 mN, 300 V discharge, hollow LaB6 cathode. Its 1500 W is drawn THROUGH the PPU, so the bus load is declared there and not here', kalite: 'Life-tested to 9000 h; channel erosion is the end of life' },
+    why: 'Sixteen times the exhaust speed of the chemical engine, so station keeping for a 15-year life costs tens of kilograms of xenon instead of hundreds of kilograms of bipropellant.' },
+  { id: 'ppu', ad: 'Power processing unit (PPU)', sistem: 'itki', step: 6,
+    mountsTo: 'radyator-yn', arayuz: 'isil', massKg: 12.5, pos: [-0.3, -0.72, 0.3], size: [0.38, 0.2, 0.3],
+    sekil: 'kutu',
+    tech: { no: 'SD-EPS-002', malzeme: 'Aluminium housing, conduction-cooled', guc_W: 1600, uzayaW: 1500, sicaklik_C: [-20, 60], baglanti: '8 x M5 with thermal filler', detay: '1500 W to the thruster at 94% efficiency, so 1596 W in and 96 W of waste heat on the radiator. One string fires at a time', kalite: 'Qualified with the thruster as one string' },
+    why: 'A Hall thruster needs 300 V and a regulated cathode supply; the bus gives 100 V. The 6% that does not become thrust becomes heat on a radiator.' },
+  { id: 'manyetometre-cubugu', ad: 'Magnetometer boom (1.2 m, stowed)', sistem: 'yapi', step: 7,
+    mountsTo: 'yan-panel-xn', arayuz: 'mentese', massKg: 2.2, pos: [-1.05, -0.45, 0.6], size: [0.07, 0.07, 1.2],
+    sekil: 'cubuk',
+    tech: { no: 'SD-STR-005', malzeme: 'CFRP tube, titanium end fittings, no ferrous parts', guc_W: 0, sicaklik_C: [-150, 120], baglanti: 'Hinge with a launch latch; released by a pyro cutter', detay: '1.2 m deployed; residual bus field falls as 1/r^3' },
+    why: 'Distance is the only cheap magnetic shield. A metre of boom cuts the spacecraft\u2019s own field at the sensor by roughly a thousandfold.' },
+  { id: 'manyetometre', ad: 'Fluxgate magnetometer (triad)', sistem: 'adcs', step: 7,
+    mountsTo: 'manyetometre-cubugu', arayuz: 'civata', massKg: 1.2, pos: [-1.05, -0.45, 1.35], size: [0.14, 0.14, 0.14],
+    sekil: 'magnetometer', detay: { shade: true, pigtail: true, cube: true },
+    tech: { no: 'SD-ACS-084', malzeme: 'Non-magnetic composite housing, three ring cores', guc_W: 1.1, sicaklik_C: [-40, 60], baglanti: '3-point kinematic mount, 3 x M4 titanium', detay: 'Range +/-64000 nT, resolution 0.1 nT, 16 Hz; optical alignment cube', kalite: 'Calibrated in a Helmholtz coil facility; bias re-fitted in flight' },
+    why: 'Three orthogonal ring cores give the field vector, which feeds the magnetorquers and gives a coarse attitude reference when the star trackers are blinded.' },
 ]);
 
 /* ── ENTEGRASYON AKIŞI ───────────────────────────────────────────────── */
@@ -381,9 +408,14 @@ export function thermalClosure({ T_C = 30, rfW = 120 } = {}) {
     paneller.push({ id: p.id, alanM2: Number(alan.toFixed(3)), kalinlikM: c, W: Math.round(W) });
   }
   const guc = powerBudget();
-  const atilacak = guc.tuketimW - rfW;
+  /* Power a part declares as leaving the spacecraft WITHOUT passing through
+     a radiator: the ion beam's kinetic energy and the thruster's own
+     300 C surface. RF was already handled this way; adding electric
+     propulsion without the same term made the margin read -163%. */
+  const uzaya = PARTS.reduce((a, q) => a + (q.tech?.uzayaW ?? 0) * (q.qty ?? 1), 0);
+  const atilacak = guc.tuketimW - rfW - uzaya;
   return {
-    T_C, rfW, paneller,
+    T_C, rfW, uzayaW: uzaya, paneller,
     kapasiteW: Math.round(kapasite),
     atilacakW: Math.round(atilacak),
     payW: Math.round(kapasite - atilacak),
