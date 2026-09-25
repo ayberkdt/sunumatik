@@ -171,12 +171,28 @@ export function createOrbitDrag(host, {
 
 /** Camera position for an orbit state, so every caller places it the same
     way. Y is up here, matching the pages that use this. */
-export function orbitPosition({ az, el, dist }) {
-  return [
-    Math.cos(az) * Math.cos(el) * dist,
-    Math.sin(el) * dist,
-    Math.sin(az) * Math.cos(el) * dist,
-  ];
+/**
+ * Yörünge durumundan kamera konumu.
+ *
+ * `yukari` HANGİ EKSENİN yukarı olduğunu söyler ve varsayılanı yoktur diye
+ * düşünülmeliydi: bu dosya sessizce Y-yukarı üretiyordu, depodaki blok
+ * sözleşmesi ise "+X ileri, +Z yukarı" diyor ve aircraft_blocks,
+ * comms_antenna, exploded_view, habitat_blocks hepsi `camera.up.set(0,0,1)`
+ * yazıyor. Uydu sayfası bunu yazmayan tek sayfaydı ve sonuç, bütün aracın
+ * YAN YATMIŞ çizilmesiydi: ölçülen açı, kamera yukarısı (0,1,0) ile gövde
+ * yukarısı (0,0,1) arasında tam 90°. Parçaların hiçbiri yanlış değildi;
+ * anten gerçekten gövde nadirine bakıyordu, ama gövde nadiri ekranda yana
+ * düşüyordu ve anten ters görünüyordu.
+ *
+ * Kamerayı kuran yer ayrıca `camera.up`'ı aynı eksene ayarlamalıdır: konum
+ * ile up ayrı ayrı yazıldığında ikisi yine ayrışır.
+ */
+export function orbitPosition({ az, el, dist }, { yukari = 'y' } = {}) {
+  const d = Math.cos(el) * dist;
+  const x = Math.cos(az) * d;
+  const yatay = Math.sin(az) * d;
+  const dikey = Math.sin(el) * dist;
+  return yukari === 'z' ? [x, yatay, dikey] : [x, dikey, yatay];
 }
 
 export { clamp };

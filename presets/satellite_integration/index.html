@@ -292,8 +292,17 @@
       onTap: (ev) => sec(ev),
     });
     const kam = surukleyici.state;
+    /* Gövde çerçevesi +Z yukarıdır - ışık kurulumu bunu "nadir -Z, fırlatma
+       ekseni yukarı" diye söylüyor - ve kamera bunu bilmiyordu. Ölçülen:
+       kamera yukarısı (0,1,0), gövde yukarısı (0,0,1), arada 90°. Araç yan
+       yatmış çiziliyordu ve nadire bakan anten ekranda yana düştüğü için
+       ters görünüyordu. Konum ile `up` AYNI yerden gelir; ayrı yazılırsa
+       yine ayrışırlar. */
+    const YUKARI = 'z';
+    camera.up.set(0, 0, 1);
+    const kam2 = kam;
     function kameraKur() {
-      const [x, y, z] = orbitPosition(kam);
+      const [x, y, z] = orbitPosition(kam2, { yukari: YUKARI });
       camera.position.set(x, y, z);
       camera.lookAt(0, 0, 0);
     }
