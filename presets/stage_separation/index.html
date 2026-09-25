@@ -425,8 +425,10 @@ function uygula(zaman) {
     const t0 = b.id === 'stage1' ? tSep : b.id.startsWith('srb') ? tSrbSep : tFairing;
     const poz = jett.poseAt(b, t - t0);
     b.node.position.set(poz.p[0], poz.p[1], poz.p[2]);
-    b.node.quaternion.copy(b.q0);
-    b.node.rotateX(poz.q[0]); b.node.rotateY(poz.q[1]); b.node.rotateZ(poz.q[2]);
+    /* One rotation about the axis the body was actually given, not three
+       Euler turns composed in sequence - which is a different rotation and
+       made the tumble axis wander as the scene ran. */
+    b.node.quaternion.set(poz.q4[0], poz.q4[1], poz.q4[2], poz.q4[3]);
   }
   if (boosterRig && stage1) {
     for (let i = 0; i < 4; i++) boosterRig.set(`gridFin.${i}.fold`, t > tSep + 6 ? 0 : 85);

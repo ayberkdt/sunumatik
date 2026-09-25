@@ -10,7 +10,10 @@
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
       font-family: "Segoe UI", system-ui, sans-serif; color: #dfe3ea; }
-    #stage { position: absolute; left: 300px; top: 0; right: 380px; bottom: 0; cursor: grab; }
+        /* The browser must not claim the touch gesture; the module sets this
+       too, and it is repeated here so a glance at the CSS says so. */
+    #stage { position: absolute; left: 300px; top: 0; right: 380px; bottom: 0; cursor: grab;
+      touch-action: none; }
     #stage.suruklu { cursor: grabbing; }
     aside { position: absolute; top: 0; bottom: 0; width: 300px; overflow-y: auto; background: #090b11;
       border-right: 1px solid #1c212c; padding: 14px 14px 22px; }
@@ -104,6 +107,7 @@
   <script type="module">
     import * as THREE from 'three';
     import { sceneLighting } from '../core/scene-lighting.mjs';
+    import { createOrbitDrag, orbitPosition } from '../core/orbit-drag.mjs';
     import { buildSatellite } from './sat-build.mjs';
     import { PARTS, STEPS, SUBSYSTEMS, INTERFACES, massBudget, centerOfMass, mountChain, partById, partMass, describe } from './sat-parts.mjs';
 
@@ -160,29 +164,23 @@
     dunya.add(kmNokta);
 
     /* ---------- kamera ---------- */
-    const kam = { az: -0.9, el: 0.42, d: 9.5 };
+    /* Orbit state and its input live in core/orbit-drag.mjs. What this page
+       had was a hand-rolled drag with no `touch-action`, no pointer capture,
+       no `pointercancel`, no pinch, and a sensitivity in raw pixels - so on
+       a touchscreen the browser took the gesture, the model barely turned, a
+       lifted finger could leave the drag stuck, and there was no way to zoom
+       at all. */
+    const surukleyici = createOrbitDrag(host, {
+      az: -0.9, el: 0.42, dist: 9.5, minDist: 3.4, maxDist: 26,
+      onChange: () => kameraKur(),
+      onTap: (ev) => sec(ev),
+    });
+    const kam = surukleyici.state;
     function kameraKur() {
-      const { az, el: e, d } = kam;
-      camera.position.set(Math.cos(az) * Math.cos(e) * d, Math.sin(e) * d, Math.sin(az) * Math.cos(e) * d);
+      const [x, y, z] = orbitPosition(kam);
+      camera.position.set(x, y, z);
       camera.lookAt(0, 0, 0);
     }
-    host.addEventListener('pointerdown', (ev) => {
-      const p0 = { x: ev.clientX, y: ev.clientY, az: kam.az, el: kam.el };
-      host.classList.add('suruklu');
-      let hareket = 0;
-      const mv = (m) => {
-        hareket += Math.abs(m.clientX - p0.x) + Math.abs(m.clientY - p0.y);
-        kam.az = p0.az - (m.clientX - p0.x) * .007;
-        kam.el = Math.max(-1.3, Math.min(1.3, p0.el + (m.clientY - p0.y) * .005));
-      };
-      const up = (m) => {
-        host.classList.remove('suruklu');
-        removeEventListener('pointermove', mv); removeEventListener('pointerup', up);
-        if (hareket < 5) sec(m);
-      };
-      addEventListener('pointermove', mv); addEventListener('pointerup', up);
-    });
-    host.addEventListener('wheel', (e) => { e.preventDefault(); kam.d = Math.min(26, Math.max(3.4, kam.d * (1 + Math.sign(e.deltaY) * .11))); }, { passive: false });
 
     /* ---------- seçim ---------- */
     const ray = new THREE.Raycaster(), fare = new THREE.Vector2();
@@ -408,6 +406,9 @@
         if (oynatT > STEPS.length * 1.6 + 1.2) { oynuyor = false; hepsi = true; el('#oynat').textContent = '▶ Montajı oynat'; el('#hepsi').classList.add('aktif'); adimlarCiz(); uygula(); }
       }
       if (!azaltilmis) dunya.rotation.z += dt * 0.055;
+      /* Coast after the finger lifts: a view that stops dead the instant
+         you let go feels like it is fighting you. */
+      surukleyici.update();
       kameraKur();
       renderer.render(scene, camera);
       etiketler();
@@ -423,7 +424,11 @@
     else raf = requestAnimationFrame(kare);
 
     window.satIntegration = {
-      state: () => ({ adim, hepsi, patla, secili, kapali: [...kapali], ozet: describe() }),
+      /* The orbit state is part of what this page IS, and exposing it is how
+         the touch behaviour gets checked at all: a drag that does not turn
+         the camera looks exactly like a drag that does, in a screenshot. */
+      state: () => ({ adim, hepsi, patla, secili, kapali: [...kapali],
+        kamera: { az: kam.az, el: kam.el, dist: kam.dist }, ozet: describe() }),
       parts: () => PARTS.map(p => ({ id: p.id, ad: p.ad, sistem: p.sistem, step: p.step, kg: partMass(p), mountsTo: p.mountsTo })),
       setStep(n) { adim = n; hepsi = false; adimlarCiz(); uygula(); panel(); },
       setExplode(k) { patla = k; patlaSurgu.value = String(Math.round(k * 100)); el('#patlaEt').textContent = `%${Math.round(k * 100)}`; uygula(); },

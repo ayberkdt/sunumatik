@@ -33,6 +33,39 @@
 
 const add3 = (a, b, k = 1) => [a[0] + b[0] * k, a[1] + b[1] * k, a[2] + b[2] * k];
 
+/**
+ * Attitude after time t for a body released at q0 and spinning at omega.
+ *
+ * A torque-free body turns about ONE axis - omega-hat - through |omega|*t.
+ * The first version of this kept qx, qy, qz as three independent angles and
+ * applied rotateX, rotateY, rotateZ in that order, which is a different
+ * rotation and an order-dependent one: the apparent spin axis drifts as the
+ * angles grow, so a booster given a tumble about one axis visibly tumbled
+ * about another. Euler angles are a way to WRITE an orientation down, not a
+ * way to accumulate one.
+ *
+ * Pure, and in world axes: q = rot(omega-hat, |omega|*t) * q0.
+ *
+ * @param q0  {x,y,z,w} or [x,y,z,w]; null means identity
+ * @returns [x, y, z, w]
+ */
+export function attitudeAt(q0, omega, t) {
+  const b = q0
+    ? (Array.isArray(q0) ? q0 : [q0.x, q0.y, q0.z, q0.w])
+    : [0, 0, 0, 1];
+  const len = Math.hypot(omega[0], omega[1], omega[2]);
+  if (!(len > 1e-12) || !(Math.abs(t) > 0)) return [b[0], b[1], b[2], b[3]];
+  const half = (len * t) / 2, sn = Math.sin(half) / len;
+  const x = omega[0] * sn, y = omega[1] * sn, z = omega[2] * sn, w = Math.cos(half);
+  /* q = rot * q0 */
+  return [
+    w * b[0] + x * b[3] + y * b[2] - z * b[1],
+    w * b[1] - x * b[2] + y * b[3] + z * b[0],
+    w * b[2] + x * b[1] - y * b[0] + z * b[3],
+    w * b[3] - x * b[0] - y * b[1] - z * b[2],
+  ];
+}
+
 /** Tek gövde adımı. Sürükleme ivmesi a = −drag·|v|·v (kuadratik, katsayı
     çağırandan; sıfır verilirse saf balistik). Yarı-örtük Euler: hız önce
     güncellenir, sonra konum — sabit yerçekiminde enerji sapması küçük kalır. */
@@ -46,8 +79,11 @@ export function integrateBody(b, dt, { gravity = [0, -9.81, 0], drag = 0 } = {})
   ];
   b.v = add3(b.v, a, dt);
   b.p = add3(b.p, b.v, dt);
-  b.q = add3(b.q, b.w, dt);
+  /* `q` is kept only as the total swept ANGLE about omega-hat, for anything
+     that wants to read how far the body has turned. The orientation itself
+     comes from attitudeAt and never from accumulating Euler angles. */
   b.age += dt;
+  b.q = [b.w[0] * b.age, b.w[1] * b.age, b.w[2] * b.age];
   return b;
 }
 
@@ -85,12 +121,8 @@ export function createJettison({ gravity = [0, -9.81, 0], drag = 0 } = {}) {
       for (const b of bodies) {
         if (!b.node) continue;
         b.node.position.set(b.p[0], b.p[1], b.p[2]);
-        if (b.q0 && b.node.quaternion.copy) {
-          b.node.quaternion.copy(b.q0);
-          b.node.rotateX(b.q[0]); b.node.rotateY(b.q[1]); b.node.rotateZ(b.q[2]);
-        } else {
-          b.node.rotation.set(b.q[0], b.q[1], b.q[2]);
-        }
+        const q = attitudeAt(b.q0, b.w, b.age);
+        if (b.node.quaternion?.set) b.node.quaternion.set(q[0], q[1], q[2], q[3]);
       }
     },
 
@@ -112,6 +144,9 @@ export function createJettison({ gravity = [0, -9.81, 0], drag = 0 } = {}) {
         p: [b.p0[0] + b.v0[0] * e + gravity[0] * h,
           b.p0[1] + b.v0[1] * e + gravity[1] * h,
           b.p0[2] + b.v0[2] * e + gravity[2] * h],
+        /* The orientation, closed form, as a quaternion. `q` stays as the
+           swept angle vector for readers that want the number. */
+        q4: attitudeAt(b.q0, b.w, e),
         q: [b.w[0] * e, b.w[1] * e, b.w[2] * e],
       };
     },

@@ -298,5 +298,95 @@ console.log('== 11 aksam dizini (mechanism-index)');
 }
 
 console.log('\n(7 kol IK: henüz yok — plan §5.2, F3.)');
+/* ── J) atılan gövdenin dönüş ekseni ─────────────────────────────────── */
+console.log('== J atılan gövde tek eksen etrafında dönüyor');
+{
+  const J = await mod('presets/physical_rigs/jettison.mjs');
+  const w = [0.31, -0.12, 0.47];                 // rad/s, üç bileşenli takla
+  const q0 = [0, 0, 0, 1];
+
+  /* Tork yoksa gövde TEK bir eksen etrafında döner. Bunu ölçmenin yolu:
+     iki ayrı ana bakıp aradaki bağıl dönüşü çıkarmak. Ekseni omega'nın
+     yönü olmak ZORUNDA, ve açısı |omega|*dt. Önceki sürüm qx, qy, qz'yi
+     ayrı ayrı biriktirip sırayla uyguluyordu; o bileşim sıraya bağlıdır ve
+     açı büyüdükçe görünen eksen kayar. */
+  const carp = (a, b) => [
+    a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1],
+    a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0],
+    a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3],
+    a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2]];
+  const es = (q) => [-q[0], -q[1], -q[2], q[3]];
+  const eksenAci = (q) => {
+    const s2 = Math.hypot(q[0], q[1], q[2]);
+    const aci = 2 * Math.atan2(s2, Math.abs(q[3]));
+    const isaret = q[3] < 0 ? -1 : 1;
+    return { aci, eksen: s2 > 1e-12 ? [isaret * q[0] / s2, isaret * q[1] / s2, isaret * q[2] / s2] : [0, 0, 1] };
+  };
+  const wLen = Math.hypot(w[0], w[1], w[2]);
+  const wHat = [w[0] / wLen, w[1] / wLen, w[2] / wLen];
+
+  /* Compared as ROTATIONS, not as extracted angles. Axis-angle extraction
+     always returns an angle in [0, pi] with a possibly flipped axis, so on
+     an interval longer than pi/|omega| it reports the short way round and
+     the axis inverts - which is what the first version of this check did,
+     and it failed a correct implementation with a deviation of exactly 2.0
+     (a unit vector pointing the other way). The quaternion double cover is
+     handled by accepting q or -q. */
+  const beklenen = (dt) => {
+    const half = wLen * dt / 2, sn = Math.sin(half) / wLen;
+    return [w[0] * sn, w[1] * sn, w[2] * sn, Math.cos(half)];
+  };
+  const ciftOrtu = (a, b) => Math.min(
+    Math.max(...a.map((v, i) => Math.abs(v - b[i]))),
+    Math.max(...a.map((v, i) => Math.abs(v + b[i]))));
+  let enKotu = 0;
+  for (const [t1, t2] of [[0, 0.7], [0.7, 2.3], [2.3, 5.9], [5.9, 11.4]]) {
+    const q1 = J.attitudeAt(q0, w, t1), q2 = J.attitudeAt(q0, w, t2);
+    enKotu = Math.max(enKotu, ciftOrtu(carp(q2, es(q1)), beklenen(t2 - t1)));
+  }
+  check('her aralıkta bağıl dönüş = rot(omega-hat, |omega|·dt)', enKotu < 1e-12,
+    `sapma ${enKotu.toExponential(1)}`);
+  /* And on a short interval, where the extraction is unambiguous, the axis
+     itself is checked so the statement is not only about quaternions. */
+  {
+    const { aci, eksen } = eksenAci(carp(J.attitudeAt(q0, w, 1.4), es(J.attitudeAt(q0, w, 0.6))));
+    const sapma = Math.hypot(eksen[0] - wHat[0], eksen[1] - wHat[1], eksen[2] - wHat[2]);
+    check('kısa aralıkta eksen doğrudan omega yönünde', sapma < 1e-9 && Math.abs(aci - wLen * 0.8) < 1e-9,
+      `eksen sapması ${sapma.toExponential(1)} · açı ${aci.toFixed(4)} rad`);
+  }
+  check('birim kuaterniyon kalıyor',
+    Math.abs(Math.hypot(...J.attitudeAt(q0, w, 37.2)) - 1) < 1e-12);
+  check('t = 0 bırakma yönelimini değiştirmiyor',
+    J.attitudeAt([0.2, 0.3, 0.1, 0.927], w, 0).every((v, i) => Math.abs(v - [0.2, 0.3, 0.1, 0.927][i]) < 1e-12));
+
+  /* TERS SINAV: eski bileşim (Euler'leri sırayla uygula) aynı ölçütü
+     geçemez. Geçseydi denetim bir şey söylemiyor olurdu. */
+  const euler = (t) => {
+    const cx = Math.cos(w[0] * t / 2), sx = Math.sin(w[0] * t / 2);
+    const cy = Math.cos(w[1] * t / 2), sy = Math.sin(w[1] * t / 2);
+    const cz = Math.cos(w[2] * t / 2), sz = Math.sin(w[2] * t / 2);
+    const qx = [sx, 0, 0, cx], qy = [0, sy, 0, cy], qz = [0, 0, sz, cz];
+    return carp(carp(qx, qy), qz);
+  };
+  let eskiSapma = 0;
+  for (const [t1, t2] of [[0.7, 2.3], [2.3, 5.9]]) {
+    const { eksen } = eksenAci(carp(euler(t2), es(euler(t1))));
+    eskiSapma = Math.max(eskiSapma,
+      Math.hypot(eksen[0] - wHat[0], eksen[1] - wHat[1], eksen[2] - wHat[2]));
+  }
+  check('TERS SINAV: sıralı Euler bileşimi ekseni kaydırıyor', eskiSapma > 0.05,
+    `kayma ${eskiSapma.toFixed(3)}`);
+
+  /* Adım adım integrasyon ile kapalı form aynı yönelimi vermeli. */
+  const jt = J.createJettison({ gravity: [0, -1.62, 0] });
+  const govde = jt.release(null, { position: [0, 0, 0], quaternion: q0, velocity: [1, 2, 0], omega: w, id: 'x' });
+  const DT = 1 / 240;
+  for (let i = 0; i < Math.round(3 / DT); i++) jt.advance(DT);
+  const adimli = J.attitudeAt(govde.q0, govde.w, govde.age);
+  const kapali = jt.poseAt(govde, 3).q4;
+  const fark = Math.max(...adimli.map((v, i) => Math.abs(v - kapali[i])));
+  check('adım adım ve kapalı form aynı yönelim', fark < 1e-9, `fark ${fark.toExponential(1)}`);
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);
