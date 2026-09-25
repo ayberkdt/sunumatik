@@ -8,10 +8,15 @@
 
    Kullanım: node scripts/validate-satellite.mjs    Çıkış: HATA varsa 1 */
 
-import { pathToFileURL } from 'node:url';
+/* fileURLToPath, not `new URL(...).pathname`: the pathname is
+   percent-encoded, so a folder with a space in its name came back as
+   `Custom%20Yetenekler` and pathToFileURL then encoded the percent
+   again. Every import missed, and only in the checkout that has a
+   space in its path - which is the one people actually work in. */
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const S = await import(pathToFileURL(path.join(root, 'presets/satellite_integration/sat-parts.mjs')).href);
 
 let fails = 0, total = 0;
