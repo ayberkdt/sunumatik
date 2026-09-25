@@ -545,11 +545,22 @@ function govde(THREE, p, mat, dokular) {
          A SADA has ONE axis. It can swing the normal onto the projection of
          the Sun into the plane square to its shaft and no further; the 28.5
          deg that remains is beta-angle loss, and drawing it away would make
-         the power budget a lie. So the shaft goes to the single-axis optimum
-         and the wing collects 0.879, not 1.000 and not 0.667. */
+         the power budget a lie. */
       const surucu = sadaAcisi(GUNES_YONU);
-      g.rotation.x = surucu.aci;
       g.userData.sada = surucu;
+
+      /* The -X wing is its own catalogue row, placed by translation alone, so
+         it was built in the same canonical frame as the +X one and its ROOT
+         came out at the far tip: the yoke of kanat-xn sat at world x -6.12
+         while the drive it bolts to is at -1.0. The wing is built once and
+         the -X one is turned to face its own spacecraft.
+         The turn gets its OWN group rather than another term on g, because g
+         already carries the drive angle and composing two rotations in one
+         Euler call is how half the hardware on this page ended up facing the
+         wrong way. */
+      const ayna = new THREE.Group();
+      if (p.pos[0] < 0) ayna.rotation.z = Math.PI;
+      g.add(ayna);
 
       const tex = dokular.hucreKit.clone();
       tex.needsUpdate = true;
@@ -560,95 +571,148 @@ function govde(THREE, p, mat, dokular) {
          it, and those two things are the whole read. */
       const arkaDoku = dokular.cfrp.clone();
       arkaDoku.needsUpdate = true;
-      arkaDoku.repeat.set(5, 2.4);
+      arkaDoku.repeat.set(1.7, 2.4);
       const arka = new THREE.MeshStandardMaterial({
         map: arkaDoku, color: 0x9aa1ab, roughness: .82, metalness: .16 });
+
+      /* Deployment chain. Each panel hangs off the hinge drawn at its INBOARD
+         edge, and the hinge group's origin sits ON that hinge line - a panel
+         rotated about its own centre does not fold, it pinwheels. */
       const w = sx / 3;
+      const kok = new THREE.Group();
+      kok.position.x = -sx / 2;
+      ayna.add(kok);
+      const mafsallar = [];
+      let anne = kok;
       for (let i = 0; i < 3; i++) {
+        const mafsal = new THREE.Group();
+        /* Menteşe kaymasi acilim() icinde verilir, burada degil: acikken
+           sifir olmali (yoksa paneller duzlem disina zikzak yapar) ve
+           katliyken BIRIKMELI. Sabit kayma ikisini de veremez - zincirdeki
+           her pi donusu cocugun kaymasinin isaretini de cevirdigi icin
+           panel 2'ninki panel 1'inkini goturuyordu ve ucu de AYNI yere
+           geliyordu: olculen panel merkezleri arasi mesafe 0,000 m. */
+        mafsal.position.set(i === 0 ? 0 : w, 0, 0);
+        anne.add(mafsal);
+        mafsallar.push(mafsal);
+        anne = mafsal;
+        const ek = (o) => { o.castShadow = true; o.receiveShadow = true; mafsal.add(o); return o; };
         /* Front face carries the cells, the rest is the CFRP substrate. */
         const yuz = [arka, arka, arka, arka, on, arka];
-        const m = ekle(new THREE.Mesh(new THREE.BoxGeometry(w * .97, sy, sz), yuz));
-        m.position.x = (i - 1) * w;
+        const m = ek(new THREE.Mesh(new THREE.BoxGeometry(w * .97, sy, sz), yuz));
+        m.position.x = w / 2;
         /* Substrate frame: the panel edge is a stiffener, not a raw cut. */
         for (const e of [-1, 1]) {
-          const kenar = ekle(new THREE.Mesh(new THREE.BoxGeometry(w * .97, sy * 0.06, sz * 1.5), KIT.aluDark));
-          kenar.position.set((i - 1) * w, e * sy * 0.47, 0);
+          const kenar = ek(new THREE.Mesh(new THREE.BoxGeometry(w * .97, sy * 0.06, sz * 1.5), KIT.aluDark));
+          kenar.position.set(w / 2, e * sy * 0.47, 0);
         }
         for (const e of [-1, 1]) {
-          const dikme = ekle(new THREE.Mesh(new THREE.BoxGeometry(w * 0.022, sy * 0.94, sz * 1.5), KIT.aluDark));
-          dikme.position.set((i - 1) * w + e * w * 0.475, 0, 0);
+          const dikme = ek(new THREE.Mesh(new THREE.BoxGeometry(w * 0.022, sy * 0.94, sz * 1.5), KIT.aluDark));
+          dikme.position.set(w / 2 + e * w * 0.475, 0, 0);
         }
         /* Cell STRINGS. A wing is wired in series strings and the gap between
            them is visible on the lit face; each string ends in a blocking
            diode, which is what stops one shadowed string draining the rest. */
         for (let j = 1; j < 4; j++) {
-          const ayrim = ekle(new THREE.Mesh(
+          const ayrim = ek(new THREE.Mesh(
             new THREE.BoxGeometry(w * 0.94, sy * 0.014, sz * 0.25), KIT.aluDark));
-          ayrim.position.set((i - 1) * w, (j / 4 - 0.5) * sy * 0.92, sz * 0.56);
+          ayrim.position.set(w / 2, (j / 4 - 0.5) * sy * 0.92, sz * 0.56);
         }
         for (let j = 0; j < 4; j++) {
-          const diyot = ekle(new THREE.Mesh(
+          const diyot = ek(new THREE.Mesh(
             new THREE.BoxGeometry(w * 0.04, sy * 0.05, sz * 0.5), KIT.gold));
-          diyot.position.set((i - 1) * w - w * 0.44, (j / 4 - 0.375) * sy * 0.92, -sz * 0.6);
+          diyot.position.set(w * 0.06, (j / 4 - 0.375) * sy * 0.92, -sz * 0.6);
         }
         /* String harness on the BACK, clipped down every so often. Taped runs
            are the thing you actually see on the back of a real wing. */
         for (let j = 0; j < 2; j++) {
-          const hat = ekle(new THREE.Mesh(
+          const hat = ek(new THREE.Mesh(
             cylGeoX(sz * 0.16, sz * 0.16, w * 0.9, 8), KIT.bakir));
-          hat.position.set((i - 1) * w, (j - 0.5) * sy * 0.46, -sz * 0.74);
+          hat.position.set(w / 2, (j - 0.5) * sy * 0.46, -sz * 0.74);
           for (let c2 = 0; c2 < 3; c2++) {
-            const kelepce = ekle(new THREE.Mesh(
+            const kelepce = ek(new THREE.Mesh(
               new THREE.BoxGeometry(sz * 0.14, sz * 0.5, sz * 0.5), KIT.mliSilver));
-            kelepce.position.set((i - 1) * w + (c2 - 1) * w * 0.3,
+            kelepce.position.set(w / 2 + (c2 - 1) * w * 0.3,
               (j - 0.5) * sy * 0.46, -sz * 0.74);
           }
         }
         /* Corner brackets: four per panel, where the frame members meet. */
         for (const ex of [-1, 1]) for (const ey of [-1, 1]) {
-          const kose = ekle(new THREE.Mesh(
+          const kose = ek(new THREE.Mesh(
             new THREE.BoxGeometry(w * 0.07, sy * 0.07, sz * 1.6), KIT.alu));
-          kose.position.set((i - 1) * w + ex * w * 0.44, ey * sy * 0.44, 0);
+          kose.position.set(w / 2 + ex * w * 0.44, ey * sy * 0.44, 0);
         }
         if (i < 2) {
-          /* Hinges live on BOTH faces of the joint - one line of knuckles is
-             a drawing, two is a hinge that could carry the panel. */
+          /* The hinge that carries the NEXT panel, drawn on the joint it
+             actually lives on. Two lines of knuckles, not one: one line is a
+             drawing, two could carry the panel. */
           for (const ez of [1, -1]) {
             const men = D.hingeLatch(THREE, KIT, 0.7);
-            men.position.set((i - 0.5) * w, 0, ez * sz * 0.9);
+            men.position.set(w, 0, ez * sz * 0.9);
             if (ez < 0) men.rotation.y = Math.PI;
-            g.add(men);
+            mafsal.add(men);
           }
           for (const ey of [-1, 1]) {
-            const yay = ekle(new THREE.Mesh(
+            const yay = ek(new THREE.Mesh(
               cylGeoX(sz * 0.5, sz * 0.5, w * 0.1, 10), KIT.aluDark));
-            yay.position.set((i - 0.5) * w, ey * sy * 0.36, sz * 0.9);
+            yay.position.set(w, ey * sy * 0.36, sz * 0.9);
           }
         }
         /* Tie-down cups: where the stack is clamped for launch and where the
            pyro cutter releases it. The row says "redundant pyro release" and
            there was nothing on the wing to release. */
         for (const ey of [-1, 1]) {
-          const kup = ekle(new THREE.Mesh(
+          const kup = ek(new THREE.Mesh(
             cylGeoZ(sz * 0.9, sz * 1.2, sz * 1.1, 12), KIT.aluDark));
-          kup.position.set((i - 1) * w + w * 0.3, ey * sy * 0.38, -sz * 1.1);
-          const pim = ekle(new THREE.Mesh(
+          kup.position.set(w / 2 + w * 0.3, ey * sy * 0.38, -sz * 1.1);
+          const pim = ek(new THREE.Mesh(
             cylGeoZ(sz * 0.3, sz * 0.3, sz * 2.2, 8), KIT.gold));
-          pim.position.set((i - 1) * w + w * 0.3, ey * sy * 0.38, -sz * 1.1);
+          pim.position.set(w / 2 + w * 0.3, ey * sy * 0.38, -sz * 1.1);
         }
       }
-      const boyunduruk = ekle(new THREE.Mesh(cylGeoX(0.03, 0.03, sx * 0.14, 10), KIT.alu));
+
+      /* Yoke and root hardware stay on the FIXED side of the root hinge. */
+      const ekA = (o) => { o.castShadow = true; o.receiveShadow = true; ayna.add(o); return o; };
+      const boyunduruk = ekA(new THREE.Mesh(cylGeoX(0.03, 0.03, sx * 0.14, 10), KIT.alu));
       boyunduruk.position.x = -sx / 2 - sx * 0.07;
       /* Yoke fork: two arms off the shaft, not a single stick. */
       for (const ey of [-1, 1]) {
-        const kol = ekle(new THREE.Mesh(
+        const kol = ekA(new THREE.Mesh(
           new THREE.BoxGeometry(sx * 0.1, sy * 0.05, sz * 1.6), KIT.alu));
         kol.position.set(-sx / 2 - sx * 0.02, ey * sy * 0.22, 0);
       }
-      /* Harness down the back of the wing to the drive. */
-      const kablo = D.harnessRun(THREE, KIT, sx * 0.92, { r: 0.012, axis: 'x' });
-      kablo.position.set(0, -sy * 0.42, -sz * 1.6);
-      g.add(kablo);
+      /* Drive harness with slack at the root hinge - a cable that folds has
+         to have somewhere to go. It stays SHORT and stays at the root: the
+         first version ran 0.9 m outboard on the fixed side of the hinge, so
+         when the wing folded away the cable was left hanging in the gap and
+         it alone pushed the stowed envelope from 3.48 m out to 4.29 m,
+         against a 3.7 m fairing. */
+      const kablo = D.harnessRun(THREE, KIT, sx * 0.06, { r: 0.012, axis: 'x' });
+      kablo.position.set(-sx / 2 - sx * 0.01, -sy * 0.42, -sz * 1.6);
+      ayna.add(kablo);
+
+      /* ---- açılım: 0 katlı, 1 açık ----
+         Katlama sırası tersten okunur. Her panel kendi menteşesinde π döner;
+         zincir sayesinde panel 1 dönerken panel 2'yi de götürür, üçü bir
+         yığın olur. Kök menteşesi yığını Y ekseninde çeyrek tur çevirip yan
+         panelin üstüne yatırır — kaportaya sığan hâl budur. */
+      const KOK_KAT = -Math.PI / 2;
+      const KAT_ARALIK = sz * 2.6;   // katli yiginda paneller arasi bosluk
+      g.userData.acilimOran = 1;
+      g.userData.acilim = (u) => {
+        const k = Math.min(1, Math.max(0, u));
+        g.userData.acilimOran = k;
+        kok.rotation.y = (1 - k) * KOK_KAT;
+        for (let i = 1; i < mafsallar.length; i++) {
+          mafsallar[i].rotation.y = (1 - k) * Math.PI;
+          /* Isaret degisiyor ki zincirdeki her donus onu ters cevirdiginde
+             kaymalar birbirini goturmek yerine BIRIKSIN. */
+          mafsallar[i].position.z = (1 - k) * KAT_ARALIK * (i % 2 === 1 ? 1 : -1);
+        }
+        /* Katlıyken sürücü KİLİTLİ: kanat çıkmadan güneş izlenmez. */
+        g.rotation.x = k >= 1 ? surucu.aci : 0;
+      };
+      g.userData.acilim(1);
       break;
     }
     case 'canak': {

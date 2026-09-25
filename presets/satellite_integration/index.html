@@ -50,8 +50,11 @@
     .kart .e:first-child { margin-top: 0; }
     .zincir { color: #8a90a0; font-size: 11px; }
     header { position: absolute; left: 314px; top: 12px; z-index: 5; display: flex; gap: 8px; align-items: center; }
+    /* 44 px: dokunma hedefi alt siniri. Sayfa masaustunde 40 px'e
+       sabitliyordu ve 44'e yalniz mobil medya sorgusunda cikiyordu, yani
+       asil kullanildigi yerde hep altindaydi - olculen 40, uc eylemde de. */
     button, select { background: rgba(16,19,27,.9); color: #dfe3ea; border: 1px solid #2b303d;
-      border-radius: 8px; padding: 8px 11px; font-size: 12px; min-height: 40px; cursor: pointer; }
+      border-radius: 8px; padding: 8px 11px; font-size: 12px; min-height: 44px; cursor: pointer; }
     button:hover, select:hover { border-color: #c9a35c; }
     button.aktif { border-color: #c9a35c; background: rgba(201,163,92,.14); color: #f0e2c4; }
     label.rng { display: flex; gap: 8px; align-items: center; background: rgba(16,19,27,.9);
@@ -83,6 +86,7 @@
     <label class="rng" title="Explode">Explode <input id="patla" type="range" min="0" max="100" value="0"><b id="patlaEt">%0</b></label>
     <button id="oynat">&#9654;&nbsp; Play assembly</button>
     <button id="hepsi" class="aktif">All parts</button>
+    <button id="katla">Stow wings</button>
     <select id="gorunum">
       <option value="serbest">Free view</option>
       <option value="on">Front (+X)</option>
@@ -175,6 +179,13 @@
        at all. */
     /* ---------- canlı mekanizmalar ----------
        Üçü de katalogda YAZILI ve sayfada karşılığı yoktu. */
+    /* ---------- açılım ----------
+       Adım 7'nin adı "Deployables" ve metni "kanatlar, SADA'lar, HGA boom'u
+       ve antenler katlı gider; yörüngede açılır" diyor. Hiçbiri açılmıyordu.
+       Katlı hâli gösterecek başka hiçbir yol olmadığı için bu tek düğmeyi
+       hak ediyor: ölçülen katlı zarf 3,144 m, açık 11,630 m. */
+    let acilimHedef = 1, acilimSimdi = 1;
+    const ACILIM_SANIYE = 2.4;
     const kanatlar = [], rotorlar = [];
     uydu.root.traverse(o => {
       if (o.userData?.sada) kanatlar.push(o);
@@ -200,12 +211,38 @@
     }
     sadaIzle();
 
+    function acilimUygula() {
+      for (const k of kanatlar) k.userData.acilim?.(acilimSimdi);
+      const d = el('#katla');
+      if (d) {
+        /* Düğme YAPACAĞI şeyi yazar, durumunu değil: "Stowed" yazan bir
+           düğmeye basınca ne olacağı belirsizdir. */
+        d.textContent = acilimHedef > 0.5 ? 'Stow wings' : 'Deploy wings';
+        d.classList.toggle('aktif', acilimSimdi < 0.999);
+      }
+    }
+    el('#katla').addEventListener('click', () => {
+      acilimHedef = acilimHedef > 0.5 ? 0 : 1;
+      /* Hareket azaltılmışsa geçiş yok, doğrudan varış: animasyon bir bilgi
+         taşıyor ama o bilgiyi durum da taşıyor. */
+      if (azaltilmis) { acilimSimdi = acilimHedef; acilimUygula(); renderer.render(scene, camera); etiketler(); }
+      else acilimUygula();
+    });
+    acilimUygula();
+
     /* Mekanizmaları ilerleten TEK yer. Çizen döngü de buradan geçer, dışarı
        açılan kanca da: ikisi ayrı yazıldığında biri sessizce ötekinden
        ayrılır, ve requestAnimationFrame koşmayan bir sayfada "tekerlek
        dönüyor" arkasında hiçbir şey olmayan bir iddiadır. */
     function mekanizmaIlerlet(dt) {
       dunya.rotation.z += dt * 0.055;
+      if (acilimSimdi !== acilimHedef) {
+        const adimlik = dt / ACILIM_SANIYE;
+        acilimSimdi = acilimHedef > acilimSimdi
+          ? Math.min(acilimHedef, acilimSimdi + adimlik)
+          : Math.max(acilimHedef, acilimSimdi - adimlik);
+        acilimUygula();
+      }
       /* Gövde döndü: sürücü karşılık veriyor. Kanadın kendiliğinden dönüyor
          görünmesinin sebebi bu. */
       sadaIzle();
@@ -287,7 +324,7 @@
       }).join('');
       el('#adimlar').querySelectorAll('[data-adim]').forEach(d => d.addEventListener('click', () => {
         adim = Number(d.dataset.adim); hepsi = false; oynuyor = false;
-        el('#hepsi').classList.remove('aktif'); el('#oynat').textContent = '▶ Montajı oynat';
+        el('#hepsi').classList.remove('aktif'); el('#oynat').textContent = '▶  Play assembly';
         uygula(); panel();
       }));
     }
@@ -452,12 +489,12 @@
     });
     el('#hepsi').addEventListener('click', () => {
       hepsi = true; oynuyor = false; el('#hepsi').classList.add('aktif');
-      el('#oynat').textContent = '▶ Montajı oynat';
+      el('#oynat').textContent = '▶  Play assembly';
       adimlarCiz(); uygula(); panel();
     });
     el('#oynat').addEventListener('click', () => {
       oynuyor = !oynuyor;
-      el('#oynat').textContent = oynuyor ? '⏸ Durdur' : '▶ Montajı oynat';
+      el('#oynat').textContent = oynuyor ? '⏸  Pause' : '▶  Play assembly';
       if (oynuyor) { hepsi = false; adim = 1; oynatT = 0; el('#hepsi').classList.remove('aktif'); adimlarCiz(); uygula(); }
     });
     el('#gorunum').addEventListener('change', (e) => {
@@ -495,7 +532,7 @@
         oynatT += dt;
         const yeni = Math.min(STEPS.length, 1 + Math.floor(oynatT / 1.6));
         if (yeni !== adim) { adim = yeni; adimlarCiz(); uygula(); panel(); }
-        if (oynatT > STEPS.length * 1.6 + 1.2) { oynuyor = false; hepsi = true; el('#oynat').textContent = '▶ Montajı oynat'; el('#hepsi').classList.add('aktif'); adimlarCiz(); uygula(); }
+        if (oynatT > STEPS.length * 1.6 + 1.2) { oynuyor = false; hepsi = true; el('#oynat').textContent = '▶  Play assembly'; el('#hepsi').classList.add('aktif'); adimlarCiz(); uygula(); }
       }
       if (!azaltilmis) mekanizmaIlerlet(dt);
       /* Coast after the finger lifts: a view that stops dead the instant
@@ -528,10 +565,15 @@
           sadaAci: kanatlar.length ? kanatlar[0].rotation.x : null,
           kanatSayisi: kanatlar.length, izlemeKos, izlemeBeta,
           rotorAci, rotorSayisi: rotorlar.length, rotorTurSaniye: TEKER_TUR_S,
+          acilimSimdi, acilimHedef,
         } }),
       /* Mekanizmaları `dt` saniye ilerlet ve çiz. Çizen döngünün kullandığı
          yolun AYNISI. */
       ilerlet: (dt = 1 / 60) => { mekanizmaIlerlet(dt); renderer.render(scene, camera); etiketler(); },
+      /* Açılım da dışarı açılır: katlı bir kanat ile açık bir kanat, kareyi
+         görmeyen bir denetim için ancak böyle ayırt edilebilir. */
+      acilim: (u) => { acilimHedef = u; acilimSimdi = u; acilimUygula();
+        renderer.render(scene, camera); etiketler(); },
       parts: () => PARTS.map(p => ({ id: p.id, ad: p.ad, sistem: p.sistem, step: p.step, kg: partMass(p), mountsTo: p.mountsTo })),
       setStep(n) { adim = n; hepsi = false; adimlarCiz(); uygula(); panel(); },
       setExplode(k) { patla = k; patlaSurgu.value = String(Math.round(k * 100)); el('#patlaEt').textContent = `%${Math.round(k * 100)}`; uygula(); },

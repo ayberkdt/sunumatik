@@ -293,6 +293,12 @@ export const GUNES_YONU = Object.freeze([5, 6, 7]);
    (0,0,1)'e nişan almıştı: ölçülen sapma 180,0°. */
 export const NADIR = Object.freeze([0, 0, -1]);
 
+/* Firlatma kaportasinin statik zarfi. Kanat satiri zaten "acilmis halde
+   hicbir sey kaportaya sigmadigi icin katli firlatilir" diyor; bu, o cumlenin
+   SAYISIDIR ve iki yonlu sinanir - KATLI hal sigmak, ACIK hal SIGMAMAK
+   zorunda. Ikincisi olmadan sinav bir sey olcmez. */
+export const KAPORTA = Object.freeze({ capM: 3.7, boyM: 9.0 });
+
 /**
  * Bir yön anteninin gövde çerçevesindeki boresight'ı.
  *

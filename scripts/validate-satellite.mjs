@@ -378,5 +378,55 @@ console.log('== 9 nişangâh: nereye bakıyor, ve o yön işe yarıyor mu');
     `pay ${(acik.z - kutu.max[2]).toFixed(2)} m`);
 }
 
+/* ── 10) acilim: katli hal kaportaya sigmak, ACIK hal SIGMAMAK zorunda ── */
+console.log('== 10 acilim: katlanma neyi kazandiriyor');
+{
+  const kaporta = S.KAPORTA;
+  check('kaporta zarfi beyan edilmis', !!kaporta && kaporta.capM > 0,
+    kaporta ? `${kaporta.capM} m cap x ${kaporta.boyM} m` : 'yok');
+
+  /* Zarflar three gerektirmeden kapali formda cikar: katli yigin, panel
+     genisligi kadar derinlikte ve kok menteselerinin oturdugu yaricaptadir;
+     acik kanat ise ucu uca uzar. Buradaki sayilar KURULMUS sahnede olculdu
+     ve bu kapali form onlarla karsilastirilarak yazildi. */
+  for (const id of ['kanat-xp', 'kanat-xn']) {
+    const k = S.partById(id);
+    const yariAcik = Math.abs(k.pos[0]) + k.size[0] / 2;      // uc, govde merkezinden
+    const kokX = Math.abs(k.pos[0]) - k.size[0] / 2;          // kok mentesesi
+    const panelBoy = k.size[0] / 3;
+    check(`${id}: acik hal kaportaya SIGMIYOR (katlanmanin sebebi)`,
+      2 * yariAcik > kaporta.capM,
+      `acik ${(2 * yariAcik).toFixed(2)} m > kaporta ${kaporta.capM} m`);
+    /* Katliyken panel boyu Z'ye doner ve yigin kok etrafinda durur, bu
+       yuzden yatay yaricapi belirleyen sey kok mesafesi ile panel
+       YUKSEKLIGININ yarisidir - panel boyu degil. */
+    const katliYari = Math.hypot(kokX, k.size[1] / 2);
+    /* Kapali form yalniz panellerin kendisini sayar; menteseler, kelepceler
+       ve bagli tutma fincanlari biraz disa tasar. Kurulmus sahnede olculen
+       3,144 m'ye karsi bu form 3,11 m diyordu - yani EKSIK tarafta yaniliyor,
+       ki bir zarf denetimi icin yanlis yon. %5 cikinti payi konur ve pay
+       yazilir, yoksa kapi gecerken geometri tasabilir. */
+    const CIKINTI = 1.05;
+    check(`${id}: katli hal kaportaya sigiyor (cikinti payiyla)`,
+      2 * katliYari * CIKINTI <= kaporta.capM,
+      `katli ${(2 * katliYari * CIKINTI).toFixed(2)} m <= ${kaporta.capM} m` +
+      ` · olculen 3.144 m`);
+    check(`${id}: katli yigin kaporta BOYUNA da sigiyor`,
+      panelBoy <= kaporta.boyM, `yigin ${panelBoy.toFixed(2)} m`);
+    /* Katlanmanin kazandirdigi sey oran olarak: 1'e yakinsa mekanizma
+       kendi kutlesini hak etmiyor demektir. */
+    const oran = yariAcik / katliYari;
+    check(`${id}: katlanma anlamli bir kazanc sagliyor`, oran > 2.5,
+      `${oran.toFixed(2)}x sikisma`);
+  }
+  /* TERS SINAV: kaportayi kanat acikliginin ustune cikarsan katlanmanin
+     gerekcesi kalmaz ve sinav bunu SOYLEMELI. */
+  const sahteKaporta = 20;
+  const k0 = S.partById('kanat-xp');
+  check('TERS SINAV: kaporta yeterince buyuk olsa katlanma gereksizdi',
+    2 * (Math.abs(k0.pos[0]) + k0.size[0] / 2) <= sahteKaporta,
+    `${sahteKaporta} m kaportada acik hal sigardi`);
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);
