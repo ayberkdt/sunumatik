@@ -145,7 +145,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <div class="stars" aria-hidden="true"></div>
   <p class="eyebrow">SUNUMATİK</p>
   <h1>Canlı Katalog</h1>
-  <p class="sub">73 preset · 10 kategori · her kart canlı çalışır</p>
+  <p class="sub">75 preset · 10 kategori · her kart canlı çalışır</p>
   <p class="not">Bu deste <b>otomatik üretilir</b> — kütüphaneye eklenen her yeni preset,
      bir sonraki aktarımda kendiliğinden burada belirir.</p>
   <p class="hint">→ ile ilerleyin · <kbd>G</kbd> dizin · <kbd>Esc</kbd> kapat</p>
@@ -184,7 +184,7 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <p class="num">02</p>
   <h2>Yörünge Sahnesi</h2>
   <p class="sub">Manim ayarında sahne blokları: bir yörünge ver, sahne onu gerçekten uçursun.</p>
-  <p class="uyeler">Yörünge Sahnesi · Araç Blokları · Kademe Ayrılması · Aksam Laboratuvarı · Uydu Entegrasyonu · Nefes Kütüphanesi · Fiziksel Aksam · Saha Yerleşimi · Arazi Blokları · Ay&#x27;a Motorlu İniş · Fırlatma ve Tırmanış · Randevu ve Kenetlenme · 3B Yörünge + 2B Yer İzi · Porkchop / Fırlatma Penceresi · Takımyıldızı Kapsaması · Giriş Koridoru · Formasyon Uçuşu · CR3BP ve Lagrange Noktaları · Yerçekimi Yardımı ve B-Düzlemi · Yönelim / GNC Laboratuvarı · Yörünge Pertürbasyonları · Tutulma, Örtülme ve Görünürlük · Yakın Geçiş ve Kovaryans · Üç-Cisim Durumları · Etki Küresi Kâşifi · Ay Serbest Dönüş Yörüngesi · Fırlatma Penceresi ve Azimut · GEO İstasyon Tutma Bütçesi · Giriş Dağılımı (Monte Carlo) · Tisserand Grafiği · Düşük İtkili Transfer Laboratuvarı · Yörünge Belirleme (EKF) Laboratuvarı · Halo Yörüngeleri ve Değişmez Manifoldlar · Lambert Transfer Kâşifi · Küresel Harmonik Yerçekimi Alanı</p>
+  <p class="uyeler">Yörünge Sahnesi · Araç Blokları · Kademe Ayrılması · Aksam Laboratuvarı · Uydu Entegrasyonu · Işık Fiziği · Patlatılmış Görünüm · Habitat Blokları · Nefes Kütüphanesi · Fiziksel Aksam · Saha Yerleşimi · Arazi Blokları · Ay&#x27;a Motorlu İniş · Fırlatma ve Tırmanış · Randevu ve Kenetlenme · 3B Yörünge + 2B Yer İzi · Porkchop / Fırlatma Penceresi · Takımyıldızı Kapsaması · Giriş Koridoru · Formasyon Uçuşu · CR3BP ve Lagrange Noktaları · Yerçekimi Yardımı ve B-Düzlemi · Yönelim / GNC Laboratuvarı · Yörünge Pertürbasyonları · Tutulma, Örtülme ve Görünürlük · Yakın Geçiş ve Kovaryans · Üç-Cisim Durumları · Etki Küresi Kâşifi · Ay Serbest Dönüş Yörüngesi · Fırlatma Penceresi ve Azimut · GEO İstasyon Tutma Bütçesi · Giriş Dağılımı (Monte Carlo) · Tisserand Grafiği · Düşük İtkili Transfer Laboratuvarı · Yörünge Belirleme (EKF) Laboratuvarı · Halo Yörüngeleri ve Değişmez Manifoldlar · Lambert Transfer Kâşifi · Küresel Harmonik Yerçekimi Alanı</p>
 </section>
 
 <section class="slide card" data-tur="kart" data-kat="orbital" data-embed="../presets/orbital_stage/index.html?tab=1">
@@ -290,6 +290,69 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <div class="sahne">
     <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
     <iframe title="Uydu Entegrasyonu önizleme" loading="lazy" data-src="../presets/satellite_integration/index.html?patla=60"></iframe>
+  </div>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="orbital" data-embed="../presets/light_blocks/index.html?ortam=mars">
+  <div class="bilgi">
+    <p class="eyebrow">Yörünge Sahnesi <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Işık Fiziği</h2>
+    <p class="hook">Aynı lamba dört ortamda yan yana: fark süsleme değil, içeriğin kendisi. Ortam kuralı bağlayıcıdır ve her reddi gerekçesiyle söyler.</p>
+    <p class="linkler"><a href="../presets/light_blocks/index.html" target="_blank" rel="noopener">Sayfayı aç ↗</a><a href="../presets/light_blocks/index.html?ortam=vakum" target="_blank" rel="noopener">Vakum</a><a href="../presets/light_blocks/index.html?ortam=ic" target="_blank" rel="noopener">İç mekân</a></p>
+    <ul class="feats">
+      <li>Renk üç meşru kaynaktan gelir: sıcaklık (Planck → CIE 1931 → doğrusal sRGB, yayımlanmış eğriye Δxy &lt; 0,0016), kimya (emisyon hatları) ve yansıma (albedo × aydınlatan)</li>
+      <li>Vakumda açık alev yanmaz, ışık huzmesi görünmez, duman asılı kalmaz — üçü de reddedilir ve yerine ne konacağı önerilir</li>
+      <li>Dolgu ışığı HESAPLANIR, AmbientLight hiç kurulmaz: regolit sıçraması E·ρ·sin(irtifa)/π, Dünya ışığı ~12 lux, Ay yüzeyinde Güneş 127 000 lux</li>
+      <li>Far kandela ile tanımlı, zemin aydınlatması E = I/d² olarak ekranda ölçülü; pembe gürültü PSD&#x27;si ölçülen eğimle −1,018</li>
+    </ul>
+    <p class="yol"><code>presets/light_blocks/index.html?ortam=mars</code></p>
+    <a class="ac" href="../presets/light_blocks/index.html?ortam=mars" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Işık Fiziği önizleme" loading="lazy" data-src="../presets/light_blocks/index.html?ortam=mars"></iframe>
+  </div>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="orbital" data-embed="../presets/exploded_view/index.html?object=satellite">
+  <div class="bilgi">
+    <p class="eyebrow">Yörünge Sahnesi <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Patlatılmış Görünüm</h2>
+    <p class="hook">Tek bir montaj çekirdeği, altı farklı cisim: beyan edilmiş katalogla türetilmiş sahne grafiği yan yana, ikisi de aynı yoldan patlıyor.</p>
+    <p class="linkler"><a href="../presets/exploded_view/index.html" target="_blank" rel="noopener">Sayfayı aç ↗</a><a href="../presets/exploded_view/index.html?object=habitat" target="_blank" rel="noopener">Yüzey üssü</a><a href="../presets/exploded_view/index.html?object=rover" target="_blank" rel="noopener">Gezgin (türetilmiş)</a></p>
+    <ul class="feats">
+      <li>Patlatma yönü rastgele değil: her parça BAĞLANDIĞI parçadan, montajın tersi doğrultuda çıkar; aynı doğrultudakiler izdüşüme göre paketlenir, hiçbiri diğerini geçmez</li>
+      <li>Hareket modeli saf ve three&#x27;siz: kademe (dış parçalar önce kalkar), smootherstep yumuşatma ve ayrılma açısı (k, parça)&#x27;nın kapalı formları — kaydırağı geri sürmek tam olarak geri izler</li>
+      <li>Her parça gidiş yönüne DİK eksende döner ve varışta beyan edilmiş duruşuna tam döner (ölçülen 3e−17 rad): patlatılmış hâl bir çizimdir</li>
+      <li>Türetilen cisimlerde kütle sınır hacminden TAHMİN edilir ve arayüzde her yerde öyle işaretlenir — beyan edilenle karıştırılmaz</li>
+    </ul>
+    <p class="yol"><code>presets/exploded_view/index.html?object=satellite</code></p>
+    <a class="ac" href="../presets/exploded_view/index.html?object=satellite" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Patlatılmış Görünüm önizleme" loading="lazy" data-src="../presets/exploded_view/index.html?object=satellite"></iframe>
+  </div>
+</section>
+
+<section class="slide card" data-tur="kart" data-kat="orbital" data-embed="../presets/habitat_blocks/index.html?ortam=mars">
+  <div class="bilgi">
+    <p class="eyebrow">Yörünge Sahnesi <span class="badge guncel">GÜNCEL</span></p>
+    <h2>Habitat Blokları</h2>
+    <p class="hook">Dört mürettebatlı bir yüzey üssü: 26 bileşen, 7 kurulum adımı ve ortama uymayan bileşeni gerekçesiyle reddeden bir kural.</p>
+    <p class="linkler"><a href="../presets/habitat_blocks/index.html" target="_blank" rel="noopener">Sayfayı aç ↗</a><a href="../presets/habitat_blocks/index.html?ortam=moon" target="_blank" rel="noopener">Ay ortamı</a></p>
+    <ul class="feats">
+      <li>Ortam kuralı bağlayıcıdır: Ay&#x27;da MOXIE (atmosferde CO₂ yok) ve rüzgâr ölçer (ölçülecek rüzgâr yok) reddedilir ve 428 kg bütçeden düşer</li>
+      <li>Dört bütçe kapanmak zorunda — asıl soru gündüz değil FIRTINA: panel %20&#x27;ye düşüp sera ile ISRU kapandığında kritik 5,81 kW yükü yalnız fisyon taşır (%45 pay)</li>
+      <li>Hat çizilmez, hesaplanır: mesnet aralığı sarkma sınırından çıkar ve g^(−1/3) ile ölçeklenir (Ay 13,3 m, Mars 10,1 m); sarkma zincir eğrisidir, parabol değil</li>
+      <li>Sabatier&#x27;in su/metan oranı stokiyometriden sınanır: ölçülen 2,250, beklenen 2,246</li>
+    </ul>
+    <p class="yol"><code>presets/habitat_blocks/index.html?ortam=mars</code></p>
+    <a class="ac" href="../presets/habitat_blocks/index.html?ortam=mars" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
+  </div>
+  <div class="sahne">
+    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
+    <iframe title="Habitat Blokları önizleme" loading="lazy" data-src="../presets/habitat_blocks/index.html?ortam=mars"></iframe>
   </div>
 </section>
 
@@ -1707,31 +1770,6 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   </div>
 </section>
 
-<section class="slide divider" data-tur="bolum" data-kat="yeni">
-  <p class="num">12</p>
-  <h2>Yeni Bloklar</h2>
-  <p class="sub">Otomatik keşifle eklendi — kartı henüz yazılmadı.</p>
-  <p class="uyeler">Light Blocks</p>
-</section>
-
-<section class="slide card" data-tur="kart" data-kat="yeni" data-embed="../presets/light_blocks/index.html">
-  <div class="bilgi">
-    <p class="eyebrow">Yeni Bloklar <span class="badge yeni">YENİ</span></p>
-    <h2>Light Blocks</h2>
-    <p class="hook">Otomatik keşifle eklendi — kartı henüz yazılmadı. build-demo.py içindeki KARTLAR listesine küratörlü kartını ekleyin.</p>
-
-    <ul class="feats">
-      <li>Kaynak: presets/light_blocks</li>
-    </ul>
-    <p class="yol"><code>presets/light_blocks/index.html</code></p>
-    <a class="ac" href="../presets/light_blocks/index.html" target="_blank" rel="noopener">Yeni sekmede aç ↗</a>
-  </div>
-  <div class="sahne">
-    <div class="yukleniyor">canlı önizleme —<br>slayt açılınca yüklenir</div>
-    <iframe title="Light Blocks önizleme" loading="lazy" data-src="../presets/light_blocks/index.html"></iframe>
-  </div>
-</section>
-
 <section class="slide closing" data-tur="kapanis">
   <div class="stars" aria-hidden="true"></div>
   <h2>Blok blok bir deste kurun</h2>
@@ -1747,10 +1785,10 @@ kbd { font-family: var(--mono); background: var(--sf); border: 1px solid var(--r
   <button id="geri" aria-label="Önceki">←</button>
   <button id="ileri" aria-label="Sonraki">→</button>
 </div>
-<button id="sayac" title="Dizin (G)">1 / 87</button>
+<button id="sayac" title="Dizin (G)">1 / 88</button>
 <div id="dizin" role="dialog" aria-label="Dizin"></div>
 <script>
-const TOC = [{"i": 0, "ad": "Kapak", "tur": "kapak", "kat": ""}, {"i": 1, "ad": "Sinematik Uzay Yolculuğu", "tur": "bolum", "kat": "sinematik"}, {"i": 2, "ad": "Sinematik Uzay Sahnesi", "tur": "kart", "kat": "sinematik"}, {"i": 3, "ad": "Yörünge Sahnesi", "tur": "bolum", "kat": "orbital"}, {"i": 4, "ad": "Yörünge Sahnesi", "tur": "kart", "kat": "orbital"}, {"i": 5, "ad": "Araç Blokları", "tur": "kart", "kat": "orbital"}, {"i": 6, "ad": "Kademe Ayrılması", "tur": "kart", "kat": "orbital"}, {"i": 7, "ad": "Aksam Laboratuvarı", "tur": "kart", "kat": "orbital"}, {"i": 8, "ad": "Uydu Entegrasyonu", "tur": "kart", "kat": "orbital"}, {"i": 9, "ad": "Nefes Kütüphanesi", "tur": "kart", "kat": "orbital"}, {"i": 10, "ad": "Fiziksel Aksam", "tur": "kart", "kat": "orbital"}, {"i": 11, "ad": "Saha Yerleşimi", "tur": "kart", "kat": "orbital"}, {"i": 12, "ad": "Arazi Blokları", "tur": "kart", "kat": "orbital"}, {"i": 13, "ad": "Ay'a Motorlu İniş", "tur": "kart", "kat": "orbital"}, {"i": 14, "ad": "Fırlatma ve Tırmanış", "tur": "kart", "kat": "orbital"}, {"i": 15, "ad": "Randevu ve Kenetlenme", "tur": "kart", "kat": "orbital"}, {"i": 16, "ad": "3B Yörünge + 2B Yer İzi", "tur": "kart", "kat": "orbital"}, {"i": 17, "ad": "Porkchop / Fırlatma Penceresi", "tur": "kart", "kat": "orbital"}, {"i": 18, "ad": "Takımyıldızı Kapsaması", "tur": "kart", "kat": "orbital"}, {"i": 19, "ad": "Giriş Koridoru", "tur": "kart", "kat": "orbital"}, {"i": 20, "ad": "Formasyon Uçuşu", "tur": "kart", "kat": "orbital"}, {"i": 21, "ad": "CR3BP ve Lagrange Noktaları", "tur": "kart", "kat": "orbital"}, {"i": 22, "ad": "Yerçekimi Yardımı ve B-Düzlemi", "tur": "kart", "kat": "orbital"}, {"i": 23, "ad": "Yönelim / GNC Laboratuvarı", "tur": "kart", "kat": "orbital"}, {"i": 24, "ad": "Yörünge Pertürbasyonları", "tur": "kart", "kat": "orbital"}, {"i": 25, "ad": "Tutulma, Örtülme ve Görünürlük", "tur": "kart", "kat": "orbital"}, {"i": 26, "ad": "Yakın Geçiş ve Kovaryans", "tur": "kart", "kat": "orbital"}, {"i": 27, "ad": "Üç-Cisim Durumları", "tur": "kart", "kat": "orbital"}, {"i": 28, "ad": "Etki Küresi Kâşifi", "tur": "kart", "kat": "orbital"}, {"i": 29, "ad": "Ay Serbest Dönüş Yörüngesi", "tur": "kart", "kat": "orbital"}, {"i": 30, "ad": "Fırlatma Penceresi ve Azimut", "tur": "kart", "kat": "orbital"}, {"i": 31, "ad": "GEO İstasyon Tutma Bütçesi", "tur": "kart", "kat": "orbital"}, {"i": 32, "ad": "Giriş Dağılımı (Monte Carlo)", "tur": "kart", "kat": "orbital"}, {"i": 33, "ad": "Tisserand Grafiği", "tur": "kart", "kat": "orbital"}, {"i": 34, "ad": "Düşük İtkili Transfer Laboratuvarı", "tur": "kart", "kat": "orbital"}, {"i": 35, "ad": "Yörünge Belirleme (EKF) Laboratuvarı", "tur": "kart", "kat": "orbital"}, {"i": 36, "ad": "Halo Yörüngeleri ve Değişmez Manifoldlar", "tur": "kart", "kat": "orbital"}, {"i": 37, "ad": "Lambert Transfer Kâşifi", "tur": "kart", "kat": "orbital"}, {"i": 38, "ad": "Küresel Harmonik Yerçekimi Alanı", "tur": "kart", "kat": "orbital"}, {"i": 39, "ad": "ML Sahneleri", "tur": "bolum", "kat": "ml"}, {"i": 40, "ad": "Kayıp Yüzeyi", "tur": "kart", "kat": "ml"}, {"i": 41, "ad": "Dikkat Akışı", "tur": "kart", "kat": "ml"}, {"i": 42, "ad": "Mimari Kurucu", "tur": "kart", "kat": "ml"}, {"i": 43, "ad": "Katman Blokları", "tur": "kart", "kat": "ml"}, {"i": 44, "ad": "Evrişimli Görü", "tur": "kart", "kat": "ml"}, {"i": 45, "ad": "Kayıp Fonksiyonları", "tur": "kart", "kat": "ml"}, {"i": 46, "ad": "Sinir Ağı Yürüyüşü", "tur": "kart", "kat": "ml"}, {"i": 47, "ad": "Havacılık ve Akışkanlar", "tur": "bolum", "kat": "havacilik"}, {"i": 48, "ad": "Uçak Blokları", "tur": "kart", "kat": "havacilik"}, {"i": 49, "ad": "Profil Etrafında Akım", "tur": "kart", "kat": "havacilik"}, {"i": 50, "ad": "Şok ve Genleşme Dalgaları", "tur": "kart", "kat": "havacilik"}, {"i": 51, "ad": "Kármán Vorteks Caddesi", "tur": "kart", "kat": "havacilik"}, {"i": 52, "ad": "Haberleşme", "tur": "bolum", "kat": "haberlesme"}, {"i": 53, "ad": "Anten ve Yer İstasyonu", "tur": "kart", "kat": "haberlesme"}, {"i": 54, "ad": "Bağlantı Bütçesi", "tur": "kart", "kat": "haberlesme"}, {"i": 55, "ad": "Gök Cisimleri ve Fonlar", "tur": "bolum", "kat": "gok"}, {"i": 56, "ad": "Güneş", "tur": "kart", "kat": "gok"}, {"i": 57, "ad": "Ay", "tur": "kart", "kat": "gok"}, {"i": 58, "ad": "Dünya", "tur": "kart", "kat": "gok"}, {"i": 59, "ad": "Gezegenler", "tur": "kart", "kat": "gok"}, {"i": 60, "ad": "Kozmos Fonu", "tur": "kart", "kat": "gok"}, {"i": 61, "ad": "Aurora", "tur": "kart", "kat": "gok"}, {"i": 62, "ad": "JWST Kaşifi", "tur": "kart", "kat": "gok"}, {"i": 63, "ad": "Denklem ve Anlatım", "tur": "bolum", "kat": "anlatim"}, {"i": 64, "ad": "Denklem Kalemi", "tur": "kart", "kat": "anlatim"}, {"i": 65, "ad": "Türetme Adımları", "tur": "kart", "kat": "anlatim"}, {"i": 66, "ad": "Figür Anlatımı", "tur": "kart", "kat": "anlatim"}, {"i": 67, "ad": "Zaman Çizelgesi", "tur": "kart", "kat": "anlatim"}, {"i": 68, "ad": "Veri, Grafik ve Hareket", "tur": "bolum", "kat": "veri"}, {"i": 69, "ad": "Grafik Motoru", "tur": "kart", "kat": "veri"}, {"i": 70, "ad": "Hareket Primitifleri", "tur": "kart", "kat": "veri"}, {"i": 71, "ad": "Tablo Sahnesi", "tur": "kart", "kat": "veri"}, {"i": 72, "ad": "Slayt Geçişleri", "tur": "kart", "kat": "veri"}, {"i": 73, "ad": "Etkileşim Efektleri", "tur": "kart", "kat": "veri"}, {"i": 74, "ad": "Tasarım Sistemi", "tur": "bolum", "kat": "tasarim"}, {"i": 75, "ad": "Kompozisyon Kılavuzu", "tur": "kart", "kat": "tasarim"}, {"i": 76, "ad": "Tipografi Sistemi", "tur": "kart", "kat": "tasarim"}, {"i": 77, "ad": "Palet Galerisi", "tur": "kart", "kat": "tasarim"}, {"i": 78, "ad": "İkon Katmanları", "tur": "bolum", "kat": "ikon"}, {"i": 79, "ad": "Alan İkonları", "tur": "kart", "kat": "ikon"}, {"i": 80, "ad": "Utility İkonlar", "tur": "kart", "kat": "ikon"}, {"i": 81, "ad": "Kahraman Bilim İkonları", "tur": "kart", "kat": "ikon"}, {"i": 82, "ad": "Arşiv", "tur": "bolum", "kat": "arsiv"}, {"i": 83, "ad": "Analitik Ay Yörüngesi", "tur": "kart", "kat": "arsiv"}, {"i": 84, "ad": "Yeni Bloklar", "tur": "bolum", "kat": "yeni"}, {"i": 85, "ad": "Light Blocks", "tur": "kart", "kat": "yeni"}, {"i": 86, "ad": "Kapanış", "tur": "kapanis", "kat": ""}];
+const TOC = [{"i": 0, "ad": "Kapak", "tur": "kapak", "kat": ""}, {"i": 1, "ad": "Sinematik Uzay Yolculuğu", "tur": "bolum", "kat": "sinematik"}, {"i": 2, "ad": "Sinematik Uzay Sahnesi", "tur": "kart", "kat": "sinematik"}, {"i": 3, "ad": "Yörünge Sahnesi", "tur": "bolum", "kat": "orbital"}, {"i": 4, "ad": "Yörünge Sahnesi", "tur": "kart", "kat": "orbital"}, {"i": 5, "ad": "Araç Blokları", "tur": "kart", "kat": "orbital"}, {"i": 6, "ad": "Kademe Ayrılması", "tur": "kart", "kat": "orbital"}, {"i": 7, "ad": "Aksam Laboratuvarı", "tur": "kart", "kat": "orbital"}, {"i": 8, "ad": "Uydu Entegrasyonu", "tur": "kart", "kat": "orbital"}, {"i": 9, "ad": "Işık Fiziği", "tur": "kart", "kat": "orbital"}, {"i": 10, "ad": "Patlatılmış Görünüm", "tur": "kart", "kat": "orbital"}, {"i": 11, "ad": "Habitat Blokları", "tur": "kart", "kat": "orbital"}, {"i": 12, "ad": "Nefes Kütüphanesi", "tur": "kart", "kat": "orbital"}, {"i": 13, "ad": "Fiziksel Aksam", "tur": "kart", "kat": "orbital"}, {"i": 14, "ad": "Saha Yerleşimi", "tur": "kart", "kat": "orbital"}, {"i": 15, "ad": "Arazi Blokları", "tur": "kart", "kat": "orbital"}, {"i": 16, "ad": "Ay'a Motorlu İniş", "tur": "kart", "kat": "orbital"}, {"i": 17, "ad": "Fırlatma ve Tırmanış", "tur": "kart", "kat": "orbital"}, {"i": 18, "ad": "Randevu ve Kenetlenme", "tur": "kart", "kat": "orbital"}, {"i": 19, "ad": "3B Yörünge + 2B Yer İzi", "tur": "kart", "kat": "orbital"}, {"i": 20, "ad": "Porkchop / Fırlatma Penceresi", "tur": "kart", "kat": "orbital"}, {"i": 21, "ad": "Takımyıldızı Kapsaması", "tur": "kart", "kat": "orbital"}, {"i": 22, "ad": "Giriş Koridoru", "tur": "kart", "kat": "orbital"}, {"i": 23, "ad": "Formasyon Uçuşu", "tur": "kart", "kat": "orbital"}, {"i": 24, "ad": "CR3BP ve Lagrange Noktaları", "tur": "kart", "kat": "orbital"}, {"i": 25, "ad": "Yerçekimi Yardımı ve B-Düzlemi", "tur": "kart", "kat": "orbital"}, {"i": 26, "ad": "Yönelim / GNC Laboratuvarı", "tur": "kart", "kat": "orbital"}, {"i": 27, "ad": "Yörünge Pertürbasyonları", "tur": "kart", "kat": "orbital"}, {"i": 28, "ad": "Tutulma, Örtülme ve Görünürlük", "tur": "kart", "kat": "orbital"}, {"i": 29, "ad": "Yakın Geçiş ve Kovaryans", "tur": "kart", "kat": "orbital"}, {"i": 30, "ad": "Üç-Cisim Durumları", "tur": "kart", "kat": "orbital"}, {"i": 31, "ad": "Etki Küresi Kâşifi", "tur": "kart", "kat": "orbital"}, {"i": 32, "ad": "Ay Serbest Dönüş Yörüngesi", "tur": "kart", "kat": "orbital"}, {"i": 33, "ad": "Fırlatma Penceresi ve Azimut", "tur": "kart", "kat": "orbital"}, {"i": 34, "ad": "GEO İstasyon Tutma Bütçesi", "tur": "kart", "kat": "orbital"}, {"i": 35, "ad": "Giriş Dağılımı (Monte Carlo)", "tur": "kart", "kat": "orbital"}, {"i": 36, "ad": "Tisserand Grafiği", "tur": "kart", "kat": "orbital"}, {"i": 37, "ad": "Düşük İtkili Transfer Laboratuvarı", "tur": "kart", "kat": "orbital"}, {"i": 38, "ad": "Yörünge Belirleme (EKF) Laboratuvarı", "tur": "kart", "kat": "orbital"}, {"i": 39, "ad": "Halo Yörüngeleri ve Değişmez Manifoldlar", "tur": "kart", "kat": "orbital"}, {"i": 40, "ad": "Lambert Transfer Kâşifi", "tur": "kart", "kat": "orbital"}, {"i": 41, "ad": "Küresel Harmonik Yerçekimi Alanı", "tur": "kart", "kat": "orbital"}, {"i": 42, "ad": "ML Sahneleri", "tur": "bolum", "kat": "ml"}, {"i": 43, "ad": "Kayıp Yüzeyi", "tur": "kart", "kat": "ml"}, {"i": 44, "ad": "Dikkat Akışı", "tur": "kart", "kat": "ml"}, {"i": 45, "ad": "Mimari Kurucu", "tur": "kart", "kat": "ml"}, {"i": 46, "ad": "Katman Blokları", "tur": "kart", "kat": "ml"}, {"i": 47, "ad": "Evrişimli Görü", "tur": "kart", "kat": "ml"}, {"i": 48, "ad": "Kayıp Fonksiyonları", "tur": "kart", "kat": "ml"}, {"i": 49, "ad": "Sinir Ağı Yürüyüşü", "tur": "kart", "kat": "ml"}, {"i": 50, "ad": "Havacılık ve Akışkanlar", "tur": "bolum", "kat": "havacilik"}, {"i": 51, "ad": "Uçak Blokları", "tur": "kart", "kat": "havacilik"}, {"i": 52, "ad": "Profil Etrafında Akım", "tur": "kart", "kat": "havacilik"}, {"i": 53, "ad": "Şok ve Genleşme Dalgaları", "tur": "kart", "kat": "havacilik"}, {"i": 54, "ad": "Kármán Vorteks Caddesi", "tur": "kart", "kat": "havacilik"}, {"i": 55, "ad": "Haberleşme", "tur": "bolum", "kat": "haberlesme"}, {"i": 56, "ad": "Anten ve Yer İstasyonu", "tur": "kart", "kat": "haberlesme"}, {"i": 57, "ad": "Bağlantı Bütçesi", "tur": "kart", "kat": "haberlesme"}, {"i": 58, "ad": "Gök Cisimleri ve Fonlar", "tur": "bolum", "kat": "gok"}, {"i": 59, "ad": "Güneş", "tur": "kart", "kat": "gok"}, {"i": 60, "ad": "Ay", "tur": "kart", "kat": "gok"}, {"i": 61, "ad": "Dünya", "tur": "kart", "kat": "gok"}, {"i": 62, "ad": "Gezegenler", "tur": "kart", "kat": "gok"}, {"i": 63, "ad": "Kozmos Fonu", "tur": "kart", "kat": "gok"}, {"i": 64, "ad": "Aurora", "tur": "kart", "kat": "gok"}, {"i": 65, "ad": "JWST Kaşifi", "tur": "kart", "kat": "gok"}, {"i": 66, "ad": "Denklem ve Anlatım", "tur": "bolum", "kat": "anlatim"}, {"i": 67, "ad": "Denklem Kalemi", "tur": "kart", "kat": "anlatim"}, {"i": 68, "ad": "Türetme Adımları", "tur": "kart", "kat": "anlatim"}, {"i": 69, "ad": "Figür Anlatımı", "tur": "kart", "kat": "anlatim"}, {"i": 70, "ad": "Zaman Çizelgesi", "tur": "kart", "kat": "anlatim"}, {"i": 71, "ad": "Veri, Grafik ve Hareket", "tur": "bolum", "kat": "veri"}, {"i": 72, "ad": "Grafik Motoru", "tur": "kart", "kat": "veri"}, {"i": 73, "ad": "Hareket Primitifleri", "tur": "kart", "kat": "veri"}, {"i": 74, "ad": "Tablo Sahnesi", "tur": "kart", "kat": "veri"}, {"i": 75, "ad": "Slayt Geçişleri", "tur": "kart", "kat": "veri"}, {"i": 76, "ad": "Etkileşim Efektleri", "tur": "kart", "kat": "veri"}, {"i": 77, "ad": "Tasarım Sistemi", "tur": "bolum", "kat": "tasarim"}, {"i": 78, "ad": "Kompozisyon Kılavuzu", "tur": "kart", "kat": "tasarim"}, {"i": 79, "ad": "Tipografi Sistemi", "tur": "kart", "kat": "tasarim"}, {"i": 80, "ad": "Palet Galerisi", "tur": "kart", "kat": "tasarim"}, {"i": 81, "ad": "İkon Katmanları", "tur": "bolum", "kat": "ikon"}, {"i": 82, "ad": "Alan İkonları", "tur": "kart", "kat": "ikon"}, {"i": 83, "ad": "Utility İkonlar", "tur": "kart", "kat": "ikon"}, {"i": 84, "ad": "Kahraman Bilim İkonları", "tur": "kart", "kat": "ikon"}, {"i": 85, "ad": "Arşiv", "tur": "bolum", "kat": "arsiv"}, {"i": 86, "ad": "Analitik Ay Yörüngesi", "tur": "kart", "kat": "arsiv"}, {"i": 87, "ad": "Kapanış", "tur": "kapanis", "kat": ""}];
 const slaytlar = [...document.querySelectorAll('.slide')];
 const sayac = document.getElementById('sayac');
 const dizin = document.getElementById('dizin');
