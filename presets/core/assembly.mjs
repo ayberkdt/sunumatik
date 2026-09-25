@@ -15,15 +15,16 @@
  */
 
 export const IFACE_CLASSES = Object.freeze({
-  civata: 'Cıvatalı arayüz (tork değerli)',
-  kizak: 'Kızak/ray arayüzü (panel seviyesinde kayar, sonra kilitlenir)',
-  ayirma: 'Ayırma arayüzü (kelepçe bandı ya da piroteknik)',
-  akiskan: 'Akışkan arayüzü (kaynaklı boru, kesme valfi)',
-  isil: 'Isıl arayüz (macun/gaz aralığı, ısı borusu gömme)',
-  elektrik: 'Elektrik arayüzü (konnektör, kablaj demeti)',
-  mentese: 'Menteşe + kilit (fırlatmada katlı, yörüngede açılır)',
-  kaynak: 'Kaynaklı/yapıştırılmış birleşim (sökülmez)',
-  basincli: 'Basınçlı geçiş (conta, kelepçe, hava sızdırmaz)',
+  civata: 'Bolted (torqued)',
+  kizak: 'Slide rail (slides in at panel level, then locks)',
+  ayirma: 'Separation (clamp band or pyrotechnic)',
+  akiskan: 'Fluid (welded line, shutoff valve)',
+  isil: 'Thermal (gap filler, embedded heat pipe)',
+  elektrik: 'Electrical (connector, harness)',
+  mentese: 'Hinge and latch (stowed for launch, deploys in flight)',
+  kaynak: 'Welded or bonded (not separable)',
+  basincli: 'Pressurised passage (seal, clamp, airtight)',
+  kelepce: 'Clamp',
 });
 
 export const MODES = Object.freeze(['assembly', 'axial', 'radial', 'layered']);

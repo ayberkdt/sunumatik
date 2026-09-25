@@ -211,6 +211,12 @@ console.log('== 8 genel yüzey sözleşmesi');
     Array.isArray(m.chain(ORNEK.parts[1].id)) && m.chain(ORNEK.parts[1].id).every(x => typeof x === 'object'));
   check('explode Map veriyor', typeof m.explode === 'function' && m.explode(0.5) instanceof Map);
   check('interfaceCensus DİZİ veriyor', Array.isArray(m.interfaceCensus()));
+  /* Her arayüz anahtarı sözlükte ÇÖZÜLMELİ. Çözülmezse sayım ham anahtarı
+     basar ve kimse fark etmez: uydu kataloğu 'menteşe' yazıyordu, sözlükte
+     'mentese' vardı ve arayüzde Türkçe ham anahtar görünüyordu. */
+  const cozulmeyen = m.interfaceCensus().filter(x => x.ad === x.iface);
+  check('her arayüz sınıfı sözlükte çözülüyor', cozulmeyen.length === 0,
+    cozulmeyen.map(x => x.iface).join(',') || `${m.interfaceCensus().length} sınıf`);
   check('budget sayısal toplam veriyor', typeof m.budget().toplamKg === 'number');
   check('integrationOrder dizi veriyor', Array.isArray(m.integrationOrder()));
 }

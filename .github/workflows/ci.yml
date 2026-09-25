@@ -81,6 +81,9 @@ jobs:
       - name: Montaj çekirdeği (patlatma yönü, çakışma paketlemesi, bütçe, adaptör)
         run: node scripts/validate-assembly.mjs
 
+      - name: Patlatma hareketi (kademe, yerleşme açısı, karma dağılımı)
+        run: node scripts/validate-exploded-motion.mjs
+
       - name: Saha yerleşimi (kural kataloğu, çözücü, determinizm, araziye yazılan kapılar)
         run: node scripts/validate-site.mjs
 

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Uydu Entegrasyonu — satellite_integration</title>
+  <title>Satellite Integration — satellite_integration</title>
   <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
   <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
   <style>
@@ -67,23 +67,23 @@
 </head>
 <body>
   <aside id="sol">
-    <h1>Uydu Entegrasyonu<small>satellite_integration · parçalar, arayüzler ve montaj sırası · patlatılmış görünüm</small></h1>
-    <h2>Montaj adımları</h2>
-    <p class="alt">Sıra keyfi değil: her adım bir sonrakinin erişimini kapatır. Adıma tıkla, uydu o ana kadar kurulsun.</p>
+    <h1>Satellite Integration<small>satellite_integration &middot; parts, interfaces and assembly order &middot; exploded view</small></h1>
+    <h2>Assembly steps</h2>
+    <p class="alt">The order is not arbitrary: each step closes off access for the next one. Click a step to build the satellite up to that point.</p>
     <div id="adimlar"></div>
-    <h2>Alt sistemler</h2>
+    <h2>Subsystems</h2>
     <div id="sistemler"></div>
   </aside>
 
   <header>
-    <label class="rng" title="Patlatma">Patlatma <input id="patla" type="range" min="0" max="100" value="0"><b id="patlaEt">%0</b></label>
-    <button id="oynat">▶ Montajı oynat</button>
-    <button id="hepsi" class="aktif">Tümü</button>
+    <label class="rng" title="Explode">Explode <input id="patla" type="range" min="0" max="100" value="0"><b id="patlaEt">%0</b></label>
+    <button id="oynat">&#9654;&nbsp; Play assembly</button>
+    <button id="hepsi" class="aktif">All parts</button>
     <select id="gorunum">
-      <option value="serbest">Serbest bakış</option>
-      <option value="on">Önden (+X)</option>
-      <option value="yan">Yandan (+Y)</option>
-      <option value="ust">Üstten (+Z)</option>
+      <option value="serbest">Free view</option>
+      <option value="on">Front (+X)</option>
+      <option value="yan">Side (+Y)</option>
+      <option value="ust">Top (+Z)</option>
     </select>
   </header>
 
@@ -92,11 +92,11 @@
   <div id="altyazi"></div>
 
   <aside id="sag">
-    <h2>Parça künyesi</h2>
-    <div class="kart" id="kunye">Bir parçaya tıkla ya da soldan bir adım seç.</div>
-    <h2>Kütle bütçesi</h2>
+    <h2>Part</h2>
+    <div class="kart" id="kunye">Click a part, or pick an assembly step on the left.</div>
+    <h2>Mass budget</h2>
     <table id="butce"></table>
-    <h2>Kütle merkezi</h2>
+    <h2>Centre of mass</h2>
     <div class="kart" id="km"></div>
   </aside>
 
@@ -219,15 +219,15 @@
       const b = massBudget(), d = describe();
       el('#butce').innerHTML =
         b.sistemler.map(s => `<tr><td class="k">${s.ad}</td><td class="v">${s.kg} kg · %${(s.pay * 100).toFixed(1)}</td></tr>`).join('')
-        + `<tr><td class="k"><b>Kuru kütle</b></td><td class="v"><b>${b.kuruKg} kg</b></td></tr>`
-        + `<tr><td class="k">İtici yükü</td><td class="v">${b.iticiKg} kg</td></tr>`
-        + `<tr><td class="k"><b>Fırlatma kütlesi</b></td><td class="v"><b>${b.firlatmaKg} kg</b></td></tr>`
-        + `<tr><td class="k">Parça</td><td class="v">${b.parcaSayisi} adet · ${d.parca} tür</td></tr>`;
+        + `<tr><td class="k"><b>Dry mass</b></td><td class="v"><b>${b.kuruKg} kg</b></td></tr>`
+        + `<tr><td class="k">Propellant</td><td class="v">${b.iticiKg} kg</td></tr>`
+        + `<tr><td class="k"><b>Launch mass</b></td><td class="v"><b>${b.firlatmaKg} kg</b></td></tr>`
+        + `<tr><td class="k">Parts</td><td class="v">${b.parcaSayisi} units · ${d.parca} types</td></tr>`;
       const c = centerOfMass(), ck = centerOfMass({ yakitli: false });
-      el('#km').innerHTML = `<b>Yakıtlı</b> [${c.x.toFixed(3)}, ${c.y.toFixed(3)}, ${c.z.toFixed(3)}] m`
-        + `<br><b>Kuru</b> [${ck.x.toFixed(3)}, ${ck.y.toFixed(3)}, ${ck.z.toFixed(3)}] m`
-        + `<span class="e">Eksenden sapma</span>${d.eksendenSapmaMm} mm`
-        + `<span class="e">Neden önemli</span>Apogee motorunun ekseni kütle merkezinden geçmezse her yakış bir dönme momenti üretir ve yakıt onu düzeltmeye gider.`;
+      el('#km').innerHTML = `<b>Wet</b> [${c.x.toFixed(3)}, ${c.y.toFixed(3)}, ${c.z.toFixed(3)}] m`
+        + `<br><b>Dry</b> [${ck.x.toFixed(3)}, ${ck.y.toFixed(3)}, ${ck.z.toFixed(3)}] m`
+        + `<span class="e">Off-axis offset</span>${d.eksendenSapmaMm} mm`
+        + `<span class="e">Why it matters</span>If the apogee engine axis misses the centre of mass, every burn produces a torque and propellant goes into cancelling it.`;
       kmNokta.position.set(c.x, c.y, c.z);
     }
     function panel() {
@@ -235,21 +235,21 @@
       if (!p) {
         const s = STEPS.find(x => x.no === adim);
         el('#kunye').innerHTML = hepsi
-          ? 'Bir parçaya tıkla ya da soldan bir adım seç.'
-          : `<b>Adım ${s.no} — ${s.ad}</b><span class="e">Ne oluyor</span>${s.aciklama}`;
+          ? 'Click a part, or pick an assembly step on the left.'
+          : `<b>Step ${String(s.no).padStart(2, "0")} \u2014 ${s.ad}</b><span class="e">What happens</span>${s.aciklama}`;
         return;
       }
       const zincir = mountChain(p.id).map(x => x.ad).reverse().join(' → ');
-      const ust = p.mountsTo ? partById(p.mountsTo).ad : 'fırlatıcı arayüzü';
+      const ust = p.mountsTo ? partById(p.mountsTo).ad : 'launch vehicle interface';
       el('#kunye').innerHTML =
         `<b>${p.ad}</b>${p.qty ? ` <span style="color:#8a90a0">× ${p.qty}</span>` : ''}`
-        + `<span class="e">Alt sistem</span>${SUBSYSTEMS[p.sistem].ad}`
-        + `<span class="e">Neden var</span>${p.why}`
-        + `<span class="e">Neye bağlanır</span>${ust}`
-        + `<span class="e">Arayüz</span>${INTERFACES[p.arayuz]}`
-        + `<span class="e">Montaj adımı</span>${p.step} — ${STEPS.find(s => s.no === p.step).ad}`
-        + `<span class="e">Kütle</span>${p.qty ? `${p.qty} × ${p.massKg} = ${partMass(p)} kg` : `${p.massKg} kg`}`
-        + `<span class="e">Bağlanma zinciri</span><span class="zincir">${zincir}</span>`
+        + `<span class="e">Subsystem</span>${SUBSYSTEMS[p.sistem].ad}`
+        + `<span class="e">Why it exists</span>${p.why}`
+        + `<span class="e">Mounts to</span>${ust}`
+        + `<span class="e">Interface</span>${INTERFACES[p.arayuz]}`
+        + `<span class="e">Assembly step</span>${String(p.step).padStart(2, "0")} \u2014 ${STEPS.find(s => s.no === p.step).ad}`
+        + `<span class="e">Mass</span>${p.qty ? `${p.qty} \u00d7 ${p.massKg} = ${partMass(p)} kg` : `${p.massKg} kg`}`
+        + `<span class="e">Mounting chain</span><span class="zincir">${zincir}</span>`
         + teknikKunye(p);
     }
 
@@ -261,21 +261,21 @@
       if (!t) return '';
       const sat = [];
       const ek = (baslik, deger) => { if (deger) sat.push(`<span class="e">${baslik}</span>${deger}`); };
-      ek('Parça no', t.no);
-      ek('Malzeme', t.malzeme);
+      ek('Part number', t.no);
+      ek('Material', t.malzeme);
       if (t.guc_W) {
         const n = p.qty ?? 1;
         const toplam = t.guc_W * n;
-        ek('Güç', toplam < 0
-          ? `${-toplam} W ÜRETİR${n > 1 ? ` (${n} × ${-t.guc_W} W)` : ''}`
-          : `${toplam} W tüketir${n > 1 ? ` (${n} × ${t.guc_W} W)` : ''}`);
+        ek('Power', toplam < 0
+          ? `${-toplam} W GENERATED${n > 1 ? ` (${n} \u00d7 ${-t.guc_W} W)` : ''}`
+          : `${toplam} W drawn${n > 1 ? ` (${n} \u00d7 ${t.guc_W} W)` : ''}`);
       }
-      if (t.veri_Mbps) ek('Veri', `${t.veri_Mbps} Mbps${t.sikistirma ? ` (${t.sikistirma}:1 sıkıştırma sonrası)` : ''}`);
-      if (t.sicaklik_C) ek('Çalışma sıcaklığı', `${t.sicaklik_C[0]} … ${t.sicaklik_C[1]} °C`);
-      ek('Bağlantı', t.baglanti);
-      ek('Isı yolu', t.isiYolu);
-      ek('Ayrıntı', t.detay);
-      ek('Nitelik', t.kalite);
+      if (t.veri_Mbps) ek('Data', `${t.veri_Mbps} Mbps${t.sikistirma ? ` (after ${t.sikistirma}:1 compression)` : ''}`);
+      if (t.sicaklik_C) ek('Operating range', `${t.sicaklik_C[0]} \u2026 ${t.sicaklik_C[1]} \u00b0C`);
+      ek('Fastening', t.baglanti);
+      ek('Heat path', t.isiYolu);
+      ek('Detail', t.detay);
+      ek('Qualification', t.kalite);
       return sat.join('');
     }
 
@@ -289,7 +289,7 @@
       const d = describe();
       const s = STEPS.find(x => x.no === adim);
       el('#altyazi').innerHTML = hepsi
-        ? `<b>Tam montaj</b> · ${d.parca} tür, ${d.adet} parça · kuru ${d.kuruKg} kg, itici ${d.iticiKg} kg, fırlatma ${d.firlatmaKg} kg`
+        ? `<b>Fully assembled</b> · ${d.parca} tür, ${d.adet} parça · kuru ${d.kuruKg} kg, itici ${d.iticiKg} kg, fırlatma ${d.firlatmaKg} kg`
         + ` · kütle merkezi eksenden ${d.eksendenSapmaMm} mm · patlatma %${Math.round(patla * 100)}`
         : `<b>Adım ${s.no}/${STEPS.length} — ${s.ad}</b> · ${s.aciklama}`;
     }

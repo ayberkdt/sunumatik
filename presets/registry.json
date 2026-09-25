@@ -283,7 +283,7 @@
     },
     {
       "name": "exploded_view",
-      "title": "Patlatılmış Görünüm — exploded_view",
+      "title": "Exploded View — exploded_view",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true
@@ -339,7 +339,7 @@
     },
     {
       "name": "habitat_blocks",
-      "title": "Habitat Blokları — habitat_blocks",
+      "title": "Habitat Blocks — habitat_blocks",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true
@@ -542,7 +542,7 @@
     },
     {
       "name": "satellite_integration",
-      "title": "Uydu Entegrasyonu — satellite_integration",
+      "title": "Satellite Integration — satellite_integration",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

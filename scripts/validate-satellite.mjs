@@ -236,7 +236,7 @@ console.log('== 8 teknik künye');
     `${t.kapasiteW} W kapasite ≥ ${t.atilacakW} W atılacak, pay %${(t.pay * 100).toFixed(1)}`);
   check('ısıl pay %10–%40 arasında', t.pay >= 0.10 && t.pay <= 0.40, `%${(t.pay * 100).toFixed(1)}`);
   /* Künyeye yazılan sayı hesapla tutmalı: ikisi ayrışırsa beyan yalan olur. */
-  const yaziliW = /Atım kapasitesi (\d+) W/.exec(S.partById('radyator-yp').tech.detay);
+  const yaziliW = /Rejects (\d+) W/.exec(S.partById('radyator-yp').tech.detay);
   check('künyeye yazılan radyatör kapasitesi hesapla aynı',
     yaziliW && Math.abs(Number(yaziliW[1]) - t.paneller[0].W) <= 2,
     yaziliW ? `künye ${yaziliW[1]} W vs hesap ${t.paneller[0].W} W` : 'künyede sayı yok');

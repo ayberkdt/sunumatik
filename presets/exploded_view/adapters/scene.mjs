@@ -66,20 +66,20 @@ function arayuzTahmin(ad) {
    OLDUĞU GİBİ kalır — uydurma bir çeviri, yanlış bir etiketten daha
    kötüdür çünkü yanlış olduğu anlaşılmaz. */
 export const CRAFT_ADLARI = Object.freeze({
-  rover: 'Gezgin gövdesi', chassis: 'Şasi', body: 'Gövde', deck: 'Güverte',
-  rockerL: 'Sol rocker kolu', rockerR: 'Sağ rocker kolu',
-  bogieL: 'Sol bojı', bogieR: 'Sağ bojı', differential: 'Diferansiyel çubuğu',
-  steerFL: 'Sol ön direksiyon', steerFR: 'Sağ ön direksiyon',
-  steerRL: 'Sol arka direksiyon', steerRR: 'Sağ arka direksiyon',
-  armJ1: 'Kol eklemi 1 (omuz)', armJ2: 'Kol eklemi 2 (dirsek)', armJ3: 'Kol eklemi 3 (bilek)',
-  mastPan: 'Direk yalpa ekseni', mastTilt: 'Direk eğim ekseni', mast: 'Kamera direği',
-  hgaAz: 'Yüksek kazançlı anten — azimut', hgaEl: 'Yüksek kazançlı anten — yükseliş',
-  panelL: 'Sol güneş kanadı', panelR: 'Sağ güneş kanadı', panel: 'Güneş kanadı',
-  gimbal: 'Gimbal', nozzle: 'Lüle', engine: 'Motor', tank: 'Tank',
-  stage1: 'Birinci kademe', stage2: 'İkinci kademe', interstage: 'Kademeler arası',
-  fairing: 'Başlık kaportası', booster: 'Yardımcı roket', boosterL: 'Sol yardımcı roket',
-  boosterR: 'Sağ yardımcı roket', leg: 'İniş ayağı', legs: 'İniş ayakları',
-  dish: 'Çanak anten', radiator: 'Radyatör', wheel: 'Tekerlek', hub: 'Göbek',
+  rover: 'Rover body', chassis: 'Chassis', body: 'Body', deck: 'Deck',
+  rockerL: 'Rocker arm, left', rockerR: 'Rocker arm, right',
+  bogieL: 'Bogie, left', bogieR: 'Bogie, right', differential: 'Differential bar',
+  steerFL: 'Steering, front left', steerFR: 'Steering, front right',
+  steerRL: 'Steering, rear left', steerRR: 'Steering, rear right',
+  armJ1: 'Arm joint 1 (shoulder)', armJ2: 'Arm joint 2 (elbow)', armJ3: 'Arm joint 3 (wrist)',
+  mastPan: 'Mast pan axis', mastTilt: 'Mast tilt axis', mast: 'Camera mast',
+  hgaAz: 'High-gain antenna, azimuth', hgaEl: 'High-gain antenna, elevation',
+  panelL: 'Solar wing, left', panelR: 'Solar wing, right', panel: 'Solar wing',
+  gimbal: 'Gimbal', nozzle: 'Nozzle', engine: 'Engine', tank: 'Tank',
+  stage1: 'First stage', stage2: 'Second stage', interstage: 'Interstage',
+  fairing: 'Payload fairing', booster: 'Booster', boosterL: 'Booster, left',
+  boosterR: 'Booster, right', leg: 'Landing leg', legs: 'Landing legs',
+  dish: 'Dish antenna', radiator: 'Radiator', wheel: 'Wheel', hub: 'Hub',
 });
 
 /** Ad → görünür etiket: 'craft:rover' → 'rover', 'sol-on-tekerlek' → 'Sol ön tekerlek'. */
@@ -192,9 +192,9 @@ export function assemblyFromScene(THREE, root, {
     /* Damga: bu satırdaki kütle ve arayüz ÖLÇÜLMEDİ, türetildi. */
     tahmini: true,
     arayuzTahmini: true,
-    why: `Sahne grafiğinden türetildi (derinlik ${a.derinlik}). Kütle sınır hacmi ` +
-      `${a.__netHacim.toExponential(2)} m³ × ${EFEKTIF_YOGUNLUK[a.__sinif]} kg/m³ (${a.__sinif}) ` +
-      `üzerinden TAHMİN edilmiştir; ölçülmüş değer değildir.`,
+    why: `Derived from the scene graph at depth ${a.derinlik}. Mass is ESTIMATED from a bounding `
+      + `volume of ${a.__netHacim.toExponential(2)} m³ at ${EFEKTIF_YOGUNLUK[a.__sinif]} kg/m³ `
+      + `(${a.__sinif} class); it is not a measured value.`,
   }));
 
   /* Montaj grafiği TEK KÖKLÜDÜR ve bu keyfi değil: patlatma yönü
@@ -223,9 +223,9 @@ export function assemblyFromScene(THREE, root, {
       tahmini: true,
       arayuzTahmini: true,
       sentetik: true,
-      why: `Sahne grafiğinde ${koksuz.length} adet köksüz düğüm vardı; montaj grafiği tek köklü ` +
-        'olmak zorunda olduğu için cismin bütününü temsil eden bu çerçeve ÜRETİLDİ. ' +
-        'Kendisi bir parça değildir, kütlesi bu yüzden sıfırdır.',
+      why: `The scene graph had ${koksuz.length} rootless nodes. An assembly graph has to be `
+        + 'single-rooted, so this frame was GENERATED to stand for the body as a whole. '
+        + 'It is not a part, which is why its mass is zero.',
     };
     for (const p of koksuz) p.parent = kokId;
     parts.unshift(sentetik);
@@ -246,8 +246,8 @@ export function assemblyFromScene(THREE, root, {
       olceklendi: Boolean(massKg),
       gabari,
       not: massKg
-        ? `Toplam ${massKg} kg beyan edildi; parça kütleleri bu toplama ölçeklendi (çarpan ${olcek.toFixed(4)}).`
-        : 'Hiçbir kütle beyan edilmedi; bütün kütleler hacimden tahmindir ve mutlak değeri anlamlı DEĞİLDİR — yalnız oranları kabaca doğrudur.',
+        ? `A total of ${massKg} kg was declared; part masses were scaled to that total (factor ${olcek.toFixed(4)}).`
+        : 'No mass was declared anywhere: every mass here is estimated from bounding volume, so the absolute values are NOT meaningful - only their rough proportions are.',
     },
   };
 }
