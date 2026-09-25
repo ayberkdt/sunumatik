@@ -9,7 +9,7 @@
  */
 
 import { PARTS, SUBSYSTEMS, partById, envAllows, runEndpoints } from './hab-parts.mjs';
-import { cylGeoZ, cylGeoX, coneGeoZ, latheX } from '../core/geometry-axis.mjs';
+import { cylGeoZ, cylGeoY, cylGeoX, coneGeoZ, latheX } from '../core/geometry-axis.mjs';
 import * as D from './hab-detail.mjs';
 import { yuzeyAlbedoRGB } from '../core/scene-lighting.mjs';
 import { planRun, buildRun } from './routing.mjs';
@@ -117,7 +117,7 @@ function silindireOturt(THREE, nesne, r, aci, z, { disari = 0, egim = 0 } = {}) 
  * will shrink as it moves over. */
 export const LOCAL_KINDS = Object.freeze(new Set([
   'platform', 'plaka', 'silindir-yatay', 'silindir-dikey', 'tunel', 'dugum',
-  'toroid', 'ortu', 'raf', 'kutu', 'tank-dikey', 'panel-tarla', 'radyator',
+  'toroid', 'ortu', 'raf', 'kutu', 'tank-dikey', 'panel-tarla', 'radyator', 'kalkan',
   'semsiye', 'reaktor', 'direk', 'canak', 'ruzgar', 'tente', 'hat',
 ]));
 
@@ -173,16 +173,66 @@ function govde(THREE, p, M, dok) {
       }
       break;
     }
+    case 'kalkan': {
+      /* A shadow shield is a frame that gets FILLED on site. Shielding a
+         reactor all the way round costs mass nobody has; shielding the cone
+         that points at the crew costs a frame and some regolith, and the
+         regolith is already underfoot. So the thing to draw is the frame,
+         the panels, and the fill behind them. */
+      const cerceveMat = M.kit.metal;
+      for (const ex of [-1, 1]) {
+        const dikme = ekle(new THREE.Mesh(new THREE.BoxGeometry(sx * 0.06, sy, sz), cerceveMat));
+        dikme.position.x = ex * sx * 0.47;
+      }
+      for (const ez of [-1, 1]) {
+        const kiris = ekle(new THREE.Mesh(new THREE.BoxGeometry(sx, sy * 1.02, sz * 0.07), cerceveMat));
+        kiris.position.z = ez * sz * 0.46;
+      }
+      /* Regolith fill between the frames: the shielding itself. */
+      const dolgu = ekle(new THREE.Mesh(
+        new THREE.BoxGeometry(sx * 0.9, sy * 0.86, sz * 0.88), M.regolit));
+      dolgu.receiveShadow = true;
+      /* Panels on the crew side, bolted after the frame is levelled. */
+      const satir = 3, sutun = 4;
+      for (let i = 0; i < sutun; i++) {
+        for (let j = 0; j < satir; j++) {
+          const pn = ekle(new THREE.Mesh(
+            new THREE.BoxGeometry(sx * 0.9 / sutun * 0.9, sy * 0.1, sz * 0.9 / satir * 0.88), M.isil));
+          pn.position.set((i - (sutun - 1) / 2) * sx * 0.9 / sutun,
+            sy * 0.52, (j - (satir - 1) / 2) * sz * 0.9 / satir);
+          for (const ex of [-1, 1]) {
+            const civ = ekle(new THREE.Mesh(cylGeoY(sx * 0.012, sx * 0.012, sy * 0.06, 6), M.koyu));
+            civ.position.set(pn.position.x + ex * sx * 0.085, sy * 0.58, pn.position.z);
+          }
+        }
+      }
+      /* Hold-down bolts along the base. */
+      for (let i = 0; i < 6; i++) {
+        const civ = ekle(new THREE.Mesh(cylGeoZ(sx * 0.02, sx * 0.02, sz * 0.05, 6), M.koyu));
+        civ.position.set((i / 5 - 0.5) * sx * 0.88, 0, -sz * 0.47);
+      }
+      /* Caution placard: this is the one wall on the site you do not walk
+         behind while the core is running. */
+      const ikaz = ekle(new THREE.Mesh(
+        new THREE.BoxGeometry(sx * 0.16, sy * 0.06, sz * 0.1), M.kit.ikaz));
+      ikaz.position.set(sx * 0.3, sy * 0.55, sz * 0.3);
+      break;
+    }
     case 'plaka': {
       ekle(new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat));
       const pabuc = D.ayakPabucu(THREE, M.kit, sx * 0.34, { regolitMat: M.regolit });
       pabuc.position.z = sz * 0.5;
       g.add(pabuc);
-      /* regolit vidası: plakayı zemine bağlayan tek şey */
+      /* Regolith screw: the only thing holding the plate to the ground.
+         Its length used to be sz * 3.2, which is fine for a 0.1 m bearing
+         plate and nonsense for anything thicker - it turned a 3 m wall into
+         a 9.7 m spike. How deep an anchor goes is set by the FOOTPRINT it
+         has to hold down, not by how thick the thing above it is. */
+      const vidaBoy = Math.min(sz * 3.2, Math.min(sx, sy) * 1.2);
       for (let i = 0; i < 4; i++) {
         const a = i * TAU / 4 + Math.PI / 4;
-        const vida = ekle(new THREE.Mesh(cylGeoZ(sx * 0.05, sx * 0.05, sz * 3.2, 8), M.koyu));
-        vida.position.set(Math.cos(a) * sx * 0.36, Math.sin(a) * sx * 0.36, -sz * 0.9);
+        const vida = ekle(new THREE.Mesh(cylGeoZ(sx * 0.05, sx * 0.05, vidaBoy, 8), M.koyu));
+        vida.position.set(Math.cos(a) * sx * 0.36, Math.sin(a) * sy * 0.36, -sz * 0.5 - vidaBoy * 0.4);
       }
       break;
     }
@@ -366,13 +416,18 @@ function govde(THREE, p, M, dok) {
       break;
     }
     case 'tunel': {
-      const r = sy / 2;
+      /* A tunnel runs along its LONGEST horizontal axis. It was built along
+         x unconditionally, so a run between two modules separated in y
+         could not be drawn at all - which is why the node, the inflatable
+         and the greenhouse had nothing between them. */
+      const uzunEksen = sy > sx, uzun = Math.max(sx, sy), cap = Math.min(sx, sy);
+      const r = cap / 2;
       /* iki rijit uç + ortada körük: ısıl genleşmeyi ve oturmayı yutar */
       for (const s of [-1, 1]) {
-        const u = ekle(new THREE.Mesh(cylGeoX(r, r, sx * 0.3, 26), mat));
-        u.position.x = s * sx * 0.35;
+        const u = ekle(new THREE.Mesh(cylGeoX(r, r, uzun * 0.3, 26), mat));
+        u.position.x = s * uzun * 0.35;
       }
-      const n = 7, boy = sx * 0.4;
+      const n = 7, boy = uzun * 0.4;
       for (let i = 0; i < n; i++) {
         const t = (i + 0.5) / n - 0.5;
         const k = ekle(new THREE.Mesh(new THREE.TorusGeometry(r * 1.06, r * 0.13, 7, 26), M.koyu));
@@ -382,11 +437,12 @@ function govde(THREE, p, M, dok) {
       ic.position.x = 0;
       /* Tünelin üstünden de yürünür: iki yanda korkuluk. */
       for (const yan of [-1, 1]) {
-        const kork = D.korkuluk(THREE, M.kit, sx * 0.86);
+        const kork = D.korkuluk(THREE, M.kit, uzun * 0.86);
         kork.position.set(0, yan * r * 0.5, r * 0.84);
         kork.rotation.x = yan * 0.55;
         g.add(kork);
       }
+      if (uzunEksen) g.rotation.z = Math.PI / 2;
       break;
     }
     case 'dugum': {

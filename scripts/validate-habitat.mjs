@@ -127,8 +127,18 @@ bolum('3. Kütle bütçesi');
 
   /* Ortamlı bütçe: reddedilen bileşen fırlatılmaz, bütçede de olmaz. */
   const mars = massBudget('mars'), ay = massBudget('moon');
-  ok(mars.kapsamParca === 26 && ay.kapsamParca === 24,
-    'ortam kapsamı bileşen sayısını değiştiriyor', `Mars ${mars.kapsamParca}, Ay ${ay.kapsamParca}`);
+  /* The numbers here used to be written down as 26 and 24, so the check
+     failed the moment the base gained a part - it was asserting a census,
+     not the rule. What it means to say is: on Mars nothing is refused, on
+     the Moon the refused ones are gone, and the difference is exactly the
+     refusal list. That survives the base growing. */
+  const ayRed = H.PARTS.filter(p => !H.envAllows(p.id, 'moon').ok).map(p => p.id);
+  const marsRed = H.PARTS.filter(p => !H.envAllows(p.id, 'mars').ok).map(p => p.id);
+  ok(mars.kapsamParca === H.PARTS.length && marsRed.length === 0,
+    'Mars ortaminda hicbir bilesen reddedilmiyor', `${mars.kapsamParca}/${H.PARTS.length}`);
+  ok(ay.kapsamParca === H.PARTS.length - ayRed.length && ayRed.length > 0,
+    'ortam kapsamı bileşen sayısını değiştiriyor',
+    `Mars ${mars.kapsamParca}, Ay ${ay.kapsamParca} (reddedilen: ${ayRed.join(', ')})`);
   const fark = mars.toplamKg - ay.toplamKg;
   const redKutle = partById('moxie').massKg + partById('ruzgar-olcer').massKg;
   ok(yakin(fark, redKutle, 0.15), 'Ay bütçesi tam reddedilen bileşenlerin kütlesi kadar hafif',
@@ -490,5 +500,76 @@ bolum('8. Teknik künye ve bütçeler');
 
 /* ══ ÖZET ══════════════════════════════════════════════════════════ */
 console.log(`\n${'═'.repeat(62)}`);
+/* ── hizalama: hiçbir şey havada durmaz, hiçbir şey ebeveyninden kopuk
+      değildir, hiçbir ikili iç içe geçmez ───────────────────────────── */
+console.log('\n== hizalama');
+{
+  /* Routed lines cross the whole site by design and the regolith cover
+     WRAPS the habitat, so neither answers a box test; the pad is the ground
+     everything legitimately stands on. Named, not silently skipped. */
+  const MUAF = new Set(['hat-o2', 'hat-guc', 'regolit-ortu']);
+  const by = new Map(H.PARTS.map(q => [q.id, q]));
+  const ped = by.get('platform');
+  const pedUst = ped.pos[2] + ped.size[2] / 2;
+
+  /* A part that says it stands on the ground has to touch it. Seven of them
+     floated between 10 and 30 cm above the pad, which is exactly what
+     "misaligned and ugly" looked like from the outside. */
+  const havada = H.PARTS
+    .filter(q => q.mountsTo === 'platform' && !MUAF.has(q.id))
+    .filter(q => Math.abs((q.pos[2] - q.size[2] / 2) - pedUst) > 0.005)
+    .map(q => `${q.id} ${((q.pos[2] - q.size[2] / 2) - pedUst).toFixed(2)} m`);
+  ok(havada.length === 0, 'zemine oturan her parça pedin üstünde duruyor',
+    havada.join(', ') || `${H.PARTS.filter(q => q.mountsTo === 'platform').length} parça`);
+
+  /* Boxes only intersect when all three axes overlap, so the SEPARATING
+     axis is the maximum - taking the minimum reported 189 false pairs when
+     this was first measured. */
+  const acik = (a, b) => {
+    let m = -Infinity;
+    for (let k = 0; k < 3; k++) {
+      const d = Math.abs(a.pos[k] - b.pos[k]) - (a.size[k] + b.size[k]) / 2;
+      if (d > m) m = d;
+    }
+    return m;
+  };
+
+  /* Declaring a parent is a claim about contact. The inflatable was 2.1 m
+     from the node it named, the greenhouse 1.5 m, the airlock 1.0 m from
+     the habitat it seals onto - the base read as parts set down near each
+     other rather than one connected thing. */
+  const kopuk = H.PARTS
+    .filter(q => q.mountsTo && !MUAF.has(q.id) && by.has(q.mountsTo))
+    .map(q => ({ q, s: acik(q, by.get(q.mountsTo)) }))
+    .filter(x => x.s > 0.05)
+    .map(x => `${x.q.id}->${x.q.mountsTo} ${x.s.toFixed(2)} m`);
+  ok(kopuk.length === 0, 'her parça beyan ettiği ebeveyne temas ediyor',
+    kopuk.join(', ') || 'hepsi');
+
+  const cakisan = [];
+  const liste = H.PARTS.filter(q => q.id !== 'platform' && !MUAF.has(q.id));
+  for (let i = 0; i < liste.length; i++) {
+    for (let j = i + 1; j < liste.length; j++) {
+      const a = liste[i], b = liste[j];
+      if (a.mountsTo === b.id || b.mountsTo === a.id) continue;   // iç içe olabilir
+      const s = acik(a, b);
+      if (s < 0) cakisan.push(`${a.id}/${b.id} ${s.toFixed(2)} m`);
+    }
+  }
+  ok(cakisan.length === 0, 'hiçbir ikili iç içe geçmiyor',
+    cakisan.join(', ') || `${liste.length} parça, ${liste.length * (liste.length - 1) / 2} ikili`);
+
+  /* And the site has to fit on its own ground, with room to read it. */
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const q of H.PARTS) {
+    if (q.id === 'platform') continue;
+    x0 = Math.min(x0, q.pos[0] - q.size[0] / 2); x1 = Math.max(x1, q.pos[0] + q.size[0] / 2);
+    y0 = Math.min(y0, q.pos[1] - q.size[1] / 2); y1 = Math.max(y1, q.pos[1] + q.size[1] / 2);
+  }
+  const payX = ped.size[0] / 2 - Math.max(-x0, x1), payY = ped.size[1] / 2 - Math.max(-y0, y1);
+  ok(payX > 1 && payY > 1, 'üs kendi pedinden taşmıyor (en az 1 m pay)',
+    `x ${payX.toFixed(1)} m · y ${payY.toFixed(1)} m`);
+}
+
 console.log(kaldi === 0 ? `HABİTAT DENETİMİ: ${gecti}/${gecti} geçti` : `HABİTAT DENETİMİ: ${gecti} geçti, ${kaldi} KALDI`);
 process.exit(kaldi === 0 ? 0 : 1);

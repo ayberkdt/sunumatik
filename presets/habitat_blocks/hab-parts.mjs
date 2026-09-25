@@ -150,7 +150,22 @@ export const PARTS = Object.freeze([
     why: '0.5 to 1 m of regolith brings the galactic cosmic ray dose down to roughly what an atmosphere gives. It is dug on site, not shipped - which is why it shows as zero in the mass budget.' },
 
   /* ADIM 3 — geçişler */
-  { id: 'hava-kilidi', ad: 'Airlock', sistem: 'gecis', step: 3, mountsTo: 'hab-silindir', arayuz: 'basincli',
+  { id: 'kilit-boyun', ad: 'Airlock vestibule', sistem: 'gecis', step: 3, mountsTo: 'hab-silindir', arayuz: 'basincli',
+    massKg: 210, pos: [-3.1, -2.9, 1.5], size: [1.6, 1.6, 1.8], sekil: 'tunel',
+    tech: {
+      no: 'HB-PRS-034',
+      malzeme: 'Aluminium shell, double-seal hatch frame at each end',
+      guc_W: 55,
+      sicaklik_C: [5, 30],
+      hacim_m3: 3.2,
+      koruma_gcm2: 0.9,
+      baglanti: 'Pressurised flange to the habitat and to the airlock',
+      isiYolu: 'Local heaters; shares the habitat loop',
+      detay: 'dia 1.6 x 1.6 m. Two hatches in series, so the airlock can be isolated without opening the habitat',
+      kalite: 'Leak-checked as part of the habitat volume, not the airlock',
+    },
+    why: 'The airlock was drawn a metre off the habitat with nothing between. This is what joins them, and the second hatch is what lets the airlock be serviced while the crew stays pressurised.' },
+  { id: 'hava-kilidi', ad: 'Airlock', sistem: 'gecis', step: 3, mountsTo: 'kilit-boyun', arayuz: 'basincli',
     massKg: 890, pos: [-3.1, -4.4, 1.5], size: [2.4, 2.4, 2.6], sekil: 'silindir-dikey',
     tech: {
       no: 'HB-EVA-030',
@@ -168,7 +183,7 @@ export const PARTS = Object.freeze([
     ports: [{ ad: 'ic', pos: [0, 1.2, -0.4], dir: [0, 1, 0], tur: 'basincli' },
             { ad: 'dis', pos: [0, -1.2, -0.4], dir: [0, -1, 0], tur: 'basincli' }] },
   { id: 'toz-firca', ad: 'Dust removal station', sistem: 'gecis', step: 3, mountsTo: 'hava-kilidi', arayuz: 'civata',
-    massKg: 65, pos: [-3.1, -6.3, 0.9], size: [1.6, 1.0, 1.8], sekil: 'kutu',
+    massKg: 65, pos: [-3.1, -6.1, 0.9], size: [1.6, 1.0, 1.8], sekil: 'kutu',
     tech: {
       kesilebilir: true,
       no: 'HB-EVA-031',
@@ -218,7 +233,37 @@ export const PARTS = Object.freeze([
             { ad: 'kuzey', pos: [0, 1.7, 0], dir: [0, 1, 0], tur: 'basincli' }] },
 
   /* ADIM 4 — şişme hacim ve sera */
-  { id: 'sisme-modul', ad: 'Inflatable habitat (toroid)', sistem: 'basincli', step: 4, mountsTo: 'dugum', arayuz: 'basincli',
+  { id: 'gecis-sisme', ad: 'Transfer tunnel, node to inflatable', sistem: 'gecis', step: 4, mountsTo: 'dugum', arayuz: 'basincli',
+    massKg: 360, pos: [5.1, 2.75, 2.2], size: [1.9, 2.9, 1.9], sekil: 'tunel',
+    tech: {
+      no: 'HB-PRS-035',
+      malzeme: 'Aluminium shell with a stainless bellows section',
+      guc_W: 70,
+      sicaklik_C: [5, 30],
+      hacim_m3: 6.8,
+      koruma_gcm2: 0.9,
+      baglanti: 'Pressurised flange at both ends; bellows in the middle',
+      isiYolu: 'Local heaters; the bellows is the cold-bridge risk',
+      detay: 'dia 1.9 x 2.9 m, running north. The inflatable settles differently from the rigid node, so the bellows is doing real work here',
+      kalite: 'Hatch at the node end; the inflatable end is a soft-goods interface ring',
+    },
+    why: 'Step 4 says the inflatable attaches to the node. It was sitting 2.1 m away with nothing in between, which is why the base looked like parts set down near each other rather than one pressurised volume.' },
+  { id: 'gecis-sera', ad: 'Transfer tunnel, node to greenhouse', sistem: 'gecis', step: 4, mountsTo: 'dugum', arayuz: 'basincli',
+    massKg: 290, pos: [7.05, 0.0, 2.0], size: [2.2, 1.8, 1.8], sekil: 'tunel',
+    tech: {
+      no: 'HB-PRS-036',
+      malzeme: 'Aluminium shell, bellows section, light-tight sleeve',
+      guc_W: 60,
+      sicaklik_C: [5, 30],
+      hacim_m3: 4.9,
+      koruma_gcm2: 0.9,
+      baglanti: 'Pressurised flange at both ends',
+      isiYolu: 'Local heaters; the greenhouse runs warmer and wetter than the node',
+      detay: 'dia 1.8 x 2.2 m. The sleeve keeps the greenhouse photoperiod out of the node - crop lighting on a 16 h cycle is not what a sleeping crew needs',
+      kalite: 'Humidity barrier at the node end',
+    },
+    why: 'The greenhouse was 1.5 m off the node it declares as its parent. This closes the gap, and it is also where the humidity and the light get stopped.' },
+  { id: 'sisme-modul', ad: 'Inflatable habitat (toroid)', sistem: 'basincli', step: 4, mountsTo: 'gecis-sisme', arayuz: 'basincli',
     massKg: 2900, pos: [5.6, 7.4, 2.4], size: [7.2, 7.2, 3.6], sekil: 'toroid',
     tech: {
       no: 'HB-PRS-040',
@@ -233,7 +278,7 @@ export const PARTS = Object.freeze([
       kalite: 'The debris layer is for micrometeoroids; the bladder alone is not enough',
     },
     why: 'Folded for launch, inflated on site: three times the volume per kilogram of a rigid module. The webbing straps and the bulge are the stress path made visible.' },
-  { id: 'sera', ad: 'Greenhouse module', sistem: 'basincli', step: 4, mountsTo: 'dugum', arayuz: 'basincli',
+  { id: 'sera', ad: 'Greenhouse module', sistem: 'basincli', step: 4, mountsTo: 'gecis-sera', arayuz: 'basincli',
     massKg: 1650, pos: [10.6, 0.0, 1.9], size: [5.6, 3.2, 3.2], sekil: 'silindir-yatay',
     tech: {
       kesilebilir: true,
@@ -252,7 +297,7 @@ export const PARTS = Object.freeze([
 
   /* ADIM 5 — güç */
   { id: 'panel-tarlasi', ad: 'Solar array field', sistem: 'guc', step: 5, qty: 4, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 310, pos: [-11.8, 7.6, 0.9], size: [5.0, 3.0, 1.6], sekil: 'panel-tarla',
+    massKg: 310, pos: [-11.8, 7.6, 0.8], size: [5.0, 3.0, 1.6], sekil: 'panel-tarla',
     tech: {
       no: 'HB-PWR-050',
       malzeme: 'IMM triple-junction cells, aluminium truss substrate',
@@ -289,7 +334,31 @@ export const PARTS = Object.freeze([
       kalite: 'The base survives even when a dust storm takes the Sun',
     },
     why: 'Solar is not enough in a dust storm. It sits well away from the base with a shadow shield between: dose falls with the square of distance, and the shield takes the rest.' },
-  { id: 'reaktor-radyator', ad: 'Reactor umbrella radiator', sistem: 'isil', step: 5, mountsTo: 'reaktor', arayuz: 'civata',
+  { id: 'golge-kalkani', ad: 'Reactor shadow shield', sistem: 'guc', step: 5, mountsTo: 'platform', arayuz: 'ayirma',
+    massKg: 420, pos: [12.1, -8.1, 1.5], size: [3.2, 0.6, 3.0], sekil: 'kalkan',
+    tech: {
+      no: 'HB-PWR-062',
+      malzeme: 'Steel frame, borated polyethylene panels, regolith-filled on site',
+      guc_W: 0,
+      sicaklik_C: [-90, 60],
+      baglanti: '8 x M16 into the pad; panels bolt on after the frame is levelled',
+      detay: '3.2 x 3.0 m wall between the core and the base. Shipped as a 420 kg frame and filled with regolith on site - the fill is the shielding and it is free here',
+      kalite: 'Dose rate at the habitat verified by survey before first criticality',
+    },
+    why: 'Step 5 already said the reactor sits behind its shadow shield, and there was no shield. Shielding a reactor all the way round costs mass that does not exist; shielding only the cone that points at the crew is why it is called a shadow shield.' },
+  { id: 'radyator-direk', ad: 'Radiator mast', sistem: 'guc', step: 5, mountsTo: 'reaktor', arayuz: 'civata',
+    massKg: 60, pos: [13.6, -9.6, 3.0], size: [0.4, 0.4, 0.6], sekil: 'direk',
+    tech: {
+      no: 'HB-PWR-063',
+      malzeme: 'Titanium column with a thermally isolating collar',
+      guc_W: 0,
+      sicaklik_C: [-90, 120],
+      baglanti: '6 x M12 to the reactor head; the umbrella bolts to the top plate',
+      detay: '0.6 m. The collar is the point: it carries the radiator without carrying the reactor head\u2019s heat into it',
+      kalite: 'Proof loaded with the umbrella deployed',
+    },
+    why: 'The umbrella radiator was floating 0.4 m above the reactor it declares as its parent. This is what holds it there, and the isolating collar is why the radiator radiates the loop heat rather than the reactor head.' },
+  { id: 'reaktor-radyator', ad: 'Reactor umbrella radiator', sistem: 'isil', step: 5, mountsTo: 'radyator-direk', arayuz: 'civata',
     massKg: 340, pos: [13.6, -9.6, 3.4], size: [5.2, 5.2, 0.4], sekil: 'semsiye',
     tech: {
       no: 'HB-THR-061',
@@ -304,7 +373,7 @@ export const PARTS = Object.freeze([
 
   /* ADIM 6 — ısıl ve ISRU */
   { id: 'radyator-dizisi', ad: 'Base radiator array', sistem: 'isil', step: 6, qty: 2, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 290, pos: [-3.6, 9.2, 1.6], size: [6.0, 0.3, 2.6], sekil: 'radyator',
+    massKg: 290, pos: [-3.6, 9.2, 1.3], size: [6.0, 0.3, 2.6], sekil: 'radyator',
     tech: {
       no: 'HB-THR-070',
       malzeme: 'Aluminium fins, OSR coating, ammonia loop',
@@ -318,7 +387,7 @@ export const PARTS = Object.freeze([
     },
     why: 'Where the habitat heat is radiated away. It stands with its BACK to the Sun; a sunlit face would zero out the net rejection.' },
   { id: 'moxie', ad: 'MOXIE (CO2 to O2)', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 420, pos: [6.8, -7.4, 1.0], size: [2.2, 1.8, 1.8], sekil: 'kutu',
+    massKg: 420, pos: [6.8, -7.4, 0.9], size: [2.2, 1.8, 1.8], sekil: 'kutu',
     tech: {
       kesilebilir: true,
       no: 'HB-ISR-080',
@@ -333,7 +402,7 @@ export const PARTS = Object.freeze([
     },
     why: '95% of the Martian atmosphere is CO2. Solid oxide electrolysis makes oxygen on site, so breathing and burning oxygen never has to be shipped.' },
   { id: 'sabatier', ad: 'Sabatier reactor', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 380, pos: [9.4, -7.4, 1.0], size: [2.0, 1.6, 1.8], sekil: 'kutu',
+    massKg: 380, pos: [9.4, -7.4, 0.9], size: [2.0, 1.6, 1.8], sekil: 'kutu',
     tech: {
       kesilebilir: true,
       no: 'HB-ISR-081',
@@ -348,7 +417,7 @@ export const PARTS = Object.freeze([
     },
     why: 'CO2 + 4H2 gives CH4 + 2H2O. Return propellant and water come out of the same reaction, and electrolysing the water returns the hydrogen.' },
   { id: 'tank-o2', ad: 'O2 tank', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 260, pos: [4.6, -11.4, 1.6], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
+    massKg: 260, pos: [4.6, -11.4, 1.5], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
     tech: {
       no: 'HB-ISR-090',
       malzeme: 'Ti liner with carbon overwrap, 30-layer MLI',
@@ -361,7 +430,7 @@ export const PARTS = Object.freeze([
     },
     why: 'Cryogenic and wrapped in MLI. It stands well clear of the fuel tank: putting oxidiser next to fuel turns one failure into a fire.' },
   { id: 'tank-ch4', ad: 'CH4 tank', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 240, pos: [9.8, -11.4, 1.6], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
+    massKg: 240, pos: [9.8, -11.4, 1.5], size: [2.4, 2.4, 3.0], sekil: 'tank-dikey',
     tech: {
       no: 'HB-ISR-091',
       malzeme: 'Ti liner with carbon overwrap, 30-layer MLI',
@@ -441,7 +510,7 @@ export const PARTS = Object.freeze([
     },
     why: 'For dust storm warning and landing windows. Only real on a planet with an atmosphere; on the Moon there is no wind to measure.' },
   { id: 'garaj', ad: 'Rover canopy', sistem: 'yapi', step: 7, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 520, pos: [-11.6, -5.8, 1.8], size: [6.0, 4.4, 3.4], sekil: 'tente',
+    massKg: 520, pos: [-11.6, -5.8, 1.7], size: [6.0, 4.4, 3.4], sekil: 'tente',
     tech: {
       no: 'HB-STR-120',
       malzeme: 'Aluminium frame, fabric cover, dia 0.12 m legs',
