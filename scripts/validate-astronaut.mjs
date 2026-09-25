@@ -9,8 +9,15 @@
  */
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { register } from 'node:module';
 
 const kok = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+/* Bu kapı artık yalnız kataloğu okumuyor: 6. bölüm figürü KURUP ölçüyor,
+   çünkü çerçeve kusurları (omuz yatağının göğse düşmesi, elin arkada
+   kalması) katalogda değil ancak çizilen geometride görünür. */
+register(pathToFileURL(path.join(kok, 'scripts/three-resolver.mjs')).href, import.meta.url);
+const { domKur } = await import(pathToFileURL(path.join(kok, 'scripts/dom-stub.mjs')).href);
+domKur();
 const A = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-parts.mjs')).href);
 const H = await import(pathToFileURL(path.join(kok, 'presets/habitat_blocks/hab-parts.mjs')).href);
 
@@ -148,6 +155,123 @@ console.log('\n== 5 ölçek: giysili mürettebat habitatın açıklıklarından 
   check('TERS SINAV: omuz tünelden genişse yakalanır',
     enDarGecis <= enDarGecis + 0.01 && !(enDarGecis > A.OMUZ_M + 5),
     `sahte omuz ${(enDarGecis + 0.5).toFixed(2)} m geçemezdi`);
+}
+
+/* ── 6 GÖVDE ÇERÇEVESİ ────────────────────────────────────────────────
+ *
+ * Bu bölüm var çünkü çerçeve aynı anda üç şeydi ve KURULAN figür ölçülünce
+ * çıktı:
+ *
+ *   omuz-yatagi   x = ±0,270 · y = 0    biri GÖĞÜSTE, öteki SIRTTA
+ *   yasam-paketi  y = -0,268            sırt paketi sol kolun içinde
+ *   gogus-paneli  y = +0,227            göğüs paneli sol böğürde
+ *   eldivenler    x = -0,123            dik duran figürün elleri arkada
+ *
+ * Sebep: katalog aynalama eksenini hiç söylemiyordu, montajcı qty 2 olan
+ * parçalarda `pos[0]`'ı bir koordinat değil BÜYÜKLÜK diye okuyordu, ve her
+ * mafsal kendi fleksiyon işaretini icat ediyordu. Üçü de artık beyan edilir;
+ * burada beyan ile ÇİZİLEN karşılaştırılır.
+ */
+console.log('');
+console.log('== 6 gövde çerçevesi: beyan edilen yön ile çizilen yön');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const { buildAstronaut, POZLAR } = AB;
+  const v = new THREE.Vector3();
+  const merkez = (o) => {
+    let mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
+    o.updateWorldMatrix(true, true);
+    o.traverse((m) => {
+      const q = m.geometry?.attributes?.position;
+      if (!q) return;
+      for (let i = 0; i < q.count; i++) {
+        v.fromBufferAttribute(q, i).applyMatrix4(m.matrixWorld);
+        mn = [Math.min(mn[0], v.x), Math.min(mn[1], v.y), Math.min(mn[2], v.z)];
+        mx = [Math.max(mx[0], v.x), Math.max(mx[1], v.y), Math.max(mx[2], v.z)];
+      }
+    });
+    return { mn, mx, c: [0, 1, 2].map(i => (mn[i] + mx[i]) / 2) };
+  };
+  const { root, nodes } = buildAstronaut(THREE, { poz: 'dik' });
+
+  /* Her qty 2 satırı aynalama eksenini BEYAN etmeli ve o eksende sıfırdan
+     farklı olmalı - yoksa iki kopya üst üste biner. */
+  const ciftler = A.PARTS.filter(p => (p.qty ?? 1) === 2);
+  const eksik = ciftler.filter(p => !p.ayna
+    || Math.abs(p.pos[{ x: 0, y: 1, z: 2 }[p.ayna]]) < 1e-6);
+  check('qty 2 olan her parça aynalama eksenini beyan ediyor', eksik.length === 0,
+    eksik.map(p => p.id).join(', ') || `${ciftler.length} çift`);
+  check('her satır gövdede nerede durduğunu söylüyor',
+    A.PARTS.every(p => p.yon && A.YONLER[p.yon]));
+
+  /* Beyan edilen yer ile çizilen yerin İŞARETİ tutmalı. */
+  const yanlis = [];
+  for (const p of A.PARTS) {
+    const n = nodes.get(p.id);
+    if (!n) continue;
+    const c = merkez(n).c;
+    const y = A.YONLER[p.yon];
+    if (p.yon === 'gogus' && !(c[0] > 0.05)) yanlis.push(`${p.id} göğüs ama x=${c[0].toFixed(3)}`);
+    if (p.yon === 'sirt' && !(c[0] < -0.05)) yanlis.push(`${p.id} sırt ama x=${c[0].toFixed(3)}`);
+    if (p.yon === 'yan' && !(Math.abs(c[1]) > 0.05)) yanlis.push(`${p.id} yan ama y=${c[1].toFixed(3)}`);
+    if (p.yon === 'orta' && Math.abs(c[1]) > 0.06) yanlis.push(`${p.id} orta ama y=${c[1].toFixed(3)}`);
+    void y;
+  }
+  check('çizilen konum beyan edilen yönle aynı işarette', yanlis.length === 0,
+    yanlis.join(' · ') || `${A.PARTS.length} satır`);
+
+  /* Aynalanan çift GERÇEKTEN aynalanmış olmalı: ±y'de ve aynı yükseklikte. */
+  const bozuk = [];
+  for (const p of ciftler) {
+    const a1 = nodes.get(p.id), a2 = nodes.get(`${p.id}#2`);
+    if (!a1 || !a2) { bozuk.push(`${p.id} tek kopya`); continue; }
+    const c1 = merkez(a1).c, c2 = merkez(a2).c;
+    if (Math.sign(c1[1]) === Math.sign(c2[1])) bozuk.push(`${p.id} ikisi de y=${c1[1].toFixed(2)}`);
+    if (Math.abs(c1[2] - c2[2]) > 0.02) bozuk.push(`${p.id} yükseklik ${c1[2].toFixed(2)}≠${c2[2].toFixed(2)}`);
+    if (Math.abs(Math.abs(c1[1]) - Math.abs(c2[1])) > 0.02) bozuk.push(`${p.id} simetrik değil`);
+  }
+  check('aynalanan her çift sol/sağ simetrik', bozuk.length === 0, bozuk.join(' · ') || `${ciftler.length} çift`);
+
+  /* TERS SINAV: aynalama ekseni x olsa omuz yatakları göğse ve sırta düşer -
+     tam da düzeltilen kusur. Ölçüm bunu yakalamak zorunda. */
+  const sahte = { ...A.partById('omuz-yatagi'), ayna: 'x', pos: [0.275, 0, 1.45] };
+  const k = A.kopyaKonumlari(sahte);
+  check('TERS SINAV: x ekseninde aynalama göğüs/sırt çifti üretir (eski kusur)',
+    Math.abs(k[0][1]) < 1e-6 && Math.abs(k[1][1]) < 1e-6 && k[0][0] === -k[1][0],
+    `[${k[0].join(',')}] ve [${k[1].join(',')}]`);
+
+  /* FLEKSİYON İŞARETİ. Dik duruşta dirsek 16° bükük: eller gövdenin ÖNÜNDE
+     olmalı. Eski sözleşmede -0,123 m ile ARKADAYDI. */
+  const el = merkez(nodes.get('eldivenler')).c;
+  check('dirsek fleksiyonu eli ÖNE getiriyor', el[0] > 0.05, `el x = ${el[0].toFixed(3)} m`);
+  const omuzY = merkez(nodes.get('omuz-yatagi')).c;
+  check('omuz yatakları yanlarda, göğüste değil',
+    Math.abs(omuzY[1]) > 0.2 && Math.abs(omuzY[0]) < 0.06,
+    `x ${omuzY[0].toFixed(3)} · y ${omuzY[1].toFixed(3)}`);
+  const paket = merkez(nodes.get('yasam-paketi')).c;
+  check('yaşam paketi SIRTTA', paket[0] < -0.15 && Math.abs(paket[1]) < 0.06,
+    `x ${paket[0].toFixed(3)} · y ${paket[1].toFixed(3)}`);
+
+  /* ÖLÇEK: çizilen boy ve omuz, beyan edilenle %3 içinde kalmalı. Bir kapı
+     açıklığı beyana göre değil, geçecek şeye göre ölçülür. */
+  const B = merkez(root);
+  const boy = B.mx[2] - B.mn[2], gen = B.mx[1] - B.mn[1];
+  check('çizilen boy beyan edilenle tutuyor', Math.abs(boy - A.BOY_M) / A.BOY_M < 0.03,
+    `${boy.toFixed(3)} m / ${A.BOY_M} m (%${(100 * Math.abs(boy - A.BOY_M) / A.BOY_M).toFixed(1)})`);
+  check('çizilen omuz beyan edilenle tutuyor', Math.abs(gen - A.OMUZ_M) / A.OMUZ_M < 0.03,
+    `${gen.toFixed(3)} m / ${A.OMUZ_M} m`);
+  check('ayaklar yere oturuyor', Math.abs(B.mn[2]) < 0.005, `taban ${B.mn[2].toFixed(4)} m`);
+
+  /* Her poz yere oturmalı: sabit ofset çömelmiş figürü havada bırakır. */
+  const havada = [];
+  for (const ad of Object.keys(POZLAR)) {
+    const r = buildAstronaut(THREE, { poz: ad }).root;
+    const m = merkez(r);
+    if (Math.abs(m.mn[2]) > 0.005) havada.push(`${ad} ${m.mn[2].toFixed(3)}`);
+  }
+  check('beş duruşun hepsinde ayaklar yerde', havada.length === 0,
+    havada.join(', ') || Object.keys(POZLAR).join(', '));
 }
 
 console.log(`\n${total - fails}/${total} geçti`);

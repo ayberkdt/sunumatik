@@ -12,6 +12,7 @@
 
 import * as THREE from '../presets/moon_advanced/vendor/three.module.min.js';
 import * as H from '../presets/habitat_blocks/hab-parts.mjs';
+import * as AST from '../presets/astronaut_blocks/astro-parts.mjs';
 const { massBudget, partById } = H;
 import * as R from '../presets/habitat_blocks/routing.mjs';
 import { createAssembly } from '../presets/core/assembly.mjs';
@@ -824,6 +825,149 @@ bolum('Saha: yasak bölge, güneş yönü, yürüme payı');
     dar.join(', ') || `en dar ${enDar.toFixed(2)} m`);
   ok(enDar < 40, 'TERS SINAV: pay ölçümü gerçekten çalışıyor (sonsuz değil)',
     `en dar ${enDar.toFixed(2)} m`);
+}
+
+/* ── YÜRÜME YOLLARI ───────────────────────────────────────────────────
+ *
+ * İki kusur da vardı ve ikisi de ölçülerek bulundu:
+ *
+ *   1. Yol, BİNANIN İÇİNDEN geçiyordu. İlk yazışta rotalar düz doğruydu ve
+ *      hava kilidi -> atölye doğrusu habitat silindirini, düğümü, şişme
+ *      modülü ve geçişleri kesiyordu: sekiz engel. Bir yol binanın etrafından
+ *      döner, o yüzden rota kırıklı yol oldu.
+ *   2. Mürettebat HATTA ÇARPIYORDU. Hatlar üssün tek doğu-batı koridorunu
+ *      1,93 ve 1,95 m'de kesiyor, giysili boy 1,95 m. Bu, hat satırlarının
+ *      beyan ettiği kutuya bakarak bulunamaz - o kutu y = -7,2'de düz bir
+ *      koşu ilan eder, çizilen ise tanktan habitata çapraz gider. Ölçüm
+ *      `runEndpoints`'in verdiği gerçek eksen çizgisinden yapılır.
+ */
+{
+  bolum('yürüme yolları');
+  const toplamL = H.yolToplamM();
+  ok(H.YOLLAR.length >= 4, 'en az dört rota beyan edilmiş', `${H.YOLLAR.length} rota, ${toplamL.toFixed(1)} m`);
+  ok(H.YOLLAR.every(y => y.neden && y.neden.length > 30),
+    'her rota NEDEN yürünüyor olduğunu söylüyor');
+
+  /* Rota uçları gerçek parçalar olmalı: yol hiçbir yere gitmiyorsa yol değil. */
+  const kayip = H.YOLLAR.flatMap(y => [y.a, y.b]).filter(id => !H.partById(id));
+  ok(kayip.length === 0, 'her rotanın iki ucu da katalogda var', kayip.join(', ') || 'hepsi var');
+
+  for (const env of ['mars', 'moon']) {
+    const engel = [];
+    for (const y of H.YOLLAR) {
+      if (!H.envAllows(y.a, env).ok || !H.envAllows(y.b, env).ok) continue;
+      for (const e of H.yolEngelleri(y, env)) engel.push(`${y.id}/${e.engel}`);
+    }
+    ok(engel.length === 0, `${env}: hiçbir yol katı bir cismin içinden geçmiyor`,
+      engel.join(', ') || 'altı rota temiz');
+  }
+
+  /* TERS SINAV: engel ölçümü gerçekten bir şey buluyor mu. Düz doğru hâli
+     sekiz engel veriyordu; ara noktaları silince yine vermeli, yoksa denetim
+     her şeyi "temiz" diyen boş bir sayaçtan ibarettir. */
+  const duz = { ...H.YOLLAR.find(y => y.id === 'yol-atolye'), ara: [] };
+  ok(H.yolEngelleri(duz, 'mars').length >= 5,
+    'TERS SINAV: ara noktalar silinince engel ölçümü kusuru yakalıyor',
+    `${H.yolEngelleri(duz, 'mars').length} engel`);
+
+  /* Baş boşluğu: her gerçek kesişimde çukurdan SONRA giysili boy + pay kadar
+     yer kalmalı. Uç bağlantısı kesişme değildir - hat tankın üstünde biter ve
+     yol da tankta biter; orada kimse hattın altından yürümez. */
+  const gereken = H.GIYSILI_BOY_M + H.BAS_PAYI_M;
+  const carpan = [], cukurlu = [];
+  for (const y of H.YOLLAR) {
+    for (const c of H.yolAltGecisleri(y, 'mars')) {
+      if (c.terminal) continue;
+      if (c.cukurM > 0) cukurlu.push(`${c.hat} ${c.cukurM.toFixed(2)} m`);
+      if (c.altZ + c.cukurM < gereken - 1e-9) carpan.push(`${y.id}/${c.hat} ${(c.altZ + c.cukurM).toFixed(2)} m`);
+    }
+  }
+  ok(carpan.length === 0,
+    `her hat kesişiminde çukurdan sonra ${gereken.toFixed(2)} m baş boşluğu var`,
+    carpan.join(', ') || `${cukurlu.length} kesişim tesviye edildi: ${cukurlu.join(', ')}`);
+  ok(cukurlu.length > 0,
+    'TERS SINAV: baş boşluğu ölçümü gerçek bir kesişim buluyor (sıfır değil)',
+    `${cukurlu.length} kesişim`);
+
+  /* Çukur derinliği ÖLÇÜMDEN çıkar: her çukur tam gerekeni kapatmalı, ne
+     eksik ne de gereksiz derin. 0,05 m yuvarlama payı. */
+  const sacma = [];
+  for (const y of H.YOLLAR) {
+    for (const c of H.yolAltGecisleri(y, 'mars')) {
+      if (c.terminal || c.cukurM <= 0) continue;
+      if (c.altZ + c.cukurM > gereken + 0.05) sacma.push(`${c.hat} ${c.cukurM.toFixed(2)} m`);
+    }
+  }
+  ok(sacma.length === 0, 'hiçbir çukur gerekenden 0,05 m fazla derin değil',
+    sacma.join(', ') || 'derinlikler ölçümden');
+
+  /* Rampa eğimi: 1:8'den dik bir rampa giysili ve yüklü yürünmez. */
+  ok(H.CUKUR_EGIM >= 8, 'çukur rampası en çok 1:8 eğimde', `1:${H.CUKUR_EGIM}`);
+
+  /* Genişlik ÖLÇEK DÜRÜSTLÜĞÜ: ana yol iki giysili omuzu yan yana almalı.
+     Sayı astronaut_blocks'un BEYAN ettiği yerden OKUNUR. Buraya 0,84 diye
+     kopyalanmıştı ve giysi yeniden çizilince beyan 0,88'e çıktı: kopyalanan
+     sayı sessizce eskidi ve yol denetimi artık var olmayan bir omuzu
+     sınıyordu. Kopyalanan sayı, doğrulanmamış sayıdır. */
+  const omuz = AST.OMUZ_M;
+  ok(H.YOL_GENISLIK_M.ana >= 2 * omuz,
+    'ana yol iki giysili mürettebatı yan yana alıyor',
+    `${H.YOL_GENISLIK_M.ana} m, iki omuz ${(2 * omuz).toFixed(2)} m`);
+  ok(H.YOL_GENISLIK_M.tali >= omuz + 0.3,
+    'tali yol bir giysili mürettebata yetiyor',
+    `${H.YOL_GENISLIK_M.tali} m, omuz ${omuz} m`);
+
+  /* Her ana yapıya yürünebiliyor mu: mürettebatın giysiyle gittiği hiçbir
+     tesis yolsuz kalmamalı. Yolsuz bir depo, kâğıt üstünde bir depodur. */
+  const uclar = new Set(H.YOLLAR.flatMap(y => [y.a, y.b]));
+  const gerekli = ['tank-o2', 'tank-ch4', 'moxie', 'garaj', 'depo', 'atolye'];
+  const yolsuz = gerekli.filter(id => !uclar.has(id));
+  ok(yolsuz.length === 0, 'mürettebatın gittiği her tesise yol var', yolsuz.join(', ') || gerekli.join(', '));
+
+  /* ÇAKIŞMA. Üç ana yol aynı caddeyi paylaşır. Rota başına şerit çizilirse
+     aynı düzlemde üç kutu üst üste gelir - z-fighting - ve aynı hat
+     kesişimine üç çukur kazılır. `yolSeritleri` aralıkları birleştirir. */
+  for (const env of ['mars', 'moon']) {
+    const S = H.yolSeritleri(env);
+    const cak = [];
+    for (let i = 0; i < S.length; i++) for (let j = i + 1; j < S.length; j++) {
+      const A = S[i], B = S[j];
+      if (Math.abs(A.aci - B.aci) > 1e-6) continue;
+      const pa = -A.uy * A.a[0] + A.ux * A.a[1];
+      const pb = -B.uy * B.a[0] + B.ux * B.a[1];
+      if (Math.abs(pa - pb) > 1e-6) continue;
+      const t0 = Math.min(A.ux * A.a[0] + A.uy * A.a[1], A.ux * A.b[0] + A.uy * A.b[1]);
+      const t1 = Math.max(A.ux * A.a[0] + A.uy * A.a[1], A.ux * A.b[0] + A.uy * A.b[1]);
+      const s0 = Math.min(B.ux * B.a[0] + B.uy * B.a[1], B.ux * B.b[0] + B.uy * B.b[1]);
+      const s1 = Math.max(B.ux * B.a[0] + B.uy * B.a[1], B.ux * B.b[0] + B.uy * B.b[1]);
+      if (Math.min(t1, s1) - Math.max(t0, s0) > 1e-6) cak.push(`${i}/${j}`);
+    }
+    ok(cak.length === 0, `${env}: aynı düzlemde çakışan şerit yok`,
+      cak.join(', ') || `${S.length} şerit, ${H.yolKaplananM(env).toFixed(1)} m zemin`);
+  }
+
+  /* Birleştirme GERÇEKTEN birleştiriyor mu: rotaların toplamı kaplanan
+     zeminden büyük olmalı, yoksa tekilleştirme kimsenin farketmediği bir
+     boş işlemdir. Paylaşılan cadde 17,6 m. */
+  const ham = H.yolToplamM(), net = H.yolKaplananM('mars');
+  ok(ham - net > 5, 'paylaşılan cadde bir kez çiziliyor',
+    `rota toplamı ${ham.toFixed(1)} m, kaplanan ${net.toFixed(1)} m, paylaşılan ${(ham - net).toFixed(1)} m`);
+
+  /* Cadde TEK PARÇA olmalı. Kanonikleştirme kusuru yüzünden batıya giden yarı
+     -1,22e-16 açı alıp "-0.0000" anahtarına düşüyordu ve tek cadde 18,6 + 12,0
+     m'ye bölünüyordu; iki bitişik kutu görsel olarak masum ama birleştirmenin
+     çalışmadığının işaretiydi. */
+  const cadde = H.yolSeritleri('mars')
+    .filter(s => Math.abs(s.aci) < 1e-6 && Math.abs(s.a[1] - H.CADDE_Y) < 1e-6);
+  ok(cadde.length === 1, 'ana cadde tek parça hâlinde birleşmiş',
+    `${cadde.length} parça${cadde.length ? ', ' + cadde[0].uzunluk.toFixed(1) + ' m' : ''}`);
+
+  /* Çukur da tekil olmalı: aynı kesişime üç rota gelir, çukur bir tanedir. */
+  const cSay = H.yolCukurlari('mars').length;
+  const hamCukur = H.YOLLAR.reduce(
+    (n, y) => n + H.yolAltGecisleri(y, 'mars').filter(c => c.cukurM > 0).length, 0);
+  ok(cSay < hamCukur, 'aynı kesişimdeki çukur bir kez kazılıyor',
+    `${hamCukur} rota-kesişimi -> ${cSay} çukur`);
 }
 
 console.log(kaldi === 0 ? `HABİTAT DENETİMİ: ${gecti}/${gecti} geçti` : `HABİTAT DENETİMİ: ${gecti} geçti, ${kaldi} KALDI`);

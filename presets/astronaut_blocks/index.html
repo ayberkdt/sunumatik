@@ -81,11 +81,21 @@
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(2, devicePixelRatio));
     renderer.shadowMap.enabled = true;
+    /* TON EŞLEME. Bu satırlar yokken sahne, fiziksel yeğinliklerle
+       aydınlatılıp doğrusal uzayda ekrana basılıyordu: BEYAZ bir yüzey
+       giysisi orta gri, gölge tarafı ise neredeyse siyah çıkıyordu. Depodaki
+       öteki her sayfa (habitat, uydu) ACES kullanıyor; bu sayfa atlamıştı.
+       Pozlama rig'den gelir - bir kameranın yapacağı şeyin aynısı. */
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
     host.appendChild(renderer.domElement);
 
     /* Ay yüzeyi: gök siyah, dolgu yalnız regolit sıçraması. */
     const rig = sceneLighting(THREE, scene, 'vacuum', { anahtarYogunluk: 3.0, golgeAlan: 3, golgeUzak: 12 });
-    rig.gunes.position.set(3, -4, 5);
+    /* Güneş ÖNDEN ve yandan gelir: vitrinin işi giysiyi göstermek ve vakumda
+       gölge mutlak siyahtır, o yüzden anahtar ışık göğsü yalamalı. */
+    rig.gunes.position.set(4.5, 3.0, 4.0);
+    renderer.toneMappingExposure = 1.0 * rig.pozlamaCarpani();
 
     const zemin = new THREE.Mesh(new THREE.CircleGeometry(9, 48),
       new THREE.MeshStandardMaterial({ color: 0x5f5f63, roughness: 0.98 }));

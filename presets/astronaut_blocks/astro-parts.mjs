@@ -22,11 +22,59 @@
 export const BOY_M = 1.95;
 /** Omuz genişliği (m) — kapı ve geçiş açıklıkları bununla ölçülür.
  *  ÇİZİLEN genişliktir: kol yatakları ve kolların kendisi dâhil ölçülmüş
- *  0,84 m. Tasarım niyeti 0,78 idi ve aradaki fark kolların kalınlığıydı —
- *  bir kapı açıklığı niyete göre değil, geçecek şeye göre ölçülür. */
-export const OMUZ_M = 0.84;
+ *  0,88 m: omuz boyundurukları, yataklar ve kolların kendisi dâhil.
+ *  Tasarım niyeti 0,78 idi; giysi yeniden çizilince ölçülen 0,84'ten 0,88'e
+ *  çıktı ve SAYI ÖLÇÜME UYDURULDU, ölçüm sayıya değil. Bir kapı açıklığı
+ *  niyete göre değil, geçecek şeye göre ölçülür. */
+export const OMUZ_M = 0.88;
 /** Çalışma basıncı (kPa) ve karşılık gelen oksijen kısmi basıncı. */
 export const BASINC_KPA = 29.6;
+
+/* GÖVDE ÇERÇEVESİ — bir kez, açıkça.
+ *
+ * +X İLERİ (göğsün baktığı yön) · +Y SOL · +Z YUKARI.
+ *
+ * Bu satır yazılana kadar çerçeve aynı anda üç şeydi. Kurulan figür ölçüldü:
+ * omuz yatakları x = ±0,270 ve y = 0'da, yani birisi GÖĞÜSTE, öteki SIRTTA;
+ * sırt paketi y = -0,268'de, yani sol kolun içinde; göğüs paneli y = +0,227'de.
+ * Sebep, kataloğun aynalama eksenini hiç söylememesiydi: montajcı qty 2 olan
+ * parçalarda `pos[0]`'ı bir KOORDİNAT değil bir BÜYÜKLÜK diye okuyup x'te
+ * aynalıyordu, kollar için ayrı bir özel durum y'de aynalıyordu, gövde takımı
+ * ise +Y'yi ileri sanan elle yazılmış konumlarla yerleştirilmişti.
+ *
+ * Artık `pos` harfiyen konumdur, aynalama eksenini satırın kendisi beyan eder
+ * ve her satır gövdede NEREDE durduğunu söyler - kapı işareti karşılaştırır.
+ */
+export const EKSEN = Object.freeze({ ileri: '+x', sol: '+y', yukari: '+z' });
+
+/** Parçanın gövdedeki yeri; kapı çizilen konumun işaretini buna göre sınar. */
+export const YONLER = Object.freeze({
+  gogus: { ad: 'Chest', eksen: 0, isaret: 1 },
+  sirt: { ad: 'Back', eksen: 0, isaret: -1 },
+  yan: { ad: 'Left/right pair', eksen: 1, isaret: 0 },
+  orta: { ad: 'Centreline', eksen: null, isaret: 0 },
+});
+
+/**
+ * qty 2 olan bir parçanın İKİ kopyasının konumu.
+ * `ayna` hangi eksende aynalandığını SÖYLER; kimse `pos`'un bir bileşenini
+ * başka bir eksenin büyüklüğü diye yeniden yorumlamaz.
+ */
+export function kopyaKonumlari(p) {
+  if ((p.qty ?? 1) !== 2) return [p.pos.slice()];
+  const k = { x: 0, y: 1, z: 2 }[p.ayna ?? 'y'];
+  const b = p.pos.slice();
+  b[k] = -b[k];
+  return [p.pos.slice(), b];
+}
+
+/** qty 2 olan parçanın iki kopyasının birlikte kapladığı zarf. */
+export function parcaZarfi(p) {
+  const yerler = kopyaKonumlari(p);
+  const mn = [0, 1, 2].map(i => Math.min(...yerler.map(q => q[i] - p.size[i] / 2)));
+  const mx = [0, 1, 2].map(i => Math.max(...yerler.map(q => q[i] + p.size[i] / 2)));
+  return { mn, mx, size: [0, 1, 2].map(i => mx[i] - mn[i]) };
+}
 
 export const SUBSYSTEMS = Object.freeze({
   basinc: { ad: 'Pressure garment', renk: '#d8dbe2' },
@@ -60,7 +108,7 @@ export const PARTS = Object.freeze([
   /* ADIM 1 — soğutma */
   { id: 'sogutma-tulumu', ad: 'Liquid cooling garment', sistem: 'yasam', step: 1,
     mountsTo: null, arayuz: 'kumas', massKg: 3.0,
-    pos: [0, 0, 0.98], size: [0.52, 0.32, 1.15], sekil: 'tulum',
+    pos: [0, 0, 0.95], size: [0.36, 0.32, 1.10], yon: 'orta', sekil: 'tulum',
     tech: {
       no: 'AS-LIF-010',
       malzeme: 'Spandex with 90 m of 4 mm PVC tubing',
@@ -77,7 +125,7 @@ export const PARTS = Object.freeze([
   /* ADIM 2 — alt gövde */
   { id: 'alt-govde', ad: 'Lower torso assembly', sistem: 'basinc', step: 2,
     mountsTo: 'sogutma-tulumu', arayuz: 'kilit', massKg: 12.5,
-    pos: [0, 0, 0.52], size: [0.46, 0.34, 1.02], sekil: 'altGovde',
+    pos: [0, 0, 0.53], size: [0.40, 0.38, 1.06], yon: 'orta', sekil: 'altGovde',
     tech: {
       no: 'AS-PRS-020',
       malzeme: 'Ortho-fabric over urethane bladder, aluminium waist ring',
@@ -92,7 +140,7 @@ export const PARTS = Object.freeze([
 
   { id: 'cizmeler', ad: 'Boots', sistem: 'hareket', step: 2,
     mountsTo: 'alt-govde', arayuz: 'kumas', massKg: 2.4, qty: 2,
-    pos: [0.11, 0, 0.09], size: [0.16, 0.30, 0.18], sekil: 'cizme',
+    pos: [0.06, 0.115, 0.10], size: [0.32, 0.15, 0.20], yon: 'yan', ayna: 'y', sekil: 'cizme',
     tech: {
       no: 'AS-MOB-021',
       malzeme: 'Silicone sole, ortho-fabric upper, metal shank',
@@ -108,7 +156,7 @@ export const PARTS = Object.freeze([
   /* ADIM 3 — sert üst gövde */
   { id: 'ust-govde', ad: 'Hard upper torso', sistem: 'basinc', step: 3,
     mountsTo: 'alt-govde', arayuz: 'kilit', massKg: 16.0,
-    pos: [0, 0, 1.30], size: [0.56, 0.38, 0.52], sekil: 'ustGovde',
+    pos: [0, 0, 1.32], size: [0.40, 0.56, 0.52], yon: 'orta', sekil: 'ustGovde',
     tech: {
       no: 'AS-PRS-030',
       malzeme: 'Spun aluminium shell with four bearing rings',
@@ -123,7 +171,7 @@ export const PARTS = Object.freeze([
 
   { id: 'omuz-yatagi', ad: 'Shoulder bearings', sistem: 'hareket', step: 3,
     mountsTo: 'ust-govde', arayuz: 'kilit', massKg: 1.1, qty: 2,
-    pos: [0.27, 0, 1.44], size: [0.13, 0.13, 0.09], sekil: 'yatak',
+    pos: [0, 0.275, 1.45], size: [0.17, 0.10, 0.17], yon: 'yan', ayna: 'y', sekil: 'yatak',
     tech: {
       no: 'AS-MOB-031',
       malzeme: 'Anodised aluminium races, dry-lubricated',
@@ -138,7 +186,7 @@ export const PARTS = Object.freeze([
 
   { id: 'kollar', ad: 'Arm assemblies', sistem: 'basinc', step: 5,
     mountsTo: 'omuz-yatagi', arayuz: 'kilit', massKg: 3.6, qty: 2,
-    pos: [0.30, 0, 1.16], size: [0.14, 0.14, 0.60], sekil: 'kol',
+    pos: [0, 0.335, 1.14], size: [0.19, 0.17, 0.62], yon: 'yan', ayna: 'y', sekil: 'kol',
     tech: {
       no: 'AS-PRS-050',
       malzeme: 'Ortho-fabric over bladder, elbow convolute, wrist bearing',
@@ -153,7 +201,7 @@ export const PARTS = Object.freeze([
 
   { id: 'eldivenler', ad: 'Gloves', sistem: 'arayuz', step: 5,
     mountsTo: 'kollar', arayuz: 'kilit', massKg: 0.9, qty: 2,
-    pos: [0.32, 0, 0.84], size: [0.12, 0.10, 0.24], sekil: 'eldiven',
+    pos: [0.03, 0.335, 0.72], size: [0.20, 0.15, 0.22], yon: 'yan', ayna: 'y', sekil: 'eldiven',
     tech: {
       no: 'AS-INT-051',
       malzeme: 'RTV silicone fingertips, Vectran palm, heated fingers',
@@ -169,7 +217,7 @@ export const PARTS = Object.freeze([
   /* ADIM 4 — yaşam desteği */
   { id: 'yasam-paketi', ad: 'Portable life support pack', sistem: 'yasam', step: 4,
     mountsTo: 'ust-govde', arayuz: 'civata', massKg: 54.0,
-    pos: [0, -0.26, 1.30], size: [0.46, 0.22, 0.64], sekil: 'paket',
+    pos: [-0.27, 0, 1.34], size: [0.24, 0.46, 0.62], yon: 'sirt', sekil: 'paket',
     tech: {
       no: 'AS-LIF-040',
       malzeme: 'Composite shell; fan, pump, CO2 bed, sublimator, O2 tanks',
@@ -184,7 +232,7 @@ export const PARTS = Object.freeze([
 
   { id: 'ikincil-o2', ad: 'Secondary oxygen pack', sistem: 'yasam', step: 4,
     mountsTo: 'yasam-paketi', arayuz: 'civata', massKg: 6.2,
-    pos: [0, -0.40, 1.12], size: [0.28, 0.12, 0.26], sekil: 'kutu',
+    pos: [-0.30, 0, 0.95], size: [0.16, 0.34, 0.18], yon: 'sirt', sekil: 'kutu',
     tech: {
       no: 'AS-LIF-041',
       malzeme: 'Two composite bottles at 41 MPa',
@@ -200,7 +248,7 @@ export const PARTS = Object.freeze([
   /* ADIM 5 — kask ve görüş */
   { id: 'kask', ad: 'Helmet and visor assembly', sistem: 'gorus', step: 5,
     mountsTo: 'ust-govde', arayuz: 'kilit', massKg: 5.8,
-    pos: [0, 0, 1.75], size: [0.30, 0.32, 0.30], sekil: 'kask',
+    pos: [0.02, 0, 1.76], size: [0.34, 0.32, 0.38], yon: 'orta', sekil: 'kask',
     tech: {
       no: 'AS-VIS-060',
       malzeme: 'Polycarbonate bubble, gold-coated EVA visor, anti-fog coating',
@@ -215,7 +263,7 @@ export const PARTS = Object.freeze([
 
   { id: 'basliklar', ad: 'Helmet lights and camera', sistem: 'gorus', step: 5,
     mountsTo: 'kask', arayuz: 'civata', massKg: 1.3,
-    pos: [0, 0.02, 1.90], size: [0.34, 0.20, 0.10], sekil: 'lamba',
+    pos: [0.04, 0, 1.85], size: [0.20, 0.38, 0.10], yon: 'orta', sekil: 'lamba',
     tech: {
       no: 'AS-VIS-061',
       malzeme: 'Four LED heads, one camera, mounting yoke',
@@ -231,7 +279,7 @@ export const PARTS = Object.freeze([
   /* ADIM 6 — arayüz ve emniyet */
   { id: 'gogus-paneli', ad: 'Display and control module', sistem: 'arayuz', step: 6,
     mountsTo: 'ust-govde', arayuz: 'civata', massKg: 2.1,
-    pos: [0, 0.22, 1.34], size: [0.26, 0.10, 0.18], sekil: 'panel',
+    pos: [0.20, 0, 1.36], size: [0.13, 0.28, 0.20], yon: 'gogus', sekil: 'panel',
     tech: {
       no: 'AS-INT-070',
       malzeme: 'Mechanical switches, sunlight-readable display, mirrored text',
@@ -246,7 +294,7 @@ export const PARTS = Object.freeze([
 
   { id: 'emniyet-halati', ad: 'Safety tether and tool caddy', sistem: 'arayuz', step: 6,
     mountsTo: 'ust-govde', arayuz: 'civata', massKg: 2.8,
-    pos: [0, 0.18, 1.06], size: [0.34, 0.14, 0.22], sekil: 'halat',
+    pos: [0.17, 0, 1.06], size: [0.14, 0.32, 0.22], yon: 'gogus', sekil: 'halat',
     tech: {
       no: 'AS-INT-071',
       malzeme: 'Retracting steel tether, carabiners, tool loops',
