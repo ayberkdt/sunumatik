@@ -89,7 +89,10 @@ export const PARTS = Object.freeze([
     },
     why: 'Regolith is compacted and levelled so modules sit true, dust stays down, and walking routes are obvious. It has no mass because it is made on site - the cheapest form of ISRU there is.' },
   { id: 'temel-hab', ad: 'Habitat bearing plates (6)', sistem: 'yapi', step: 1, qty: 6, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 42, pos: [-3.6, 0, 0.06], size: [1.1, 1.1, 0.12], sekil: 'plaka',
+    /* Altı plaka 3,2 m yarıçaplı bir halkaya dizilir; zarf halkanın çapı
+       artı bir plaka. */
+    dizilim: { n: 6, yay: 'halka', r: 3.2 },
+    massKg: 42, pos: [-3.6, 0, 0.06], size: [7.5, 7.5, 0.12], sekil: 'plaka',
     tech: {
       no: 'HB-STR-010',
       malzeme: '6061-T6 aluminium plate, 12 mm',
@@ -136,7 +139,12 @@ export const PARTS = Object.freeze([
     },
     why: 'Life support, water recovery and electronics collect on one wall: maintenance from one place, noise in one direction.' },
   { id: 'regolit-ortu', ad: 'Regolith shielding cover', sistem: 'yapi', step: 2, mountsTo: 'hab-silindir', arayuz: 'ayirma',
-    massKg: 0, pos: [-3.6, 0, 3.4], size: [8.6, 5.4, 1.6], sekil: 'ortu',
+    /* `size` ZARFTIR, kalinlik degil. Ikisi ayni alanda tutulunca kubbenin
+       yariçapi kendi zarfindan hesaplaniyor ve dairesel bagimlilik cikiyor;
+       ayrica olculen cizim beyani 1,14 m asiyordu. Kalinlik ayri beyan
+       edilir, zarf da kubbenin gercek kapladigi yerdir. */
+    kalinlik: 0.6,
+    massKg: 0, pos: [-3.6, 0, 3.55], size: [7.9, 5.0, 2.5], sekil: 'ortu',
     tech: {
       no: 'HB-RAD-022',
       malzeme: 'Excavated regolith in bags',
@@ -297,7 +305,12 @@ export const PARTS = Object.freeze([
 
   /* ADIM 5 — güç */
   { id: 'panel-tarlasi', ad: 'Solar array field', sistem: 'guc', step: 5, qty: 4, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 310, pos: [-16.3, 9.6, 0.8], size: [5.0, 3.0, 1.6], sekil: 'panel-tarla',
+    /* `size` DİZİNİN TAMAMININ zarfıdır, tek bir sıranın değil. Desen
+       builder'ın içindeki bir haritada duruyordu ve katalog tek sıra beyan
+       ediyordu: ölçülen çizim 23,6 m'ye yayılıyordu, beyan 5,0 m diyordu, ve
+       `size`'a bakan her kapı olmayan bir ayak izini ölçüyordu. */
+    dizilim: { n: 4, adim: [6.2, 0, 0] },
+    massKg: 310, pos: [-13.0, 9.6, 0.8], size: [23.6, 3.0, 1.6], sekil: 'panel-tarla',
     tech: {
       no: 'HB-PWR-050',
       malzeme: 'IMM triple-junction cells, aluminium truss substrate',
@@ -378,7 +391,8 @@ export const PARTS = Object.freeze([
 
   /* ADIM 6 — ısıl ve ISRU */
   { id: 'radyator-dizisi', ad: 'Base radiator array', sistem: 'isil', step: 6, qty: 2, mountsTo: 'platform', arayuz: 'ayirma',
-    massKg: 290, pos: [-3.6, 12.7, 1.3], size: [6.0, 0.3, 2.6], sekil: 'radyator',
+    dizilim: { n: 2, adim: [0, 2.6, 0] },
+    massKg: 290, pos: [-3.6, 15.4, 1.3], size: [6.0, 2.9, 2.6], sekil: 'radyator',
     tech: {
       no: 'HB-THR-070',
       malzeme: 'Aluminium fins, OSR coating, ammonia loop',

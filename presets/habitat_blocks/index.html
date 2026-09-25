@@ -98,7 +98,7 @@
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
-    import { buildHabitat } from './hab-build.mjs';
+    import { buildHabitat, buildCevre } from './hab-build.mjs';
     import { sceneLighting } from '../core/scene-lighting.mjs';
     import { PARTS, STEPS, SUBSYSTEMS, HAB_ENV, INTERFACES,
              massBudget, runEndpoints, partById,
@@ -120,6 +120,7 @@
     host.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
+    let cevre = null;
     const camera = new THREE.PerspectiveCamera(40, 1, 0.2, 800);
     camera.up.set(0, 0, 1);
     const kontrol = new OrbitControls(camera, renderer.domElement);
@@ -148,7 +149,17 @@
        ışığı saçar ve gölgeyi yumuşatır. */
     function ortamUygula() {
       const mars = ortam === 'mars';
-      scene.background = new THREE.Color(mars ? 0x3a2a20 : 0x04060c);
+      /* Arkaplan tek düz bir renkti ve zemin pedden ibaretti: üs bir
+         gezegende değil, bir masanın üstünde duruyordu. Çevre ortamla
+         birlikte yeniden kurulur - Ay'da grade edilecek atmosfer ve içinde
+         kaybolunacak pus olmadığı için orada ufuk keskin, gök siyah kalır. */
+      if (cevre) { scene.remove(cevre.group); }
+      cevre = buildCevre(THREE, { env: mars ? 'mars' : 'ay', ped: partById('platform').size });
+      scene.add(cevre.group);
+      scene.background = new THREE.Color(cevre.ufukRengi);
+      /* Pus yalnız atmosfer varken: uzaklık Mars'ta ufka karışır, Ay'da
+         karışmaz ve bu iki gökcismi arasındaki en görünür farklardan biridir. */
+      scene.fog = mars ? new THREE.Fog(cevre.ufukRengi, 70, 300) : null;
       /* Every number below is now a consequence, not a preference. The Sun
          at Mars is 1/1.524^2 = 0.431 of its strength at the Moon; the sky
          term is 7.7% of the Sun on Mars and EXACTLY ZERO on the Moon, where

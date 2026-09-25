@@ -123,7 +123,20 @@ export const LOCAL_KINDS = Object.freeze(new Set([
 ]));
 
 function govde(THREE, p, M, dok) {
-  const [sx, sy, sz] = p.size;
+  /* Cogaltilan bir parcada `size` DIZININ zarfidir; gövde ise TEK birimi
+     cizer. Birimin olcusu zarftan cogaltma acikligi dusulerek bulunur.
+     Bu ayrim yapilmayinca panel tarlasinin kablo tavasi `-sx * 0.42` ile
+     9,9 m disari gitti ve dizi 42 m'ye yayildi: `sx` artik 23,6 idi. */
+  const dz = p.dizilim;
+  const birim = (() => {
+    const [a, b, c] = p.size;
+    if (!dz) return [a, b, c];
+    if (dz.yay === 'halka') return [a - 2 * dz.r, b - 2 * dz.r, c];
+    return [a - Math.abs(dz.adim[0]) * (dz.n - 1),
+      b - Math.abs(dz.adim[1]) * (dz.n - 1),
+      c - Math.abs(dz.adim[2]) * (dz.n - 1)];
+  })();
+  const [sx, sy, sz] = birim;
   const g = new THREE.Group();
   const mat = M[p.sistem] || M.yapi;
   const ekle = (m) => { m.castShadow = true; m.receiveShadow = true; g.add(m); return m; };
@@ -406,7 +419,7 @@ function govde(THREE, p, M, dok) {
       const pompa = ekle(new THREE.Mesh(new THREE.BoxGeometry(r * 0.5, r * 0.34, r * 0.44), M.koyu));
       silindireOturt(THREE, pompa, r, Math.PI * 0.55, -sz * 0.18, { disari: r * 0.16 });
       /* İkaz levhası: basınç boşaltma uyarısı, kırmızı şeritli. */
-      const ikaz = D.levha(THREE, M.kit, ['BASINÇLI HACİM', 'boşaltmadan açma'],
+      const ikaz = D.levha(THREE, M.kit, ['PRESSURISED', 'do not open before venting'],
         { w: r * 0.9, h: r * 0.42, seritRenk: '#c9563f' });
       ikaz.position.set(0, -r * 1.01, sz * 0.3);
       ikaz.rotation.x = Math.PI / 2;
@@ -507,26 +520,42 @@ function govde(THREE, p, M, dok) {
         kork.rotation.z = a + Math.PI / 2;
         g.add(kork);
       }
-      const lv4 = D.levha(THREE, M.kit, [p.tech?.no || p.id, 'ŞİŞME HACİM'], { w: R * 0.5, h: R * 0.24 });
+      const lv4 = D.levha(THREE, M.kit, [p.tech?.no || p.id, 'INFLATABLE VOLUME'], { w: R * 0.5, h: R * 0.24 });
       lv4.position.set(0, -R * 0.46, sz * 0.5);
       lv4.rotation.x = Math.PI / 2;
       g.add(lv4);
       break;
     }
     case 'ortu': {
-      /* regolit örtüsü: yarım silindir kabuk, yüzeyi kırık */
-      const r = sy / 2;
-      /* Yarım kabuk kısmi lathe ile kurulur. Çıplak CylinderGeometry'nin
-         thetaLength'i burada işe yarardı ama eksen sözleşmesi çıplak
-         silindiri yasaklar; latheX zaten kısmi tur alıyor. */
-      const profil = [new THREE.Vector2(r, -sx / 2), new THREE.Vector2(r, sx / 2)];
+      /* Regolit örtüsü, ÖRTTÜĞÜ ŞEYDEN türetilir.
+         Ölçülen (düzeltme öncesi): çizilen kabuk z 0,16..5,56 ve y -2,70..0,
+         yani yerden 5,56 m'ye çıkan, -Y yanına dikilmiş DİKEY bir yarım
+         duvar - beyan edilen kutu ise z 2,60..4,20. İki ayrı sebep: yarıçap
+         örttüğü modülden (2,2) değil parçanın kendi GENİŞLİĞİNDEN (5,4)
+         geliyordu, ve lathe üstteki yarımı değil -Y'ye bakan yarımı
+         süpürüyordu. Üstünde durmayan şey örtü değildir.
+         Artık eksen de, uzunluk da, yarıçap da bağlı olduğu silindirden
+         okunur; örtünün kendi `sz`'si yalnız kalınlıktır. */
+      const ust = partById(p.mountsTo);
+      const kR = ust ? Math.min(ust.size[1], ust.size[2]) / 2 : sy / 2;
+      /* Kalinlik ayri beyan edilir; `sz` artik zarfin yuksekligi. */
+      const r = kR + (p.kalinlik ?? 0.6) * 0.5;
+      const boy = ust ? ust.size[0] * 1.04 : sx;
+      /* Silindirin ekseni, bu grubun kendi çerçevesinde. */
+      const eksen = ust ? ust.pos[2] - p.pos[2] : 0;
+      const profil = [new THREE.Vector2(r, -boy / 2), new THREE.Vector2(r, boy / 2)];
       const m = ekle(latheX(profil, 26, M.regolit, 0, Math.PI));
-      m.position.z = -sz * 0.34;
+      /* Süpürülen yarım -Y'ye bakar; tek eksende çeyrek tur onu ÜSTE alır.
+         Tek bileşenli dönüş, sıra tuzağı yok. */
+      m.rotation.x = -Math.PI / 2;
+      m.position.z = eksen;
       m.castShadow = false;
+      /* Yüzeyi kıran regolit yığınları kabuğun üstüne, aynı eksene oturur. */
       for (let i = 0; i < 26; i++) {
         const a = Math.PI * (i + 0.5) / 26;
         const yig = ekle(new THREE.Mesh(new THREE.SphereGeometry(r * 0.1, 7, 5), M.regolit));
-        yig.position.set((i % 7 - 3) * sx * 0.14, Math.cos(a) * r * 0.96, -sz * 0.34 + Math.sin(a) * r * 0.96);
+        yig.position.set((i % 7 - 3) * boy * 0.14, Math.cos(a) * r * 0.96,
+          eksen + Math.sin(a) * r * 0.96);
         yig.scale.set(1, 1, 0.6); yig.castShadow = false;
       }
       break;
@@ -551,20 +580,38 @@ function govde(THREE, p, M, dok) {
       break;
     }
     case 'tank-dikey': {
-      const r = sx / 2, boy = sz - sx;
-      const t = ekle(new THREE.Mesh(cylGeoZ(r, r, boy, 30), mat));
-      t.material = mat.clone(); t.material.map = dok.zar; t.material.map.repeat.set(6, 3);
+      /* Ölçülen: çizilen tank z -1,06..2,99, beyan 0..3 - ayaklar pedin
+         1,05 m ALTINA iniyordu. İki hata üst üsteydi: ayak `-sz*0.6`'ya
+         konuyor ve `sz*0.5` uzunlukta çiziliyordu, üstelik basınç kabı zaten
+         beyan edilen yüksekliğin TAMAMINI dolduruyordu, yani ayağa hiç yer
+         yoktu. Kriyojenik bir tank ayaklarının üstünde durur ve ayakları
+         zarfın içindedir. */
+      const ayakPay = sz * 0.2;
+      const r = sx / 2;
+      /* Gövde boyu zarftan ARTAN kadardır. Eskiden `sz - sx` yazıyordu ve
+         alt sınır konmadigi icin kap zarfi 0,36 m asiyordu; capi yuksekligine
+         yakin bir tank zaten kuresel olur, silindirik govdesi kalmaz. */
+      const boy = Math.max(0, sz - ayakPay - sx);
+      const kapZ = -sz / 2 + ayakPay + sx / 2 + boy / 2;
+      if (boy > 0.05) {
+        const t = ekle(new THREE.Mesh(cylGeoZ(r, r, boy, 30), mat));
+        t.position.z = kapZ;
+        t.material = mat.clone(); t.material.map = dok.zar; t.material.map.repeat.set(6, 3);
+      }
       for (const s of [-1, 1]) {
         const k = ekle(new THREE.Mesh(new THREE.SphereGeometry(r, 26, 16, 0, TAU, 0, Math.PI / 2), mat));
         k.rotation.x = s > 0 ? 0 : Math.PI;
-        k.position.z = s * boy / 2;
+        k.position.z = kapZ + s * boy / 2;
       }
       for (let i = 0; i < 4; i++) {
         const a = i * TAU / 4;
-        const bac = ekle(new THREE.Mesh(cylGeoZ(r * 0.06, r * 0.06, sz * 0.5, 10), M.koyu));
-        bac.position.set(Math.cos(a) * r * 0.82, Math.sin(a) * r * 0.82, -sz * 0.6);
+        /* Ayak, pedin üstünden kabın alt kapağına kadar - aşağı doğru DEĞİL. */
+        const bac = ekle(new THREE.Mesh(cylGeoZ(r * 0.06, r * 0.06, ayakPay, 10), M.koyu));
+        bac.position.set(Math.cos(a) * r * 0.82, Math.sin(a) * r * 0.82, -sz / 2 + ayakPay / 2);
+        /* Pabuc PEDIN USTUNDE durur. `-sz * 0.85` yaziyordu, yani zarfin
+           1,05 m altinda: olculen cizim z -1,06'ya iniyordu. */
         const pb = D.ayakPabucu(THREE, M.kit, r * 0.2, { regolitMat: M.regolit });
-        pb.position.set(Math.cos(a) * r * 0.82, Math.sin(a) * r * 0.82, -sz * 0.85);
+        pb.position.set(Math.cos(a) * r * 0.82, Math.sin(a) * r * 0.82, -sz / 2);
         g.add(pb);
       }
       /* Dolum-boşaltım paneli ve akışkan künyesi: hangi tank ne taşıyor,
@@ -573,7 +620,7 @@ function govde(THREE, p, M, dok) {
       kp2.position.set(0, -r * 1.02, sz * 0.05);
       kp2.rotation.x = Math.PI / 2;
       g.add(kp2);
-      const akis = p.id.includes('o2') ? ['O₂', 'KRİYOJENİK'] : ['CH₄', 'YANICI'];
+      const akis = p.id.includes('o2') ? ['O2', 'CRYOGENIC'] : ['CH4', 'FLAMMABLE'];
       const lv2 = D.levha(THREE, M.kit, akis,
         { w: r * 0.85, h: r * 0.5, seritRenk: p.id.includes('o2') ? '#5aa86a' : '#c95a5a' });
       lv2.position.set(0, -r * 1.02, sz * 0.3);
@@ -625,7 +672,7 @@ function govde(THREE, p, M, dok) {
       /* Dönüş hattı ve künye: akışkan amonyak, dokunma sınırı yazılı. */
       const t2 = ekle(new THREE.Mesh(cylGeoX(0.045, 0.045, sx * 1.02, 10), M.koyu));
       t2.position.set(0, 0.09, -sz / 2);
-      const lv3 = D.levha(THREE, M.kit, ['NH₃ SOĞUTUCU', 'dokunma'],
+      const lv3 = D.levha(THREE, M.kit, ['NH3 COOLANT', 'do not touch'],
         { w: 0.58, h: 0.28, seritRenk: '#d68a4a' });
       lv3.position.set(sx * 0.32, 0.12, -sz * 0.3);
       lv3.rotation.x = Math.PI / 2;
@@ -670,7 +717,7 @@ function govde(THREE, p, M, dok) {
         const a = i * TAU / 4;
         /* Levhadaki sayı da katalogdan gelir: bir uyarı levhasının, uyardığı
            şeyin kendi beyanından farklı bir rakam yazması mümkün olmamalı. */
-        const ik = D.levha(THREE, M.kit, ['RADYASYON', `${p.yasakYaricapM ?? 14} m yaklaşma sınırı`],
+        const ik = D.levha(THREE, M.kit, ['RADIATION', `${p.yasakYaricapM ?? 14} m approach limit`],
           { w: r * 0.8, h: r * 0.42, seritRenk: '#d6a24a', zemin: '#e0cf9a' });
         ik.position.set(Math.cos(a) * r * 0.64, Math.sin(a) * r * 0.64, sz * 0.05);
         /* The comment above is the specification: readable from whichever side
@@ -881,6 +928,94 @@ function govde(THREE, p, M, dok) {
  * `nodes` doğrudan `core/exploded-view.mjs`'e verilebilir — patlatma
  * için ek bir adım gerekmez.
  */
+/* Üssün ÇEVRESİ: pedin bittiği yerde dünya bitmez.
+ *
+ * Sahne arkaplanı tek düz bir renkti ve zemin 54x44 m'lik pedden ibaretti,
+ * yani üs bir gezegen yüzeyinde değil bir masanın üstünde duruyordu. Buradaki
+ * her şey ORTAMA bağlıdır: Ay'da grade edilecek atmosfer ve içinde
+ * kaybolunacak pus yoktur, o yüzden Ay'da ufuk keskin ve gök siyahtır.
+ *
+ * Kayalar pedin DIŞINA dağılır - üssün içine kaya düşmesi, üstünde durduğu
+ * hazırlanmış alanın ne olduğunu anlamamak demektir.
+ */
+export function buildCevre(THREE, { env = 'mars', ped = [54, 44], yaricap = 170, tohum = 7 } = {}) {
+  const g = new THREE.Group();
+  g.userData.notes = { regime: `${env} çevresi`,
+    why: 'Pedin dışı da yüzeydir; üssün ölçeği ancak çevresine göre okunur.' };
+  const mars = env === 'mars';
+  /* Deterministik dağılım: aynı sahne her açılışta aynı görünmeli. */
+  let t = tohum;
+  const rnd = () => (t = (t * 1664525 + 1013904223) % 4294967296) / 4294967296;
+
+  const zeminRenk = mars ? 0x8a5638 : 0x5f5f63;
+  const zemin = new THREE.Mesh(
+    new THREE.CircleGeometry(yaricap, 96),
+    new THREE.MeshStandardMaterial({ color: zeminRenk, roughness: 0.98, metalness: 0.02 }));
+  /* Hafif kabarıklık: kusursuz düzlük bir yüzeye değil, bir zemine benzer. */
+  const pz = zemin.geometry.attributes.position;
+  for (let i = 0; i < pz.count; i++) {
+    const x = pz.getX(i), y = pz.getY(i);
+    const d = Math.hypot(x, y);
+    const h = d < 30 ? 0 : Math.sin(x * 0.07) * Math.cos(y * 0.061) * Math.min(1, (d - 30) / 40) * 1.5;
+    pz.setZ(i, h - 0.02);
+  }
+  pz.needsUpdate = true;
+  zemin.geometry.computeVertexNormals();
+  zemin.receiveShadow = true;
+  g.add(zemin);
+
+  /* Kaya dağılımı. Pedin köşegeninin dışında başlar. */
+  const disR = Math.hypot(ped[0], ped[1]) / 2 + 6;
+  const kayaMat = new THREE.MeshStandardMaterial({ color: mars ? 0x6d4530 : 0x4c4c50,
+    roughness: 0.95, metalness: 0.03 });
+  const kayaGeo = new THREE.IcosahedronGeometry(1, 0);
+  const n = 260;
+  const kaya = new THREE.InstancedMesh(kayaGeo, kayaMat, n);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(),
+    kon = new THREE.Vector3(), olc = new THREE.Vector3(), e = new THREE.Euler();
+  for (let i = 0; i < n; i++) {
+    const a = rnd() * Math.PI * 2;
+    const r = disR + Math.pow(rnd(), 0.65) * (yaricap - disR - 8);
+    const s2 = 0.25 + Math.pow(rnd(), 2.6) * 2.6;
+    kon.set(Math.cos(a) * r, Math.sin(a) * r, s2 * 0.28);
+    e.set(rnd() * 3.14, rnd() * 3.14, rnd() * 3.14);
+    q.setFromEuler(e);
+    olc.set(s2 * (0.8 + rnd() * 0.6), s2 * (0.8 + rnd() * 0.6), s2 * 0.62);
+    kaya.setMatrixAt(i, m4.compose(kon, q, olc));
+  }
+  kaya.castShadow = true; kaya.receiveShadow = true;
+  g.add(kaya);
+
+  /* Gök: Mars'ta dereceli, Ay'da siyah. Doku 2 piksel geniştir - gradyan
+     dikeydir ve yatayda bilgi yoktur. */
+  const c = document.createElement('canvas');
+  c.width = 2; c.height = 256;
+  const ctx = c.getContext('2d');
+  const gr = ctx.createLinearGradient(0, 0, 0, 256);
+  if (mars) {
+    gr.addColorStop(0, '#20160f');    // zenit
+    gr.addColorStop(0.55, '#6b452c');
+    gr.addColorStop(0.82, '#b4794a');  // ufuk pusu
+    gr.addColorStop(1, '#c98f5c');
+  } else {
+    gr.addColorStop(0, '#01010a');
+    gr.addColorStop(0.9, '#05060c');
+    gr.addColorStop(1, '#0b0d14');
+  }
+  ctx.fillStyle = gr; ctx.fillRect(0, 0, 2, 256);
+  const dokuGok = new THREE.CanvasTexture(c);
+  dokuGok.colorSpace = THREE.SRGBColorSpace;
+  const gok = new THREE.Mesh(
+    new THREE.SphereGeometry(yaricap * 2.4, 32, 24),
+    new THREE.MeshBasicMaterial({ map: dokuGok, side: THREE.BackSide, depthWrite: false, fog: false }));
+  /* Küre +Y kutuplu kurulur; gövde çerçevesi +Z yukarıdır. Tek eksende
+     çeyrek tur, sıra tuzağı yok. */
+  gok.rotation.x = Math.PI / 2;
+  g.add(gok);
+
+  return { group: g, zemin, kaya, gok, ufukRengi: mars ? 0xb4794a : 0x05060c };
+}
+
 export function buildHabitat(THREE, { env = 'mars', tema = {} } = {}) {
   /* The ground is painted with the albedo the lighting reflects off, so the
      two cannot disagree: 0.13 and nearly neutral on the Moon, 0.25 and
@@ -910,13 +1045,30 @@ export function buildHabitat(THREE, { env = 'mars', tema = {} } = {}) {
 
   /* Çoklu bileşenler (qty) katalogdaki tek gövdenin kopyalarıdır; temel
      plakaları ve panel sıraları tek tek beyan edilmez, dizilir. */
-  const dizi = { 'temel-hab': { n: 6, adim: [0, 0, 0], yay: 'halka', r: 3.2 },
-    'panel-tarlasi': { n: 4, adim: [6.2, 0, 0] }, 'radyator-dizisi': { n: 2, adim: [0, 2.6, 0] } };
-  for (const [id, d] of Object.entries(dizi)) {
+  /* Desen artık KATALOGDA. Burada yazılıyken `size` tek bir birimi
+     anlatıyordu, çizim ise dizinin tamamını: panel tarlası 5,0 m beyan edip
+     23,6 m'ye yayılıyordu ve `size` okuyan hiçbir kapı bunu göremiyordu. */
+  for (const q of PARTS) {
+    const d = q.dizilim;
+    if (!d) continue;
+    const id = q.id;
     const temel = nodes.get(id);
     if (!temel) continue;
+    /* Dizinin zarfı beyan edilen `size` olduğu için, tek birimin gövdesi
+       zarfın BAŞINDAN başlar: yoksa dizi beyan edilen kutunun dışına taşar. */
+    const bas = d.yay === 'halka' ? [0, 0, 0]
+      : [-(d.adim[0] * (d.n - 1)) / 2, -(d.adim[1] * (d.n - 1)) / 2, -(d.adim[2] * (d.n - 1)) / 2];
+    temel.position.set(q.pos[0] + bas[0], q.pos[1] + bas[1], q.pos[2] + bas[2]);
+    /* Kopya, HIC KOPYA EKLENMEMIS hâlden alınır. Döngü `temel.clone(true)`
+       diyordu ve her turda temel'e bir kopya eklendiği için sonraki klonlar
+       öncekileri de içine alıyordu: kopyalar iç içe giriyor ve ötelemeler
+       üst üste biniyordu. Ölçülen sonuç - panel tarlası beyan edilen
+       x [-18,8, -13,8] yerine x [18,4, 23,4]'te, yani sahanın tam öbür
+       ucunda ve reaktörün üstünde, 112 alt-mesh'e şişmiş hâlde. Aynı döngü
+       temel plakalarını 6,4 m, radyatör dizisini 3,1 m kaydırıyordu. */
+    const taban = temel.clone(true);
     for (let i = 1; i < d.n; i++) {
-      const k = temel.clone(true);
+      const k = taban.clone(true);
       if (d.yay === 'halka') {
         const a = i * TAU / d.n;
         k.position.set(temel.position.x + Math.cos(a) * d.r, temel.position.y + Math.sin(a) * d.r, temel.position.z);
