@@ -108,6 +108,9 @@ jobs:
       - name: Çizilen geometri beyan edilen kutuda (yön ve hizalama)
         run: node scripts/validate-geometry.mjs
 
+      - name: Astronot blokları (giysi kataloğu ve EVA bütçesi)
+        run: node scripts/validate-astronaut.mjs
+
       - name: motion-manifest şemaları
         shell: bash
         run: |

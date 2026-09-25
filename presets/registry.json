@@ -1,9 +1,9 @@
 {
   "$comment": "scripts/build-registry.mjs üretir — ELLE DÜZENLEMEYİN. CI, taramayla bu dosyanın eşleştiğini doğrular.",
   "counts": {
-    "presets": 73,
-    "presetsWithIndex": 65,
-    "animatedPresets": 58,
+    "presets": 74,
+    "presetsWithIndex": 66,
+    "animatedPresets": 59,
     "skills": 18,
     "demoSlides": 88,
     "demoCards": 75,
@@ -132,6 +132,13 @@
     {
       "name": "aircraft_blocks",
       "title": "Uçak Blokları — aircraft_blocks",
+      "hasIndex": true,
+      "animated": true,
+      "hasMotionManifest": true
+    },
+    {
+      "name": "astronaut_blocks",
+      "title": "Astronot Blokları — astronaut_blocks",
       "hasIndex": true,
       "animated": true,
       "hasMotionManifest": true

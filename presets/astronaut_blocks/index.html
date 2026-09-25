@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Astronot Blokları — astronaut_blocks</title>
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAAAACw=">
+  <script type="importmap">{ "imports": { "three": "../moon_advanced/vendor/three.module.min.js" } }</script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; background: #05070b; overflow: hidden;
+      color: #dfe3ea; font: 13px/1.5 "Segoe UI", system-ui, sans-serif; }
+    aside { position: absolute; top: 0; bottom: 0; width: 292px; overflow-y: auto; background: #090b11;
+      border-right: 1px solid #1b202a; padding: 16px 14px 28px; }
+    aside.sag { left: auto; right: 0; border-right: 0; border-left: 1px solid #1b202a; }
+    h1 { margin: 0 0 4px; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: #c9a35c; }
+    .alt { margin: 0 0 16px; font-size: 12px; color: #767d8c; }
+    h2 { margin: 18px 0 8px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #8a90a0; }
+    #sahne { position: absolute; left: 292px; right: 292px; top: 0; bottom: 0; }
+    .arac { position: absolute; left: 306px; top: 12px; display: flex; gap: 8px; flex-wrap: wrap; z-index: 3; }
+    button, select { background: rgba(16,19,27,.9); color: #dfe3ea; border: 1px solid #2b303d;
+      border-radius: 8px; padding: 8px 11px; font-size: 12px; min-height: 44px; cursor: pointer; }
+    button.aktif { border-color: #c9a35c; background: rgba(201,163,92,.14); color: #f0e2c4; }
+    .adim { padding: 8px; border: 1px solid transparent; border-radius: 7px; cursor: pointer; min-height: 44px; }
+    .adim.secili { background: rgba(201,163,92,.10); border-color: #c9a35c; }
+    .adim b { display: block; font-size: 12.5px; color: #eef1f6; }
+    .adim span { display: block; font-size: 12px; color: #98a0b0; }
+    .satir { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0;
+      border-bottom: 1px solid #161a23; font-size: 12px; }
+    .satir b { color: #eef1f6; font-weight: 600; }
+    .e { display: block; margin: 9px 0 2px; font-size: 10.5px; letter-spacing: .09em;
+      text-transform: uppercase; color: #6f7686; }
+    #altyazi { position: absolute; left: 306px; right: 306px; bottom: 12px; z-index: 3;
+      padding: 9px 12px; font-size: 12px; line-height: 1.5; color: #b9bfcc;
+      background: rgba(10,12,18,.76); border: 1px solid #232837; border-radius: 8px; }
+  </style>
+  <link rel="stylesheet" href="../core/mobile.css">
+</head>
+<body>
+  <aside>
+    <h1>Astronot Blokları</h1>
+    <p class="alt">astronaut_blocks — bir yüzey giysisinin bileşenleri, giyinme sırası ve sekiz saatlik EVA bütçesi</p>
+    <h2>Giyinme sırası</h2>
+    <div id="adimlar"></div>
+    <h2>Duruş</h2>
+    <div id="pozlar"></div>
+  </aside>
+
+  <div id="sahne"></div>
+  <div class="arac">
+    <button id="patlat">Patlat</button>
+    <button id="hepsi" class="aktif">Tüm bileşenler</button>
+  </div>
+  <div id="altyazi"></div>
+
+  <aside class="sag">
+    <h2>Bileşen</h2>
+    <div id="kunye">Bir bileşene tıklayın ya da soldan bir adım seçin.</div>
+    <h2>Ölçek</h2>
+    <div id="olcek"></div>
+    <h2>Sekiz saatlik EVA</h2>
+    <div id="eva"></div>
+  </aside>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { buildAstronaut, POZLAR } from './astro-build.mjs';
+    import { PARTS, STEPS, SUBSYSTEMS, INTERFACES, partById, partMass, mountChain,
+             describe, evaBudget, powerBudget, BOY_M, OMUZ_M, BASINC_KPA } from './astro-parts.mjs';
+    import { sceneLighting } from '../core/scene-lighting.mjs';
+    import { createOrbitDrag, orbitPosition } from '../core/orbit-drag.mjs';
+
+    const el = (s) => document.querySelector(s);
+    const host = el('#sahne');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0d14);
+    const camera = new THREE.PerspectiveCamera(38, 1, 0.02, 60);
+    /* Blok sözleşmesi +Z yukarı; kamera da öyle olmak zorunda, yoksa figür
+       yan yatar. Bu, aynı depoda bir kez pahalıya mal oldu. */
+    camera.up.set(0, 0, 1);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+    renderer.shadowMap.enabled = true;
+    host.appendChild(renderer.domElement);
+
+    /* Ay yüzeyi: gök siyah, dolgu yalnız regolit sıçraması. */
+    const rig = sceneLighting(THREE, scene, 'vacuum', { anahtarYogunluk: 3.0, golgeAlan: 3, golgeUzak: 12 });
+    rig.gunes.position.set(3, -4, 5);
+
+    const zemin = new THREE.Mesh(new THREE.CircleGeometry(9, 48),
+      new THREE.MeshStandardMaterial({ color: 0x5f5f63, roughness: 0.98 }));
+    zemin.receiveShadow = true;
+    scene.add(zemin);
+
+    let poz = 'dik', kurulum = null, patla = 0, secili = null, adim = 0;
+    const kok = new THREE.Group();
+    scene.add(kok);
+
+    function kur() {
+      if (kurulum) { kok.remove(kurulum.root); }
+      kurulum = buildAstronaut(THREE, { poz });
+      kok.add(kurulum.root);
+      uygula();
+    }
+
+    /* Patlatma yönü giyinme sırasının TERSİDİR: en son takılan en önce
+       çıkar, çünkü patlatma sökme sırasının resmidir. */
+    function uygula() {
+      for (const p of PARTS) {
+        const n = kurulum.nodes.get(p.id);
+        if (!n) continue;
+        const gorunur = adim === 0 || p.step <= adim;
+        n.visible = gorunur;
+        const d = (STEPS.length - p.step + 1) * 0.10 * patla;
+        n.position.x = (n.userData.temelX ??= n.position.x) + d;
+      }
+      panel(); altyazi();
+    }
+
+    function altyazi() {
+      const d = describe();
+      const s = STEPS.find((x) => x.no === adim);
+      el('#altyazi').innerHTML = adim === 0
+        ? `<b>Giysi tamam</b> · ${d.parca} bileşen, ${d.adet} adet · ${d.kutleKg} kg ·
+           boy ${d.boyM} m, omuz ${d.omuzM} m · ${d.basincKPa} kPa · ${d.gucW} W ·
+           duruş: ${POZLAR[poz].ad}`
+        : `<b>Adım ${s.no}/${STEPS.length} — ${s.ad}</b> · ${s.aciklama}`;
+    }
+
+    function panel() {
+      const p = secili ? partById(secili) : null;
+      if (!p) { el('#kunye').textContent = 'Bir bileşene tıklayın ya da soldan bir adım seçin.'; return; }
+      const zincir = mountChain(p.id).map((x) => x.ad).reverse().join(' → ');
+      const t = p.tech || {};
+      el('#kunye').innerHTML =
+        `<b>${p.ad}</b>${p.qty ? ` <span style="color:#8a90a0">× ${p.qty}</span>` : ''}`
+        + `<span class="e">Alt sistem</span>${SUBSYSTEMS[p.sistem].ad}`
+        + `<span class="e">Neden var</span>${p.why}`
+        + `<span class="e">Arayüz</span>${INTERFACES[p.arayuz]}`
+        + `<span class="e">Kütle</span>${p.qty ? `${p.qty} × ${p.massKg} = ${partMass(p)} kg` : `${p.massKg} kg`}`
+        + `<span class="e">Parça no</span>${t.no ?? '—'}`
+        + `<span class="e">Malzeme</span>${t.malzeme ?? '—'}`
+        + (t.guc_W ? `<span class="e">Güç</span>${t.guc_W} W` : '')
+        + `<span class="e">Ayrıntı</span>${t.detay ?? '—'}`
+        + `<span class="e">Nitelik</span>${t.kalite ?? '—'}`
+        + `<span class="e">Bağlantı zinciri</span>${zincir}`;
+    }
+
+    /* ---------- sol panel ---------- */
+    const ad = el('#adimlar');
+    STEPS.forEach((s) => {
+      const d = document.createElement('div');
+      d.className = 'adim';
+      d.innerHTML = `<b>${s.no} · ${s.ad}</b><span>${s.aciklama}</span>`;
+      d.addEventListener('click', () => {
+        adim = adim === s.no ? 0 : s.no;
+        [...ad.children].forEach((c, i) => c.classList.toggle('secili', adim === STEPS[i].no));
+        el('#hepsi').classList.toggle('aktif', adim === 0);
+        uygula();
+      });
+      ad.appendChild(d);
+    });
+    const pz = el('#pozlar');
+    for (const [k, v] of Object.entries(POZLAR)) {
+      const b = document.createElement('button');
+      b.textContent = v.ad;
+      b.classList.toggle('aktif', k === poz);
+      b.addEventListener('click', () => {
+        poz = k;
+        [...pz.children].forEach((c) => c.classList.remove('aktif'));
+        b.classList.add('aktif');
+        kur();
+      });
+      pz.appendChild(b);
+    }
+
+    /* ---------- sağ panel: ölçek ve bütçe ---------- */
+    const sat = (a, b) => `<div class="satir"><span>${a}</span><b>${b}</b></div>`;
+    el('#olcek').innerHTML =
+      sat('Giysili boy', `${BOY_M} m`) + sat('Omuz genişliği', `${OMUZ_M} m`)
+      + sat('Çalışma basıncı', `${BASINC_KPA} kPa`)
+      + sat('Giysi kütlesi', `${describe().kutleKg} kg`)
+      + `<p class="alt" style="margin-top:8px">Habitat kapısı, el kilidi ve tutamak aralıkları bu iki sayıya göre ölçülür — çıplak insana göre değil.</p>`;
+    {
+      const e = evaBudget(), g = powerBudget();
+      el('#eva').innerHTML =
+        sat('Metabolik hız', `${e.metabolikW} W`)
+        + sat('Elektronik', `${g.toplamW} W`)
+        + sat('Atılacak ısı', `${Math.round(e.isiW)} W`)
+        + sat('O₂ tüketimi', `${e.o2Kg.toFixed(2)} kg`)
+        + sat('CO₂ üretimi', `${e.co2Kg.toFixed(2)} kg`)
+        + sat('Yüceltici suyu', `${e.suKg.toFixed(2)} kg`)
+        + `<p class="alt" style="margin-top:8px">Su miktarı uydurulmaz: atılacak ısıdan ve suyun süblimleşme gizli ısısından (${e.sublimMJkg} MJ/kg) çıkar.</p>`;
+    }
+
+    el('#hepsi').addEventListener('click', () => {
+      adim = 0;
+      [...ad.children].forEach((c) => c.classList.remove('secili'));
+      el('#hepsi').classList.add('aktif');
+      uygula();
+    });
+    el('#patlat').addEventListener('click', () => {
+      patla = patla > 0 ? 0 : 1;
+      el('#patlat').classList.toggle('aktif', patla > 0);
+      uygula();
+    });
+
+    /* ---------- kamera ---------- */
+    const surukleyici = createOrbitDrag(host, {
+      az: 0.9, el: 0.25, dist: 4.6, minDist: 1.4, maxDist: 12,
+      onChange: () => kameraKur(),
+      onTap: (ev) => sec(ev),
+    });
+    const kam = surukleyici.state;
+    function kameraKur() {
+      const [x, y, z] = orbitPosition(kam, { yukari: 'z' });
+      camera.position.set(x, y, z + 0.95);
+      camera.lookAt(0, 0, 0.95);
+    }
+
+    const ray = new THREE.Raycaster(), fare = new THREE.Vector2();
+    function sec(ev) {
+      const r = renderer.domElement.getBoundingClientRect();
+      fare.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
+      fare.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
+      ray.setFromCamera(fare, camera);
+      const v = ray.intersectObject(kok, true);
+      secili = null;
+      for (const h of v) {
+        let n = h.object;
+        while (n && !n.userData.partId) n = n.parent;
+        if (n) { secili = n.userData.partId; break; }
+      }
+      panel();
+    }
+
+    function boyutla() {
+      const w = host.clientWidth, h = host.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / Math.max(1, h);
+      camera.updateProjectionMatrix();
+    }
+    addEventListener('resize', boyutla);
+
+    const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let raf = 0;
+    function kare() {
+      surukleyici.update();
+      kameraKur();
+      renderer.render(scene, camera);
+      raf = requestAnimationFrame(kare);
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
+      else if (!document.hidden && !raf) raf = requestAnimationFrame(kare);
+    });
+
+    kur(); boyutla(); kameraKur();
+    if (azaltilmis) renderer.render(scene, camera); else raf = requestAnimationFrame(kare);
+
+    window.astronautBlocks = {
+      state: () => ({ poz, adim, patla, secili, ozet: describe(),
+        kamera: { az: kam.az, el: kam.el, dist: kam.dist } }),
+      setPoz: (k) => { if (POZLAR[k]) { poz = k; kur(); } },
+      setAdim: (n) => { adim = n; uygula(); },
+      pozlar: () => Object.keys(POZLAR),
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "preset": "astronaut_blocks",
+  "motions": [
+    {
+      "id": "poz-secimi",
+      "type": "state-transition",
+      "truthLevel": "illustrative",
+      "purpose": "Bir astronotun duruşu bir İŞ anlatır. Beş duruş - Standing, Crouched at a task, Reaching up to a panel, Carrying a load, Walking - kalça, diz, omuz ve dirsek açılarını DERECE cinsinden beyan eder ve geometri o açılardan kurulur; aradaki fark elle taşınmış vertexler değil, okunabilir sayılardır.",
+      "loop": false,
+      "durationMs": 0,
+      "pauseControl": "Hareket yoktur: her duruş tek karede durur, seçimle değişir.",
+      "reducedMotion": "Sahnede süreye bağlı hiçbir hareket yoktur; her duruş durağan bir karedir. prefers-reduced-motion altında davranış aynıdır.",
+      "exportState": "Duruş soldaki düğmelerden seçilir; window.astronautBlocks.setPoz(ad) ve setAdim(n) ile de sürülür. Patlatma ve giyinme adımı ekrandan seçilir.",
+      "accessibility": "Her duruş ve her giyinme adımı 44 px'lik düğmelerdir; bileşen künyesi metin olarak sağ panelde durur, yani sahneyi hiç görmeden de okunabilir.",
+      "limitations": "Duruş açıları temsilîdir: gerçek bir basınçlı giysinin mafsal açıklığı burada modellenmez ve konvolüt mafsalın direnci hesaplanmaz. Ayaklar her pozda ÖLÇÜLEREK yere oturtulur (sabit ofset çömelmiş figürü havada bırakır); ölçülen taban yüksekliği beş duruşun hepsinde 0,000 m. Çizilen boy 1,89 m, beyan edilen 1,95 m - %3,2 sapma ve kapı bunu 5% eşiğiyle sınar.",
+      "notes": "Katalog: presets/astronaut_blocks/astro-parts.mjs — 13 bileşen, 17 adet, 5 alt sistem, 6 giyinme adımı; her satırda neye bağlandığı, arayüz türü, adım, kütle, güç ve NEDEN VAR. Giyinme sırası fiziksel bir kısıttır: sırt paketi kollardan ÖNCE bağlanır çünkü bağlandıktan sonra mürettebat kendi başına eğilemez, ve kapı bunu sınar. EVA bütçesi TEK bir metabolik hızdan türetilir: atılacak ısı = metabolik + elektronik (350 + 148 = 498 W), oksijen 0,67 kg, CO2 onun 1,2 katı, yüceltici suyu ise ısıdan ve suyun süblimleşme gizli ısısından (2,83 MJ/kg) çıkar — 5,07 kg. İlk yazışta 0,45 kg/kWh yazılmıştı ve su ihtiyacı üçte birine iniyordu; hesap, paketin kendi beyanıyla çelişince yakalandı. ÖLÇEK DÜRÜSTLÜĞÜ beyan edilir ve sınanır: giysili boy 1,95 m, omuz 0,84 m (çizilen genişlik — tasarım niyeti 0,78 idi, fark kolların kalınlığıydı ve bir kapı açıklığı niyete göre değil geçecek şeye göre ölçülür). Habitatın geçiş açıklıkları bu sayıya göre denetlenir: en dar tünel 1,60 m, pay 0,76 m; hava kilidi iki giysili mürettebatı alır. Aynı figür habitat_blocks sahnesinde iki mürettebat olarak durur — biri kriyojenik tankın sehpa birleşiminde çömelmiş, öteki atölye duvarında uzanıyor. Doğrulama: scripts/validate-astronaut.mjs (26 denetim) ve scripts/validate-geometry.mjs."
+    }
+  ]
+}

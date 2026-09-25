@@ -38,8 +38,9 @@ const GROUPS = [
       'reentry_corridor', 'stage_separation'] },
   { id: 'vehicles', title: 'Vehicles and assemblies',
     blurb: 'Hardware: how it is built, what it mounts to, and what it is made of.',
-    members: ['aircraft_blocks', 'comms_antenna', 'comms_link_budget', 'craft_blocks', 'exploded_view',
-      'habitat_blocks', 'mechanism_lab', 'physical_rigs', 'satellite_integration', 'site_plan'] },
+    members: ['aircraft_blocks', 'astronaut_blocks', 'comms_antenna', 'comms_link_budget', 'craft_blocks',
+      'exploded_view', 'habitat_blocks', 'mechanism_lab', 'physical_rigs', 'satellite_integration',
+      'site_plan'] },
   { id: 'worlds', title: 'Worlds and environments',
     blurb: 'Surfaces, atmospheres, skies and the light that falls on them.',
     members: ['aurora', 'cinematic_space', 'cosmos_advanced', 'earth_advanced', 'jwst_explorer',
@@ -94,6 +95,8 @@ const ICONS = {
   hedef: '<circle cx="8" cy="8" r="5.6"/><circle cx="8" cy="8" r="2"/><path d="M8 0.8v2.6M8 12.6v2.6M0.8 8h2.6M12.6 8h2.6"/>',
   ayrilma: '<rect x="5" y="1.8" width="6" height="5" rx="1"/><rect x="5" y="9.2" width="6" height="5" rx="1"/><path d="M2.5 8h11"/>',
   kutu: '<path d="M8 1.8l6 3.1v6.2l-6 3.1-6-3.1V4.9z"/><path d="M2 4.9l6 3.1 6-3.1M8 8v6.2"/>',
+  astronot: '<circle cx="8" cy="3.4" r="2.2"/><path d="M5.4 6.2h5.2a1 1 0 0 1 1 1v3.2a1 1 0 0 1-1 1H5.4a1 1 0 0 1-1-1V7.2a1 1 0 0 1 1-1z"/>'
+    + '<path d="M4.4 7.6L2.4 9M11.6 7.6l2 1.4M6.4 11.4v3M9.6 11.4v3"/>',
 };
 
 /* ── tür ──────────────────────────────────────────────────────────────
@@ -121,6 +124,7 @@ const SCENE = {
   aero_shock_waves: ['olcum', 'sok'],
   aero_vortex_street: ['olcum', 'girdap'],
   aircraft_blocks: ['arac', 'kanat'],
+  astronaut_blocks: ['olcum', 'astronot'],
   attitude_gnc: ['olcum', 'hedef'],
   aurora: ['gorsel', 'aurora'],
   cinematic_space: ['gorsel', 'yildiz'],
@@ -200,6 +204,7 @@ const TITLE_EN = {
   aero_airfoil_flow: 'Flow Around an Aerofoil',
   aero_shock_waves: 'Shock and Expansion Waves',
   aircraft_blocks: 'Aircraft Blocks',
+  astronaut_blocks: 'Astronaut Blocks - suit components and the EVA budget',
   attitude_gnc: 'Attitude and GNC Laboratory',
   aurora: 'Aurora - emission lines, altitude, activity',
   comms_antenna: 'Antenna and Ground Station',
