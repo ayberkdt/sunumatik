@@ -492,3 +492,43 @@ düzelir, ne el gövdeden çıkar. 9 tek başına en büyük iş ve 10'u da o ç
 * `craft-blocks` yarım başlığı hâlâ üst/alt bölüyor (birinci turdan kalan,
   kendi sayfasında doğrulanmadan değişmez).
 * Habitat sayfasında "gündüz payı %0" görünüyor; astronot işinin dışında.
+
+---
+
+## 9 · Uygulama sonrası: ölçümün plandan ayrıldığı yer
+
+Plan bittiğinde geriye tek madde kaldı (§6 deri/skinning) ve onu yapmadan önce
+gerekçesini ölçtüm. Ölçüm planın teşhisini DOĞRULAMADI.
+
+**§6'nın öncülü:** "şikâyet 1, 2 ve 3'ün ortak kökü parçaların katı olması."
+
+**Ölçülen:** üç şikâyetin üçü de başka yerden geliyormuş ve üçü de düzeldi.
+
+| şikâyet | planın teşhisi | ölçülen sebep | ne yapıldı |
+|---|---|---|---|
+| kask/boyun garip | gövde yok | boyun sütunu ve ek yeri yoktu | `DIKEY.boyun`, bölüm 16 |
+| omuzlar sıkışık | mafsal içeride | mafsal gövdesi mafsalın 114 mm üstüne taşıyordu | `basik: 0.62`, bölüm 10 |
+| "iki silindir birleşmiş" | katı parçalar | **körük 22/m, kapitone 19/m — aynı frekans** | `YUZEY_RITMI`, bölüm 21 |
+| mekanik yürüyüş | — | kalça tam erişimde, çözüm iki dallıydı | `BASMA_PAYI`, bölüm 20 |
+
+**Derinin çözeceğini sandığım şey de ölçümle düştü.** Katı uyluk ile baldırın
+iç içe geçmesini ölçtüm: dizde 0-30° hiç yok, 60°'de 7/337 köşe, 104°'de
+55/337. Görünür mü diye baktım - 55'inin hiçbiri diz gövdesinin içinde değil,
+yani görünür. Deriyi yazmaya oturmadan önce o 55 köşenin NEREDE olduğuna
+baktım: 2. halkadan 14. halkaya kadar, yani dizin 259 mm ALTINA kadar
+yayılmışlar. Bu mafsal yüzeyi kusuru değil; bacak tamamen katlanınca baldırın
+uyluğa BASMASI - gerçek bir bacakta da olan şey. Deri bunu düzeltmez, çünkü
+deri mafsalın çevresindeki yüzeyi sürekli kılar, çarpışma çözmez.
+
+Geriye derinin gerçekten çözeceği şey kalıyor: mafsalın çevresinde yüzey
+sürekliliği. Onu şu an mafsal gövdesi + tek parça konvolüt sağlıyor ve bölüm
+6, 13 kapıları ölçüp geçiyor.
+
+**Maliyeti de ayrıca ölçtüm.** `SkinnedMesh` deformasyonu gölgelendiricide
+olur, yani `geometry.attributes.position` BİND DURUŞUNU gösterir; bu deponun
+bütün kapıları köşe konumu okur. GPU derisi kapıları KÖR EDERDİ. Doğrusu CPU
+derisidir (poz başına ~2800 köşe, ölçülebilir maliyeti yok) ve yazılabilir -
+ama gerekçesi artık "planda vardı"dan ibaret.
+
+**Karar kullanıcının:** ölçüm §6'nın gerekçesini desteklemiyor, o yüzden
+uygulamadan önce soruyorum. §6 dışındaki bütün maddeler bitti.
