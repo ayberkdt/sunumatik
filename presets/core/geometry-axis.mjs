@@ -52,6 +52,84 @@ export function cylGeoZ(rPoz, rNeg, h, seg, open = false, thetaStart = 0, thetaL
   return eksenZ(new THREE.CylinderGeometry(rPoz, rNeg, h, seg, 1, open, thetaStart, thetaLength));
 }
 
+/**
+ * PAHLI KUTU — imal edilmiş hiçbir kenar keskin değildir.
+ *
+ * Sayıldı: astronot figürünün 481 mesh'inin 232'si (%48) çıplak
+ * `BoxGeometry`. Gerçekte işlenmiş ya da kalıplanmış her kenarda 0,3-2 mm'lik
+ * bir KIRIK vardır ve bir kenarı çizen parlak çizgi o kırıktan gelir. Kırığı
+ * olmayan bir kutu, üstüne hangi ışığı koyarsanız koyun "çizilmiş" görünür;
+ * figürün bilgisayar işi durmasının en büyük tek sebebi buydu.
+ *
+ * 24 köşe: her köşede, komşu üç yüzün her biri için bir nokta. Yüzler
+ * 6 dörtgen + 12 kenar dörtgeni + 8 köşe üçgeni. Sarım yönü ÖLÇÜLÜR
+ * (validate-astronaut §14): her yüzün normali merkezden dışa bakmak zorunda,
+ * yoksa kutu kendi gölgesinde kalır - bu depoda bir kez pahalıya mal olmuş
+ * bir hatadır.
+ *
+ * `pah` mutlak metre cinsindendir ve en kısa kenarın dörtte biriyle
+ * sınırlanır: 2 mm'lik bir düğmeye 4 mm pah, pah değil koni olurdu.
+ */
+export function pahliKutuGeo(en, boy, der, pah = 0.004) {
+  const a = en / 2, b = boy / 2, c = der / 2;
+  const p = Math.min(pah, Math.min(a, Math.min(b, c)) * 0.5);
+  const poz = [], idx = [], uv = [];
+  /* kose[sx][sy][sz] = [iX, iY, iZ] — üç yüz noktasının indeksi. */
+  const kose = {};
+  /* UV METRE cinsindendir (bkz. astro-body/supur): dokunun ölçeği parçanın
+     boyutuna değil DÜNYAYA bağlı kalsın. */
+  const ek = (x, y, z) => { poz.push(x, y, z); uv.push(x + z, y + z); return poz.length / 3 - 1; };
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) {
+    kose[`${sx},${sy},${sz}`] = [
+      ek(sx * a, sy * (b - p), sz * (c - p)),
+      ek(sx * (a - p), sy * b, sz * (c - p)),
+      ek(sx * (a - p), sy * (b - p), sz * c),
+    ];
+  }
+  const K = (sx, sy, sz) => kose[`${sx},${sy},${sz}`];
+  const dortgen = (i0, i1, i2, i3) => { idx.push(i0, i1, i2, i0, i2, i3); };
+  /* 6 yüz. Sıra, normalin DIŞA bakacağı şekilde seçilir. */
+  for (const s of [-1, 1]) {
+    const d = s > 0 ? 1 : -1;
+    /* +X / -X */
+    const q = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => K(s, u, v)[0]);
+    dortgen(...(d > 0 ? q : [q[0], q[3], q[2], q[1]]));
+    /* +Y / -Y */
+    const r = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => K(v, s, u)[1]);
+    dortgen(...(d > 0 ? r : [r[0], r[3], r[2], r[1]]));
+    /* +Z / -Z */
+    const w = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => K(u, v, s)[2]);
+    dortgen(...(d > 0 ? w : [w[0], w[3], w[2], w[1]]));
+  }
+  /* 12 kenar pahı. */
+  for (const sy of [-1, 1]) for (const sz of [-1, 1]) {       // X boyunca
+    const A = K(-1, sy, sz), B = K(1, sy, sz);
+    const q = [A[1], A[2], B[2], B[1]];
+    dortgen(...(sy * sz > 0 ? q : [q[0], q[3], q[2], q[1]]));
+  }
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {       // Y boyunca
+    const A = K(sx, -1, sz), B = K(sx, 1, sz);
+    const q = [A[2], A[0], B[0], B[2]];
+    dortgen(...(sx * sz > 0 ? q : [q[0], q[3], q[2], q[1]]));
+  }
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) {       // Z boyunca
+    const A = K(sx, sy, -1), B = K(sx, sy, 1);
+    const q = [A[0], A[1], B[1], B[0]];
+    dortgen(...(sx * sy > 0 ? q : [q[0], q[3], q[2], q[1]]));
+  }
+  /* 8 köşe üçgeni. */
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) {
+    const [iX, iY, iZ] = K(sx, sy, sz);
+    if (sx * sy * sz > 0) idx.push(iX, iY, iZ); else idx.push(iX, iZ, iY);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(poz, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+
 /* KISMİ KÜRE — kutup da bir yöndür.
  *
  * `SphereGeometry(r, w, h, phiBas, phiUz, thetaBas, thetaUz)` kısmi verilince

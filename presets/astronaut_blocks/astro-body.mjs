@@ -153,7 +153,7 @@ export function cizmeGovdesi(THREE, {
   uzunluk, arkaPay, en, boy, istasyon = 30, halka = 20,
   ustP = 2.6, altP = 6.0,
 }) {
-  const poz = [], idx = [];
+  const poz = [], idx = [], uv = [];
   const satir = halka;
   const nokta = (w, h, a) => {
     const c = Math.cos(a), s = Math.sin(a);
@@ -173,6 +173,8 @@ export function cizmeGovdesi(THREE, {
       const a = (j / halka) * Math.PI * 2;
       const [y, z] = nokta(w, h, a);
       poz.push(x, y, Math.max(z, 0));
+      /* UV METRE CİNSİNDEN — bkz. `supur`. */
+      uv.push((a / (Math.PI * 2)) * Math.PI * (w + h), x);
     }
   }
   for (let i = 0; i < istasyon; i++) {
@@ -191,6 +193,7 @@ export function cizmeGovdesi(THREE, {
       sx += poz[(bas + j) * 3]; sy += poz[(bas + j) * 3 + 1]; sz += poz[(bas + j) * 3 + 2];
     }
     poz.push(sx / halka, sy / halka, sz / halka);
+    uv.push(0, sx / halka);
     for (let j = 0; j < halka; j++) {
       const j2 = (j + 1) % halka;
       if (ters) idx.push(m, bas + j2, bas + j);
@@ -199,6 +202,7 @@ export function cizmeGovdesi(THREE, {
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(poz, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   geo.setIndex(idx);
   geo.computeVertexNormals();
   return geo;
@@ -218,7 +222,7 @@ export function cizmeGovdesi(THREE, {
 export function supur(THREE, {
   boy, kesit, dilim = 16, halka = 22, kapakUst = true, kapakAlt = true,
 }) {
-  const poz = [], idx = [];
+  const poz = [], idx = [], uv = [];
   const satir = dilim + 1;
   for (let i = 0; i <= dilim; i++) {
     const t = i / dilim;
@@ -236,6 +240,11 @@ export function supur(THREE, {
       /* kesitNokta ilk bileşeni w ekseninde verir; giyside w = y (en),
          d = x (derinlik), çünkü bir gövde enine geniş önden sığdır. */
       poz.push((k.oy ?? 0) + px, (k.ox ?? 0) + py, z);
+      /* UV METRE CİNSİNDEN: u çevre boyunca yay uzunluğu, v eksen boyunca
+         metre. Böylece 2 mm'lik bir dokuma göğüste de 2 mm, eldiven
+         parmağında da 2 mm olur; mesh'e göre ölçeklenen UV aynı kumaşı
+         gövdede kaba, parmak ucunda görünmez yapar. */
+      uv.push((a / (Math.PI * 2)) * Math.PI * (w + d), t * boy);
     }
   }
   for (let i = 0; i < dilim; i++) {
@@ -258,6 +267,7 @@ export function supur(THREE, {
     const merkez = poz.length / 3;
     const k = kesit(ters ? 1 : 0) || {};
     poz.push(k.oy ?? 0, k.ox ?? 0, z);
+    uv.push(0, z);
     for (let j = 0; j < halka; j++) {
       const a = satirIdx * halka + j;
       const b = satirIdx * halka + (j + 1) % halka;
@@ -270,6 +280,7 @@ export function supur(THREE, {
 
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(poz, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   geo.setIndex(idx);
   geo.computeVertexNormals();
   return geo;
