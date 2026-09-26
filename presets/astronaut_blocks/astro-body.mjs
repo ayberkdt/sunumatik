@@ -96,6 +96,115 @@ export function kirisikKat(t, aci, frekans, genlik) {
 }
 
 /**
+ * AYAK KALIBI — bir ayağın PLANDAN biçimi.
+ *
+ * Ölçülen kusur: çizme plandan neredeyse KARE idi (0,343 x 0,266) ve
+ * bilek kesiti enine boyundan genişti, yani ayak yürüdüğü yöne değil yana
+ * bakıyordu. Bir ayak ise boyunca dört kez genişlik değiştirir: topuk
+ * yuvarlak ve orta genişlikte, çukurda (arch) DARALIR, bilyede en geniştir,
+ * sonra burna doğru kapanır. Bu dört sayı olmadan çizilen şey ayak değil
+ * yassı bir taştır.
+ *
+ * Değerler en geniş yerin (bilye) oranıdır. u = 0 topuğun arkası,
+ * u = 1 burnun ucu.
+ */
+export const AYAK_KALIP = Object.freeze([
+  [0.00, 0.46], [0.08, 0.70], [0.20, 0.80], [0.38, 0.68],
+  [0.60, 0.98], [0.72, 1.00], [0.86, 0.84], [0.95, 0.56], [1.00, 0.11],
+]);
+/** Kalıbın u noktasındaki genişlik oranı (doğrusal ara değer). */
+export function ayakEni(u) {
+  const k = AYAK_KALIP;
+  const x = Math.max(0, Math.min(1, u));
+  for (let i = 1; i < k.length; i++) {
+    if (x <= k[i][0]) {
+      const f = (x - k[i - 1][0]) / (k[i][0] - k[i - 1][0]);
+      return k[i - 1][1] + (k[i][1] - k[i - 1][1]) * f;
+    }
+  }
+  return k[k.length - 1][1];
+}
+
+/**
+ * AYAK YÜKSEKLİĞİ — çizmenin u noktasındaki üst yüzey yüksekliği (oran).
+ * Bilekte en yüksek, burunda alçak: bir çizmenin üstü yataya YATAR.
+ */
+export function ayakBoyu(u) {
+  const bilek = 0.30;                     // bilek ekseninin plandaki yeri
+  if (u <= bilek) return 0.62 + 0.38 * (u / bilek) ** 0.7;
+  const v = (u - bilek) / (1 - bilek);
+  /* Burunda 0,14'e iner: 0,26'da kalınca uç DÜZ bir yüzle bitiyordu ve o
+     yüz, çizmenin ucunda açık bir ağız gibi görünüyordu. */
+  return 1 - 0.86 * v ** 1.3;
+}
+
+/**
+ * ÇİZME GÖVDESİ — kalıp boyunca süpürülmüş TEK yüzey.
+ *
+ * Kesit altta DÜZ, üstte yuvarlaktır: taban basılan yerdir ve basılan yer
+ * yuvarlak olamaz. İki ayrı üs kullanılır - alt yarıda büyük (yassı), üst
+ * yarıda küçük (yuvarlak) - çünkü tek bir süperelips ya tabanı yuvarlatır
+ * ya üstü kutulaştırır.
+ *
+ * Dönen: THREE.BufferGeometry, yerel çerçevede x ileri, z yukarı, taban
+ * z = 0'da.
+ */
+export function cizmeGovdesi(THREE, {
+  uzunluk, arkaPay, en, boy, istasyon = 30, halka = 20,
+  ustP = 2.6, altP = 6.0,
+}) {
+  const poz = [], idx = [];
+  const satir = halka;
+  const nokta = (w, h, a) => {
+    const c = Math.cos(a), s = Math.sin(a);
+    const pp = s >= 0 ? ustP : altP;
+    const k = 2 / pp;
+    return [
+      Math.sign(c) * Math.abs(c) ** k * w,
+      h * 0.5 + Math.sign(s) * Math.abs(s) ** k * h * 0.5,
+    ];
+  };
+  for (let i = 0; i <= istasyon; i++) {
+    const u = i / istasyon;
+    const x = -arkaPay + u * uzunluk;
+    const w = Math.max(en * 0.5 * ayakEni(u), 1e-4);
+    const h = Math.max(boy * ayakBoyu(u), 1e-4);
+    for (let j = 0; j < halka; j++) {
+      const a = (j / halka) * Math.PI * 2;
+      const [y, z] = nokta(w, h, a);
+      poz.push(x, y, Math.max(z, 0));
+    }
+  }
+  for (let i = 0; i < istasyon; i++) {
+    for (let j = 0; j < halka; j++) {
+      const j2 = (j + 1) % halka;
+      const a = i * satir + j, b = i * satir + j2;
+      const c = (i + 1) * satir + j, d = (i + 1) * satir + j2;
+      idx.push(a, c, b, b, c, d);
+    }
+  }
+  /* İki uç kapanır: açık bir çizme, içi görünen bir çizmedir. */
+  for (const [bas, ters] of [[0, true], [istasyon * satir, false]]) {
+    const m = poz.length / 3;
+    let sx = 0, sy = 0, sz = 0;
+    for (let j = 0; j < halka; j++) {
+      sx += poz[(bas + j) * 3]; sy += poz[(bas + j) * 3 + 1]; sz += poz[(bas + j) * 3 + 2];
+    }
+    poz.push(sx / halka, sy / halka, sz / halka);
+    for (let j = 0; j < halka; j++) {
+      const j2 = (j + 1) % halka;
+      if (ters) idx.push(m, bas + j2, bas + j);
+      else idx.push(m, bas + j, bas + j2);
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(poz, 3));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/**
  * SÜPÜRME GÖVDESİ — kesiti eksen boyunca değişen yüzey.
  *
  * `kesit(t)` her yükseklikte şunu döndürür:

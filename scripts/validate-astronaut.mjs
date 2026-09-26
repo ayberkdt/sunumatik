@@ -933,5 +933,94 @@ console.log('\n== 11 boyun: siluet daralıyor mu');
   }
 }
 
+/* ── 12 KIRPMA SESSİZ OLMASIN ────────────────────────────────────────
+ *
+ * Bir eklem sınırına dayandığında çözüm istediğini alamaz ve aradaki fark
+ * SESSİZCE yutulur. Ölçülen sonuç: bilek basma evresinin %19'unda sınırda
+ * ve kırpma 40,8°'ye kadar çıkıyor. Bu kendi başına kusur DEĞİLDİR - basınçlı
+ * bir bilek itiş boyunca plantar fleksiyon yapamaz ve mürettebatın yürümek
+ * yerine sıçramasının sebebi tam olarak budur. Kusur, kırpmanın GÖRÜNMEMESİ:
+ * taban profili eklemin aralığında örneklenip DÜNYA EĞİMİYLE sorgulanıyordu
+ * ve kırpma o aralığın 39,5° dışına çıkınca çizme yere 15,7 mm giriyordu.
+ *
+ * İkinci sınav bir DÜZELTMEDİR. Basan dizin açısını "hiç değişmiyor, sabit
+ * 11,5°" diye rapor etmiştim; o ölçüm 8 fazlıydı, yani iki adımlık çevrimde
+ * adım başına dört örnek, ve her seferinde çevrimin aynı yerine denk geldi.
+ * 120 fazda ölçülen genlik 43,7°. Sayı artık kapıda duruyor ki aynı dikkatsiz
+ * iddia bir daha kurulmasın.
+ */
+console.log('\n== 12 kırpma sessiz olmasın');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const G = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-gait.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik' });
+
+  const olc = (ortam, hiz) => {
+    const F = G.yuruyusFizigi(ortam, S.olcu.bacakM, hiz, S.olcu);
+    let kirpik = 0, basan = 0, enBuyuk = 0;
+    let dizMin = 1e9, dizMaks = -1e9, enAlt = 1e9;
+    for (let i = 0; i < 120; i++) {
+      const P = G.yuruyusPozu(i / 120, F, S.olcu);
+      S.uygulaPoz(P);
+      S.root.updateMatrixWorld(true);
+      enAlt = Math.min(enAlt, new THREE.Box3().setFromObject(S.root).min.z);
+      for (let j = 0; j < 2; j++) {
+        if (!P.ayakKonum[j].basiyor) continue;
+        basan++;
+        const gereken = P.kalca[j] - P.diz[j];
+        const k = Math.abs(P.ayak[j] - gereken);
+        if (k > 0.5) { kirpik++; enBuyuk = Math.max(enBuyuk, k); }
+        dizMin = Math.min(dizMin, P.diz[j]);
+        dizMaks = Math.max(dizMaks, P.diz[j]);
+      }
+    }
+    return { oran: kirpik / Math.max(1, basan), enBuyuk, basan,
+      dizGenlik: dizMaks - dizMin, enAlt };
+  };
+
+  const ortamlar = [['ay', 1.2], ['ay', 1.7], ['dunya', 1.2], ['mars', 1.0]];
+  const sonuc = ortamlar.map(([o, h]) => ({ o, h, ...olc(o, h) }));
+
+  check('her ortamda basma evresi ölçülüyor', sonuc.every((r) => r.basan > 40),
+    sonuc.map((r) => `${r.o}:${r.basan}`).join(' '));
+
+  /* EŞİK %40: ölçülen en yüksek oran %22 (Dünya 1,2 m/s). Bunun üstü, artık
+     kırpılan bir bilek değil, giysiye sığmayan bir yürüyüş demektir. */
+  const cokKirpik = sonuc.filter((r) => r.oran > 0.40);
+  check('hiçbir ortamda bilek basma evresinin %40\'ından fazlasında sınırda değil',
+    cokKirpik.length === 0,
+    sonuc.map((r) => `${r.o} ${r.h}: %${(100 * r.oran).toFixed(0)}`).join(' · '));
+
+  /* Kırpma varsa taban YİNE DE yerde kalmalı: sessiz kırpmanın gerçek
+     bedeli buydu. */
+  const batan = sonuc.filter((r) => r.enAlt < -0.008);
+  check('kırpmaya rağmen taban yere girmiyor', batan.length === 0,
+    sonuc.map((r) => `${r.o} ${r.h}: ${(1000 * r.enAlt).toFixed(1)} mm`).join(' · '));
+
+  /* DÜZELTME: basan diz donuk değil. */
+  const donuk = sonuc.filter((r) => r.dizGenlik < 8);
+  check('basan dizin açısı çevrim boyunca en az 8° değişiyor', donuk.length === 0,
+    sonuc.map((r) => `${r.o}:${r.dizGenlik.toFixed(1)}°`).join(' '));
+
+  /* TERS SINAV: profil aralığı eklem aralığına daraltılsaydı ne olurdu?
+     Kırpmanın bıraktığı eğim ölçülen tablonun DIŞINA çıkıyor ve tablo uca
+     kırpılıp eksik düşme döndürüyor - yani sorgu, ölçümün kapsamadığı yerde. */
+  {
+    const [aMin, aMaxJ] = [-26, 34];
+    let disari = 0, enUzak = 0;
+    const F = G.yuruyusFizigi('ay', S.olcu.bacakM, 1.7, S.olcu);
+    for (let i = 0; i < 120; i++) {
+      const P = G.yuruyusPozu(i / 120, F, S.olcu);
+      for (let j = 0; j < 2; j++) {
+        const egim = P.ayak[j] - (P.kalca[j] - P.diz[j]);
+        if (egim < aMin || egim > aMaxJ) { disari++; enUzak = Math.max(enUzak, Math.abs(egim)); }
+      }
+    }
+    check('TERS SINAV: dünya eğimi eklem aralığının DIŞINA çıkıyor (profil geniş olmak zorunda)',
+      disari > 0, `${disari} örnekte, en uzak ${enUzak.toFixed(1)}°`);
+  }
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);

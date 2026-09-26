@@ -106,6 +106,11 @@ export function sinirla(ad, aciDeg) {
 
 /* Ayak: bilekten buruna ve topuğa olan yatay mesafe. Bilek sınıra dayanınca
    ayak bu uçlardan biri etrafında DÖNER ve bilek o kadar yükselir. */
+/* AYAK ENİ. Beyan edilen 0,23 m'ydi ve çizilen 0,31'e çıkıyordu; ikisi de
+   bir ayak için fazla - Ay botu kalın bir overshoe'dur ama 1,95 m'lik bir
+   figürün ayağı 0,17 m'den geniş değildir. Ölçülen kusur: çizme plandan
+   neredeyse KAREYDİ (0,343 x 0,266) ve bir kare, yürüdüğü yönü söylemez. */
+export const AYAK_EN_M = 0.17;
 export const AYAK_ON_M = 0.22;
 export const AYAK_ARKA_M = 0.12;
 
@@ -251,10 +256,10 @@ export const PARTS = Object.freeze([
 
   { id: 'cizmeler', ad: 'Boots', sistem: 'hareket', step: 2,
     mountsTo: 'alt-govde', arayuz: 'kumas', massKg: 2.4, qty: 2,
-    pos: [0.05, 0.155, 0.10], size: [0.36, 0.23, 0.22], yon: 'yan', ayna: 'y', sekil: 'cizme',
+    pos: [0.05, 0.145, 0.10], size: [0.36, 0.19, 0.22], yon: 'yan', ayna: 'y', sekil: 'cizme',
     /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
-    zarfOran: 0.4,
-    zarfNeden: 'Taban ayaktan geniştir (basma alanı) ve bağ kayışı çizmenin ETRAFINDAN geçer. BORÇ: çizme gövdesi hâlâ 0,295 m - bir ayak kadar dar değil.',
+    zarfOran: 0.25,
+    zarfNeden: 'Taban ayaktan geniştir (basma alanı: 1,06 kat) ve manşet halkaları bileği sarar. Çizilen 0,366 x 0,231 - artık boyundan geniş değil, ki bir ayağın yürüdüğü yönü söyleyen tek şey odur.',
     tech: {
       no: 'AS-MOB-021',
       malzeme: 'Silicone sole, ortho-fabric upper, metal shank',

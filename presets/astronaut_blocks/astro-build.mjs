@@ -30,10 +30,12 @@
  * duruşu hem de `astro-gait.mjs`'in çözdüğü yürüyüşü oynatır.
  */
 import {
-  PARTS, partById, BOY_M, OMUZ_M, BOYUN_CAP_M, DIKEY, UYLUK_M, BALDIR_M, kopyaKonumlari,
+  PARTS, partById, BOY_M, OMUZ_M, BOYUN_CAP_M, DIKEY, UYLUK_M, BALDIR_M,
+  AYAK_ON_M, AYAK_ARKA_M, AYAK_EN_M, kopyaKonumlari,
   EKLEMLER, POZ_EKLEM, sinirla,
 } from './astro-parts.mjs';
-import { supur, uzuvKesiti, govdeKesiti } from './astro-body.mjs';
+import { kesitNokta, supur, uzuvKesiti, govdeKesiti,
+         cizmeGovdesi, ayakEni, ayakBoyu } from './astro-body.mjs';
 import { cylGeoX, cylGeoY, cylGeoZ, kureGeoZ, latheZ, latheZYonlu,
          PHI_Z } from '../core/geometry-axis.mjs';
 import * as D from '../core/hardware-kit.mjs';
@@ -363,65 +365,85 @@ function govde(THREE, p, M, yan = 0) {
        OVERSHOE'dur - giysinin botunun ÜSTÜNE geçer, o yüzden bilekten
        aşağısı belirgin şekilde kalındır ve tabanı geniştir. */
     case 'cizme': {
+      /* ÇİZME, BEYAN EDİLEN AYAKTAN. Önceki hâl `AYAK_ON_M` ve
+         `AYAK_ARKA_M`i hiç kullanmıyordu: burun bir küre, topuk başka bir
+         küre, taban ayrı bir levhaydı ve üçü arasında görünür kademeler
+         vardı. Ölçülen sonuç plandan neredeyse kare bir kütleydi - yani
+         yürüdüğü yönü söylemeyen bir ayak.
+
+         Şimdi tek yüzey: kalıp boyunca süpürülen, altı DÜZ üstü yuvarlak
+         bir gövde. Taban, diş ve manşet aynı kalıbın farklı yüksekliklerde
+         örnekleridir, o yüzden aralarında kademe olamaz. */
       const boy = sz, uz = sx, gen = sy;
-      g.add(yatakHalkasi(THREE, M, gen * 0.44, { kalin: 0.012, tirnak: 6 }));
-      g.add(konvolut(THREE, M, gen * 0.44, gen * 0.46, gen * 0.5, gen * 0.52, boy * 0.3, 2));
-      /* Overshoe gövdesi: bilekten aşağı AÇILIR. */
-      const ust = ekle(uzuvMesh(THREE, M.kumasGolge, boy * 0.56, uzuvKesiti({
-        ustW: gen * 0.5, ustD: uz * 0.22, altW: gen * 0.58, altD: uz * 0.3,
-        sis: 0.02, p: 2.6, kapitone: [3, 0.06],
-      }), { dilim: 12, halka: 28 }));
-      ust.position.z = -boy * 0.22;
-      /* Ayak: burun yuvarlak, topuk kısa ve dik. */
-      const tabanZ = -boy * 0.8;
-      const orta = ekle(new THREE.Mesh(
-        new THREE.BoxGeometry(uz * 0.5, gen * 1.0, boy * 0.26), M.kumasGolge));
-      orta.position.set(uz * 0.06, 0, tabanZ + boy * 0.14);
-      const burun = ekle(new THREE.Mesh(new THREE.SphereGeometry(gen * 0.5, 24, 16), M.kumasGolge));
-      burun.scale.set(uz * 0.88 / gen, 1, 0.6);
-      burun.position.set(uz * 0.3, 0, tabanZ + boy * 0.14);
-      const topuk = ekle(new THREE.Mesh(new THREE.SphereGeometry(gen * 0.48, 22, 15), M.kumasGolge));
-      topuk.scale.set(0.72, 1, 0.66);
-      topuk.position.set(-uz * 0.2, 0, tabanZ + boy * 0.13);
-      /* Taban ve deseni. Desen topukta ve ayak bilyesinde SIKLAŞIR, çünkü
-         basılan yer orasıdır - düzgün aralıklı çizgiler bir ayakkabının
-         nasıl aşındığını bilmemek demek. */
-      const tabanM = ekle(new THREE.Mesh(
-        new THREE.BoxGeometry(uz * 1.0, gen * 1.06, boy * 0.08), M.taban));
-      tabanM.position.set(uz * 0.05, 0, tabanZ);
-      for (let i = 0; i < 11; i++) {
-        const u = i / 10;
-        const yogun = Math.abs(u - 0.2) < 0.18 || Math.abs(u - 0.82) < 0.16;
+      const uzunluk = AYAK_ON_M + AYAK_ARKA_M;
+      const tabanZ = -DIKEY.ayakBilegi + 0.012;     // bilek ekseninden tabana
+      const govdeBoy = boy * 0.86;
+
+      const cizme = ekle(new THREE.Mesh(cizmeGovdesi(THREE, {
+        uzunluk, arkaPay: AYAK_ARKA_M, en: AYAK_EN_M, boy: govdeBoy,
+        istasyon: 34, halka: 22,
+        /* Çizme gövdesi BEYAZDIR. `kumasGolge` ile kurulduğunda ayak, bacağın
+           geri kalanından koyu bir kütle olarak ayrılıyordu ve figür dizden
+           aşağısı başka bir şeymiş gibi okunuyordu; Apollo overshoe'su da
+           açık renk, yalnız TABANI koyudur. */
+      }), M.kumas));
+      cizme.position.z = tabanZ;
+
+      /* TABAN ayrı bir malzemedir ama aynı kalıptan gelir: silikon taban,
+         kumaş üst - ikisi arasındaki çizgi çizmenin en okunur ayrıntısı. */
+      const taban = ekle(new THREE.Mesh(cizmeGovdesi(THREE, {
+        uzunluk: uzunluk * 0.995, arkaPay: AYAK_ARKA_M * 0.995,
+        en: AYAK_EN_M * 0.99, boy: boy * 0.24, istasyon: 34, halka: 22,
+      }), M.taban));
+      taban.position.z = tabanZ - 0.002;
+
+      /* DİŞ DESENİ topukta ve bilyede SIKLAŞIR, çünkü basılan yer orasıdır.
+         Her çubuk kalıbın o istasyondaki genişliğini alır: dışarı taşan bir
+         diş, tabanın dışına çizilmiş bir çizgidir. */
+      for (let i = 0; i < 13; i++) {
+        const u = 0.04 + (i + 0.5) / 13 * 0.9;
+        const yogun = Math.abs(u - 0.22) < 0.14 || Math.abs(u - 0.68) < 0.16;
+        /* Çubuk kalıbın o istasyondaki eninde ve ondan DAR: tabanın
+           kenarından taşan bir diş, tabanın dışına çizilmiş bir çizgidir. */
         const d = ekle(new THREE.Mesh(new THREE.BoxGeometry(
-          uz * (yogun ? 0.055 : 0.032), gen * 0.98, boy * 0.05), M.taban));
-        d.position.set((u - 0.45) * uz * 0.94 + uz * 0.05, 0, tabanZ - boy * 0.055);
+          uzunluk * (yogun ? 0.045 : 0.028), AYAK_EN_M * 0.76 * ayakEni(u),
+          boy * 0.05), M.taban));
+        d.position.set(-AYAK_ARKA_M + u * uzunluk, 0, tabanZ - boy * 0.012);
       }
-      /* Bağ ucu ve topuk klipsi: çizme bir kutu değil, BAĞLANAN bir şeydir. */
-      for (const s2 of [-1, 1]) {
-        const uc = ekle(new THREE.Mesh(
-          new THREE.BoxGeometry(uz * 0.07, gen * 0.07, boy * 0.1), M.metal));
-        uc.position.set(uz * 0.16, s2 * gen * 0.5, tabanZ + boy * 0.3);
-      }
-      const klips = ekle(new THREE.Mesh(
-        new THREE.BoxGeometry(uz * 0.1, gen * 0.5, boy * 0.09), M.metal));
-      klips.position.set(-uz * 0.33, 0, tabanZ + boy * 0.2);
-      /* Bağ kayışı çizmenin ETRAFINI sarar. `rotation.x = PI/2` halkayı DİK
-         çeviriyordu: XY düzlemindeki bir simit +Z ekseni etrafında sarar,
-         X etrafında çevrilince XZ düzlemine geçer ve tabanın 6 cm ALTINA
-         sarkar. Ölçülen taban profili de onu görüyordu - bilek-taban mesafesi
-         0,194 yerine 0,253 çıkıyor ve yürüyüş çözümü her karede 30 mm
-         şaşıyordu. Bir simidin ekseni, sardığı şeyin eksenidir. */
-      /* ÖLÇÜ ÇİZMENİN KENDİ KUTUSUNDAN. Önceki hâl `uz * 0.8`i YARIÇAP
-         yerine koyuyordu; çizmenin yarı uzunluğu ise `uz * 0.5`tir. 0,36 m
-         boyunda bir çizmenin etrafında 0,657 m'lik, buruna göre 16 cm öne
-         taşan ve ayağa hiçbir yerde değmeyen düz bir çember dönüyordu
-         (ölçüldü: dünya matrisi determinantı 2,3188). Bir kayış, sardığı
-         şeyin ölçüsündedir. */
-      const kayisR = gen * 0.54;
+
+      /* MANŞET: bileği saran konvolüt ve yatak halkası. Çizme ayrı bir
+         OVERSHOE'dur, yani giysinin botunun ÜSTÜNE geçer ve bilekten
+         aşağısı belirgin şekilde kalınlaşır. */
+      /* Manşet AYAĞIN kesitinden gelir, çizmenin gabarisinden değil:
+         `gen`den kurulduğunda halkalar 0,266 m'ye çıkıyordu, yani çizme
+         gövdesinden (0,221) geniş bir bilek. Bir bilek, bastığı ayaktan
+         geniş olamaz. */
+      const bilekW = AYAK_EN_M * 0.46, bilekD = AYAK_EN_M * 0.52;
+      g.add(yatakHalkasi(THREE, M, bilekW, { kalin: 0.012, tirnak: 6 }));
+      const mans = konvolut(THREE, M, bilekW, bilekD, bilekW * 1.1, bilekD * 1.08,
+        boy * 0.34, 3);
+      mans.position.z = -boy * 0.06;
+      g.add(mans);
+
+      /* BAĞ KAYIŞI çizmenin ETRAFINI sarar ve ölçüsü kalıptan gelir; bir
+         zamanlar `uz * 0.8` yarıçap yerine konduğu için 0,657 m'lik, ayağa
+         hiç değmeyen düz bir çember dönüyordu. */
+      const kayisU = 0.42;                          // bilyenin biraz gerisi
+      const kayisW = AYAK_EN_M * 0.5 * ayakEni(kayisU) * 1.14;
       const kayis = ekle(new THREE.Mesh(
-        new THREE.TorusGeometry(kayisR, gen * 0.055, 8, 24), M.koyu));
-      kayis.scale.set(uz * 0.44 / kayisR, 1, 1);
-      kayis.position.set(uz * 0.05, 0, tabanZ + boy * 0.34);
+        new THREE.TorusGeometry(kayisW, gen * 0.045, 8, 22), M.koyu));
+      kayis.scale.set(uzunluk * 0.16 / kayisW, 1, 1);
+      kayis.position.set(-AYAK_ARKA_M + kayisU * uzunluk, 0,
+        tabanZ + govdeBoy * ayakBoyu(kayisU) * 0.52);
+      const toka = ekle(new THREE.Mesh(
+        new THREE.BoxGeometry(uzunluk * 0.06, gen * 0.09, boy * 0.05), M.metal));
+      toka.position.set(-AYAK_ARKA_M + kayisU * uzunluk, 0,
+        tabanZ + govdeBoy * ayakBoyu(kayisU) * 1.02);
+
+      /* Topuk klipsi: çizme bir kutu değil, BAĞLANAN bir şeydir. */
+      const klips = ekle(new THREE.Mesh(
+        new THREE.BoxGeometry(uz * 0.08, AYAK_EN_M * 0.44, boy * 0.08), M.metal));
+      klips.position.set(-AYAK_ARKA_M * 0.82, 0, tabanZ + boy * 0.16);
       break;
     }
 
@@ -1210,10 +1232,27 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
     const eskiKalca = eklem.kalca[0].rotation.y, eskiDiz = eklem.diz[0].rotation.y;
     eklem.kalca[0].rotation.y = 0;
     eklem.diz[0].rotation.y = 0;
-    const [aMin, aMax] = EKLEMLER['ayak.L'].range;
+    /* ÖLÇÜM ARALIĞI EKLEM ARALIĞINDAN GENİŞ. Profil, sorulacağı şeyi
+       kapsamak ZORUNDA: tablo bileğin beyan edilen aralığında (-26..+34)
+       örnekleniyordu, ama sorulan şey eklem açısı değil DÜNYA EĞİMİDİR,
+       yani kırpmanın bıraktığı farktır - ve Ay'da 1,7 m/s'de o fark +39,5°
+       çıkıyor. Aralığın dışında kalan sorgu uca kırpılıp EKSİK bir düşme
+       döndürüyordu ve çizme 15,7 mm yere giriyordu. Ölçülen kusur tam
+       buydu: doğru işleyen bir tablo, yanlış yerde sorgulanıyor.
+       ±55° pay, ölçülen en büyük taşmanın (39,5°) rahatça üstünde. */
+    const [aMinJ, aMaxJ] = EKLEMLER['ayak.L'].range;
+    const aMin = aMinJ - 55, aMax = aMaxJ + 55;
     const bot = nodes.get('cizmeler');
-    for (let i = 0; i <= 96; i++) {
-      const aci = aMin + (aMax - aMin) * (i / 96);
+    /* ÇÖZÜNÜRLÜK ÖLÇÜMDEN. 96 aralık, eski yuvarlak çizmede yetiyordu;
+       kalıptan süpürülen çizmede tabanın en alçak noktası topuktan bilyeye
+       geçerken profilde daha KESKİN bir kırık var ve aynı örnekleme 8-10 mm
+       batma bırakıyordu. Doğrusal ara değerin hatası adım aralığının karesiyle
+       gider: 96 → 240 onu yaklaşık altıda bire indirir. Eşik değil ÖLÇÜM
+       düzeltilir - eşiği gevşetmek, kusuru ölçmemek demektir. */
+    /* Adım ~0,5°: aralık genişledi, çözünürlük korunur. */
+    const ornek = Math.round((aMax - aMin) * 2);
+    for (let i = 0; i <= ornek; i++) {
+      const aci = aMin + (aMax - aMin) * (i / ornek);
       ay.rotation.y = aci * RAD * FLEKS.ayak;
       kok.updateMatrixWorld(true);
       tabanProfili.push([aci, ay.getWorldPosition(new THREE.Vector3()).z - enAltZ(bot)]);
