@@ -34,7 +34,7 @@ import {
   EKLEMLER, POZ_EKLEM, sinirla,
 } from './astro-parts.mjs';
 import { supur, uzuvKesiti, govdeKesiti } from './astro-body.mjs';
-import { cylGeoX, cylGeoY, cylGeoZ, latheZ } from '../core/geometry-axis.mjs';
+import { cylGeoX, cylGeoY, cylGeoZ, latheZ, latheZYonlu, PHI_Z } from '../core/geometry-axis.mjs';
 import * as D from '../core/hardware-kit.mjs';
 
 const TAU = Math.PI * 2;
@@ -438,7 +438,7 @@ function govde(THREE, p, M, yan = 0) {
         gpts.push(new THREE.Vector2(
           Math.max(sx * (0.44 + 0.2 * Math.sin(Math.PI * t)), 0.02), (t - 0.46) * sz * 0.88));
       }
-      const gogus = ekle(latheZ(gpts, 20, M.sert, -1.0, 2.0));
+      const gogus = ekle(latheZYonlu(gpts, 20, M.sert, PHI_Z.on, 2.0));
       gogus.scale.y = sy * 0.9 / sx;
       /* Omuz boyundurukları ve YAMUK KASI. Omuz çizgisi boyundan omuza
          DÜŞER; düz bir tepe çizgisi gövdeyi kutu yapar ve bir insan
@@ -847,7 +847,7 @@ function govde(THREE, p, M, yan = 0) {
         const a = (14 + (i / 14) * 118) * RAD;
         vpts.push(new THREE.Vector2(R * 1.06 * Math.sin(a), R * 1.06 * Math.cos(a)));
       }
-      const viz = ekle(latheZ(vpts, 44, M.vizor, -1.62, 3.24));
+      const viz = ekle(latheZYonlu(vpts, 44, M.vizor, PHI_Z.on, 3.24));
       viz.position.z = sz * 0.06;
       /* VİZÖR İNİK. Referans Apollo fotoğrafında altın vizör indirilmiştir ve
          AYNA gibi davranır - kaskın önü, karşısındakini yansıtan altın bir
@@ -865,20 +865,23 @@ function govde(THREE, p, M, yan = 0) {
         const a = (17 + (i / 8) * 20) * RAD;
         spts.push(new THREE.Vector2(R * 1.09 * Math.sin(a), R * 1.09 * Math.cos(a)));
       }
-      const sip = ekle(latheZ(spts, 32, M.kumasGolge, -0.95, 1.9));
+      const sip = ekle(latheZYonlu(spts, 32, M.kumasGolge, PHI_Z.on, 1.9));
       sip.position.z = sz * 0.06;
       /* LEVA: kaskın üstüne geçen BEYAZ dış miğfer - Apollo siluetinin en
          tanınır parçası. İlk denemede kısmi bir küre + torus ağızlık + iki
          siperlikle kurulmuştu ve birbirine giren koyu köşeler çıkıyordu.
-         `latheZ` zaten kısmi tur destekliyor ve phi = 0 +X'e (öne) bakıyor:
-         ÖN AÇIKLIĞI bırakıp geri kalanı kapatmak tek çağrı. */
+         `latheZYonlu` kısmi turu YÖNÜYLE alır: ÖN AÇIKLIĞI bırakıp geri
+         kalanı kapatmak tek çağrı. (Burada bir kez "phi = 0 öne bakıyor"
+         yazıyordu; ölçüm phi = 0'ın −Y'ye, yani figürün SAĞINA baktığını
+         söyledi ve bu kabuk beş kardeşiyle birlikte 90° yan duruyordu.) */
       const acik = 0.92;                       // ön açıklığın yarı açısı (rad)
       const lpts = [];
       for (let i = 0; i <= 14; i++) {
         const a = (8 + (i / 14) * 150) * RAD;
         lpts.push(new THREE.Vector2(R * 1.1 * Math.sin(a), R * 1.1 * Math.cos(a)));
       }
-      const leva = ekle(latheZ(lpts, 44, M.kumas, acik, TAU - 2 * acik));
+      /* Kaplanan yay ARKADA merkezlidir, çünkü AÇIKLIK öndedir. */
+      const leva = ekle(latheZYonlu(lpts, 44, M.kumas, PHI_Z.arka, TAU - 2 * acik));
       leva.position.z = sz * 0.06;
       /* Açıklığın kenarı: ince bir bilezik, miğferin bittiği yeri belli eder. */
       const kpts = [];
@@ -887,7 +890,7 @@ function govde(THREE, p, M, yan = 0) {
         kpts.push(new THREE.Vector2(R * 1.15 * Math.sin(a), R * 1.15 * Math.cos(a)));
       }
       for (const yon of [-1, 1]) {
-        const kenar = ekle(latheZ(kpts, 8, M.kumasGolge, yon > 0 ? acik : TAU - acik - 0.12, 0.12));
+        const kenar = ekle(latheZYonlu(kpts, 8, M.kumasGolge, PHI_Z.on + yon * (acik + 0.06), 0.12));
         kenar.position.z = sz * 0.06;
       }
       /* YAN VİZÖRLER. LEVA'nın iki yanında, menteşeli iki beyaz kanat;
@@ -900,7 +903,7 @@ function govde(THREE, p, M, yan = 0) {
           const a = (34 + (i / 10) * 74) * RAD;
           ypts.push(new THREE.Vector2(R * 1.17 * Math.sin(a), R * 1.17 * Math.cos(a)));
         }
-        const yv = ekle(latheZ(ypts, 16, M.kumas, yon > 0 ? acik - 0.1 : -acik - 0.42, 0.52));
+        const yv = ekle(latheZYonlu(ypts, 16, M.kumas, PHI_Z.on + yon * (acik + 0.16), 0.52));
         yv.position.z = sz * 0.06;
         /* Menteşe braketi: kanadın döndüğü yer görünür olmak zorunda. */
         const br = ekle(new THREE.Mesh(

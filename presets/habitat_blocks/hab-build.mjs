@@ -981,6 +981,9 @@ function govde(THREE, p, M, dok, env = 'mars') {
       /* Silindirin ekseni, bu grubun kendi çerçevesinde. */
       const eksen = ust ? ust.pos[2] - p.pos[2] : 0;
       const profil = [new THREE.Vector2(r, -boy / 2), new THREE.Vector2(r, boy / 2)];
+      /* phi-ok: ÖLÇÜLDÜ — latheX'te phi = 0 +Z'ye (ÜSTE) bakar, yani bu
+         yarım zaten üstü kaplıyor ve aşağıdaki çeyrek tur onu eksene
+         oturtuyor. Yön burada yazılı olduğu için açı kalabilir. */
       const m = ekle(latheX(profil, 26, M.regolit, 0, Math.PI));
       /* Süpürülen yarım -Y'ye bakar; tek eksende çeyrek tur onu ÜSTE alır.
          Tek bileşenli dönüş, sıra tuzağı yok. */

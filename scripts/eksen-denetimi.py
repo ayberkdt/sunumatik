@@ -120,6 +120,60 @@ EULER_SIFIR = re.compile(r"^\s*(?:-\s*)?0(?:\.0+)?\s*$")
 # Sıranın gerçekten önemsiz olduğu yer: satıra gerekçesiyle işaret konur.
 EULER_KACIS = re.compile(r"euler-ok\s*:")
 
+# -- KURAL 3: kismi lathe'in YONU ------------------------------------
+# `latheZ(pts, seg, mat, phiStart, phiLength)` bir yarim kabuk kurar ama
+# phiStart'in dunyada nereye baktigi ANLASILMAZ. Olculdu: phi = 0 blok
+# -Y'sine (figurun SAGINA), phi = +pi/2 +X'e (ONE) bakar. Kodda tersi
+# yaziyordu ve astronotta BES kabuk birden 90 derece yan duruyordu: altin
+# vizor basin yaninda, beyaz migferin on acikligi sagda, gogus dolgusu sag
+# omzun altinda. Hicbir kapi gormedi, cunku aci bir sayidir ve sayinin
+# yonu yoktur.
+#
+# Bundan sonra kismi lathe yalniz `latheZYonlu(..., PHI_Z.on, ...)` gibi
+# YONUYLE yazilir. Kacis: satirin ustunde `phi-ok:` isareti.
+PHI_CAGRI = re.compile(r'\blathe[XZ]\s*\(')
+PHI_KACIS = re.compile(r"phi-ok\s*:")
+
+
+def phi_argumanlari(metin, konum):
+    """lathe cagrisinin ust duzey arguman sayisi (parantez dengesiyle)."""
+    i = metin.index("(", konum)
+    derin, arg, j = 0, 1, i
+    while j < len(metin):
+        c = metin[j]
+        if c in "([{":
+            derin += 1
+        elif c in ")]}":
+            derin -= 1
+            if derin == 0:
+                return arg
+        elif c == "," and derin == 1:
+            arg += 1
+        j += 1
+    return arg
+
+
+def phi_denetle(yol):
+    """(satir no, satir) listesi - yonu soylenmemis kismi lathe cagrilari."""
+    try:
+        metin = io.open(yol, encoding="utf-8").read()
+    except (UnicodeDecodeError, OSError):
+        return []
+    # Ceviriyi yapan dosya muaf: sarmalayicilar orada yasiyor.
+    if os.path.basename(yol) == "geometry-axis.mjs":
+        return []
+    bulgular = []
+    satirlar = metin.splitlines()
+    for m in PHI_CAGRI.finditer(metin):
+        if phi_argumanlari(metin, m.start()) <= 3:
+            continue                      # tam tur - yonu yok, sorun da yok
+        satir_no = metin.count(chr(10), 0, m.start()) + 1
+        pencere = chr(10).join(satirlar[max(0, satir_no - 9):satir_no])
+        if PHI_KACIS.search(pencere):
+            continue
+        bulgular.append((satir_no, satirlar[satir_no - 1].strip()[:96]))
+    return bulgular
+
 
 def euler_denetle(yol):
     """(satır no, satır) listesi — X ve Z birlikte sıfırdan farklı olanlar."""
@@ -225,6 +279,21 @@ def main():
     else:
         print("EULER SIRASI: temiz — X ve Z birlikte verilen çağrı yok.")
 
+    # ── KURAL 3: kısmi lathe'in yönü ──
+    phi = []
+    for yol in sorted(dosyalar()):
+        for n, satir in phi_denetle(yol):
+            phi.append((os.path.relpath(yol, DEPO).replace(os.sep, "/"), n, satir))
+    if phi:
+        print("\nKISMI LATHE'IN YÖNÜ SÖYLENMEMİŞ — çıplak açı verilmiş:")
+        for d, n, satir in phi:
+            print(f"  {d}:{n}  {satir}")
+        print("ÖLÇÜLDÜ: latheZ'de phi = 0 blok −Y'sine, phi = +π/2 +X'e bakar."
+              "\nBir açının yönü yoktur; `latheZYonlu(..., PHI_Z.on, açıklık)` yazın."
+              "\nGerçekten açı gerekiyorsa satıra gerekçesiyle `phi-ok:` işaretini koyun.")
+    else:
+        print("KISMI LATHE: temiz — her kısmi kabuk yönünü söylüyor.")
+
     if taban_yaz:
         with io.open(TABAN_DOSYA, "w", encoding="utf-8", newline="\n") as f:
             json.dump(ozet, f, ensure_ascii=False, indent=2, sort_keys=True)
@@ -255,7 +324,7 @@ def main():
               "\ntaşınır — çalışan geometriyi toplu hâlde yeniden yazmak,"
               "\nkapatmaya çalıştığımız hatanın ta kendisini üretir.")
         return 1
-    if euler:
+    if euler or phi:
         return 1
     if dusen:
         print(f"\nSayı tabana göre {dusen} düştü — ilerlemeyi kilitlemek için "

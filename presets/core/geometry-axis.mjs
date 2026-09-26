@@ -71,9 +71,29 @@ export function coneZ(r, h, seg, mat, open = false) {
  * Burada artık imkânsız: sıra kontrol edilir, gerekirse ÇEVRİLİR. Çağıran
  * profili hangi sırada verdiğini düşünmek zorunda değil.
  */
-/* phiStart/phiLength: KISMİ lathe (yarım başlık, kabuk dilimi). Lathe uzayında
-   açı +Y ekseni etrafındadır; eksenX çevirisinden sonra phi=0 yarımı (lathe +x)
-   blok −Y tarafına düşer. Varsayılan tam tur — eski çağrılar değişmez. */
+/* phiStart/phiLength: KISMİ lathe (yarım başlık, kabuk dilimi).
+ *
+ * ÖLÇÜLDÜ, türetilmedi. Her iki yardımcı da tek noktalı bir profille
+ * kurulup ilk köşenin dünya koordinatı okundu:
+ *
+ *            phi = 0        phi = +π/2      phi = π        phi = −π/2
+ *   latheZ   (0,−1,0) SAĞ   (1,0,0) ÖN      (0,1,0) SOL    (−1,0,0) ARKA
+ *   latheX   (0,0,1) ÜST    (0,−1,0) SAĞ    (0,0,−1) ALT    (0,1,0) SOL
+ *
+ * İKİSİ AYNI DEĞİL ve tek bir ortak tablo yapmak, kapatmaya çalıştığımız
+ * tuzağın ikincisini kurardı: "ön" yazan bir ad, geometriyi başka yere
+ * götürür. O yüzden iki ayrı tablo.
+ *
+ * Bu sayı bir kez yanlış BİLİNDİ ve astronotta beş yerde birden patladı:
+ * altın vizör başın yanına, beyaz miğferin ön açıklığı sağa, göğüs dolgusu
+ * sağ omzun altına düştü. Kodda "phi = 0 öne bakıyor" yazıyordu; ölçüm 90°
+ * yanında olduğunu söyledi. O yüzden çağıran artık AÇI yazmaz, YÖN yazar. */
+export const PHI_Z = Object.freeze({
+  sag: 0, on: Math.PI / 2, sol: Math.PI, arka: -Math.PI / 2,
+});
+export const PHI_X = Object.freeze({
+  ust: 0, sag: Math.PI / 2, alt: Math.PI, sol: -Math.PI / 2,
+});
 export function latheX(noktalar, seg, mat, phiStart = 0, phiLength = Math.PI * 2) {
   const p = noktalar.slice();
   if (p.length > 1 && p[p.length - 1].y < p[0].y) p.reverse();
@@ -83,4 +103,21 @@ export function latheZ(noktalar, seg, mat, phiStart = 0, phiLength = Math.PI * 2
   const p = noktalar.slice();
   if (p.length > 1 && p[p.length - 1].y < p[0].y) p.reverse();
   return new THREE.Mesh(eksenZ(new THREE.LatheGeometry(p, seg, phiStart, phiLength)), mat);
+}
+
+/**
+ * KISMİ lathe, YÖNÜYLE. `merkezYon` kaplanan yayın ORTASININ baktığı yön
+ * (`latheZYonlu` için `PHI_Z.*`, `latheXYonlu` için `PHI_X.*` — ikisi aynı
+ * tablo DEĞİLDİR), `acikligi` yayın radyan cinsinden uzunluğu.
+ *
+ * phiStart/phiLength ile aynı şeyi yapar ama okunabilir: "önü kapla, 1,9
+ * radyan genişliğinde" cümlesi, "−0,95'ten başla 1,9 git"ten farklı olarak
+ * yanlış yazıldığında GÖZLE görülür. Bir kabuğun hangi yöne baktığı, o
+ * kabuğu kuran satırda yazmak zorunda.
+ */
+export function latheZYonlu(noktalar, seg, mat, merkezYon, acikligi) {
+  return latheZ(noktalar, seg, mat, merkezYon - acikligi / 2, acikligi);   // phi-ok: çeviriyi yapan yer
+}
+export function latheXYonlu(noktalar, seg, mat, merkezYon, acikligi) {
+  return latheX(noktalar, seg, mat, merkezYon - acikligi / 2, acikligi);   // phi-ok: çeviriyi yapan yer
 }

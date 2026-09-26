@@ -776,6 +776,12 @@ export function buildRocket({ stages = 2, scale = 1, palette, boosters = 0, surf
        ayarlıdır, ojive sarılınca bütün bantlar burna sıkışıyor ve nose
        tek renk koyu bir kütleye dönüyordu (ölçüldü). Gerçek başlıklar da
        düz boyalıdır; panel deseni tank gövdesine aittir. */
+    /* phi-ok: ÖLÇÜLDÜ ve BURADA BİR KUSUR VAR — latheX'te phi = 0 +Z'ye,
+       phi = π −Z'ye bakar, yani bu iki yarım başlığı ÜST/ALT bölüyor; oysa
+       menteşe ekseni z'dir ve kapak SOL/SAĞ açılmalı (phi0 = ±π/2). Astronot
+       işinin kapsamı dışında olduğu için burada yalnız ADLANDIRILDI, elle
+       düzeltilmedi: çalışan geometri, kendi sayfasında doğrulanmadan
+       değişmez. */
     const kabuk = latheX(pts, 24, m.body, phi0, Math.PI);
     kabuk.material = m.body;
     yarim.add(kabuk);
