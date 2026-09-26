@@ -159,13 +159,37 @@ export function ayakEni(u) {
  * AYAK YÜKSEKLİĞİ — çizmenin u noktasındaki üst yüzey yüksekliği (oran).
  * Bilekte en yüksek, burunda alçak: bir çizmenin üstü yataya YATAR.
  */
+/**
+ * ÇİZMENİN YAN PROFİLİ — yükseklik, kalıp boyunca.
+ *
+ * Tek üslü bir düşüşle (bilekte 1,00, burunda 0,14) yazılmıştı ve sonuç bir
+ * ÇİZME değil KAMAydı: bileğin önünden buruna kadar kesintisiz bir rampa.
+ * Gerçek bir çizme tarak üstünde hızla iner, sonra BURUN KUTUSU boyunca
+ * neredeyse düz gider ve ancak son onda birde yuvarlanır. Yan siluetini
+ * "ayak" yapan şey o düz bölümdür.
+ *
+ * Ökçe de dik: arkada 0,72'den başlayıp bileğe kadar çıkar - konik bir
+ * topuk, ayağı terlik gibi gösterir.
+ */
+export const AYAK_PROFIL = Object.freeze([
+  [0.00, 0.72], [0.10, 0.90], [0.30, 1.00],     // ökçe → bilek
+  [0.46, 0.66], [0.60, 0.46],                   // tarak
+  [0.72, 0.42], [0.88, 0.40],                   // burun kutusu: neredeyse düz
+  [0.95, 0.30], [1.00, 0.10],                   // uç yuvarlanır
+]);
 export function ayakBoyu(u) {
-  const bilek = 0.30;                     // bilek ekseninin plandaki yeri
-  if (u <= bilek) return 0.62 + 0.38 * (u / bilek) ** 0.7;
-  const v = (u - bilek) / (1 - bilek);
-  /* Burunda 0,14'e iner: 0,26'da kalınca uç DÜZ bir yüzle bitiyordu ve o
-     yüz, çizmenin ucunda açık bir ağız gibi görünüyordu. */
-  return 1 - 0.86 * v ** 1.3;
+  const k = AYAK_PROFIL;
+  const x = Math.max(0, Math.min(1, u));
+  for (let i = 1; i < k.length; i++) {
+    if (x <= k[i][0]) {
+      const f = (x - k[i - 1][0]) / (k[i][0] - k[i - 1][0]);
+      /* Yumuşak geçiş: köşeli bir ara değer, profilin her düğümünde
+         görünür bir kırık bırakır. */
+      const s = f * f * (3 - 2 * f);
+      return k[i - 1][1] + (k[i][1] - k[i - 1][1]) * s;
+    }
+  }
+  return k[k.length - 1][1];
 }
 
 /**

@@ -25,7 +25,10 @@
        ve tek vurgu kuralı, en çok bakılan şeyi öne çıkarma işini yapamıyordu.
        Seçili durum sessizdir; vurgu tonu yalnız birincil eylemindir. */
     button.aktif { border-color: #4a5164; background: rgba(255,255,255,.06); color: #e7ebf3; }
-    button.birincil { border-color: #c9a35c; background: rgba(201,163,92,.16); color: #f0e2c4; }
+    /* HEDEF 44 px, KISA METİNDE DE. "Dur" üç harf olduğu için düğme 43 px
+       kalıyordu; ölçüldü, eşik 44. Metnin uzunluğu dokunma hedefini
+       belirlemez. */
+    button.birincil { border-color: #c9a35c; background: rgba(201,163,92,.16); color: #f0e2c4; min-width: 44px; }
     /* Kaydıraç dokunmatik hedefi: ölçülen 16 px idi, en az 44 olmalı. */
     input[type=range] { width: 100%; min-height: 44px; accent-color: #c9a35c;
       background: transparent; }

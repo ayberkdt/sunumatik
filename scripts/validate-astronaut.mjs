@@ -2088,9 +2088,202 @@ console.log('\n== 21 yüzey ritmi: mafsal nerede');
      sıfıra inerse oran sonsuz olur ve ortada mafsal diye bir şey kalmaz.
      O yüzden körüğün kendi alt sınırı ayrıca aranır. */
   check('TERS SINAV: körükler kendi başına sık ve derin',
-    enSeyrekKoruk >= 14 && enSigKoruk >= 1.5 * R.konvolutDerinlik,
+    /* EŞİK 0,8 × derinlik: kıvrım tabandan yalnız DIŞARI taştığı için
+       tepe-oluk farkı artık `derinlik`in kendisidir, iki katı değil. */
+    enSeyrekKoruk >= 14 && enSigKoruk >= 0.8 * R.konvolutDerinlik,
     `en seyrek ${enSeyrekKoruk.toFixed(1)}/m · en sığ %${(100 * enSigKoruk).toFixed(1)}`
     + ' (düz bir uzuvda 0/m ve %0 olurdu, oran sınavları yine geçerdi)');
+}
+
+/* ── 22 KÖRÜĞÜN OLUĞUNDAN BAŞKA BİR ŞEY GÖRÜNMESİN ─────────────────
+ *
+ * Gözle görülen kusur: dirsek körüğünün kıvrımları TESTERE DİŞİYDİ - her
+ * sırtın altında yırtık gibi koyu üçgenler vardı. Sebep aritmetikle çıktı:
+ * kıvrım taban yarıçapın İKİ yanına salınıyordu (k = 1 ± derinlik), yani
+ * oluk tabanın 0,90 katına iniyordu. Dirsekte körüğün tabanı sy*0,59, üst
+ * kolun alt yarıçapı sy*0,574; oluk 0,531'e inince KOLUN KENDİ YÜZEYİ her
+ * iki kıvrımın arasından dışarı çıkıyordu. Dizde aynısı: oluk 0,297,
+ * uyluk 0,325.
+ *
+ * Bu, sessiz bozulan bir kusur: hiçbir kapı düşmüyordu, çünkü yüzey
+ * sürekliydi, zarf taşmıyordu, ritim doğruydu. Yalnız YANLIŞ YÜZEY
+ * görünüyordu. O yüzden ölçü de yüzeyin kendisinden alınır: körüğün
+ * bandında dışarı atılan bir ışın, EN DIŞTA körüğü görmeli.
+ */
+console.log('\n== 22 körüğün oluğundan başka bir şey görünmüyor');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik', ao: false });
+  S.root.updateMatrixWorld(true);
+  const rc = new THREE.Raycaster();
+  const v = new THREE.Vector3();
+
+  /* Her körük için: kendi halkalarının yüksekliklerinde, çevresinde ışın at.
+     Işının en DIŞTAKİ kesişimi körüğün kendisi olmalı. */
+  const korukler = [];
+  S.root.traverse((m) => { if (m.isMesh && m.userData?.rol === 'koruk') korukler.push(m); });
+  let toplamIsin = 0, kotu = 0, enKotu = null;
+  for (const k of korukler) {
+    const iz = k.geometry.userData?.izgara;
+    if (!iz || iz.boy < 0.05) continue;         // el/manşet gibi küçük körükler ayrı ölçek
+    /* Körüğün ekseni yerel −z; dünyaya taşı. */
+    const m0 = k.matrixWorld;
+    for (let i = 1; i < iz.dilim; i++) {
+      const t2 = i / iz.dilim;
+      const mer = new THREE.Vector3(0, 0, -t2 * iz.boy).applyMatrix4(m0);
+      for (let a = 0; a < 12; a++) {
+        const ac = (a / 12) * Math.PI * 2;
+        /* Işın eksene DİK: yerel x-y düzleminde, dünyaya döndürülmüş. */
+        const yon = new THREE.Vector3(Math.cos(ac), Math.sin(ac), 0)
+          .transformDirection(m0).normalize();
+        rc.set(mer.clone().addScaledVector(yon, 0.6), yon.clone().negate());
+        rc.far = 0.6;
+        const h = rc.intersectObject(S.root, true).filter((q) => {
+          /* Yalnız o uzva ait kumaş yüzeyleri: sert plaka, cep, boru,
+             halka ve KOMŞU uzuvlar bu sınavın konusu değil. */
+          let p2 = q.object, kendi = false;
+          while (p2) { if (p2 === k.parent?.parent || p2 === k.parent) kendi = true; p2 = p2.parent; }
+          return kendi && q.object.userData?.kumas;
+        });
+        if (!h.length) continue;
+        toplamIsin++;
+        if (h[0].object !== k) {
+          kotu++;
+          const d = h[0].point.distanceTo(mer) - (() => {
+            const kk = h.find((q) => q.object === k);
+            return kk ? kk.point.distanceTo(mer) : 0;
+          })();
+          if (!enKotu || d > enKotu.d) enKotu = { d, i, boy: iz.boy };
+        }
+      }
+    }
+  }
+  check('körüğün bandında en dıştaki yüzey körüğün kendisi', kotu === 0,
+    `${toplamIsin} ışından ${kotu} tanesinde altındaki uzuv körüğün dışında`
+    + (enKotu ? ` · en kötü ${(1000 * enKotu.d).toFixed(1)} mm` : '')
+    + ' · kusurlu hâlinde dirsekte oluk 0,531, kol 0,574 idi');
+  check('TERS SINAV: sınav gerçekten ışın atıyor', toplamIsin > 200,
+    `${toplamIsin} ışın (sıfır ışın da "0 kusur" derdi)`);
+
+  /* OMUZ TEK PARÇA OKUNMALI. Şikâyet "kol ve gövde ayrı ayrı duruyor"du ve
+     ölçüm yeri daralttı: mafsal çizgisi boyunca ikisi zaten 1-3 mm ile
+     değiyor, ama omzun ÜSTÜNDE (z 1,62…1,66) aralarında 29-51 mm hiçbir şey
+     yoktu. Bir omzun tek parça olması gereken tek yer, deliğin olduğu yerdi.
+     Ölçü: her yükseklikte gövdenin EN DIŞ y'si ile kolun EN İÇ y'si. Kol
+     gövdenin dışında kaldığı her dilim bir yarıktır. */
+  {
+    const v2 = new THREE.Vector3();
+    const sinir = (dugum, z, tol) => {
+      let enY = -9, azY = 9;
+      dugum.updateWorldMatrix(true, true);
+      dugum.traverse((m) => {
+        if (!m.isMesh || !m.geometry?.attributes?.position) return;
+        const q = m.geometry.attributes.position;
+        for (let i = 0; i < q.count; i++) {
+          v2.fromBufferAttribute(q, i).applyMatrix4(m.matrixWorld);
+          if (Math.abs(v2.z - z) > tol || Math.abs(v2.x) > 0.25 || v2.y < 0.02) continue;
+          if (v2.y > enY) enY = v2.y;
+          if (v2.y < azY) azY = v2.y;
+        }
+      });
+      return { enY, azY };
+    };
+    const G = S.nodes.get('ust-govde'), K = S.nodes.get('kollar');
+    const omZ = S.eklem.omuz[0].getWorldPosition(new THREE.Vector3()).z;
+    let enYarik = 0, nerede = 0, dilim = 0;
+    for (let z = omZ - 0.10; z <= omZ + 0.10; z += 0.0075) {
+      const a2 = sinir(G, z, 0.009), b2 = sinir(K, z, 0.009);
+      if (a2.enY < -8 || b2.azY > 8) continue;
+      dilim++;
+      const yarik = b2.azY - a2.enY;
+      if (yarik > enYarik) { enYarik = yarik; nerede = z; }
+    }
+    check('omuz boyunca kol ile gövde arasında yarık yok', enYarik <= 0.004,
+      `en büyük yarık ${(1000 * enYarik).toFixed(1)} mm @ z ${nerede.toFixed(3)}`
+      + ` · ${dilim} dilim · kusurlu hâlinde 51 mm`);
+    check('TERS SINAV: sınav omzun ÜSTÜNÜ de örnekliyor', dilim >= 18,
+      `${dilim} dilim (yalnız mafsal hizasına bakan bir sınav 51 mm'lik`
+      + ' yarığı göremezdi: orada ikisi 1 mm ile değiyordu)');
+  }
+  S.uygulaPoz(S.poz);
+}
+
+/* ── 23 BİLEK BACAĞIN EN DAR YERİ ──────────────────────────────────
+ *
+ * Ölçülen kusur - tabandan yukarı doğru enler ve o enin sahibi:
+ *
+ *     z 0,00-0,08   0,170   çizme gövdesi   (beyan edilen AYAK_EN_M ile aynı)
+ *     z 0,10-0,14   0,199   manşet körüğü
+ *     z 0,16        0,193   bilek eklem gövdesi
+ *     z 0,18-0,20   0,214   bilek yatak halkası
+ *     z 0,22+       0,222   baldır, dize doğru 0,253'e
+ *
+ * Yani bacak dizden aşağı BOYUNCA genişliyor ve üzerindeki en dar şey AYAK
+ * oluyordu. Böyle bir bacakta bilek diye bir şey yoktur: konik bir direk ve
+ * ucunda yassı bir ped vardır - "ayaklar sorunlu duruyor" cümlesinin
+ * ölçülebilir hâli budur.
+ *
+ * Kapı tek bir sayıyı değil SIRAYI ölçer: baldır > bilek < ayak. Tek tek
+ * sayılara bakan bir kapı, üçü birden büyüyünce hiçbir şey söylemezdi.
+ */
+console.log('\n== 23 bilek bacağın en dar yeri');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const AP = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-parts.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik', ao: false });
+  S.root.updateMatrixWorld(true);
+  const v = new THREE.Vector3();
+
+  /* Bacak + çizme birlikte: ayrı ayrı ölçmek, aradaki manşeti kimsenin
+     üstüne yazmaz ve tam orada kusur vardı. */
+  const en = (z) => {
+    let enY = -9, azY = 9;
+    for (const d of [S.eklem.diz[0], S.nodes.get('cizmeler')]) {
+      d.updateWorldMatrix(true, true);
+      d.traverse((m) => {
+        if (!m.isMesh || !m.geometry?.attributes?.position) return;
+        const q = m.geometry.attributes.position;
+        for (let i = 0; i < q.count; i++) {
+          v.fromBufferAttribute(q, i).applyMatrix4(m.matrixWorld);
+          if (Math.abs(v.z - z) > 0.008) continue;
+          if (v.y > enY) enY = v.y;
+          if (v.y < azY) azY = v.y;
+        }
+      });
+    }
+    return enY > -8 ? enY - azY : null;
+  };
+
+  const zB = S.eklem.ayak[0].getWorldPosition(new THREE.Vector3()).z;
+  /* Ayak: tabanın hemen üstü. Bilek: mafsalın çevresi. Baldır: mafsalın
+     15 cm üstü, yani konvolütün dışında. */
+  const ayakEn = Math.max(...[0.02, 0.04, 0.06].map((z) => en(z) ?? 0));
+  const bilekEn = Math.min(...[-0.04, -0.02, 0, 0.02].map((d) => en(zB + d) ?? 9));
+  const baldirEn = Math.max(...[0.12, 0.15, 0.18].map((d) => en(zB + d) ?? 0));
+  console.log(`  ayak ${ayakEn.toFixed(3)} · bilek ${bilekEn.toFixed(3)} · baldır ${baldirEn.toFixed(3)}`);
+
+  check('bilek ayaktan dar', bilekEn < ayakEn,
+    `bilek ${bilekEn.toFixed(3)} · ayak ${ayakEn.toFixed(3)}`
+    + ` · kusurlu hâlinde bilek 0,214, ayak 0,170`);
+  check('bilek baldırdan dar', bilekEn < baldirEn,
+    `bilek ${bilekEn.toFixed(3)} · baldır ${baldirEn.toFixed(3)}`);
+  /* Bilek ne kadar dar olabilir: iki yanındakinin %60'ından ince bir bilek
+     bacağı kırık gösterir. Üst sınır da var, çünkü asıl kusur oydu. */
+  const oran = bilekEn / Math.min(ayakEn, baldirEn);
+  check('bilek incelmesi abartılı değil', oran > 0.6 && oran < 0.98,
+    `bilek / komşusu = ${oran.toFixed(2)} (0,60…0,98)`);
+
+  /* Çizmenin PLANDAN biçimi: yürüdüğü yönü söylemek zorunda. */
+  const b = new THREE.Box3().setFromObject(S.nodes.get('cizmeler'));
+  const boyEn = (b.max.x - b.min.x) / ayakEn;
+  check('çizme plandan boyuna uzun', boyEn > 1.8,
+    `boy/en ${boyEn.toFixed(2)} (kare bir ayak yürüdüğü yönü söylemez)`);
+  check('çizilen ayak eni beyan edilene uyuyor',
+    Math.abs(ayakEn - AP.AYAK_EN_M) < 0.012,
+    `çizilen ${ayakEn.toFixed(3)} · beyan ${AP.AYAK_EN_M}`);
+  S.uygulaPoz(S.poz);
 }
 
 console.log(`\n${total - fails}/${total} geçti`);

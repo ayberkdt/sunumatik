@@ -31,7 +31,8 @@
  */
 import {
   PARTS, partById, BOY_M, OMUZ_M, BOYUN_CAP_M, DIKEY, UYLUK_M, BALDIR_M,
-  AYAK_ON_M, AYAK_ARKA_M, AYAK_EN_M, EL_CERCEVE, PANEL_SEMASI, kopyaKonumlari,
+  AYAK_ON_M, AYAK_ARKA_M, AYAK_EN_M, EL_CERCEVE, PANEL_SEMASI, OMUZ_MAFSAL_Y,
+  kopyaKonumlari,
   EKLEMLER, POZ_EKLEM, sinirla,
 } from './astro-parts.mjs';
 import { supur, uzuvKesiti, govdeKesiti, cizmeGovdesi, ayakEni, ayakBoyu,
@@ -152,7 +153,7 @@ function konvolut(THREE, M, wUst, dUst, wAlt, dAlt, boy, n = 4, {
      gökyüzü ışığı sıfır olduğu için - tamamen siyah çıkıyor ve körük bir
      lastik akordeon gibi okunuyordu. Gerçek konvolüt kıvrımı yarıçapın
      onda biri kadardır. */
-  derinlik = 0.10, dilim = null, halka = 30,
+  derinlik = 0.16, dilim = null, halka = 30,
 } = {}) {
   const g = new THREE.Group();
   /* Dilim sayısı KIVRIM BAŞINA en az 8 olmalı: daha azı kıvrımı üçgen
@@ -166,7 +167,16 @@ function konvolut(THREE, M, wUst, dUst, wAlt, dAlt, boy, n = 4, {
        kosinüs tam bunu verir. */
     const faz = Math.cos(Math.PI * 2 * n * t);
     const dalga = Math.sign(faz) * Math.abs(faz) ** 0.7;
-    const k = 1 + derinlik * dalga;
+    /* KIVRIM DIŞARI DOĞRU. Dalga [-1, +1] aralığında uygulanıyordu, yani
+       oluk taban yarıçapın 0,90 katına İNİYORDU - ve altındaki uzuv oradan
+       DIŞARI çıkıyordu. Dirsekte körüğün tabanı sy*0,59, üst kolun alt
+       yarıçapı sy*0,574; oluk 0,531'e inince kol her iki kıvrımın arasından
+       görünüyor ve körük testere dişine dönüyordu. Dizde aynısı: oluk 0,297,
+       uyluk 0,325.
+       Gerçek bir konvolüt BÜZÜLMÜŞ bir borudur: en dar yeri borunun kendisi,
+       kıvrımlar ondan dışarı taşar. Dalga artık [0, +derinlik]; sırt aynı
+       yerde, kaybolan şey hiç var olmaması gereken kısım. */
+    const k = 1 + derinlik * (dalga + 1) / 2;
     return {
       w: w * k, d: d * k, p: 2.3,
       kapitone: null,                      // kıvrımın kendisi zaten desendir
@@ -495,18 +505,23 @@ function govde(THREE, p, M, yan = 0) {
            GÖREMEZ: onun ışınları mafsalın kendi çevresinde döner, 40 mm
            aşağıdaki bir bandın üstünden geçer. */
         const baldir = uzuvMesh(THREE, M.kumas, BALDIR_M - 0.07, uzuvKesiti({
-          ustW: sy * 0.3, ustD: sx * 0.3, altW: sy * 0.244, altD: sx * 0.25,
+          /* BALDIR BİLEĞE DARALIR. Alt ucu sy*0,244 iken bilek bandı
+             0,214-0,222 m'ye çıkıyor ve bacağın en dar yeri AYAK oluyordu;
+             öyle bir bacakta bilek diye bir şey yoktur. */
+          ustW: sy * 0.3, ustD: sx * 0.3, altW: sy * 0.162, altD: sx * 0.172,
           sis: 0.07, sisT: 0.25, p: 2.2, kapitone: [2, 0.03], dikis: [8, 0.04], kirisik: [1.6, 0.022],
         }), { dilim: 20, halka: 32 });
         baldir.position.z = -0.07;
         baldir.castShadow = true; baldir.receiveShadow = true;
         baldir.userData.rol = 'bolum';
         diz.add(baldir);
-        const ayakY = yatakHalkasi(THREE, M, sy * 0.215, { kalin: 0.013, tirnak: 6 });
+        /* BİLEK YATAĞI BACAĞIN EN DAR YERİDİR. 0,215'te halkanın kendisi
+           0,214 m'ye çıkıp bacağın en geniş noktalarından biri oluyordu. */
+        const ayakY = yatakHalkasi(THREE, M, sy * 0.15, { kalin: 0.012, tirnak: 6 });
         ayakY.position.z = -BALDIR_M;
         diz.add(ayakY);
         /* AYAK BİLEĞİ EKLEMİ: bilek en dar mafsal ve en çok bükülen yer. */
-        const ayakEk = mafsalGovdesi(THREE, M.kumasGolge, sy * 0.235, sx * 0.24);
+        const ayakEk = mafsalGovdesi(THREE, M.kumasGolge, sy * 0.158, sx * 0.168);
         ayakEk.position.z = -BALDIR_M;
         diz.add(ayakEk);
         /* Havalandırma hattı baldırın arkasından iner. */
@@ -577,9 +592,14 @@ function govde(THREE, p, M, yan = 0) {
         const yogun = Math.abs(u - 0.22) < 0.14 || Math.abs(u - 0.68) < 0.16;
         /* Çubuk kalıbın o istasyondaki eninde ve ondan DAR: tabanın
            kenarından taşan bir diş, tabanın dışına çizilmiş bir çizgidir. */
-        const d = ekle(new THREE.Mesh(pahliKutuGeo(
-          uzunluk * (yogun ? 0.045 : 0.028), AYAK_EN_M * 0.76 * ayakEni(u),
-          boy * 0.05), M.taban));
+        /* ÇUBUĞUN ENİ, İKİ UCUNUN DARINDAN. Merkez istasyonundan alınınca
+           çubuk yarım boyu kadar ÖNE uzanıyor ve kalıbın orada daralmış
+           olduğu yere taşıyordu: burunda dişler tabanın dışına çıkmış
+           çizgiler gibi görünüyordu. */
+        const cBoy = uzunluk * (yogun ? 0.045 : 0.028);
+        const cEn = AYAK_EN_M * 0.76 * Math.min(
+          ayakEni(u - cBoy / uzunluk / 2), ayakEni(u + cBoy / uzunluk / 2));
+        const d = ekle(new THREE.Mesh(pahliKutuGeo(cBoy, cEn, boy * 0.05), M.taban));
         d.position.set(-AYAK_ARKA_M + u * uzunluk, 0, tabanZ - boy * 0.012);
       }
 
@@ -590,27 +610,36 @@ function govde(THREE, p, M, yan = 0) {
          `gen`den kurulduğunda halkalar 0,266 m'ye çıkıyordu, yani çizme
          gövdesinden (0,221) geniş bir bilek. Bir bilek, bastığı ayaktan
          geniş olamaz. */
-      const bilekW = AYAK_EN_M * 0.46, bilekD = AYAK_EN_M * 0.52;
+      /* MANŞET AYAKTAN DAR. 0,46 ile körüğün sırtı 0,199 m'ye çıkıyordu -
+         beyan edilen ayak eninin (0,17) üstü. Bir overshoe bileği sarar,
+         ayağı değil; en geniş yeri her zaman ayağın bilyesidir.
+         (Körüğün kıvrımı artık yalnız DIŞARI taştığı için bu çarpan
+         eskisinden daha çok iş yapıyor: sırt 1,1 × 1,16 kat.) */
+      const bilekW = AYAK_EN_M * 0.33, bilekD = AYAK_EN_M * 0.38;
       g.add(yatakHalkasi(THREE, M, bilekW, { kalin: 0.012, tirnak: 6 }));
       const mans = konvolut(THREE, M, bilekW, bilekD, bilekW * 1.1, bilekD * 1.08,
         boy * 0.34, 3);
       mans.position.z = -boy * 0.06;
       g.add(mans);
 
-      /* BAĞ KAYIŞI çizmenin ETRAFINI sarar ve ölçüsü kalıptan gelir; bir
-         zamanlar `uz * 0.8` yarıçap yerine konduğu için 0,657 m'lik, ayağa
-         hiç değmeyen düz bir çember dönüyordu. */
       const kayisU = 0.42;                          // bilyenin biraz gerisi
-      const kayisW = AYAK_EN_M * 0.5 * ayakEni(kayisU) * 1.14;
-      const kayis = ekle(new THREE.Mesh(
-        new THREE.TorusGeometry(kayisW, gen * 0.045, 8, 22), M.koyu));
-      kayis.scale.set(uzunluk * 0.16 / kayisW, 1, 1);
-      kayis.position.set(-AYAK_ARKA_M + kayisU * uzunluk, 0,
-        tabanZ + govdeBoy * ayakBoyu(kayisU) * 0.52);
+      /* BAĞ KAYIŞI KALDIRILDI - ve neden kaldırıldığı burada duruyor.
+         Önce yatay bir çemberdi (`TorusGeometry` varsayılan ekseniyle), yani
+         çizmeyi bir yükseklikte çevreleyen bir lastik bant. Ekseni ayağın
+         boyuna çevrildi, eni kalıptan boyu profilden alındı, %94'e
+         içerlendi - ve her denemede yüzeyden ayrılıp havada duran bir tel
+         halka olarak kaldı. Sebebi yapısal: çizmenin kesiti SÜPERELİPS,
+         kayış ise elips; ikisi yalnız dört noktada buluşur, aradaki
+         açılarda biri ötekinin dışına çıkar.
+         Yüzeye OTURAN bir kayış, ayrı bir halka değil `cizmeGovdesi`nin
+         kendi kesitinden türeyen bir banttır - o da biçim dilinde bir u
+         aralığı parametresi ister. Yüzeyden ayrık duran bir kayış, hiç
+         kayış olmamasından kötüdür; tarak plakası kalır. */
       const toka = ekle(new THREE.Mesh(
         pahliKutuGeo(uzunluk * 0.06, gen * 0.09, boy * 0.05), M.eloksal));
+      /* Toka kayışın ÜSTÜNDE, çizmenin sırtında. */
       toka.position.set(-AYAK_ARKA_M + kayisU * uzunluk, 0,
-        tabanZ + govdeBoy * ayakBoyu(kayisU) * 1.02);
+        tabanZ + govdeBoy * ayakBoyu(kayisU) * 0.97);
 
       /* Topuk klipsi: çizme bir kutu değil, BAĞLANAN bir şeydir. */
       const klips = ekle(new THREE.Mesh(
@@ -658,9 +687,46 @@ function govde(THREE, p, M, yan = 0) {
          DÜŞER; düz bir tepe çizgisi gövdeyi kutu yapar ve bir insan
          siluetinde omuz hiçbir zaman yatay değildir. */
       for (const s of [-1, 1]) {
-        const om = ekle(new THREE.Mesh(new THREE.SphereGeometry(sy * 0.24, 26, 18), M.kumas));
-        om.scale.set(sx * 0.5 / (sy * 0.24) * 0.58, 1, 0.8);
+        /* BOYUNDURUK MAFSAL ÇİZGİSİNE KADAR GİDER. Ölçülen kusur: omuzun
+           ÜSTÜNDE (mafsal+0,06) gövde ile kol arasında 52,6 mm boşluk
+           vardı - mafsal çizgisi boyunca ise ikisi 1-3 mm ile değiyor. Yani
+           kol gövdeden AYRI DURMUYORDU; omuzun tepesinde, bir omzun tek
+           parça olması gereken yerde bir yarık vardı. Boyunduruk sy*0,31'de
+           duruyor ve dış kenarı beyan edilen mafsal çizgisine (0,300)
+           yetişmiyordu.
+           Taşınan şey MAFSAL DEĞİL, onu örtmesi gereken kabuktur; mafsalı
+           taşımak denendi, ölçüldü ve geri alındı (`OMUZ_MAFSAL_Y`). */
+        const omR = sy * 0.24;
+        const om = ekle(new THREE.Mesh(new THREE.SphereGeometry(omR, 26, 18), M.kumas));
+        om.scale.set(sx * 0.5 / omR * 0.58, 1, 0.8);
+        /* BOYUNDURUK YERİNDE KALIR. Dış kenarını mafsal çizgisine dayamak
+           denendi ve ÖLÇÜM REDDETTİ: omuzun üstündeki 52,6 mm'lik boşluk
+           hiç değişmedi (çünkü boşluk boyunduruğun DEĞİL, gövdenin tepesi
+           ile kol kapağının arasında), buna karşılık `ust-govde` zarfının
+           1,29 katına çıktı ve göğüs paneli gövdeden koptu. Yanlış parçayı
+           büyütmek, doğru boşluğu kapatmaz. */
         om.position.set(0, s * sy * 0.31, sz * 0.2);
+        /* KOL YATAĞI KÖPRÜSÜ. Ölçülen boşluk z 1,62…1,66 bandında, 29-51 mm;
+           altında ve üstünde yok. Köprü tam o bandı kapatır: boyunduruğun
+           dış kenarından mafsal çizgisine uzanan, omuz hattını izleyen yassı
+           bir kabuk. Gerçek giyside bu, kol yatağının gövdeye dikildiği
+           halkadır (scye) - ve orada omuz tek parçadır.
+           Yeri MAFSAL ÇİZGİSİNDEN türer, elle verilmez: iki ucu neyi
+           bağladığıysa, konumu da odur. */
+        const kopruIc = sy * 0.31 + sy * 0.24 * 0.35;     // boyunduruğun dış kenarı
+        const kopruY = (kopruIc + OMUZ_MAFSAL_Y) / 2;
+        const kopru = ekle(new THREE.Mesh(new THREE.SphereGeometry(1, 22, 14), M.kumas));
+        /* İKİ UCU NEREYSE, ORAYA OTURUR. İlk denemede yarıçap ile yarım
+           açıklık karıştırıldı ve köprü 0,356'ya, gövdenin beyan edilen
+           yarı eninin (0,308) dışına taştı; yüksekliği de ölçülen banttan
+           (1,62…1,66) 45 mm aşağıda kaldı, yani boşluğu hiç görmedi. */
+        /* TEPESİ BOYUN ÖLÇÜMÜNÜN ALTINDA KALIR. 1,671'e çıktığında siluetin
+           en dar noktası artık boyun değil köprü oluyordu (0,339 m,
+           beyan edilen boyun çapı 0,26) ve iki boyun kapısı düştü. Boşluk
+           zaten 1,62…1,65 bandında; köprünün onun ötesine geçmesi için bir
+           sebep yok. */
+        kopru.scale.set(sx * 0.27, (OMUZ_MAFSAL_Y - kopruIc) / 2, sz * 0.047);
+        kopru.position.set(sx * 0.06, s * kopruY, sz * 0.457);
         /* Boyundan omuza İNEN eğim. İlk denemede kütleler hem yüksek hem
            x'te 1,7 kat gerili olduğu için omuz düz bir RAFA dönüyordu -
            eğim vermek isterken tam tersini yapıyordu. Küçük, dar ve gerçekten
@@ -1208,18 +1274,34 @@ function govde(THREE, p, M, yan = 0) {
       const bub = ekle(new THREE.Mesh(
         kureGeoZ(R, 44, 26, 0, TAU, 0, bubTheta), M.cam));
       bub.position.z = sz * 0.06;
+      /* AÇIKLIK VE LEVA YAYI VİZÖRDEN ÖNCE TÜRETİLİR, çünkü vizörün
+         kaplayacağı şey tam olarak bu açıklıktır.
+         AÇIKLIK 0,92 rad (105°) idi ve bir YARIK gibi okunuyordu; referans
+         kaskın açıklığı kabarcığın bütün önünü gösterir. 1,12 rad = 128°. */
+      const acik = 1.12;                       // ön açıklığın yarı açısı (rad)
+      const levaR = R * 1.1;
+      /* LEVA'NIN ALT KENARI BOYUN ÇİZGİSİNDE. 158°'ye kadar süpürüldüğünde
+         kabuğun altı 1,568'e iniyor ve omuz boyunduruğunun içinden geçiyordu.
+         Bitiş açısı beyan edilen boyundan türer. */
+      const levaSon = Math.acos(Math.max(-1, Math.min(1,
+        (DIKEY.boyun + 0.012 - (p.pos[2] + sz * 0.06)) / levaR))) / RAD;
+
       /* Altın vizör KALDIRILMIŞ durumda. İndirilmişken içerideki kişi
          görünmez ve vitrinin işi giysiyi giyen birini göstermek; menteşe de
          ancak kullanıldığında menteşe olduğunu belli eder. Gölgede indirilir. */
       const vpts = [];
-      /* Vizör LEVA'nın ön açıklığını TAMAMEN doldurur. Daha dar bir bant
-         bırakıldığında açıklığın altı beyaz kalıyordu; referans fotoğrafta
-         kaskın bütün önü altın bir aynadır. */
-      for (let i = 0; i <= 14; i++) {
-        const a = (14 + (i / 14) * 118) * RAD;
+      /* VİZÖRÜN YAYI AÇIKLIKTAN TÜRER. Sabit 14°…132° yazılıydı ve LEVA'nın
+         alt kenarı sonradan boyun çizgisinden türetilince açıklığın alt
+         18°'si vizörsüz kaldı: altın bandın altından kabarcık beyaz
+         görünüyordu ve yüz garip okunuyordu. Üstündeki yorum "açıklığı
+         TAMAMEN doldurur" diyordu - yazıldığı gün doğruydu. Birbirine uyması
+         gereken iki sayı, tek sayıdır. */
+      for (let i = 0; i <= 16; i++) {
+        const a = (6 + (i / 16) * (levaSon + 2 - 6)) * RAD;
         vpts.push(new THREE.Vector2(R * 1.06 * Math.sin(a), R * 1.06 * Math.cos(a)));
       }
-      const viz = ekle(latheZYonlu(vpts, 44, M.vizor, PHI_Z.on, 3.24));
+      /* Yay da açıklıktan geniş: kenarları LEVA'nın altında kalsın. */
+      const viz = ekle(latheZYonlu(vpts, 48, M.vizor, PHI_Z.on, 2 * acik + 0.5));
       viz.position.z = sz * 0.06;
       /* VİZÖR İNİK. Referans Apollo fotoğrafında altın vizör indirilmiştir ve
          AYNA gibi davranır - kaskın önü, karşısındakini yansıtan altın bir
@@ -1237,7 +1319,9 @@ function govde(THREE, p, M, yan = 0) {
         const a = (17 + (i / 8) * 20) * RAD;
         spts.push(new THREE.Vector2(R * 1.09 * Math.sin(a), R * 1.09 * Math.cos(a)));
       }
-      const sip = ekle(latheZYonlu(spts, 32, M.kumasGolge, PHI_Z.on, 1.9));
+      /* Siperlik açıklığın içinde kalır: daha genişi kaskı siyah bir
+         başlığa çevirip altındaki altın vizörü gölgeliyor. */
+      const sip = ekle(latheZYonlu(spts, 32, M.kumasGolge, PHI_Z.on, Math.min(1.9, 2 * acik - 0.5)));
       sip.position.z = sz * 0.06;
       /* LEVA: kaskın üstüne geçen BEYAZ dış miğfer - Apollo siluetinin en
          tanınır parçası. İlk denemede kısmi bir küre + torus ağızlık + iki
@@ -1246,14 +1330,6 @@ function govde(THREE, p, M, yan = 0) {
          kalanı kapatmak tek çağrı. (Burada bir kez "phi = 0 öne bakıyor"
          yazıyordu; ölçüm phi = 0'ın −Y'ye, yani figürün SAĞINA baktığını
          söyledi ve bu kabuk beş kardeşiyle birlikte 90° yan duruyordu.) */
-      const acik = 0.92;                       // ön açıklığın yarı açısı (rad)
-      /* LEVA'NIN ALT KENARI DA BOYUN ÇİZGİSİNDE. 158°'ye kadar süpürüldüğünde
-         kabuğun altı 1,568'e iniyor ve omuz boyunduruğunun içinden geçiyordu.
-         Bitiş açısı beyan edilen boyundan türer: kabuk merkezi ile boyun
-         arasındaki farkın (R*1,1)'e oranının ark kosinüsü. */
-      const levaR = R * 1.1;
-      const levaSon = Math.acos(Math.max(-1, Math.min(1,
-        (DIKEY.boyun + 0.012 - (p.pos[2] + sz * 0.06)) / levaR))) / RAD;
       const lpts = [];
       for (let i = 0; i <= 14; i++) {
         const a = (8 + (i / 14) * (levaSon - 8)) * RAD;
@@ -1282,7 +1358,14 @@ function govde(THREE, p, M, yan = 0) {
           const a = (34 + (i / 10) * 74) * RAD;
           ypts.push(new THREE.Vector2(R * 1.17 * Math.sin(a), R * 1.17 * Math.cos(a)));
         }
-        const yv = ekle(latheZYonlu(ypts, 16, M.kumas, PHI_Z.on + yon * (acik + 0.16), 0.52));
+        /* YAN KANATLAR AÇIKLIKLA BİRLİKTE DIŞARI AÇILMAZ. Açıklık 0,92'den
+           1,12 rad'a genişleyince kanatlar da dışarı kayıp kaskı 0,386 m'ye
+           çıkardı - beyan edilen 0,33'ün %17 üstü, zarf payı %15. Kanadın
+           YERİ menteşededir ve menteşe kabuğun yanındadır; açıklığın
+           genişlemesi onu taşımaz. Kanadın öne çevrilmiş hâli bir DURUMDUR,
+           bir ölçü değil - ve ölçüyü belirleyen, habitat kapısıdır. */
+        const kanatAci = Math.min(acik + 0.16, 1.08);
+        const yv = ekle(latheZYonlu(ypts, 16, M.kumas, PHI_Z.on + yon * kanatAci, 0.52));
         yv.position.z = sz * 0.06;
         /* Menteşe braketi: kanadın döndüğü yer görünür olmak zorunda. */
         const br = ekle(new THREE.Mesh(

@@ -101,7 +101,12 @@ export const BOYUN_CAP_M = 0.26;
  * derin olmak zorundadır.
  */
 export const YUZEY_RITMI = Object.freeze({
-  konvolutDerinlik: 0.10,        // yarıçapa oran, mafsalda
+  /* DERİNLİK 0,10 → 0,16. Kıvrım artık taban yarıçapın İKİ yanına değil
+     yalnız DIŞINA taşıyor (sebebi `konvolut`ta: oluk uzvun içine iniyor ve
+     uzuv kıvrımların arasından görünüyordu). Aynı taban etrafında salınan
+     0,10, sırtı oluktan %20 yukarıda bırakıyordu; tek yönlü 0,16 ise %16 -
+     görünen belirginlik yaklaşık korunur, uzvun içine inen kısım kalmaz. */
+  konvolutDerinlik: 0.16,        // yarıçapa oran, mafsalda, TABANDAN DIŞARI
   kapitoneDerinlikTavan: 0.035,  // yarıçapa oran, bölüm boyunca
   kapitoneSiklikTavan: 9,        // metrede bant
   ayrimOrani: 2.5,               // körük / kapitone, hem sıklıkta hem derinlikte
@@ -411,8 +416,12 @@ export const PARTS = Object.freeze([
        x = 0 ile bilek kalıbın beyan edilen yerine oturur. */
     pos: [0, 0.145, 0.10], size: [0.36, 0.19, 0.22], yon: 'yan', ayna: 'y', sekil: 'cizme',
     /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
-    zarfOran: 0.25,
-    zarfNeden: 'Taban ayaktan geniştir (basma alanı: 1,06 kat) ve manşet halkaları bileği sarar. Çizilen 0,366 x 0,231 - artık boyundan geniş değil, ki bir ayağın yürüdüğü yönü söyleyen tek şey odur.',
+    /* ZARF PAYI KALDIRILDI (0,25 idi). Payın çoğunu manşet yiyordu: körük
+       sırtı 0,199 m'ye, beyan edilen ayak eninin (0,17) üstüne çıkıyor ve
+       bacağın EN DAR yeri ayak oluyordu. Manşet bileği saracak kadar
+       daraltılınca çizilen ×1,10'a indi, yani varsayılan payın (0,12)
+       altına - ayrı bir beyana gerek kalmadı. Gereksiz bir pay, ölçülmemiş
+       bir taşmanın saklanabileceği yerdir ve kapı da tam bunu söylüyor. */
     tech: {
       no: 'AS-MOB-021',
       malzeme: 'Silicone sole, ortho-fabric upper, metal shank',
