@@ -1445,7 +1445,10 @@ console.log('\n== 16 ek yeri: kask ile gövde buluşuyor mu');
   const ortak = (a, b) => { let n = 0; for (const k of a) if (b.has(k)) n++; return n; };
   const govdeH = hucreler('ust-govde');
   const n = ortak(hucreler('kask'), govdeH);
-  check('kask ile gövde iç içe geçmiyor', n <= 130,
+  /* EŞİK 95: ölçülen 66. Kusurlu hâli 223'tü ve kaskı 60 mm indirmek 109
+     veriyor - eşik ikisinin arasında ve ölçülene yakın durmalı, yoksa
+     ratchet gevşer. */
+  check('kask ile gövde iç içe geçmiyor', n <= 95,
     `${n} ortak hücre (1 cm) · kusurlu hâlinde 223`);
 
   /* Kaskın hiçbir parçası boyun çizgisinin çok altına inmemeli. Vizör
@@ -1479,7 +1482,7 @@ console.log('\n== 16 ek yeri: kask ile gövde buluşuyor mu');
     k.position.z -= 0.06; k.updateMatrixWorld(true);
     const n2 = ortak(hucreler('kask'), govdeH);
     k.position.z += 0.06; k.updateMatrixWorld(true);
-    check('TERS SINAV: kask 60 mm indirilince iç içe geçme yakalanıyor', n2 > 130,
+    check('TERS SINAV: kask 60 mm indirilince iç içe geçme yakalanıyor', n2 > 95,
       `${n} → ${n2} ortak hücre`);
   }
 }
@@ -1606,6 +1609,88 @@ console.log('\n== 17 kolun eksenleri');
       `${(1000 * a.distanceTo(b)).toFixed(4)} mm`);
   }
   S.uygulaPoz(sifir);
+}
+
+/* ── 18 UZUV BOYUNCA ÇIPLAK BANT VAR MI ─────────────────────────────
+ *
+ * Bölüm 6 mafsalın ÇEVRESİNDE boşluk arar: 0,6 m uzaktan, büküm düzleminde,
+ * menzili mafsalda duran ışınlar. O sınav dizin 40 mm ALTINDAKİ bir bandı
+ * GÖREMEZ, çünkü ışınların hiçbiri oradan geçmez - ve tam orada bir delik
+ * vardı: baldır dizin 0,16 m altından başlıyordu, diz gövdesinin yarı boyu
+ * ise 0,137, yani aradaki 23 mm'de hiçbir yüzey yoktu. Siluet genişliği
+ * 0,281'den 0,047'ye düşüyordu.
+ *
+ * ÖLÇÜT genişliğin MEDYANA oranıdır, ikinci fark DEĞİL: körüğün kıvrımları
+ * da ikinci farkı yüz milimetrelere çıkarır ve o kıvrımlar kusur değil
+ * tasarımdır. Bir delik ise genişliği çökertir.
+ *
+ * Ölçüm SIFIR DURUŞTA ve uzvun kendi zincirinde yapılır; sabit bir x'ten tek
+ * yönlü ışın atmak uzvun ekseni orada durmadığında daha dar bir KİRİŞ ölçer -
+ * ilk deneme tam bu yüzden olmayan bir kusur raporladı.
+ */
+console.log('\n== 18 uzuv boyunca çıplak bant');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik', ao: false });
+  S.uygulaPoz({ omuz: [0, 0], dirsek: [0, 0], kalca: [0, 0], diz: [0, 0], ayak: [0, 0],
+    govdeEgim: 0, govdeDonme: 0, basDonme: 0, kalcaZOfset: 0 });
+  S.root.updateMatrixWorld(true);
+
+  /* YARIM GENİŞLİK ölçülür: mafsalın kendi y'sinden uzvun DIŞ yüzeyine.
+     İki yandan ölçmek kalçada işe yaramıyor - orada iki bacak aynı zincirde
+     ve merkez çizgisinden atılan iç ışın leğenin İÇİNDEN başlıyor, hiçbir ön
+     yüze çarpmıyor, ölçüm boş dönüyordu. Dış yüzeye olan mesafe hem üç
+     mafsalda da aynı anlama gelir hem de bir deliği aynı biçimde gösterir. */
+  const profil = (zincir, merkez, alt, ust) => {
+    const hedef = [];
+    zincir.traverse((o) => { if (o.isMesh) hedef.push(o); });
+    const rc = new THREE.Raycaster(); rc.far = 3;
+    const c = merkez.getWorldPosition(new THREE.Vector3());
+    const sat = [];
+    for (let dz = alt; dz <= ust + 1e-9; dz += 0.005) {
+      const z = c.z + dz;
+      const disari = Math.sign(c.y) || 1;
+      rc.set(new THREE.Vector3(c.x, disari * 2, z), new THREE.Vector3(0, -disari, 0));
+      const a = rc.intersectObjects(hedef, false);
+      if (!a.length) { sat.push(0); continue; }
+      sat.push(Math.abs(disari * 2 - disari * a[0].distance - c.y));
+    }
+    return sat;
+  };
+  const oran = (sat) => {
+    const sirali = [...sat].sort((x, y) => x - y);
+    const medyan = sirali[Math.floor(sirali.length / 2)];
+    return { en: Math.min(...sat), medyan, oran: Math.min(...sat) / medyan };
+  };
+
+  for (const [ad, zincir, merkez, alt, ust] of [
+    ['diz', S.eklem.kalca[0], S.eklem.diz[0], -0.20, 0.20],
+    ['kalça', S.nodes.get('alt-govde'), S.eklem.kalca[0], -0.18, 0.06],
+    ['dirsek', S.eklem.omuz[0], S.eklem.dirsek[0], -0.20, 0.20],
+  ]) {
+    const r = oran(profil(zincir, merkez, alt, ust));
+    check(`${ad} boyunca çıplak bant yok (en dar / medyan ≥ %60)`, r.oran >= 0.60,
+      `en dar ${r.en.toFixed(3)} · medyan ${r.medyan.toFixed(3)} · %${(100 * r.oran).toFixed(0)}`);
+  }
+
+  /* TERS SINAV: baldırı 90 mm aşağı itmek bandı geri açmalı. */
+  {
+    let baldir = null;
+    S.eklem.diz[0].traverse((o) => {
+      if (!o.isMesh || o.userData.mafsalGovdesi) return;
+      const b = new THREE.Box3().setFromObject(o);
+      if (b.getSize(new THREE.Vector3()).z > 0.3 && !baldir) baldir = o;
+    });
+    const once = baldir.position.z;
+    baldir.position.z -= 0.09;
+    S.root.updateMatrixWorld(true);
+    const r = oran(profil(S.eklem.kalca[0], S.eklem.diz[0], -0.20, 0.20));
+    baldir.position.z = once;
+    S.root.updateMatrixWorld(true);
+    check('TERS SINAV: baldır 90 mm aşağı itilince bant yakalanıyor', r.oran < 0.60,
+      `%${(100 * r.oran).toFixed(0)} (en dar ${r.en.toFixed(3)})`);
+  }
 }
 
 console.log(`\n${total - fails}/${total} geçti`);

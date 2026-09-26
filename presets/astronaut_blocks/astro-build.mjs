@@ -122,27 +122,55 @@ function kabuk(THREE, mat, r, boy, { seg = 22, uc = 0.5 } = {}) {
  * Kıvrımlar hacmi sabit tutar; olmayınca mafsal bükülmez, sıkışır.
  * Halkalar da eliptiktir: mafsal yuvarlak değil, uzvun kesitini izler.
  */
-function konvolut(THREE, M, wUst, dUst, wAlt, dAlt, boy, n = 4) {
+/**
+ * KONVOLÜT — basınçlı mafsalın körüğü, TEK yüzey.
+ *
+ * Ölçülen kusur: diz ekseni boyunca yarıçap 0,150'den 0,042'ye düşüp geri
+ * çıkıyordu; iki santimetrede 113,7 mm'lik ikinci fark. Sebep yakın planda
+ * görülüyordu - körük ayrı bir ince kol ve üstüne dizilmiş AYRI simitlerdi,
+ * ve ışın iki simidin ARASINDAN geçip içerideki ince kola çarpıyordu.
+ * Halkaların arasından öteye bakılabiliyordu.
+ *
+ * Gerçek bir konvolüt mafsal tek parça bir duvardır ve o duvar KIVRILIR.
+ * Burada da öyle: kesit yarıçapı eksen boyunca salınan tek bir süpürme.
+ * Böylece halkalar arasında delik kalmaz, yüzey gerçekten süreklidir, ve
+ * körük de uzuvlarla aynı kapitone/dikiş/kırışık alanını taşır - simit
+ * yığını taşıyamazdı.
+ *
+ * `n` kıvrım sayısı, `derinlik` kıvrımın yarıçapa oranı. Dirsekte sık ve
+ * sığ, dizde seyrek ve derin olur; ikisi de çağıranın işidir.
+ */
+function konvolut(THREE, M, wUst, dUst, wAlt, dAlt, boy, n = 4, {
+  /* DERİNLİK 0,10. 0,17 ile oluklar o kadar dikleşiyordu ki vakumda -
+     gökyüzü ışığı sıfır olduğu için - tamamen siyah çıkıyor ve körük bir
+     lastik akordeon gibi okunuyordu. Gerçek konvolüt kıvrımı yarıçapın
+     onda biri kadardır. */
+  derinlik = 0.10, dilim = null, halka = 30,
+} = {}) {
   const g = new THREE.Group();
-  g.add(uzuvMesh(THREE, M.kumas, boy, uzuvKesiti({
-    ustW: wUst * 0.94, ustD: dUst * 0.94, altW: wAlt * 0.94, altD: dAlt * 0.94, sis: 0.01,
-  }), { dilim: 10, halka: 26 }));
-  for (let i = 0; i < n; i++) {
-    const t = (i + 0.5) / n;
-    const w = wUst + (wAlt - wUst) * t, d = dUst + (dAlt - dUst) * t;
-    /* KONVOLÜT HALKASI SİLUETE GİRER. Boru yarıçapı w*0,2, yani bir uzuvda
-       yaklaşık 28 mm: 10 kesit segmenti orada 36°'lik kenar açısı bırakır ve
-       giysinin en çok tekrar eden ayrıntısı (her uzuvda 3-4 halka, figürde
-       34 tane) köşeli görünür. 14 segment onu 26°'ye indirir. Bedel
-       HESAPLANDI (ölçülmedi, çünkü aynı sürümde eldiven de değişti):
-       34 halka x (14x30 - 10x28) x 2 = 9.520 üçgen, figürün ~%8'i. */
-    const k = new THREE.Mesh(new THREE.TorusGeometry(w, w * 0.2, 14, 30), M.kumasGolge);
-    k.scale.x = d / w;
-    k.position.z = -t * boy;
-    g.add(k);
-  }
+  /* Dilim sayısı KIVRIM BAŞINA en az 8 olmalı: daha azı kıvrımı üçgen
+     yapar ve körük testere dişine döner. */
+  const bol = dilim ?? Math.max(24, Math.round(n * 9));
+  const m = uzuvMesh(THREE, M.kumasGolge, boy, (t) => {
+    const w = wUst + (wAlt - wUst) * t;
+    const d = dUst + (dAlt - dUst) * t;
+    /* KIVRIM. Kosinüs değil, uçları YASSI bir dalga: bir körüğün sırtı
+       yuvarlak, oluğu dardır ve ikisi aynı eğri değildir. Üsse alınmış
+       kosinüs tam bunu verir. */
+    const faz = Math.cos(Math.PI * 2 * n * t);
+    const dalga = Math.sign(faz) * Math.abs(faz) ** 0.7;
+    const k = 1 + derinlik * dalga;
+    return {
+      w: w * k, d: d * k, p: 2.3,
+      kapitone: null,                      // kıvrımın kendisi zaten desendir
+      dikis: [6, 0.03], kirisik: [2.2, 0.014],
+    };
+  }, { dilim: bol, halka });
+  m.castShadow = true; m.receiveShadow = true;
+  g.add(m);
   return g;
 }
+
 
 /**
  * EKLEM GÖVDESİ — mafsalın merkezindeki cisim.
@@ -420,11 +448,18 @@ function govde(THREE, p, M, yan = 0) {
         kapak.rotation.x = Math.PI / 2;
         kapak.position.z = -0.05;
         diz.add(kapak);
-        const baldir = uzuvMesh(THREE, M.kumas, BALDIR_M - 0.16, uzuvKesiti({
+        /* UZUV MAFSAL GÖVDESİNİN İÇİNDE BAŞLAR, altında değil. Baldır
+           dizin 0,16 m altından başlıyordu; diz gövdesinin yarı boyu ise
+           0,137. Aradaki 23 mm'lik bant BOŞTU - siluet ölçümünde genişlik
+           0,281'den 0,047'ye düşüyor ve iki santimetrede 245 mm'lik bir
+           ikinci fark bırakıyordu. Süreklilik kapısı (bölüm 6) bunu
+           GÖREMEZ: onun ışınları mafsalın kendi çevresinde döner, 40 mm
+           aşağıdaki bir bandın üstünden geçer. */
+        const baldir = uzuvMesh(THREE, M.kumas, BALDIR_M - 0.07, uzuvKesiti({
           ustW: sy * 0.3, ustD: sx * 0.3, altW: sy * 0.244, altD: sx * 0.25,
           sis: 0.07, sisT: 0.25, p: 2.2, kapitone: [6, 0.07], dikis: [8, 0.04], kirisik: [1.6, 0.022],
         }), { dilim: 20, halka: 32 });
-        baldir.position.z = -0.16;
+        baldir.position.z = -0.07;
         baldir.castShadow = true; baldir.receiveShadow = true;
         diz.add(baldir);
         const ayakY = yatakHalkasi(THREE, M, sy * 0.215, { kalin: 0.013, tirnak: 6 });
@@ -753,11 +788,13 @@ function govde(THREE, p, M, yan = 0) {
       fincan.rotation.x = -Math.PI / 2;
       fincan.position.z = -sz * 0.05;
       dirsek.add(fincan);
-      const on = uzuvMesh(THREE, M.kumas, onBoy - sz * 0.17, uzuvKesiti({
+      /* Aynı kusur ön kolda da vardı: dirsekten sz*0,17 = 0,129 m aşağıdan
+         başlıyordu, dirsek gövdesinin yarı boyu ise 0,094. */
+      const on = uzuvMesh(THREE, M.kumas, onBoy - sz * 0.09, uzuvKesiti({
         ustW: sy * 0.541, ustD: sx * 0.54, altW: sy * 0.447, altD: sx * 0.45,
         sis: 0.06, sisT: 0.25, p: 2.2, kapitone: [6, 0.08], dikis: [6, 0.035], kirisik: [2.0, 0.025],
       }), { dilim: 18, halka: 30 });
-      on.position.z = -sz * 0.17;
+      on.position.z = -sz * 0.09;
       on.castShadow = true; on.receiveShadow = true;
       /* Ön kolun KENDİSİ döner, üst kol değil: dönen parça `onkolDon`un
          altındadır ve eldiven de oraya bağlanır. */
