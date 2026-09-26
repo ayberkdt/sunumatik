@@ -177,6 +177,88 @@ export function yuzeyAlbedoRGB(ad) {
  *
  * @returns { gunes, gokYer, yansima, butce, uygula(ad) }
  */
+/**
+ * ORTAM HARİTASI — yansıyacak bir dünya.
+ *
+ * NEDEN VAR
+ * ─────────
+ * `metalness > 0` olan bir yüzey, kendi rengini değil ÇEVRESİNİ gösterir.
+ * Ortam haritası olmayan bir sahnede yansıtacak hiçbir şey yoktur, dolayısıyla
+ * saf metal SİYAH çıkar. Astronot vitrininde bu tam olarak şöyle görünüyordu:
+ * altın vizör donuk bir delik, rulman halkaları koyu lekeler. O sayfada geçici
+ * çözüm metalness'ı 0,96'dan 0,55'e indirmekti - yani malzemeyi yalan söyleyip
+ * altını boyaya çevirmek. Doğrusu yansıtacak bir dünya vermektir.
+ *
+ * Harita UYDURULMAZ: sahnenin kendi ışık bütçesinden çıkar. Gök terimi,
+ * yer sıçraması ve güneş diski, ışıkları süren aynı lux değerleridir; ufuk
+ * çizgisi de dünya +Z'sine göredir, çünkü bu depoda yukarı +Z'dir.
+ *
+ * ÇİFT SAYIM. Ortam haritası hem yayınık hem aynasal katkı verir; yarım küre
+ * dolgusu ise yalnız yayınık. İkisini birden tam şiddetle bırakmak ortamı iki
+ * kez saymaktır. Çağıran taraf `rig.gokYer.intensity`'yi o kadar kısar -
+ * karar sayfada, sessizce burada değil.
+ *
+ * @returns { doku, at } doku: equirect DataTexture (PMREM'e verilir),
+ *                       at: haritanın taşıdığı yayınık pay (0..1)
+ */
+export function cevreHaritasi(THREE, ad = 'orbit', {
+  gunesYonu = [1, 1, 1], en = 256, gunesYariCapDeg = 2.5, beyazDenge = true,
+} = {}) {
+  const b = isikButcesi(ad);
+  const s = SAHNELER[ad];
+  if (!s) throw new Error(`scene-lighting: bilinmeyen sahne '${ad}'`);
+  const boy = en / 2;
+  const veri = new Float32Array(en * boy * 4);
+
+  /* Renkler bütçeden. Ölçek REFERANS_LUX'e göre normalize edilir, böylece
+     harita hangi gök cisminde olursak olalım aynı pozlamada oturur -
+     `pozlamaCarpani` ile aynı mantık. */
+  const olcek = 1 / REFERANS_LUX;
+  const gokR = bounceColorRGB(s.gokAlbedo ?? [0, 0, 0], beyazDenge);
+  const yerR = bounceColorRGB(s.yerAlbedo3, beyazDenge);
+  const gunR = sunColorRGB(beyazDenge);
+  const gokG = b.gokLux * olcek, yerG = b.yerLux * olcek;
+  /* Güneş diski: gerçek açısal yarıçap 0,27° ve 256x128'de bir teksele bile
+     düşmez. Disk BÜYÜTÜLÜR ve parlaklığı katı açıyla ters orantılı kısılır,
+     yani toplam akı korunur - aynasal vurgu görünür olur ama sahneyi
+     aydınlatmaz (aydınlatmayı yönlü ışık yapar). */
+  const gercekDeg = 0.27;
+  const buyutme = (gunesYariCapDeg / gercekDeg) ** 2;
+  const gunG = (b.gunesLux * olcek) / buyutme;
+  const gcos = Math.cos(gunesYariCapDeg * Math.PI / 180);
+  const gl = Math.hypot(...gunesYonu) || 1;
+  const gx = gunesYonu[0] / gl, gy = gunesYonu[1] / gl, gz = gunesYonu[2] / gl;
+
+  for (let j = 0; j < boy; j++) {
+    /* three'nin equirect sözleşmesi: v = asin(dir.y)/PI + 0,5 */
+    const v = (j + 0.5) / boy;
+    const fi = (v - 0.5) * Math.PI;
+    const dy = Math.sin(fi), r = Math.cos(fi);
+    for (let i = 0; i < en; i++) {
+      const u = (i + 0.5) / en;
+      const teta = (u - 0.5) * Math.PI * 2;
+      const dx = r * Math.cos(teta), dz = r * Math.sin(teta);
+      /* Ufuk DÜNYA +Z'sine göre: bu depoda yukarı +Z'dir, three'nin
+         equirect kutbu ise +Y. Karıştırmak göğü astronotun soluna asar. */
+      const yukari = dz;
+      const yumusak = Math.max(0, Math.min(1, (yukari + 0.06) / 0.12));
+      let R = yerR[0] * yerG * (1 - yumusak) + gokR[0] * gokG * yumusak;
+      let G = yerR[1] * yerG * (1 - yumusak) + gokR[1] * gokG * yumusak;
+      let B = yerR[2] * yerG * (1 - yumusak) + gokR[2] * gokG * yumusak;
+      if (dx * gx + dy * gy + dz * gz > gcos) {
+        R += gunR[0] * gunG; G += gunR[1] * gunG; B += gunR[2] * gunG;
+      }
+      const k = (j * en + i) * 4;
+      veri[k] = R; veri[k + 1] = G; veri[k + 2] = B; veri[k + 3] = 1;
+    }
+  }
+  const doku = new THREE.DataTexture(veri, en, boy, THREE.RGBAFormat, THREE.FloatType);
+  doku.mapping = THREE.EquirectangularReflectionMapping;
+  doku.colorSpace = THREE.LinearSRGBColorSpace;
+  doku.needsUpdate = true;
+  return { doku, at: b.gokPay + b.yerPay, butce: b };
+}
+
 export function sceneLighting(THREE, scene, ad = 'orbit', {
   anahtarYogunluk = 3.0, golge = true, golgeAlan = 16, golgeUzak = 60,
   beyazDenge = true,

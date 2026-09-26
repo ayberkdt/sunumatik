@@ -85,7 +85,7 @@
     import { buildAstronaut, POZLAR } from './astro-build.mjs';
     import { PARTS, STEPS, SUBSYSTEMS, INTERFACES, partById, partMass, mountChain,
              describe, evaBudget, powerBudget, BOY_M, OMUZ_M, BASINC_KPA } from './astro-parts.mjs';
-    import { sceneLighting } from '../core/scene-lighting.mjs';
+    import { sceneLighting, cevreHaritasi } from '../core/scene-lighting.mjs';
     import { createOrbitDrag, orbitPosition } from '../core/orbit-drag.mjs';
     import { yuruyusFizigi, yuruyusPozu, YERCEKIMI, ORTAM_ADI, GECIS_FROUDE,
              froudeHizi, DOGAL_FROUDE } from './astro-gait.mjs';
@@ -118,6 +118,28 @@
     /* Pozlama: güneşli bir Ay yüzeyi parlaktır ve referans fotoğraf da öyle.
        1,0'da giysi ve zemin orta gride kalıyordu. */
     renderer.toneMappingExposure = 1.25 * rig.pozlamaCarpani();
+
+    /* ORTAM HARİTASI. metalness > 0 olan bir yüzey kendi rengini değil
+       ÇEVRESİNİ gösterir; yansıtacak bir dünya yoksa saf metal SİYAH çıkar.
+       Bu sayfada tam öyle oluyordu: altın vizör donuk bir delik, rulman
+       halkaları koyu lekelerdi, ve geçici çözüm metalness'ı 0,96'dan 0,55'e
+       indirip altını boyaya çevirmekti. Harita sahnenin KENDİ bütçesinden
+       üretilir - gök, yer sıçraması ve güneş diski aynı lux değerlerinden.
+
+       ÇİFT SAYIM: harita hem yayınık hem aynasal katkı verir, yarım küre
+       dolgusu ise yalnız yayınık. İkisi birlikte ortamı iki kez sayardı, o
+       yüzden ortam artık haritanın işi ve dolgu sıfırlanır. */
+    {
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      pmrem.compileEquirectangularShader();
+      const { doku } = cevreHaritasi(THREE, 'vacuum', {
+        gunesYonu: [rig.gunes.position.x, rig.gunes.position.y, rig.gunes.position.z],
+      });
+      scene.environment = pmrem.fromEquirectangular(doku).texture;
+      doku.dispose();
+      pmrem.dispose();
+      rig.gokYer.intensity = 0;
+    }
 
     /* Yürünecek kadar uzun bir zemin: 9 m'lik bir disk üstünde yürüyen bir
        figür üç adımda kenardan düşer. */

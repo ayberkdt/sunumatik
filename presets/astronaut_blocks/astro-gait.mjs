@@ -219,6 +219,21 @@ export function yuruyusPozu(faz, F, olcu) {
   /* Gövde hıza göre öne yatar; düşük yerçekiminde daha az, çünkü itme
      kuvveti küçüktür. */
   const egim = 4 + 8 * F.froude;
+  /* GÖVDE TERS DÖNER. Yürürken omuzlar ve leğen düşey eksen etrafında
+     BİRBİRİNE TERS döner; kol salınımının dengelediği açısal momentumu üreten
+     şey budur ve bir yürüyüşü "gerçek" yapan en güçlü işaret odur. Yalnız
+     bacakları sallamak, koşu bandındaki bir manken verir.
+
+     Dönme yalnız ÜST gövdeye uygulanır, leğene değil: göreli hareket aynıdır
+     ama ayak konumları bozulmaz - leğeni döndürmek basan ayağı yanlara
+     kaydırır ve ters kinematiğin çözdüğü noktadan ayırır. */
+  const donme = Math.min(11, 3 + 9 * F.adimOrani) * Math.sin(2 * Math.PI * faz);
+  /* İKİNCİL HAREKET: hortum ve halat gövdeyi GECİKMELİ izler. Sönümlü bir
+     takipçinin bir sinüse yanıtı, faz kaymış ve zayıflamış bir sinüstür -
+     durum tutmaya gerek yok, doğrudan yazılır. Böylece kare hızından da
+     bağımsızdır. */
+  const gecikme = (kat, kayma) => kat * Math.min(11, 3 + 9 * F.adimOrani)
+    * Math.sin(2 * Math.PI * (faz - kayma));
   return {
     ad: F.tip === 'sicrama' ? 'Loping' : 'Walking',
     kalca: [bacak[0].kalca, bacak[1].kalca],
@@ -226,6 +241,11 @@ export function yuruyusPozu(faz, F, olcu) {
     omuz: [genlik * kolFaz(0.5), genlik * kolFaz(0)],
     dirsek: [26 + 14 * kolFaz(0.5), 26 + 14 * kolFaz(0)],
     govdeEgim: egim,
+    govdeDonme: donme,
+    /* Baş SABİTLENİR: gövde dönerken bakış ileride kalır. Bir insan yürürken
+       başını gövdesiyle birlikte sallamaz, gözü ufku takip eder. */
+    basDonme: -donme * 0.85,
+    ikincil: { hortum: gecikme(0.55, 0.09), halat: gecikme(0.8, 0.13) },
     /* Kalça yüksekliği: kök bu kadar yukarıdadır, ölçümle değil hesapla. */
     kalcaZ: hz,
     /* Ayak KONUMLARI - `ayak` DEĞİL. Bir duruş nesnesinde `ayak` alanı

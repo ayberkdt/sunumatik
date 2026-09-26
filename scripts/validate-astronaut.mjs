@@ -514,6 +514,58 @@ console.log('== 8 yürüyüş: ayak kaymaz, batmaz, çevrim kapanır');
   check('basma evresinde ayak yerden kalkmıyor',
     bas.length > 50, `${bas.length} örnek basıyor`);
 
+  /* HAREKET KALİTESİ. Bir yürüyüşü "gerçek" yapan şey bacakların sallanması
+     değil: omuzlar leğene TERS döner (kol salınımının dengelediği açısal
+     momentumu üreten şey budur), baş sabit kalır (insan yürürken gözü ufku
+     takip eder), ve esnek parçalar gövdeyi GECİKMELİ izler. Üçü de ölçülür. */
+  {
+    const Fy = G.yuruyusFizigi('ay', L, 1.2);
+    const P = (x) => G.yuruyusPozu(x, Fy, olc);
+    const N = 120;
+    let enDonme = 0, basEnKalan = 0;
+    for (let i = 0; i < N; i++) {
+      const p = P(i / N);
+      enDonme = Math.max(enDonme, Math.abs(p.govdeDonme));
+      basEnKalan = Math.max(basEnKalan, Math.abs(p.govdeDonme + p.basDonme));
+    }
+    check('gövde düşey eksende dönüyor', enDonme > 4,
+      `genlik ${enDonme.toFixed(1)}°`);
+    check('baş sabitleniyor: dünyada kalan dönme gövdenin %25\u0027inden az',
+      basEnKalan < enDonme * 0.25,
+      `gövde ${enDonme.toFixed(1)}° → başta kalan ${basEnKalan.toFixed(1)}°`);
+
+    /* İkincil hareket GECİKMELİ olmalı: tepe noktası gövdeninkinden SONRA
+       gelmeli. Aynı fazda sallanan bir hortum, takip değil kopyadır. */
+    const tepe = (al) => {
+      let en = -Infinity, faz = 0;
+      for (let i = 0; i < N; i++) { const d = al(P(i / N)); if (d > en) { en = d; faz = i / N; } }
+      return faz;
+    };
+    const tG = tepe(p => p.govdeDonme);
+    const tH = tepe(p => p.ikincil.hortum);
+    const tT = tepe(p => p.ikincil.halat);
+    const gecik = (x) => ((x - tG) % 1 + 1) % 1;
+    check('hortum gövdeyi gecikmeli izliyor', gecik(tH) > 0.02 && gecik(tH) < 0.3,
+      `gövde tepe faz ${tG.toFixed(3)} → hortum ${tH.toFixed(3)} (gecikme ${gecik(tH).toFixed(3)})`);
+    check('halat gövdeyi hortumdan DAHA ÇOK gecikmeli izliyor', gecik(tT) > gecik(tH),
+      `hortum ${gecik(tH).toFixed(3)} < halat ${gecik(tT).toFixed(3)}`);
+
+    /* Dönme bacaklara DOKUNMAMALI: leğeni döndürmek basan ayağı yanlara
+       kaydırır ve ters kinematiğin çözdüğü noktadan ayırır. */
+    let sapma = 0;
+    for (let i = 0; i < N; i++) {
+      const p = P(i / N);
+      S.uygulaPoz(p);
+      for (const j of [0, 1]) {
+        const w = S.eklem.ayak[j].getWorldPosition(new THREE.Vector3());
+        const h = p.ayakKonum[j];
+        sapma = Math.max(sapma, Math.hypot(w.x - h.x, w.z - (h.z + S.olcu.botOfsetM)));
+      }
+    }
+    check('gövde dönmesi ayak konumunu bozmuyor', sapma < 0.001,
+      `sapma ${(sapma * 1000).toFixed(2)} mm`);
+  }
+
   /* TERS SINAV: kalça kısıtı yalnız BASAN ayağa bakarsa - ilk yazımdaki
      kusur - ters kinematik kırpılır ve bilek çözümden sapar. Ölçüm bunu
      yakalamak zorunda, yoksa "sapma 0" bir şey söylemiyordur. */
