@@ -81,6 +81,21 @@ export function dikisKat(aci, n, derinlik) {
 }
 
 /**
+ * KUMAŞ KIRIŞIĞI. Kapitone bantları DÜZENLİDİR; gerçek kumaş değildir.
+ * Basınçlı bir giysinin yüzeyinde bantların arasında küçük, düzensiz
+ * buruşmalar olur ve bir yüzeyi "kumaş" yapan şey o düzensizliktir -
+ * kusursuz tekrar, plastik görünür. Gürültü DETERMİNİSTİK: aynı giysi her
+ * karede aynı kırışıkları taşır, yoksa yüzey titrer.
+ */
+export function kirisikKat(t, aci, frekans, genlik) {
+  if (!frekans || !genlik) return 1;
+  const a = Math.sin(t * frekans * 7.13 + aci * 3.0) * 0.6;
+  const b = Math.sin(t * frekans * 11.7 - aci * 5.0 + 1.7) * 0.3;
+  const c = Math.sin(t * frekans * 23.1 + aci * 2.0 + 0.4) * 0.15;
+  return 1 + genlik * (a + b + c);
+}
+
+/**
  * SÜPÜRME GÖVDESİ — kesiti eksen boyunca değişen yüzey.
  *
  * `kesit(t)` her yükseklikte şunu döndürür:
@@ -107,7 +122,8 @@ export function supur(THREE, {
       const a = (j / halka) * Math.PI * 2;
       const kap = kapitoneKat(t, k.kapitone?.[0], k.kapitone?.[1]);
       const dik = dikisKat(a, k.dikis?.[0], k.dikis?.[1]);
-      const [py, px] = kesitNokta(a, w * kap * dik, d * kap * dik, p);
+      const kir = kirisikKat(t, a, k.kirisik?.[0], k.kirisik?.[1]);
+      const [py, px] = kesitNokta(a, w * kap * dik * kir, d * kap * dik * kir, p);
       /* kesitNokta ilk bileşeni w ekseninde verir; giyside w = y (en),
          d = x (derinlik), çünkü bir gövde enine geniş önden sığdır. */
       poz.push((k.oy ?? 0) + px, (k.ox ?? 0) + py, z);
@@ -157,7 +173,7 @@ export function supur(THREE, {
  */
 export function uzuvKesiti({
   ustW, ustD, altW, altD, p = 2.4, sis = 0.07, sisT = 0.5,
-  kapitone = null, dikis = null, egri = null,
+  kapitone = null, dikis = null, kirisik = null, egri = null,
 }) {
   return (t) => {
     /* ŞİŞMENİN YERİ. Kas, uzvun ortasında değildir: baldırın kütlesi dizin
@@ -170,7 +186,7 @@ export function uzuvKesiti({
     return {
       w: (ustW + (altW - ustW) * t) * k,
       d: (ustD + (altD - ustD) * t) * k,
-      p, kapitone, dikis,
+      p, kapitone, dikis, kirisik,
       ox: e ? e[0] : 0, oy: e ? e[1] : 0,
     };
   };
@@ -181,7 +197,8 @@ export function uzuvKesiti({
  * `omuzT` en geniş yerin nerede olduğunu söyler (0 = tepe).
  */
 export function govdeKesiti({
-  omuzW, omuzD, belW, belD, omuzT = 0.18, p = 2.7, kapitone = null, dikis = null,
+  omuzW, omuzD, belW, belD, omuzT = 0.18, p = 2.7,
+  kapitone = null, dikis = null, kirisik = null,
 }) {
   return (t) => {
     /* Omuzdan bele geçiş: omuz hizasına kadar açılır, sonra kapanır. */
@@ -189,6 +206,6 @@ export function govdeKesiti({
     const g = t < omuzT ? 0.86 + 0.14 * u : 1 - (t - omuzT) / (1 - omuzT);
     const gen = belW + (omuzW - belW) * Math.max(0, Math.min(1, g));
     const der = belD + (omuzD - belD) * Math.max(0, Math.min(1, g));
-    return { w: gen, d: der, p, kapitone, dikis };
+    return { w: gen, d: der, p, kapitone, dikis, kirisik };
   };
 }

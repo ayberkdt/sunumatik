@@ -159,11 +159,13 @@ export const FLEKS = Object.freeze({ kalca: -1, diz: 1, ayak: 1, omuz: -1, dirse
 /** Kolun gövdeye YAKINSAMA açısı (derece). Omuz 0,30 m'den bilek 0,21 m'ye
  *  iner: 0,09 m / 0,76 m = 6,8°. İnsan kolunun asılı duruşu budur. */
 export const KOL_YAKINSAMA = 7;
+/** Ayak ucunun dışa dönme açısı (derece). Paralel iki ayak oyuncak askeridir. */
+export const AYAK_ACILMA = 7;
 /** Bir mafsalın poz açısını radyana ve DOĞRU işarete çevirir. */
 export const mafsal = (poz, ad, i) => (poz?.[ad]?.[i] ?? 0) * RAD * FLEKS[ad];
 
 export const POZLAR = Object.freeze({
-  dik: { ad: 'Standing', kalca: [0, 0], diz: [2, 2], omuz: [5, 5], dirsek: [16, 16], govdeEgim: 0 },
+  dik: { ad: 'Standing', kalca: [5, 5], diz: [9, 9], omuz: [5, 5], dirsek: [16, 16], govdeEgim: 2 },
   egilme: { ad: 'Crouched at a task', kalca: [52, 52], diz: [66, 66], omuz: [34, 34], dirsek: [58, 58], govdeEgim: 26 },
   uzanma: { ad: 'Reaching up to a panel', kalca: [0, 0], diz: [6, 6], omuz: [104, 30], dirsek: [22, 14], govdeEgim: -6 },
   tasima: { ad: 'Carrying a load', kalca: [8, 8], diz: [12, 12], omuz: [48, 48], dirsek: [74, 74], govdeEgim: 8 },
@@ -225,7 +227,7 @@ function govde(THREE, p, M, yan = 0) {
          oluyordu. */
       const brief = ekle(uzuvMesh(THREE, M.kumas, belZ - kalcaZ + 0.26, uzuvKesiti({
         ustW: sy * 0.44, ustD: sx * 0.46, altW: sy * 0.54, altD: sx * 0.52, sis: 0.03,
-        p: 2.7, kapitone: [4, 0.05], dikis: [6, 0.05],
+        p: 2.7, kapitone: [4, 0.05], dikis: [6, 0.05], kirisik: [1.2, 0.018],
       }), { dilim: 12, halka: 22 }));
       brief.position.z = belZ;
       const bel = yatakHalkasi(THREE, M, sy * 0.42,
@@ -249,7 +251,7 @@ function govde(THREE, p, M, yan = 0) {
         kalca.add(konvolut(THREE, M, sy * 0.26, sx * 0.25, sy * 0.25, sx * 0.245, 0.07, 2));
         const uyluk = uzuvMesh(THREE, M.kumas, UYLUK_M - 0.07, uzuvKesiti({
           ustW: sy * 0.25, ustD: sx * 0.245, altW: sy * 0.2, altD: sx * 0.2,
-          sis: 0.07, sisT: 0.26, p: 2.25, kapitone: [6, 0.075], dikis: [8, 0.045],
+          sis: 0.07, sisT: 0.26, p: 2.25, kapitone: [6, 0.075], dikis: [8, 0.045], kirisik: [1.4, 0.022],
         }), { dilim: 14, halka: 22 });
         uyluk.position.z = -0.07;
         uyluk.castShadow = true; uyluk.receiveShadow = true;
@@ -273,7 +275,7 @@ function govde(THREE, p, M, yan = 0) {
         diz.add(kapak);
         const baldir = uzuvMesh(THREE, M.kumas, BALDIR_M - 0.1, uzuvKesiti({
           ustW: sy * 0.225, ustD: sx * 0.23, altW: sy * 0.17, altD: sx * 0.18,
-          sis: 0.1, sisT: 0.22, p: 2.25, kapitone: [6, 0.07], dikis: [8, 0.045],
+          sis: 0.1, sisT: 0.22, p: 2.25, kapitone: [6, 0.07], dikis: [8, 0.045], kirisik: [1.6, 0.022],
         }), { dilim: 14, halka: 22 });
         baldir.position.z = -0.1;
         baldir.castShadow = true; baldir.receiveShadow = true;
@@ -361,7 +363,7 @@ function govde(THREE, p, M, yan = 0) {
          ve bel çok az daralır: şişmiş bir tulumun beli yoktur. */
       const kab = ekle(uzuvMesh(THREE, M.kumas, sz, govdeKesiti({
         omuzW: sy * 0.5, omuzD: sx * 0.54, belW: sy * 0.42, belD: sx * 0.48,
-        omuzT: 0.26, p: 2.2, kapitone: [4, 0.03], dikis: [5, 0.03],
+        omuzT: 0.26, p: 2.2, kapitone: [4, 0.03], dikis: [5, 0.03], kirisik: [1.1, 0.016],
       }), { dilim: 18, halka: 28 }));
       kab.position.z = sz / 2;
       /* Göğüs dolgusu: basınç kumaşı şişirir ve öne eğilebilmek için ÖNDE
@@ -470,7 +472,7 @@ function govde(THREE, p, M, yan = 0) {
       g.add(konvolut(THREE, M, sy * 0.57, sx * 0.54, sy * 0.56, sx * 0.53, sz * 0.09, 2));
       const ust = uzuvMesh(THREE, M.kumas, ustBoy - sz * 0.09, uzuvKesiti({
         ustW: sy * 0.56, ustD: sx * 0.53, altW: sy * 0.44, altD: sx * 0.44,
-        sis: 0.08, sisT: 0.2, p: 2.25, kapitone: [6, 0.085], dikis: [6, 0.04],
+        sis: 0.08, sisT: 0.2, p: 2.25, kapitone: [6, 0.085], dikis: [6, 0.04], kirisik: [1.8, 0.025],
       }), { dilim: 12, halka: 20 });
       ust.position.z = -sz * 0.09;
       ust.castShadow = true; ust.receiveShadow = true;
@@ -488,7 +490,7 @@ function govde(THREE, p, M, yan = 0) {
       dirsek.add(fincan);
       const on = uzuvMesh(THREE, M.kumas, onBoy - sz * 0.1, uzuvKesiti({
         ustW: sy * 0.46, ustD: sx * 0.46, altW: sy * 0.34, altD: sx * 0.35,
-        sis: 0.09, sisT: 0.22, p: 2.25, kapitone: [6, 0.08], dikis: [6, 0.04],
+        sis: 0.09, sisT: 0.22, p: 2.25, kapitone: [6, 0.08], dikis: [6, 0.04], kirisik: [2.0, 0.025],
       }), { dilim: 12, halka: 20 });
       on.position.z = -sz * 0.1;
       on.castShadow = true; on.receiveShadow = true;
@@ -894,7 +896,10 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
       if (p.id === 'cizmeler' && dizler && dizler[i]) {
         /* Çizmenin kaynak noktası AYAK BİLEĞİ ve AYAK BİLEĞİ MAFSALINA
            bağlanır - baldıra bağlansa basma evresinde yere girer. */
+        /* AYAK UCU DIŞA DÖNER. Bir insan ayaklarını birbirine paralel
+           koymaz; tam paralel iki çizme figürü bir oyuncak askerine çevirir. */
         gg.position.set(x, 0, 0);
+        gg.rotation.z = (i === 0 ? 1 : -1) * AYAK_ACILMA * RAD;
         dizler[i].userData.ayak.add(gg);
       } else if (p.id === 'eldivenler' && kolG?.userData.dirsek) {
         gg.position.set(0, 0, kolG.userData.bilekZ);
@@ -939,7 +944,7 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
         paket.pos[2] + paket.size[2] * 0.24 - belZ];
       const b = [panel.pos[0] - panel.size[0] * 0.3, s * panel.size[1] * 0.3,
         panel.pos[2] - belZ];
-      const h = hortum(THREE, M.koyu, a, b, Math.max(a[2], b[2]) + 0.14, 0.022);
+      const h = hortum(THREE, M.kumasGolge, a, b, Math.max(a[2], b[2]) + 0.14, 0.026);
       h.castShadow = true;
       hg.add(h);
     }
