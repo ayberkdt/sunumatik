@@ -3,8 +3,10 @@
 Tarih: 26.09.2026 · Ölçülen sürüm: `82dbfb8` · Konu: `presets/astronaut_blocks/`
 
 Birinci turda kusurlar tek tek ölçülüp tek tek onarıldı ve 118 sınavlık bir
-kapı bıraktı. Bu turda bildirilen dört şikâyetin **üçü aynı kökten geliyor** ve
-o kök, tek tek onarımla kapanmaz — mimari.
+kapı bıraktı. Bu turda bildirilen **beş** şikâyetin üçü aynı kökten geliyor
+(figür katı parçalardan kurulu, §1) ve biri ondan bağımsız ama daha utanç
+verici: **eller ters takılmış** ve figürün kolunda dönme ekseni hiç yok
+(§5b). Ters el küçük bir iş; dönme ekseni orta; deri büyük.
 
 Her satır ya tarayıcıda ölçüldü ya kaynaktan okundu. Ölçüm yordamı §0'da.
 
@@ -280,6 +282,150 @@ var mı).
 
 ---
 
+## 5b · Şikâyet 5 — parçalar ters takılmış (eller, kollar)
+
+Ölçüldü (`scratchpad/yon.mjs`, `yon2.mjs`, `avuc.mjs`; hepsi SIFIR duruşta,
+yani poz ölçümü kirletmesin diye bütün eklemler 0'da).
+
+### 5b.1 ELLER TAKAS EDİLMİŞ — sol kolda sağ el var
+
+İki bağımsız ölçüm:
+
+| ölçülen | değer |
+|---|---|
+| avuç normali (eldivenin yerel +x'i) | **(1,000, 0,000, 0,000)** — tam ÖNE |
+| parmakların kıvrım yönü | ÖNE (uçların ortalaması bileğe göre Δx = **+0,077**) |
+| başparmağın yeri (SOL el) | **−y**, yani gövde orta çizgisine doğru |
+| başparmağın yeri (SAĞ el) | **+y**, yine orta çizgiye doğru |
+| sol/sağ ayna sapması | 0,1 mm — yani ikisi birbirinin **doğru aynası** |
+
+Bu dört satır bir arada imkânsız bir el tarif ediyor. Avucu ÖNE bakan bir
+**sol** elde başparmak kişinin SOLUNDA, yani +y'de olmak zorundadır. Ölçülen
+−y. Aynı şey sağ elde tersine. Yani:
+
+> **Sol kola sağ el, sağ kola sol el takılmış.** İkisi birbirinin kusursuz
+> aynası olduğu için ayna kapısı (bölüm 9) bunu göremiyor: kapı "eşi var mı"
+> diye soruyor, "doğru eli mi" diye sormuyor.
+
+Bir önceki turda "sağ el kopya değil ayna olsun" diye bir düzeltme yapılmıştı
+ve o düzeltme DOĞRU çalışıyor — ama iki elin birbirine göre doğru olması,
+ikisinin de gövdeye göre doğru olduğu anlamına gelmiyor. Ölçülmemiş olan
+buydu.
+
+### 5b.2 Avuç dinlenme yönü de yanlış
+
+Kol yanda asılıyken insan avucu **uyluğa**, yani içe bakar; başparmak öne
+gelir. Burada avuç öne bakıyor, başparmak yana. Bu yalnız "ters el"
+meselesinden ayrı bir kusur: el doğru el olsa bile duruşu yanlış olurdu.
+
+**Düzeltme (ikisi birden).** Eldivenin YEREL çerçevesi yeniden tanımlansın ve
+katalogda beyan edilsin:
+
+```
+avuç normali   : −ayna · y   (içe, gövdeye doğru)
+başparmak      : +x          (öne)
+parmaklar      : −z          (aşağı)
+```
+
+Şu an üçü de farklı: avuç +x, başparmak −ayna·y, parmaklar −z. Tek bir işareti
+çevirmek YETMEZ — ölçüm bunu açıkça söylüyor: avucu içe döndüren dönme
+(z etrafında −90°) başparmağı ARKAYA götürür, yani elin kendi elliği yanlış.
+Çerçeve baştan kurulmalı, tek sayı yamanmamalı.
+
+**Kapı.** Her el için üç vektör ayrı ayrı ölçülsün: avuç normali · başparmak
+yönü · parmak yönü, ve üçü beyan edilen çerçeveye ≤ 15° uysun. Ayrıca
+**ellilik sınavı**: `(başparmak × parmak) · avuçNormali` işareti sol ve sağ
+elde **ZIT** olmak zorunda — bir sol el ile bir sağ eli ayıran tek şey budur
+ve ayna sınavı onu göremez. Ters sınav: bir elin başparmağını öteki tarafa
+alınca kapı düşmeli.
+
+### 5b.3 KOLUN DÖNME EKSENİ HİÇ YOK — asıl sebep bu
+
+`EKLEMLER` tablosu okundu. Beyan edilen bütün uzuv eklemleri **tek eksenli**:
+
+| eklem | eksen |
+|---|---|
+| `bel.donme` | z |
+| `omuz.L/R` | **y** |
+| `dirsek.L/R` | **y** |
+| `kalca.L/R` | **y** |
+| `diz.L/R` | **y** |
+| `ayak.L/R` | **y** |
+
+Yani figürde **omuz dönmesi (iç/dış rotasyon), ön kol dönmesi (pronasyon/
+supinasyon), omuz açılması (abdüksiyon) ve kalça açılması yok**. Kol yalnız
+ileri-geri sallanabiliyor.
+
+Bunun üç sonucu var ve üçü de bildirilen şikâyetlerin içinde:
+
+1. **Elin yönü DONMUŞ.** Hangi poza geçilirse geçilsin avuç hep aynı yöne
+   bakar. "Panele uzanma" pozunda da avuç öne bakıyor — oysa uzanan bir el
+   avucunu panele çevirir. El "ters" görünmesinin bir sebebi de bu.
+2. **Yürüyüş düzlemsel.** Kol yalnız tek düzlemde salınıyor; gerçek salınımda
+   omuz ucunda birkaç derece açılır ve içe döner. Şikâyet 4'teki "mekanik"
+   hissin büyük parçası budur.
+3. **El gövdeye giriyor** (§5.1, 60 fazın 32'si): kolun dışa açılacak ekseni
+   olmadığı için çözümün eli gövdeden uzaklaştıracak hiçbir serbestliği yok.
+
+**Düzeltme.** `EKLEMLER`e üç eksen daha, sınırlarıyla birlikte (basınçlı
+giyside hepsi çıplak insandakinden dar):
+
+```
+omuz.acilma.L/R   ekseni x   aralık [-8, 62]    (abdüksiyon)
+omuz.donme.L/R    ekseni z   aralık [-35, 45]   (humeral rotasyon)
+onkol.donme.L/R   ekseni z   aralık [-60, 70]   (pronasyon/supinasyon)
+kalca.acilma.L/R  ekseni x   aralık [-6, 28]
+```
+
+Her eksen için ayrı bir grup gerekir (tek `rotation` üzerine iki eksen
+yazmak, deponun bir kez pahalıya mal olan Euler sırası tuzağıdır — bkz.
+`eksen-denetimi.py` kural 2). Duruşlar ve yürüyüş çözümü bu eksenleri
+kullanacak şekilde genişletilir.
+
+**Kapı.** `mechanism-index.mjs` sözleşmesine göre her yeni eksen düğüm +
+eksen + aralık + hız beyan etmek zorunda (mevcut kapı bunu zaten ölçüyor,
+yeni eksenler kendiliğinden kapsanır). Ek olarak: "panele uzanma" pozunda
+avuç normali ile uzanılan yön arasındaki açı ≤ 40° olmalı — yani el
+gerçekten çevriliyor mu.
+
+### 5b.4 Bilek ayağın yanlış yerinde
+
+| | çizilen | beyan | fark |
+|---|---|---|---|
+| burun, bilekten önde | **0,279 m** | `AYAK_ON_M` 0,22 | **+%27** |
+| topuk, bilekten arkada | **0,079 m** | `AYAK_ARKA_M` 0,12 | **−%34** |
+| toplam | 0,358 | 0,340 | +%5 |
+
+Ayak toplamda doğru uzunlukta ama **bilek 4 cm fazla geride**: ayak öne
+taşıyor, topuk neredeyse yok. İnsanda bilek ayağın arkadan üçte birindedir ve
+beyan edilen 0,12/0,22 tam bunu söylüyor — çizim uymuyor.
+
+Bu yalnız görünüş meselesi değil: `ayakYuvarlanma` bu iki sayıyı **kaldıraç
+kolu** olarak kullanıyor (`kol = fark > 0 ? AYAK_ON_M : AYAK_ARKA_M`). Yani
+bilek kırpıldığında tabanın ne kadar yükseleceği, geometriyle uyuşmayan
+sayılardan hesaplanıyor. Topukta hata %34.
+
+**Düzeltme.** `cizmeGovdesi` çağrısında `arkaPay` gerçekten `AYAK_ARKA_M`
+olmalı ve çizme düğümünün konumu bileği kalıbın doğru yerine oturtmalı.
+**Kapı:** çizilen burun/topuk mesafeleri beyan edilenden ≤ %10 sapsın.
+Ters sınav: çizmeyi 30 mm öne kaydırınca kapı düşmeli.
+
+### 5b.5 Kol dimdik asılı
+
+Ölçülen: omuz (0, ±0,300, 1,576) → dirsek (0, ±0,257, 1,229) → el
+(0,019, ±0,210, 0,794). Üst kolun **Δx'i tam sıfır**, yani kol mükemmel
+dikey.
+
+İnsanda kol yanda asılıyken dirsek gövdenin biraz ARKASINDA, ön kol hafif
+ÖNDE durur ve kolun gövdeyle yaptığı açı (taşıma açısı) 5-15°'dir. Mükemmel
+dikey bir kol, figürü hazır ol vaziyetinde bir asker gibi gösterir — kullanıcı
+"sıkışık" derken gördüğü şeyin bir parçası budur.
+
+**Düzeltme.** Dinlenme duruşunda omuz −4°, dirsek +8°, ve §5b.3'teki yeni
+abdüksiyon ekseninde +6°. Bunlar `POZLAR.dik` içinde beyan edilir.
+
+---
+
 ## 6 · DERİ (skinning) — en büyük madde, ayrı tutuldu
 
 Şikâyet 1, 2 ve 3'ün ortak kökü. Yapılacak iş:
@@ -320,17 +466,23 @@ ikisi de deride kesitin parçası olacak. §5 (yürüyüş) deriden SONRA, çün
 
 | # | iş | bağımlılık | büyüklük |
 |---|---|---|---|
-| 1 | Kask/gövde örtüşmesi (§2.1) | yok | küçük |
-| 2 | Omuz yapısı ve beyanı (§3.1) | yok | orta |
-| 3 | Konvolüt tek yüzey (§4) | yok | orta |
-| 4 | Panel hatları ve konstrüksiyon (§3.2) | 2 | orta |
-| 5 | **Deri / skinning (§6)** | 2, 3 | **büyük** |
-| 6 | Leğen-uyluk sürekliliği (§2.2) | 5 | 5'in içinde |
-| 7 | Çarpışma kapsülü ve el (§5.1) | 5 | orta |
-| 8 | Yürüyüş canlılığı (§5.2) | 7 | küçük |
+| 1 | **Eller: el çerçevesi ve ellilik (§5b.1-2)** | yok | **küçük — ÖNCE BU** |
+| 2 | Bilek ayağın doğru yerine (§5b.4) | yok | küçük |
+| 3 | Kask/gövde örtüşmesi (§2.1) | yok | küçük |
+| 4 | **Kola dönme/açılma eksenleri (§5b.3)** | yok | orta |
+| 5 | Omuz yapısı ve beyanı (§3.1) | 4 | orta |
+| 6 | Dinlenme duruşu, taşıma açısı (§5b.5) | 4 | küçük |
+| 7 | Konvolüt tek yüzey (§4) | yok | orta |
+| 8 | Panel hatları ve konstrüksiyon (§3.2) | 5 | orta |
+| 9 | **Deri / skinning (§6)** | 5, 7 | **büyük** |
+| 10 | Leğen-uyluk sürekliliği (§2.2) | 9 | 9'un içinde |
+| 11 | Çarpışma kapsülü ve el (§5.1) | 4, 9 | orta |
+| 12 | Yürüyüş canlılığı (§5.2) | 11 | küçük |
 
-1-4 arası deriden bağımsız ve hemen yapılabilir; görünür kazancın yarısını
-onlar verir. 5 tek başına en büyük iş ve 6 ile 7'yi de o çözer.
+**1 ve 2 önce, çünkü ikisi de küçük ve ikisi de açıkça YANLIŞ** — biri eli
+ters takıyor, öteki yürüyüş çözümüne yanlış kaldıraç kolu veriyor. 4 (kolun
+eksik eksenleri) 5, 6 ve 11'in önkoşulu: dönme ekseni olmadan ne elin yönü
+düzelir, ne el gövdeden çıkar. 9 tek başına en büyük iş ve 10'u da o çözer.
 
 ---
 
