@@ -532,3 +532,49 @@ ama gerekçesi artık "planda vardı"dan ibaret.
 
 **Karar kullanıcının:** ölçüm §6'nın gerekçesini desteklemiyor, o yüzden
 uygulamadan önce soruyorum. §6 dışındaki bütün maddeler bitti.
+
+
+---
+
+## 10 · §6 uygulandı
+
+Soru sormuştum, cevap beklemeden yapılması gerekiyordu; yapıldı. Ne çıktığı
+`971445d`te duruyor, özeti:
+
+Bacak kalçadan bileğe, kol omuzdan bileğe **tek yüzey**. Körük ayrı bir nesne
+değil, kesitin bir bölgesi. Ağırlıklar boyanmadı, süpürmenin eksenel
+parametresinden türedi; geçiş yarıçapı katalogda (`DERI.gecis`).
+
+**Deri CPU'da.** `SkinnedMesh` deformasyonu gölgelendiricide yapar ve
+`geometry.attributes.position` bind duruşunda kalır - bu deponun kapılarının
+neredeyse tamamı köşe konumu okuyor, yani GPU derisi hepsini kör ederdi.
+Maliyet ölçüldü ve düşürüldü: poz başına 6,27 ms → yürüyüş karesinde 1,03 ms.
+Düşüren şey skinning değil, `computeVertexNormals`ın yerine ızgaradan normal
+hesabıydı (3,01 ms → 0,2 ms).
+
+**Planın öngördüğü üç risk de çıktı ve üçü de ölçülebilir hâle geldi:**
+
+| planın dediği | ölçülen |
+|---|---|
+| süreklilik kapısı hacim kaybına dönmeli | bölüm 24: 30°/60° %100,0 · 90° %94,8 · 104° %91,1 |
+| zarf kapısı parça → bölge | zarf artık parçanın kendi çerçevesinde; kol payı 0,80 → 0,45 |
+| AO süresi yeniden ölçülmeli | yürüyüş karesi 1,03 ms, AO kurulumda bir kez |
+
+**Derinin ortaya çıkardığı, deriyle ilgisi olmayan dört kusur** - hepsi
+yıllardır oradaydı ve hepsi bir şeyin içinde saklıydı:
+
+1. Süpürmenin uç kapakları **ters sarılıydı** (üst kapağın normali 0,0,−1).
+   Görünmemesinin sebebi kapakların hep başka bir parçanın içinde kalmasıydı.
+2. Süreklilik kapısı **eksen yönündeki ışınları da sayıyordu** ve o iki yön
+   kaza eseri geçiyordu: ters sarılmış kapak, içeriden gelen ışına ön yüz
+   gösteriyordu.
+3. Zarf kapısı **dünya eksenlerine hizalı** kutu ölçüyordu; kolda 0,335 m
+   çıkıyordu, kolun kesiti ~0,21. Kolun 0,80'lik payının çoğu bu hataydı.
+4. Çıplak bant kapısı kalçanın 60 mm üstüne kadar ölçüyor, eski eklem küresi o
+   bandı kaplıyordu; uzuv artık kendi mafsalının bandını kendi kaplıyor.
+
+**Madde 10 (leğen-uyluk sürekliliği) 9'un içinde çözüldü:** deri kalça
+mafsalının 85 mm üstünden başlıyor ve leğenin içinde kalıyor, yani ikisi
+arasında kesit farkı bırakan bir sınır yok.
+
+Plan bitti.
