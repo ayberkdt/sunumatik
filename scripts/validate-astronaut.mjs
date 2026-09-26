@@ -363,11 +363,21 @@ console.log('== 7 biçim: kesit daire değil');
   };
   const wOmuz = enY(1.54, 1.62), wBel = enY(1.12, 1.20);
   const wKalca = enY(0.98, 1.06), wUyluk = enY(0.80, 0.88);
-  check('siluet omuzdan uyluğa doğru daralıyor',
-    wOmuz > wBel && wBel > wKalca && wKalca > wUyluk,
-    `omuz ${wOmuz.toFixed(3)} > bel ${wBel.toFixed(3)} > kalça ${wKalca.toFixed(3)} > uyluk ${wUyluk.toFixed(3)}`);
-  check('uyluk hizası omuzun %80\'inden dar', wUyluk / wOmuz < 0.8,
-    `${(wUyluk / wOmuz).toFixed(3)} (kollar dikken 0.90 idi)`);
+  /* ÜST GÖVDE daralır, ALT GÖVDE daralmaz. Bu ayrım önce YANLIŞ kodlanmıştı:
+     kapı omuzdan uyluğa kadar tek yönlü daralma istiyordu ve uzuvlar gerçek
+     A7L kalınlığına şişirilince kendi kapım düştü. Şişirilmiş bir giysinin
+     bacağı kalçadan incelmez - referans fotoğrafta kalça ile uyluk aynı
+     genişliktedir ve figür bir fıçı gibi devam eder. Daralmayı yapan şey
+     KOLLARIN yakınsamasıdır, bacakların incelmesi değil. */
+  check('omuzdan bele daralıyor (kollar yakınsıyor)', wOmuz > wBel * 1.05,
+    `omuz ${wOmuz.toFixed(3)} → bel ${wBel.toFixed(3)} · oran ${(wBel / wOmuz).toFixed(3)}`);
+  check('bel omuzun %88 inden dar', wBel / wOmuz < 0.88,
+    `${(wBel / wOmuz).toFixed(3)} (kollar dikken 0.96 idi)`);
+  check('alt gövde fıçı gibi devam ediyor (kalça ≈ uyluk)',
+    Math.abs(wUyluk - wKalca) / wKalca < 0.15,
+    `kalça ${wKalca.toFixed(3)} · uyluk ${wUyluk.toFixed(3)} · fark %${(100 * Math.abs(wUyluk - wKalca) / wKalca).toFixed(1)}`);
+  check('uyluk hizası omuzdan dar', wUyluk / wOmuz < 0.9,
+    `${(wUyluk / wOmuz).toFixed(3)}`);
 
   /* Kollar GERÇEKTEN yakınsıyor mu: bilek, omuzdan içeride olmalı. */
   const omuzY = Math.abs(S.eklem.omuz[0].getWorldPosition(new THREE.Vector3()).y);

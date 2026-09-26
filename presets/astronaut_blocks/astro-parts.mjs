@@ -28,7 +28,7 @@ export const BOY_M = 1.95;
  *  gövdeye yakınsayınca; dimdik asılı kol omuz genişliğini bileğe kadar
  *  taşıyordu). Bir kapı açıklığı niyete göre değil, geçecek şeye göre
  *  ölçülür. */
-export const OMUZ_M = 0.82;
+export const OMUZ_M = 0.85;
 /* DİKEY DÜZEN — bir kez, tablo hâlinde.
  *
  * İlk yazışta kalça 0,774 m'de çıkıyordu: 1,95 m boyunda bir figür için
@@ -153,7 +153,7 @@ export const PARTS = Object.freeze([
   /* ADIM 2 — alt gövde */
   { id: 'alt-govde', ad: 'Lower torso assembly', sistem: 'basinc', step: 2,
     mountsTo: 'sogutma-tulumu', arayuz: 'kilit', massKg: 12.5,
-    pos: [0, 0, 0.59], size: [0.34, 0.40, 1.18], yon: 'orta', sekil: 'altGovde',
+    pos: [0, 0, 0.59], size: [0.38, 0.44, 1.18], yon: 'orta', sekil: 'altGovde',
     tech: {
       no: 'AS-PRS-020',
       malzeme: 'Ortho-fabric over urethane bladder, aluminium waist ring',
@@ -168,7 +168,7 @@ export const PARTS = Object.freeze([
 
   { id: 'cizmeler', ad: 'Boots', sistem: 'hareket', step: 2,
     mountsTo: 'alt-govde', arayuz: 'kumas', massKg: 2.4, qty: 2,
-    pos: [0.05, 0.135, 0.10], size: [0.34, 0.19, 0.21], yon: 'yan', ayna: 'y', sekil: 'cizme',
+    pos: [0.05, 0.155, 0.10], size: [0.36, 0.23, 0.22], yon: 'yan', ayna: 'y', sekil: 'cizme',
     tech: {
       no: 'AS-MOB-021',
       malzeme: 'Silicone sole, ortho-fabric upper, metal shank',
@@ -229,7 +229,7 @@ export const PARTS = Object.freeze([
 
   { id: 'eldivenler', ad: 'Gloves', sistem: 'arayuz', step: 5,
     mountsTo: 'kollar', arayuz: 'kilit', massKg: 0.9, qty: 2,
-    pos: [0.03, 0.30, 0.71], size: [0.21, 0.15, 0.22], yon: 'yan', ayna: 'y', sekil: 'eldiven',
+    pos: [0.03, 0.30, 0.71], size: [0.22, 0.17, 0.24], yon: 'yan', ayna: 'y', sekil: 'eldiven',
     tech: {
       no: 'AS-INT-051',
       malzeme: 'RTV silicone fingertips, Vectran palm, heated fingers',
@@ -276,7 +276,7 @@ export const PARTS = Object.freeze([
   /* ADIM 5 — kask ve görüş */
   { id: 'kask', ad: 'Helmet and visor assembly', sistem: 'gorus', step: 5,
     mountsTo: 'ust-govde', arayuz: 'kilit', massKg: 5.8,
-    pos: [0.02, 0, 1.716], size: [0.40, 0.38, 0.42], yon: 'orta', sekil: 'kask',
+    pos: [0.02, 0, 1.660], size: [0.40, 0.38, 0.42], yon: 'orta', sekil: 'kask',
     tech: {
       no: 'AS-VIS-060',
       malzeme: 'Polycarbonate bubble, gold-coated EVA visor, anti-fog coating',
@@ -291,7 +291,7 @@ export const PARTS = Object.freeze([
 
   { id: 'basliklar', ad: 'Helmet lights and camera', sistem: 'gorus', step: 5,
     mountsTo: 'kask', arayuz: 'civata', massKg: 1.3,
-    pos: [0.03, 0, 1.716], size: [0.22, 0.44, 0.12], yon: 'orta', sekil: 'lamba',
+    pos: [0.03, 0, 1.660], size: [0.22, 0.44, 0.12], yon: 'orta', sekil: 'lamba',
     tech: {
       no: 'AS-VIS-061',
       malzeme: 'Four LED heads, one camera, mounting yoke',
