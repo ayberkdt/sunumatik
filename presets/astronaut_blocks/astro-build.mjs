@@ -130,7 +130,13 @@ function konvolut(THREE, M, wUst, dUst, wAlt, dAlt, boy, n = 4) {
   for (let i = 0; i < n; i++) {
     const t = (i + 0.5) / n;
     const w = wUst + (wAlt - wUst) * t, d = dUst + (dAlt - dUst) * t;
-    const k = new THREE.Mesh(new THREE.TorusGeometry(w, w * 0.2, 10, 28), M.kumasGolge);
+    /* KONVOLÜT HALKASI SİLUETE GİRER. Boru yarıçapı w*0,2, yani bir uzuvda
+       yaklaşık 28 mm: 10 kesit segmenti orada 36°'lik kenar açısı bırakır ve
+       giysinin en çok tekrar eden ayrıntısı (her uzuvda 3-4 halka, figürde
+       34 tane) köşeli görünür. 14 segment onu 26°'ye indirir. Bedel
+       HESAPLANDI (ölçülmedi, çünkü aynı sürümde eldiven de değişti):
+       34 halka x (14x30 - 10x28) x 2 = 9.520 üçgen, figürün ~%8'i. */
+    const k = new THREE.Mesh(new THREE.TorusGeometry(w, w * 0.2, 14, 30), M.kumasGolge);
     k.scale.x = d / w;
     k.position.z = -t * boy;
     g.add(k);
@@ -818,7 +824,7 @@ function govde(THREE, p, M, yan = 0) {
         }
         /* Uç, parmağın DEVAMI olan bir kapak - üstüne takılmış bir top değil.
            Silikon parmak ucu koyudur ve tutuş yüzeyidir. */
-        const uc = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), M.taban);
+        const uc = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), M.taban);
         uc.scale.set(d * 0.98, w * 0.98, w * 1.05);
         uc.position.z = -w * 0.35;
         ana.add(uc);
@@ -937,7 +943,7 @@ function govde(THREE, p, M, yan = 0) {
         const tup = ekle(new THREE.Mesh(cylGeoY(sz * 0.36, sz * 0.36, sy * 0.86, 12), M.metal));
         tup.position.set(0, 0, sz * 0.12 + zs * sz * 0.3);
         for (const ys of [-1, 1]) {
-          const bas = ekle(new THREE.Mesh(new THREE.SphereGeometry(sz * 0.36, 10, 8), M.metal));
+          const bas = ekle(new THREE.Mesh(new THREE.SphereGeometry(sz * 0.36, 16, 11), M.metal));
           bas.position.set(0, ys * sy * 0.43, sz * 0.12 + zs * sz * 0.3);
         }
       }

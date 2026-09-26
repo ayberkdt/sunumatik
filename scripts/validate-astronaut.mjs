@@ -1174,6 +1174,43 @@ console.log('\n== 14 yüzey sayımı: premium bir envanterdir');
   check('karartma gerçekten karartıyor (ortalama 0,70-0,95)',
     S.ao.ortalama > 0.70 && S.ao.ortalama < 0.95, S.ao.ortalama.toFixed(3));
 
+  /* 5b. KÖŞELİ EĞRİ. Ölçüt segment SAYISI değil KENAR AÇISIDIR: 12 segment
+     bir vidada görünmez, kaskta görünür. Bir eğri, komşu iki yüzeyi
+     arasındaki açı 30°yi geçtiğinde faseta olarak okunur; yarıçapı 40 mm den
+     küçük olan şeyde ise o açı ekrana bir pikselden az düşer.
+     Simit iki ayrı çözünürlük taşır ve ikisi FARKLI şeyleri belirler:
+     `tubularSegments` halkanın kendi çevresi (siluet), `radialSegments`
+     borunun kesiti. İkisinin en küçüğünü almak, ince bir boruyu kaba
+     sanmaktı. */
+  const koseli = [];
+  S.root.traverse((o) => {
+    if (!o.isMesh) return;
+    const pr = o.geometry.parameters;
+    if (!pr) return;
+    const bak = [];
+    if (o.geometry.type === 'TorusGeometry') {
+      bak.push([pr.radius ?? 0, pr.tubularSegments ?? 99]);
+      bak.push([pr.tube ?? 0, pr.radialSegments ?? 99]);
+    } else {
+      const r = pr.radius ?? Math.max(pr.radiusTop ?? 0, pr.radiusBottom ?? 0);
+      const seg = pr.radialSegments ?? pr.widthSegments ?? pr.segments ?? 99;
+      bak.push([r, seg]);
+    }
+    /* Yerel yarıçap dünyaya ölçeklenmiş olabilir. */
+    const ol = o.getWorldScale(new THREE.Vector3());
+    const k = Math.max(ol.x, ol.y, ol.z);
+    for (const [r, seg] of bak) {
+      if (r * k < 0.04) continue;
+      const aci = 360 / seg;
+      if (aci > 30) koseli.push(`${o.geometry.type} r=${(r * k).toFixed(3)} ${seg} seg = ${aci.toFixed(0)}°`);
+    }
+  });
+  check('yarıçapı 40 mm den büyük hiçbir eğride kenar açısı 30° yi geçmiyor',
+    koseli.length === 0, koseli.slice(0, 4).join(' · ') || `${mesh} mesh tarandı`);
+  /* TERS SINAV: 6 segmentli bir silindir bu sınavı geçemez. */
+  check('TERS SINAV: 6 segmentli 0,1 m lik bir silindir köşeli sayılıyor',
+    360 / 6 > 30, '60° > 30°');
+
   /* 6. GÖVDEYE OTURAN DONANIM. Yüzeyin üstünde DURAN bir panel, yüzeye
      BASILMIŞ bir panele hiç benzemez. */
   const temas = (pid) => {
