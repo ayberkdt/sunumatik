@@ -1104,5 +1104,118 @@ console.log('\n== 13 eklem gövdesi uzvun dilini konuşuyor mu');
   }
 }
 
+/* ── 14 YÜZEY SAYIMI: "premium" bir zevk değil, bir envanterdir ────────
+ *
+ * "Yeterince premium durmuyor" cümlesinin altında sayılabilir şeyler var ve
+ * hepsi bir kez sayıldı: 481 mesh'in 232'si çıplak kutu (keskin kenar, ışığı
+ * yakalayacak kırık yok), 18 malzemenin yalnız 3'ünde doku ve o üçü de yazı
+ * etiketi (normal 0, pürüzlülük 0, örtme 0), tek bir malzeme mesh'lerin
+ * %40'ını kaplıyor (her şey aynı krom), ve gövdeye oturan panel 12 ışının
+ * hiçbirinde gövdeye değmiyor (17-46 mm havada).
+ *
+ * Bunların hepsi SAYIDIR, o yüzden hepsi kapıda durur. Bir daha "biraz daha
+ * premium olsun" diye bakmak yerine, sayıya bakılır.
+ */
+console.log('\n== 14 yüzey sayımı: premium bir envanterdir');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik' });
+  S.root.updateMatrixWorld(true);
+
+  let mesh = 0, ciplakKutu = 0, renksiz = 0;
+  const malzeme = new Map();
+  S.root.traverse((o) => {
+    if (!o.isMesh) return;
+    mesh++;
+    if (o.geometry.type === 'BoxGeometry') ciplakKutu++;
+    if (!o.geometry.attributes.color) renksiz++;
+    malzeme.set(o.material, (malzeme.get(o.material) ?? 0) + 1);
+  });
+
+  /* 1. KESKİN KENAR. İmal edilmiş hiçbir kenar keskin değildir ve kırığı
+     olmayan bir kutu, üstüne hangi ışığı koyarsanız koyun çizilmiş görünür. */
+  check('astronotta çıplak (pahsız) kutu yok', ciplakKutu === 0,
+    ciplakKutu ? `${ciplakKutu} çıplak kutu` : `${mesh} mesh, hepsi pahlı ya da süpürme`);
+
+  /* 2. TEK MALZEME TEKELİ. Vida da toka da braket de aynı ayna olunca
+     donanım oyuncak gibi okunur. */
+  const enBuyuk = Math.max(...malzeme.values());
+  check('hiçbir malzeme mesh\'lerin %32 sinden fazlasını kaplamıyor',
+    enBuyuk / mesh <= 0.32, `en büyük pay %${(100 * enBuyuk / mesh).toFixed(0)} · ${malzeme.size} malzeme`);
+
+  /* 3. DOKU. Düz renk artı iki sayı, boyanmış plastiktir. */
+  /* MESH AĞIRLIKLI ölçülür, malzeme sayısıyla değil: sorulan şey "tabloda
+     kaç satır doku taşıyor" değil, GÖRÜLEN yüzeyin ne kadarının dokusu var.
+     Vizör bir aynadır, cam camdır, ten tendir - üçü de dokuma taşımaz ve
+     taşımamalı, ama üçü birlikte figürün yüzeyinin yüzde birkaçıdır. */
+  let haritaliMesh = 0;
+  for (const [m, n] of malzeme) if (m && (m.normalMap || m.roughnessMap)) haritaliMesh += n;
+  check('görünen yüzeyin en az %80 i doku taşıyor', haritaliMesh / mesh >= 0.80,
+    `%${(100 * haritaliMesh / mesh).toFixed(0)} (${haritaliMesh}/${mesh} mesh)`);
+  for (const ad of ['kumas', 'kumasGolge']) {
+    const m = S.materials[ad];
+    check(`${ad} dokuma taşıyor`, !!(m && m.normalMap && m.roughnessMap),
+      m && m.normalMap ? `tekrar ${m.normalMap.repeat.x.toFixed(0)}/m` : 'harita yok');
+  }
+
+  /* 4. UV. Harita UV'siz sahiplenilemez: tek teksel her yüzeye yayılır. */
+  let uvsuz = 0;
+  S.root.traverse((o) => {
+    if (!o.isMesh || !o.material) return;
+    if ((o.material.normalMap || o.material.roughnessMap) && !o.geometry.attributes.uv) uvsuz++;
+  });
+  check('haritalı hiçbir mesh UV siz değil', uvsuz === 0, `${uvsuz} mesh`);
+
+  /* 5. TEMAS KARARTMASI. Her mesh renk özniteliği taşımak ZORUNDA: eksikse
+     `vertexColors` açık malzemede SİYAH çıkar. */
+  check('her mesh temas karartması taşıyor', renksiz === 0,
+    renksiz ? `${renksiz} mesh renksiz` : `${S.ao.koseSayisi} köşe · ortalama ${S.ao.ortalama.toFixed(3)}`);
+  check('karartma gerçekten karartıyor (ortalama 0,70-0,95)',
+    S.ao.ortalama > 0.70 && S.ao.ortalama < 0.95, S.ao.ortalama.toFixed(3));
+
+  /* 6. GÖVDEYE OTURAN DONANIM. Yüzeyin üstünde DURAN bir panel, yüzeye
+     BASILMIŞ bir panele hiç benzemez. */
+  const temas = (pid) => {
+    const n = S.nodes.get(pid) ?? S.nodes.get(`${pid}#1`);
+    if (!n) return null;
+    const ic = new Set(); n.traverse((o) => ic.add(o));
+    const ustAd = A.partById(pid)?.mountsTo;
+    const ustN = ustAd ? (S.nodes.get(ustAd) ?? S.nodes.get(`${ustAd}#1`)) : null;
+    if (!ustN) return null;
+    const hedef = []; ustN.traverse((o) => { if (o.isMesh && !ic.has(o)) hedef.push(o); });
+    const b = new THREE.Box3().setFromObject(n);
+    const rc = new THREE.Raycaster(); rc.far = 0.3;
+    let enYakin = 9;
+    for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) {
+      rc.set(new THREE.Vector3(b.min.x - 0.0005,
+        b.min.y + (b.max.y - b.min.y) * (i / 4),
+        b.min.z + (b.max.z - b.min.z) * (j / 4)), new THREE.Vector3(-1, 0, 0));
+      const h = rc.intersectObjects(hedef, true);
+      if (h.length) enYakin = Math.min(enYakin, h[0].distance);
+    }
+    return enYakin;
+  };
+  const panel = temas('gogus-paneli');
+  check('göğüs paneli gövdeye değiyor (≤ 6 mm)', panel !== null && panel <= 0.006,
+    panel === null ? 'ölçülemedi' : `${(1000 * panel).toFixed(1)} mm (önce 27,0 mm)`);
+
+  /* TERS SINAV: paneli 30 mm öne itmek kapıyı düşürmek ZORUNDA. */
+  {
+    const n = S.nodes.get('gogus-paneli');
+    n.position.x += 0.03; n.updateMatrixWorld(true);
+    const bozuk = temas('gogus-paneli');
+    n.position.x -= 0.03; n.updateMatrixWorld(true);
+    check('TERS SINAV: panel 30 mm öne itilince temas kayboluyor',
+      bozuk !== null && bozuk > 0.006, `${(1000 * bozuk).toFixed(1)} mm`);
+  }
+  /* TERS SINAV 2: dokusuz bir malzeme sayımda görünür mü? */
+  {
+    const sahte = new THREE.MeshStandardMaterial();
+    check('TERS SINAV: dokusuz malzeme haritalı sayılmıyor',
+      !(sahte.normalMap || sahte.roughnessMap), 'çıplak MeshStandardMaterial');
+  }
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);

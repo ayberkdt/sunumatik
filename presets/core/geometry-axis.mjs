@@ -70,7 +70,9 @@ export function cylGeoZ(rPoz, rNeg, h, seg, open = false, thetaStart = 0, thetaL
  * `pah` mutlak metre cinsindendir ve en kısa kenarın dörtte biriyle
  * sınırlanır: 2 mm'lik bir düğmeye 4 mm pah, pah değil koni olurdu.
  */
-export function pahliKutuGeo(en, boy, der, pah = 0.004) {
+export function pahliKutuGeo(en, boy, der, pah = 0.004, {
+  arkaEgriR = 0, egriR = 0,
+} = {}) {
   const a = en / 2, b = boy / 2, c = der / 2;
   const p = Math.min(pah, Math.min(a, Math.min(b, c)) * 0.5);
   const poz = [], idx = [], uv = [];
@@ -121,6 +123,20 @@ export function pahliKutuGeo(en, boy, der, pah = 0.004) {
   for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) {
     const [iX, iY, iZ] = K(sx, sy, sz);
     if (sx * sy * sz > 0) idx.push(iX, iY, iZ); else idx.push(iX, iZ, iY);
+  }
+  /* GÖVDEYE OTURAN ARKA YÜZ. Yassı bir kutu, eğri bir gövdeye ancak tek bir
+     noktada değer: ölçüldü, göğüs paneli 12 ışının hiçbirinde gövdeye
+     değmiyor ve aradaki boşluk 17-46 mm. Bir şeyin yüzeye BASILMIŞ mı
+     yoksa ÜSTÜNDE DURUYOR mu göründüğünü belirleyen şey budur.
+     `arkaEgriR` yalnız arka yüzü, `egriR` iki yüzü birden büker - biri
+     sert bir kutu, öteki yüzeye yapışan bir çıkartma içindir. */
+  const R = egriR || arkaEgriR;
+  if (R > 0) {
+    for (let i = 0; i < poz.length; i += 3) {
+      const y = poz[i + 1];
+      const cok = R - Math.sqrt(Math.max(0, R * R - y * y));
+      if (egriR > 0 || poz[i] < 0) poz[i] += cok;
+    }
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(poz, 3));

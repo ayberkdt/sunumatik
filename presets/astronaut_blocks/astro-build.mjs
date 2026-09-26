@@ -227,8 +227,11 @@ function yatakHalkasi(THREE, M, r, { kalin = 0.02, tirnak = 8, kol = false, basi
 }
 
 /** Bir yüzeye yapışan yama/etiket. */
-function yama(THREE, mat, w, h, kal = 0.006) {
-  return new THREE.Mesh(pahliKutuGeo(kal, w, h), mat);
+function yama(THREE, mat, w, h, kal = 0.006, egriR = 0.30) {
+  /* Bir çıkartma yüzeye BASILIR, üstünde durmaz: eğri bir gövdeye konan düz
+     bir dörtgen kenarlarından kalkar ve gölgesiyle birlikte "yapıştırılmış
+     etiket" gibi okunur. Yarıçap gövdenin kendi eğriliğidir. */
+  return new THREE.Mesh(pahliKutuGeo(kal, w, h, 0.0015, { egriR }), mat);
 }
 
 /* ── pozlar ──────────────────────────────────────────────────────────
@@ -733,19 +736,30 @@ function govde(THREE, p, M, yan = 0) {
        parmak (ikişer boğum, hafif kıvrık) ve ayrı başparmak. Parmak uçları
        koyu: kavrama yüzeyi kumaş değil, kauçuktur. */
     case 'eldiven': {
-      const rB = sy * 0.6, uz = sx, boy = sz;
+      /* BİLEK HALKASI KOLDAN BİRAZ GENİŞ, ELDİVENDEN DEĞİL. sy*0.6 ile
+         halkanın dış çapı 0,230 m çıkıyordu; ön kolun bilekteki kesiti ise
+         0,152 m, yani halka kolundan %51 genişti - bir kilit halkası
+         geçtiği kolun ölçüsündedir. */
+      const rB = sy * 0.44, uz = sx, boy = sz;
       g.add(yatakHalkasi(THREE, M, rB, { kalin: 0.012, tirnak: 6 }));
       const mansetBoy = boy * 0.34;
       ekle(uzuvMesh(THREE, M.kumasGolge, mansetBoy, uzuvKesiti({
         ustW: rB, ustD: rB * 0.96, altW: rB * 0.9, altD: rB * 0.84, sis: 0.02,
         p: 2.4, kapitone: [2, 0.05],
       }), { dilim: 10, halka: 24 }));
-      const avuc = ekle(new THREE.Mesh(
-        pahliKutuGeo(uz * 0.34, sy * 0.88, boy * 0.3), M.kumasGolge));
-      avuc.position.set(uz * 0.04, 0, -mansetBoy - boy * 0.15);
+      /* AVUÇ da SÜPÜRÜLÜR. Pahlı bir kutu olarak kurulduğunda el, ucuna
+         parmak takılmış bir tuğlaydı; bir avuç bilekten boğumlara doğru
+         GENİŞLER ve önden arkaya BASIKTIR - kesit oranı 1:2,3. */
+      const avuc = ekle(uzuvMesh(THREE, M.kumasGolge, boy * 0.32, uzuvKesiti({
+        ustW: sy * 0.36, ustD: uz * 0.17, altW: sy * 0.44, altD: uz * 0.155,
+        sis: 0.02, p: 2.5, kapitone: [2, 0.04], dikis: [5, 0.035],
+      }), { dilim: 8, halka: 22 }));
+      avuc.position.set(uz * 0.04, 0, -mansetBoy);
+      /* Kavrama yastığı avucun EĞRİSİNİ izler: düz bir levha, avucun üstüne
+         yapıştırılmış bir kart gibi duruyordu. */
       const ped = ekle(new THREE.Mesh(
-        pahliKutuGeo(uz * 0.28, sy * 0.72, boy * 0.05), M.taban));
-      ped.position.set(uz * 0.2, 0, -mansetBoy - boy * 0.15);
+        pahliKutuGeo(uz * 0.04, sy * 0.44, boy * 0.19, 0.002, { egriR: 0.09 }), M.koyu));
+      ped.position.set(uz * 0.155, 0, -mansetBoy - boy * 0.17);
       /* Bilek kayışı ve tokası: eldiven bileğe SIKILIR. */
       const bkayis = ekle(new THREE.Mesh(
         new THREE.TorusGeometry(rB * 0.92, rB * 0.09, 8, 22), M.koyu));
@@ -759,35 +773,86 @@ function govde(THREE, p, M, yan = 0) {
          hangi el olduğu, onu kuran koda SÖYLENMEK zorunda. */
       const ayna = yan >= 0 ? 1 : -1;
       const parmakZ = -mansetBoy - boy * 0.3;
+
+      /* PARMAK: üç boğum, her biri bir öncekinden kısa, ince ve DAHA KIVRIK.
+         Önceki hâl iki düz dikdörtgen ve ucunda parmaktan kalın siyah bir
+         küreydi - dört tanesi yan yana, hepsi aynı boyda: bir el değil bir
+         çatal. Kesit süpürmeden gelir, yani parmak da giysinin geri kalanıyla
+         aynı biçim dilini konuşur.
+
+         KIVRIM BASINÇTAN. 29,6 kPa'da kumaş silindir olmak ister, o yüzden
+         şişmiş bir eldivenin NÖTR duruşu hafif kapalıdır; mürettebat gün boyu
+         o kıvrıma karşı çalışır ve giysili bir eli en çok tanınır kılan şey
+         budur. Açık, düz bir parmak basınçlı bir eldivende hiç görülmez. */
+      const parmakKur = (kokGrup, boyOran, enOran, kivrimlar) => {
+        let ana = kokGrup;
+        let L = boy * 0.17 * boyOran;
+        let w = sy * 0.085 * enOran;
+        let d = uz * 0.075 * enOran;
+        for (let b = 0; b < 3; b++) {
+          const eklemG = new THREE.Group();
+          eklemG.rotation.y = -kivrimlar[b];
+          ana.add(eklemG);
+          const m = new THREE.Mesh(supur(THREE, {
+            boy: L,
+            kesit: (u) => ({
+              /* Boğum ortada şişer, uçlarda mafsala iner: basınçlı kumaşın
+                 boğum arası her zaman dolgundur. */
+              w: w * (0.86 + 0.14 * Math.sin(Math.PI * u)),
+              d: d * (0.86 + 0.14 * Math.sin(Math.PI * u)),
+              p: 2.4, kapitone: [2, 0.05], dikis: [4, 0.03],
+            }),
+            dilim: 6, halka: 14,
+          }), M.kumas);
+          m.castShadow = true; m.receiveShadow = true;
+          eklemG.add(m);
+          /* Boğum mafsalı: parmak da bir eklemdir ve orada da kama boşluğu
+             açılır. */
+          const mf = mafsalGovdesi(THREE, M.kumas, w * 1.02, d * 1.02, { seg: 12 });
+          eklemG.add(mf);
+          const sonraki = new THREE.Group();
+          sonraki.position.z = -L;
+          eklemG.add(sonraki);
+          ana = sonraki;
+          L *= 0.72; w *= 0.86; d *= 0.86;
+        }
+        /* Uç, parmağın DEVAMI olan bir kapak - üstüne takılmış bir top değil.
+           Silikon parmak ucu koyudur ve tutuş yüzeyidir. */
+        const uc = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), M.taban);
+        uc.scale.set(d * 0.98, w * 0.98, w * 1.05);
+        uc.position.z = -w * 0.35;
+        ana.add(uc);
+      };
+
+      /* Dört parmak: işaret en uzun, serçe en kısa; kıvrım serçeye doğru
+         artar - bir el kapanırken böyle kapanır. */
+      const PARMAK = [
+        { boyO: 1.00, enO: 1.00, kiv: [0.30, 0.42, 0.40] },   // işaret
+        { boyO: 1.08, enO: 1.00, kiv: [0.26, 0.40, 0.38] },   // orta
+        { boyO: 0.98, enO: 0.94, kiv: [0.30, 0.46, 0.44] },   // yüzük
+        { boyO: 0.80, enO: 0.86, kiv: [0.36, 0.52, 0.50] },   // serçe
+      ];
       for (let i = 0; i < 4; i++) {
         const kok = new THREE.Group();
-        kok.position.set(uz * 0.06, ayna * (i / 3 - 0.5) * sy * 0.64, parmakZ);
-        kok.rotation.y = -0.42;
+        /* Parmak kökleri bir YAY üzerinde durur, düz bir çizgide değil:
+           avuç kemikleri farklı uzunluktadır ve el o yüzden kürek değildir. */
+        const u = i / 3;
+        kok.position.set(uz * 0.05 - uz * 0.06 * u * u,
+          ayna * (u - 0.5) * sy * 0.58, parmakZ + boy * 0.02 * Math.sin(Math.PI * u));
+        kok.rotation.y = -0.16;
+        kok.rotation.x = ayna * (u - 0.5) * 0.10;
         g.add(kok);
-        const b1 = new THREE.Mesh(pahliKutuGeo(uz * 0.13, sy * 0.15, boy * 0.16), M.kumas);
-        b1.position.z = -boy * 0.08;
-        kok.add(b1);
-        const b2g = new THREE.Group();
-        b2g.position.z = -boy * 0.16;
-        b2g.rotation.y = -0.5;
-        kok.add(b2g);
-        const b2 = new THREE.Mesh(pahliKutuGeo(uz * 0.11, sy * 0.13, boy * 0.13), M.kumas);
-        b2.position.z = -boy * 0.065;
-        b2g.add(b2);
-        const uc = new THREE.Mesh(new THREE.SphereGeometry(sy * 0.07, 8, 6), M.taban);
-        uc.position.z = -boy * 0.13;
-        b2g.add(uc);
+        parmakKur(kok, PARMAK[i].boyO, PARMAK[i].enO, PARMAK[i].kiv);
       }
+
+      /* BAŞPARMAK gövde ortasına bakar ve öteki dörde KARŞIDIR - bir eli el
+         yapan şey odur. İki boğum, daha kalın, daha çok kıvrık. */
       const bp = new THREE.Group();
-      bp.position.set(uz * 0.15, -ayna * sy * 0.4, -mansetBoy - boy * 0.16);
-      bp.rotation.y = -1.0;
+      bp.position.set(uz * 0.14, -ayna * sy * 0.34, -mansetBoy - boy * 0.12);
+      bp.rotation.y = -0.85;
+      bp.rotation.z = ayna * 0.55;
       g.add(bp);
-      const bp1 = new THREE.Mesh(pahliKutuGeo(uz * 0.12, sy * 0.16, boy * 0.14), M.kumas);
-      bp1.position.z = -boy * 0.07;
-      bp.add(bp1);
-      const bpUc = new THREE.Mesh(new THREE.SphereGeometry(sy * 0.08, 8, 6), M.taban);
-      bpUc.position.z = -boy * 0.14;
-      bp.add(bpUc);
+      parmakKur(bp, 0.92, 1.22, [0.22, 0.40, 0.0]);
       break;
     }
 
@@ -1062,7 +1127,11 @@ function govde(THREE, p, M, yan = 0) {
     case 'panel': {
       /* RCU açık renktir. Göğse siyah bir levha koymak, referans fotoğraftaki
          beyaz kutuyu deliğe çeviriyordu. */
-      ekle(new THREE.Mesh(pahliKutuGeo(sx * 0.8, sy, sz), M.kumasGolge));
+      /* RCU'nun ARKASI göğsün eğrisini izler. Ölçülen yarıçap 0,56 m:
+         gövde kesiti p = 2,2 süperelipstir ve panelin yarı eninde (0,14 m)
+         yüzey 17,6 mm geri çekilir - dairesel karşılığı budur. */
+      ekle(new THREE.Mesh(pahliKutuGeo(sx * 0.8, sy, sz, 0.004, { arkaEgriR: 0.56 }),
+        M.kumasGolge));
       const ekran = ekle(new THREE.Mesh(
         pahliKutuGeo(sx * 0.1, sy * 0.46, sz * 0.34), M.kit.white));
       ekran.position.set(sx * 0.44, sy * 0.22, sz * 0.26);

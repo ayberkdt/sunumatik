@@ -333,9 +333,6 @@ export const PARTS = Object.freeze([
   { id: 'eldivenler', ad: 'Gloves', sistem: 'arayuz', step: 5,
     mountsTo: 'kollar', arayuz: 'kilit', massKg: 0.9, qty: 2,
     pos: [0.03, 0.30, 0.71], size: [0.22, 0.17, 0.24], yon: 'yan', ayna: 'y', sekil: 'eldiven',
-    /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
-    zarfOran: 0.35,
-    zarfNeden: 'Bilek kilidi ve kavrama yastığı avuçtan geniştir. BORÇ: eldiven hâlâ boyundan geniş.',
     tech: {
       no: 'AS-INT-051',
       malzeme: 'RTV silicone fingertips, Vectran palm, heated fingers',
@@ -441,7 +438,11 @@ export const PARTS = Object.freeze([
   /* ADIM 6 — arayüz ve emniyet */
   { id: 'gogus-paneli', ad: 'Display and control module', sistem: 'arayuz', step: 6,
     mountsTo: 'ust-govde', arayuz: 'civata', massKg: 2.1,
-    pos: [0.19, 0, 1.46], size: [0.13, 0.28, 0.20], yon: 'gogus', sekil: 'panel',
+    /* PANEL GÖVDEYE DEĞER. 0,19'da dururken arka yüzü gövdeden 27 mm
+       uzaktaydı ve 12 ışının hiçbiri değmiyordu: göğsün üstünde DURAN değil,
+       önünde UÇAN bir kutu. Arka yüz artık göğsün eğrisini izliyor (bkz.
+       astro-build/panel), konum da onu gövdeye oturtacak kadar geri alındı. */
+    pos: [0.163, 0, 1.46], size: [0.13, 0.28, 0.20], yon: 'gogus', sekil: 'panel',
     /* AYNA: bu parça bilerek asimetriktir - beyan edilmezse
        ayna kapısı düşer (validate-astronaut §9). */
     asimetrik: 'Kumanda yerleşimi SAĞ el içindir; aynalanmış bir panel kullanılamaz, çünkü kolun ulaştığı yer aynalanmıyor.',

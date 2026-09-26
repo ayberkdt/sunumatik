@@ -20,7 +20,7 @@
  * three is passed in; this module never imports it.
  */
 
-import { cylGeoX, cylGeoY, cylGeoZ, coneGeoZ, latheX, latheZ } from './geometry-axis.mjs';
+import { cylGeoX, cylGeoY, cylGeoZ, coneGeoZ, latheX, latheZ, pahliKutuGeo } from './geometry-axis.mjs';
 
 const TAU = Math.PI * 2;
 
@@ -1051,7 +1051,9 @@ export function kabloTavasi(THREE, M, uzunluk, { kablo = 3 } = {}) {
 export function levha(THREE, M, satirlar, { w = 0.3, h = 0.15, seritRenk = null, zemin, yazi } = {}) {
   const t = levhaDokusu(THREE, satirlar, { seritRenk, zemin, yazi });
   const mat = new THREE.MeshStandardMaterial({ map: t, roughness: .78, metalness: .05 });
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.006), mat);
+  /* Künye levhası da PAHLIDIR: 0,4 mm'lik bir kenar kırığı, basılı bir
+     etiketi "boyanmış dikdörtgen"den ayıran şeydir. */
+  const m = new THREE.Mesh(pahliKutuGeo(w, h, 0.006, 0.0004), mat);
   m.userData.notes = { regime: 'işletme', why: 'Levha bir süs değil: bakımcı hangi hattın ne taşıdığını gövdenin üstünden okur.' };
   return m;
 }
