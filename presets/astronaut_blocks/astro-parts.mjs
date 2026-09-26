@@ -51,6 +51,51 @@ export const DIKEY = Object.freeze({
   ayakBilegi: 0.20, diz: 0.64, kalca: 1.10, bel: 1.18, omuz: 1.58,
   boyun: 1.66, tepe: 1.95,
 });
+/**
+ * EKLEM SÖZLEŞMESİ — deponun "aksamlar" kütüphanesiyle aynı biçim.
+ *
+ * `presets/physical_rigs/mechanism-index.mjs` şunu söyler: hareketli parçasını
+ * olan her kurucu eklemlerini `userData.rig.joints` ile ilan eder ve orada her
+ * eklemin DÜĞÜMÜ, EKSENİ, SINIRI ve HIZI yazar. Astronotun hiçbiri yoktu: ne
+ * beyan edilmiş eksen, ne sınır - dolayısıyla bir uzvun ters dönmesini
+ * yakalayabilecek hiçbir şey yoktu. Eldivenin sağ eli tam bu yüzden aynalanmak
+ * yerine kopyalanmış olarak kalabildi.
+ *
+ * SINIRLAR BASINÇLI GİYSİNİNDİR, çıplak insanın değil. Gömlek kolunda omuz
+ * 180° fleksiyon yapar; A7L sınıfı bir giyside konvolüt mafsal ve basınç bunu
+ * yaklaşık 120°'ye indirir. Ayak bileği en dar mafsaldır ve aşağıda görüleceği
+ * gibi yürüyüş çözümünün istediği açı oraya SIĞMAZ - o yüzden kırpılır.
+ */
+export const EKLEMLER = Object.freeze({
+  'bel.donme':   { node: 'belDonme', axis: 'z', range: [-28, 28], rateDegS: 90 },
+  'omuz.L':      { node: 'omuzL', axis: 'y', range: [-55, 120], rateDegS: 120 },
+  'omuz.R':      { node: 'omuzR', axis: 'y', range: [-55, 120], rateDegS: 120 },
+  'dirsek.L':    { node: 'dirsekL', axis: 'y', range: [0, 122], rateDegS: 150 },
+  'dirsek.R':    { node: 'dirsekR', axis: 'y', range: [0, 122], rateDegS: 150 },
+  'kalca.L':     { node: 'kalcaL', axis: 'y', range: [-28, 72], rateDegS: 110 },
+  'kalca.R':     { node: 'kalcaR', axis: 'y', range: [-28, 72], rateDegS: 110 },
+  'diz.L':       { node: 'dizL', axis: 'y', range: [0, 104], rateDegS: 160 },
+  'diz.R':       { node: 'dizR', axis: 'y', range: [0, 104], rateDegS: 160 },
+  'ayak.L':      { node: 'ayakL', axis: 'y', range: [-26, 34], rateDegS: 130 },
+  'ayak.R':      { node: 'ayakR', axis: 'y', range: [-26, 34], rateDegS: 130 },
+});
+/** Poz alanı → eklem adı (sol, sağ). */
+export const POZ_EKLEM = Object.freeze({
+  omuz: ['omuz.L', 'omuz.R'], dirsek: ['dirsek.L', 'dirsek.R'],
+  kalca: ['kalca.L', 'kalca.R'], diz: ['diz.L', 'diz.R'], ayak: ['ayak.L', 'ayak.R'],
+});
+/** Bir açıyı kendi ekleminin sınırına kırpar. */
+export function sinirla(ad, aciDeg) {
+  const e = EKLEMLER[ad];
+  if (!e) return aciDeg;
+  return Math.max(e.range[0], Math.min(e.range[1], aciDeg));
+}
+
+/* Ayak: bilekten buruna ve topuğa olan yatay mesafe. Bilek sınıra dayanınca
+   ayak bu uçlardan biri etrafında DÖNER ve bilek o kadar yükselir. */
+export const AYAK_ON_M = 0.22;
+export const AYAK_ARKA_M = 0.12;
+
 /** Uyluk ve baldır uzunluğu — ters kinematik bunları kullanır. */
 export const UYLUK_M = DIKEY.kalca - DIKEY.diz;
 export const BALDIR_M = DIKEY.diz - DIKEY.ayakBilegi;

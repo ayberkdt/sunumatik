@@ -200,7 +200,9 @@
        Bacak boyu figürden gelir, buraya kopyalanmaz. */
     function fizikKur() {
       if (hiz === null) hiz = froudeHizi(DOGAL_FROUDE, YERCEKIMI[ortam], kurulum.olcu.bacakM);
-      F = yuruyusFizigi(ortam, kurulum.olcu.bacakM, hiz);
+      /* Ölçüler VERİLİR: giysi yürüyüşü sınırlar ve çözüm, beyan edilen
+         mafsal açıklığına sığacak şekilde adımı kısaltır. */
+      F = yuruyusFizigi(ortam, kurulum.olcu.bacakM, hiz, kurulum.olcu);
       el('#hiz').value = String(Math.min(2.4, Math.max(0.3, hiz)));
       el('#hizDeger').textContent =
         `${F.hiz.toFixed(2)} m/s · geçiş ${F.gecisHiz.toFixed(2)} m/s · doğal ${F.dogalHiz.toFixed(2)} m/s`;

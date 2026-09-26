@@ -41,6 +41,8 @@
  * düşey hızıyla tam eşleşmez.
  */
 
+import { EKLEMLER, POZ_EKLEM, sinirla, AYAK_ON_M, AYAK_ARKA_M } from './astro-parts.mjs';
+
 /** Yüzey yerçekimi (m/s²). Kaynak: standart gezegen değerleri. */
 export const YERCEKIMI = Object.freeze({
   ay: 1.624, mars: 3.721, dunya: 9.807,
@@ -63,7 +65,7 @@ export const froudeHizi = (fr, g, bacakM) => Math.sqrt(fr * g * bacakM);
  * Bir ortam ve hız için yürüyüşün bütün sayıları.
  * Hız verilmezse kendiliğinden seçilen hız kullanılır.
  */
-export function yuruyusFizigi(ortam, bacakM, hizMs = null) {
+export function yuruyusFizigi(ortam, bacakM, hizMs = null, olcu = null) {
   const g = YERCEKIMI[ortam] ?? YERCEKIMI.dunya;
   const gecisHiz = froudeHizi(GECIS_FROUDE, g, bacakM);
   const dogalHiz = froudeHizi(DOGAL_FROUDE, g, bacakM);
@@ -96,7 +98,7 @@ export function yuruyusFizigi(ortam, bacakM, hizMs = null) {
   /* Uçuşta gövdenin yükselmesi: v0 = g*t/2, tepe = g*t²/8. */
   const ucusYukselme = g * ucusSure * ucusSure / 8;
 
-  return {
+  const F = {
     ortam, ad: ORTAM_ADI[ortam] ?? ortam, g, bacakM,
     hiz, froude: fr, gecisHiz, dogalHiz, tip,
     adimSure, adimBoyu, cadans: 60 / adimSure, gorevOrani,
@@ -109,6 +111,57 @@ export function yuruyusFizigi(ortam, bacakM, hizMs = null) {
        mürettebat ayağını daha yükseğe atar. */
     ayakAcikligi: Math.min(0.30, 0.04 + 0.16 * adimOrani + 0.4 * ucusYukselme),
   };
+  /* GİYSİ YÜRÜYÜŞÜ SINIRLAR. Ölçüler verilirse, çözümün istediği açıların
+     beyan edilen mafsal açıklığına SIĞDIĞI doğrulanır ve sığmıyorsa ayak
+     açıklığı düşürülür. Sığdırmadan bırakmak, kırpılan dizin bileği
+     çözümün söylediği yerden 90-177 mm ayırmasına yol açıyordu - ve o
+     sapma, salınan ayağın burnunu yere sokuyordu. Gerçekte olan da budur:
+     basınçlı bir giyside mürettebat ayağını o kadar yükseğe atamaz. */
+  if (olcu && olcu.uylukM && olcu.baldirM) {
+    /* GİYSİ YÜRÜYÜŞÜ SINIRLAR. Çözümün istediği açılar beyan edilen mafsal
+       açıklığına sığmak ZORUNDA; sığmayınca ters kinematik kırpılıyor ve
+       bilek çözümün söylediği yerden 90-177 mm ayrılıyordu - salınan ayağın
+       burnu da o sapmayla yere giriyordu.
+       İlk sığdırma yalnız DİZE bakıyordu ve diz zaten sınırın altındaydı
+       (70-96° / 104°); kısıtlayan eklem KALÇAYDI - Ay'da 1,2 m/s'de çözüm
+       -34..+88° istiyor, giysi -28..+72 veriyor. Kalça salınımını belirleyen
+       şey adım boyu, dizi belirleyen şey ayak açıklığıdır, o yüzden hangisi
+       taşıyorsa o küçülür.
+       Sonuç fiziksel olarak doğru ve ilginç: aynı hızda giysili mürettebat
+       daha KISA ve daha SIK adım atar, çünkü kalçası o kadar açılmaz. */
+    const kSin = EKLEMLER['kalca.L'].range, dSin = EKLEMLER['diz.L'].range;
+    const ihlal = (Fx) => {
+      let kalca = 0, diz = 0;
+      for (let i = 0; i < 48; i++) {
+        const faz = i / 48;
+        const hz = kalcaYuksekligi(faz, Fx, olcu.uylukM + olcu.baldirM);
+        for (const of2 of [0, 0.5]) {
+          const a = ayakKonumu(faz + of2, Fx);
+          const c = bacakIK(a.x, a.z - hz, olcu.uylukM, olcu.baldirM);
+          kalca = Math.max(kalca, c.kalca - kSin[1], kSin[0] - c.kalca);
+          diz = Math.max(diz, c.diz - dSin[1], dSin[0] - c.diz);
+        }
+      }
+      return { kalca, diz, en: Math.max(kalca, diz) };
+    };
+    for (let n = 0; n < 60; n++) {
+      const iz = ihlal(F);
+      if (iz.en <= 0.05) break;
+      if (iz.diz > iz.kalca && F.ayakAcikligi > 0.05) {
+        F.ayakAcikligi *= 0.92;
+      } else if (F.adimBoyu > 0.25) {
+        F.adimBoyu *= 0.955;
+        F.adimSure = F.adimBoyu / Math.max(F.hiz, 1e-3);
+        F.cadans = 60 / F.adimSure;
+        F.adimOrani = F.adimBoyu / bacakM;
+        F.ayakAcikligi = Math.min(F.ayakAcikligi, 0.04 + 0.16 * F.adimOrani);
+      } else break;
+    }
+    const son = ihlal(F);
+    F.mafsalTasma = son.en;
+    F.sigdirildi = son.en <= 0.05;
+  }
+  return F;
 }
 
 /**
@@ -199,6 +252,25 @@ export function kalcaYuksekligi(faz, F, erisimM) {
  * @param F     yuruyusFizigi çıktısı
  * @param olcu  { uylukM, baldirM, bacakM }
  */
+/**
+ * AYAĞIN YUVARLANMASI. Bilek en dar mafsaldır ve tabanı yere düz tutmak için
+ * gereken açı (kalça - diz) ona her zaman sığmaz. Sığmadığında gerçek ayak
+ * düz kalmaz: hâlâ yerde olan ucu (burun ya da topuk) etrafında DÖNER ve
+ * bilek o kadar yükselir. Kırpıp bırakmak tabanı yere gömüyordu - ölçülen
+ * 12 ile 124 mm arası.
+ *
+ * @returns { aci, yukselme } bilek açısı (derece) ve bileğin yükselmesi (m)
+ */
+export function ayakYuvarlanma(ad, gerekenDeg) {
+  const aci = sinirla(ad, gerekenDeg);
+  const fark = (aci - gerekenDeg) * Math.PI / 180;
+  if (Math.abs(fark) < 1e-9) return { aci, yukselme: 0 };
+  /* Pozitif fark burnu aşağı çevirir: yerde kalan uç BURUNDUR, bilek
+     burun mesafesi kadar yükselir. Negatifte topuk kalır. */
+  const kol = fark > 0 ? AYAK_ON_M : AYAK_ARKA_M;
+  return { aci, yukselme: kol * Math.abs(Math.sin(fark)) };
+}
+
 export function yuruyusPozu(faz, F, olcu) {
   const { uylukM, baldirM } = olcu;
   /* Erişim uzunluğu BURADA türetilir. Önce ayrıca verilen bir `bacakM`
@@ -208,10 +280,41 @@ export function yuruyusPozu(faz, F, olcu) {
      şey, girdi olarak istenmez. */
   const erisim = uylukM + baldirM;
   const hz = kalcaYuksekligi(faz, F, erisim);
-  const bacak = [0, 0.5].map((ofset) => {
-    const a = ayakKonumu(faz + ofset, F);
-    return bacakIK(a.x, a.z - hz, uylukM, baldirM);
-  });
+  /* İki geçiş: önce açılar çözülür, sonra bileğin SINIRI uygulanır ve ayak
+     yuvarlanarak bileği yükseltir; hedef o kadar yükselince kinematik bir
+     kez daha çözülür. Tek geçiş, tabanı yere gömer. */
+  const ayaklar = [0, 0.5].map((ofset) => ayakKonumu(faz + ofset, F));
+  const bacak = [], bilek = [];
+  for (let i = 0; i < 2; i++) {
+    const a = ayaklar[i];
+    /* YAY YÜKSEKLİĞİ ayrı tutulur: `a.z` bundan sonra BİLEĞİN yüksekliği
+       olacak ve tabanın nerede olduğu profilden gelecek. */
+    const yay = a.z;
+    let c = bacakIK(a.x, a.z - hz, uylukM, baldirM);
+    /* SABİT NOKTA. Bilek açısı bileğin yüksekliğini, yükseklik de açıyı
+       belirler; ikisi birbirine bağlı. Sabit sayıda geçiş yapmak, `a.z` ile
+       ona karşılık gelen açıyı tutarsız bırakıyordu - taban 12 mm gömülü ya
+       da bilek çözümden 12 mm ayrı kalıyordu. Yakınsayana kadar dönülür. */
+    let aci = 0;
+    for (let gec = 0; gec < 8; gec++) {
+      c.kalca = sinirla(POZ_EKLEM.kalca[i], c.kalca);
+      c.diz = sinirla(POZ_EKLEM.diz[i], c.diz);
+      const gereken = c.kalca - c.diz;
+      aci = sinirla(POZ_EKLEM.ayak[i], gereken);
+      /* ANAHTAR, EKLEM AÇISI DEĞİL DÜNYA EĞİMİDİR: tabanın ne kadar düştüğünü
+         belirleyen şey ayağın YERE göre eğimi, yani kırpmanın bıraktığı
+         farktır. Kırpma yokken sapma sıfırdır ve taban düzdür. */
+      const zYeni = yay + (olcu.tabanDusme
+        ? olcu.tabanDusme(aci - gereken) - olcu.botOfsetM : 0);
+      if (Math.abs(zYeni - a.z) < 1e-7) break;
+      a.z = zYeni;
+      c = bacakIK(a.x, a.z - hz, uylukM, baldirM);
+    }
+    c.kalca = sinirla(POZ_EKLEM.kalca[i], c.kalca);
+    c.diz = sinirla(POZ_EKLEM.diz[i], c.diz);
+    bilek.push(aci);
+    bacak.push(c);
+  }
   /* Kol salınımı bacağın TERSİ fazdadır ve genliği adım boyuyla artar:
      kollar dengeyi tutar, süs değildir. */
   const genlik = Math.min(42, 14 + 60 * F.adimBoyu / erisim);
@@ -252,6 +355,7 @@ export function yuruyusPozu(faz, F, olcu) {
        bilek AÇISIDIR (sayı); buraya ayak konumu (nesne) yazılınca
        `uygulaPoz` onu açı sanıp nesne * RAD yapıyor ve bütün figür NaN'a
        dönüyordu. Aynı addaki iki şey, aynı nesnede duramaz. */
-    ayakKonum: [ayakKonumu(faz, F), ayakKonumu(faz + 0.5, F)],
+    ayak: bilek,
+    ayakKonum: ayaklar,
   };
 }

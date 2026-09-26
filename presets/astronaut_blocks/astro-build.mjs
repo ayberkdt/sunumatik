@@ -31,6 +31,7 @@
  */
 import {
   PARTS, partById, BOY_M, OMUZ_M, DIKEY, UYLUK_M, BALDIR_M, kopyaKonumlari,
+  EKLEMLER, POZ_EKLEM, sinirla,
 } from './astro-parts.mjs';
 import { supur, uzuvKesiti, govdeKesiti } from './astro-body.mjs';
 import { cylGeoX, cylGeoY, cylGeoZ, latheZ } from '../core/geometry-axis.mjs';
@@ -251,6 +252,7 @@ function govde(THREE, p, M, yan = 0) {
       const eklem = { kalca: [], diz: [], ayak: [] };
       for (const [i, s] of [[0, 1], [1, -1]]) {
         const kalca = new THREE.Group();
+        kalca.name = i === 0 ? 'kalcaL' : 'kalcaR';
         kalca.position.set(0, s * sy * 0.37, kalcaZ);
         g.add(kalca);
         eklem.kalca.push(kalca);
@@ -273,6 +275,7 @@ function govde(THREE, p, M, yan = 0) {
         kalca.add(cep);
 
         const diz = new THREE.Group();
+        diz.name = i === 0 ? 'dizL' : 'dizR';
         diz.position.z = -UYLUK_M;
         kalca.add(diz);
         eklem.diz.push(diz);
@@ -302,6 +305,7 @@ function govde(THREE, p, M, yan = 0) {
            giriyordu - ölçülen: Ay'da taban 0,107 m yerin altında. Bir ayak
            bileği yalnız bir ayrıntı değil, tabanı yere DÜZ tutan şeydir. */
         const ayak = new THREE.Group();
+        ayak.name = i === 0 ? 'ayakL' : 'ayakR';
         ayak.position.z = -BALDIR_M;
         diz.add(ayak);
         eklem.ayak.push(ayak);
@@ -362,11 +366,16 @@ function govde(THREE, p, M, yan = 0) {
       const klips = ekle(new THREE.Mesh(
         new THREE.BoxGeometry(uz * 0.1, gen * 0.5, boy * 0.09), M.metal));
       klips.position.set(-uz * 0.33, 0, tabanZ + boy * 0.2);
+      /* Bağ kayışı çizmenin ETRAFINI sarar. `rotation.x = PI/2` halkayı DİK
+         çeviriyordu: XY düzlemindeki bir simit +Z ekseni etrafında sarar,
+         X etrafında çevrilince XZ düzlemine geçer ve tabanın 6 cm ALTINA
+         sarkar. Ölçülen taban profili de onu görüyordu - bilek-taban mesafesi
+         0,194 yerine 0,253 çıkıyor ve yürüyüş çözümü her karede 30 mm
+         şaşıyordu. Bir simidin ekseni, sardığı şeyin eksenidir. */
       const kayis = ekle(new THREE.Mesh(
-        new THREE.TorusGeometry(gen * 0.56, gen * 0.05, 8, 22), M.koyu));
-      kayis.scale.set(uz * 0.72 / gen, 1, 1);
-      kayis.position.set(uz * 0.02, 0, tabanZ + boy * 0.28);
-      kayis.rotation.x = Math.PI / 2;
+        new THREE.TorusGeometry(gen * 0.54, gen * 0.05, 8, 22), M.koyu));
+      kayis.scale.set(uz * 0.8 / (gen * 0.54), 1, 1);
+      kayis.position.set(uz * 0.04, 0, tabanZ + boy * 0.34);
       break;
     }
 
@@ -532,6 +541,7 @@ function govde(THREE, p, M, yan = 0) {
       g.add(ust);
 
       const dirsek = new THREE.Group();
+      dirsek.name = yan >= 0 ? 'dirsekL' : 'dirsekR';
       dirsek.position.z = -ustBoy;
       g.add(dirsek);
       g.userData.dirsek = dirsek;
@@ -591,10 +601,15 @@ function govde(THREE, p, M, yan = 0) {
       const btoka = ekle(new THREE.Mesh(
         new THREE.BoxGeometry(uz * 0.1, sy * 0.1, boy * 0.05), M.metal));
       btoka.position.set(uz * 0.24, 0, -mansetBoy * 0.55);
+      /* AYNA, KOPYA DEĞİL. Başparmak GÖVDE ORTASINA bakar: sol elde -y,
+         sağ elde +y. İki eli aynı geometriyle kurmak, sağ elin başparmağını
+         dışarı çeviriyordu - ölçülen: iki elde de yerel y = -0,054. Elin
+         hangi el olduğu, onu kuran koda SÖYLENMEK zorunda. */
+      const ayna = yan >= 0 ? 1 : -1;
       const parmakZ = -mansetBoy - boy * 0.3;
       for (let i = 0; i < 4; i++) {
         const kok = new THREE.Group();
-        kok.position.set(uz * 0.06, (i / 3 - 0.5) * sy * 0.64, parmakZ);
+        kok.position.set(uz * 0.06, ayna * (i / 3 - 0.5) * sy * 0.64, parmakZ);
         kok.rotation.y = -0.42;
         g.add(kok);
         const b1 = new THREE.Mesh(new THREE.BoxGeometry(uz * 0.13, sy * 0.15, boy * 0.16), M.kumas);
@@ -612,7 +627,7 @@ function govde(THREE, p, M, yan = 0) {
         b2g.add(uc);
       }
       const bp = new THREE.Group();
-      bp.position.set(uz * 0.15, -sy * 0.4, -mansetBoy - boy * 0.16);
+      bp.position.set(uz * 0.15, -ayna * sy * 0.4, -mansetBoy - boy * 0.16);
       bp.rotation.y = -1.0;
       g.add(bp);
       const bp1 = new THREE.Mesh(new THREE.BoxGeometry(uz * 0.12, sy * 0.16, boy * 0.14), M.kumas);
@@ -997,8 +1012,10 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
      taşısaydı sıra belirsiz olurdu; iç içe iki grup her ikisini de tek
      eksenli tutar. */
   const belDonme = new THREE.Group();
+  belDonme.name = 'belDonme';
   belDonme.position.z = belZ;
   const bel = new THREE.Group();
+  bel.name = 'belEgim';
   const nodes = new Map();
   const eklem = { kalca: [], diz: [], ayak: [], omuz: [], dirsek: [] };
 
@@ -1039,6 +1056,7 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
         yuva.rotation.x = -Math.sign(y || 1) * KOL_YAKINSAMA * RAD;
         bel.add(yuva);
         const omuz = new THREE.Group();
+        omuz.name = i === 0 ? 'omuzL' : 'omuzR';
         yuva.add(omuz);
         omuz.add(gg);
         eklem.omuz.push(omuz);
@@ -1095,19 +1113,68 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
     return z;
   };
   kok.updateMatrixWorld(true);
-  const botOfset = DIKEY.ayakBilegi - enAltZ(nodes.get('cizmeler'));
+
+  /* TABAN PROFİLİ ÖLÇÜLÜR, MODELLENMEZ. Bilek açısı değişince tabanın en
+     alçak noktası bileğe göre nereye düşer? Bunu "ayak burun mesafesi çarpı
+     sin(açı)" diye modellemek yaklaşıktı ve tabanı 3,5-16 mm yere gömüyordu:
+     taban düz bir çizgi değil, kalınlığı ve yuvarlatılmış uçları var.
+     Bir kez süpürülüp ölçülür ve yürüyüş çözümü o tabloyu okur. */
+  const tabanProfili = [];
+  {
+    const ay = eklem.ayak[0];
+    const eski = ay.rotation.y;
+    /* ÜST ZİNCİR NÖTRLENİR. Profil, ayakta duruş pozunda ölçülüyordu: kalça
+       5° ve diz 9° dönükken bilek açısı 0 olsa bile çizme 4° eğikti, ve
+       tablo o eğikliği içine gömdü - her karede sabit 30 mm'lik bir sapma
+       olarak çıktı. Bir uzvun profili, kendi açısının fonksiyonu olmak
+       zorunda; atalarının değil. */
+    const eskiKalca = eklem.kalca[0].rotation.y, eskiDiz = eklem.diz[0].rotation.y;
+    eklem.kalca[0].rotation.y = 0;
+    eklem.diz[0].rotation.y = 0;
+    const [aMin, aMax] = EKLEMLER['ayak.L'].range;
+    const bot = nodes.get('cizmeler');
+    for (let i = 0; i <= 96; i++) {
+      const aci = aMin + (aMax - aMin) * (i / 96);
+      ay.rotation.y = aci * RAD * FLEKS.ayak;
+      kok.updateMatrixWorld(true);
+      tabanProfili.push([aci, ay.getWorldPosition(new THREE.Vector3()).z - enAltZ(bot)]);
+    }
+    ay.rotation.y = eski;
+    eklem.kalca[0].rotation.y = eskiKalca;
+    eklem.diz[0].rotation.y = eskiDiz;
+    kok.updateMatrixWorld(true);
+  }
+  /** Bilek açısı için bileğin taban üstündeki yüksekliği (m), doğrusal ara değer. */
+  function tabanDusme(aci) {
+    const n = tabanProfili.length;
+    const a0 = tabanProfili[0][0], a1 = tabanProfili[n - 1][0];
+    const u = Math.max(0, Math.min(1, (aci - a0) / (a1 - a0))) * (n - 1);
+    const i = Math.min(n - 2, Math.floor(u));
+    /* MUHAFAZAKÂR ARA DEĞER. Tabanın en alçak noktası topuktan burna geçerken
+       profilde bir KIRIK var ve doğrusal ara değer o kırığı keserek bileği
+       fazla alçaltıyordu - taban 2-7 mm gömülüyordu. İki komşu örneğin
+       BÜYÜĞÜ alınır: hata artık her zaman yukarı doğru ve ayak asla batmaz. */
+    return Math.max(tabanProfili[i][1], tabanProfili[i + 1][1]);
+  }
+
+  /* ÇİZME OFSETİ PROFİLDEN GELİR. Önce `DIKEY.ayakBilegi` tasarım
+     yüksekliğinden çıkarılıyordu; profil ise gerçek bilek-taban mesafesini
+     ölçüyor ve ikisi aynı şey OLMAK zorunda. Değillerdi: aradaki fark her
+     karede sabit 30 mm'lik bir sapma olarak çıktı. Tek ölçüm, iki kullanıcı. */
+  const botOfset = tabanDusme(0);
 
   const olcu = Object.freeze({
     uylukM: UYLUK_M, baldirM: BALDIR_M,
     erisimM: UYLUK_M + BALDIR_M,
     bacakM: DIKEY.kalca,
     botOfsetM: botOfset,
+    tabanDusme, tabanProfili,
   });
 
   /** Duruşu uygular. Geometri yeniden kurulmaz. */
   function uygulaPoz(P) {
     bel.rotation.y = (P.govdeEgim ?? 0) * RAD;
-    belDonme.rotation.z = (P.govdeDonme ?? 0) * RAD;
+    belDonme.rotation.z = sinirla('bel.donme', P.govdeDonme ?? 0) * RAD;
     /* Baş sabitlenir ve ikincil parçalar gövdeyi GECİKMELİ izler. */
     const kask = nodes.get('kask'), lamba = nodes.get('basliklar');
     if (kask) kask.rotation.z = (P.basDonme ?? 0) * RAD;
@@ -1116,18 +1183,30 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
     if (hg) hg.rotation.z = (P.ikincil?.hortum ?? 0) * RAD;
     if (halat) halat.rotation.z = (P.ikincil?.halat ?? 0) * RAD;
     for (let i = 0; i < 2; i++) {
-      if (eklem.kalca[i]) eklem.kalca[i].rotation.y = mafsal(P, 'kalca', i);
-      if (eklem.diz[i]) eklem.diz[i].rotation.y = mafsal(P, 'diz', i);
+      /* Her açı kendi ekleminin BEYAN EDİLEN sınırından geçer. Kırpmasız bir
+         duruş, giysinin yapamayacağı bir şeyi çizer ve bunu kimse görmez. */
+      if (eklem.kalca[i]) eklem.kalca[i].rotation.y =
+        sinirla(POZ_EKLEM.kalca[i], P.kalca?.[i] ?? 0) * RAD * FLEKS.kalca;
+      if (eklem.diz[i]) eklem.diz[i].rotation.y =
+        sinirla(POZ_EKLEM.diz[i], P.diz?.[i] ?? 0) * RAD * FLEKS.diz;
       /* AYAK BİLEĞİ TÜRETİLİR. Baldırın düşeyle açısı kalça - diz'dir;
          tabanın yere düz oturması için bilek tam o kadar ters döner. Poz
          kendi açısını verirse o kullanılır, vermezse hesaplanır - böylece
          hiçbir duruşta ve hiçbir yürüyüş karesinde ayak yere giremez. */
       if (eklem.ayak[i]) {
+        /* Ayak bileği en DAR mafsaldır ve tabanı düz tutmak için gereken açı
+           salınımda ona sığmaz: kalça 35°, diz 70° iken türev -35° çıkar ama
+           giysinin bileği -26°'den fazla açılmaz. Kırpılır - ve sonuç
+           doğrudur: gerçek bir yürüyüşte salınan ayak zaten yere paralel
+           kalmaz, ucu düşer. */
         const turev = (P.kalca?.[i] ?? 0) - (P.diz?.[i] ?? 0);
-        eklem.ayak[i].rotation.y = (P.ayak?.[i] ?? turev) * RAD * FLEKS.ayak;
+        eklem.ayak[i].rotation.y =
+          sinirla(POZ_EKLEM.ayak[i], P.ayak?.[i] ?? turev) * RAD * FLEKS.ayak;
       }
-      if (eklem.omuz[i]) eklem.omuz[i].rotation.y = mafsal(P, 'omuz', i);
-      if (eklem.dirsek[i]) eklem.dirsek[i].rotation.y = mafsal(P, 'dirsek', i);
+      if (eklem.omuz[i]) eklem.omuz[i].rotation.y =
+        sinirla(POZ_EKLEM.omuz[i], P.omuz?.[i] ?? 0) * RAD * FLEKS.omuz;
+      if (eklem.dirsek[i]) eklem.dirsek[i].rotation.y =
+        sinirla(POZ_EKLEM.dirsek[i], P.dirsek?.[i] ?? 0) * RAD * FLEKS.dirsek;
     }
     if (P.kalcaZ != null) {
       /* Yürüyüş çözümü kalçanın yüksekliğini zaten verir: basan ayağın
@@ -1143,9 +1222,23 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
   const P0 = typeof poz === 'string' ? (POZLAR[poz] ?? POZLAR.dik) : poz;
   uygulaPoz(P0);
 
+  /* RİG YAYIMLANIR. `craft-blocks`'un `finalize`'ı ile aynı sözleşme: her
+     eklemin düğümü ağaçta ARANIR ve bulunamayan `found: false` ile
+     işaretlenir - sessizce yanlış bir ad yok. */
+  {
+    const joints = {};
+    for (const [ad, spec] of Object.entries(EKLEMLER)) {
+      joints[ad] = { deg: true, ...spec, found: !!kok.getObjectByName(spec.node) };
+    }
+    kok.userData.rig = {
+      kind: 'astronaut', units: 'm', scaleToRoot: 1, joints,
+      contacts: ['cizmeler', 'cizmeler#2'],
+      massClass: 'A7L sınıfı yüzey giysisi (~120 kg)',
+    };
+  }
   kok.userData.notes = { regime: 'yüzey EVA',
     why: `Giysili boy ${BOY_M} m, omuz ${OMUZ_M} m: habitat kapısı ve tutamak aralıkları bu ölçüye göre belirlenir, çıplak insana göre değil.` };
   return { root: kok, bel, nodes, eklem, materials: M, poz: P0, uygulaPoz, olcu };
 }
 
-export { PARTS, partById, DIKEY };
+export { PARTS, partById, DIKEY, EKLEMLER, POZ_EKLEM, sinirla };
