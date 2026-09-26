@@ -30,7 +30,7 @@
  * duruşu hem de `astro-gait.mjs`'in çözdüğü yürüyüşü oynatır.
  */
 import {
-  PARTS, partById, BOY_M, OMUZ_M, DIKEY, UYLUK_M, BALDIR_M, kopyaKonumlari,
+  PARTS, partById, BOY_M, OMUZ_M, BOYUN_CAP_M, DIKEY, UYLUK_M, BALDIR_M, kopyaKonumlari,
   EKLEMLER, POZ_EKLEM, sinirla,
 } from './astro-parts.mjs';
 import { supur, uzuvKesiti, govdeKesiti } from './astro-body.mjs';
@@ -435,8 +435,11 @@ function govde(THREE, p, M, yan = 0) {
          bir kabuk zırh gibi okunur - o, xEMU/Ranger'ın biçim dili. Apollo'da
          kesit yuvarlağa yakındır (p = 2,2), omuz keskin değil DÖNEREK biter
          ve bel çok az daralır: şişmiş bir tulumun beli yoktur. */
+      /* Boyun çapı KATALOGDAN gelir; kabuğun tepesi o çapa iner. Kesit
+         yarım ölçü kullandığı için beyan edilen çap ikiye bölünür. */
       const kab = ekle(uzuvMesh(THREE, M.kumas, sz, govdeKesiti({
         omuzW: sy * 0.5, omuzD: sx * 0.54, belW: sy * 0.42, belD: sx * 0.48,
+        boyunW: BOYUN_CAP_M * 0.5, boyunD: BOYUN_CAP_M * 0.52, boyunT: 0.26,
         omuzT: 0.26, p: 2.2, kapitone: [4, 0.03], dikis: [5, 0.03], kirisik: [1.1, 0.016],
       }), { dilim: 24, halka: 40 }));
       kab.position.z = sz / 2;
@@ -473,12 +476,27 @@ function govde(THREE, p, M, yan = 0) {
         { kalin: 0.022, tirnak: 10, kol: true, basik: sx * 1.12 / sy });
       belY.position.z = -sz * 0.5;
       g.add(belY);
-      const boyun = ekle(uzuvMesh(THREE, M.kumas, sz * 0.1, uzuvKesiti({
-        ustW: sy * 0.22, ustD: sx * 0.28, altW: sy * 0.26, altD: sx * 0.3, sis: 0,
+      /* BOYUN — beyan edilen çizgide ve beyan edilen çapta.
+         Önceki hâl sütunu gövde boyunun %60'ına koyuyordu (dünyada 1,708)
+         ve kask oraya kadar indiği için sütun kaskın İÇİNDE kalıyordu:
+         çizilmiş ama görülemeyen bir boyun, olmayan bir boyunla aynı şeydir.
+         Artık yükseklik `DIKEY.boyun`dan, çap `BOYUN_CAP_M`den gelir -
+         ikisi de katalogda yazılı, ikisi de kapıda ölçülüyor. */
+      const boyunZ = DIKEY.boyun - p.pos[2];       // parça çerçevesinde
+      const bR = BOYUN_CAP_M * 0.5;
+      const boyun = ekle(uzuvMesh(THREE, M.kumas, sz * 0.19, uzuvKesiti({
+        ustW: bR * 0.92, ustD: bR * 0.98, altW: bR, altD: bR * 1.06, sis: 0,
       }), { dilim: 8, halka: 26 }));
-      boyun.position.z = sz * 0.6;
-      const boyunY = yatakHalkasi(THREE, M, sy * 0.22, { kalin: 0.018, tirnak: 8, kol: true });
-      boyunY.position.z = sz * 0.5;
+      boyun.position.z = boyunZ + sz * 0.06;
+      /* Basınç körüğü: boyun, basınç altında da eğilebilmek zorunda. */
+      const bkor = konvolut(THREE, M, bR * 1.02, bR * 1.08, bR * 0.96, bR * 1.02,
+        sz * 0.1, 3);
+      bkor.position.z = boyunZ - sz * 0.02;
+      g.add(bkor);
+      /* Kilit bileziği: kaskın oturduğu yer. Giysinin en tanınır
+         ayrıntılarından biri ve şimdiye kadar hiç görünmemişti. */
+      const boyunY = yatakHalkasi(THREE, M, bR * 1.06, { kalin: 0.019, tirnak: 10, kol: true });
+      boyunY.position.z = boyunZ;
       g.add(boyunY);
       /* Mürettebat şeridi, bayrak ve isimlik - giysinin üstünde YAZILI olan
          şeyler; iki mürettebatı uzaktan ayıran tek işaret. */

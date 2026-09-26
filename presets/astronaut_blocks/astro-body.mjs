@@ -198,12 +198,28 @@ export function uzuvKesiti({
  */
 export function govdeKesiti({
   omuzW, omuzD, belW, belD, omuzT = 0.18, p = 2.7,
+  boyunW = null, boyunD = null, boyunT = 0.20,
   kapitone = null, dikis = null, kirisik = null,
 }) {
   return (t) => {
+    /* BOYUN GİRİNTİSİ. Bunsuz kesit tepede omuzun %86'sı kadar kalıyordu ve
+       gövde, boyun hizasında 0,56 m genişliğinde DÜZ bitiyordu: bir insan
+       siluetini insan yapan daralma hiç oluşmuyordu. Geçiş smoothstep'tir,
+       doğrusal değil - omuzla boyun arasındaki geçiş bir koni değil bir
+       yamuktur ve köşeli bir omuz çizgisi figürü zırh gibi gösterir. */
+    if (boyunW !== null && t < boyunT) {
+      const u = t / boyunT;
+      const k = u * u * (3 - 2 * u);
+      return {
+        w: boyunW + (omuzW - boyunW) * k,
+        d: (boyunD ?? boyunW) + (omuzD - (boyunD ?? boyunW)) * k,
+        p, kapitone, dikis, kirisik,
+      };
+    }
     /* Omuzdan bele geçiş: omuz hizasına kadar açılır, sonra kapanır. */
-    const u = t < omuzT ? t / omuzT : 1;
-    const g = t < omuzT ? 0.86 + 0.14 * u : 1 - (t - omuzT) / (1 - omuzT);
+    const t2 = boyunW !== null ? (t - boyunT) / (1 - boyunT) : t;
+    const u = t2 < omuzT ? t2 / omuzT : 1;
+    const g = t2 < omuzT ? 0.86 + 0.14 * u : 1 - (t2 - omuzT) / (1 - omuzT);
     const gen = belW + (omuzW - belW) * Math.max(0, Math.min(1, g));
     const der = belD + (omuzD - belD) * Math.max(0, Math.min(1, g));
     return { w: gen, d: der, p, kapitone, dikis, kirisik };

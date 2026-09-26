@@ -839,5 +839,99 @@ console.log('\n== 10 zarf: çizilen geometri beyan edilen kutunun içinde');
   }
 }
 
+/* ── 11 BOYUN: SİLUET DARALIYOR MU ───────────────────────────────────
+ *
+ * "Boyunsuz insan" ölçülebilir bir şeydir: boyun, iki geniş kütle arasındaki
+ * DARALMADIR. Ölçüldüğünde figürün siluetinde göğüsten tepeye hiçbir yerel
+ * en küçük yoktu - genişlik 0,6163'ten tek yönde azalıyordu - ve göğüsle
+ * kask arasındaki en dar nokta göğsün %72'siydi. Derinlik hiç daralmıyordu:
+ * boyun hizasında göğsün %96'sı, yani baş önden arkaya göğüs kadar kalın.
+ *
+ * İki sebep de ölçülmüştü: gövde kabuğu boyun çizgisinde bitiyor ama orada
+ * 0,56 m GENİŞ kalıyordu (kesitin tepesi omuzun %86'sı, boyna daralma yok),
+ * ve kaskın ekvatoru halkanın yalnız 25 mm üstündeydi, yani kaskın en geniş
+ * yeri boynun bandını dolduruyordu.
+ *
+ * EŞİK %55: giysili boyun kilidi 0,26 m, göğüs 0,61 m - oran %43. Ölçülen
+ * kusur %72'ydi. İkisinin arasında, meşru payı bırakacak kadar yukarıda.
+ */
+console.log('\n== 11 boyun: siluet daralıyor mu');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const B = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-body.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik' });
+  S.uygulaPoz({ omuz: [0, 0], dirsek: [0, 0], kalca: [0, 0], diz: [0, 0], ayak: [0, 0],
+    govdeEgim: 0, govdeDonme: 0, basDonme: 0, kalcaZOfset: 0 });
+  S.root.updateMatrixWorld(true);
+
+  /* KOLLAR HARİÇ: bir kol boynu ölçmez, ama omuz hizasında siluetin en
+     geniş şeyi odur ve ölçümü tamamen bastırır. */
+  const disari = new Set();
+  for (const ad of ['kollar', 'kollar#2', 'eldivenler', 'eldivenler#2',
+                    'omuz-yatagi', 'omuz-yatagi#2']) {
+    S.nodes.get(ad)?.traverse((o) => disari.add(o));
+  }
+  const hedef = [];
+  S.root.traverse((o) => { if (o.isMesh && !disari.has(o)) hedef.push(o); });
+  const rc = new THREE.Raycaster(); rc.far = 2;
+  const enDeger = (z) => {
+    rc.set(new THREE.Vector3(0.02, 1.5, z), new THREE.Vector3(0, -1, 0));
+    const a = rc.intersectObjects(hedef, true);
+    rc.set(new THREE.Vector3(0.02, -1.5, z), new THREE.Vector3(0, 1, 0));
+    const b = rc.intersectObjects(hedef, true);
+    if (!a.length || !b.length) return null;
+    return (1.5 - a[0].distance) - (-1.5 + b[0].distance);
+  };
+  const tara = [];
+  for (let z = 1.20; z <= 1.96; z += 0.01) {
+    const e = enDeger(z);
+    if (e !== null) tara.push({ z: +z.toFixed(2), e });
+  }
+  check('siluet taranıyor', tara.length > 50, `${tara.length} kesit`);
+
+  const gogus = Math.max(...tara.filter((r) => r.z <= A.DIKEY.omuz).map((r) => r.e));
+  const bant = tara.filter((r) => r.z >= A.DIKEY.omuz && r.z <= A.DIKEY.boyun + 0.10);
+  const dar = bant.reduce((a, b) => (b.e < a.e ? b : a));
+  const ustu = tara.filter((r) => r.z > dar.z).map((r) => r.e);
+  const oran = dar.e / gogus;
+
+  check('boyun bandında YEREL bir en küçük var (üstünde daha geniş bir şey)',
+    ustu.length > 0 && Math.max(...ustu) > dar.e + 0.02,
+    `en dar ${dar.e.toFixed(3)} @ ${dar.z} · üstünde ${Math.max(...ustu).toFixed(3)}`);
+  check('en dar nokta göğsün %55\'ini geçmiyor', oran <= 0.55,
+    `%${(100 * oran).toFixed(0)} (${dar.e.toFixed(3)} / ${gogus.toFixed(3)})`);
+  check('daralma BEYAN EDİLEN boyun çizgisinde', Math.abs(dar.z - A.DIKEY.boyun) <= 0.06,
+    `${dar.z} vs ${A.DIKEY.boyun}`);
+  check('çizilen boyun beyan edilen çapa uyuyor',
+    Math.abs(dar.e - A.BOYUN_CAP_M) / A.BOYUN_CAP_M <= 0.25,
+    `${dar.e.toFixed(3)} m vs ${A.BOYUN_CAP_M} m`);
+
+  /* TERS SINAV: boyun girintisi olmadan kesit ne kadar genişti? Aynı
+     fonksiyon, `boyunW` verilmeden - kapı bunu yakalamak zorunda. */
+  {
+    const ortak = { omuzW: 0.28, omuzD: 0.2, belW: 0.235, belD: 0.18, omuzT: 0.26 };
+    const boyunlu = B.govdeKesiti({ ...ortak, boyunW: A.BOYUN_CAP_M * 0.5,
+      boyunD: A.BOYUN_CAP_M * 0.52, boyunT: 0.26 })(0.0);
+    const boyunsuz = B.govdeKesiti(ortak)(0.0);
+    check('TERS SINAV: boyun girintisi olmadan kesit tepede %50 daha geniş',
+      boyunsuz.w > boyunlu.w * 1.5,
+      `boyunsuz ${(2 * boyunsuz.w).toFixed(3)} m vs boyunlu ${(2 * boyunlu.w).toFixed(3)} m`);
+  }
+  /* TERS SINAV 2: kask alçaltılsa ölçüm bunu görür mü? Kaskın kabuğunu
+     boyun bandına indirmek en dar noktayı bozmak zorunda. */
+  {
+    const kaskD = S.nodes.get('kask');
+    const oncekiZ = kaskD.position.z;
+    kaskD.position.z -= 0.09;
+    kaskD.updateMatrixWorld(true);
+    const bozuk = Math.min(...bant.map((r) => enDeger(r.z) ?? 9));
+    kaskD.position.z = oncekiZ;
+    kaskD.updateMatrixWorld(true);
+    check('TERS SINAV: kask 90 mm indirilince daralma kayboluyor',
+      bozuk / gogus > 0.55, `%${(100 * bozuk / gogus).toFixed(0)}`);
+  }
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);

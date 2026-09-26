@@ -52,6 +52,19 @@ export const DIKEY = Object.freeze({
   boyun: 1.66, tepe: 1.95,
 });
 /**
+ * BOYUN ÇAPI — tabloda yalnız YÜKSEKLİK vardı, çap hiçbir yerde yazmıyordu,
+ * o yüzden kimse ona uymuyordu: gövde kabuğu boyun halkasının hizasında
+ * 0,56 m genişliğinde bitiyor, kask da ekvatoru halkanın 25 mm üstünde
+ * durduğu için 0,42 m ile aynı bandı dolduruyordu. Sonuç, omuzdan tepeye
+ * hiç daralmayan bir siluet - yani BOYUNSUZ bir figür.
+ *
+ * Bir boyun, iki geniş kütle arasındaki DARALMADIR. Ölçüt de o: göğsün en
+ * geniş kesiti ile kask arasında bir yerel en küçük olmak ZORUNDA ve o en
+ * küçük göğsün %55'ini geçemez. Giysili boyun kilidi 0,26 m'dir (çıplak
+ * boyun 0,12; aradaki fark basınç contası, kilit bileziği ve körük).
+ */
+export const BOYUN_CAP_M = 0.26;
+/**
  * EKLEM SÖZLEŞMESİ — deponun "aksamlar" kütüphanesiyle aynı biçim.
  *
  * `presets/physical_rigs/mechanism-index.mjs` şunu söyler: hareketli parçasını
@@ -373,7 +386,14 @@ export const PARTS = Object.freeze([
   /* ADIM 5 — kask ve görüş */
   { id: 'kask', ad: 'Helmet and visor assembly', sistem: 'gorus', step: 5,
     mountsTo: 'ust-govde', arayuz: 'kilit', massKg: 5.8,
-    pos: [0.02, 0, 1.660], size: [0.40, 0.38, 0.42], yon: 'orta', sekil: 'kask',
+    /* KASK YUKARI VE KÜÇÜK. Ekvator boyun halkasının 25 mm üstündeyken
+       kaskın en geniş yeri boynun bandına düşüyordu. Küre denklemi:
+       halkada genişliğin göğsün %55'inin altına inmesi için merkez en az
+       0,585·R kadar yukarıda olmak zorunda; R = 0,182 için bu 1,766 eder ve
+       tepe 1,946'da kalır - beyan edilen 1,95'in altında. Kask böylece
+       0,42'den 0,36'ya iner: 1,95 m'lik bir figürde kask+LEVA yüksekliğinin
+       toplam boya oranı %22'den %18'e düşer, ki gerçek oran odur. */
+    pos: [0.02, 0, 1.726], size: [0.34, 0.33, 0.36], yon: 'orta', sekil: 'kask',
     /* AYNA: bu parça bilerek asimetriktir - beyan edilmezse
        ayna kapısı düşer (validate-astronaut §9). */
     asimetrik: 'Mikrofon kolu tek yanda — ağza tek bir mikrofon gider.',
@@ -394,7 +414,10 @@ export const PARTS = Object.freeze([
 
   { id: 'basliklar', ad: 'Helmet lights and camera', sistem: 'gorus', step: 5,
     mountsTo: 'kask', arayuz: 'civata', massKg: 1.3,
-    pos: [0.03, 0, 1.660], size: [0.22, 0.44, 0.12], yon: 'orta', sekil: 'lamba',
+    /* LAMBALAR KASKLA BİRLİKTE ÇIKAR. Kask 1,745'e taşınırken bunlar
+       1,660'ta kaldı ve boyun bandını 0,461 m genişliğinde doldurdular -
+       kaska cıvatalanan bir şey kaskın bıraktığı yerde duramaz. */
+    pos: [0.03, 0, 1.768], size: [0.20, 0.38, 0.12], yon: 'orta', sekil: 'lamba',
     /* AYNA: bu parça bilerek asimetriktir - beyan edilmezse
        ayna kapısı düşer (validate-astronaut §9). */
     asimetrik: 'Bir yanda kamera, öteki yanda anten. İkisi de iki yana konursa kütle ve gölge iki katına çıkar, kazanç sıfırdır.',
