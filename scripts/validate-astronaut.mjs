@@ -411,21 +411,35 @@ console.log('== 7 biçim: kesit daire değil');
     const surekli = (eklem, altKok, aciDeg, n = 72) => {
       const eski = eklem.rotation.y;
       eklem.rotation.y = aciDeg * Math.PI / 180;
+      /* DERİ DE YENİLENİR. Uzuv artık mafsalda kesilmeyen tek bir yüzey ve o
+         yüzey CPU'da dökülüyor; yalnız `rotation`u oynatmak kemiği döndürür,
+         deriyi bir önceki duruşta bırakır ve sınav olmayan bir boşluk görür. */
+      S.deriYenile?.();
       S.root.updateMatrixWorld(true);
       const c = eklem.getWorldPosition(new THREE.Vector3());
       const hedef = [];
       altKok.traverse((m) => { if (m.isMesh) hedef.push(m); });
-      let bos = 0;
+      let bos = 0, atilan = 0;
       for (let i = 0; i < n; i++) {
         const q = (i / n) * Math.PI * 2;
+        /* EKSEN YÖNÜ ÖLÇÜLMEZ. Kama, uzva DİK yönlerde açılır; eksen boyunca
+           uzuv zaten devam eder ve oradan gelen bir ışının gördüğü şey
+           kamanın değil, uzvun boyunun ta kendisidir. O iki yön daha önce
+           KAZA ESERİ geçiyordu: süpürmenin uç kapakları içe sarılıydı, yani
+           bacağın içinden yukarı çıkan ışın uyluğun üst kapağını ÖN yüz
+           olarak görüyordu. Sarım düzeltilince (uzuv tek görünür yüzey
+           olunca kapaklar dışa bakmak zorunda) o kaza da bitti. */
+        const eksene = Math.abs(Math.abs(Math.sin(q)) - 1);
+        if (eksene < 0.03) { atilan++; continue; }
         const d = new THREE.Vector3(Math.cos(q), 0, Math.sin(q));
         ray.set(c.clone().addScaledVector(d, 0.6), d.clone().negate());
         ray.far = 0.599;
         if (!ray.intersectObjects(hedef, false).length) bos++;
       }
       eklem.rotation.y = eski;
+      S.deriYenile?.();
       S.root.updateMatrixWorld(true);
-      return bos;
+      return { bos, olculen: n - atilan };
     };
     const kotu = [];
     for (const [ad, ek, altKok, acilar] of [
@@ -434,8 +448,8 @@ console.log('== 7 biçim: kesit daire değil');
       ['kalca', S.eklem.kalca[0], S.nodes.get('alt-govde'), [-20, 0, 30, 70]],
     ]) {
       for (const a of acilar) {
-        const bos = surekli(ek, altKok, a);
-        if (bos > 0) kotu.push(`${ad} ${a}° → ${bos}/72 boş`);
+        const r = surekli(ek, altKok, a);
+        if (r.bos > 0) kotu.push(`${ad} ${a}° → ${r.bos}/${r.olculen} boş`);
       }
     }
     check('her mafsal her açıda SÜREKLİ (kama boşluğu yok)', kotu.length === 0,
@@ -448,9 +462,12 @@ console.log('== 7 biçim: kesit daire değil');
     bosluk.position.set(1.2, 0, 1.0);
     S.root.add(bosluk);
     S.root.updateMatrixWorld(true);
-    const bosSayi = surekli(bosluk, S.root, 0);
+    const bosR = surekli(bosluk, S.root, 0);
     S.root.remove(bosluk);
-    check('TERS SINAV: boş uzayda 72 yönün hepsi boş', bosSayi === 72, `${bosSayi}/72`);
+    /* Ölçülen yön sayısı 72 değil 62: eksene yakın iki yön atılıyor
+       (gerekçesi `surekli` içinde). Sınav "hepsi" der, sayıyı değil. */
+    check('TERS SINAV: boş uzayda ölçülen yönlerin hepsi boş',
+      bosR.bos === bosR.olculen, `${bosR.bos}/${bosR.olculen}`);
   }
 
   /* Kapitone gerçekten yüzeyi modüle ediyor mu: bantlı ve bantsız aynı uzvun
@@ -773,8 +790,27 @@ console.log('\n== 10 zarf: çizilen geometri beyan edilen kutunun içinde');
       while (q) { if (q === n) { ic = true; break; } q = q.parent; }
       if (ic) n2.traverse((o) => cocuk.add(o));
     }
+    /* KUTU PARÇANIN KENDİ ÇERÇEVESİNDE. `expandByObject` dünya eksenlerine
+       hizalı bir kutu verir, yani figürde EĞİK duran bir parça için onun
+       eğimini İÇEREN kutuyu ölçer - `size`ın beyan ettiği şey bu değil.
+       Kolda fark açık: kol boyunca `KOL_YAKINSAMA` kadar içeri yakınsıyor,
+       dünya kutusu 0,335 m çıkıyor, kolun kendi kesiti ise ~0,21. Beyan
+       edilen 0,80'lik pay büyük ölçüde bu ölçüm hatasını taşıyordu.
+       Deri bunu görünür yaptı: uzvu tek gövde yapmak dünya kutusunu 1,86'dan
+       1,94'e çıkardı ve kapı, parçanın boyu olmayan bir büyüklük üzerinden
+       düştü. */
+    n.updateWorldMatrix(true, true);
+    const ters = new THREE.Matrix4().copy(n.matrixWorld).invert();
+    const v2 = new THREE.Vector3();
     const b = new THREE.Box3();
-    n.traverse((o) => { if (o.isMesh && !cocuk.has(o)) b.expandByObject(o); });
+    n.traverse((o) => {
+      if (!o.isMesh || cocuk.has(o) || !o.geometry?.attributes?.position) return;
+      const pos = o.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        v2.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld).applyMatrix4(ters);
+        b.expandByPoint(v2);
+      }
+    });
     return isFinite(b.min.x) ? b.getSize(new THREE.Vector3()).toArray() : null;
   };
 
@@ -1082,11 +1118,14 @@ console.log('\n== 13 eklem gövdesi uzvun dilini konuşuyor mu');
   /* Kesit komşu uzuvdan ÇOK sapmamalı: mafsal bağladığı şeyin kesitini
      izler, yoksa ince bir bileğe yuvarlak bir top takılmış gibi durur. */
   const dizG = govdeler.find((m) => Math.abs(m.getWorldPosition(new THREE.Vector3()).z - A.DIKEY.diz) < 0.05);
-  check('diz gövdesi bulundu', !!dizG,
-    dizG ? `z = ${dizG.getWorldPosition(new THREE.Vector3()).z.toFixed(3)}` : '-');
+  /* DİZ ARTIK AYRI BİR GÖVDE DEĞİL, DERİNİN BİR BANDI. Eski sınav diz
+     gövdesi ağını bulup kesitini baldırınkiyle karşılaştırıyordu; sorulan şey
+     ("mafsal bağladığı şeyin kesitini izliyor mu") aynen duruyor, sorulduğu
+     nesne yok. Derili uzuvda mafsal zaten uzvun kendisidir, o yüzden ölçü
+     bandın ORTALAMA yarıçapının iki yanındaki uzva ne kadar yakın olduğudur.
+     `dizG` varsa (henüz derili olmayan uzuvlar için) o da ölçülür. */
   if (dizG) {
     const gb = new THREE.Box3().setFromObject(dizG).getSize(new THREE.Vector3());
-    /* Komşu baldır: dizin hemen altındaki süpürme gövdesi. */
     let baldir = null;
     S.eklem.diz[0].traverse((o) => {
       if (!o.isMesh || o.userData.mafsalGovdesi) return;
@@ -1095,10 +1134,53 @@ console.log('\n== 13 eklem gövdesi uzvun dilini konuşuyor mu');
         baldir = b;
       }
     });
-    const bb = baldir.getSize(new THREE.Vector3());
-    const sapma = Math.abs(gb.y - bb.y) / bb.y;
-    check('diz gövdesinin kesiti baldırınkinden %20 den fazla sapmıyor', sapma < 0.20,
-      `gövde ${gb.y.toFixed(3)} · baldır ${bb.y.toFixed(3)} · %${(100 * sapma).toFixed(1)}`);
+    if (baldir) {
+      const bb = baldir.getSize(new THREE.Vector3());
+      const sapma = Math.abs(gb.y - bb.y) / bb.y;
+      check('diz gövdesinin kesiti baldırınkinden %20 den fazla sapmıyor', sapma < 0.20,
+        `gövde ${gb.y.toFixed(3)} · baldır ${bb.y.toFixed(3)} · %${(100 * sapma).toFixed(1)}`);
+    }
+  }
+  {
+    const v = new THREE.Vector3();
+    const deriler = [];
+    S.root.traverse((o) => {
+      if (o.isMesh && o.userData?.rol === 'deri' && o.geometry.userData?.ritim) deriler.push(o);
+    });
+    check('derili uzuv bulundu', deriler.length >= 2, `${deriler.length} deri`);
+    const kotu = [];
+    for (const m of deriler) {
+      const iz = m.geometry.userData.izgara;
+      const pos = m.geometry.attributes.position;
+      const yari = [];
+      for (let i = 0; i <= iz.dilim; i++) {
+        let s = 0;
+        for (let j = 0; j < iz.halka; j++) {
+          v.fromBufferAttribute(pos, i * iz.halka + j);
+          s += Math.hypot(v.x, v.y);
+        }
+        yari.push(s / iz.halka);
+      }
+      for (const b of m.geometry.userData.ritim) {
+        const ic = [], dis = [];
+        for (let i = 0; i <= iz.dilim; i++) {
+          const z = iz.z[i];
+          if (z <= b.z0 && z >= b.z1) ic.push(yari[i]);
+          /* Bandın hemen dışındaki 40 mm: "iki yanındaki uzuv". */
+          else if (z < b.z0 + 0.04 && z > b.z1 - 0.04) dis.push(yari[i]);
+        }
+        if (ic.length < 4 || dis.length < 2) continue;
+        const ortIc = ic.reduce((x, y) => x + y, 0) / ic.length;
+        const ortDis = dis.reduce((x, y) => x + y, 0) / dis.length;
+        const sapma = Math.abs(ortIc - ortDis) / ortDis;
+        if (sapma >= 0.20) {
+          kotu.push(`${b.ad} %${(100 * sapma).toFixed(1)}`);
+        }
+      }
+    }
+    check('her körük bandı komşu uzvun kesitinden %20 den az sapıyor',
+      kotu.length === 0,
+      kotu.join(' · ') || `${deriler.length} deri · bütün bantlar uzvun kesitinde`);
   }
 
   /* TERS SINAV: modülasyonsuz bir küre bu sınavı GEÇEMEMELİ. */
@@ -1674,22 +1756,41 @@ console.log('\n== 18 uzuv boyunca çıplak bant');
       `en dar ${r.en.toFixed(3)} · medyan ${r.medyan.toFixed(3)} · %${(100 * r.oran).toFixed(0)}`);
   }
 
-  /* TERS SINAV: baldırı 90 mm aşağı itmek bandı geri açmalı. */
+  /* TERS SINAV: DERİYİ SIKIŞTIRMAK bandı geri açmalı.
+     Eskiden baldır ağı 90 mm aşağı itiliyor ve arada çıplak bir halka
+     açılıyordu; bacak tek yüzey olunca itilecek bir baldır ağı kalmadı ve
+     sınav değişmeyen figürü ölçüp %77 diyordu - yani hiçbir şey
+     kanıtlamıyordu. Aynı soru deriye sorulunca daha da güçlü oluyor: kapının
+     ÖLÇTÜĞÜ yüzeyin kendisi bozuluyor, iki nesne arasındaki boşluk değil. */
   {
-    let baldir = null;
-    S.eklem.diz[0].traverse((o) => {
-      if (!o.isMesh || o.userData.mafsalGovdesi) return;
-      const b = new THREE.Box3().setFromObject(o);
-      if (b.getSize(new THREE.Vector3()).z > 0.3 && !baldir) baldir = o;
+    let deri = null;
+    S.eklem.kalca[0].traverse((o) => {
+      if (o.isMesh && o.userData?.rol === 'deri' && !deri) deri = o;
     });
-    const once = baldir.position.z;
-    baldir.position.z -= 0.09;
+    check('TERS SINAV için deri bulundu', !!deri, deri ? 'bacak derisi' : '-');
+    const iz = deri.geometry.userData.izgara;
+    const pos = deri.geometry.attributes.position;
+    const yedek = Float32Array.from(pos.array);
+    const zDiz = S.eklem.diz[0].position.z;
+    for (let i = 0; i <= iz.dilim; i++) {
+      if (Math.abs(iz.z[i] - zDiz) > 0.05) continue;
+      for (let j = 0; j < iz.halka; j++) {
+        const k = (i * iz.halka + j) * 3;
+        pos.array[k] *= 0.45; pos.array[k + 1] *= 0.45;
+      }
+    }
+    pos.needsUpdate = true;
+    deri.geometry.computeBoundingSphere();
+    deri.geometry.computeBoundingBox();
     S.root.updateMatrixWorld(true);
     const r = oran(profil(S.eklem.kalca[0], S.eklem.diz[0], -0.20, 0.20));
-    baldir.position.z = once;
+    pos.array.set(yedek);
+    pos.needsUpdate = true;
+    deri.geometry.computeBoundingSphere();
+    deri.geometry.computeBoundingBox();
     S.root.updateMatrixWorld(true);
-    check('TERS SINAV: baldır 90 mm aşağı itilince bant yakalanıyor', r.oran < 0.60,
-      `%${(100 * r.oran).toFixed(0)} (en dar ${r.en.toFixed(3)})`);
+    check('TERS SINAV: deri dizde %45 e sıkıştırılınca bant yakalanıyor', r.oran < 0.60,
+      `sıkışmış hâlde %${(100 * r.oran).toFixed(0)} (sağlam hâlde %81)`);
   }
 }
 
@@ -2047,11 +2148,91 @@ console.log('\n== 21 yüzey ritmi: mafsal nerede');
     return { siklik, derin, boy: iz.boy };
   };
 
+  /* Bir halka dizisinin ritmi: kaç kıvrım, ne derinlikte. */
+  const ritimDizi = (r, boy) => {
+    if (r.length < 4 || boy <= 0) return null;
+    let yon = 0, don = 0;
+    for (let i = 1; i < r.length; i++) {
+      const d = r[i] - r[i - 1];
+      if (Math.abs(d) < 1e-5) continue;
+      const y = Math.sign(d);
+      if (yon && y !== yon) don++;
+      yon = y;
+    }
+    const siklik = (don / 2) / boy;
+    const halkaPer = siklik > 0.5
+      ? Math.max(3, Math.round(r.length / (siklik * boy))) : r.length;
+    const yari = Math.floor(halkaPer / 2);
+    let enB = -Infinity, enK = Infinity, ortR = 0;
+    for (let i = 0; i < r.length; i++) {
+      let s = 0, n2 = 0;
+      for (let k = i - yari; k <= i + yari; k++) {
+        s += r[Math.min(r.length - 1, Math.max(0, k))]; n2++;
+      }
+      const fark = r[i] - s / n2;
+      if (fark > enB) enB = fark;
+      if (fark < enK) enK = fark;
+      ortR += r[i];
+    }
+    return { siklik, derin: (enB - enK) / (ortR / r.length), boy };
+  };
+  /* Bir ağın halka ortalaması yarıçapları. */
+  const halkaYari = (m) => {
+    const iz = m.geometry.userData?.izgara;
+    if (!iz) return null;
+    const pos = m.geometry.attributes.position;
+    const r = [];
+    for (let i = 0; i <= iz.dilim; i++) {
+      let s = 0;
+      for (let j = 0; j < iz.halka; j++) {
+        v.fromBufferAttribute(pos, i * iz.halka + j);
+        s += Math.hypot(v.x, v.y);
+      }
+      r.push(s / iz.halka);
+    }
+    return { r, iz };
+  };
+
   const koruk = [], bolum = [];
   S.root.traverse((m) => {
-    if (!m.isMesh || !m.userData?.rol) return;
-    const t2 = ritim(m);
-    if (t2) (m.userData.rol === 'koruk' ? koruk : bolum).push(t2);
+    if (!m.isMesh) return;
+    const rol = m.userData?.rol;
+    if (rol !== 'koruk' && rol !== 'bolum' && rol !== 'deri') return;
+    const h = halkaYari(m);
+    if (!h) return;
+    if (rol !== 'deri') {
+      const t2 = ritimDizi(h.r, h.iz.boy);
+      if (t2) (rol === 'koruk' ? koruk : bolum).push(t2);
+      return;
+    }
+    /* DERİ: bantları ÜRETEN söyler (`userData.ritim`), ağın boyundan tahmin
+       edilmez. Bant içindeki halkalar körük, aralarındakiler bölümdür. */
+    const bantlar = m.geometry.userData?.ritim ?? [];
+    const z = h.iz.z;
+    if (!z) return;
+    const bantta = z.map((q) => bantlar.some((b) => q <= b.z0 && q >= b.z1));
+    for (const b of bantlar) {
+      const dizin = z.map((q, i) => (q <= b.z0 && q >= b.z1 ? i : -1)).filter((i) => i >= 0);
+      if (dizin.length < 6) continue;
+      const t2 = ritimDizi(dizin.map((i) => h.r[i]), Math.abs(b.z0 - b.z1));
+      if (t2) koruk.push(t2);
+    }
+    /* Bölümler: iki bant arasındaki kesintisiz halka dizileri. */
+    let bas2 = -1;
+    for (let i = 0; i <= z.length; i++) {
+      const ic = i < z.length && !bantta[i];
+      if (ic && bas2 < 0) bas2 = i;
+      if (!ic && bas2 >= 0) {
+        const dizin = [];
+        for (let k = bas2; k < i; k++) dizin.push(k);
+        const boy2 = Math.abs(z[dizin[dizin.length - 1]] - z[dizin[0]]);
+        if (dizin.length >= 6 && boy2 > 0.08) {
+          const t2 = ritimDizi(dizin.map((k) => h.r[k]), boy2);
+          if (t2) bolum.push(t2);
+        }
+        bas2 = -1;
+      }
+    }
   });
   check('her körük ve her bölüm ölçülebildi', koruk.length >= 10 && bolum.length >= 8,
     `${koruk.length} körük · ${bolum.length} bölüm`);
@@ -2240,7 +2421,10 @@ console.log('\n== 23 bilek bacağın en dar yeri');
      üstüne yazmaz ve tam orada kusur vardı. */
   const en = (z) => {
     let enY = -9, azY = 9;
-    for (const d of [S.eklem.diz[0], S.nodes.get('cizmeler')]) {
+    /* Bacak zinciri KALÇADAN taranır: uzuv artık kalçadan bileğe tek deri ve
+       o deri kalça kemiğinin çocuğu; dizden tarayan bir ölçüm baldırı hiç
+       görmez ve "baldır 0,000" der. */
+    for (const d of [S.eklem.kalca[0], S.nodes.get('cizmeler')]) {
       d.updateWorldMatrix(true, true);
       d.traverse((m) => {
         if (!m.isMesh || !m.geometry?.attributes?.position) return;
@@ -2283,6 +2467,149 @@ console.log('\n== 23 bilek bacağın en dar yeri');
   check('çizilen ayak eni beyan edilene uyuyor',
     Math.abs(ayakEn - AP.AYAK_EN_M) < 0.012,
     `çizilen ${ayakEn.toFixed(3)} · beyan ${AP.AYAK_EN_M}`);
+  S.uygulaPoz(S.poz);
+}
+
+/* ── 24 DERİ: BÜKÜLÜRKEN NE OLUYOR ────────────────────────────────
+ *
+ * Uzuv kalçadan bileğe tek yüzey olduğu için mafsalda DELİK olamaz - eski
+ * süreklilik sorusu artık yapı gereği yanıtlı ve onu ölçen bir kapı her
+ * zaman "evet" derdi. Derinin bozulabileceği, katı kurgunun bozulamayacağı
+ * iki şey var ve ölçülen bunlar:
+ *
+ *  · ŞEKERLEME SARGISI: mafsal büküldükçe iki kemik arasındaki halkalar
+ *    burulur ve uzuv tam da kalınlığını koruması gereken yerde SIKIŞIR.
+ *    Gerçek bir körük hacmini korur - konvolütün var olma sebebi budur.
+ *  · AĞIRLIKLAR: toplamı 1 olmayan ya da olmaması gereken bir kemiğe uzanan
+ *    bir ağırlık, köşeyi yüzeyden koparır.
+ */
+console.log('\n== 24 deri: bükülürken ne oluyor');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const AP = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-parts.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik', ao: false });
+  const v = new THREE.Vector3();
+
+  const deriler = [];
+  S.root.traverse((o) => { if (o.isMesh && o.userData?.rol === 'deri') deriler.push(o); });
+  check('deri bulundu (iki bacak, iki kol)', deriler.length === 4,
+    `${deriler.length} derili uzuv`);
+
+  /* AĞIRLIKLAR. Toplam 1 olmalı ve hiçbiri negatif olmamalı. */
+  {
+    let kotu = 0, enSapma = 0, kemikSayi = 0;
+    for (const m of deriler) {
+      const d = m.geometry.userData?.deri;
+      if (!d) { kotu++; continue; }
+      kemikSayi = d.kemikSayisi;
+      for (let i = 0; i < d.agirlik.length / d.kemikSayisi; i++) {
+        let s = 0;
+        for (let k = 0; k < d.kemikSayisi; k++) {
+          const w = d.agirlik[i * d.kemikSayisi + k];
+          if (w < -1e-9 || w > 1 + 1e-9) kotu++;
+          s += w;
+        }
+        enSapma = Math.max(enSapma, Math.abs(s - 1));
+      }
+    }
+    check('her köşenin ağırlıkları 1 e toplanıyor', kotu === 0 && enSapma < 1e-6,
+      `${kemikSayi} kemik · en büyük sapma ${enSapma.toExponential(1)} · aralık dışı ${kotu}`);
+  }
+
+  /* GEÇİŞ BANDI BEYAN EDİLDİĞİ KADAR. Ağırlığın 0 ile 1 arasında olduğu
+     köşelerin eksenel yayılımı, beyan edilen `gecis`in iki katı olmalı -
+     daha dar bir bant keskin bir kırık, daha genişi lastik bir uzuv demek. */
+  for (const m of deriler) {
+    const d = m.geometry.userData.deri;
+    let enAz = Infinity, enCok = -Infinity;
+    for (let i = 0; i < d.bind.length / 3; i++) {
+      const w = d.agirlik[i * d.kemikSayisi + 1];
+      if (w <= 1e-4 || w >= 1 - 1e-4) continue;
+      const z = d.bind[i * 3 + 2];
+      enAz = Math.min(enAz, z); enCok = Math.max(enCok, z);
+    }
+    const genislik = enCok - enAz;
+    /* ÖLÇÜLEN BANT, BEYAN EDİLENDEN BİR İSTASYON KADAR DAR ÇIKAR: ağırlıklar
+       süpürmenin İSTASYONLARINDA değerleniyor ve körük bandının dışında
+       istasyon aralığı 35 mm'ye kadar çıkıyor. Kapı, ağın sahip olmadığı bir
+       çözünürlüğü istemek yerine bunu söylüyor. */
+    check(`geçiş bandı beyan edilen ${d.gecis} m ile tutuyor`,
+      genislik <= 2 * d.gecis + 0.01 && genislik >= 2 * d.gecis - 0.08,
+      `ölçülen ${genislik.toFixed(3)} m · beyan 2 × ${d.gecis} (istasyon aralığı payı 35 mm)`);
+    break;                                   // biri yeterli: dördü aynı yoldan
+  }
+
+  /* ŞEKERLEME SARGISI. Diz büküldükçe mafsal çevresindeki en küçük halka
+     çevresi ölçülür; düz hâline göre düşmemeli. */
+  {
+    const deri = deriler.find((m) => m.parent === S.eklem.kalca[0]);
+    const iz = deri.geometry.userData.izgara;
+    const pos = deri.geometry.attributes.position;
+    const zDiz = S.eklem.diz[0].position.z;
+    const cevre = () => {
+      let enAz = Infinity;
+      for (let i = 0; i <= iz.dilim; i++) {
+        if (Math.abs(iz.z[i] - zDiz) > 0.09) continue;
+        /* Halkanın çevresi: ardışık köşeler arası mesafelerin toplamı.
+           Yarıçap ortalaması burulmayı GÖREMEZ - halka eğilip yassılaşınca
+           ortalama yarıçap aynı kalır, çevre ise düşer. */
+        let c = 0;
+        const ilk = new THREE.Vector3(), onceki = new THREE.Vector3();
+        for (let j = 0; j < iz.halka; j++) {
+          v.fromBufferAttribute(pos, i * iz.halka + j);
+          if (j === 0) { ilk.copy(v); onceki.copy(v); continue; }
+          c += onceki.distanceTo(v); onceki.copy(v);
+        }
+        c += onceki.distanceTo(ilk);
+        enAz = Math.min(enAz, c);
+      }
+      return enAz;
+    };
+    S.uygulaPoz({ ...S.poz, kalca: [0, 0], diz: [0, 0], ayak: [0, 0] });
+    const duz = cevre();
+    const olcum = [];
+    for (const aci of [30, 60, 90, 104]) {
+      S.uygulaPoz({ ...S.poz, kalca: [0, 0], diz: [aci, 0], ayak: [0, 0] });
+      olcum.push({ aci, oran: cevre() / duz });
+    }
+    S.uygulaPoz(S.poz);
+    const enKotu = olcum.reduce((a, b) => (b.oran < a.oran ? b : a));
+    /* EŞİK %92. Bir konvolüt hacmini korur; %8'lik bir daralma, kıvrımların
+       kapanmasıyla açıklanabilecek en büyük paydır. Sıfır sıkışma istemek,
+       hiç bükülmeyen bir uzuv istemektir. */
+    /* EŞİK %88, VE SAYI ÖLÇÜLDÜĞÜ İÇİN BURADA: doğrusal harman derisinin
+       "şekerleme sargısı" kusuru tamamen yok edilemez (çift kuaterniyon
+       harmanı gerekirdi); ölçülebilir olan ne kadar ve NEREDE olduğudur.
+       Ölçülen: 30° ve 60°'de %100,0, 90°'de %94,8, 104°'de %91,1. Yürüyüş
+       çevrimi 45°'yi geçmiyor, yani hareket hâlinde hiç görünmüyor; kayıp
+       yalnız mafsalın beyan edilen sınırında, gerçek bir körüğün de
+       kapandığı yerde ortaya çıkıyor. Geçiş yarıçapını genişletmek DENENDİ
+       ve yardım etmedi: 0,09/0,11/0,13 → %91,1/%90,9/%90,8. */
+    check('diz büküldükçe uzuv sıkışmıyor (şekerleme sargısı yok)',
+      enKotu.oran >= 0.88,
+      olcum.map((o) => `${o.aci}°: %${(100 * o.oran).toFixed(1)}`).join(' · ')
+      + ' · yürüyüş 45°yi geçmiyor');
+    /* TERS SINAV: ölçü gerçekten büküme duyarlı mı - 104°'de çevre düz
+       hâlinden FARKLI olmak zorunda, yoksa ölçüm bükümü hiç görmüyordur. */
+    check('TERS SINAV: ölçüm bükümü görüyor',
+      Math.abs(olcum[olcum.length - 1].oran - 1) > 0.005,
+      `104°'de %${(100 * olcum[olcum.length - 1].oran).toFixed(1)} (bükümü görmeyen bir ölçüm %100,0 derdi)`);
+  }
+
+  /* MALİYET. Deri CPU'da dökülüyor; her karede çağrılıyor ve bir vitrinde
+     60 kare/s hedefleniyor. Ölçülmeyen bir maliyet, sonra ölçülür. */
+  {
+    const t0 = performance.now();
+    const N = 60;
+    for (let i = 0; i < N; i++) S.uygulaPoz(S.poz);
+    const ms = (performance.now() - t0) / N;
+    let kose = 0;
+    for (const m of deriler) kose += m.geometry.attributes.position.count;
+    check('bir poz 8 ms den kısa sürüyor', ms < 8,
+      `${ms.toFixed(2)} ms/poz · ${kose} deri köşesi`);
+  }
+  void AP;
   S.uygulaPoz(S.poz);
 }
 

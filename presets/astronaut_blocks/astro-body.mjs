@@ -275,11 +275,18 @@ export function cizmeGovdesi(THREE, {
  */
 export function supur(THREE, {
   boy, kesit, dilim = 16, halka = 22, kapakUst = true, kapakAlt = true,
+  /* İSTASYONLAR ELLE VERİLEBİLİR. Düzgün aralık, kıvrımlı bir bandı
+     çözebilecek sıklığa çıkarıldığında uzvun DÜZ kısımlarını da o sıklıkta
+     böler: derili bir bacakta bu ~200 halka, yani her karede CPU'da dönen
+     6.500 köşe eder. Sıklık gereken yere konursa dörtte biri yeter. */
+  tDizisi = null,
 }) {
   const poz = [], idx = [], uv = [];
+  const T = tDizisi ?? Array.from({ length: dilim + 1 }, (_, i) => i / dilim);
+  dilim = T.length - 1;
   const satir = dilim + 1;
   for (let i = 0; i <= dilim; i++) {
-    const t = i / dilim;
+    const t = T[i];
     const k = kesit(t) || {};
     const w = Math.max(k.w ?? 0.01, 1e-4);
     const d = Math.max(k.d ?? w, 1e-4);
@@ -327,7 +334,14 @@ export function supur(THREE, {
     for (let j = 0; j < halka; j++) {
       const a = satirIdx * halka + j;
       const b = satirIdx * halka + (j + 1) % halka;
-      if (ters) idx.push(merkez, b, a); else idx.push(merkez, a, b);
+      /* SARIM YÖNÜ DIŞA BAKAR. Ters sarılmıştı: ölçüldü, üst kapağın
+         normali (0,0,−1), alt kapağınki (0,0,+1) - yani ikisi de uzvun
+         İÇİNE bakıyordu. Dışarıdan bakan biri o yüzeyi arka yüz olarak
+         görür; şimdiye kadar fark edilmemesinin tek sebebi kapakların hep
+         başka bir parçanın (eklem küresi, leğen, çizme) içinde kalmasıydı.
+         Süpürme artık kalçadan bileğe tek yüzey olduğu için kapaklar da
+         gerçek yüzeyin parçası. */
+      if (ters) idx.push(merkez, a, b); else idx.push(merkez, b, a);
     }
   };
   if (kapakUst) kapa(0, 0, false);
@@ -345,7 +359,7 @@ export function supur(THREE, {
      sayı dilim sayısının ta kendisiydi. Süpürmenin halkaları zaten eksen
      boyunca düzgün aralıklı; onları yeniden keşfetmeye çalışmak yerine
      saymak gerekir. */
-  geo.userData.izgara = { halka, dilim, boy };
+  geo.userData.izgara = { halka, dilim, boy, t: T };
   return geo;
 }
 

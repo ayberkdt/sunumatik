@@ -32,9 +32,11 @@
 import {
   PARTS, partById, BOY_M, OMUZ_M, BOYUN_CAP_M, DIKEY, UYLUK_M, BALDIR_M,
   AYAK_ON_M, AYAK_ARKA_M, AYAK_EN_M, EL_CERCEVE, PANEL_SEMASI, OMUZ_MAFSAL_Y,
+  DERI, YUZEY_RITMI,
   kopyaKonumlari,
   EKLEMLER, POZ_EKLEM, sinirla,
 } from './astro-parts.mjs';
+import { deriliUzuv } from './astro-deri.mjs';
 import { supur, uzuvKesiti, govdeKesiti, cizmeGovdesi, ayakEni, ayakBoyu,
          kapitoneKat, dikisKat, kirisikKat } from './astro-body.mjs';
 import { kumasNormalHaritasi, kumasPuruzHaritasi, metalNormalHaritasi,
@@ -192,6 +194,134 @@ function konvolut(THREE, M, wUst, dUst, wAlt, dAlt, boy, n = 4, {
   return g;
 }
 
+
+/**
+ * DERİLİ UZUV — kalçadan bileğe (omuzdan bileğe) TEK yüzey.
+ *
+ * Uzuv üç parçaydı: bir süpürme, mafsalda bir küre, bir süpürme daha. Yüzeyin
+ * mafsalda sürekli GÖRÜNMESİNİ sağlayan şey aradaki küreydi; yüzeyin kendisi
+ * orada kesiliyordu. Burada kesit fonksiyonu iki bölümün birleşimidir ve
+ * körük ayrı bir nesne değil, kesitin bir BÖLGESİDİR - ayrı bir nesne olduğu
+ * sürece büküldüğünde katı kalıyor ve oluğu altındaki uzvun dışına
+ * çıkabiliyordu (bölüm 22'nin yakaladığı kusur).
+ *
+ * İSTASYONLAR KIVRIMIN OLDUĞU YERDE SIKLAŞIR. Düzgün aralıkla kıvrımı
+ * çözecek sıklık bütün uzva uygulansaydı bacak başına ~200 halka, yani her
+ * karede CPU'da dönen 6.500 köşe olurdu.
+ */
+function uzuvDerisi(THREE, mat, {
+  ustBoy, altBoy, ust, alt, spec, mafsalZ, halka, kemikler, rol,
+  ustPay = 0, altPay = 0,
+}) {
+  /* Bantların z aralıkları: mafsala göre verilenler burada çözülür. */
+  const bant = spec.bant.map((b) => (b.mafsal
+    ? { ...b, z0: mafsalZ[b.mafsal] + b.ust, z1: mafsalZ[b.mafsal] - b.alt }
+    : { ...b }));
+  /* SÜPÜRME MAFSALLARIN ÖTESİNE TAŞAR. Kök mafsalda tam olarak bitirmek,
+     uzvun üstünde hiç malzeme bırakmıyor: süreklilik kapısının dik açıyla
+     inen ışınları üst kenarın yanından geçip hiçbir şeye çarpmıyordu. Eski
+     eklem küresi bu malzemeyi zaten sağlıyordu - mafsalın ÜSTÜNDE yarıçapı
+     kadar yer kaplıyordu, çünkü mafsal etin içindedir, tepesinde değil. */
+  const boyT = ustPay + ustBoy + altBoy + altPay;
+  const zQ = (q) => ustPay - q * boyT;
+  const qZ = (z) => (ustPay - z) / boyT;
+
+  /* İSTASYONLAR. Kıvrım başına 9 - daha azı kıvrımı üçgen yapar ve körük
+     testere dişine döner (`konvolut`un bir zamanlar öğrendiği şey). */
+  const nokta = new Set([0, 1]);
+  for (const b of bant) {
+    const q0 = qZ(b.z0), q1 = qZ(b.z1);
+    const n = Math.max(12, Math.round(b.kivrim * 9));
+    for (let i = 0; i <= n; i++) nokta.add(q0 + (q1 - q0) * (i / n));
+  }
+  const kaba = [...nokta].filter((x) => x >= 0 && x <= 1).sort((a, b) => a - b);
+  const T = [];
+  for (let i = 0; i < kaba.length; i++) {
+    T.push(kaba[i]);
+    if (i + 1 < kaba.length) {
+      /* Düz kısımda 35 mm'den seyrek olmasın: daha seyreği, kesitin şişme
+         eğrisini köşeli gösterir. */
+      const ek = Math.floor((kaba[i + 1] - kaba[i]) * boyT / 0.035);
+      for (let k = 1; k <= ek; k++) {
+        T.push(kaba[i] + (kaba[i + 1] - kaba[i]) * (k / (ek + 1)));
+      }
+    }
+  }
+  T.sort((a, b) => a - b);
+
+  const yumusak = (x) => {
+    const q = Math.max(0, Math.min(1, x));
+    return q * q * (3 - 2 * q);
+  };
+  /* Bölümler arası geçiş MAFSAL BANDINDA olur: iki profilin uçları arasında
+     bir fark var ve onu bandın dışında yapmak, düz kısmın ortasında görünür
+     bir kademe bırakırdı. */
+  const gecisBant = bant.find((b) => b.mafsal) ?? bant[bant.length - 1];
+  const kesit = (q) => {
+    const z = zQ(q);
+    const s = yumusak((gecisBant.z0 - z) / (gecisBant.z0 - gecisBant.z1));
+    /* Bölüm içindeki yer Z'DEN hesaplanır, q'dan değil: taşma payları q'yu
+       kaydırır ve profil uçları mafsallardan kayardı. */
+    const a = ust(Math.max(0, Math.min(1, -z / ustBoy)));
+    const b = alt(Math.max(0, Math.min(1, (-z - ustBoy) / altBoy)));
+    const kaynak = s < 0.5 ? a : b;
+    let f = 1, bantta = false;
+    for (const bd of bant) {
+      if (z > bd.z0 || z < bd.z1) continue;
+      bantta = true;
+      const u = (bd.z0 - z) / (bd.z0 - bd.z1);
+      /* Faz π kaydırılır: bandın İKİ UCU da OLUK olsun. Sırt ile başlayan bir
+         bant, girdiği yerde yüzeye bir kademe bırakır. */
+      const faz = Math.cos(Math.PI * 2 * bd.kivrim * u + Math.PI);
+      const dalga = Math.sign(faz) * Math.abs(faz) ** 0.7;
+      f *= 1 + YUZEY_RITMI.konvolutDerinlik * (dalga + 1) / 2;
+    }
+    /* Taşma paylarında kesit KAPANIR: uzuv orada bir başka parçanın (leğen,
+       çizme) içine girer ve açık bir ağız bırakmamalı. */
+    /* KÜRE GİBİ KAPANIR. 1 - 0,45·(z/pay)² ile tepe kesitin %55'ine
+       iniyordu ve kapağın x derinliği 0,035 m'ye düşüyordu - süreklilik
+       kapısının eksenel ışını kalçanın ekseninden 0,040 m uzakta geçtiği
+       için kapağın YANINDAN geçiyordu. Eski eklem küresi küre gibi
+       kapanıyordu: merkezin h kadar üstünde yarıçap √(R²−h²), yani 120 mm'lik
+       bir kesitte 60 mm'lik taşma için %87. */
+    let kapan = 1;
+    if (z > 0) kapan = Math.sqrt(Math.max(0.2, 1 - 0.25 * (z / Math.max(ustPay, 1e-6)) ** 2));
+    else if (z < -(ustBoy + altBoy)) {
+      const h = (-z - ustBoy - altBoy) / Math.max(altPay, 1e-6);
+      kapan = Math.sqrt(Math.max(0.2, 1 - 0.45 * h ** 2));
+    }
+    return {
+      w: (a.w + (b.w - a.w) * s) * f * kapan,
+      d: (a.d + (b.d - a.d) * s) * f * kapan,
+      p: kaynak.p,
+      /* Bantta kapitone YOK: kıvrımın kendisi zaten desendir ve ikisi üst
+         üste gelince yüzey ritmi okunmaz hâle gelir (bölüm 21). */
+      kapitone: bantta ? null : kaynak.kapitone,
+      dikis: kaynak.dikis,
+      kirisik: kaynak.kirisik,
+      panelCevre: bantta ? null : kaynak.panelCevre,
+      panelBoyuna: bantta ? null : kaynak.panelBoyuna,
+    };
+  };
+
+  const geo = supur(THREE, { boy: boyT, kesit, tDizisi: T, halka });
+  /* GEOMETRİ KAYDIRILIR, AĞ DEĞİL: derinin ağırlıkları bind z'den okunuyor
+     ve o z, KEMİĞİN çerçevesinde olmak zorunda. Ağı konumlandırmak, ağırlık
+     hesabını sessizce pay kadar kaydırırdı. */
+  if (ustPay) geo.translate(0, 0, ustPay);
+  /* Halkaların KEMİK ÇERÇEVESİNDEKİ z'si: ritim kapısı hangi halkanın hangi
+     bantta olduğunu buradan okur, `t`den geri hesaplamaz. */
+  geo.userData.izgara.z = T.map((q) => zQ(q));
+  /* Ritim kapısı için: hangi z aralığı körük. Ölçüm bunu ağın boyundan
+     tahmin etmez, ÜRETEN söyler. */
+  geo.userData.ritim = bant.map((b) => ({
+    ad: b.ad, z0: b.z0, z1: b.z1, kivrim: b.kivrim,
+  }));
+  const d = deriliUzuv(THREE, geo, mat, { kemikler, gecis: spec.gecis });
+  d.mesh.userData.kumas = true;
+  d.mesh.userData.rol = rol ?? 'deri';
+  return d;
+}
 
 /**
  * EKLEM GÖVDESİ — mafsalın merkezindeki cisim.
@@ -436,6 +566,8 @@ function govde(THREE, p, M, yan = 0) {
       }
 
       const eklem = { kalca: [], diz: [], ayak: [], kalcaAcilma: [] };
+      /* Poz uygulandıktan sonra çağrılacak deri güncelleyicileri. */
+      const deriler = [];
       for (const [i, s] of [[0, 1], [1, -1]]) {
         /* KALÇA DA İKİ EKSENDİR: açılma (abdüksiyon) kendi grubunda, çünkü
            bacak x'te açılırken y'de bükülür ve ikisini tek `rotation`a
@@ -449,29 +581,9 @@ function govde(THREE, p, M, yan = 0) {
         kalcaAc.add(kalca);
         eklem.kalca.push(kalca);
         eklem.kalcaAcilma.push(kalcaAc);
-        /* KALÇA EKLEMİ: mafsalın merkezinde gövde, sonra konvolüt. */
-        kalca.add(mafsalGovdesi(THREE, M.kumas, sy * 0.355, sx * 0.35));
-        kalca.add(konvolut(THREE, M, sy * 0.36, sx * 0.355, sy * 0.35, sx * 0.345, 0.07, 2));
-        /* Uyluk, eklem gövdesinin içinde bitmek yerine ONA DAYANIR. */
-        const uyluk = uzuvMesh(THREE, M.kumas, UYLUK_M - 0.07 - sy * 0.2, uzuvKesiti({
-          /* BASINÇLI GİYSİ İNCELMEZ. İnsan uyluğu dize doğru daralır; 26 kPa'ya
-             şişirilmiş bir tulum daralmaz - uyluk 0,28 m, diz 0,26 m, yani
-             neredeyse aynı. Anatomik daralmayı giysiye uygulamak, figürü bir
-             basınç kabı değil tulum giymiş bir insan gibi gösteriyordu. */
-          ustW: sy * 0.35, ustD: sx * 0.345, altW: sy * 0.325, altD: sx * 0.32,
-          /* ŞİŞME KALÇAYA YAKIN. 0,3'te (dünyada z ≈ 0,95) uyluğun en kalın
-             yeri kalçanın ALTINDA kalıyor ve etek görüntüsüne katkı
-             veriyordu; bir bacağın en kalın yeri kalçanın hemen altıdır. */
-          /* KAPİTONE SEYREK VE SIĞ (`YUZEY_RITMI`). 6 bant / 0,32 m = metrede 19,
-             diz körüğünün 25'ine çok yakındı; bacak baştan sona körük gibi
-             okunuyordu. 2 bant = metrede 6, körüğün dörtte biri. */
-          sis: 0.045, sisT: 0.12, p: 2.2, kapitone: [2, 0.03], dikis: [8, 0.04], kirisik: [1.4, 0.022],
-          panelCevre: PANEL_SEMASI.altGovde.cevre, panelBoyuna: PANEL_SEMASI.altGovde.boyuna,
-        }), { dilim: 20, halka: 32 });
-        uyluk.position.z = -0.07;
-        uyluk.castShadow = true; uyluk.receiveShadow = true;
-        uyluk.userData.rol = 'bolum';
-        kalca.add(uyluk);
+        /* KALÇA EKLEMİ, UYLUK VE BALDIR ARTIK TEK YÜZEY - aşağıda, diz
+           kemiği kurulduktan sonra. Buradaki üç ayrı nesne (eklem küresi,
+           kalça körüğü, uyluk süpürmesi) derinin kesitine girdi. */
         /* Uyluk cebi: A7L'de örnek torbası ve kontrol listesi oradadır. */
         const cep = new THREE.Mesh(
           pahliKutuGeo(sx * 0.16, sy * 0.24, UYLUK_M * 0.3), M.kumasGolge);
@@ -483,40 +595,60 @@ function govde(THREE, p, M, yan = 0) {
         diz.position.z = -UYLUK_M;
         kalca.add(diz);
         eklem.diz.push(diz);
-        /* DİZ EKLEMİ. Konvolüt artık mafsalın ÜSTÜNE ve ALTINA simetrik
-           oturur: yalnız altına konunca büküm dışında boşluk kalıyordu. */
-        diz.add(mafsalGovdesi(THREE, M.kumas, sy * 0.325, sx * 0.32));
-        const dizKon = konvolut(THREE, M, sy * 0.33, sx * 0.325, sy * 0.3, sx * 0.3, 0.16, 4);
-        dizKon.position.z = 0.07;
-        diz.add(dizKon);
-        /* Diz kapağı: konvolütü koruyan EĞRİ plaka. */
+
+        /* BACAK DERİSİ: kalçadan bileğe tek süpürme, iki kemik.
+           Uçları MAFSAL YARIÇAPLARIDIR, uzuv gövdesinin yarıçapları değil:
+           deri artık mafsalın içinden GEÇİYOR, orada bitmiyor. */
+        const bacakDeri = uzuvDerisi(THREE, M.kumas, {
+          ustBoy: UYLUK_M, altBoy: BALDIR_M,
+          /* Kalçanın üstünde 85 mm, bilekte 30 mm.
+             60 mm denendi ve ÖLÇÜM YETMEDİĞİNİ söyledi: çıplak bant kapısı
+             mafsalın 60 mm üstüne kadar ölçüyor ve tam o dilimde derinin
+             tepesi kapanıp altındaki LEĞEN görünüyordu - leğen orada
+             uyluktan dar (0,257'ye karşı 0,301) ve siluet çöküyordu. Eski
+             eklem küresi o bandı zaten kaplıyordu. Uzuv kendi mafsalının
+             bandını kendi kaplamalı; deri leğenin içinde kalır, çünkü leğen
+             kalçanın 120 mm altına iner. */
+          ustPay: 0.085, altPay: 0.03,
+          ust: uzuvKesiti({
+            /* BASINÇLI GİYSİ İNCELMEZ. İnsan uyluğu dize doğru daralır;
+               26 kPa'ya şişirilmiş bir tulum daralmaz - uyluk 0,28 m,
+               diz 0,26 m, yani neredeyse aynı. */
+            ustW: sy * 0.355, ustD: sx * 0.35, altW: sy * 0.33, altD: sx * 0.325,
+            /* ŞİŞME KALÇAYA YAKIN: bir bacağın en kalın yeri kalçanın
+               hemen altıdır, ortası değil. */
+            sis: 0.045, sisT: 0.12, p: 2.2,
+            kapitone: [2, 0.03], dikis: [8, 0.04], kirisik: [1.4, 0.022],
+            panelCevre: PANEL_SEMASI.altGovde.cevre,
+            panelBoyuna: PANEL_SEMASI.altGovde.boyuna,
+          }),
+          alt: uzuvKesiti({
+            /* BALDIR BİLEĞE DARALIR: bacağın en dar yeri bilektir, ayak
+               değil (bölüm 23). */
+            ustW: sy * 0.3, ustD: sx * 0.3, altW: sy * 0.162, altD: sx * 0.172,
+            sis: 0.07, sisT: 0.25, p: 2.2,
+            kapitone: [2, 0.03], dikis: [8, 0.04], kirisik: [1.6, 0.022],
+          }),
+          spec: DERI.bacak,
+          mafsalZ: { diz: -UYLUK_M },
+          halka: 26,
+          kemikler: [{ node: kalca, z: 0 }, { node: diz, z: -UYLUK_M }],
+        });
+        kalca.add(bacakDeri.mesh);
+        deriler.push(bacakDeri.guncelle);
+        /* DİZ KÖRÜĞÜ DERİNİN İÇİNDE (`DERI.bacak.bant`). Ayrı bir nesne
+           olduğu sürece diz büküldüğünde körük KATI kalıyordu: kıvrımlar
+           dönmüyor, yalnız bütün olarak eğiliyordu.
+           Diz kapağı kalır - o bir PLAKA, kumaş değil. */
         /* kutup-ok: kutup burada ELLE +Z'ye çevriliyor (aşağıdaki tek
            eksenli dönüş), plakanın eğrilmesi gereken yön de o. */
         const kapak = new THREE.Mesh(
-          new THREE.SphereGeometry(sy * 0.37, 24, 16, -0.8, 1.6, 0.9, 1.1), M.kumasGolge);
+          /* 0,37 iken kapak, körüğün sırtının (sy*0,33 × 1,16 = 0,383)
+             ALTINDA kalıyor ve kıvrımların arasından girip çıkıyordu. */
+          new THREE.SphereGeometry(sy * 0.40, 24, 16, -0.8, 1.6, 0.9, 1.1), M.kumasGolge);
         kapak.rotation.x = Math.PI / 2;
         kapak.position.z = -0.05;
         diz.add(kapak);
-        /* UZUV MAFSAL GÖVDESİNİN İÇİNDE BAŞLAR, altında değil. Baldır
-           dizin 0,16 m altından başlıyordu; diz gövdesinin yarı boyu ise
-           0,137. Aradaki 23 mm'lik bant BOŞTU - siluet ölçümünde genişlik
-           0,281'den 0,047'ye düşüyor ve iki santimetrede 245 mm'lik bir
-           ikinci fark bırakıyordu. Süreklilik kapısı (bölüm 6) bunu
-           GÖREMEZ: onun ışınları mafsalın kendi çevresinde döner, 40 mm
-           aşağıdaki bir bandın üstünden geçer. */
-        const baldir = uzuvMesh(THREE, M.kumas, BALDIR_M - 0.07, uzuvKesiti({
-          /* BALDIR BİLEĞE DARALIR. Alt ucu sy*0,244 iken bilek bandı
-             0,214-0,222 m'ye çıkıyor ve bacağın en dar yeri AYAK oluyordu;
-             öyle bir bacakta bilek diye bir şey yoktur. */
-          ustW: sy * 0.3, ustD: sx * 0.3, altW: sy * 0.162, altD: sx * 0.172,
-          sis: 0.07, sisT: 0.25, p: 2.2, kapitone: [2, 0.03], dikis: [8, 0.04], kirisik: [1.6, 0.022],
-        }), { dilim: 20, halka: 32 });
-        baldir.position.z = -0.07;
-        baldir.castShadow = true; baldir.receiveShadow = true;
-        baldir.userData.rol = 'bolum';
-        diz.add(baldir);
-        /* BİLEK YATAĞI BACAĞIN EN DAR YERİDİR. 0,215'te halkanın kendisi
-           0,214 m'ye çıkıp bacağın en geniş noktalarından biri oluyordu. */
         const ayakY = yatakHalkasi(THREE, M, sy * 0.15, { kalin: 0.012, tirnak: 6 });
         ayakY.position.z = -BALDIR_M;
         diz.add(ayakY);
@@ -544,6 +676,7 @@ function govde(THREE, p, M, yan = 0) {
       g.userData.eklem = eklem;
       g.userData.diz = eklem.diz;
       g.userData.ayak = eklem.ayak;
+      g.userData.deriler = deriler;
       break;
     }
 
@@ -875,19 +1008,10 @@ function govde(THREE, p, M, yan = 0) {
          Mafsal 1,576'da; gövde onun 114 mm üstüne çıkıyordu. Bir omuz
          mafsalı kol kadar GENİŞ olmak zorunda, kol kadar YÜKSEK değil. */
       g.add(mafsalGovdesi(THREE, M.kumas, sy * 0.62, sx * 0.59, { basik: 0.62 }));
-      g.add(konvolut(THREE, M, sy * 0.63, sx * 0.6, sy * 0.61, sx * 0.58, sz * 0.09, 2));
-      const ust = uzuvMesh(THREE, M.kumas, ustBoy - sz * 0.09 - sy * 0.34, uzuvKesiti({
-        ustW: sy * 0.61, ustD: sx * 0.58, altW: sy * 0.574, altD: sx * 0.56,
-        /* ÜST KOL 0,223 m: iki bant metrede 9 eder ve omuz körüğünün 22'sine
-           fazla yaklaşır (ölçüldü: 11,2/m, oran 1,96 - eşik 2,5). Tek bant. */
-        sis: 0.05, sisT: 0.25, p: 2.2, kapitone: [1, 0.03], dikis: [6, 0.035], kirisik: [1.8, 0.025],
-        panelCevre: PANEL_SEMASI.kol.cevre, panelBoyuna: PANEL_SEMASI.kol.boyuna,
-      }), { dilim: 18, halka: 30 });
-      ust.position.z = -sz * 0.09;
-      ust.castShadow = true; ust.receiveShadow = true;
-      ust.userData.rol = 'bolum';
-      g.add(ust);
-
+      /* OMUZ KÖRÜĞÜ, ÜST KOL VE ÖN KOL TEK DERİ - aşağıda, ön kol dönme
+         kemiği kurulduktan sonra kurulur. Omuz EKLEM GÖVDESİ kalır: o,
+         derinin başladığı yerin ÜSTÜNDE duruyor ve omuz yarığını kapatan
+         yapının parçası (bölüm 22). */
       const dirsek = new THREE.Group();
       dirsek.name = yan >= 0 ? 'dirsekL' : 'dirsekR';
       dirsek.position.z = -ustBoy;
@@ -901,11 +1025,42 @@ function govde(THREE, p, M, yan = 0) {
       dirsek.add(onkolDon);
       g.userData.onkolDon = onkolDon;
 
-      /* DİRSEK EKLEMİ: gövde mafsalın merkezinde, konvolüt iki yanına. */
-      dirsek.add(mafsalGovdesi(THREE, M.kumas, sy * 0.575, sx * 0.565));
-      const dirKon = konvolut(THREE, M, sy * 0.59, sx * 0.58, sy * 0.55, sx * 0.55, sz * 0.16, 4);
-      dirKon.position.z = sz * 0.07;
-      dirsek.add(dirKon);
+      /* KOL DERİSİ: omuzdan bileğe tek süpürme, iki kemik. İkinci kemik
+         `onkolDon`: ön kol dirsekten SONRA kendi ekseninde döner (radius
+         ulnanın üstünde), yani deri o dönmeyi de taşımak zorunda. */
+      const kolDeri = uzuvDerisi(THREE, M.kumas, {
+        ustBoy, altBoy: onBoy,
+        /* Omuzda 50 mm: deri omuz kapağının içinde kalır. Bilekte 30 mm,
+           orası manşetin içine girer. */
+        ustPay: 0.04, altPay: 0.02,
+        ust: uzuvKesiti({
+          /* KESİT, KÖRÜK SIRTI ESKİSİYLE AYNI ÇIKACAK ŞEKİLDE. Körük artık
+             kesitin bir bandı ve kıvrım yalnız DIŞARI taşıyor, yani sırt
+             taban yarıçapın 1,16 katı. Eski ayrı körük sy*0,63 tabanın
+             ±%10'una salınıyordu, sırtı 0,693·sy idi. Aynı sırtı tutturmak
+             için taban 0,693/1,16 = 0,597·sy olmalı - yoksa deri kolu
+             sessizce şişirir (ölçüldü: zarf oranı 1,86'dan 1,97'ye çıktı). */
+          ustW: sy * 0.597, ustD: sx * 0.578, altW: sy * 0.56, altD: sx * 0.55,
+          sis: 0.05, sisT: 0.25, p: 2.2,
+          kapitone: [1, 0.03], dikis: [6, 0.035], kirisik: [1.8, 0.025],
+          panelCevre: PANEL_SEMASI.kol.cevre, panelBoyuna: PANEL_SEMASI.kol.boyuna,
+        }),
+        alt: uzuvKesiti({
+          ustW: sy * 0.53, ustD: sx * 0.53, altW: sy * 0.447, altD: sx * 0.45,
+          sis: 0.06, sisT: 0.25, p: 2.2,
+          kapitone: [2, 0.03], dikis: [6, 0.035], kirisik: [2.0, 0.025],
+        }),
+        spec: DERI.kol,
+        mafsalZ: { dirsek: -ustBoy },
+        halka: 24,
+        kemikler: [{ node: g, z: 0 }, { node: onkolDon, z: -ustBoy }],
+      });
+      g.add(kolDeri.mesh);
+      g.userData.deriler = [kolDeri.guncelle];
+
+      /* DİRSEK KÖRÜĞÜ DERİNİN İÇİNDE (`DERI.kol.bant`). Ayrı bir nesne
+         olduğu sürece dirsek büküldüğünde körük KATI kalıyordu: kıvrımlar
+         dönmüyor, yalnız bütün olarak eğiliyordu. */
       /* kutup-ok: kutup elle −Z'ye çevriliyor; fincan dirseğin ALTINI
          kaplar, o yüzden ters yön. */
       const fincan = new THREE.Mesh(
@@ -913,18 +1068,6 @@ function govde(THREE, p, M, yan = 0) {
       fincan.rotation.x = -Math.PI / 2;
       fincan.position.z = -sz * 0.05;
       dirsek.add(fincan);
-      /* Aynı kusur ön kolda da vardı: dirsekten sz*0,17 = 0,129 m aşağıdan
-         başlıyordu, dirsek gövdesinin yarı boyu ise 0,094. */
-      const on = uzuvMesh(THREE, M.kumas, onBoy - sz * 0.09, uzuvKesiti({
-        ustW: sy * 0.541, ustD: sx * 0.54, altW: sy * 0.447, altD: sx * 0.45,
-        sis: 0.06, sisT: 0.25, p: 2.2, kapitone: [2, 0.03], dikis: [6, 0.035], kirisik: [2.0, 0.025],
-      }), { dilim: 18, halka: 30 });
-      on.position.z = -sz * 0.09;
-      on.castShadow = true; on.receiveShadow = true;
-      on.userData.rol = 'bolum';
-      /* Ön kolun KENDİSİ döner, üst kol değil: dönen parça `onkolDon`un
-         altındadır ve eldiven de oraya bağlanır. */
-      onkolDon.add(on);
       const bilek = yatakHalkasi(THREE, M, sy * 0.46, { kalin: 0.014, tirnak: 6, kol: true });
       bilek.position.z = -onBoy;
       onkolDon.add(bilek);
@@ -1584,6 +1727,8 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
   const bel = new THREE.Group();
   bel.name = 'belEgim';
   const nodes = new Map();
+  /* Poz uygulandıktan sonra çağrılacak deri güncelleyicileri. */
+  const deriGuncelle = [];
   const eklem = { kalca: [], diz: [], ayak: [], omuz: [], dirsek: [],
     omuzAcilma: [], omuzDonme: [], onkolDonme: [], kalcaAcilma: [] };
 
@@ -1651,6 +1796,7 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
         gg.position.set(x, y, anne === bel ? z - belZ : z);
         anne.add(gg);
       }
+      if (gg.userData.deriler) deriGuncelle.push(...gg.userData.deriler);
       if (p.id === 'alt-govde') {
         eklem.kalca.push(gg.userData.eklem.kalca[0], gg.userData.eklem.kalca[1]);
         eklem.kalcaAcilma.push(gg.userData.eklem.kalcaAcilma[0], gg.userData.eklem.kalcaAcilma[1]);
@@ -1977,6 +2123,11 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
       kok.position.z = 0;
       kok.position.z = -enAltZ(kok) + zOfset;
     }
+    /* DERİ EN SON. Mafsal açıları yazıldıktan sonra yüzey yeniden dökülür;
+       önce yapılsaydı bir kare gerideki duruşu çizerdi. `zincir` kemiklerin
+       YEREL matrisini okur, o yüzden `updateMatrixWorld` gerekmez - ve
+       gerekmemesi iyi, çünkü bu her karede çağrılıyor. */
+    for (const g2 of deriGuncelle) g2();
     kok.userData.poz = P;
   }
 
@@ -1999,7 +2150,14 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
   }
   kok.userData.notes = { regime: 'yüzey EVA',
     why: `Giysili boy ${BOY_M} m, omuz ${OMUZ_M} m: habitat kapısı ve tutamak aralıkları bu ölçüye göre belirlenir, çıplak insana göre değil.` };
-  return { root: kok, bel, nodes, eklem, materials: M, poz: P0, uygulaPoz, olcu, ao: aoSonuc };
+  /* DERİYİ TEK BAŞINA YENİLEMEK. Bir mafsalı `uygulaPoz` üzerinden değil
+     doğrudan `rotation`dan oynatan her yer (kapılar bunu yapıyor: tek bir
+     eklemi süpürüp sürekliliği ölçüyorlar) yüzeyi de yenilemek ZORUNDA.
+     Yoksa kemik döner, deri bir önceki duruşta kalır ve ölçüm olmayan bir
+     kusuru raporlar. */
+  const deriYenile = () => { for (const g2 of deriGuncelle) g2(); };
+  return { root: kok, bel, nodes, eklem, materials: M, poz: P0, uygulaPoz,
+    olcu, ao: aoSonuc, deriYenile };
 }
 
 export { PARTS, partById, DIKEY, EKLEMLER, POZ_EKLEM, sinirla };

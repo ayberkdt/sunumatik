@@ -112,6 +112,43 @@ export const YUZEY_RITMI = Object.freeze({
   ayrimOrani: 2.5,               // körük / kapitone, hem sıklıkta hem derinlikte
 });
 
+/**
+ * DERİ — uzuv mafsalda KESİLMEZ.
+ *
+ * Uzuvlar parça parça kuruluyordu ve mafsalda yüzeyi sürekli GÖSTEREN şey
+ * aradaki boşluğu dolduran küreydi; yüzeyin kendisi sürekli değildi. Uzuv
+ * artık kalçadan bileğe (ve omuzdan bileğe) tek bir süpürmedir ve
+ * büküldüğünde kesitler iki kemiğin arasında pay edilerek döner.
+ *
+ * `gecis` — ağırlığın 0'dan 1'e geçtiği YARI bant, metre. Yumuşaklığın
+ * kendisi budur, o yüzden burada durur. Dar bant keskin bir kırık verir
+ * (parçalı hâlin ta kendisi), geniş bant ise uzvu mafsalın uzağında da
+ * büker ve bacak lastik gibi okunur. Sayılar uzvun kesit YARIÇAPI
+ * ölçeğindedir: dizde ~0,16 m çapında bir uzuv için 0,09.
+ *
+ * `bant` — körüğün süpürme boyunca nerede olduğu. Körük artık ayrı bir nesne
+ * değil, derinin KENDİ kesitinin bir bölgesi: ayrı bir nesne olduğunda
+ * büküldüğünde katı kalıyordu ve oluğu altındaki uzvun dışına çıkabiliyordu
+ * (bölüm 22'nin yakaladığı kusur). `z0`/`z1` kök kemiğin çerçevesinde,
+ * metre; `kivrim` kıvrım sayısı.
+ */
+export const DERI = Object.freeze({
+  bacak: {
+    gecis: 0.09,
+    bant: [
+      { ad: 'kalça körüğü', z0: -0.005, z1: -0.075, kivrim: 2 },
+      { ad: 'diz körüğü', z0: null, z1: null, kivrim: 4, mafsal: 'diz', ust: 0.07, alt: 0.09 },
+    ],
+  },
+  kol: {
+    gecis: 0.055,
+    bant: [
+      { ad: 'omuz körüğü', z0: -0.002, z1: -0.068, kivrim: 2 },
+      { ad: 'dirsek körüğü', z0: null, z1: null, kivrim: 4, mafsal: 'dirsek', ust: 0.055, alt: 0.07 },
+    ],
+  },
+});
+
 export const PANEL_SEMASI = Object.freeze({
   ustGovde: {
     cevre: [0.24, 0.52, 0.78],          // omuz boyunduruğu, göğüs, bel kuşağı
@@ -371,8 +408,11 @@ export const PARTS = Object.freeze([
     mountsTo: null, arayuz: 'kumas', massKg: 3.0,
     pos: [0, 0, 1.20], size: [0.24, 0.28, 0.95], yon: 'orta', sekil: 'tulum',
     /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
-    zarfOran: 0.4,
-    zarfNeden: 'Soğutma borusu halkaları gövdeyi SARAR (0,337 m), yani çapları gövdenin çapıdır; tulumun kendi kumaş kalınlığı değil.',
+    /* ZARF PAYI KALDIRILDI (0,40 idi). Gerekçesi "boru halkaları gövdeyi
+       sarar, çapları gövdenin çapıdır" diyordu ve doğruydu - ama ölçülen
+       0,337 m, parçanın DÜNYA kutusuydu. Zarf artık parçanın kendi
+       çerçevesinde ölçülüyor ve tulum ×1,04'e iniyor, yani varsayılan payın
+       (0,12) altında. Ölçüm düzelince payın gerekçesi de ortadan kalktı. */
     tech: {
       no: 'AS-LIF-010',
       malzeme: 'Spandex with 90 m of 4 mm PVC tubing',
@@ -478,7 +518,13 @@ export const PARTS = Object.freeze([
        ayna kapısı düşer (validate-astronaut §9). */
     asimetrik: 'Kontrol listesi TEK bilekte: EVA sırasında bakılan yer orasıdır ve ikinci bir kopya ek kütle taşımaktan başka bir şey yapmaz.',
     /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
-    zarfOran: 0.8,
+    /* PAY 0,80 → 0,45. 0,80'in büyük kısmı ölçüm hatasıydı: zarf dünya
+       eksenlerine hizalı bir kutuyla ölçülüyordu ve kol boyunca içeri
+       yakınsadığı için kutu kolun kendi kesitini değil yakınsamasını
+       kapsıyordu (0,335 m'ye karşı ~0,21). Ölçüm parçanın kendi çerçevesine
+       taşınınca çizilen ×1,94'ten ×1,42'ye indi. Kalan pay omuz kapağı,
+       yatak halkaları ve dirsek fincanının kesitin dışına taşması. */
+    zarfOran: 0.45,
     zarfNeden: 'Omuz eklem gövdesi (0,259 m) ve iki yatak bileziği (0,258 / 0,254 m) bu parçanın içindedir ve kol borusunun kesitinden geniştir - bir yatak, içinde döndüğü şeyden dar olamaz. BORÇ: beyan edilen 0,17 m çıplak bir kolun kesitidir, takımın değil.',
     tech: {
       no: 'AS-PRS-050',
