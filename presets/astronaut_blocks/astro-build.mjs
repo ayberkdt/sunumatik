@@ -258,12 +258,39 @@ export const AYAK_ACILMA = 7;
 /** Bir mafsalın poz açısını radyana ve DOĞRU işarete çevirir. */
 export const mafsal = (poz, ad, i) => (poz?.[ad]?.[i] ?? 0) * RAD * FLEKS[ad];
 
+/* DURUŞLAR ARTIK YEDİ EKSEN KULLANIR. Bu tablo dört eksenle yazıldığında
+   figür her pozda aynı ele ve dimdik bir kola sahipti - ölçülen: omuzdan
+   dirseğe Δx tam sıfır, yani hazır ol vaziyetinde bir asker. İnsanda taşıma
+   açısı 5-15°dir, dirsek omzun biraz ARKASINDA durur ve avuç gövdeye bakar.
+
+   `omuzAcilma` kolu gövdeden ayırır, `omuzDonme` üst kolu kendi ekseninde
+   çevirir, `onkolDonme` avucu çevirir, `kalcaAcilma` bacağı açar. Hepsi
+   beyan edilen sınırlardan geçer; verilmeyen eksen 0'dır. */
 export const POZLAR = Object.freeze({
-  dik: { ad: 'Standing', kalca: [5, 5], diz: [9, 9], omuz: [5, 5], dirsek: [16, 16], govdeEgim: 2 },
-  egilme: { ad: 'Crouched at a task', kalca: [52, 52], diz: [66, 66], omuz: [34, 34], dirsek: [58, 58], govdeEgim: 26 },
-  uzanma: { ad: 'Reaching up to a panel', kalca: [0, 0], diz: [6, 6], omuz: [104, 30], dirsek: [22, 14], govdeEgim: -6 },
-  tasima: { ad: 'Carrying a load', kalca: [8, 8], diz: [12, 12], omuz: [48, 48], dirsek: [74, 74], govdeEgim: 8 },
-  selam: { ad: 'Saluting', kalca: [0, 0], diz: [2, 2], omuz: [96, 4], dirsek: [118, 14], govdeEgim: -2 },
+  dik: { ad: 'Standing', kalca: [5, 5], diz: [9, 9], omuz: [-4, -4], dirsek: [14, 14],
+    /* Dinlenmede omuz AÇILMAZ: kolun gövdeye yakınsaması zaten
+       `KOL_YAKINSAMA` ile yuvadan geliyor ve üstüne abdüksiyon eklemek
+       bileği omzun DIŞINA çıkarıyor (ölçüldü: 7°'de 0,306 > 0,300 ve
+       bölüm 7'nin yakınsama sınavı düşüyor). "Hazır ol"dan çıkaran şey
+       açılma değil, omzun hafif GERİDE ve dirseğin bükük olmasıdır. */
+    omuzAcilma: [0, 0], omuzDonme: [10, 10], onkolDonme: [-14, -14],
+    kalcaAcilma: [3, 3], govdeEgim: 2 },
+  egilme: { ad: 'Crouched at a task', kalca: [52, 52], diz: [66, 66], omuz: [34, 34],
+    dirsek: [58, 58], omuzAcilma: [16, 16], omuzDonme: [-18, -18],
+    /* Bir işe eğilen kişinin AVUÇLARI işe döner: iki el de içe supinasyon. */
+    onkolDonme: [46, 46], kalcaAcilma: [9, 9], govdeEgim: 26 },
+  uzanma: { ad: 'Reaching up to a panel', kalca: [0, 0], diz: [6, 6], omuz: [104, 30],
+    dirsek: [22, 14], omuzAcilma: [24, 9], omuzDonme: [32, 6],
+    /* Panele uzanan el AVUCUNU panele çevirir - bu, dönme ekseni olmadan
+       yapılamayan şeyin ta kendisiydi. */
+    onkolDonme: [64, 10], kalcaAcilma: [2, 2], govdeEgim: -6 },
+  tasima: { ad: 'Carrying a load', kalca: [8, 8], diz: [12, 12], omuz: [48, 48],
+    dirsek: [74, 74], omuzAcilma: [12, 12], omuzDonme: [-24, -24],
+    /* Yük taşıyan avuçlar YUKARI bakar. */
+    onkolDonme: [58, 58], kalcaAcilma: [5, 5], govdeEgim: 8 },
+  selam: { ad: 'Saluting', kalca: [0, 0], diz: [2, 2], omuz: [96, 4], dirsek: [118, 14],
+    omuzAcilma: [38, 6], omuzDonme: [26, 8], onkolDonme: [-38, -10],
+    kalcaAcilma: [2, 2], govdeEgim: -2 },
 });
 
 /* ── gövdeler ────────────────────────────────────────────────────────
@@ -339,13 +366,20 @@ function govde(THREE, p, M, yan = 0) {
         ask.rotation.x = Math.PI / 2;
       }
 
-      const eklem = { kalca: [], diz: [], ayak: [] };
+      const eklem = { kalca: [], diz: [], ayak: [], kalcaAcilma: [] };
       for (const [i, s] of [[0, 1], [1, -1]]) {
+        /* KALÇA DA İKİ EKSENDİR: açılma (abdüksiyon) kendi grubunda, çünkü
+           bacak x'te açılırken y'de bükülür ve ikisini tek `rotation`a
+           yazmak Euler sırası tuzağıdır. */
+        const kalcaAc = new THREE.Group();
+        kalcaAc.name = i === 0 ? 'kalcaAcL' : 'kalcaAcR';
+        kalcaAc.position.set(0, s * sy * 0.37, kalcaZ);
+        g.add(kalcaAc);
         const kalca = new THREE.Group();
         kalca.name = i === 0 ? 'kalcaL' : 'kalcaR';
-        kalca.position.set(0, s * sy * 0.37, kalcaZ);
-        g.add(kalca);
+        kalcaAc.add(kalca);
         eklem.kalca.push(kalca);
+        eklem.kalcaAcilma.push(kalcaAc);
         /* KALÇA EKLEMİ: mafsalın merkezinde gövde, sonra konvolüt. */
         kalca.add(mafsalGovdesi(THREE, M.kumas, sy * 0.355, sx * 0.35));
         kalca.add(konvolut(THREE, M, sy * 0.36, sx * 0.355, sy * 0.35, sx * 0.345, 0.07, 2));
@@ -699,6 +733,14 @@ function govde(THREE, p, M, yan = 0) {
       dirsek.position.z = -ustBoy;
       g.add(dirsek);
       g.userData.dirsek = dirsek;
+      /* ÖN KOL DÖNMESİ (pronasyon/supinasyon) dirsekten SONRA gelir: radius
+         ulnanın üstünde döner, yani dönen şey ön koldur, üst kol değil.
+         Kendi grubunda, çünkü dirsek y'de bükülürken ön kol z'de döner. */
+      const onkolDon = new THREE.Group();
+      onkolDon.name = yan >= 0 ? 'onkolDonL' : 'onkolDonR';
+      dirsek.add(onkolDon);
+      g.userData.onkolDon = onkolDon;
+
       /* DİRSEK EKLEMİ: gövde mafsalın merkezinde, konvolüt iki yanına. */
       dirsek.add(mafsalGovdesi(THREE, M.kumas, sy * 0.575, sx * 0.565));
       const dirKon = konvolut(THREE, M, sy * 0.59, sx * 0.58, sy * 0.55, sx * 0.55, sz * 0.16, 4);
@@ -717,14 +759,16 @@ function govde(THREE, p, M, yan = 0) {
       }), { dilim: 18, halka: 30 });
       on.position.z = -sz * 0.17;
       on.castShadow = true; on.receiveShadow = true;
-      dirsek.add(on);
+      /* Ön kolun KENDİSİ döner, üst kol değil: dönen parça `onkolDon`un
+         altındadır ve eldiven de oraya bağlanır. */
+      onkolDon.add(on);
       const bilek = yatakHalkasi(THREE, M, sy * 0.46, { kalin: 0.014, tirnak: 6, kol: true });
       bilek.position.z = -onBoy;
-      dirsek.add(bilek);
+      onkolDon.add(bilek);
       /* BİLEK EKLEMİ. */
       const bilekEk = mafsalGovdesi(THREE, M.kumasGolge, sy * 0.45, sx * 0.45);
       bilekEk.position.z = -onBoy;
-      dirsek.add(bilekEk);
+      onkolDon.add(bilekEk);
       if (yan >= 0) {
         const kitap = new THREE.Mesh(
           pahliKutuGeo(sy * 0.46, sy * 0.12, onBoy * 0.3), M.kit.white);
@@ -1360,7 +1404,8 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
   const bel = new THREE.Group();
   bel.name = 'belEgim';
   const nodes = new Map();
-  const eklem = { kalca: [], diz: [], ayak: [], omuz: [], dirsek: [] };
+  const eklem = { kalca: [], diz: [], ayak: [], omuz: [], dirsek: [],
+    omuzAcilma: [], omuzDonme: [], onkolDonme: [], kalcaAcilma: [] };
 
   for (const p of PARTS) {
     const yerler = kopyaKonumlari(p);
@@ -1384,9 +1429,11 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
         gg.position.set(x, 0, 0);
         gg.rotation.z = (i === 0 ? 1 : -1) * AYAK_ACILMA * RAD;
         dizler[i].userData.ayak.add(gg);
-      } else if (p.id === 'eldivenler' && kolG?.userData.dirsek) {
+      } else if (p.id === 'eldivenler' && kolG?.userData.onkolDon) {
+        /* Eldiven ÖN KOL DÖNME grubuna bağlanır: bilek döndüğünde el de
+           döner, yoksa yeni eksen hiçbir şeyi çevirmez. */
         gg.position.set(0, 0, kolG.userData.bilekZ);
-        kolG.userData.dirsek.add(gg);
+        kolG.userData.onkolDon.add(gg);
       } else if (p.id === 'kollar') {
         /* KOLLAR YAKINSAR. Dimdik asılı bir kol, omuz genişliğini bileğe
            kadar taşır ve figür uyluk ortasından omuza kadar SABİT bir levha
@@ -1398,12 +1445,27 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
         yuva.position.set(x, y, z + p.size[2] / 2 - belZ);
         yuva.rotation.x = -Math.sign(y || 1) * KOL_YAKINSAMA * RAD;
         bel.add(yuva);
+        /* OMUZ ÜÇ EKSENDİR ve her eksen KENDİ GRUBUNDA durur. Tek bir
+           `rotation` üzerine iki eksen yazmak, deponun bir kez pahalıya mal
+           olduğu Euler sırası tuzağıdır (eksen-denetimi kural 2): three
+           R = Rx·Ry·Rz kurar ve "aç, sonra çevir" o sırayla olmaz.
+           Sıra ANATOMİK: önce açılma (kol gövdeden ayrılır), sonra dönme
+           (kol kendi ekseninde), en sonra fleksiyon (ileri sallanır). */
+        const omuzAc = new THREE.Group();
+        omuzAc.name = i === 0 ? 'omuzAcL' : 'omuzAcR';
+        yuva.add(omuzAc);
+        const omuzDon = new THREE.Group();
+        omuzDon.name = i === 0 ? 'omuzDonL' : 'omuzDonR';
+        omuzAc.add(omuzDon);
         const omuz = new THREE.Group();
         omuz.name = i === 0 ? 'omuzL' : 'omuzR';
-        yuva.add(omuz);
+        omuzDon.add(omuz);
         omuz.add(gg);
         eklem.omuz.push(omuz);
+        eklem.omuzAcilma.push(omuzAc);
+        eklem.omuzDonme.push(omuzDon);
         eklem.dirsek.push(gg.userData.dirsek);
+        eklem.onkolDonme.push(gg.userData.onkolDon);
       } else {
         const anne = z > belZ ? bel : kok;
         gg.position.set(x, y, anne === bel ? z - belZ : z);
@@ -1411,6 +1473,7 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
       }
       if (p.id === 'alt-govde') {
         eklem.kalca.push(gg.userData.eklem.kalca[0], gg.userData.eklem.kalca[1]);
+        eklem.kalcaAcilma.push(gg.userData.eklem.kalcaAcilma[0], gg.userData.eklem.kalcaAcilma[1]);
         eklem.diz.push(gg.userData.eklem.diz[0], gg.userData.eklem.diz[1]);
         eklem.ayak.push(gg.userData.eklem.ayak[0], gg.userData.eklem.ayak[1]);
       }
@@ -1580,6 +1643,23 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
         sinirla(POZ_EKLEM.omuz[i], P.omuz?.[i] ?? 0) * RAD * FLEKS.omuz;
       if (eklem.dirsek[i]) eklem.dirsek[i].rotation.y =
         sinirla(POZ_EKLEM.dirsek[i], P.dirsek?.[i] ?? 0) * RAD * FLEKS.dirsek;
+      /* YENİ EKSENLER. Her biri kendi grubunda ve kendi beyan edilen
+         sınırından geçer; verilmezse duruş 0'dır, yani eski duruşlar
+         değişmez. Açılma işareti YANA göre: pozitif açı kolu/bacağı
+         GÖVDEDEN UZAKLAŞTIRIR, iki tarafta da. */
+      const yanIsaret = i === 0 ? 1 : -1;
+      /* AÇILMA İŞARETİ ÖLÇÜLDÜ, TÜRETİLMEDİ. −yanIsaret ile sol kol +45°'de
+         y = +0,203'ten −0,325'e gidiyordu, yani gövdeden uzaklaşmak yerine
+         KARŞIYA geçiyordu. x etrafında θ dönmesi (0, 0, −L)'yi
+         y' = L·sin θ'ya götürür; sol kolun dışarı gitmesi için θ > 0. */
+      if (eklem.omuzAcilma[i]) eklem.omuzAcilma[i].rotation.x =
+        yanIsaret * sinirla(POZ_EKLEM.omuzAcilma[i], P.omuzAcilma?.[i] ?? 0) * RAD;
+      if (eklem.omuzDonme[i]) eklem.omuzDonme[i].rotation.z =
+        yanIsaret * sinirla(POZ_EKLEM.omuzDonme[i], P.omuzDonme?.[i] ?? 0) * RAD;
+      if (eklem.onkolDonme[i]) eklem.onkolDonme[i].rotation.z =
+        yanIsaret * sinirla(POZ_EKLEM.onkolDonme[i], P.onkolDonme?.[i] ?? 0) * RAD;
+      if (eklem.kalcaAcilma[i]) eklem.kalcaAcilma[i].rotation.x =
+        yanIsaret * sinirla(POZ_EKLEM.kalcaAcilma[i], P.kalcaAcilma?.[i] ?? 0) * RAD;
     }
     /* Hareket parçaları kökü milimetrik oynatabilir (nefes gövdeyi kaldırır).
        Ayrı bir alan, çünkü `kalcaZ` yürüyüş çözümünün ÇIKTISIDIR ve ikisini

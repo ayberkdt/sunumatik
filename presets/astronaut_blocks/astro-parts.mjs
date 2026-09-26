@@ -90,10 +90,33 @@ export const EKLEMLER = Object.freeze({
   'diz.L':       { node: 'dizL', axis: 'y', range: [0, 104], rateDegS: 160 },
   'diz.R':       { node: 'dizR', axis: 'y', range: [0, 104], rateDegS: 160 },
   'ayak.L':      { node: 'ayakL', axis: 'y', range: [-26, 34], rateDegS: 130 },
+  /* TEK EKSEN BİR KOL DEĞİLDİR. Bu satırlar yazılana kadar figürdeki bütün
+     uzuv eklemleri y ekseniydi: kol yalnız ileri-geri sallanabiliyordu.
+     Ölçülen üç sonuç da bildirilen şikâyetlerdi - elin yönü her pozda donuk
+     kalıyor, yürüyüş tek düzlemde kalıyor, ve yürüyüş çevriminin 60 fazının
+     32'sinde el gövdenin İÇİNDE çünkü çözümün onu dışarı çıkaracak hiçbir
+     serbestliği yok.
+
+     SINIRLAR BASINÇLI GİYSİNİNDİR. Çıplak omuz 180° abdüksiyon yapar; 29,6
+     kPa'ya şişmiş bir omuz yatağı ve konvolüt onu ~62°'ye indirir. Ön kol
+     pronasyonu çıplakta 180°'dir, giyside bilek yatağının sürtünmesiyle
+     ~130°. Kalça abdüksiyonu bacak halkasının izin verdiği kadardır. */
+  'omuz.acilma.L': { node: 'omuzAcL', axis: 'x', range: [-8, 62], rateDegS: 100 },
+  'omuz.acilma.R': { node: 'omuzAcR', axis: 'x', range: [-8, 62], rateDegS: 100 },
+  'omuz.donme.L':  { node: 'omuzDonL', axis: 'z', range: [-35, 45], rateDegS: 110 },
+  'omuz.donme.R':  { node: 'omuzDonR', axis: 'z', range: [-35, 45], rateDegS: 110 },
+  'onkol.donme.L': { node: 'onkolDonL', axis: 'z', range: [-60, 70], rateDegS: 140 },
+  'onkol.donme.R': { node: 'onkolDonR', axis: 'z', range: [-60, 70], rateDegS: 140 },
+  'kalca.acilma.L': { node: 'kalcaAcL', axis: 'x', range: [-6, 28], rateDegS: 90 },
+  'kalca.acilma.R': { node: 'kalcaAcR', axis: 'x', range: [-6, 28], rateDegS: 90 },
   'ayak.R':      { node: 'ayakR', axis: 'y', range: [-26, 34], rateDegS: 130 },
 });
 /** Poz alanı → eklem adı (sol, sağ). */
 export const POZ_EKLEM = Object.freeze({
+  omuzAcilma: ['omuz.acilma.L', 'omuz.acilma.R'],
+  omuzDonme: ['omuz.donme.L', 'omuz.donme.R'],
+  onkolDonme: ['onkol.donme.L', 'onkol.donme.R'],
+  kalcaAcilma: ['kalca.acilma.L', 'kalca.acilma.R'],
   omuz: ['omuz.L', 'omuz.R'], dirsek: ['dirsek.L', 'dirsek.R'],
   kalca: ['kalca.L', 'kalca.R'], diz: ['diz.L', 'diz.R'], ayak: ['ayak.L', 'ayak.R'],
 });

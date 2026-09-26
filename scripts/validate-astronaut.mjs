@@ -826,7 +826,12 @@ console.log('\n== 10 zarf: çizilen geometri beyan edilen kutunun içinde');
   /* TERS SINAV 2: sıfır duruş gerçekten fark yaratıyor mu? Dik duruşta
      ölçseydik kolun oranı poz yüzünden şişerdi. */
   {
-    const S2 = AB.buildAstronaut(THREE, { poz: 'dik' });
+    /* POZ olarak EN BÜKÜK olanı seçilir: sınav "poz ölçümü kirletir mi"
+       diye soruyor ve dinlenme duruşu düzeldikçe (kol artık dimdik değil ama
+       çok daha sakin) aradaki fark küçülüyor - `dik` ile 2,17'den 1,95'e
+       indi. Sınavın ölçtüğü şeyi en iyi gösteren duruş, kolun en çok
+       kaldırıldığı duruştur. */
+    const S2 = AB.buildAstronaut(THREE, { poz: 'uzanma' });
     S2.root.updateMatrixWorld(true);
     const n = S2.nodes.get('kollar') ?? S2.nodes.get('kollar#1');
     const b = new THREE.Box3().setFromObject(n);
@@ -835,7 +840,7 @@ console.log('\n== 10 zarf: çizilen geometri beyan edilen kutunun içinde');
     const sifirOran = olcum.find((m) => m.id === 'kollar').en;
     check('TERS SINAV: poz ölçümü kirletiyor, sıfır duruş şart',
       dikOran > sifirOran + 0.2,
-      `dik ×${dikOran.toFixed(2)} vs sıfır ×${sifirOran.toFixed(2)}`);
+      `uzanma ×${dikOran.toFixed(2)} vs sıfır ×${sifirOran.toFixed(2)}`);
   }
 }
 
@@ -1477,6 +1482,130 @@ console.log('\n== 16 ek yeri: kask ile gövde buluşuyor mu');
     check('TERS SINAV: kask 60 mm indirilince iç içe geçme yakalanıyor', n2 > 130,
       `${n} → ${n2} ortak hücre`);
   }
+}
+
+/* ── 17 KOLUN EKSENLERİ: tek eksen bir kol değildir ──────────────────
+ *
+ * Katalog okundu: bu bölüm yazılana kadar figürdeki BÜTÜN uzuv eklemleri tek
+ * eksenliydi (y). Omuz dönmesi yok, ön kol pronasyonu yok, omuz açılması yok,
+ * kalça açılması yok - kol yalnız ileri-geri sallanabiliyordu. Üç ölçülmüş
+ * sonuç: elin yönü her pozda donuk, yürüyüş tek düzlemde, ve çevrimin 60
+ * fazının 32'sinde el gövdenin içinde çünkü çözümün onu çıkaracak hiçbir
+ * serbestliği yok.
+ *
+ * Burada ölçülen şey eksenin VAR OLMASI değil, DOĞRU ŞEYİ DOĞRU YÖNE
+ * götürmesi. İşaret bir kez ölçüldü ve yanlış çıktı: −yanIsaret ile sol kol
+ * 45°'de gövdeden uzaklaşmak yerine y = +0,203'ten −0,325'e, yani KARŞIYA
+ * geçiyordu.
+ */
+console.log('\n== 17 kolun eksenleri');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik', ao: false });
+  const sifir = { omuz: [0, 0], dirsek: [0, 0], kalca: [0, 0], diz: [0, 0], ayak: [0, 0],
+    govdeEgim: 0, govdeDonme: 0, basDonme: 0, kalcaZOfset: 0 };
+  const V = () => new THREE.Vector3();
+  const merkez = (ad) => { S.root.updateMatrixWorld(true);
+    return new THREE.Box3().setFromObject(S.nodes.get(ad)).getCenter(V()); };
+
+  /* 1. Beyan: dört eksen de katalogda, düğümü/ekseni/aralığı/hızıyla. */
+  const yeni = ['omuz.acilma.L', 'omuz.donme.L', 'onkol.donme.L', 'kalca.acilma.L'];
+  const eksik = yeni.filter((ad) => {
+    const e = A.EKLEMLER[ad];
+    return !e || !e.node || !e.axis || !Array.isArray(e.range) || !e.rateDegS;
+  });
+  check('dört yeni eksen katalogda tam künyeli', eksik.length === 0,
+    eksik.join(',') || yeni.map((a) => `${a}:${A.EKLEMLER[a].axis}`).join(' '));
+
+  /* 2. Her eksenin düğümü figürde GERÇEKTEN var. */
+  const dugumVar = yeni.every((ad) => {
+    let bulundu = false;
+    S.root.traverse((o) => { if (o.name === A.EKLEMLER[ad].node) bulundu = true; });
+    return bulundu;
+  });
+  check('her eksenin düğümü figürde kurulu', dugumVar,
+    yeni.map((a) => A.EKLEMLER[a].node).join(' '));
+
+  /* 3. Her eksen KENDİ grubunda: iki eksen aynı `rotation` üstüne yazılırsa
+     Euler sırası tuzağına düşülür (eksen-denetimi kural 2). */
+  {
+    const cokEksenli = [];
+    S.root.traverse((o) => {
+      if (!o.isObject3D) return;
+      const r = o.rotation;
+      const n = [r.x, r.y, r.z].filter((v) => Math.abs(v) > 1e-6).length;
+      if (n > 1 && o.name) cokEksenli.push(o.name);
+    });
+    check('hiçbir düğümde iki eksen birden dönmüyor', cokEksenli.length === 0,
+      cokEksenli.slice(0, 3).join(',') || 'her eksen kendi grubunda');
+  }
+
+  /* 4. AÇILMA gövdeden UZAKLAŞTIRIR - iki tarafta da. */
+  for (const [ad, hedef, alan] of [
+    ['omuz', 'eldivenler', 'omuzAcilma'], ['kalça', 'cizmeler', 'kalcaAcilma'],
+  ]) {
+    S.uygulaPoz(sifir);
+    const sol0 = merkez(hedef).y, sag0 = merkez(`${hedef}#2`).y;
+    S.uygulaPoz({ ...sifir, [alan]: [40, 40] });
+    const sol1 = merkez(hedef).y, sag1 = merkez(`${hedef}#2`).y;
+    check(`${ad} açılması iki kolu da gövdeden UZAKLAŞTIRIYOR`,
+      sol1 > sol0 + 0.05 && sag1 < sag0 - 0.05,
+      `sol ${sol0.toFixed(3)}→${sol1.toFixed(3)} · sağ ${sag0.toFixed(3)}→${sag1.toFixed(3)}`);
+  }
+
+  /* 5. DÖNME eli ÇEVİRİR, YERİNDEN OYNATMAZ. Bir rotasyon ekseni uzvu
+     taşıyorsa o eksen yanlış yere konmuştur. */
+  {
+    S.uygulaPoz(sifir);
+    const bilek0 = S.eklem.onkolDonme[0].getWorldPosition(V());
+    S.uygulaPoz({ ...sifir, onkolDonme: [60, 0] });
+    const bilek1 = S.eklem.onkolDonme[0].getWorldPosition(V());
+    check('ön kol dönmesi bileği yerinden oynatmıyor',
+      bilek0.distanceTo(bilek1) < 0.002,
+      `${(1000 * bilek0.distanceTo(bilek1)).toFixed(2)} mm kayma`);
+    /* Ama eli GERÇEKTEN ÇEVİRİYOR. Ölçü elin KUTU MERKEZİ olamaz: bir
+       rotasyon ekseni merkezi neredeyse yerinde bırakır (ölçüldü: 14 mm) ve
+       o sayı "çevirmiyor" demek değil, "yanlış şeyi ölçüyorsun" demektir.
+       Çevrilen şey elin YÖNÜDÜR - başparmağın dünyadaki doğrultusu. */
+    const bpYon = () => {
+      S.root.updateMatrixWorld(true);
+      let uc = null, kk = null;
+      S.nodes.get('eldivenler').traverse((o) => {
+        if (o.userData.el?.rol !== 'basparmak') return;
+        uc = o.getWorldPosition(V()); kk = o.userData.el.kok.getWorldPosition(V());
+      });
+      return uc.sub(kk).normalize();
+    };
+    S.uygulaPoz(sifir);
+    const y0 = bpYon();
+    S.uygulaPoz({ ...sifir, onkolDonme: [60, 0] });
+    const y1 = bpYon();
+    const aci = Math.acos(Math.max(-1, Math.min(1, y0.dot(y1)))) * 180 / Math.PI;
+    check('ön kol dönmesi eli gerçekten çeviriyor (başparmak yönü)', aci > 25,
+      `başparmak ${aci.toFixed(0)}° döndü`);
+  }
+
+  /* 6. SINIRLAR uygulanıyor: aralığın dışı kırpılmalı. */
+  {
+    S.uygulaPoz({ ...sifir, omuzAcilma: [200, 0] });
+    const asiri = merkez('eldivenler').clone();
+    S.uygulaPoz({ ...sifir, omuzAcilma: [A.EKLEMLER['omuz.acilma.L'].range[1], 0] });
+    const sinir = merkez('eldivenler');
+    check('beyan edilen sınırın ötesi kırpılıyor', asiri.distanceTo(sinir) < 0.002,
+      `200° ile ${A.EKLEMLER['omuz.acilma.L'].range[1]}° aynı yere gidiyor`);
+  }
+
+  /* TERS SINAV: eksen olmasaydı poz hiçbir şeyi oynatmazdı. */
+  {
+    S.uygulaPoz(sifir);
+    const a = merkez('eldivenler').clone();
+    S.uygulaPoz({ ...sifir, omuzDonme: [0, 0] });
+    const b = merkez('eldivenler');
+    check('TERS SINAV: sıfır açı hiçbir şeyi oynatmıyor', a.distanceTo(b) < 1e-6,
+      `${(1000 * a.distanceTo(b)).toFixed(4)} mm`);
+  }
+  S.uygulaPoz(sifir);
 }
 
 console.log(`\n${total - fails}/${total} geçti`);
