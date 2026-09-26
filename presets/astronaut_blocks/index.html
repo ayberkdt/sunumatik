@@ -107,6 +107,14 @@
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(2, devicePixelRatio));
     renderer.shadowMap.enabled = true;
+    /* YUMUŞAK GÖLGE, GÜNEŞİN KENDİ ÖLÇÜSÜNDE. `shadowMap.type` hiç
+       atanmamıştı, yani three'nin varsayılanı olan sert kenarlı PCF
+       kullanılıyordu. Ay'da güneş gerçekten keskin gölge verir - ama sonsuz
+       keskin değil: açısal çapı 0,53°, yani yarı gölge her metre mesafe için
+       yaklaşık 9,3 mm genişler. Gölge kamerası ±3 m ve harita 2048 teksel
+       olduğu için bir teksel 2,93 mm; 1 m ayrıklıkta 9,3 mm yarı gölge
+       yaklaşık 3 teksel eder. Yarıçap tahminden değil O SAYIDAN gelir. */
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     /* TON EŞLEME. Bu satırlar yokken sahne, fiziksel yeğinliklerle
        aydınlatılıp doğrusal uzayda ekrana basılıyordu: BEYAZ bir yüzey
        giysisi orta gri, gölge tarafı ise neredeyse siyah çıkıyordu. Depodaki
@@ -121,6 +129,8 @@
     /* Güneş ÖNDEN ve yandan gelir: vitrinin işi giysiyi göstermek ve vakumda
        gölge mutlak siyahtır, o yüzden anahtar ışık göğsü yalamalı. */
     rig.gunes.position.set(4.5, 3.0, 4.0);
+    rig.gunes.shadow.radius = 3;
+    rig.gunes.shadow.blurSamples = 12;
     /* Pozlama: güneşli bir Ay yüzeyi parlaktır ve referans fotoğraf da öyle.
        1,0'da giysi ve zemin orta gride kalıyordu. */
     renderer.toneMappingExposure = 1.25 * rig.pozlamaCarpani();
@@ -158,6 +168,24 @@
       rig.gunes.target.updateMatrixWorld();
       rig.gunes.position.set(gunesTaban.x + x, gunesTaban.y, gunesTaban.z);
     }
+
+    /* VİZÖRÜN YANSITACAĞI DÜNYA. Altın vizör pürüzlülük 0,07 ve metallik
+       1,0 ile neredeyse mükemmel bir aynadır, ama yansıtabildiği tek şey
+       256x128'lik yordamsal haritaydı ve onun içinde üç şey vardı: siyah
+       gök, düz gri yer yarımı, büyütülmüş bir güneş lekesi. Bir ayna iki
+       renkli bir gradyanı yansıtınca iki renkli bir gradyan gösterir -
+       vizörün donuk kahverengi bir leke gibi durmasının sebebi buydu.
+       Malzeme doğruydu; yansıtacak dünya yoktu.
+
+       Küp kamera kaskın olduğu yerde durur ve sahneyi ORADAN görür: ufuk
+       çizgisi, zemin, göğüs paneli, kendi elleri. 128 piksel yeter - aranan
+       şey ayrıntı değil, aynada bir DÜNYA olduğunun belli olması. Her karede
+       değil, 20 karede bir güncellenir: sahne o kadar hızlı değişmiyor ve
+       altı yüzlü bir render her karede altı kat maliyettir. */
+    const kupHedef = new THREE.WebGLCubeRenderTarget(128, { generateMipmaps: true,
+      minFilter: THREE.LinearMipmapLinearFilter });
+    const kupKamera = new THREE.CubeCamera(0.05, 40, kupHedef);
+    scene.add(kupKamera);
 
     /* Yürünecek kadar uzun bir zemin: 9 m'lik bir disk üstünde yürüyen bir
        figür üç adımda kenardan düşer. */
@@ -472,6 +500,29 @@
       kurulum.uygulaPoz(harmanla(POZLAR[poz], nefes, j.fark));
     }
 
+    /* VİZÖRÜN AYNASI. Küp kamera kaskın olduğu yerde durur; figür yürüdükçe
+       onunla gider. 20 karede bir güncellenir - altı yüzlü bir render her
+       karede altı kat maliyettir ve sahne o kadar hızlı değişmiyor.
+       Kask kendini yansıtmasın diye o an gizlenir: bir aynanın içinde
+       aynanın kendisi görünmez. */
+    let kupSayac = 0;
+    function vizoruTazele() {
+      if (!kurulum || patla > 0) return;
+      if (kupSayac++ % 20 !== 0) return;
+      const kask = kurulum.nodes.get('kask');
+      const gorunur = kask ? kask.visible : false;
+      if (kask) kask.visible = false;
+      kask?.getWorldPosition(kupKamera.position);
+      kupKamera.update(renderer, scene);
+      if (kask) kask.visible = gorunur;
+      if (kurulum.materials.vizor.envMap !== kupHedef.texture) {
+        kurulum.materials.vizor.envMap = kupHedef.texture;
+        kurulum.materials.vizor.needsUpdate = true;
+        kurulum.materials.cam.envMap = kupHedef.texture;
+        kurulum.materials.cam.needsUpdate = true;
+      }
+    }
+
     function kare(t) {
       const dt = sonT ? Math.min(0.05, (t - sonT) / 1000) : 0;
       sonT = t;
@@ -479,6 +530,7 @@
       if (!yuruyor && kurulum) bostaKare(dt);
       surukleyici.update();
       kameraKur();
+      vizoruTazele();
       renderer.render(scene, camera);
       raf = requestAnimationFrame(kare);
     }

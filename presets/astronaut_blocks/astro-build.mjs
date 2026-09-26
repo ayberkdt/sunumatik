@@ -38,6 +38,7 @@ import { supur, uzuvKesiti, govdeKesiti, cizmeGovdesi, ayakEni, ayakBoyu,
          kapitoneKat, dikisKat, kirisikKat } from './astro-body.mjs';
 import { kumasNormalHaritasi, kumasPuruzHaritasi, metalNormalHaritasi,
          DOKU_TEKRAR } from './astro-doku.mjs';
+import { ortamOrtme } from './astro-ao.mjs';
 import { cylGeoX, cylGeoY, cylGeoZ, kureGeoZ, pahliKutuGeo, latheZ, latheZYonlu,
          PHI_Z } from '../core/geometry-axis.mjs';
 import * as D from '../core/hardware-kit.mjs';
@@ -1154,19 +1155,33 @@ function hortum(THREE, mat, a, b, tepe, r) {
  * verilmezse en alçak nokta ÖLÇÜLÜR - sabit bir ofset çömelmiş figürü
  * havada bırakır.
  */
-export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = null } = {}) {
+/* DOKU ÖNBELLEĞİ. Haritalar her figür için yeniden üretiliyordu ve 256x256
+   üç harita, köşe başına birkaç sinüs ve gürültü çağrısıyla kurulumun yarısını
+   yiyordu; habitat sayfası iki mürettebat kurduğu için bedeli iki katına
+   çıkıyordu. Aynı kumaş her figürde aynı kumaştır - bir kez üretilir. */
+let _doku = null;
+function dokuOnbellegi(THREE) {
+  if (_doku) return _doku;
+  /* GÜÇ 0,22: 1,0 ile dokuma bir ÖRGÜ gibi kabarıyordu. Beta bezinin
+     kabartısı ipliğin çapının onda biri kadardır; görünmesi gereken şey
+     ipliğin kendisi değil ışığı kırma biçimi. */
+  _doku = {
+    nrm: kumasNormalHaritasi(THREE, { en: 256, iplik: 8, guc: 0.22 }),
+    prz: kumasPuruzHaritasi(THREE, { en: 256, iplik: 8 }),
+    mNrm: metalNormalHaritasi(THREE, { en: 128 }),
+  };
+  return _doku;
+}
+
+export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = null,
+                                      ao = true } = {}) {
   const M = suitMaterials(THREE, tokens);
   if (seritRenk !== null) M.serit = new THREE.MeshStandardMaterial({
     color: seritRenk, roughness: 0.7, metalness: 0.1 });
 
   /* Haritalar BİR KEZ üretilir ve paylaşılır: her malzemeye ayrı doku
      üretmek, aynı kumaşı belleğe yedi kez koymaktı. */
-  /* GÜÇ 0,32: 1,0 ile dokuma bir ÖRGÜ gibi kabarıyordu. Beta bezinin
-     kabartısı ipliğin çapının onda biri kadardır; görünmesi gereken şey
-     ipliğin kendisi değil ışığı kırma biçimi. */
-  const nrm = kumasNormalHaritasi(THREE, { en: 256, iplik: 8, guc: 0.22 });
-  const prz = kumasPuruzHaritasi(THREE, { en: 256, iplik: 8 });
-  const mNrm = metalNormalHaritasi(THREE, { en: 128 });
+  const { nrm, prz, mNrm } = dokuOnbellegi(THREE);
   const kare = (dok, tekrar) => { const d = dok.clone(); d.repeat.set(tekrar, tekrar); d.needsUpdate = true; return d; };
   for (const [ad, tekrar, guc] of [['kumas', DOKU_TEKRAR, 0.30], ['kumasGolge', DOKU_TEKRAR, 0.30],
     ['bere', DOKU_TEKRAR * 1.5, 0.30]]) {
@@ -1180,6 +1195,13 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
   /* SERT ÜST GÖVDE kumaş DEĞİLDİR: cam elyafı bir kabuk. Dokuma yerine çok
      sığ bir taşlama izi alır, yoksa figürün en sert parçası battaniyeye
      dönüşüyor. */
+  /* TEMAS KARARTMASI köşe rengine pişirilir, o yüzden HER malzeme
+     `vertexColors` açar. Açık bırakılıp özniteliği olmayan bir geometri
+     SİYAH çıkar - ayrık durum bırakmamak için öznitelik istisnasız
+     veriliyor (bkz. astro-ao). */
+  for (const m of Object.values(M)) {
+    if (m && m.isMaterial) { m.vertexColors = true; m.needsUpdate = true; }
+  }
   for (const ad of ['metal', 'eloksal', 'taban', 'koyu', 'sert']) {
     const m = M[ad];
     if (!m) continue;
@@ -1363,6 +1385,19 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
      karede sabit 30 mm'lik bir sapma olarak çıktı. Tek ölçüm, iki kullanıcı. */
   const botOfset = tabanDusme(0);
 
+  /* AO, taban profili ölçülmeden ÖNCE pişirilemez ve duruş uygulanmadan
+     önce pişirilmeli: karartma geometriye aittir, poza değil. */
+  const aoSonuc = ao ? ortamOrtme(THREE, kok, nodes) : null;
+  if (!ao) {
+    /* KAPALIYKEN DE ÖZNİTELİK ŞART: `vertexColors` açık bir malzemede
+       renk özniteliği olmayan geometri SİYAH çıkar. */
+    kok.traverse((o) => {
+      if (!o.isMesh || !o.geometry.attributes.position) return;
+      const n = o.geometry.attributes.position.count;
+      o.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3).fill(1), 3));
+    });
+  }
+
   const olcu = Object.freeze({
     uylukM: UYLUK_M, baldirM: BALDIR_M,
     erisimM: UYLUK_M + BALDIR_M,
@@ -1442,7 +1477,7 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
   }
   kok.userData.notes = { regime: 'yüzey EVA',
     why: `Giysili boy ${BOY_M} m, omuz ${OMUZ_M} m: habitat kapısı ve tutamak aralıkları bu ölçüye göre belirlenir, çıplak insana göre değil.` };
-  return { root: kok, bel, nodes, eklem, materials: M, poz: P0, uygulaPoz, olcu };
+  return { root: kok, bel, nodes, eklem, materials: M, poz: P0, uygulaPoz, olcu, ao: aoSonuc };
 }
 
 export { PARTS, partById, DIKEY, EKLEMLER, POZ_EKLEM, sinirla };
