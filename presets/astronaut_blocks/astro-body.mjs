@@ -156,11 +156,16 @@ export function supur(THREE, {
  * yüzden hiçbir uzuv iki ucu arasında doğrusal daralmaz.
  */
 export function uzuvKesiti({
-  ustW, ustD, altW, altD, p = 2.4, sis = 0.07,
+  ustW, ustD, altW, altD, p = 2.4, sis = 0.07, sisT = 0.5,
   kapitone = null, dikis = null, egri = null,
 }) {
   return (t) => {
-    const k = 1 + sis * Math.sin(Math.PI * t);
+    /* ŞİŞMENİN YERİ. Kas, uzvun ortasında değildir: baldırın kütlesi dizin
+       hemen altında, uyluğunki kalçaya yakındır. Şişmeyi hep ortaya koymak
+       her uzvu aynı fıçıya çevirir, ve bir silueti insan yapan şey tam bu
+       asimetridir. `sisT` tepe noktasını söyler. */
+    const u = t < sisT ? t / Math.max(sisT, 1e-6) : (1 - t) / Math.max(1 - sisT, 1e-6);
+    const k = 1 + sis * Math.sin(Math.PI * 0.5 * Math.max(0, Math.min(1, u)) ** 0.8) ** 1.4;
     const e = egri ? egri(t) : null;
     return {
       w: (ustW + (altW - ustW) * t) * k,

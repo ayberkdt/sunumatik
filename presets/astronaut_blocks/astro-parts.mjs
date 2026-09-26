@@ -22,11 +22,13 @@
 export const BOY_M = 1.95;
 /** Omuz genişliği (m) — kapı ve geçiş açıklıkları bununla ölçülür.
  *  ÇİZİLEN genişliktir: kol yatakları ve kolların kendisi dâhil ölçülmüş
- *  0,88 m: omuz boyundurukları, yataklar ve kolların kendisi dâhil.
- *  Tasarım niyeti 0,78 idi; giysi yeniden çizilince ölçülen 0,84'ten 0,88'e
- *  çıktı ve SAYI ÖLÇÜME UYDURULDU, ölçüm sayıya değil. Bir kapı açıklığı
- *  niyete göre değil, geçecek şeye göre ölçülür. */
-export const OMUZ_M = 0.88;
+ *  0,79 m: omuz boyundurukları, yataklar ve kolların kendisi dâhil.
+ *  Sayı üç kez ÖLÇÜME UYDURULDU, hiç tersi olmadı: 0,84 → 0,88 (giysi gerçek
+ *  bir basınçlı giysi olarak yeniden çizilince) → 0,79 (kollar insan gibi
+ *  gövdeye yakınsayınca; dimdik asılı kol omuz genişliğini bileğe kadar
+ *  taşıyordu). Bir kapı açıklığı niyete göre değil, geçecek şeye göre
+ *  ölçülür. */
+export const OMUZ_M = 0.79;
 /* DİKEY DÜZEN — bir kez, tablo hâlinde.
  *
  * İlk yazışta kalça 0,774 m'de çıkıyordu: 1,95 m boyunda bir figür için
@@ -197,7 +199,7 @@ export const PARTS = Object.freeze([
 
   { id: 'omuz-yatagi', ad: 'Shoulder bearings', sistem: 'hareket', step: 3,
     mountsTo: 'ust-govde', arayuz: 'kilit', massKg: 1.1, qty: 2,
-    pos: [0, 0.27, 1.58], size: [0.16, 0.10, 0.16], yon: 'yan', ayna: 'y', sekil: 'yatak',
+    pos: [0, 0.25, 1.58], size: [0.16, 0.10, 0.16], yon: 'yan', ayna: 'y', sekil: 'yatak',
     tech: {
       no: 'AS-MOB-031',
       malzeme: 'Anodised aluminium races, dry-lubricated',
@@ -212,7 +214,7 @@ export const PARTS = Object.freeze([
 
   { id: 'kollar', ad: 'Arm assemblies', sistem: 'basinc', step: 5,
     mountsTo: 'omuz-yatagi', arayuz: 'kilit', massKg: 3.6, qty: 2,
-    pos: [0, 0.335, 1.20], size: [0.18, 0.17, 0.76], yon: 'yan', ayna: 'y', sekil: 'kol',
+    pos: [0, 0.30, 1.20], size: [0.18, 0.17, 0.76], yon: 'yan', ayna: 'y', sekil: 'kol',
     tech: {
       no: 'AS-PRS-050',
       malzeme: 'Ortho-fabric over bladder, elbow convolute, wrist bearing',
@@ -227,7 +229,7 @@ export const PARTS = Object.freeze([
 
   { id: 'eldivenler', ad: 'Gloves', sistem: 'arayuz', step: 5,
     mountsTo: 'kollar', arayuz: 'kilit', massKg: 0.9, qty: 2,
-    pos: [0.03, 0.335, 0.71], size: [0.21, 0.15, 0.22], yon: 'yan', ayna: 'y', sekil: 'eldiven',
+    pos: [0.03, 0.30, 0.71], size: [0.21, 0.15, 0.22], yon: 'yan', ayna: 'y', sekil: 'eldiven',
     tech: {
       no: 'AS-INT-051',
       malzeme: 'RTV silicone fingertips, Vectran palm, heated fingers',
@@ -258,7 +260,7 @@ export const PARTS = Object.freeze([
 
   { id: 'ikincil-o2', ad: 'Secondary oxygen pack', sistem: 'yasam', step: 4,
     mountsTo: 'yasam-paketi', arayuz: 'civata', massKg: 6.2,
-    pos: [-0.28, 0, 1.04], size: [0.15, 0.34, 0.18], yon: 'sirt', sekil: 'kutu',
+    pos: [-0.24, 0, 1.79], size: [0.16, 0.28, 0.13], yon: 'sirt', sekil: 'kutu',
     tech: {
       no: 'AS-LIF-041',
       malzeme: 'Two composite bottles at 41 MPa',

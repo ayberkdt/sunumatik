@@ -342,6 +342,52 @@ console.log('== 7 biçim: kesit daire değil');
   check('süpürme yüzeyinin normalleri DIŞA bakıyor', ice === 0 && yan > 50,
     `${yan} yan nokta, ${ice} içe bakan`);
 
+  /* SİLUET DARALMALI. "İnsan formuna getir" ölçülebilir bir iddiadır:
+     omuzdan uyluğa doğru genişlik AZALIR. Önce azalmıyordu - kollar dimdik
+     ve y = ±0,335'te asılı olduğu için genişliği z 0,71 ile 1,61 arasında
+     HER yükseklikte onlar belirliyor ve figür uyluk ortasından omuza kadar
+     sabit 0,40-0,45 boy oranında bir LEVHA oluyordu. İnsanda el kalçanın
+     yanında biter, omzun yanında değil. */
+  const enY = (z0, z1) => {
+    let m = 0;
+    S.root.updateWorldMatrix(true, true);
+    S.root.traverse((o) => {
+      const q = o.isMesh && o.geometry?.attributes?.position;
+      if (!q) return;
+      for (let i = 0; i < q.count; i++) {
+        v.fromBufferAttribute(q, i).applyMatrix4(o.matrixWorld);
+        if (v.z >= z0 && v.z <= z1) m = Math.max(m, Math.abs(v.y) * 2);
+      }
+    });
+    return m;
+  };
+  const wOmuz = enY(1.54, 1.62), wBel = enY(1.12, 1.20);
+  const wKalca = enY(0.98, 1.06), wUyluk = enY(0.80, 0.88);
+  check('siluet omuzdan uyluğa doğru daralıyor',
+    wOmuz > wBel && wBel > wKalca && wKalca > wUyluk,
+    `omuz ${wOmuz.toFixed(3)} > bel ${wBel.toFixed(3)} > kalça ${wKalca.toFixed(3)} > uyluk ${wUyluk.toFixed(3)}`);
+  check('uyluk hizası omuzun %80\'inden dar', wUyluk / wOmuz < 0.8,
+    `${(wUyluk / wOmuz).toFixed(3)} (kollar dikken 0.90 idi)`);
+
+  /* Kollar GERÇEKTEN yakınsıyor mu: bilek, omuzdan içeride olmalı. */
+  const omuzY = Math.abs(S.eklem.omuz[0].getWorldPosition(new THREE.Vector3()).y);
+  const bilekY = Math.abs(S.nodes.get('eldivenler').getWorldPosition(new THREE.Vector3()).y);
+  check('kol gövdeye yakınsıyor (bilek omuzdan içeride)', bilekY < omuzY - 0.05,
+    `omuz y ${omuzY.toFixed(3)} → bilek y ${bilekY.toFixed(3)} · ${AB.KOL_YAKINSAMA}°`);
+  check('TERS SINAV: yakınsama sıfır olsa bilek omuzla aynı hizada olurdu',
+    Math.abs(omuzY - (omuzY - Math.sin(AB.KOL_YAKINSAMA * Math.PI / 180) * 0.76)) > 0.05,
+    `${AB.KOL_YAKINSAMA}° → ${(Math.sin(AB.KOL_YAKINSAMA * Math.PI / 180) * 0.76).toFixed(3)} m içeri`);
+
+  /* KASKIN İÇİNDE BİRİ OLMALI. Boş bir kabarcık, giysiyi giyen birinin değil
+     bir mankenin resmidir; bir silueti insan yapan en güçlü işaret baştır. */
+  const kask = S.nodes.get('kask');
+  let basMesh = 0;
+  kask.traverse((o) => {
+    if (!o.isMesh || !o.material?.color) return;
+    if (o.material === S.materials.ten || o.material === S.materials.bere) basMesh++;
+  });
+  check('kaskın içinde bir kişi var', basMesh >= 4, `${basMesh} baş/başlık gövdesi`);
+
   /* Kapitone gerçekten yüzeyi modüle ediyor mu: bantlı ve bantsız aynı uzvun
      yarıçapları FARKLI olmalı, yoksa kapitone yalnız yorumda vardır. */
   const duz = BODY.kapitoneKat(0.5, 0, 0);

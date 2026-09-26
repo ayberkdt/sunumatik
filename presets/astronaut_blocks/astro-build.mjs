@@ -60,6 +60,10 @@ export function suitMaterials(THREE, tk = {}) {
     cam: new THREE.MeshStandardMaterial({ color: 0xa8cadd, roughness: 0.04,
       metalness: 0.08, transparent: true, opacity: 0.22, side: THREE.DoubleSide }),
     serit: std(tk.serit ?? 0xc23b3b, 0.7, 0.1),
+    /* Kaskın içindeki kişi. Ten rengi bir PORTRE değil, nötr bir orta ton:
+       amaç birini resmetmek değil, kaskın boş olmadığını göstermek. */
+    ten: std(tk.ten ?? 0xb08768, 0.82, 0.02),
+    bere: std(tk.bere ?? 0xe6e3dc, 0.9, 0.02),
     kit: D.hardwareMaterials(THREE, tk),
   };
 }
@@ -144,6 +148,9 @@ function yama(THREE, mat, w, h, kal = 0.006) {
    ve dirsek fleksiyonu uzvu ÖNE getirir (-Y etrafında), diz fleksiyonu
    topuğu GERİ getirir (+Y). Fark anatomiktir, o yüzden yazılıdır. */
 export const FLEKS = Object.freeze({ kalca: -1, diz: 1, ayak: 1, omuz: -1, dirsek: -1 });
+/** Kolun gövdeye YAKINSAMA açısı (derece). Omuz 0,30 m'den bilek 0,21 m'ye
+ *  iner: 0,09 m / 0,76 m = 6,8°. İnsan kolunun asılı duruşu budur. */
+export const KOL_YAKINSAMA = 7;
 /** Bir mafsalın poz açısını radyana ve DOĞRU işarete çevirir. */
 export const mafsal = (poz, ad, i) => (poz?.[ad]?.[i] ?? 0) * RAD * FLEKS[ad];
 
@@ -228,13 +235,13 @@ function govde(THREE, p, M, yan = 0) {
       const eklem = { kalca: [], diz: [], ayak: [] };
       for (const [i, s] of [[0, 1], [1, -1]]) {
         const kalca = new THREE.Group();
-        kalca.position.set(0, s * sy * 0.27, kalcaZ);
+        kalca.position.set(0, s * sy * 0.24, kalcaZ);
         g.add(kalca);
         eklem.kalca.push(kalca);
         kalca.add(konvolut(THREE, M, sy * 0.19, sx * 0.17, sy * 0.18, sx * 0.17, 0.07, 2));
         const uyluk = uzuvMesh(THREE, M.kumas, UYLUK_M - 0.07, uzuvKesiti({
-          ustW: sy * 0.18, ustD: sx * 0.16, altW: sy * 0.135, altD: sx * 0.135,
-          sis: 0.05, p: 2.4, kapitone: [5, 0.055], dikis: [8, 0.05],
+          ustW: sy * 0.185, ustD: sx * 0.165, altW: sy * 0.128, altD: sx * 0.128,
+          sis: 0.07, sisT: 0.26, p: 2.4, kapitone: [5, 0.055], dikis: [8, 0.05],
         }), { dilim: 14, halka: 22 });
         uyluk.position.z = -0.07;
         uyluk.castShadow = true; uyluk.receiveShadow = true;
@@ -257,8 +264,8 @@ function govde(THREE, p, M, yan = 0) {
         kapak.position.z = -0.05;
         diz.add(kapak);
         const baldir = uzuvMesh(THREE, M.kumas, BALDIR_M - 0.1, uzuvKesiti({
-          ustW: sy * 0.14, ustD: sx * 0.145, altW: sy * 0.095, altD: sx * 0.105,
-          sis: 0.06, p: 2.4, kapitone: [5, 0.05], dikis: [8, 0.05],
+          ustW: sy * 0.14, ustD: sx * 0.145, altW: sy * 0.088, altD: sx * 0.1,
+          sis: 0.1, sisT: 0.22, p: 2.4, kapitone: [5, 0.05], dikis: [8, 0.05],
         }), { dilim: 14, halka: 22 });
         baldir.position.z = -0.1;
         baldir.castShadow = true; baldir.receiveShadow = true;
@@ -354,11 +361,24 @@ function govde(THREE, p, M, yan = 0) {
       }
       const gogus = ekle(latheZ(gpts, 20, M.sert, -1.0, 2.0));
       gogus.scale.y = sy * 0.9 / sx;
-      /* Omuz boyundurukları: kolun çıktığı yerdeki kabarıklık. */
+      /* Omuz boyundurukları ve YAMUK KASI. Omuz çizgisi boyundan omuza
+         DÜŞER; düz bir tepe çizgisi gövdeyi kutu yapar ve bir insan
+         siluetinde omuz hiçbir zaman yatay değildir. */
       for (const s of [-1, 1]) {
         const om = ekle(new THREE.Mesh(new THREE.SphereGeometry(sy * 0.2, 16, 12), M.sert));
         om.scale.set(sx * 0.46 / (sy * 0.2) * 0.5, 1, 0.72);
-        om.position.set(0, s * sy * 0.34, sz * 0.28);
+        om.position.set(0, s * sy * 0.34, sz * 0.26);
+        /* Boyundan omuza İNEN eğim. İlk denemede kütleler hem yüksek hem
+           x'te 1,7 kat gerili olduğu için omuz düz bir RAFA dönüyordu -
+           eğim vermek isterken tam tersini yapıyordu. Küçük, dar ve gerçekten
+           alçalan üç kütle. */
+        for (let i = 1; i <= 3; i++) {
+          const u = i / 3;
+          const yam = ekle(new THREE.Mesh(
+            new THREE.SphereGeometry(sy * (0.115 - 0.035 * u), 12, 9), M.sert));
+          yam.scale.set(0.92, 1, 0.66);
+          yam.position.set(0, s * sy * 0.3 * u, sz * (0.34 - 0.2 * u));
+        }
       }
       const belY = yatakHalkasi(THREE, M, sy * 0.35,
         { kalin: 0.022, tirnak: 10, kol: true, basik: sx * 1.12 / sy });
@@ -429,8 +449,8 @@ function govde(THREE, p, M, yan = 0) {
       g.add(yatakHalkasi(THREE, M, sy * 0.5, { kalin: 0.014, tirnak: 6 }));
       g.add(konvolut(THREE, M, sy * 0.5, sx * 0.46, sy * 0.48, sx * 0.45, sz * 0.09, 2));
       const ust = uzuvMesh(THREE, M.kumas, ustBoy - sz * 0.09, uzuvKesiti({
-        ustW: sy * 0.48, ustD: sx * 0.45, altW: sy * 0.4, altD: sx * 0.4,
-        sis: 0.06, p: 2.4, kapitone: [4, 0.06], dikis: [6, 0.05],
+        ustW: sy * 0.5, ustD: sx * 0.47, altW: sy * 0.38, altD: sx * 0.38,
+        sis: 0.08, sisT: 0.2, p: 2.4, kapitone: [4, 0.06], dikis: [6, 0.05],
       }), { dilim: 12, halka: 20 });
       ust.position.z = -sz * 0.09;
       ust.castShadow = true; ust.receiveShadow = true;
@@ -447,8 +467,8 @@ function govde(THREE, p, M, yan = 0) {
       fincan.position.z = -sz * 0.05;
       dirsek.add(fincan);
       const on = uzuvMesh(THREE, M.kumas, onBoy - sz * 0.1, uzuvKesiti({
-        ustW: sy * 0.38, ustD: sx * 0.38, altW: sy * 0.32, altD: sx * 0.33,
-        sis: 0.05, p: 2.4, kapitone: [4, 0.055], dikis: [6, 0.05],
+        ustW: sy * 0.4, ustD: sx * 0.4, altW: sy * 0.29, altD: sx * 0.3,
+        sis: 0.09, sisT: 0.22, p: 2.4, kapitone: [4, 0.055], dikis: [6, 0.05],
       }), { dilim: 12, halka: 20 });
       on.position.z = -sz * 0.1;
       on.castShadow = true; on.receiveShadow = true;
@@ -541,11 +561,10 @@ function govde(THREE, p, M, yan = 0) {
         tut.position.set(-sx * 0.1, s * sy * 0.3, sz * 0.5);
         tut.rotation.y = Math.PI / 2;
       }
-      /* OPS: ikincil oksijenin paketin ÜSTÜNDE durduğu A7L düzeni. */
-      const ops = ekle(uzuvMesh(THREE, M.kumasGolge, sz * 0.2, uzuvKesiti({
-        ustW: sy * 0.42, ustD: sx * 0.4, altW: sy * 0.44, altD: sx * 0.42, sis: 0, p: 3.4,
-      }), { dilim: 4, halka: 20 }));
-      ops.position.z = sz * 0.7;
+      /* İkincil oksijen AYRI BİR PARÇADIR ve paketin üstünde durur (A7L
+         düzeni). Buraya bir de OPS kutusu çizmek onu İKİ KEZ göstermekti:
+         biri burada, biri kataloğun `ikincil-o2` satırında sırtın altında.
+         Aynı donanım iki yerde duramaz. */
       for (const s of [-1, 1]) {
         const tup = ekle(new THREE.Mesh(cylGeoZ(sy * 0.1, sy * 0.1, sz * 0.44, 14), M.metal));
         tup.position.set(-sx * 0.1, s * sy * 0.24, sz * 0.2);
@@ -606,9 +625,55 @@ function govde(THREE, p, M, yan = 0) {
         .position.z = -sz * 0.47;
       const huni = ekle(kabuk(THREE, M.sert, R * 0.8, sz * 0.2, { seg: 18, uc: 0.2 }));
       huni.position.z = -sz * 0.3;
+      /* KASKIN İÇİNDE BİRİ VAR. Boş bir kabarcık, giysiyi giyen birinin
+         değil bir mankenin resmidir - ve bir silueti insan yapan en güçlü
+         işaret baştır. İçeride kafatası, yüz düzlemi, çene ve Apollo'nun
+         CCA haberleşme başlığı ("Snoopy cap") var: beyaz bere, koyu kulaklık
+         ve mikrofon kolu. Ten rengi nötr bir orta tondur; amaç birini
+         RESMETMEK değil, kaskın boş olmadığını göstermek. */
+      const bas = new THREE.Group();
+      bas.position.set(-R * 0.04, 0, sz * 0.04);
+      g.add(bas);
+      const kafa = new THREE.Mesh(new THREE.SphereGeometry(R * 0.6, 18, 14), M.ten);
+      kafa.scale.set(0.92, 0.84, 1.06);
+      bas.add(kafa);
+      const cene = new THREE.Mesh(new THREE.SphereGeometry(R * 0.4, 14, 10), M.ten);
+      cene.scale.set(1.05, 0.86, 0.72);
+      cene.position.set(R * 0.12, 0, -R * 0.36);
+      bas.add(cene);
+      const burun = new THREE.Mesh(new THREE.SphereGeometry(R * 0.13, 10, 8), M.ten);
+      burun.scale.set(1.5, 0.8, 0.9);
+      burun.position.set(R * 0.5, 0, -R * 0.06);
+      bas.add(burun);
+      for (const s2 of [-1, 1]) {
+        const goz = new THREE.Mesh(new THREE.SphereGeometry(R * 0.07, 8, 6), M.koyu);
+        goz.position.set(R * 0.44, s2 * R * 0.2, R * 0.08);
+        bas.add(goz);
+      }
+      /* CCA: beyaz bere kafatasını örter, kulaklıklar koyu, mikrofon kolu
+         ağzın önüne gelir. Apollo fotoğraflarında kaskın içinde görünen şey. */
+      const berem = new THREE.Mesh(
+        new THREE.SphereGeometry(R * 0.63, 18, 14, 0, TAU, 0, Math.PI * 0.62), M.bere);
+      berem.scale.set(0.94, 0.88, 1.06);
+      bas.add(berem);
+      for (const s2 of [-1, 1]) {
+        const kulak = new THREE.Mesh(cylGeoY(R * 0.19, R * 0.19, R * 0.1, 12), M.koyu);
+        kulak.position.set(-R * 0.04, s2 * R * 0.52, -R * 0.02);
+        bas.add(kulak);
+      }
+      const mikKol = new THREE.Mesh(cylGeoX(R * 0.03, R * 0.03, R * 0.5, 8), M.koyu);
+      mikKol.position.set(R * 0.3, R * 0.46, -R * 0.2);
+      mikKol.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), -0.5);  // euler-ok: tek eksen
+      bas.add(mikKol);
+      const mik = new THREE.Mesh(new THREE.SphereGeometry(R * 0.07, 8, 6), M.koyu);
+      mik.position.set(R * 0.5, R * 0.24, -R * 0.3);
+      bas.add(mik);
+
       const bub = ekle(new THREE.Mesh(new THREE.SphereGeometry(R, 26, 18), M.cam));
       bub.position.z = sz * 0.06;
-      /* Altın vizör: ÖN yarıyı kaplar, alın hizasından çene hizasına. */
+      /* Altın vizör KALDIRILMIŞ durumda. İndirilmişken içerideki kişi
+         görünmez ve vitrinin işi giysiyi giyen birini göstermek; menteşe de
+         ancak kullanıldığında menteşe olduğunu belli eder. Gölgede indirilir. */
       const vpts = [];
       for (let i = 0; i <= 10; i++) {
         const a = (40 + (i / 10) * 66) * RAD;
@@ -616,6 +681,7 @@ function govde(THREE, p, M, yan = 0) {
       }
       const viz = ekle(latheZ(vpts, 22, M.vizor, -1.15, 2.3));
       viz.position.z = sz * 0.06;
+      viz.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), -1.15);  // euler-ok: menteşe tek eksen
       for (const s of [-1, 1]) {
         const men = ekle(new THREE.Mesh(cylGeoY(R * 0.07, R * 0.07, R * 0.16, 8), M.metal));
         men.position.set(0, s * R * 1.02, sz * 0.06 + R * 0.34);
@@ -782,10 +848,18 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
         gg.position.set(0, 0, kolG.userData.bilekZ);
         kolG.userData.dirsek.add(gg);
       } else if (p.id === 'kollar') {
-        /* Kol OMUZDAN döner ve omuz kolun kendi tepesidir - sayı katalogdan. */
+        /* KOLLAR YAKINSAR. Dimdik asılı bir kol, omuz genişliğini bileğe
+           kadar taşır ve figür uyluk ortasından omuza kadar SABİT bir levha
+           olur - ölçülen: z 0,71 ile 1,61 arasında genişlik hep 0,40-0,45
+           boy oranında. İnsanda el kalçanın yanında biter, omzun yanında
+           değil. Uzaklaştırma açısı kendi YUVASINDA durur, böylece poz açısı
+           tek eksenli bir dönüş olarak kalır. */
+        const yuva = new THREE.Group();
+        yuva.position.set(x, y, z + p.size[2] / 2 - belZ);
+        yuva.rotation.x = -Math.sign(y || 1) * KOL_YAKINSAMA * RAD;
+        bel.add(yuva);
         const omuz = new THREE.Group();
-        omuz.position.set(x, y, z + p.size[2] / 2 - belZ);
-        bel.add(omuz);
+        yuva.add(omuz);
         omuz.add(gg);
         eklem.omuz.push(omuz);
         eklem.dirsek.push(gg.userData.dirsek);
