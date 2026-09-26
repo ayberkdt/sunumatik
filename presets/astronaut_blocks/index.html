@@ -115,11 +115,13 @@
     /* Güneş ÖNDEN ve yandan gelir: vitrinin işi giysiyi göstermek ve vakumda
        gölge mutlak siyahtır, o yüzden anahtar ışık göğsü yalamalı. */
     rig.gunes.position.set(4.5, 3.0, 4.0);
-    renderer.toneMappingExposure = 1.0 * rig.pozlamaCarpani();
+    /* Pozlama: güneşli bir Ay yüzeyi parlaktır ve referans fotoğraf da öyle.
+       1,0'da giysi ve zemin orta gride kalıyordu. */
+    renderer.toneMappingExposure = 1.25 * rig.pozlamaCarpani();
 
     /* Yürünecek kadar uzun bir zemin: 9 m'lik bir disk üstünde yürüyen bir
        figür üç adımda kenardan düşer. */
-    const zeminMat = new THREE.MeshStandardMaterial({ color: 0x5f5f63, roughness: 0.98 });
+    const zeminMat = new THREE.MeshStandardMaterial({ color: 0x8b8b8f, roughness: 0.98 });
     const zemin = new THREE.Mesh(new THREE.PlaneGeometry(220, 44), zeminMat);
     zemin.receiveShadow = true;
     scene.add(zemin);

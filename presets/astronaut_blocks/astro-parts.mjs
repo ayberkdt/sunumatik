@@ -28,7 +28,7 @@ export const BOY_M = 1.95;
  *  gövdeye yakınsayınca; dimdik asılı kol omuz genişliğini bileğe kadar
  *  taşıyordu). Bir kapı açıklığı niyete göre değil, geçecek şeye göre
  *  ölçülür. */
-export const OMUZ_M = 0.79;
+export const OMUZ_M = 0.82;
 /* DİKEY DÜZEN — bir kez, tablo hâlinde.
  *
  * İlk yazışta kalça 0,774 m'de çıkıyordu: 1,95 m boyunda bir figür için
@@ -168,7 +168,7 @@ export const PARTS = Object.freeze([
 
   { id: 'cizmeler', ad: 'Boots', sistem: 'hareket', step: 2,
     mountsTo: 'alt-govde', arayuz: 'kumas', massKg: 2.4, qty: 2,
-    pos: [0.05, 0.115, 0.10], size: [0.33, 0.16, 0.20], yon: 'yan', ayna: 'y', sekil: 'cizme',
+    pos: [0.05, 0.135, 0.10], size: [0.34, 0.19, 0.21], yon: 'yan', ayna: 'y', sekil: 'cizme',
     tech: {
       no: 'AS-MOB-021',
       malzeme: 'Silicone sole, ortho-fabric upper, metal shank',
@@ -276,7 +276,7 @@ export const PARTS = Object.freeze([
   /* ADIM 5 — kask ve görüş */
   { id: 'kask', ad: 'Helmet and visor assembly', sistem: 'gorus', step: 5,
     mountsTo: 'ust-govde', arayuz: 'kilit', massKg: 5.8,
-    pos: [0.02, 0, 1.768], size: [0.34, 0.32, 0.36], yon: 'orta', sekil: 'kask',
+    pos: [0.02, 0, 1.716], size: [0.40, 0.38, 0.42], yon: 'orta', sekil: 'kask',
     tech: {
       no: 'AS-VIS-060',
       malzeme: 'Polycarbonate bubble, gold-coated EVA visor, anti-fog coating',
@@ -291,7 +291,7 @@ export const PARTS = Object.freeze([
 
   { id: 'basliklar', ad: 'Helmet lights and camera', sistem: 'gorus', step: 5,
     mountsTo: 'kask', arayuz: 'civata', massKg: 1.3,
-    pos: [0.04, 0, 1.832], size: [0.20, 0.38, 0.10], yon: 'orta', sekil: 'lamba',
+    pos: [0.03, 0, 1.716], size: [0.22, 0.44, 0.12], yon: 'orta', sekil: 'lamba',
     tech: {
       no: 'AS-VIS-061',
       malzeme: 'Four LED heads, one camera, mounting yoke',
@@ -322,7 +322,7 @@ export const PARTS = Object.freeze([
 
   { id: 'emniyet-halati', ad: 'Safety tether and tool caddy', sistem: 'arayuz', step: 6,
     mountsTo: 'ust-govde', arayuz: 'civata', massKg: 2.8,
-    pos: [0.16, 0, 1.20], size: [0.14, 0.32, 0.20], yon: 'gogus', sekil: 'halat',
+    pos: [0.13, 0.17, 1.16], size: [0.11, 0.22, 0.16], yon: 'gogus', sekil: 'halat',
     tech: {
       no: 'AS-INT-071',
       malzeme: 'Retracting steel tether, carabiners, tool loops',
