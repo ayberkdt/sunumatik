@@ -970,5 +970,60 @@ bolum('Saha: yasak bölge, güneş yönü, yürüme payı');
     `${hamCukur} rota-kesişimi -> ${cSay} çukur`);
 }
 
+/* ── YAŞAM İŞLEVLERİ ──────────────────────────────────────────────────
+ *
+ * "Yeterli yaşam alanı" bir his değil, ölçülebilir bir iddia - ve ölçülünce
+ * üssün dar olduğu şeyin HACİM OLMADIĞI çıktı: 316,9 m3 yaşanabilir hacim,
+ * kişi başı 79,2 m3, uzun süreli bir mürettebata normalde verilenin epey
+ * üstünde. Dar olduğu şey İŞLEVDİ. Katalogda hiçbir yerde kimin nerede
+ * uyuduğu, yediği, yıkandığı ya da tedavi edildiği yazmıyordu; yaşanabilir
+ * hacmin %59'u içinde hiçbir şey beyan edilmemiş tek bir şişme modüldü.
+ */
+{
+  bolum('yaşam işlevleri');
+  const b = H.islevBudget();
+  ok(b.eksikler.length === 0, 'her yaşam işlevi gereken hacmi buluyor',
+    b.eksikler.map(s => `${s.ad} ${s.var}/${s.gerek} m³`).join(', ')
+      || `${b.satirlar.length} işlev · ${b.tahsisM3} m³ tahsis`);
+
+  /* Mahremiyet KİŞİ BAŞINA ölçeklenir: ortak bir yatakhane dört kamaranın
+     yerine geçmez, ve bu ayrım kaybolursa "yeterli" bir daha yanlış olur. */
+  ok(H.ISLEVLER.uyku.kisiBasi > 0 && H.ISLEVLER.yemek.kisiBasi === 0,
+    'uyku kişiyle ölçeklenir, mutfak ölçeklenmez',
+    `uyku ${H.ISLEVLER.uyku.kisiBasi} m³/kişi · mutfak ${H.ISLEVLER.yemek.taban} m³ sabit`);
+  const alti = H.islevBudget(6);
+  ok(alti.satirlar.find(s => s.ad === 'uyku').gerek > b.satirlar.find(s => s.ad === 'uyku').gerek,
+    'TERS SINAV: mürettebat 6 olsa uyku hacmi gereği büyür',
+    `4 kişi ${b.satirlar.find(s => s.ad === 'uyku').gerek} m³ → 6 kişi ${alti.satirlar.find(s => s.ad === 'uyku').gerek} m³`);
+  ok(alti.eksikler.some(s => s.ad === 'uyku'),
+    'TERS SINAV: altı kişilik mürettebat için kamara YETMEZ (denetim körü değil)',
+    alti.eksikler.map(s => s.ad).join(', ') || 'hiçbiri');
+
+  /* Tahsis edilen hacim, onu barındıran modülün hacmini aşamaz: bir
+     modülün içine sığmayan bir işlev, kâğıt üstünde bir işlevdir. */
+  const tasan = [];
+  for (const p of H.PARTS) {
+    const m = p.tech?.islev;
+    if (!m) continue;
+    const t2 = Object.values(m).reduce((a2, v) => a2 + v, 0);
+    if (t2 > (p.tech.hacim_m3 ?? 0)) tasan.push(`${p.id} ${t2}/${p.tech.hacim_m3} m³`);
+  }
+  ok(tasan.length === 0, 'hiçbir modül kendi hacminden fazlasını tahsis etmiyor',
+    tasan.join(', ') || 'hepsi sığıyor');
+
+  /* Dolaşım payı: koridor da gereklidir ama hepsi koridor olamaz. */
+  const v = H.volumeBudget();
+  const pay = b.dolasimM3 / v.yasanabilirM3;
+  ok(pay > 0.25 && pay < 0.75, 'dolaşım payı makul bandda',
+    `%${(pay * 100).toFixed(0)} (${b.dolasimM3} / ${v.yasanabilirM3} m³)`);
+
+  /* Kamara AYRI bir basınç bölmesinde olmalı: tek bir kaçak hem uyunan hem
+     toplanılan hacmi almamalı. */
+  const kamara = H.partById('kamara-modulu');
+  ok(kamara && kamara.mountsTo && H.partById(kamara.mountsTo)?.sekil === 'tunel',
+    'kamaralar ortak alandan ayrı bir bölmede',
+    kamara ? `${kamara.id} → ${kamara.mountsTo}` : 'kamara yok');
+}
+
 console.log(kaldi === 0 ? `HABİTAT DENETİMİ: ${gecti}/${gecti} geçti` : `HABİTAT DENETİMİ: ${gecti} geçti, ${kaldi} KALDI`);
 process.exit(kaldi === 0 ? 0 : 1);

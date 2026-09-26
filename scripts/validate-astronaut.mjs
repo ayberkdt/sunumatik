@@ -398,6 +398,61 @@ console.log('== 7 biçim: kesit daire değil');
   });
   check('kaskın içinde bir kişi var', basMesh >= 4, `${basMesh} baş/başlık gövdesi`);
 
+  /* EKLEM SÜREKLİLİĞİ. İki katı parçayı bir mafsalda birleştirmek yetmez:
+     uçları düz kapaklıysa açı büyüdükçe bükümün DIŞINDA kama biçiminde bir
+     boşluk açılır. Ölçülen kusur buydu ve figürün "birbirine yapıştırılmış
+     parçalar" gibi durmasının sebebiydi.
+
+     Sınama: mafsalın merkezinden 0,6 m uzaktan, büküm düzleminde 72 yöne
+     içeri doğru ışın gönderilir ve menzil merkezde durdurulur. Yüzey o yönde
+     kopmuşsa ışın hiçbir şeye çarpmaz - kama boşluğu tam budur. */
+  {
+    const ray = new THREE.Raycaster();
+    const surekli = (eklem, altKok, aciDeg, n = 72) => {
+      const eski = eklem.rotation.y;
+      eklem.rotation.y = aciDeg * Math.PI / 180;
+      S.root.updateMatrixWorld(true);
+      const c = eklem.getWorldPosition(new THREE.Vector3());
+      const hedef = [];
+      altKok.traverse((m) => { if (m.isMesh) hedef.push(m); });
+      let bos = 0;
+      for (let i = 0; i < n; i++) {
+        const q = (i / n) * Math.PI * 2;
+        const d = new THREE.Vector3(Math.cos(q), 0, Math.sin(q));
+        ray.set(c.clone().addScaledVector(d, 0.6), d.clone().negate());
+        ray.far = 0.599;
+        if (!ray.intersectObjects(hedef, false).length) bos++;
+      }
+      eklem.rotation.y = eski;
+      S.root.updateMatrixWorld(true);
+      return bos;
+    };
+    const kotu = [];
+    for (const [ad, ek, altKok, acilar] of [
+      ['diz', S.eklem.diz[0], S.eklem.kalca[0], [0, 20, 45, 70, 100]],
+      ['dirsek', S.eklem.dirsek[0], S.eklem.omuz[0], [0, 40, 80, 120]],
+      ['kalca', S.eklem.kalca[0], S.nodes.get('alt-govde'), [-20, 0, 30, 70]],
+    ]) {
+      for (const a of acilar) {
+        const bos = surekli(ek, altKok, a);
+        if (bos > 0) kotu.push(`${ad} ${a}° → ${bos}/72 boş`);
+      }
+    }
+    check('her mafsal her açıda SÜREKLİ (kama boşluğu yok)', kotu.length === 0,
+      kotu.join(' · ') || 'diz, dirsek, kalça · 13 açı · hepsi kapalı');
+
+    /* TERS SINAV: ölçüm gerçekten boşluk görüyor mu? Figürün 1,2 m önündeki
+       boş uzayda 72 yönün HEPSİ boş çıkmak zorunda, yoksa sınama her şeye
+       "kapalı" diyen bir sayaçtan ibarettir. */
+    const bosluk = new THREE.Object3D();
+    bosluk.position.set(1.2, 0, 1.0);
+    S.root.add(bosluk);
+    S.root.updateMatrixWorld(true);
+    const bosSayi = surekli(bosluk, S.root, 0);
+    S.root.remove(bosluk);
+    check('TERS SINAV: boş uzayda 72 yönün hepsi boş', bosSayi === 72, `${bosSayi}/72`);
+  }
+
   /* Kapitone gerçekten yüzeyi modüle ediyor mu: bantlı ve bantsız aynı uzvun
      yarıçapları FARKLI olmalı, yoksa kapitone yalnız yorumda vardır. */
   const duz = BODY.kapitoneKat(0.5, 0, 0);

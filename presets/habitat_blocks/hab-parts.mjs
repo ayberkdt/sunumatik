@@ -121,6 +121,11 @@ export const PARTS = Object.freeze([
       guc_W: 1850,
       sicaklik_C: [18, 27],
       hacim_m3: 92,
+      /* İÇİNDE NE VAR. Bir üssü yaşanır kılan hacim değil TAHSİSTİR: kimin
+         nerede yıkandığı, tedavi edildiği ve sistemleri izlediği yazılı
+         olmak zorunda. Beyan edilmeyen hacim dolaşımdır - koridor da
+         gereklidir ama orada yaşanmaz. */
+      islev: { hijyen: 8, tibbi: 6, kontrol: 6, bakim: 10, depo: 14 },
       koruma_gcm2: 2.1,
       baglanti: '6 x M20 spherical joints onto the bearing plates; pressurised flanges at both ends',
       isiYolu: 'Cabin air -> coolant loop -> radiator array (radiator array)',
@@ -286,7 +291,15 @@ export const PARTS = Object.freeze([
       malzeme: 'Vectran restraint webbing, urethane bladder, Nextel debris layer',
       guc_W: 680,
       sicaklik_C: [18, 27],
-      hacim_m3: 186,
+      /* HACİM KENDİ GEOMETRİSİNDEN. 186 m3 yazıyordu; beyan edilen gabari
+         7,2 x 7,2 x 3,6 m'lik bir toroid ve onun iç hacmi 2*pi^2*R*r^2 ile
+         R = 1,8 · r = 1,8 için 115 m3'tür. Aradaki 71 m3, yaşanabilir hacmin
+         dörtte birini hiçbir geometriye dayanmadan şişiriyordu. */
+      hacim_m3: 115,
+      /* Şişme modül üssün ORTAK alanı: birlikte yenen yer, egzersiz ve
+         örnek işleme. Kamara buraya konamaz - mahremiyet paylaşılan bir
+         hacimde olmaz. */
+      islev: { yemek: 15, egzersiz: 12, laboratuvar: 20, depo: 10 },
       koruma_gcm2: 1.6,
       baglanti: 'Pressurised passage to the node; the membrane ties to the core through the webbing',
       isiYolu: 'Core duct -> coolant loop',
@@ -294,6 +307,41 @@ export const PARTS = Object.freeze([
       kalite: 'The debris layer is for micrometeoroids; the bladder alone is not enough',
     },
     why: 'Folded for launch, inflated on site: three times the volume per kilogram of a rigid module. The webbing straps and the bulge are the stress path made visible.' },
+  { id: 'gecis-kamara', ad: 'Transfer tunnel, inflatable to quarters', sistem: 'basincli', step: 4, mountsTo: 'sisme-modul', arayuz: 'basincli',
+    massKg: 620, pos: [5.6, 13.1, 1.9], size: [1.9, 4.4, 1.9], sekil: 'tunel',
+    tech: {
+      no: 'HB-PRS-016',
+      malzeme: 'Aluminium-lithium shell, same section as the node transits',
+      guc_W: 30,
+      hacim_m3: 5.4,
+      sicaklik_C: [-120, 40],
+      baglanti: 'Pressurised passage, seal and clamp at both ends',
+      detay: '3,4 m. Uyku hacmi ortak alandan AYRI bir basınç bölmesi olmak zorunda: bir kaçak olduğunda mürettebatın uyuduğu yer ile birlikte bulunduğu yerin aynı anda kaybedilmemesi gerekir',
+      kalite: 'Her iki uçta bağımsız kapak; tünel tek başına basınç tutar',
+    },
+    why: 'Kamaralar ortak alana doğrudan açılamaz: tek bir kaçak hem uyunan hem toplanılan hacmi almamalı. Tünel bir koridordan fazlasıdır, bir BÖLMEDİR.' },
+  { id: 'kamara-modulu', ad: 'Crew quarters module', sistem: 'basincli', step: 4, mountsTo: 'gecis-kamara', arayuz: 'basincli',
+    /* Yatay silindirin ÇAPI hem y hem z'dir; y ve z'yi farklı vermek modülü
+       beyan ettiği kutudan 1,47 m taşırıyordu. Gabari silindire uyar. */
+    massKg: 3050, pos: [5.6, 17.4, 2.3], size: [7.4, 4.6, 4.6], sekil: 'silindir-yatay',
+    tech: {
+      no: 'HB-PRS-018',
+      malzeme: 'Aluminium-lithium shell, regolith-filled outer jacket 0.4 m',
+      /* KESİLEBİLİR DEĞİL. Basınçlı bir yaşam hacminin ışığı ve
+         havalandırması yük atma sırasında kesilemez - bu, kendi koyduğum
+         kuralın ta kendisi ve kapı onu bana hatırlattı. Güç de dörde
+         düşürüldü: dört kamaranın aydınlatması ve fan yükü 340 W değil,
+         160 W mertebesindedir. */
+      guc_W: 160,
+      hacim_m3: 46,
+      isiYolu: 'Düğüm üzerinden ana soğutma halkasına; ceket dışa ısı vermez, regolit yalıtkandır',
+      islev: { uyku: 18 },
+      sicaklik_C: [-130, 45],
+      baglanti: 'Pressurised passage to the transfer tunnel; 8 x M24 into the pad',
+      detay: '7,4 m boy, 4,6 m çap; dört AYRI kamara (kişi başı 4,5 m3) ve bir giyinme koridoru. Regolit ceketi burada en kalın: mürettebat günün üçte birini bu hacimde geçirir, yani yıllık dozun en büyük tek payı burada birikir',
+      kalite: 'Her kamara bağımsız havalandırılır ve ışığı kendi denetler',
+    },
+    why: 'Mahremiyet konfor değildir: uzun görevlerde geri çekilebileceği bir yeri olmayan mürettebatta uyku ve uyum bozuklugu olcülür. Kamara KİŞİ BAŞINA gerekir ve ortak bir yatakhane onun yerine geçmez - üste bunlardan hiç yoktu.' },
   { id: 'sera', ad: 'Greenhouse module', sistem: 'basincli', step: 4, mountsTo: 'gecis-sera', arayuz: 'basincli',
     massKg: 1650, pos: [10.6, 0.0, 1.9], size: [5.6, 3.2, 3.2], sekil: 'silindir-yatay',
     tech: {
@@ -1147,6 +1195,84 @@ export function powerBudget() {
 
 /** Mürettebat varsayımı — bütün yaşam bütçeleri buna göre. */
 export const MURETTEBAT = 4;
+
+/**
+ * YAŞAM İŞLEVLERİ — bir üssü yaşanır kılan şey hacim değil, TAHSİSTİR.
+ *
+ * Ölçülen: 316,9 m3 yaşanabilir hacim, kişi başı 79,2 m3 - uzun süreli bir
+ * mürettebata normalde verilen ~50 m3'ün epey üstünde. Yani üs metreküp
+ * bakımından dar değildi. Dar olduğu şey İŞLEVDİ: katalogda hiçbir yerde
+ * kimin nerede uyuduğu, yediği, yıkandığı, spor yaptığı, yaralanınca tedavi
+ * edildiği ya da çalıştığı yazmıyordu. Yaşanabilir hacmin %59'u, içinde hiçbir
+ * şey beyan edilmemiş tek bir şişme modüldü - orada yaşandığı hissini
+ * vermemesinin sebebi tam buydu.
+ *
+ * Sayılar 4 kişilik uzun süreli bir yüzey mürettebatı içindir ve KİŞİ BAŞINA
+ * olanlar mürettebat sayısıyla ölçeklenir. Mahremiyet ölçeklenir (herkesin
+ * kendi kamarası olmak zorunda), mutfak ölçeklenmez (bir mutfak dörde de
+ * yeter, altıya da).
+ */
+export const ISLEVLER = Object.freeze({
+  uyku: { ad: 'Private crew quarters', kisiBasi: 4.5, taban: 0,
+    neden: 'Mahremiyet bir konfor değil: uzun görevlerde geri çekilebilecek bir yeri olmayan mürettebat, uyku ve uyum bozukluğu yaşar. Kamara KİŞİ BAŞINA gerekir, ortak bir yatakhane onun yerine geçmez.' },
+  yemek: { ad: 'Galley and wardroom', kisiBasi: 0, taban: 15,
+    neden: 'Birlikte yemek, uzun görevlerde ekibi bir arada tutan tek düzenli toplanma. Masa dörde de yeter altıya da, o yüzden kişiyle ölçeklenmez.' },
+  hijyen: { ad: 'Hygiene and waste', kisiBasi: 0, taban: 8,
+    neden: 'Tam gövde temizliği ve atık yönetimi ayrı ve KAPALI bir hacim ister; mutfakla aynı odada olamaz.' },
+  egzersiz: { ad: 'Exercise', kisiBasi: 0, taban: 12,
+    neden: 'Düşük yerçekiminde kemik ve kas kaybı günlük direnç egzersizi olmadan durdurulamaz. Cihazın tavanı ve serbest hacmi gerekir.' },
+  tibbi: { ad: 'Medical', kisiBasi: 0, taban: 6,
+    neden: 'Bir yaralıyı yatırıp etrafında dönebilecek kadar yer: tahliye seçeneği olmayan bir üste bu, isteğe bağlı değildir.' },
+  laboratuvar: { ad: 'Science and sample handling', kisiBasi: 0, taban: 20,
+    neden: 'Örnek üsse toz taşır; işlenmesi yaşam hacminden AYRI bir yerde olmak zorunda.' },
+  bakim: { ad: 'Pressurised maintenance', kisiBasi: 0, taban: 10,
+    neden: 'Giysili çalışılamayacak her onarım burada yapılır; atölye basınçsızdır ve eldivenle tornavida tutulamaz.' },
+  kontrol: { ad: 'Command and control', kisiBasi: 0, taban: 6,
+    neden: 'Sistemlerin izlendiği ve haberleşmenin yapıldığı yer; yatakhanede olamaz.' },
+  depo: { ad: 'Pressurised stowage', kisiBasi: 0, taban: 24,
+    neden: 'Yiyecek, yedek ve tıbbi malzeme basınç altında ve ulaşılabilir durmak zorunda.' },
+});
+
+/** Bir işlevin mürettebat sayısına göre gereken hacmi (m3). */
+export function islevGeregi(ad, kisi = MURETTEBAT) {
+  const i = ISLEVLER[ad];
+  if (!i) return 0;
+  return Number((i.taban + i.kisiBasi * kisi).toFixed(1));
+}
+
+/**
+ * İŞLEV BÜTÇESİ: her gerekli işlev, gereken hacmi bulabiliyor mu?
+ * Modüller `tech.islev` ile içlerinde ne olduğunu m3 cinsinden beyan eder;
+ * beyan edilmeyen hacim DOLAŞIM sayılır - koridor da gereklidir ama orada
+ * yaşanmaz.
+ */
+export function islevBudget(kisi = MURETTEBAT) {
+  const bulunan = {};
+  let tahsis = 0;
+  const nerede = {};
+  for (const q of PARTS) {
+    const m = q.tech?.islev;
+    if (!m) continue;
+    for (const [ad, v] of Object.entries(m)) {
+      bulunan[ad] = (bulunan[ad] ?? 0) + v;
+      (nerede[ad] ??= []).push(`${q.ad || q.id} ${v} m3`);
+      tahsis += v;
+    }
+  }
+  const satirlar = Object.keys(ISLEVLER).map((ad) => {
+    const gerek = islevGeregi(ad, kisi);
+    const var_ = Number((bulunan[ad] ?? 0).toFixed(1));
+    return { ad, adi: ISLEVLER[ad].ad, gerek, var: var_, eksik: Number(Math.max(0, gerek - var_).toFixed(1)), nerede: nerede[ad] ?? [] };
+  });
+  const hacim = volumeBudget(kisi);
+  return {
+    kisi, satirlar,
+    tahsisM3: Number(tahsis.toFixed(1)),
+    dolasimM3: Number((hacim.yasanabilirM3 - tahsis).toFixed(1)),
+    eksikler: satirlar.filter((s) => s.eksik > 0.05),
+    tamam: satirlar.every((s) => s.eksik <= 0.05),
+  };
+}
 
 /**
  * Basınçlı hacim. Yaşanabilir hacim, geçiş ve üretim hacimlerini İÇERMEZ:

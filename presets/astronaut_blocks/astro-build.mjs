@@ -121,6 +121,30 @@ function konvolut(THREE, M, wUst, dUst, wAlt, dAlt, boy, n = 4) {
 }
 
 /**
+ * EKLEM GÖVDESİ — mafsalın merkezindeki cisim.
+ *
+ * İki katı parçayı bir mafsalda birleştirmek YETMEZ. Uçları düz kapaklıysa
+ * açı büyüdükçe bükümün dışında KAMA biçiminde bir boşluk açılır, içinde ise
+ * iki kapak birbirine girer. Ölçülen: diz mafsalının 5 cm çevresinde yalnız
+ * İKİ yüzey noktası - yani mafsalın kendisinde neredeyse hiçbir şey yok.
+ * Figürün "birbirine yapıştırılmış parçalar" gibi durmasının sebebi buydu.
+ *
+ * Çözüm, eklemli modellerin her zaman kullandığı şey: mafsalın MERKEZİNE,
+ * uzvun kalınlığında bir cisim koymak. Küre her yönden aynı görünür, o yüzden
+ * içinden geçen bir yüzey HİÇBİR açıda kopamaz. Uzuv parçaları da mafsalın
+ * içinde buluşmak yerine eklem yarıçapı kadar geride biter.
+ *
+ * Kesit eliptik olduğu için küre de eliptiktir: mafsal, bağladığı uzvun
+ * kesitini izler, yoksa ince bir bileğe yuvarlak bir top takılmış gibi durur.
+ */
+function mafsalGovdesi(THREE, mat, w, d, { doluluk = 1.0, seg = 22 } = {}) {
+  const k = new THREE.Mesh(new THREE.SphereGeometry(1, seg, Math.round(seg * 0.7)), mat);
+  k.scale.set(d * doluluk, w * doluluk, w * doluluk * 0.96);
+  k.castShadow = true; k.receiveShadow = true;
+  return k;
+}
+
+/**
  * Yatak halkası. Konvolüt bükmeyi verir, DÖNMEYİ vermez: omuz, dirsek,
  * bilek, bel, kalça, diz ve ayak bileği dönüşü rulmanlı halkalardan gelir.
  */
@@ -256,8 +280,11 @@ function govde(THREE, p, M, yan = 0) {
         kalca.position.set(0, s * sy * 0.37, kalcaZ);
         g.add(kalca);
         eklem.kalca.push(kalca);
+        /* KALÇA EKLEMİ: mafsalın merkezinde gövde, sonra konvolüt. */
+        kalca.add(mafsalGovdesi(THREE, M.kumas, sy * 0.355, sx * 0.35));
         kalca.add(konvolut(THREE, M, sy * 0.36, sx * 0.355, sy * 0.35, sx * 0.345, 0.07, 2));
-        const uyluk = uzuvMesh(THREE, M.kumas, UYLUK_M - 0.07, uzuvKesiti({
+        /* Uyluk, eklem gövdesinin içinde bitmek yerine ONA DAYANIR. */
+        const uyluk = uzuvMesh(THREE, M.kumas, UYLUK_M - 0.07 - sy * 0.2, uzuvKesiti({
           /* BASINÇLI GİYSİ İNCELMEZ. İnsan uyluğu dize doğru daralır; 26 kPa'ya
              şişirilmiş bir tulum daralmaz - uyluk 0,28 m, diz 0,26 m, yani
              neredeyse aynı. Anatomik daralmayı giysiye uygulamak, figürü bir
@@ -279,23 +306,32 @@ function govde(THREE, p, M, yan = 0) {
         diz.position.z = -UYLUK_M;
         kalca.add(diz);
         eklem.diz.push(diz);
-        diz.add(konvolut(THREE, M, sy * 0.33, sx * 0.325, sy * 0.3, sx * 0.3, 0.1, 3));
+        /* DİZ EKLEMİ. Konvolüt artık mafsalın ÜSTÜNE ve ALTINA simetrik
+           oturur: yalnız altına konunca büküm dışında boşluk kalıyordu. */
+        diz.add(mafsalGovdesi(THREE, M.kumas, sy * 0.325, sx * 0.32));
+        const dizKon = konvolut(THREE, M, sy * 0.33, sx * 0.325, sy * 0.3, sx * 0.3, 0.16, 4);
+        dizKon.position.z = 0.07;
+        diz.add(dizKon);
         /* Diz kapağı: konvolütü koruyan EĞRİ plaka. */
         const kapak = new THREE.Mesh(
           new THREE.SphereGeometry(sy * 0.37, 24, 16, -0.8, 1.6, 0.9, 1.1), M.kumasGolge);
         kapak.rotation.x = Math.PI / 2;
         kapak.position.z = -0.05;
         diz.add(kapak);
-        const baldir = uzuvMesh(THREE, M.kumas, BALDIR_M - 0.1, uzuvKesiti({
+        const baldir = uzuvMesh(THREE, M.kumas, BALDIR_M - 0.16, uzuvKesiti({
           ustW: sy * 0.3, ustD: sx * 0.3, altW: sy * 0.244, altD: sx * 0.25,
           sis: 0.07, sisT: 0.25, p: 2.2, kapitone: [6, 0.07], dikis: [8, 0.04], kirisik: [1.6, 0.022],
         }), { dilim: 20, halka: 32 });
-        baldir.position.z = -0.1;
+        baldir.position.z = -0.16;
         baldir.castShadow = true; baldir.receiveShadow = true;
         diz.add(baldir);
         const ayakY = yatakHalkasi(THREE, M, sy * 0.215, { kalin: 0.013, tirnak: 6 });
         ayakY.position.z = -BALDIR_M;
         diz.add(ayakY);
+        /* AYAK BİLEĞİ EKLEMİ: bilek en dar mafsal ve en çok bükülen yer. */
+        const ayakEk = mafsalGovdesi(THREE, M.kumasGolge, sy * 0.235, sx * 0.24);
+        ayakEk.position.z = -BALDIR_M;
+        diz.add(ayakEk);
         /* Havalandırma hattı baldırın arkasından iner. */
         const hat = new THREE.Mesh(cylGeoZ(sx * 0.022, sx * 0.022, BALDIR_M * 0.8, 8), M.koyu);
         hat.position.set(-sx * 0.33, 0, -BALDIR_M * 0.55);
@@ -531,8 +567,10 @@ function govde(THREE, p, M, yan = 0) {
       const kap = ekle(new THREE.Mesh(new THREE.SphereGeometry(sy * 0.7, 24, 16), M.kumas));
       kap.scale.set(0.9, 1, 0.78);
       g.add(yatakHalkasi(THREE, M, sy * 0.62, { kalin: 0.014, tirnak: 6 }));
+      /* OMUZ EKLEMİ. */
+      g.add(mafsalGovdesi(THREE, M.kumas, sy * 0.62, sx * 0.59));
       g.add(konvolut(THREE, M, sy * 0.63, sx * 0.6, sy * 0.61, sx * 0.58, sz * 0.09, 2));
-      const ust = uzuvMesh(THREE, M.kumas, ustBoy - sz * 0.09, uzuvKesiti({
+      const ust = uzuvMesh(THREE, M.kumas, ustBoy - sz * 0.09 - sy * 0.34, uzuvKesiti({
         ustW: sy * 0.61, ustD: sx * 0.58, altW: sy * 0.574, altD: sx * 0.56,
         sis: 0.05, sisT: 0.25, p: 2.2, kapitone: [6, 0.085], dikis: [6, 0.035], kirisik: [1.8, 0.025],
       }), { dilim: 18, halka: 30 });
@@ -545,22 +583,30 @@ function govde(THREE, p, M, yan = 0) {
       dirsek.position.z = -ustBoy;
       g.add(dirsek);
       g.userData.dirsek = dirsek;
-      dirsek.add(konvolut(THREE, M, sy * 0.59, sx * 0.58, sy * 0.55, sx * 0.55, sz * 0.1, 3));
+      /* DİRSEK EKLEMİ: gövde mafsalın merkezinde, konvolüt iki yanına. */
+      dirsek.add(mafsalGovdesi(THREE, M.kumas, sy * 0.575, sx * 0.565));
+      const dirKon = konvolut(THREE, M, sy * 0.59, sx * 0.58, sy * 0.55, sx * 0.55, sz * 0.16, 4);
+      dirKon.position.z = sz * 0.07;
+      dirsek.add(dirKon);
       const fincan = new THREE.Mesh(
         new THREE.SphereGeometry(sy * 0.66, 22, 15, -0.8, 1.6, 0.9, 1.1), M.kumasGolge);
       fincan.rotation.x = -Math.PI / 2;
       fincan.position.z = -sz * 0.05;
       dirsek.add(fincan);
-      const on = uzuvMesh(THREE, M.kumas, onBoy - sz * 0.1, uzuvKesiti({
+      const on = uzuvMesh(THREE, M.kumas, onBoy - sz * 0.17, uzuvKesiti({
         ustW: sy * 0.541, ustD: sx * 0.54, altW: sy * 0.447, altD: sx * 0.45,
         sis: 0.06, sisT: 0.25, p: 2.2, kapitone: [6, 0.08], dikis: [6, 0.035], kirisik: [2.0, 0.025],
       }), { dilim: 18, halka: 30 });
-      on.position.z = -sz * 0.1;
+      on.position.z = -sz * 0.17;
       on.castShadow = true; on.receiveShadow = true;
       dirsek.add(on);
       const bilek = yatakHalkasi(THREE, M, sy * 0.46, { kalin: 0.014, tirnak: 6, kol: true });
       bilek.position.z = -onBoy;
       dirsek.add(bilek);
+      /* BİLEK EKLEMİ. */
+      const bilekEk = mafsalGovdesi(THREE, M.kumasGolge, sy * 0.45, sx * 0.45);
+      bilekEk.position.z = -onBoy;
+      dirsek.add(bilekEk);
       if (yan >= 0) {
         const kitap = new THREE.Mesh(
           new THREE.BoxGeometry(sy * 0.46, sy * 0.12, onBoy * 0.3), M.kit.white);
