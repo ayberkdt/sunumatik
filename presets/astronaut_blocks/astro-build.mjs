@@ -665,6 +665,28 @@ function govde(THREE, p, M, yan = 0) {
         const ag = ekle(new THREE.Mesh(cylGeoX(sy * 0.05, sy * 0.05, sx * 0.3, 10), M.koyu));
         ag.position.set(sx * 0.4, s * sy * 0.2, sz * 0.24);
       }
+      /* Durum paneli ve bağlantı bloğu: paket bir kutu değil, ÜSTÜNDE
+         okunacak şeyler ve takılacak yerler olan bir makinedir. */
+      const durum = ekle(new THREE.Mesh(
+        new THREE.BoxGeometry(sx * 0.12, sy * 0.4, sz * 0.14), M.koyu));
+      durum.position.set(-sx * 0.5, sy * 0.16, sz * 0.24);
+      for (let i = 0; i < 3; i++) {
+        const led = ekle(new THREE.Mesh(cylGeoX(sy * 0.022, sy * 0.022, sx * 0.05, 10),
+          i === 1 ? M.uyari : M.kit.white));
+        led.position.set(-sx * 0.57, sy * (0.05 + i * 0.11), sz * 0.24);
+      }
+      const blok = ekle(new THREE.Mesh(
+        new THREE.BoxGeometry(sx * 0.14, sy * 0.3, sz * 0.1), M.metal));
+      blok.position.set(-sx * 0.5, -sy * 0.24, sz * 0.24);
+      for (let i = 0; i < 3; i++) {
+        const soket = ekle(new THREE.Mesh(cylGeoX(sy * 0.032, sy * 0.032, sx * 0.07, 12), M.koyu));
+        soket.position.set(-sx * 0.56, -sy * (0.14 + i * 0.1), sz * 0.24);
+      }
+      /* Paket anteni kask TEPESİNİ AŞMAZ: uzun bir çubuk beyan edilen boyu
+         2,064 m'ye çıkarıyordu ve o beyan, habitatın kapı açıklığı
+         denetiminin okuduğu sözleşmedir. */
+      const anten = ekle(new THREE.Mesh(cylGeoZ(sy * 0.013, sy * 0.009, sz * 0.28, 8), M.metal));
+      anten.position.set(-sx * 0.3, -sy * 0.38, sz * 0.56);
       const lv = D.levha(THREE, M.kit, [p.tech?.no || p.id, 'LIFE SUPPORT'],
         { w: sy * 0.56, h: sz * 0.1 });
       lv.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
@@ -807,6 +829,27 @@ function govde(THREE, p, M, yan = 0) {
         const kenar = ekle(latheZ(kpts, 8, M.kumasGolge, yon > 0 ? acik : TAU - acik - 0.12, 0.12));
         kenar.position.z = sz * 0.06;
       }
+      /* YAN VİZÖRLER. LEVA'nın iki yanında, menteşeli iki beyaz kanat;
+         güneş yanlardan gelirken öne çevrilir, gerekmeyince geriye yatar.
+         Apollo kaskının profilden en tanınır ayrıntısı bu ve onsuz miğfer
+         düz bir küre kalıyordu. */
+      for (const yon of [-1, 1]) {
+        const ypts = [];
+        for (let i = 0; i <= 10; i++) {
+          const a = (34 + (i / 10) * 74) * RAD;
+          ypts.push(new THREE.Vector2(R * 1.17 * Math.sin(a), R * 1.17 * Math.cos(a)));
+        }
+        const yv = ekle(latheZ(ypts, 16, M.kumas, yon > 0 ? acik - 0.1 : -acik - 0.42, 0.52));
+        yv.position.z = sz * 0.06;
+        /* Menteşe braketi: kanadın döndüğü yer görünür olmak zorunda. */
+        const br = ekle(new THREE.Mesh(
+          new THREE.BoxGeometry(R * 0.1, R * 0.1, R * 0.26), M.metal));
+        br.position.set(R * 0.62 * Math.cos(acik), yon * R * 1.12 * Math.sin(acik), sz * 0.06 + R * 0.5);
+      }
+      /* Güneşlik kolu: vizörü indiren düğme, eldivenli elle çevrilebilecek
+         kadar büyük. */
+      const vkol = ekle(new THREE.Mesh(cylGeoZ(R * 0.07, R * 0.07, R * 0.16, 12), M.uyari));
+      vkol.position.set(R * 0.5, 0, sz * 0.06 + R * 0.86);
       const kanal = ekle(new THREE.Mesh(
         new THREE.BoxGeometry(R * 0.34, R * 0.5, sz * 0.46), M.kumasGolge));
       kanal.position.set(-R * 0.98, 0, sz * 0.02);

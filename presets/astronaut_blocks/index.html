@@ -140,6 +140,18 @@
       pmrem.dispose();
       rig.gokYer.intensity = 0;
     }
+    /* GÖLGE HACMİ YÜRÜYÜŞÜ İZLER. Gölge kamerası ±3 m'lik bir kutudur ve
+       orijinde durur; figür birkaç metre yürüdükten sonra o kutudan ÇIKIP
+       gölgesini kaybediyordu. Hedef figürle birlikte taşınır ve ışık aynı
+       bağıl konumda kalır, böylece yön (dolayısıyla bütün gölge açıları)
+       değişmez. */
+    const gunesTaban = rig.gunes.position.clone();
+    scene.add(rig.gunes.target);
+    function golgeyiTasi(x) {
+      rig.gunes.target.position.x = x;
+      rig.gunes.target.updateMatrixWorld();
+      rig.gunes.position.set(gunesTaban.x + x, gunesTaban.y, gunesTaban.z);
+    }
 
     /* Yürünecek kadar uzun bir zemin: 9 m'lik bir disk üstünde yürüyen bir
        figür üç adımda kenardan düşer. */
@@ -399,6 +411,7 @@
       kurulum.uygulaPoz(P);
       mesafe += F.hiz * dt;
       kurulum.root.position.x = mesafe;
+      golgeyiTasi(mesafe);
       /* İz, ayağın yere DEĞDİĞİ anda bırakılır - her karede değil. */
       for (const j of [0, 1]) {
         const a = P.ayakKonum[j];
