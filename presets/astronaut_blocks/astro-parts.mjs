@@ -81,6 +81,32 @@ export const BOYUN_CAP_M = 0.26;
  * `t` süpürmedeki yükseklik (0 tepe, 1 dip), `aci` kesit üzerindeki açı.
  * `cevre` bütün çevreyi saran yatay dikiş; `boyuna` belirli açılarda düşey.
  */
+/**
+ * YÜZEY RİTMİ — körük ile kapitone AYNI ŞEY GİBİ OKUNMAMALI.
+ *
+ * Ölçülen kusur: diz körüğü 0,16 m'de 4 kıvrım, yani metrede 25, derinliği
+ * yarıçapın ±%10'u. Uyluk kapitonesi 0,32 m'de 6 bant, yani metrede 19,
+ * derinliği ±%3,75. AYNI uzamsal frekans ve yalnızca 2,7 kat derinlik farkı -
+ * bir metre öteden bacak kalçadan bileğe kadar TEK bir oluklu hortumdur ve
+ * mafsal, on altı kıvrımın arasında biraz daha derin olanı olmaktan başka bir
+ * şey değildir.
+ *
+ * "İki silindir birleşmiş gibi" şikâyetinin ölçülebilir hâli budur: kusur
+ * parçaların katı olması değil, YÜZEYDE BÜKÜMÜN NEREDE OLDUĞUNU SÖYLEYEN bir
+ * şey bulunmamasıdır. Gerçek bir basınç giysisi ilk bakışta okunur, çünkü
+ * körük SIK ve DERİNDİR, iki yanındaki bölüm ise neredeyse düzdür.
+ *
+ * O yüzden beyan edilen şey biçim değil RİTİM: mafsalın kıvrımı, iki
+ * yanındaki bölümün kapitonesinden en az `ayrimOrani` kat daha sık VE daha
+ * derin olmak zorundadır.
+ */
+export const YUZEY_RITMI = Object.freeze({
+  konvolutDerinlik: 0.10,        // yarıçapa oran, mafsalda
+  kapitoneDerinlikTavan: 0.035,  // yarıçapa oran, bölüm boyunca
+  kapitoneSiklikTavan: 9,        // metrede bant
+  ayrimOrani: 2.5,               // körük / kapitone, hem sıklıkta hem derinlikte
+});
+
 export const PANEL_SEMASI = Object.freeze({
   ustGovde: {
     cevre: [0.24, 0.52, 0.78],          // omuz boyunduruğu, göğüs, bel kuşağı

@@ -1962,5 +1962,136 @@ console.log('\n== 20 yürüyüş sürekli mi');
   S.uygulaPoz(S.poz);
 }
 
+/* ── 21 YÜZEY RİTMİ: MAFSAL NEREDE ─────────────────────────────────
+ *
+ * Ölçülen kusur: diz körüğü metrede 22 kıvrım, uyluk kapitonesi metrede 19 -
+ * neredeyse AYNI uzamsal frekans, aralarında yalnız 2,7 kat derinlik farkı.
+ * Bir metre öteden bacak kalçadan bileğe kadar TEK bir oluklu hortumdur ve
+ * mafsal, on altı kıvrımın arasında biraz daha derin olanından başka bir şey
+ * değildir. "İki silindir birleşmiş gibi duruyor" şikâyetinin ölçülebilir
+ * hâli budur: kusur parçaların katı olması değil, YÜZEYDE BÜKÜMÜN NEREDE
+ * OLDUĞUNU SÖYLEYEN bir şey bulunmamasıdır.
+ *
+ * ÖLÇÜM İKİ KEZ YENİDEN YAZILDI, çünkü ikisi de kendi kusurunu ölçüyordu:
+ *  - "Kontur dönüş açısı" DÜZ bir bacakta 135° kırılma buldu - körük sırtı
+ *    da diz kapağı da tasarım gereği keskin dönüştür. Tasarlanmış bir sırtı
+ *    kusurdan ayıramayan ölçü hiçbir şey ölçmez.
+ *  - z kovalarına bölmek metrede 120 "kıvrım" verdi; o sayı dilim sayısının
+ *    ta kendisiydi - kova aralığı halka aralığından ince olunca ölçülen şey
+ *    tesselasyon gürültüsüdür.
+ * İşe yarayan: süpürmenin KENDİ halkaları (geometride `userData.izgara`) ve
+ * her halkanın ORTALAMA yarıçapı. Kapitone w ile d'yi birlikte çarptığı için
+ * ortalamayı oynatır; süperelips biçimi halka boyunca ortalandığında düşer.
+ *
+ * Hangi ağın körük, hangisinin bölüm olduğu da ölçülmez - ÜRETEN SÖYLER
+ * (`userData.rol`). Boyundan tahmin etmek, aynı sınıftan bir hata olurdu.
+ */
+console.log('\n== 21 yüzey ritmi: mafsal nerede');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const AP = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-parts.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik', ao: false });
+  const R = AP.YUZEY_RITMI;
+  const v = new THREE.Vector3();
+
+  const ritim = (m) => {
+    const iz = m.geometry.userData?.izgara;
+    if (!iz) return null;
+    const pos = m.geometry.attributes.position;
+    const r = [];
+    for (let i = 0; i <= iz.dilim; i++) {
+      let s = 0;
+      for (let j = 0; j < iz.halka; j++) {
+        v.fromBufferAttribute(pos, i * iz.halka + j);
+        s += Math.hypot(v.x, v.y);
+      }
+      r.push(s / iz.halka);
+    }
+    let yon = 0, don = 0, derin = 0;
+    for (let i = 1; i < r.length; i++) {
+      const d = r[i] - r[i - 1];
+      if (Math.abs(d) < 1e-5) continue;
+      const y = Math.sign(d);
+      if (yon && y !== yon) don++;
+      yon = y;
+    }
+    /* DERİNLİK ÜÇ ŞEYE KARŞI BAĞIŞIK OLMALI: uzvun konikliğine, şişmesine ve
+       ağın ne kadar sık bölündüğüne.
+       İlk ölçü pencere içi tepe-çukur farkıydı ve KONİKLİĞİ sayıyordu:
+       baldırın "%4,9'u" çoğunlukla daralmaydı, kapitone değil.
+       İkincisi ikinci farktı; koniklikten kurtardı ama bu kez İYİ ÖRNEKLENMİŞ
+       kıvrımı cezalandırdı - kıvrım başına ne kadar çok halka varsa ikinci
+       fark o kadar küçülür, ve kalça körüğü %10'luk gerçek derinliğiyle
+       %3,5 görünüyordu.
+       Doğrusu: profili KENDİ DALGA BOYU kadar bir hareketli ortalamayla
+       düzleştirip farkı almak. Tam bir periyotluk ortalama dalgayı siler,
+       koniklik ve şişme ise ortalamada kalır - geriye yalnız dalga kalır ve
+       genliği halka sayısından bağımsızdır. */
+    const siklik = (don / 2) / iz.boy;
+    const halkaPer = siklik > 0.5
+      ? Math.max(3, Math.round(iz.dilim / (siklik * iz.boy))) : r.length;
+    const yari = Math.floor(halkaPer / 2);
+    let enB = -Infinity, enK = Infinity, ortR = 0;
+    for (let i = 0; i < r.length; i++) {
+      let s = 0, n2 = 0;
+      for (let k = i - yari; k <= i + yari; k++) {
+        s += r[Math.min(r.length - 1, Math.max(0, k))]; n2++;
+      }
+      const fark = r[i] - s / n2;
+      if (fark > enB) enB = fark;
+      if (fark < enK) enK = fark;
+      ortR += r[i];
+    }
+    derin = (enB - enK) / (ortR / r.length);
+    return { siklik, derin, boy: iz.boy };
+  };
+
+  const koruk = [], bolum = [];
+  S.root.traverse((m) => {
+    if (!m.isMesh || !m.userData?.rol) return;
+    const t2 = ritim(m);
+    if (t2) (m.userData.rol === 'koruk' ? koruk : bolum).push(t2);
+  });
+  check('her körük ve her bölüm ölçülebildi', koruk.length >= 10 && bolum.length >= 8,
+    `${koruk.length} körük · ${bolum.length} bölüm`);
+
+  const enSik = Math.max(...bolum.map((b) => b.siklik));
+  const enDerin = Math.max(...bolum.map((b) => b.derin));
+  check('bölüm kapitonesi sıklık tavanının altında', enSik <= R.kapitoneSiklikTavan,
+    `en sık bölüm ${enSik.toFixed(1)}/m (tavan ${R.kapitoneSiklikTavan}) · kusurlu hâlinde 19/m`);
+  /* BÖLÜMÜN DERİNLİĞİ ÖLÇÜLMÜYOR - ve bu bilerek.
+     Üç ölçü denendi: pencere içi tepe-çukur farkı KONİKLİĞİ saydı, ikinci
+     fark iyi örneklenmiş kıvrımı cezalandırdı, dalga boyu kadar hareketli
+     ortalama ise bölümde dejenere oldu. Sebebi yapısal: bölümde bir ya da
+     iki kapitone bandı var, yani kapitone ile uzvun kendi daralması AYNI
+     uzamsal frekansta yaşıyor ve frekansla ayrılamıyorlar. Güvenilir hâle
+     getiremediğim bir sayı kapı olamaz; ölçülmediğini yazmak, ölçtüğünü
+     sanmaktan iyidir.
+     Ayrım zaten SIKLIKTA ölçülüyor ve orada fark 9,6 kat. */
+  void enDerin;
+
+  /* MAFSAL BÖLÜMDEN AYRILMALI: hem sıklıkta hem derinlikte. Uzuv körükleri
+     (kalça, diz, bilek, omuz, dirsek) için; el ve manşet gibi küçük körükler
+     kendi ölçeğinde olduğu için alt sınırın dışında tutulur. */
+  const uzuvKoruk = koruk.filter((k) => k.boy >= 0.06);
+  const enSeyrekKoruk = Math.min(...uzuvKoruk.map((k) => k.siklik));
+  const enSigKoruk = Math.min(...uzuvKoruk.map((k) => k.derin));
+  check('en seyrek körük bile en sık bölümden belirgin sık',
+    enSeyrekKoruk >= R.ayrimOrani * enSik,
+    `${enSeyrekKoruk.toFixed(1)}/m ÷ ${enSik.toFixed(1)}/m = `
+    + `${(enSeyrekKoruk / Math.max(enSik, 0.1)).toFixed(1)}× (en az ${R.ayrimOrani}×)`
+    + ' · kusurlu hâlinde 1,2×');
+
+
+  /* TERS SINAV: körüğü DÜZLEŞTİRMEK de yukarıdaki iki oranı korur - bölüm
+     sıfıra inerse oran sonsuz olur ve ortada mafsal diye bir şey kalmaz.
+     O yüzden körüğün kendi alt sınırı ayrıca aranır. */
+  check('TERS SINAV: körükler kendi başına sık ve derin',
+    enSeyrekKoruk >= 14 && enSigKoruk >= 1.5 * R.konvolutDerinlik,
+    `en seyrek ${enSeyrekKoruk.toFixed(1)}/m · en sığ %${(100 * enSigKoruk).toFixed(1)}`
+    + ' (düz bir uzuvda 0/m ve %0 olurdu, oran sınavları yine geçerdi)');
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);

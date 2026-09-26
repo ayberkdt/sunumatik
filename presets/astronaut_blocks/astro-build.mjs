@@ -102,7 +102,14 @@ export function suitMaterials(THREE, tk = {}) {
 
 /** Süpürülmüş uzuv: kesiti değişen, kapitoneli, dikişli bir gövde parçası. */
 function uzuvMesh(THREE, mat, boy, kesit, o = {}) {
-  return new THREE.Mesh(supur(THREE, { boy, kesit, ...o }), mat);
+  const m = new THREE.Mesh(supur(THREE, { boy, kesit, ...o }), mat);
+  /* KUMAŞ SÜPÜRMESİ OLDUĞUNU SÖYLER. Yüzey ritmi kapısı (bölüm 21) yalnız
+     kumaşı ölçmek zorunda: sert plaka, cep, boru ve halkanın kendi ritmi
+     vardır ve onlar mafsalın nerede olduğunu işaretlemez. Ayırt etmenin
+     yolu malzemeye ya da köşe sayısına bakmak değil, üreten yerin
+     SÖYLEMESİDİR. */
+  m.userData.kumas = true;
+  return m;
 }
 
 /** Yumuşak uçlu kabuk (kask kabarcığı): iki ucu kapanan dönel yüzey. */
@@ -167,6 +174,10 @@ function konvolut(THREE, M, wUst, dUst, wAlt, dAlt, boy, n = 4, {
     };
   }, { dilim: bol, halka });
   m.castShadow = true; m.receiveShadow = true;
+  /* MAFSALIN KIVRIMI olduğunu söyler; yüzey ritmi kapısı (bölüm 21) bunu
+     bölümün kapitonesiyle karşılaştırır ve hangisinin hangisi olduğunu
+     ağın BOYUNDAN tahmin etmek zorunda kalmaz. */
+  m.userData.rol = 'koruk';
   g.add(m);
   return g;
 }
@@ -398,7 +409,7 @@ function govde(THREE, p, M, yan = 0) {
       const brief = ekle(uzuvMesh(THREE, M.kumas, belZ - kalcaZ + 0.12, uzuvKesiti({
         ustW: sy * 0.56, ustD: sx * 0.54, altW: sy * 0.50, altD: sx * 0.46,
         sis: 0.14, sisT: 0.42,
-        p: 2.5, kapitone: [4, 0.05], dikis: [6, 0.05], kirisik: [1.2, 0.018],
+        p: 2.5, kapitone: [2, 0.035], dikis: [6, 0.05], kirisik: [1.2, 0.018],
         panelCevre: PANEL_SEMASI.altGovde.cevre, panelBoyuna: PANEL_SEMASI.altGovde.boyuna,
       }), { dilim: 22, halka: 36 }));
       brief.position.z = belZ;
@@ -441,11 +452,15 @@ function govde(THREE, p, M, yan = 0) {
           /* ŞİŞME KALÇAYA YAKIN. 0,3'te (dünyada z ≈ 0,95) uyluğun en kalın
              yeri kalçanın ALTINDA kalıyor ve etek görüntüsüne katkı
              veriyordu; bir bacağın en kalın yeri kalçanın hemen altıdır. */
-          sis: 0.045, sisT: 0.12, p: 2.2, kapitone: [6, 0.075], dikis: [8, 0.04], kirisik: [1.4, 0.022],
+          /* KAPİTONE SEYREK VE SIĞ (`YUZEY_RITMI`). 6 bant / 0,32 m = metrede 19,
+             diz körüğünün 25'ine çok yakındı; bacak baştan sona körük gibi
+             okunuyordu. 2 bant = metrede 6, körüğün dörtte biri. */
+          sis: 0.045, sisT: 0.12, p: 2.2, kapitone: [2, 0.03], dikis: [8, 0.04], kirisik: [1.4, 0.022],
           panelCevre: PANEL_SEMASI.altGovde.cevre, panelBoyuna: PANEL_SEMASI.altGovde.boyuna,
         }), { dilim: 20, halka: 32 });
         uyluk.position.z = -0.07;
         uyluk.castShadow = true; uyluk.receiveShadow = true;
+        uyluk.userData.rol = 'bolum';
         kalca.add(uyluk);
         /* Uyluk cebi: A7L'de örnek torbası ve kontrol listesi oradadır. */
         const cep = new THREE.Mesh(
@@ -481,10 +496,11 @@ function govde(THREE, p, M, yan = 0) {
            aşağıdaki bir bandın üstünden geçer. */
         const baldir = uzuvMesh(THREE, M.kumas, BALDIR_M - 0.07, uzuvKesiti({
           ustW: sy * 0.3, ustD: sx * 0.3, altW: sy * 0.244, altD: sx * 0.25,
-          sis: 0.07, sisT: 0.25, p: 2.2, kapitone: [6, 0.07], dikis: [8, 0.04], kirisik: [1.6, 0.022],
+          sis: 0.07, sisT: 0.25, p: 2.2, kapitone: [2, 0.03], dikis: [8, 0.04], kirisik: [1.6, 0.022],
         }), { dilim: 20, halka: 32 });
         baldir.position.z = -0.07;
         baldir.castShadow = true; baldir.receiveShadow = true;
+        baldir.userData.rol = 'bolum';
         diz.add(baldir);
         const ayakY = yatakHalkasi(THREE, M, sy * 0.215, { kalin: 0.013, tirnak: 6 });
         ayakY.position.z = -BALDIR_M;
@@ -796,11 +812,14 @@ function govde(THREE, p, M, yan = 0) {
       g.add(konvolut(THREE, M, sy * 0.63, sx * 0.6, sy * 0.61, sx * 0.58, sz * 0.09, 2));
       const ust = uzuvMesh(THREE, M.kumas, ustBoy - sz * 0.09 - sy * 0.34, uzuvKesiti({
         ustW: sy * 0.61, ustD: sx * 0.58, altW: sy * 0.574, altD: sx * 0.56,
-        sis: 0.05, sisT: 0.25, p: 2.2, kapitone: [6, 0.085], dikis: [6, 0.035], kirisik: [1.8, 0.025],
+        /* ÜST KOL 0,223 m: iki bant metrede 9 eder ve omuz körüğünün 22'sine
+           fazla yaklaşır (ölçüldü: 11,2/m, oran 1,96 - eşik 2,5). Tek bant. */
+        sis: 0.05, sisT: 0.25, p: 2.2, kapitone: [1, 0.03], dikis: [6, 0.035], kirisik: [1.8, 0.025],
         panelCevre: PANEL_SEMASI.kol.cevre, panelBoyuna: PANEL_SEMASI.kol.boyuna,
       }), { dilim: 18, halka: 30 });
       ust.position.z = -sz * 0.09;
       ust.castShadow = true; ust.receiveShadow = true;
+      ust.userData.rol = 'bolum';
       g.add(ust);
 
       const dirsek = new THREE.Group();
@@ -832,10 +851,11 @@ function govde(THREE, p, M, yan = 0) {
          başlıyordu, dirsek gövdesinin yarı boyu ise 0,094. */
       const on = uzuvMesh(THREE, M.kumas, onBoy - sz * 0.09, uzuvKesiti({
         ustW: sy * 0.541, ustD: sx * 0.54, altW: sy * 0.447, altD: sx * 0.45,
-        sis: 0.06, sisT: 0.25, p: 2.2, kapitone: [6, 0.08], dikis: [6, 0.035], kirisik: [2.0, 0.025],
+        sis: 0.06, sisT: 0.25, p: 2.2, kapitone: [2, 0.03], dikis: [6, 0.035], kirisik: [2.0, 0.025],
       }), { dilim: 18, halka: 30 });
       on.position.z = -sz * 0.09;
       on.castShadow = true; on.receiveShadow = true;
+      on.userData.rol = 'bolum';
       /* Ön kolun KENDİSİ döner, üst kol değil: dönen parça `onkolDon`un
          altındadır ve eldiven de oraya bağlanır. */
       onkolDon.add(on);

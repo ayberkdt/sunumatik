@@ -315,6 +315,13 @@ export function supur(THREE, {
   geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   geo.setIndex(idx);
   geo.computeVertexNormals();
+  /* SÜPÜRMENİN IZGARASI GEOMETRİDE DURUR. Yüzey ritmini z kovalarına bölerek
+     ölçmeye çalışmak, kova aralığı halka aralığından ince olduğu anda ölçüm
+     değil TESSELASYON GÜRÜLTÜSÜ verir: metrede 120 "kıvrım" çıkıyordu ve o
+     sayı dilim sayısının ta kendisiydi. Süpürmenin halkaları zaten eksen
+     boyunca düzgün aralıklı; onları yeniden keşfetmeye çalışmak yerine
+     saymak gerekir. */
+  geo.userData.izgara = { halka, dilim, boy };
   return geo;
 }
 
