@@ -274,5 +274,210 @@ console.log('== 6 gövde çerçevesi: beyan edilen yön ile çizilen yön');
     havada.join(', ') || Object.keys(POZLAR).join(', '));
 }
 
+/* ── 7 BİÇİM: kesit daire DEĞİL ───────────────────────────────────────
+ *
+ * "Silindir yığını gibi duruyor" ölçülebilir bir iddiadır: dönel yüzeyin
+ * kesiti DAİREDİR, yani çizilen en ile derinlik birbirine eşittir. İnsanda
+ * hiçbir yerde öyle değil - göğüs enine geniş önden sığ, uyluk kalçada
+ * yanlara yassıdır. Bu bölüm o oranı ölçer.
+ */
+console.log('');
+console.log('== 7 biçim: kesit daire değil');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const BODY = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-body.mjs')).href);
+  const v = new THREE.Vector3();
+  const kutu = (o) => {
+    let mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
+    o.updateWorldMatrix(true, true);
+    o.traverse((m) => {
+      const q = m.isMesh && m.geometry?.attributes?.position;
+      if (!q) return;
+      for (let i = 0; i < q.count; i++) {
+        v.fromBufferAttribute(q, i).applyMatrix4(m.matrixWorld);
+        mn = [Math.min(mn[0], v.x), Math.min(mn[1], v.y), Math.min(mn[2], v.z)];
+        mx = [Math.max(mx[0], v.x), Math.max(mx[1], v.y), Math.max(mx[2], v.z)];
+      }
+    });
+    return { mn, mx, size: [0, 1, 2].map(i => mx[i] - mn[i]) };
+  };
+  const S = AB.buildAstronaut(THREE, { poz: 'dik' });
+
+  /* Sert üst gövde: enine geniş, önden arkaya sığ. Daire olsa oran 1 olurdu. */
+  const hut = kutu(S.nodes.get('ust-govde')).size;
+  const oran = hut[1] / hut[0];
+  check('üst gövde kesiti enine geniş, önden sığ (daire değil)', oran > 1.25,
+    `en ${hut[1].toFixed(3)} / derinlik ${hut[0].toFixed(3)} = ${oran.toFixed(2)}`);
+
+  /* TERS SINAV: ölçüm gerçekten bir oran görüyor mu - küre için 1 vermeli. */
+  const kure = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 8),
+    new THREE.MeshStandardMaterial());
+  const ko = kutu(kure).size;
+  check('TERS SINAV: küre için oran 1 çıkıyor', Math.abs(ko[1] / ko[0] - 1) < 0.02,
+    `${(ko[1] / ko[0]).toFixed(3)}`);
+
+  /* Süpereliptik kesit gerçekten süperelips mi: p = 4 için köşe noktası
+     elipsinkinden DIŞARIDA olmalı (yuvarlatılmış dikdörtgene yaklaşır). */
+  const e2 = BODY.kesitNokta(Math.PI / 4, 1, 1, 2);
+  const e4 = BODY.kesitNokta(Math.PI / 4, 1, 1, 4);
+  check('süpereliptik üs kesiti kutulaştırıyor', Math.hypot(...e4) > Math.hypot(...e2) + 0.05,
+    `p=2 köşe ${Math.hypot(...e2).toFixed(3)} < p=4 köşe ${Math.hypot(...e4).toFixed(3)}`);
+
+  /* NORMALLER DIŞA BAKMALI. İçe bakan normal yüzeyi içeriden aydınlatır ve
+     BEYAZ giysi siyah çıkar - ilk yazışta tam bu oldu, 144 normalin hepsi
+     içe bakıyordu. Depodaki `latheZ` yardımcısı aynı tuzağı belgeliyor. */
+  const geo = BODY.supur(THREE, {
+    boy: 1, kesit: BODY.uzuvKesiti({ ustW: 0.2, ustD: 0.18, altW: 0.1, altD: 0.09, sis: 0 }),
+    dilim: 8, halka: 16,
+  });
+  const P = geo.attributes.position, N = geo.attributes.normal;
+  let ice = 0, yan = 0;
+  for (let i = 0; i < P.count; i++) {
+    const x = P.getX(i), y = P.getY(i), r = Math.hypot(x, y);
+    if (r < 1e-6) continue;
+    yan++;
+    if ((N.getX(i) * x + N.getY(i) * y) / r <= 0) ice++;
+  }
+  check('süpürme yüzeyinin normalleri DIŞA bakıyor', ice === 0 && yan > 50,
+    `${yan} yan nokta, ${ice} içe bakan`);
+
+  /* Kapitone gerçekten yüzeyi modüle ediyor mu: bantlı ve bantsız aynı uzvun
+     yarıçapları FARKLI olmalı, yoksa kapitone yalnız yorumda vardır. */
+  const duz = BODY.kapitoneKat(0.5, 0, 0);
+  const bant = [0, 0.1, 0.2, 0.3].map(x => BODY.kapitoneKat(x, 5, 0.06));
+  check('kapitone bantları yüzeyi modüle ediyor',
+    duz === 1 && Math.max(...bant) - Math.min(...bant) > 0.02,
+    `düz ${duz} · bant aralığı ${(Math.max(...bant) - Math.min(...bant)).toFixed(3)}`);
+}
+
+/* ── 8 YÜRÜYÜŞ: ayak kaymaz, batmaz, çevrim kapanır ───────────────────
+ *
+ * Bir yürüyüşü kare kare açı yazarak kurmak iki hatayı garanti eder ve
+ * ikisi de burada ölçülür. Üçü de ilk yazışta GERÇEKTEN oldu:
+ *
+ *   ayak yere 0,107 m battı        çizme baldıra sabitti, bilek mafsalı yoktu
+ *   bilek çözümden 47 mm saptı     kalça yüksekliği yalnız BASAN ayağa bakıyordu
+ *   bütün figür NaN'a döndü        yürüyüş `ayak` alanına KONUM yazıyordu,
+ *                                  duruş `ayak` alanını AÇI sanıyordu
+ */
+console.log('');
+console.log('== 8 yürüyüş: ayak kaymaz, batmaz, çevrim kapanır');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const G = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-gait.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik' });
+  const L = S.olcu.bacakM;
+
+  /* FROUDE ÖZDEŞLİĞİ: hız ile Froude birbirinin tersi olmalı. */
+  const g = G.YERCEKIMI.dunya;
+  const hz = G.froudeHizi(0.37, g, L);
+  check('Froude ↔ hız dönüşümü kendi tersi', Math.abs(G.froude(hz, g, L) - 0.37) < 1e-12,
+    `Fr 0.37 → ${hz.toFixed(3)} m/s → Fr ${G.froude(hz, g, L).toFixed(6)}`);
+
+  /* MODELİN DOĞRULAMASI: Dünya'da kendiliğinden seçilen hızda cadans, insan
+     ölçümleriyle aynı bantta olmalı (105-115 adım/dk). Bu sayı modele
+     UYDURULMADI - adım boyu Froude'dan çıkıyor ve cadans oradan geliyor. */
+  const D = G.yuruyusFizigi('dunya', L);
+  check('Dünya doğal yürüyüşünde cadans insan bandında',
+    D.cadans > 100 && D.cadans < 120,
+    `${D.cadans.toFixed(0)} adım/dk · adım ${D.adimBoyu.toFixed(2)} m · ${D.hiz.toFixed(2)} m/s`);
+  check('Dünya doğal hızı insan bandında (uzun boy için ölçekli)',
+    D.hiz > 1.3 && D.hiz < 1.9, `${D.hiz.toFixed(2)} m/s, bacak ${L} m`);
+
+  /* APOLLO İDDİASI ÖLÇÜLÜR: aynı mutlak hız Dünya'da yürüyüş, Ay'da sıçrama
+     olmak ZORUNDA - yoksa "onun için sıçradılar" cümlesi dayanaksızdır. */
+  const dz = G.yuruyusFizigi('dunya', L, 1.2);
+  const ay = G.yuruyusFizigi('ay', L, 1.2);
+  check('aynı hız Dünya\'da yürüyüş, Ay\'da sıçrama',
+    dz.tip === 'yuruyus' && ay.tip === 'sicrama',
+    `1.2 m/s → Dünya Fr ${dz.froude.toFixed(2)} (${dz.tip}) · Ay Fr ${ay.froude.toFixed(2)} (${ay.tip})`);
+  check('sıçramada uçuş evresi var, yürüyüşte yok',
+    dz.ucusSure === 0 && ay.ucusSure > 0.05,
+    `Dünya ${dz.ucusSure.toFixed(2)} s · Ay ${ay.ucusSure.toFixed(2)} s`);
+  check('görev oranı yürüyüşte > 0,5, sıçramada < 0,5',
+    dz.gorevOrani > 0.5 && ay.gorevOrani < 0.5,
+    `${dz.gorevOrani.toFixed(2)} / ${ay.gorevOrani.toFixed(2)}`);
+
+  /* ÇİZİLEN GEOMETRİ ÇÖZÜMLE TUTUYOR MU. Bilek mafsalının dünya konumu,
+     çözümün söylediği ayak konumunda olmalı; taban da yerin altına inmemeli. */
+  const olc = { uylukM: S.olcu.uylukM, baldirM: S.olcu.baldirM };
+  const v = new THREE.Vector3();
+  for (const [ortam, hiz] of [['dunya', 1.2], ['ay', 1.2], ['ay', 1.7], ['mars', 1.0]]) {
+    const F = G.yuruyusFizigi(ortam, L, hiz);
+    let sapma = 0, enAlt = Infinity;
+    const N = 180;
+    for (let i = 0; i < N; i++) {
+      const P = G.yuruyusPozu(i / N, F, olc);
+      S.uygulaPoz(P);
+      for (const j of [0, 1]) {
+        const w = S.eklem.ayak[j].getWorldPosition(new THREE.Vector3());
+        const h = P.ayakKonum[j];
+        sapma = Math.max(sapma, Math.hypot(w.x - h.x, w.z - (h.z + S.olcu.botOfsetM)));
+        const c = S.nodes.get(j === 0 ? 'cizmeler' : 'cizmeler#2');
+        c.updateWorldMatrix(true, true);
+        c.traverse((m) => {
+          const q = m.isMesh && m.geometry?.attributes?.position;
+          if (!q) return;
+          for (let k = 0; k < q.count; k++) {
+            v.fromBufferAttribute(q, k).applyMatrix4(m.matrixWorld);
+            if (v.z < enAlt) enAlt = v.z;
+          }
+        });
+      }
+    }
+    check(`${ortam} ${hiz} m/s: bilek çözümün söylediği yerde`, sapma < 0.001,
+      `sapma ${(sapma * 1000).toFixed(2)} mm`);
+    check(`${ortam} ${hiz} m/s: taban yerin altına inmiyor`, enAlt > -0.001,
+      `en alçak ${enAlt.toFixed(4)} m`);
+  }
+
+  /* ÇEVRİM KAPANMALI: faz 0 ile faz 1 aynı duruş olmalı, yoksa her turda
+     görünür bir sıçrama olur. */
+  const F = G.yuruyusFizigi('ay', L, 1.2);
+  const P0 = G.yuruyusPozu(0, F, olc), P1 = G.yuruyusPozu(1, F, olc);
+  let fark = 0;
+  for (const k of ['kalca', 'diz', 'omuz', 'dirsek']) {
+    fark = Math.max(fark, Math.abs(P0[k][0] - P1[k][0]), Math.abs(P0[k][1] - P1[k][1]));
+  }
+  check('çevrim kapanıyor (faz 0 = faz 1)', fark < 1e-9, `en büyük fark ${fark.toExponential(1)}°`);
+
+  /* AYAK KAYMAZ: basma evresinde ayak yere çividir ve gövdeye göre tam
+     adım boyu kadar geriye gider - ne eksik ne fazla. */
+  const bas = [];
+  for (let i = 0; i <= 400; i++) {
+    const u = i / 400;
+    const k = G.ayakKonumu(u, F);
+    if (k.basiyor) bas.push(k.x);
+  }
+  const yol = Math.max(...bas) - Math.min(...bas);
+  check('basma evresinde ayak tam adım boyu kadar geriye gidiyor',
+    Math.abs(yol - F.adimBoyu) < 0.01,
+    `${yol.toFixed(3)} m / adım ${F.adimBoyu.toFixed(3)} m`);
+  check('basma evresinde ayak yerden kalkmıyor',
+    bas.length > 50, `${bas.length} örnek basıyor`);
+
+  /* TERS SINAV: kalça kısıtı yalnız BASAN ayağa bakarsa - ilk yazımdaki
+     kusur - ters kinematik kırpılır ve bilek çözümden sapar. Ölçüm bunu
+     yakalamak zorunda, yoksa "sapma 0" bir şey söylemiyordur. */
+  const Fd = G.yuruyusFizigi('dunya', L, 1.2);
+  const enUzun = (S.olcu.uylukM + S.olcu.baldirM) * 0.995;
+  let kotu = 0;
+  for (let i = 0; i < 200; i++) {
+    const u = i / 200;
+    const ayaklar = [G.ayakKonumu(u, Fd), G.ayakKonumu(u + 0.5, Fd)];
+    const basanlar = ayaklar.filter(x => x.basiyor);
+    if (!basanlar.length) continue;
+    /* Eski (hatalı) kural: yalnız basan ayakların EN BÜYÜĞÜ. */
+    const eski = Math.max(...basanlar.map(x => Math.sqrt(Math.max(0, enUzun * enUzun - x.x * x.x))));
+    for (const x of ayaklar) {
+      if (Math.hypot(x.x, eski - x.z) > enUzun + 1e-6) kotu++;
+    }
+  }
+  check('TERS SINAV: eski kalça kuralı erişilemeyen ayak üretiyor', kotu > 0,
+    `${kotu} karede bacak yetişmiyordu`);
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);

@@ -20,7 +20,15 @@
     .arac { position: absolute; left: 306px; top: 12px; display: flex; gap: 8px; flex-wrap: wrap; z-index: 3; }
     button, select { background: rgba(16,19,27,.9); color: #dfe3ea; border: 1px solid #2b303d;
       border-radius: 8px; padding: 8px 11px; font-size: 12px; min-height: 44px; cursor: pointer; }
-    button.aktif { border-color: #c9a35c; background: rgba(201,163,92,.14); color: #f0e2c4; }
+    /* SEÇİLİ DURUM ile BİRİNCİL EYLEM aynı şey değil. İkisi de `.aktif`
+       olunca görünümde üç vurgu birden çıkıyordu (Standing · the Moon · Yürü)
+       ve tek vurgu kuralı, en çok bakılan şeyi öne çıkarma işini yapamıyordu.
+       Seçili durum sessizdir; vurgu tonu yalnız birincil eylemindir. */
+    button.aktif { border-color: #4a5164; background: rgba(255,255,255,.06); color: #e7ebf3; }
+    button.birincil { border-color: #c9a35c; background: rgba(201,163,92,.16); color: #f0e2c4; }
+    /* Kaydıraç dokunmatik hedefi: ölçülen 16 px idi, en az 44 olmalı. */
+    input[type=range] { width: 100%; min-height: 44px; accent-color: #c9a35c;
+      background: transparent; }
     .adim { padding: 8px; border: 1px solid transparent; border-radius: 7px; cursor: pointer; min-height: 44px; }
     .adim.secili { background: rgba(201,163,92,.10); border-color: #c9a35c; }
     .adim b { display: block; font-size: 12.5px; color: #eef1f6; }
@@ -44,18 +52,28 @@
     <div id="adimlar"></div>
     <h2>Duruş</h2>
     <div id="pozlar"></div>
+    <h2>Yürüyüş</h2>
+    <p class="alt" style="margin:0 0 8px">Yerçekimi bir başlık değil, bir kumanda:
+      aynı hız Dünya'da yürüyüş, Ay'da sıçramadır.</p>
+    <div id="ortamlar"></div>
+    <label class="e" for="hiz">Hız</label>
+    <input id="hiz" type="range" min="0.3" max="2.4" step="0.05" value="0.67">
+    <div id="hizDeger" class="alt" style="margin:2px 0 0"></div>
   </aside>
 
   <div id="sahne"></div>
   <div class="arac">
+    <button id="oynat" class="birincil">Dur</button>
     <button id="patlat">Patlat</button>
-    <button id="hepsi" class="aktif">Tüm bileşenler</button>
+    <button id="hepsi">Tüm bileşenler</button>
   </div>
   <div id="altyazi"></div>
 
   <aside class="sag">
     <h2>Bileşen</h2>
     <div id="kunye">Bir bileşene tıklayın ya da soldan bir adım seçin.</div>
+    <h2>Yürüyüş fiziği</h2>
+    <div id="fizik"></div>
     <h2>Ölçek</h2>
     <div id="olcek"></div>
     <h2>Sekiz saatlik EVA</h2>
@@ -69,6 +87,8 @@
              describe, evaBudget, powerBudget, BOY_M, OMUZ_M, BASINC_KPA } from './astro-parts.mjs';
     import { sceneLighting } from '../core/scene-lighting.mjs';
     import { createOrbitDrag, orbitPosition } from '../core/orbit-drag.mjs';
+    import { yuruyusFizigi, yuruyusPozu, YERCEKIMI, ORTAM_ADI, GECIS_FROUDE,
+             froudeHizi, DOGAL_FROUDE } from './astro-gait.mjs';
 
     const el = (s) => document.querySelector(s);
     const host = el('#sahne');
@@ -97,12 +117,38 @@
     rig.gunes.position.set(4.5, 3.0, 4.0);
     renderer.toneMappingExposure = 1.0 * rig.pozlamaCarpani();
 
-    const zemin = new THREE.Mesh(new THREE.CircleGeometry(9, 48),
-      new THREE.MeshStandardMaterial({ color: 0x5f5f63, roughness: 0.98 }));
+    /* Yürünecek kadar uzun bir zemin: 9 m'lik bir disk üstünde yürüyen bir
+       figür üç adımda kenardan düşer. */
+    const zeminMat = new THREE.MeshStandardMaterial({ color: 0x5f5f63, roughness: 0.98 });
+    const zemin = new THREE.Mesh(new THREE.PlaneGeometry(220, 44), zeminMat);
     zemin.receiveShadow = true;
     scene.add(zemin);
+    /* BOT İZLERİ. Ay tozunda iz kalır ve KALICIDIR - onu silecek ne rüzgâr
+       ne su vardır. Bir yürüyüşün gerçekten yol aldığını gösteren tek şey
+       arkada bıraktığıdır; iz olmadan figür bir koşu bandındadır. */
+    const izMat = new THREE.MeshStandardMaterial({ color: 0x3f4045, roughness: 1 });
+    const izGeo = new THREE.PlaneGeometry(0.33, 0.16);
+    const izler = [];
+    const IZ_SAYISI = 48;
+    for (let i = 0; i < IZ_SAYISI; i++) {
+      const m = new THREE.Mesh(izGeo, izMat);
+      m.position.set(0, 0, -99);
+      m.receiveShadow = false;
+      scene.add(m);
+      izler.push(m);
+    }
+    let izSira = 0;
+    function izBirak(x, y) {
+      const m = izler[izSira % IZ_SAYISI];
+      izSira++;
+      m.position.set(x, y, 0.004);
+    }
 
     let poz = 'dik', kurulum = null, patla = 0, secili = null, adim = 0;
+    /* YÜRÜYÜŞ DURUMU. `faz` çevrim içindeki yer (0..1, bir çevrim İKİ adım),
+       `mesafe` figürün gerçekten aldığı yol. */
+    let yuruyor = true, ortam = 'ay', hiz = null, faz = 0, mesafe = 0, F = null;
+    let sonBasan = [false, false];
     const kok = new THREE.Group();
     scene.add(kok);
 
@@ -110,7 +156,41 @@
       if (kurulum) { kok.remove(kurulum.root); }
       kurulum = buildAstronaut(THREE, { poz });
       kok.add(kurulum.root);
+      fizikKur();
       uygula();
+    }
+
+    /* Yürüyüşün bütün sayıları TEK yerden: ortam, bacak boyu ve hız.
+       Bacak boyu figürden gelir, buraya kopyalanmaz. */
+    function fizikKur() {
+      if (hiz === null) hiz = froudeHizi(DOGAL_FROUDE, YERCEKIMI[ortam], kurulum.olcu.bacakM);
+      F = yuruyusFizigi(ortam, kurulum.olcu.bacakM, hiz);
+      el('#hiz').value = String(Math.min(2.4, Math.max(0.3, hiz)));
+      el('#hizDeger').textContent =
+        `${F.hiz.toFixed(2)} m/s · geçiş ${F.gecisHiz.toFixed(2)} m/s · doğal ${F.dogalHiz.toFixed(2)} m/s`;
+      fizikPaneli();
+    }
+
+    function fizikPaneli() {
+      const s = (a, b) => `<div class="satir"><span>${a}</span><b>${b}</b></div>`;
+      el('#fizik').innerHTML =
+        s('Yer çekimi', `${F.g.toFixed(2)} m/s²`)
+        + s('Bacak boyu (kalça)', `${kurulum.olcu.bacakM.toFixed(2)} m`)
+        + s('Hız', `${F.hiz.toFixed(2)} m/s`)
+        + s('Froude sayısı', F.froude.toFixed(3))
+        + s('Yürüyüş → sıçrama eşiği', `Fr ${GECIS_FROUDE} · ${F.gecisHiz.toFixed(2)} m/s`)
+        + s('Kip', F.tip === 'sicrama' ? 'Sıçrama (loping)' : 'Yürüyüş')
+        + s('Adım boyu', `${F.adimBoyu.toFixed(2)} m`)
+        + s('Cadans', `${F.cadans.toFixed(0)} adım/dk`)
+        + s('Görev oranı', F.gorevOrani.toFixed(2))
+        + s('Uçuş süresi', `${F.ucusSure.toFixed(2)} s`)
+        + `<div class="satir"><span>Alınan yol</span><b id="yol">${mesafe.toFixed(1)} m</b></div>`
+        + `<p class="alt" style="margin:8px 0 0">Fr = v²/(g·L). Basan bacak bir ters
+           sarkaçtır; gövdenin üstünden dönmesi için gereken v²/L yerçekimini aşınca
+           ayak yerden kesilir ve yürümek imkânsızlaşır. ${F.tip === 'sicrama'
+             ? `${F.ad} için eşik ${F.gecisHiz.toFixed(2)} m/s ve bu hız onun üstünde —
+                Apollo ekibinin sıçrayarak ilerlemesinin sebebi bu.`
+             : `Bu hız eşiğin altında, o yüzden yürüyüş mümkün.`}</p>`;
     }
 
     /* Patlatma yönü giyinme sırasının TERSİDİR: en son takılan en önce
@@ -132,8 +212,11 @@
       const s = STEPS.find((x) => x.no === adim);
       el('#altyazi').innerHTML = adim === 0
         ? `<b>Giysi tamam</b> · ${d.parca} bileşen, ${d.adet} adet · ${d.kutleKg} kg ·
-           boy ${d.boyM} m, omuz ${d.omuzM} m · ${d.basincKPa} kPa · ${d.gucW} W ·
-           duruş: ${POZLAR[poz].ad}`
+           boy ${d.boyM} m, omuz ${d.omuzM} m · ${d.basincKPa} kPa · ${d.gucW} W · ${
+             yuruyor && F
+               ? `${F.ad} · ${F.tip === 'sicrama' ? 'sıçrama' : 'yürüyüş'} ${F.hiz.toFixed(2)} m/s ·
+                  Fr ${F.froude.toFixed(2)} · ${mesafe.toFixed(1)} m`
+               : `duruş: ${POZLAR[poz].ad}`}`
         : `<b>Adım ${s.no}/${STEPS.length} — ${s.ad}</b> · ${s.aciklama}`;
     }
 
@@ -177,6 +260,8 @@
       b.classList.toggle('aktif', k === poz);
       b.addEventListener('click', () => {
         poz = k;
+        yuruyor = false;
+        el('#oynat').textContent = 'Yürü';
         [...pz.children].forEach((c) => c.classList.remove('aktif'));
         b.classList.add('aktif');
         kur();
@@ -215,6 +300,32 @@
       uygula();
     });
 
+    /* ---------- yürüyüş kumandaları ---------- */
+    const ortamKutu = el('#ortamlar');
+    for (const k of ['ay', 'mars', 'dunya']) {
+      const b = document.createElement('button');
+      b.textContent = ORTAM_ADI[k];
+      b.classList.toggle('aktif', k === ortam);
+      b.onclick = () => {
+        ortam = k;
+        /* Ortam değişince hız o ortamın DOĞAL hızına döner: aynı mutlak hızı
+           korumak ilginç ama varsayılan olarak şaşırtıcı olur. */
+        hiz = froudeHizi(DOGAL_FROUDE, YERCEKIMI[ortam], kurulum.olcu.bacakM);
+        for (const o of ortamKutu.children) o.classList.toggle('aktif', o === b);
+        fizikKur();
+      };
+      ortamKutu.appendChild(b);
+    }
+    el('#hiz').addEventListener('input', (ev) => {
+      hiz = Number(ev.target.value);
+      fizikKur();
+    });
+    el('#oynat').onclick = () => {
+      yuruyor = !yuruyor;
+      el('#oynat').textContent = yuruyor ? 'Dur' : 'Yürü';
+      if (!yuruyor) { kurulum.uygulaPoz(POZLAR[poz]); altyazi(); }
+    };
+
     /* ---------- kamera ---------- */
     const surukleyici = createOrbitDrag(host, {
       az: 0.9, el: 0.25, dist: 4.6, minDist: 1.4, maxDist: 12,
@@ -223,9 +334,12 @@
     });
     const kam = surukleyici.state;
     function kameraKur() {
+      /* Kamera figürü TAKİP eder: sabit bir hedefte yürüyen figür üç saniyede
+         kadrajdan çıkar. */
+      const hx = kurulum ? kurulum.root.position.x : 0;
       const [x, y, z] = orbitPosition(kam, { yukari: 'z' });
-      camera.position.set(x, y, z + 0.95);
-      camera.lookAt(0, 0, 0.95);
+      camera.position.set(x + hx, y, z + 0.95);
+      camera.lookAt(hx, 0, 0.95);
     }
 
     const ray = new THREE.Raycaster(), fare = new THREE.Vector2();
@@ -253,26 +367,68 @@
     addEventListener('resize', boyutla);
 
     const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let raf = 0;
-    function kare() {
+    let raf = 0, sonT = 0;
+    function yuruyusKare(dt) {
+      /* Bir ÇEVRİM iki adımdır, o yüzden çevrim süresi 2 × adım süresi. */
+      faz = (faz + dt / (2 * F.adimSure)) % 1;
+      const P = yuruyusPozu(faz, F, kurulum.olcu);
+      kurulum.uygulaPoz(P);
+      mesafe += F.hiz * dt;
+      kurulum.root.position.x = mesafe;
+      /* İz, ayağın yere DEĞDİĞİ anda bırakılır - her karede değil. */
+      for (const j of [0, 1]) {
+        const a = P.ayakKonum[j];
+        if (a.basiyor && !sonBasan[j]) {
+          izBirak(mesafe + a.x, j === 0 ? 0.115 : -0.115);
+        }
+        sonBasan[j] = a.basiyor;
+      }
+      altyazi();
+      /* Alınan yol CANLI bir sayıdır. Paneli yalnız ayar değişince yenilemek
+         onu donduruyordu: figür yürürken panel 0,0 m diyordu ve canlı bir
+         sayıyı donuk göstermek, yanlış göstermektir. */
+      const y = el('#yol');
+      if (y) y.textContent = `${mesafe.toFixed(1)} m`;
+    }
+    function kare(t) {
+      const dt = sonT ? Math.min(0.05, (t - sonT) / 1000) : 0;
+      sonT = t;
+      if (yuruyor && kurulum && F && patla === 0) yuruyusKare(dt);
       surukleyici.update();
       kameraKur();
       renderer.render(scene, camera);
       raf = requestAnimationFrame(kare);
     }
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; }
-      else if (!document.hidden && !raf) raf = requestAnimationFrame(kare);
+      if (document.hidden && raf) { cancelAnimationFrame(raf); raf = 0; sonT = 0; }
+      else if (!document.hidden && !raf) { sonT = 0; raf = requestAnimationFrame(kare); }
     });
 
     kur(); boyutla(); kameraKur();
-    if (azaltilmis) renderer.render(scene, camera); else raf = requestAnimationFrame(kare);
+    if (azaltilmis) {
+      /* prefers-reduced-motion: yürüyüş oynamaz ama GÖRÜNÜR - çevrimin orta
+         basma karesi durağan olarak gösterilir, kumanda yine çalışır. */
+      yuruyor = false;
+      el('#oynat').textContent = 'Yürü';
+      kurulum.uygulaPoz(yuruyusPozu(0.25, F, kurulum.olcu));
+      renderer.render(scene, camera);
+      raf = requestAnimationFrame(kare);
+    } else {
+      raf = requestAnimationFrame(kare);
+    }
 
     window.astronautBlocks = {
       state: () => ({ poz, adim, patla, secili, ozet: describe(),
+        yuruyor, ortam, hiz: F ? F.hiz : null, faz, mesafe,
+        fizik: F ? { froude: F.froude, tip: F.tip, adimBoyu: F.adimBoyu,
+          cadans: F.cadans, gorevOrani: F.gorevOrani, ucusSure: F.ucusSure } : null,
         kamera: { az: kam.az, el: kam.el, dist: kam.dist } }),
-      setPoz: (k) => { if (POZLAR[k]) { poz = k; kur(); } },
+      setPoz: (k) => { if (POZLAR[k]) { poz = k; yuruyor = false; kur(); } },
       setAdim: (n) => { adim = n; uygula(); },
+      setOrtam: (k) => { if (YERCEKIMI[k]) { ortam = k; hiz = null; fizikKur(); } },
+      setHiz: (v) => { hiz = Number(v); fizikKur(); },
+      setFaz: (v) => { faz = Number(v) % 1; kurulum.uygulaPoz(yuruyusPozu(faz, F, kurulum.olcu)); },
+      yuru: (a) => { yuruyor = !!a; },
       pozlar: () => Object.keys(POZLAR),
     };
   </script>
