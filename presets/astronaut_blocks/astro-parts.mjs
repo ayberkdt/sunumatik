@@ -64,6 +64,27 @@ export const DIKEY = Object.freeze({
  * boyun 0,12; aradaki fark basınç contası, kilit bileziği ve körük).
  */
 export const BOYUN_CAP_M = 0.26;
+
+/**
+ * GÖVDE KAPSÜLÜ — kolun İÇİNE GİREMEYECEĞİ hacim.
+ *
+ * Ölçülen kusur: yürüyüş çevriminin 60 fazının 32'sinde el gövdenin içinde,
+ * en kötüsünde 2201 eldiven köşesi. Sebep basit - kol salınımı bir AÇIDIR ve
+ * çözümün elin nereye gittiğinden haberi yoktur. Üstelik kolun dışa açılacak
+ * bir ekseni de yoktu, yani düzeltmek için serbestlik de yoktu.
+ *
+ * Kapsül düşey bir eksen parçası ve bir yarıçaptır. Yarıçap ÖLÇÜLDÜ: gövdenin
+ * en geniş kesiti (yarı en 0,308) artı eldivenin yarı kalınlığı (0,094), yani
+ * elin merkezi bu yarıçapın içine girerse el gövdeye değiyor demektir.
+ *
+ * Beyan edilir, çünkü kodun içine gömülmüş bir çarpışma yarıçapını kimse
+ * sonradan bulamaz.
+ */
+export const GOVDE_KAPSULU = Object.freeze({
+  altZ: 1.02, ustZ: 1.62, yariCap: 0.40,
+  neden: 'Gövdenin yarı eni 0,308 m; eldivenin yarı kalınlığı 0,094 m. '
+    + 'Elin MERKEZİ bu yarıçapın içine girerse el gövdeye girmiş demektir.',
+});
 /**
  * EKLEM SÖZLEŞMESİ — deponun "aksamlar" kütüphanesiyle aynı biçim.
  *

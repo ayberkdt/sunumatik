@@ -41,7 +41,8 @@
  * düşey hızıyla tam eşleşmez.
  */
 
-import { EKLEMLER, POZ_EKLEM, sinirla, AYAK_ON_M, AYAK_ARKA_M } from './astro-parts.mjs';
+import { EKLEMLER, POZ_EKLEM, sinirla, AYAK_ON_M, AYAK_ARKA_M,
+         GOVDE_KAPSULU } from './astro-parts.mjs';
 
 /** Yüzey yerçekimi (m/s²). Kaynak: standart gezegen değerleri. */
 export const YERCEKIMI = Object.freeze({
@@ -200,7 +201,10 @@ export function ayakKonumu(faz, F) {
   if (u < D) {
     /* BASMA: ayak yerde. Öne basılır, gövde üstünden geçer, arkada kalkar. */
     const s = u / D;
-    return { x: A * (0.5 - s), z: 0, basiyor: true };
+    /* `basmaFaz`: basma evresinin NERESİNDE olduğumuz (0 temas, 1 kalkış).
+       Temas tepkisi buna ihtiyaç duyar ve onu yeniden hesaplamak, aynı
+       sayıyı iki yerde tutmak olurdu. */
+    return { x: A * (0.5 - s), z: 0, basiyor: true, basmaFaz: s };
   }
   /* SALINIM: ayak kalkar, öne gider, iner. */
   const s = (u - D) / (1 - D);
@@ -208,7 +212,7 @@ export function ayakKonumu(faz, F) {
   return {
     x: A * (-0.5 + yumusak),
     z: F.ayakAcikligi * Math.sin(Math.PI * s),
-    basiyor: false,
+    basiyor: false, basmaFaz: -1,
   };
 }
 
@@ -271,6 +275,27 @@ export function ayakYuvarlanma(ad, gerekenDeg) {
   return { aci, yukselme: kol * Math.abs(Math.sin(fark)) };
 }
 
+/**
+ * ADIM GÜRÜLTÜSÜ — iki adım birbirinin aynı değildir.
+ *
+ * Ölçülen: çevrim birebir tekrar ediyordu. Gerçek yürüyüşte adım boyu ve
+ * süresi %2-4 dalgalanır ve bir yürüyüşü CANLI yapan şey o küçük
+ * düzensizliktir; tam tekrar, koşu bandındaki bir manken verir.
+ *
+ * DETERMİNİSTİK: aynı faz her zaman aynı gürültüyü verir. Her karede yeniden
+ * çekilen bir sayı figürü yürütmez, TİTRETİR - ve kare hızına da bağlı
+ * olurdu.
+ *
+ * Dalga birkaç asal periyodun toplamıdır: tek bir sinüs, gürültü değil ikinci
+ * bir ritim olurdu ve göz onu hemen yakalar.
+ */
+export function adimGurultusu(faz, genlik = 0.03) {
+  const a = Math.sin(faz * Math.PI * 2 * 1.0 + 0.7);
+  const b = Math.sin(faz * Math.PI * 2 * 2.7 + 2.1) * 0.55;
+  const c = Math.sin(faz * Math.PI * 2 * 4.3 + 4.9) * 0.3;
+  return 1 + genlik * (a + b + c) / 1.85;
+}
+
 export function yuruyusPozu(faz, F, olcu) {
   const { uylukM, baldirM } = olcu;
   /* Erişim uzunluğu BURADA türetilir. Önce ayrıca verilen bir `bacakM`
@@ -279,7 +304,28 @@ export function yuruyusPozu(faz, F, olcu) {
      denetimlerin çoğu bunu görmüyordu. Zaten elde olan sayıdan hesaplanan
      şey, girdi olarak istenmez. */
   const erisim = uylukM + baldirM;
-  const hz = kalcaYuksekligi(faz, F, erisim);
+  /* GÜRÜLTÜ VE TEMAS ÇÖKMESİ ÇÖZÜMÜN İÇİNDE. Bunlar `kalcaZ`ye SONRADAN
+     eklenmişti ve ölçüm reddetti: bilek çözümün söylediği yerden 21-29 mm
+     ayrıldı ve taban yere 29 mm girdi. `kalcaZ` yürüyüş çözümünün ÇIKTISIDIR;
+     onu çözümden sonra oynatmak, bacakları başka bir yükseklik için çözüp
+     figürü başka bir yüksekliğe koymaktır.
+     Gürültü yalnız AŞAĞI yönde: kalçayı yükseltmek bacağın erişemeyeceği bir
+     hedef üretir ve ters kinematik kırpılır. */
+  const gurultuKat = Math.min(1, adimGurultusu(faz, 0.03));
+  const g2 = adimGurultusu(faz + 0.37, 0.05);
+  const onAyaklar = [0, 0.5].map((o) => ayakKonumu(faz + o, F));
+  /* TEMAS TEPKİSİ. Ayak yere değdiğinde gövde biraz ÇÖKER; bunsuz figür yere
+     konar gibi değil, yere değer gibi görünür. Ay'da yerçekimi Dünya'nın
+     altıda biri, yani çökme de o oranda küçüktür - sayı ORTAMDAN gelir. */
+  let temasCokme = 0;
+  for (const a of onAyaklar) {
+    const u = a.basmaFaz ?? -1;
+    if (u >= 0 && u < 0.18) {
+      temasCokme = Math.max(temasCokme,
+        0.014 * Math.sqrt(Math.min(1, F.g / 9.807)) * Math.sin(Math.PI * u / 0.18));
+    }
+  }
+  const hz = kalcaYuksekligi(faz, F, erisim) * gurultuKat - temasCokme;
   /* İki geçiş: önce açılar çözülür, sonra bileğin SINIRI uygulanır ve ayak
      yuvarlanarak bileği yükseltir; hedef o kadar yükselince kinematik bir
      kez daha çözülür. Tek geçiş, tabanı yere gömer. */
@@ -337,12 +383,30 @@ export function yuruyusPozu(faz, F, olcu) {
      bağımsızdır. */
   const gecikme = (kat, kayma) => kat * Math.min(11, 3 + 9 * F.adimOrani)
     * Math.sin(2 * Math.PI * (faz - kayma));
+  /* ÇARPIŞMA TABLOSU ÖLÇÜMDEN GELİR, hesaptan değil.
+     İlk deneme gövdeyi bir kapsülle modelleyip açılmayı geometriden
+     türetiyordu ve ölçüm onu reddetti: çakışan faz sayısı 32'den 34'e ÇIKTI.
+     Sebep açık - çözüm göremediği bir gövde hakkında akıl yürütüyordu.
+     Deponun bu iş için zaten bir deseni var: taban profili kurulumda bir kez
+     süpürülüp ölçülüyor ve yürüyüş o tabloyu okuyor. Burada da öyle:
+     `olcu.omuzAcilma(fleks)` her omuz açısı için eli gövdeden çıkaran EN
+     KÜÇÜK açılmayı verir ve o sayı figürün kendi geometrisinden ölçülmüştür. */
+  const acilmaGerek = olcu.omuzAcilma ?? (() => 0);
+  const omuzL = genlik * kolFaz(0.5), omuzR = genlik * kolFaz(0);
+  const dirsekL = 26 + 14 * kolFaz(0.5), dirsekR = 26 + 14 * kolFaz(0);
+
   return {
     ad: F.tip === 'sicrama' ? 'Loping' : 'Walking',
     kalca: [bacak[0].kalca, bacak[1].kalca],
     diz: [bacak[0].diz, bacak[1].diz],
-    omuz: [genlik * kolFaz(0.5), genlik * kolFaz(0)],
-    dirsek: [26 + 14 * kolFaz(0.5), 26 + 14 * kolFaz(0)],
+    omuz: [omuzL * g2, omuzR * g2],
+    omuzAcilma: [acilmaGerek(omuzL, dirsekL), acilmaGerek(omuzR, dirsekR)],
+    /* SALINIMIN UCUNDA DÖNME. Gerçek bir kol ileri giderken hafifçe içe,
+       geri giderken dışa döner; tek eksende gidip gelen bir kol, bir
+       sarkaçtır. */
+    omuzDonme: [-10 * kolFaz(0.5), -10 * kolFaz(0)],
+    onkolDonme: [-16 + 10 * kolFaz(0.5), -16 + 10 * kolFaz(0)],
+    dirsek: [dirsekL, dirsekR],
     govdeEgim: egim,
     govdeDonme: donme,
     /* Baş SABİTLENİR: gövde dönerken bakış ileride kalır. Bir insan yürürken

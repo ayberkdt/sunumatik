@@ -1693,5 +1693,129 @@ console.log('\n== 18 uzuv boyunca çıplak bant');
   }
 }
 
+/* ── 19 EL GÖVDEDEN GEÇMİYOR ─────────────────────────────────────────
+ *
+ * Ölçülen kusur: yürüyüş çevriminin 60 fazının 32'sinde en az bir eldiven
+ * köşesi gövdenin içindeydi, en kötüsünde 2201 tane. Kol salınımı bir AÇIYDI
+ * ve çözümün elin nereye gittiğinden haberi yoktu; üstelik kolun dışa
+ * açılacak bir ekseni de yoktu, yani düzeltecek serbestlik de yoktu.
+ *
+ * Çözüm deponun taban profili desenidir: kurulumda bir kez ÖLÇ, yürüyüş
+ * tabloyu okusun. Yol boyunca dört şey ölçümle öğrenildi ve her biri bir
+ * sonrakini gerekli kıldı:
+ *   · Gövdeyi bir kapsülle modelleyip açılmayı hesaplamak DENENDİ - çakışma
+ *     32'den 34 faza ÇIKTI. Çözüm göremediği bir gövde hakkında akıl
+ *     yürütemiyor.
+ *   · Tek eksenli tablo (yalnız omuz) 26 fazda takıldı: elin yeri iki
+ *     mafsala bağlı, dirsek onu öne ve İÇERİ taşıyor.
+ *   · İki eksenli tablo 22'de takıldı: en kötü fazda çarpan şey gövde değil
+ *     SALLANAN UYLUKTU. Izgara süpürülmüş hacim oldu.
+ *   · Kollar `bel`in altında, bacaklar kökün - gövde eğimi ikisinin BAĞIL
+ *     açısını beyan edilen aralığın 14° dışına taşıyor.
+ * Kalan 16 faz, sınırda duran açıların gövde dönmesiyle yeniden içeri
+ * düşmesiydi: 8° payla 2 faz, 10° payla sıfır.
+ */
+console.log('\n== 19 el gövdeden geçmiyor');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const G = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-gait.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik', ao: false });
+
+  const H = 0.025;
+  const ah = (x, y, z) => (((x + 512) << 20) | ((y + 512) << 10) | (z + 512));
+  const carpisan = (P) => {
+    S.uygulaPoz(P); S.root.updateMatrixWorld(true);
+    const g = new Set(); const v = new THREE.Vector3();
+    for (const ad of ['ust-govde', 'alt-govde', 'sogutma-tulumu', 'gogus-paneli']) {
+      const n = S.nodes.get(ad) ?? S.nodes.get(`${ad}#1`);
+      if (!n) continue;
+      n.traverse((o) => {
+        if (!o.isMesh) return;
+        const q = o.geometry.attributes.position;
+        for (let i = 0; i < q.count; i++) {
+          v.fromBufferAttribute(q, i).applyMatrix4(o.matrixWorld);
+          g.add(ah(Math.floor(v.x / H), Math.floor(v.y / H), Math.floor(v.z / H)));
+        }
+      });
+    }
+    let n = 0;
+    for (const ad of ['eldivenler', 'eldivenler#2']) {
+      S.nodes.get(ad).traverse((o) => {
+        if (!o.isMesh) return;
+        const q = o.geometry.attributes.position;
+        for (let i = 0; i < q.count; i += 3) {
+          v.fromBufferAttribute(q, i).applyMatrix4(o.matrixWorld);
+          if (g.has(ah(Math.floor(v.x / H), Math.floor(v.y / H), Math.floor(v.z / H)))) n++;
+        }
+      });
+    }
+    return n;
+  };
+
+  for (const [ortam, hiz] of [['ay', 1.2], ['dunya', 1.2]]) {
+    const F = G.yuruyusFizigi(ortam, S.olcu.bacakM, hiz, S.olcu);
+    let faz = 0, enKotu = 0;
+    for (let i = 0; i < 40; i++) {
+      const n = carpisan(G.yuruyusPozu(i / 40, F, S.olcu));
+      if (n > 0) faz++;
+      enKotu = Math.max(enKotu, n);
+    }
+    check(`${ortam} ${hiz} m/s: el çevrimin hiçbir fazında gövdenin içinde değil`,
+      faz === 0, `${faz}/40 faz · en kötü ${enKotu} köşe · kusurlu hâlinde 32/60 ve 2201 köşe`);
+  }
+
+  /* Açılma tablosu GERÇEKTEN kullanılıyor mu: sıfırlanınca çakışma dönmeli. */
+  {
+    const F = G.yuruyusFizigi('ay', S.olcu.bacakM, 1.2, S.olcu);
+    let faz = 0;
+    for (let i = 0; i < 40; i++) {
+      const P = G.yuruyusPozu(i / 40, F, S.olcu);
+      if (carpisan({ ...P, omuzAcilma: [0, 0] }) > 0) faz++;
+    }
+    check('TERS SINAV: açılma sıfırlanınca el yine gövdeye giriyor', faz > 8,
+      `${faz}/40 faz`);
+  }
+
+  /* ── YÜRÜYÜŞ BİR DÖNGÜ DEĞİL ────────────────────────────────────
+     Çevrim birebir tekrar ediyordu: her adım bir öncekinin kopyası. Gerçek
+     yürüyüşte adım boyu ve süresi %2-4 dalgalanır ve bir yürüyüşü CANLI
+     yapan şey o küçük düzensizliktir. Ayrıca ayak yere değdiğinde gövde
+     biraz çöker - Ay'da bile temasın bir darbesi vardır.
+
+     Gürültü DETERMİNİSTİKTİR: aynı faz her zaman aynı sayıyı verir. Her
+     karede yeniden çekilen bir sayı figürü yürütmez, TİTRETİR. */
+  {
+    const F = G.yuruyusFizigi('ay', S.olcu.bacakM, 1.2, S.olcu);
+    let ort = 0, n = 0;
+    for (let i = 0; i < 40; i++) {
+      const a = G.yuruyusPozu(i / 40, F, S.olcu);
+      const b = G.yuruyusPozu(i / 40 + 0.5, F, S.olcu);
+      ort += Math.abs(a.kalcaZ - b.kalcaZ); n++;
+    }
+    check('çevrimin iki adımı birbirinin kopyası değil', ort / n > 0.002,
+      `yarım çevrim kaydırmasında ortalama ${(1000 * ort / n).toFixed(2)} mm fark`);
+
+    /* Gürültü deterministik: aynı faz iki kez sorulunca aynı sayı. */
+    check('gürültü deterministik', G.adimGurultusu(0.37) === G.adimGurultusu(0.37),
+      `${G.adimGurultusu(0.37).toFixed(6)}`);
+    /* TERS SINAV: genlik sıfırken gürültü tam olarak 1 olmalı. */
+    check('TERS SINAV: genlik 0 iken gürültü yok', G.adimGurultusu(0.37, 0) === 1,
+      `${G.adimGurultusu(0.37, 0)}`);
+    /* Gürültü ölçülü: %8'i geçen bir dalgalanma yürüyüş değil sendeleme. */
+    let en = 0;
+    for (let i = 0; i < 200; i++) en = Math.max(en, Math.abs(G.adimGurultusu(i / 200) - 1));
+    check('gürültü %8 in altında', en < 0.08, `en büyük sapma %${(100 * en).toFixed(1)}`);
+  }
+
+  /* Tablo boş olmasın: en az bir açı gerçekten açılma istemeli. */
+  {
+    const dolu = S.olcu.omuzAcilmaProfili.some(([, satir]) => satir.some((a) => a > 0));
+    check('açılma tablosu gerçekten ölçülmüş (boş değil)', dolu,
+      `${S.olcu.omuzAcilmaProfili.length} omuz x ${S.olcu.omuzAcilmaProfili[0][1].length} dirsek`);
+  }
+  S.uygulaPoz(S.poz);
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);

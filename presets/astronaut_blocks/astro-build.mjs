@@ -1636,12 +1636,136 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
     });
   }
 
+  /* ── OMUZ AÇILMA PROFİLİ ────────────────────────────────────────
+     Ölçülen kusur: yürüyüş çevriminin 60 fazının 32'sinde el gövdenin
+     İÇİNDE, en kötüsünde 2201 eldiven köşesi. Kol salınımı bir AÇIDIR ve
+     çözümün elin nereye gittiğinden haberi yoktur.
+
+     Gövdeyi bir kapsülle modelleyip açılmayı hesaplamak DENENDİ ve ölçüm
+     reddetti - çakışma 32 fazdan 34'e çıktı. O yüzden burada da taban
+     profilinin deseni kullanılır: her omuz fleksiyonu için eli gövdeden
+     çıkaran en küçük açılma bir kez ÖLÇÜLÜR ve yürüyüş o tabloyu okur.
+
+     Izgara 2,5 cm: eldivenin kendi kalınlığından küçük, yani "değiyor" ile
+     "giriyor" ayırt edilebiliyor. */
+  const omuzAcilmaProfili = [];
+  {
+    const H = 0.025;
+    const ah = (x, y, z) => (((x + 512) << 20) | ((y + 512) << 10) | (z + 512));
+    const govdeIzgara = new Set();
+    const v = new THREE.Vector3();
+    /* IZGARA SÜPÜRÜLMÜŞ HACİMDİR, tek bir duruş değil. İlk sürüm gövdeyi
+       nötr duruşta örnekliyordu ve çakışma 26 fazda kalıyordu; ölçüm sebebi
+       gösterdi - en kötü fazda çarpan şey gövde değil SALLANAN UYLUKTU, ve
+       uyluk tabloda hiç yoktu. Kalça kendi aralığında süpürülüp birleşim
+       alınır: el, bacağın gidebileceği HER yerden uzak durur. */
+    const kalcaKayit = eklem.kalca.map((k) => k.rotation.y);
+    /* ARALIK BEYAN EDİLENDEN GENİŞ. Gövde eğimi (yürüyüşte ~10°) kolları
+       döndürür ama bacakları döndürmez - kollar `bel`in altında, bacaklar
+       kökün. Yani kol ile bacak arasındaki BAĞIL açı, kalçanın kendi
+       aralığından 10-12° daha geniş bir bandı tarar. Pay o yüzden ±14°. */
+    const [kMin0, kMaks0] = EKLEMLER['kalca.L'].range;
+    const kMin = kMin0 - 14, kMaks = kMaks0 + 14;
+    for (let s = 0; s <= 7; s++) {
+      const ka = kMin + (kMaks - kMin) * (s / 7);
+      for (const k of eklem.kalca) k.rotation.y = ka * RAD * FLEKS.kalca;
+      kok.updateMatrixWorld(true);
+      for (const ad of ['ust-govde', 'alt-govde', 'sogutma-tulumu', 'gogus-paneli']) {
+        const n = nodes.get(ad) ?? nodes.get(`${ad}#1`);
+        if (!n) continue;
+        n.traverse((o) => {
+          if (!o.isMesh) return;
+          const q = o.geometry.attributes.position;
+          for (let i = 0; i < q.count; i += 2) {
+            v.fromBufferAttribute(q, i).applyMatrix4(o.matrixWorld);
+            govdeIzgara.add(ah(Math.floor(v.x / H), Math.floor(v.y / H), Math.floor(v.z / H)));
+          }
+        });
+      }
+    }
+    eklem.kalca.forEach((k, i2) => { k.rotation.y = kalcaKayit[i2]; });
+    kok.updateMatrixWorld(true);
+    const elMesh = [];
+    (nodes.get('eldivenler') ?? { traverse: () => {} }).traverse((o) => { if (o.isMesh) elMesh.push(o); });
+    const carpma = () => {
+      kok.updateMatrixWorld(true);
+      let n = 0;
+      for (const o of elMesh) {
+        const q = o.geometry.attributes.position;
+        for (let i = 0; i < q.count; i += 3) {
+          v.fromBufferAttribute(q, i).applyMatrix4(o.matrixWorld);
+          if (govdeIzgara.has(ah(Math.floor(v.x / H), Math.floor(v.y / H), Math.floor(v.z / H)))) n++;
+        }
+      }
+      return n;
+    };
+    const [fMin, fMaks] = EKLEMLER['omuz.L'].range;
+    const [dMin, dMaks] = EKLEMLER['dirsek.L'].range;
+    const aMaks = EKLEMLER['omuz.acilma.L'].range[1];
+    const eskiF = eklem.omuz[0].rotation.y, eskiA = eklem.omuzAcilma[0].rotation.x;
+    const eskiD = eklem.dirsek[0].rotation.y;
+    /* TABLO İKİ EKSENLİ. Tek eksenle (yalnız omuz) çakışma 32 fazdan 26'ya
+       indi ve orada durdu; gövde dönmesini ve eğimini kapatmak hiçbir şeyi
+       değiştirmedi (25 ve 28), yani sebep gövde değildi. Sebep DİRSEKTİ:
+       yürüyüş dirseği 26±14° bükıyor ve dirsek fleksiyonu eli öne ve İÇERİ,
+       karına doğru taşıyor. İki mafsallı bir kolda elin yeri tek açıyla
+       bulunamaz. */
+    const FN = 15, DN = 5;
+    for (let i = 0; i <= FN; i++) {
+      const f = fMin + (fMaks - fMin) * (i / FN);
+      eklem.omuz[0].rotation.y = f * RAD * FLEKS.omuz;
+      const satir = [];
+      for (let j = 0; j <= DN; j++) {
+        const d = dMin + (dMaks - dMin) * (j / DN);
+        eklem.dirsek[0].rotation.y = d * RAD * FLEKS.dirsek;
+        let gerek = 0;
+        for (let a = 0; a <= aMaks; a += 2) {
+          eklem.omuzAcilma[0].rotation.x = a * RAD;
+          gerek = a;
+          if (carpma() === 0) break;
+        }
+        /* PAY. Tablo tek bir eldivenle ve tek bir bacak duruşuyla
+           süpürülüyor; gerçek çevrimde gövde de dönüyor, eğiliyor ve iki el
+           birden hareket ediyor. Tam sınırda kalan bir açı o küçük farklarla
+           yeniden içeri düşer - ölçülen: 8° payla 2 faz, 10° payla SIFIR faz çakışıyor. Pay
+           yalnız SIFIRDAN BÜYÜK değerlere eklenir: temas etmeyen bir kolu
+           bedavaya açmak, figürü kanat gibi yapardı. */
+        satir.push(gerek > 0 ? Math.min(aMaks, gerek + 10) : 0);
+      }
+      omuzAcilmaProfili.push([f, satir]);
+    }
+    eklem.omuz[0].rotation.y = eskiF;
+    eklem.dirsek[0].rotation.y = eskiD;
+    eklem.omuzAcilma[0].rotation.x = eskiA;
+    kok.updateMatrixWorld(true);
+  }
+  /** Omuz ve dirsek açısı için gereken en küçük açılma (derece). */
+  function omuzAcilma(fleksDeg, dirsekDeg = 0) {
+    const n = omuzAcilmaProfili.length;
+    if (!n) return 0;
+    const [fMin, fMaks] = EKLEMLER['omuz.L'].range;
+    const [dMin, dMaks] = EKLEMLER['dirsek.L'].range;
+    const u = Math.max(0, Math.min(1, (fleksDeg - fMin) / (fMaks - fMin))) * (n - 1);
+    const i = Math.min(n - 2, Math.floor(u));
+    const m = omuzAcilmaProfili[i][1].length;
+    const w = Math.max(0, Math.min(1, (dirsekDeg - dMin) / (dMaks - dMin))) * (m - 1);
+    const j = Math.min(m - 2, Math.floor(w));
+    /* MUHAFAZAKÂR: dört komşunun EN BÜYÜĞÜ. Eksik açılma eli gövdeye sokar,
+       fazlası yalnız kolu biraz açar - hata hep güvenli yöne. */
+    return Math.max(
+      omuzAcilmaProfili[i][1][j], omuzAcilmaProfili[i][1][j + 1],
+      omuzAcilmaProfili[i + 1][1][j], omuzAcilmaProfili[i + 1][1][j + 1]);
+  }
+
+
+
   const olcu = Object.freeze({
     uylukM: UYLUK_M, baldirM: BALDIR_M,
     erisimM: UYLUK_M + BALDIR_M,
     bacakM: DIKEY.kalca,
     botOfsetM: botOfset,
     tabanDusme, tabanProfili,
+    omuzAcilma, omuzAcilmaProfili,
   });
 
   /** Duruşu uygular. Geometri yeniden kurulmaz. */
