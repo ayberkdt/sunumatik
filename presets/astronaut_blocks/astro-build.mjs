@@ -1208,13 +1208,17 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
       if (eklem.dirsek[i]) eklem.dirsek[i].rotation.y =
         sinirla(POZ_EKLEM.dirsek[i], P.dirsek?.[i] ?? 0) * RAD * FLEKS.dirsek;
     }
+    /* Hareket parçaları kökü milimetrik oynatabilir (nefes gövdeyi kaldırır).
+       Ayrı bir alan, çünkü `kalcaZ` yürüyüş çözümünün ÇIKTISIDIR ve ikisini
+       aynı sayıya yazmak, nefesi yürüyüşün yerine geçirirdi. */
+    const zOfset = P.kalcaZOfset ?? 0;
     if (P.kalcaZ != null) {
       /* Yürüyüş çözümü kalçanın yüksekliğini zaten verir: basan ayağın
          tabanı tam z = 0'a oturur, ölçüm gerekmez. */
-      kok.position.z = botOfset + P.kalcaZ - DIKEY.kalca;
+      kok.position.z = botOfset + P.kalcaZ - DIKEY.kalca + zOfset;
     } else {
       kok.position.z = 0;
-      kok.position.z = -enAltZ(kok);
+      kok.position.z = -enAltZ(kok) + zOfset;
     }
     kok.userData.poz = P;
   }

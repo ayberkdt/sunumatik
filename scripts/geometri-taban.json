@@ -1,5 +1,5 @@
 {
- "habitat/mars/platform": 1.13,
+ "habitat/mars/platform": 1.45,
  "habitat/mars/temel-hab": 0.346,
  "habitat/mars/hab-silindir": 0.211,
  "habitat/mars/hab-ic-raf": 0.04,
@@ -34,7 +34,7 @@
  "habitat/mars/anten-canak": 0,
  "habitat/mars/ruzgar-olcer": 0.036,
  "habitat/mars/garaj": 0.286,
- "habitat/moon/platform": 1.13,
+ "habitat/moon/platform": 1.45,
  "habitat/moon/temel-hab": 0.346,
  "habitat/moon/hab-silindir": 0.211,
  "habitat/moon/hab-ic-raf": 0.04,

@@ -10,7 +10,7 @@
 
 import { PARTS, SUBSYSTEMS, partById, envAllows, runEndpoints, canakGeo,
   PANEL_EGIM_DEG, YOLLAR, yolSeritleri, yolCukurlari, yolKoseleri,
-  cukurRampaM, cukurAcikligiM, CUKUR_TABAN_M } from './hab-parts.mjs';
+  yolNoktalari, cukurRampaM, cukurAcikligiM, CUKUR_TABAN_M } from './hab-parts.mjs';
 import { cylGeoZ, cylGeoY, cylGeoX, coneGeoZ, latheX } from '../core/geometry-axis.mjs';
 import * as D from './hab-detail.mjs';
 import { yuzeyAlbedoRGB } from '../core/scene-lighting.mjs';
@@ -122,7 +122,9 @@ export const LOCAL_KINDS = Object.freeze(new Set([
   'toroid', 'ortu', 'raf', 'kutu', 'tank-dikey', 'panel-tarla', 'radyator', 'kalkan',
   'semsiye', 'reaktor', 'direk', 'canak', 'ruzgar', 'tente', 'hat',
   'kubbe', 'depo', 'gezgin', 'atolye',
-]));
+,
+  /* Kargo önlüğü: ped grameri bu adı bilmez, yerel kurucusu var. */
+  'onluk']));
 
 function govde(THREE, p, M, dok, env = 'mars') {
   /* Cogaltilan bir parcada `size` DIZININ zarfidir; gövde ise TEK birimi
@@ -205,6 +207,36 @@ function govde(THREE, p, M, dok, env = 'mars') {
           iz.position.set(cx, cy, ustZ + 0.02);
           iz.rotation.z = g.aci;
           iz.castShadow = false; iz.receiveShadow = true;
+          /* BOYALI KENAR ÇİZGİSİ. Bir yolu yol yapan şey yüzeyi değil
+             BOYASIDIR: soluk bir pedin üstündeki soluk bir şerit, bakan için
+             yalnız bir çizgidir. İki yanına kontrast bir kenar çizgisi
+             çekilince yol okunur hale gelir. */
+          for (const yan of [-1, 1]) {
+            const kenar = ekle(new THREE.Mesh(
+              new THREE.BoxGeometry(L, g.genislik * 0.07, kal * 0.7), M.kit.gold));
+            kenar.position.set(
+              cx - g.uy * yan * g.genislik * 0.46,
+              cy + g.ux * yan * g.genislik * 0.46, ustZ + 0.025);
+            kenar.rotation.z = g.aci;
+            kenar.castShadow = false;
+          }
+          /* YÖN İŞARETLERİ: yolun nereye gittiğini yolun kendisi söyler. */
+          const nKev = Math.max(1, Math.round(L / 3.4));
+          for (let i = 0; i < nKev; i++) {
+            const u = (i + 0.5) / nKev;
+            const d = s0 + L * u;
+            const [kx, ky] = yerel(g.a[0] + g.ux * d, g.a[1] + g.uy * d);
+            for (const kol of [-1, 1]) {
+              const kv = ekle(new THREE.Mesh(new THREE.BoxGeometry(
+                g.genislik * 0.34, g.genislik * 0.08, kal * 0.7), M.kit.white));
+              kv.position.set(
+                kx - g.uy * kol * g.genislik * 0.16 - g.ux * g.genislik * 0.08,
+                ky + g.ux * kol * g.genislik * 0.16 - g.uy * g.genislik * 0.08,
+                ustZ + 0.025);
+              kv.rotation.z = g.aci + kol * 0.62;
+              kv.castShadow = false;
+            }
+          }
         };
         let imlec = 0;
         for (const [a1, b1] of bosluk) {
@@ -297,6 +329,33 @@ function govde(THREE, p, M, dok, env = 'mars') {
             bas.position.set(lx, ly, ustZ + 0.44);
             bas.castShadow = false;
           }
+        }
+      }
+
+      /* HEDEF TABELASI. Bir yolun nereye gittiği YAZILI olmak zorunda: yön
+         işareti yönü söyler, ada ihtiyaç duyulan şey hedeftir. Tabela her
+         rotanın iki ucunda, yolun kendi doğrultusuna dik durur. */
+      for (const yol of YOLLAR) {
+        if (!envAllows(yol.a, env).ok || !envAllows(yol.b, env).ok) continue;
+        const n = yolNoktalari(yol);
+        if (!n) continue;
+        for (const [uc, hedefId] of [[0, yol.b], [n.length - 1, yol.a]]) {
+          const hedef = partById(hedefId);
+          if (!hedef) continue;
+          const dx = n[uc === 0 ? 1 : uc - 1][0] - n[uc][0];
+          const dy = n[uc === 0 ? 1 : uc - 1][1] - n[uc][1];
+          const aci = Math.atan2(dy, dx);
+          const [tx, ty] = yerel(n[uc][0] + Math.cos(aci) * 2.4 - Math.sin(aci) * 1.5,
+            n[uc][1] + Math.sin(aci) * 2.4 + Math.cos(aci) * 1.5);
+          const direk = ekle(new THREE.Mesh(cylGeoZ(0.05, 0.06, 1.3, 8), M.kit.aluDark));
+          direk.position.set(tx, ty, ustZ + 0.65);
+          direk.castShadow = false;
+          const lv = D.levha(THREE, M.kit, [(hedef.ad || hedefId).toUpperCase()],
+            { w: 1.4, h: 0.3 });
+          lv.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2);  // euler-ok
+          lv.rotateOnWorldAxis(new THREE.Vector3(0, 0, 1), aci + Math.PI / 2);  // euler-ok
+          lv.position.set(tx, ty, ustZ + 1.3);
+          g.add(lv);
         }
       }
 
@@ -947,6 +1006,43 @@ function govde(THREE, p, M, dok, env = 'mars') {
       }
       break;
     }
+    /* ── kargo önlüğü ───────────────────────────────────────────────
+       Yük, basınçlı hacmin yanına inemez: bir iniş aracı regoliti çevresine
+       savurur. Ayrı bir önlük hem inişi hem yük taşımayı güvenli kılar ve
+       maliyeti yalnızca sıkıştırılmış zemindir - ama BOŞ bir levha değildir:
+       kenarı, bağlama halkaları ve köşe işaretleri vardır. */
+    case 'onluk': {
+      const plaka = ekle(new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat));
+      plaka.receiveShadow = true; plaka.castShadow = false;
+      /* Kenar bordürü: önlüğün nerede bittiği tozda görünmek zorunda. */
+      for (const [ex, ey, w, h] of [[0, sy * 0.5, sx, 0.3], [0, -sy * 0.5, sx, 0.3],
+        [sx * 0.5, 0, 0.3, sy], [-sx * 0.5, 0, 0.3, sy]]) {
+        const b = ekle(new THREE.Mesh(new THREE.BoxGeometry(w, h, sz * 1.8), M.kit.aluDark));
+        b.position.set(ex, ey, sz * 0.4);
+        b.castShadow = false;
+      }
+      /* Bağlama halkaları: yük indirilir ve BAĞLANIR, yoksa ilk fırtınada
+         önlükte durmaz. */
+      for (const ex of [-1, 1]) for (const ey of [-1, 1]) {
+        const halka = ekle(new THREE.Mesh(
+          new THREE.TorusGeometry(0.22, 0.05, 8, 18), M.kit.aluDark));
+        halka.position.set(ex * sx * 0.3, ey * sy * 0.3, sz * 0.6);
+        halka.rotation.x = Math.PI / 2;
+        const yuva = ekle(new THREE.Mesh(cylGeoZ(0.16, 0.2, sz * 1.2, 10), M.kit.aluDark));
+        yuva.position.set(ex * sx * 0.3, ey * sy * 0.3, sz * 0.2);
+      }
+      /* Köşe işaretleri: iniş aracı nereye ineceğini YUKARIDAN görmeli. */
+      for (const ex of [-1, 1]) for (const ey of [-1, 1]) {
+        for (const [dx, dy] of [[1.4, 0.3], [0.3, 1.4]]) {
+          const m2 = ekle(new THREE.Mesh(
+            new THREE.BoxGeometry(dx, dy, sz * 0.6), M.kit.gold));
+          m2.position.set(ex * (sx * 0.5 - dx * 0.5 - 0.5),
+            ey * (sy * 0.5 - dy * 0.5 - 0.5), sz * 0.9);
+          m2.castShadow = false;
+        }
+      }
+      break;
+    }
     case 'kutu': {
       ekle(new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), mat));
       const kpk = ekle(new THREE.Mesh(new THREE.BoxGeometry(sx * 0.72, sy * 0.06, sz * 0.62), M.koyu));
@@ -1325,7 +1421,11 @@ function govde(THREE, p, M, dok, env = 'mars') {
  * Kayalar pedin DIŞINA dağılır - üssün içine kaya düşmesi, üstünde durduğu
  * hazırlanmış alanın ne olduğunu anlamamak demektir.
  */
-export function buildCevre(THREE, { env = 'mars', ped = [54, 44], yaricap = 170, tohum = 7 } = {}) {
+export function buildCevre(THREE, { env = 'mars', ped = null, yaricap = 170, tohum = 7 } = {}) {
+  /* Ped ölçüsü KATALOGDAN gelir. `[54, 44]` diye elle yazılmış bir varsayılan,
+     ped büyüdüğünde çevreyi eski ölçüde bırakıyordu: hazırlanmış alan ile
+     onu çevreleyen araziyi iki ayrı sayı anlatamaz. */
+  if (!ped) { const pf = partById('platform'); ped = [pf.size[0], pf.size[1]]; }
   const g = new THREE.Group();
   g.userData.notes = { regime: `${env} çevresi`,
     why: 'Pedin dışı da yüzeydir; üssün ölçeği ancak çevresine göre okunur.' };

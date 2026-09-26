@@ -52,6 +52,10 @@
     <div id="adimlar"></div>
     <h2>Duruş</h2>
     <div id="pozlar"></div>
+    <h2>Hareket</h2>
+    <p class="alt" style="margin:0 0 8px">Nefes hep çalar; jestler arada bir
+      kendiliğinden gelir. Bir parçaya tıklamak onu hemen oynatır.</p>
+    <div id="jestler"></div>
     <h2>Yürüyüş</h2>
     <p class="alt" style="margin:0 0 8px">Yerçekimi bir başlık değil, bir kumanda:
       aynı hız Dünya'da yürüyüş, Ay'da sıçramadır.</p>
@@ -89,6 +93,8 @@
     import { createOrbitDrag, orbitPosition } from '../core/orbit-drag.mjs';
     import { yuruyusFizigi, yuruyusPozu, YERCEKIMI, ORTAM_ADI, GECIS_FROUDE,
              froudeHizi, DOGAL_FROUDE } from './astro-gait.mjs';
+    import { HAREKETLER, HAREKET_IDLER, harmanla, bostaZamanlayici,
+             nefesHizi } from './astro-motion.mjs';
 
     const el = (s) => document.querySelector(s);
     const host = el('#sahne');
@@ -185,6 +191,11 @@
        `mesafe` figürün gerçekten aldığı yol. */
     let yuruyor = true, ortam = 'ay', hiz = null, faz = 0, mesafe = 0, F = null;
     let sonBasan = [false, false];
+    /* BOŞTA HAREKET. Duran bir figür tamamen kıpırdamazsa ölü görünür; sürekli
+       kıpırdarsa huzursuz. Nefes hep çalar, jestler arada bir gelir ve
+       aralarında en az birkaç saniye durulur. */
+    const bosta = bostaZamanlayici({ tohum: 7 });
+    let saat = 0, sonJest = null;
     const kok = new THREE.Group();
     scene.add(kok);
 
@@ -223,6 +234,7 @@
         + s('Görev oranı', F.gorevOrani.toFixed(2))
         + s('Uçuş süresi', `${F.ucusSure.toFixed(2)} s`)
         + `<div class="satir"><span>Alınan yol</span><b id="yol">${mesafe.toFixed(1)} m</b></div>`
+        + s('Nefes', `${nefesHizi(350).soluk.toFixed(0)} soluk/dk · ${nefesHizi(350).ve.toFixed(1)} L/dk`)
         + `<p class="alt" style="margin:8px 0 0">Fr = v²/(g·L). Basan bacak bir ters
            sarkaçtır; gövdenin üstünden dönmesi için gereken v²/L yerçekimini aşınca
            ayak yerden kesilir ve yürümek imkânsızlaşır. ${F.tip === 'sicrama'
@@ -254,7 +266,7 @@
              yuruyor && F
                ? `${F.ad} · ${F.tip === 'sicrama' ? 'sıçrama' : 'yürüyüş'} ${F.hiz.toFixed(2)} m/s ·
                   Fr ${F.froude.toFixed(2)} · ${mesafe.toFixed(1)} m`
-               : `duruş: ${POZLAR[poz].ad}`}`
+               : `duruş: ${POZLAR[poz].ad}${sonJest ? ' · ' + HAREKETLER[sonJest].ad : ' · nefes'}`}`
         : `<b>Adım ${s.no}/${STEPS.length} — ${s.ad}</b> · ${s.aciklama}`;
     }
 
@@ -337,6 +349,27 @@
       el('#patlat').classList.toggle('aktif', patla > 0);
       uygula();
     });
+
+    /* ---------- hareket parçaları ---------- */
+    const jestKutu = el('#jestler');
+    const jestDugme = new Map();
+    for (const k of HAREKET_IDLER) {
+      if (HAREKETLER[k].dongu) continue;       // nefes hep çalar, düğmesi yok
+      const b = document.createElement('button');
+      b.textContent = HAREKETLER[k].ad;
+      b.title = HAREKETLER[k].neden;
+      b.onclick = () => {
+        yuruyor = false;
+        el('#oynat').textContent = 'Yürü';
+        bosta.baslat(k, saat);
+        sonJest = k; jestIsaretle(); altyazi();
+      };
+      jestKutu.appendChild(b);
+      jestDugme.set(k, b);
+    }
+    function jestIsaretle() {
+      for (const [k, b] of jestDugme) b.classList.toggle('aktif', k === sonJest);
+    }
 
     /* ---------- yürüyüş kumandaları ---------- */
     const ortamKutu = el('#ortamlar');
@@ -429,10 +462,21 @@
       const y = el('#yol');
       if (y) y.textContent = `${mesafe.toFixed(1)} m`;
     }
+    /* Duran figürün karesi: temel duruş + nefes + (varsa) jest.
+       Farklar TOPLANIR; birleşik hareket yazmak iki parçayı listeye koymaktır. */
+    function bostaKare(dt) {
+      saat += dt;
+      const nefes = HAREKETLER.nefes.uygula(saat, { metabolikW: 350 });
+      const j = bosta.kare(saat, {});
+      if (j.aktif !== sonJest) { sonJest = j.aktif; jestIsaretle(); altyazi(); }
+      kurulum.uygulaPoz(harmanla(POZLAR[poz], nefes, j.fark));
+    }
+
     function kare(t) {
       const dt = sonT ? Math.min(0.05, (t - sonT) / 1000) : 0;
       sonT = t;
       if (yuruyor && kurulum && F && patla === 0) yuruyusKare(dt);
+      if (!yuruyor && kurulum) bostaKare(dt);
       surukleyici.update();
       kameraKur();
       renderer.render(scene, camera);
@@ -468,6 +512,9 @@
       setHiz: (v) => { hiz = Number(v); fizikKur(); },
       setFaz: (v) => { faz = Number(v) % 1; kurulum.uygulaPoz(yuruyusPozu(faz, F, kurulum.olcu)); },
       yuru: (a) => { yuruyor = !!a; },
+      jestler: () => HAREKET_IDLER.filter((k) => !HAREKETLER[k].dongu),
+      jest: (k) => { yuruyor = false; return bosta.baslat(k, saat); },
+      nefes: () => nefesHizi(350),
       pozlar: () => Object.keys(POZLAR),
     };
   </script>

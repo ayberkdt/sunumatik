@@ -77,20 +77,22 @@ const ENV_RULE = {
 export const PARTS = Object.freeze([
   /* ADIM 1 — zemin hazırlığı ve temel */
   { id: 'platform', ad: 'Compacted pad', sistem: 'yapi', step: 1, mountsTo: null, arayuz: 'ayirma',
-    massKg: 0, pos: [0, 0, -0.08], size: [54, 44, 0.16], sekil: 'platform',
+    massKg: 0, pos: [0, 0, -0.08], size: [62, 50, 0.16], sekil: 'platform',
     /* Ped 0,16 m'lik bir plaka, ama üstünde YOL DONANIMI taşıyor: kenar
        dikmeleri ve alçak geçit uyarı işaretleri. En yükseği, hattın 1,93 m'de
        geçtiği yeri işaretleyen uyarı dikmesi - pedin üstünde 1,13 m. Pay bu
-       ölçümden seçildi: 0,65 + 0,55 = 1,20 m eşik, 0,07 m boşluk. İşarete
-       yeter, yanlış yerleştirilmiş bir pedi saklamaya yetmez. */
-    zarfPay: 0.55,
+       ölçümden seçildi. Yola HEDEF TABELASI eklenince en yüksek nokta 1,47 m
+       oldu (direk 1,3 m + levha): bir tabela okunmak için var ve yerde
+       duramaz. 0,65 + 0,85 = 1,50 m eşik, 0,03 m boşluk - tabelaya yeter,
+       yanlış yerleştirilmiş bir pedi saklamaya yetmez. */
+    zarfPay: 0.85,
     tech: {
       no: 'HB-CIV-001',
       malzeme: 'Compacted regolith with polyurethane binder infiltration',
       guc_W: 0,
       sicaklik_C: [-140, 30],
       baglanti: 'None - laid and compacted in place',
-      detay: '54 x 44 m (the number followed `size` when the pad was widened; the text said 26 x 20 m until it was measured); compacted to 1.9 g/cm3, bearing capacity 180 kPa. Binder only soaks the top 40 mm: it fixes the dust without preventing excavation',
+      detay: '62 x 50 m (the text follows `size`; it said 26 x 20 m until it was measured, and the pad has been widened twice since as the settlement grew); compacted to 1.9 g/cm3, bearing capacity 180 kPa. Binder only soaks the top 40 mm: it fixes the dust without preventing excavation',
       kalite: 'Made on site - zero launched mass',
     },
     why: 'Regolith is compacted and levelled so modules sit true, dust stays down, and walking routes are obvious. It has no mass because it is made on site - the cheapest form of ISRU there is.' },
@@ -532,6 +534,44 @@ export const PARTS = Object.freeze([
       kalite: 'Covers survive a 30 m/s dust storm with the bays loaded',
     },
     why: 'Everything that is not in use has to be SOMEWHERE, and on a surface base that place has to be reachable in a suit. Unpressurised because pressurising a warehouse costs mass for nothing.' },
+  { id: 'tank-h2o', ad: 'Water tank', sistem: 'isru', step: 6, mountsTo: 'platform', arayuz: 'ayirma',
+    massKg: 1180, pos: [13.0, -14.4, 1.5], size: [3.7, 3.7, 3.0], kapCapM: 2.4, sekil: 'tank-dikey',
+    tech: {
+      no: 'HB-FLU-140',
+      malzeme: '316L inner shell, MLI over a vented jacket, same stand as the cryogenic pair',
+      guc_W: 95,
+      kesilebilir: true,
+      sicaklik_C: [-40, 40],
+      baglanti: 'Girth ring on forked struts; dry-break couplings to the Sabatier loop',
+      detay: '2,4 m capacity, 11 m3. Water is the one consumable the base makes AND buys: Sabatier produces it, the sublimator spends it, and 8 h of EVA costs 5,07 kg per crew member. Trace heating 95 W keeps it liquid and is sheddable, because a tank that freezes can be thawed and a habitat that loses power cannot',
+      kalite: 'Same stand geometry as the O2 and CH4 tanks - one drawing, three tanks',
+    },
+    why: 'Bir üsse su deposu, oksijen deposu kadar gereklidir: yüceltici 8 saatlik EVA basina 5 kg harcar ve o su geri gelmez. Sehpa ve kap capi kriyojenik ciftin AYNISIDIR - ayni cizim, ucuncu tank.' },
+  { id: 'iletisim-kulesi', ad: 'Comms mast', sistem: 'iletisim', step: 7, mountsTo: 'platform', arayuz: 'civata',
+    massKg: 310, pos: [-20.5, 5.0, 4.6], size: [1.4, 1.4, 9.2], zarfPay: 3.0, sekil: 'direk',
+    tech: {
+      no: 'HB-COM-040',
+      malzeme: 'Guyed aluminium lattice, 3 guy sets at 120 deg',
+      guc_W: 110,
+      kesilebilir: true,
+      sicaklik_C: [-130, 40],
+      baglanti: '4 x M20 base plate; guys to buried anchors at 7 m radius',
+      detay: '9,2 m. The rover leaves line of sight within 300 m on this terrain, so relay height is what buys traverse range: horizon distance goes as sqrt(2 R h) and 9 m buys about 5,5 km on the Moon',
+      kalite: 'Survives a 30 m/s dust storm with the guys tensioned',
+    },
+    why: 'Gezgin ufkun arkasina gectigi anda bagliligi keser. Bagli kalmanin bedeli yukseklik: ufuk mesafesi sqrt(2Rh) ile gider ve 9 m, Ay\'da yaklasik 5,5 km kazandirir.' },
+  { id: 'kargo-pedi', ad: 'Cargo apron', sistem: 'yapi', step: 7, mountsTo: 'platform', arayuz: 'ayirma',
+    massKg: 0, pos: [22.4, 12.6, 0.08], size: [8.6, 8.6, 0.16], sekil: 'onluk',
+    tech: {
+      no: 'HB-CIV-050',
+      malzeme: 'Compacted regolith with binder infiltration, same recipe as the main pad',
+      guc_W: 0,
+      sicaklik_C: [-140, 30],
+      baglanti: 'None - laid and compacted in place',
+      detay: '9 x 9 m. Cargo comes down away from the habitat and is moved in by pallet: a lander that touches down next to a pressurised volume throws regolith at it at orbital-entry speed',
+      kalite: 'Bearing capacity 180 kPa, same as the main pad',
+    },
+    why: 'Yuk, basincli hacmin yanina inemez: bir inis araci regoliti cevresine savurur. Ayri bir onluk, hem inisi hem de yuk tasimayi guvenli kilar ve maliyeti yalnizca sikistirilmis zemindir.' },
   { id: 'kasif-gezgini', ad: 'Exploration rover', sistem: 'yapi', step: 7, mountsTo: 'platform', arayuz: 'ayirma',
     massKg: 780, pos: [-15.1, -2.0, 1.25], size: [3.4, 2.2, 2.5], sekil: 'gezgin',
     tech: {
