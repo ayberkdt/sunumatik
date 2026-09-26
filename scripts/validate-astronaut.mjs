@@ -1740,10 +1740,25 @@ console.log('\n== 18 uzuv boyunca çıplak bant');
     }
     return sat;
   };
+  /* DELİK YERELDİR. Ölçüt "en dar dilim ÷ medyan dilim"di ve uzvun kendi
+     KONİKLİĞİNİ delik sanıyordu: dirsek boyunca genişlik 0,060'tan 0,129'a
+     düzgün çıkıyor, hiçbir yerde çökmüyor, ama en dar ile medyanın oranı
+     %57. Bir delik, iki yanındaki dilimlerden belirgin dar olan BİR
+     dilimdir; komşularıyla karşılaştırılır, bütünün medyanıyla değil.
+     (Bu, koniklikle kusuru karıştıran üçüncü ölçüt; deseni hep aynı -
+     uzuv boyunca DEĞİŞMESİ beklenen bir büyüklüğe genel bir karşılaştırma
+     uygulamak.) */
   const oran = (sat) => {
-    const sirali = [...sat].sort((x, y) => x - y);
-    const medyan = sirali[Math.floor(sirali.length / 2)];
-    return { en: Math.min(...sat), medyan, oran: Math.min(...sat) / medyan };
+    const adim = 6;                            // 5 mm örnekte ±30 mm
+    let en = 0, nerede = 0, deger = 0;
+    for (let i = adim; i < sat.length - adim; i++) {
+      const komsu = (sat[i - adim] + sat[i + adim]) / 2;
+      if (komsu <= 1e-6) continue;
+      const d = 1 - sat[i] / komsu;
+      if (d > en) { en = d; nerede = i; deger = sat[i]; }
+    }
+    return { dusus: en, nerede, deger,
+      medyan: [...sat].sort((x, y) => x - y)[Math.floor(sat.length / 2)] };
   };
 
   for (const [ad, zincir, merkez, alt, ust] of [
@@ -1752,8 +1767,12 @@ console.log('\n== 18 uzuv boyunca çıplak bant');
     ['dirsek', S.eklem.omuz[0], S.eklem.dirsek[0], -0.20, 0.20],
   ]) {
     const r = oran(profil(zincir, merkez, alt, ust));
-    check(`${ad} boyunca çıplak bant yok (en dar / medyan ≥ %60)`, r.oran >= 0.60,
-      `en dar ${r.en.toFixed(3)} · medyan ${r.medyan.toFixed(3)} · %${(100 * r.oran).toFixed(0)}`);
+    /* EŞİK %25: komşularının dörtte birinden fazla çöken bir dilim, kumaşın
+       oraya hiç uğramadığı yerdir. Konvolüt oluğu bile komşusunun %16
+       altındadır. */
+    check(`${ad} boyunca çıplak bant yok (yerel çöküş < %25)`, r.dusus < 0.25,
+      `en büyük yerel çöküş %${(100 * r.dusus).toFixed(0)}`
+      + ` (dilim ${r.deger.toFixed(3)} · medyan ${r.medyan.toFixed(3)})`);
   }
 
   /* TERS SINAV: DERİYİ SIKIŞTIRMAK bandı geri açmalı.
@@ -1789,8 +1808,8 @@ console.log('\n== 18 uzuv boyunca çıplak bant');
     deri.geometry.computeBoundingSphere();
     deri.geometry.computeBoundingBox();
     S.root.updateMatrixWorld(true);
-    check('TERS SINAV: deri dizde %45 e sıkıştırılınca bant yakalanıyor', r.oran < 0.60,
-      `sıkışmış hâlde %${(100 * r.oran).toFixed(0)} (sağlam hâlde %81)`);
+    check('TERS SINAV: deri dizde %45 e sıkıştırılınca bant yakalanıyor', r.dusus >= 0.25,
+      `sıkışmış hâlde yerel çöküş %${(100 * r.dusus).toFixed(0)}`);
   }
 }
 
@@ -2610,6 +2629,101 @@ console.log('\n== 24 deri: bükülürken ne oluyor');
       `${ms.toFixed(2)} ms/poz · ${kose} deri köşesi`);
   }
   void AP;
+  S.uygulaPoz(S.poz);
+}
+
+/* ── 25 KOL İNSAN GİBİ DURUYOR VE SALLANIYOR MU ───────────────────
+ *
+ * Ölçülen kusur - Ay'da 1,2 m/s'de:
+ *   omuz  −41,0°…+43,5°  (toplam 84,5°)   insanda toplam ~45°
+ *   dirsek  12,0°…40,0°                   insanda 20°…60°
+ * Yani figür iki kolunu da neredeyse düz biçimde savuruyordu: yürüme
+ * hızında tutulan bir koşu duruşu. Salınım ayrıca SİMETRİKTİ; insanda omuz
+ * öne, geriye açıldığından ~1,6 kat fazla bükülür.
+ *
+ * Dik duruşta da bilek 46 mm alçaktı, çünkü ön kolun boyu `sz * 0,44`
+ * kesriydi - `DIKEY` kolun eklemlerini hiç beyan etmiyordu. Bacakta her
+ * eklem beyan edilirken kolunkilerin iki gerekçesiz kesire bırakılması,
+ * tam olarak bu kapının var olma sebebi.
+ */
+console.log('\n== 25 kol insan gibi duruyor ve sallanıyor mu');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const AP = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-parts.mjs')).href);
+  const G = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-gait.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik', ao: false });
+  const V = () => new THREE.Vector3();
+  S.root.updateMatrixWorld(true);
+
+  /* ── duruş ── */
+  const om = S.eklem.omuz[0].getWorldPosition(V());
+  const dir = S.eklem.dirsek[0].getWorldPosition(V());
+  const el = S.nodes.get('eldivenler').getWorldPosition(V());
+  /* Beyan edilen dirsek ve bilek yükseklikleri ÇİZİLENLE tutmalı: bölüm
+     boyları artık onlardan türüyor, yani tutmazsa türetme kopmuştur. */
+  check('çizilen dirsek beyan edilen yükseklikte', Math.abs(dir.z - AP.DIKEY.dirsek) < 0.015,
+    `çizilen ${dir.z.toFixed(3)} · beyan ${AP.DIKEY.dirsek}`);
+  check('çizilen bilek beyan edilen yükseklikte', Math.abs(el.z - AP.DIKEY.bilek) < 0.015,
+    `çizilen ${el.z.toFixed(3)} · beyan ${AP.DIKEY.bilek} · kusurlu hâlinde 0,900 (46 mm alçak)`);
+  /* Üst kol ile ön kolun oranı: insanda ~1,27. */
+  const ustU = om.distanceTo(dir), onU = dir.distanceTo(el);
+  check('üst kol / ön kol oranı insan bandında', ustU / onU > 1.1 && ustU / onU < 1.45,
+    `${ustU.toFixed(3)} / ${onU.toFixed(3)} = ${(ustU / onU).toFixed(2)} (insanda 1,27)`);
+  /* El gövdenin ÖNÜNDE ve yanında: arkada kalan bir el "hazır ol"dur. */
+  const kalca = S.eklem.kalca[0].getWorldPosition(V());
+  check('dinlenmede el kalçanın biraz önünde', el.x - kalca.x > 0.0 && el.x - kalca.x < 0.09,
+    `${(1000 * (el.x - kalca.x)).toFixed(0)} mm (insanda 0…60 mm)`);
+
+  /* ── yürüyüş ── */
+  const K = AP.KOL_SALINIMI;
+  for (const [ortam, hiz] of [['ay', 1.2], ['dunya', 1.2], ['mars', 1.0]]) {
+    const F = G.yuruyusFizigi(ortam, S.olcu.bacakM, hiz, S.olcu);
+    let oMin = 9e9, oMax = -9e9, dMin = 9e9, dMax = -9e9;
+    for (let i = 0; i < 120; i++) {
+      const P = G.yuruyusPozu(i / 120, F, S.olcu);
+      oMin = Math.min(oMin, P.omuz[0]); oMax = Math.max(oMax, P.omuz[0]);
+      dMin = Math.min(dMin, P.dirsek[0]); dMax = Math.max(dMax, P.dirsek[0]);
+    }
+    /* EŞİK 30-55°: normal bir yürüyüşün omuz salınımı ~45°, hızlı yürüyüşte
+       55°'ye çıkar. 84,5° koşudur ve figür yürüyor. */
+    check(`${ortam} ${hiz}: omuz salınımı yürüyüş bandında`,
+      oMax - oMin >= 30 && oMax - oMin <= 55,
+      `${oMin.toFixed(1)}°…${oMax.toFixed(1)}° = ${(oMax - oMin).toFixed(1)}°`
+      + ' · kusurlu hâlinde 84,5°');
+    check(`${ortam} ${hiz}: dirsek yürüyüş boyunca bükük kalıyor`,
+      dMin >= 15 && dMax <= 65 && dMax - dMin >= 20,
+      `${dMin.toFixed(1)}°…${dMax.toFixed(1)}° · kusurlu hâlinde 12,0…40,0`);
+    /* Öne bükülme geriye açılmadan FAZLA: simetrik bir salınım, omzun
+       yapamayacağı kadar geriye açılması demek. */
+    check(`${ortam} ${hiz}: salınım öne ağırlıklı`,
+      oMax > Math.abs(oMin) * 1.2,
+      `öne ${oMax.toFixed(1)}° · geriye ${Math.abs(oMin).toFixed(1)}°`
+      + ` = ${(oMax / Math.max(Math.abs(oMin), 0.1)).toFixed(2)}× (beyan ${K.ileriGeriOran})`);
+  }
+
+  /* TERS SINAV: salınım adım boyuna GERÇEKTEN yanıt veriyor mu? Sabit bir
+     genlik de "bandında" sınavını geçerdi. Ağır bir yürüyüşle normal bir
+     yürüyüşün salınımı ölçülebilir biçimde farklı olmalı.
+     (Önce "tavan bağlayıcı mı" diye soruldu ve ölçüm HAYIR dedi: en uzun
+     adımda bile istenen genlik 23,6°, tavan 24°. Tavan bir korkuluk,
+     etkin sınır değil - ve bunu bir kapının iddia etmesi yanlış olurdu.) */
+  {
+    const olc = (ortam, hiz) => {
+      const F = G.yuruyusFizigi(ortam, S.olcu.bacakM, hiz, S.olcu);
+      let a2 = 9e9, b2 = -9e9;
+      for (let i = 0; i < 90; i++) {
+        const P = G.yuruyusPozu(i / 90, F, S.olcu);
+        a2 = Math.min(a2, P.omuz[0]); b2 = Math.max(b2, P.omuz[0]);
+      }
+      return b2 - a2;
+    };
+    const agir = olc('dunya', 0.6), normal = olc('ay', 1.2);
+    check('TERS SINAV: salınım adım boyuna yanıt veriyor',
+      normal > agir * 1.15,
+      `ağır yürüyüş ${agir.toFixed(1)}° · normal ${normal.toFixed(1)}°`
+      + ` = ${(normal / agir).toFixed(2)}× (sabit genlik 1,00× verirdi)`);
+  }
   S.uygulaPoz(S.poz);
 }
 

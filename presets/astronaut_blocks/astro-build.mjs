@@ -450,7 +450,12 @@ export const mafsal = (poz, ad, i) => (poz?.[ad]?.[i] ?? 0) * RAD * FLEKS[ad];
    çevirir, `onkolDonme` avucu çevirir, `kalcaAcilma` bacağı açar. Hepsi
    beyan edilen sınırlardan geçer; verilmeyen eksen 0'dır. */
 export const POZLAR = Object.freeze({
-  dik: { ad: 'Standing', kalca: [5, 5], diz: [9, 9], omuz: [-4, -4], dirsek: [14, 14],
+  /* DİNLENMEDE DİRSEK 22°. 14°'ydi ve ön kol beyan edilen bilek
+     yüksekliğinden türetilip 46 mm kısalınca el geriye kaydı (x 0,048 -
+     "eller gövdenin önünde" sınavı 0,05 istiyor). İnsanda rahat duruşta
+     dirsek 15-25° bükülüdür; 22° eli kalçanın 54 mm önüne getiriyor, ki
+     ölçülen insan aralığı 0-60 mm. */
+  dik: { ad: 'Standing', kalca: [5, 5], diz: [9, 9], omuz: [-4, -4], dirsek: [22, 22],
     /* Dinlenmede omuz AÇILMAZ: kolun gövdeye yakınsaması zaten
        `KOL_YAKINSAMA` ile yuvadan geliyor ve üstüne abdüksiyon eklemek
        bileği omzun DIŞINA çıkarıyor (ölçüldü: 7°'de 0,306 > 0,300 ve
@@ -994,7 +999,10 @@ function govde(THREE, p, M, yan = 0) {
        Sol ve sağ kol AYNI DEĞİL: kontrol listesi bir kolda, ayna ötekinde -
        mürettebat kendi göğsündeki paneli ancak aynayla okur. */
     case 'kol': {
-      const ustBoy = sz * 0.46, onBoy = sz * 0.44;
+      /* BÖLÜM BOYLARI BEYANDAN. `sz * 0,46` / `sz * 0,44` iki gerekçesiz
+         kesirdi ve ön kolu 46 mm uzun yapıyordu; artık `DIKEY`in beyan ettiği
+         dirsek ve bilek yüksekliklerinin farkı. */
+      const ustBoy = DIKEY.omuz - DIKEY.dirsek, onBoy = DIKEY.dirsek - DIKEY.bilek;
       /* OMUZ KAPAĞI DA BASIK. Ölçülen: kolun tepesi 1,683 ve mafsal
          1,576'da - kapak mafsalın 107 mm üstüne çıkıyordu, gövdenin tepesi
          (boyun) ise 1,696. Omuz yatağı 1,636'da bitiyor; kapak ondan

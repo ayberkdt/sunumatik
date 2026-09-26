@@ -49,6 +49,16 @@ export const OMUZ_M = 0.85;
  */
 export const DIKEY = Object.freeze({
   ayakBilegi: 0.20, diz: 0.64, kalca: 1.10, bel: 1.18, omuz: 1.58,
+  /* DİRSEK VE BİLEK DE BEYAN EDİLİR. Kolun bölüm boyları `sz * 0,46` ve
+     `sz * 0,44` idi: parçanın beyan edilen derinliğinin iki kesri ve
+     arkalarında hiçbir şey yok. Ölçüm, `DIKEY`in geri kalanının geldiği
+     antropometriyle karşılaştırdı (boy kesirleri; kalça 0,564, omuz 0,810,
+     diz 0,328 - üçü de tutuyor):
+         dirsek  0,630 × 1,95 = 1,228   çizilen 1,230   2 mm
+         bilek   0,485 × 1,95 = 0,946   çizilen 0,900   46 mm ALÇAK
+     Yani üst kol doğruydu, ön kol 46 mm uzundu - elleri uyluğun altına
+     sarkıtan ve "kollar uzun" diye okunan şey buydu. */
+  dirsek: 1.23, bilek: 0.95,
   boyun: 1.66, tepe: 1.95,
 });
 /**
@@ -132,6 +142,30 @@ export const YUZEY_RITMI = Object.freeze({
  * (bölüm 22'nin yakaladığı kusur). `z0`/`z1` kök kemiğin çerçevesinde,
  * metre; `kivrim` kıvrım sayısı.
  */
+/**
+ * KOL SALINIMI — insan yürüyüşünün ölçüleri.
+ *
+ * Ölçülen kusur: Ay'da 1,2 m/s'de omuz −41,0°…+43,5°, yani toplam 84,5°
+ * salınıyordu. Yürüyen bir insanda omuz toplam ~45° salınır ve SİMETRİK
+ * DEĞİLDİR: öne bükülme geriye açılmadan belirgin fazladır (~28° öne,
+ * ~17° geriye). Figür iki kolunu da neredeyse düz biçimde savuruyordu -
+ * yürüme hızında tutulan bir koşu duruşu.
+ *
+ * Dirsek de fazla düzdü: ölçülen 12°…40°, insanda 20°…60° ve en bükük olduğu
+ * an kolun ÖNDE olduğu andır.
+ *
+ * `ileriGeriOran` insanın omuz fleksiyon/ekstansiyon oranı. `kazanc` adım
+ * boyuna göre artışı, `tavan` da bir yürüyüşün (koşunun değil) üst sınırı.
+ */
+export const KOL_SALINIMI = Object.freeze({
+  taban: 5,            // derece, yarı genlik: neredeyse durur gibi yürürken
+  kazanc: 16,          // derece / (adım boyu ÷ bacak erişimi)
+  tavan: 24,           // derece, yarı genlik (toplam ~45° eder)
+  ileriGeriOran: 1.6,  // öne bükülme ÷ geriye açılma
+  dirsekTaban: 34,     // derece, salınımın ortasında
+  dirsekGenlik: 17,    // derece, kol öne giderken bükülür
+});
+
 export const DERI = Object.freeze({
   bacak: {
     gecis: 0.09,

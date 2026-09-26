@@ -41,7 +41,7 @@
  * düşey hızıyla tam eşleşmez.
  */
 
-import { EKLEMLER, POZ_EKLEM, sinirla, AYAK_ON_M, AYAK_ARKA_M,
+import { EKLEMLER, POZ_EKLEM, sinirla, KOL_SALINIMI, AYAK_ON_M, AYAK_ARKA_M,
          GOVDE_KAPSULU } from './astro-parts.mjs';
 
 /** Yüzey yerçekimi (m/s²). Kaynak: standart gezegen değerleri. */
@@ -423,7 +423,11 @@ export function yuruyusPozu(faz, F, olcu) {
   }
   /* Kol salınımı bacağın TERSİ fazdadır ve genliği adım boyuyla artar:
      kollar dengeyi tutar, süs değildir. */
-  const genlik = Math.min(42, 14 + 60 * F.adimBoyu / erisim);
+  /* KOL SALINIMI `KOL_SALINIMI`DEN. Buradaki sayı `Math.min(42, 14 + 60·…)`
+     idi: gerçek her adımda tavana dayanıyor ve 42 YARI genlik olarak
+     kullanıldığı için omuz 84° salınıyordu - insanınkinin iki katı. */
+  const K = KOL_SALINIMI;
+  const genlik = Math.min(K.tavan, K.taban + K.kazanc * F.adimBoyu / erisim);
   const kolFaz = (o) => Math.sin(2 * Math.PI * (faz + o));
   /* Gövde hıza göre öne yatar; düşük yerçekiminde daha az, çünkü itme
      kuvveti küçüktür. */
@@ -452,8 +456,16 @@ export function yuruyusPozu(faz, F, olcu) {
      `olcu.omuzAcilma(fleks)` her omuz açısı için eli gövdeden çıkaran EN
      KÜÇÜK açılmayı verir ve o sayı figürün kendi geometrisinden ölçülmüştür. */
   const acilmaGerek = olcu.omuzAcilma ?? (() => 0);
-  const omuzL = genlik * kolFaz(0.5), omuzR = genlik * kolFaz(0);
-  const dirsekL = 26 + 14 * kolFaz(0.5), dirsekR = 26 + 14 * kolFaz(0);
+  /* SALINIM SİMETRİK DEĞİL: omuz öne, geriye açıldığından ~1,6 kat fazla
+     bükülür. Aynı sinüsü iki yarıya da vermek, kolu geriye insanın
+     açamayacağı kadar atıyordu (ölçülen −41°). */
+  const kolAci = (o) => {
+    const s = kolFaz(o);
+    return s >= 0 ? s * genlik : s * genlik / K.ileriGeriOran;
+  };
+  const omuzL = kolAci(0.5), omuzR = kolAci(0);
+  const dirsekL = K.dirsekTaban + K.dirsekGenlik * kolFaz(0.5);
+  const dirsekR = K.dirsekTaban + K.dirsekGenlik * kolFaz(0);
 
   return {
     ad: F.tip === 'sicrama' ? 'Loping' : 'Walking',
