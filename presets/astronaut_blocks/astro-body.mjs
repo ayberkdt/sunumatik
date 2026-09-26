@@ -81,6 +81,36 @@ export function dikisKat(aci, n, derinlik) {
 }
 
 /**
+ * PANEL HATTI — iki panelin BULUŞTUĞU çizgi.
+ *
+ * Kapitone ENİNE, dikiş BOYUNA, panel hattı ise PARÇA SINIRI boyunca gider ve
+ * üçü farklı şeylerdir. Kapitone bir dolgu deseni, dikiş bir bastırma izi,
+ * panel hattı ise giysinin kaç parçadan kesildiğini söyleyen şeydir. Bir
+ * giysiyi "yapılmış" gösteren üçüncüsüdür; ilk ikisi vardı, bu yoktu.
+ *
+ * Oluk DAR ve DERİN: geniş bir çukur kumaşı buruşuk gösterir, dar bir çizgi
+ * ise dikiş gibi okunur.
+ */
+export function panelKat(t, aci, cevre, boyuna, derinlik = 0.012, genislik = 0.018) {
+  let k = 1;
+  if (cevre) {
+    for (const c of cevre) {
+      const d = Math.abs(t - c);
+      if (d < genislik) k -= derinlik * (1 - d / genislik);
+    }
+  }
+  if (boyuna) {
+    const u = ((aci / (Math.PI * 2)) % 1 + 1) % 1;
+    for (const b of boyuna) {
+      let d = Math.abs(u - b);
+      d = Math.min(d, 1 - d);
+      if (d < genislik) k -= derinlik * (1 - d / genislik);
+    }
+  }
+  return k;
+}
+
+/**
  * KUMAŞ KIRIŞIĞI. Kapitone bantları DÜZENLİDİR; gerçek kumaş değildir.
  * Basınçlı bir giysinin yüzeyinde bantların arasında küçük, düzensiz
  * buruşmalar olur ve bir yüzeyi "kumaş" yapan şey o düzensizliktir -
@@ -236,7 +266,9 @@ export function supur(THREE, {
       const kap = kapitoneKat(t, k.kapitone?.[0], k.kapitone?.[1]);
       const dik = dikisKat(a, k.dikis?.[0], k.dikis?.[1]);
       const kir = kirisikKat(t, a, k.kirisik?.[0], k.kirisik?.[1]);
-      const [py, px] = kesitNokta(a, w * kap * dik * kir, d * kap * dik * kir, p);
+      const pan = panelKat(t, a, k.panelCevre, k.panelBoyuna,
+        k.panelDerinlik ?? 0.012, k.panelGenislik ?? 0.018);
+      const [py, px] = kesitNokta(a, w * kap * dik * kir * pan, d * kap * dik * kir * pan, p);
       /* kesitNokta ilk bileşeni w ekseninde verir; giyside w = y (en),
          d = x (derinlik), çünkü bir gövde enine geniş önden sığdır. */
       poz.push((k.oy ?? 0) + px, (k.ox ?? 0) + py, z);
@@ -294,6 +326,7 @@ export function supur(THREE, {
 export function uzuvKesiti({
   ustW, ustD, altW, altD, p = 2.4, sis = 0.07, sisT = 0.5,
   kapitone = null, dikis = null, kirisik = null, egri = null,
+  panelCevre = null, panelBoyuna = null,
 }) {
   return (t) => {
     /* ŞİŞMENİN YERİ. Kas, uzvun ortasında değildir: baldırın kütlesi dizin
@@ -306,7 +339,7 @@ export function uzuvKesiti({
     return {
       w: (ustW + (altW - ustW) * t) * k,
       d: (ustD + (altD - ustD) * t) * k,
-      p, kapitone, dikis, kirisik,
+      p, kapitone, dikis, kirisik, panelCevre, panelBoyuna,
       ox: e ? e[0] : 0, oy: e ? e[1] : 0,
     };
   };
@@ -320,6 +353,7 @@ export function govdeKesiti({
   omuzW, omuzD, belW, belD, omuzT = 0.18, p = 2.7,
   boyunW = null, boyunD = null, boyunT = 0.20,
   kapitone = null, dikis = null, kirisik = null,
+  panelCevre = null, panelBoyuna = null,
 }) {
   return (t) => {
     /* BOYUN GİRİNTİSİ. Bunsuz kesit tepede omuzun %86'sı kadar kalıyordu ve
@@ -333,7 +367,7 @@ export function govdeKesiti({
       return {
         w: boyunW + (omuzW - boyunW) * k,
         d: (boyunD ?? boyunW) + (omuzD - (boyunD ?? boyunW)) * k,
-        p, kapitone, dikis, kirisik,
+        p, kapitone, dikis, kirisik, panelCevre, panelBoyuna,
       };
     }
     /* Omuzdan bele geçiş: omuz hizasına kadar açılır, sonra kapanır. */
@@ -342,6 +376,6 @@ export function govdeKesiti({
     const g = t2 < omuzT ? 0.86 + 0.14 * u : 1 - (t2 - omuzT) / (1 - omuzT);
     const gen = belW + (omuzW - belW) * Math.max(0, Math.min(1, g));
     const der = belD + (omuzD - belD) * Math.max(0, Math.min(1, g));
-    return { w: gen, d: der, p, kapitone, dikis, kirisik };
+    return { w: gen, d: der, p, kapitone, dikis, kirisik, panelCevre, panelBoyuna };
   };
 }

@@ -66,6 +66,54 @@ export const DIKEY = Object.freeze({
 export const BOYUN_CAP_M = 0.26;
 
 /**
+ * PANEL ŞEMASI — bir giysi KESİLİP DİKİLİR, dökülmez.
+ *
+ * Ölçüldü: gövde yüzeyleri dokuludur (dokuma normal + pürüzlülük haritası,
+ * ~14 m²). Yani "kumaş deseni yok" doğru değildi. Eksik olan DOKU değil
+ * KONSTRÜKSİYON: gerçek bir basınç giysisinde panel dikiş hatları, omuz
+ * boyunduruğu, göğüs kapak dikişi, bel kuşağı, diz ve dirsek takviyesi
+ * vardır. Buradaki gövde tek parça düz bir kabuktu ve üstündeki tek ayrıntı
+ * kapitone bantlarıydı.
+ *
+ * Dikiş bir DOKU DEĞİLDİR: iki panelin BULUŞTUĞU yerdir, yani beyan edilmiş
+ * bir sınır boyunca gider ve aynı kalıptan çıkan her giyside aynı yerdedir.
+ *
+ * `t` süpürmedeki yükseklik (0 tepe, 1 dip), `aci` kesit üzerindeki açı.
+ * `cevre` bütün çevreyi saran yatay dikiş; `boyuna` belirli açılarda düşey.
+ */
+export const PANEL_SEMASI = Object.freeze({
+  ustGovde: {
+    cevre: [0.24, 0.52, 0.78],          // omuz boyunduruğu, göğüs, bel kuşağı
+    boyuna: [0.18, 0.5, 0.82],          // yan dikiş, ön kapak, arka dikiş
+    ad: ['omuz boyunduruğu', 'göğüs kapağı', 'bel kuşağı'],
+  },
+  altGovde: { cevre: [0.18, 0.46], boyuna: [0.25, 0.75], ad: ['kalça kuşağı', 'bacak birleşimi'] },
+  kol: { cevre: [0.3, 0.68], boyuna: [0.5], ad: ['omuz birleşimi', 'dirsek takviyesi'] },
+});
+
+/**
+ * OMUZ MAFSALININ YERİ — ve onu TAŞIMAMA gerekçesi.
+ *
+ * "Mafsal gövdenin içinde" diye ölçüldü: |y| = 0,300, sert üst gövdenin
+ * çizilen yarı eni 0,308. İnsandaki karşılığı 0,20'ye karşı 0,16 (oran 1,25)
+ * diye alındı ve mafsal 0,376'ya taşındı.
+ *
+ * ÖLÇÜM YANLIŞ ŞEYLERİ KARŞILAŞTIRIYORDU. İnsandaki sayı mafsalı GÖĞÜS
+ * KAFESİYLE karşılaştırır; 0,308 ise üstünde kapitone olan basınçlı bir
+ * kabuktur, kafes değil. Beyan edilen sayılar ilk yerleşimin doğru olduğunu
+ * söylüyor: omuz açıklığı `OMUZ_M` = 0,85 ve kol kesiti ~0,26 ise mafsalın
+ * yeri 0,85/2 − 0,13 = 0,295'tir. 0,300'deydi.
+ *
+ * Taşıma denendi ve ÖLÇÜM REDDETTİ: figür 0,990 m'ye genişledi (kendi beyan
+ * ettiği açıklığın %16 üstü) ve `ust-govde` zarfının 1,54 katına çıktı. İki
+ * beyan edilen sayı, yanlış bir karşılaştırma uğruna bozuluyordu.
+ *
+ * "Sıkışık" görünmesinin sebebi mafsalın yeri değil, omuz YAPISININ
+ * (boyunduruk, panel hatları, dikişler) hiç çizilmemiş olması.
+ */
+export const OMUZ_MAFSAL_Y = 0.30;
+
+/**
  * GÖVDE KAPSÜLÜ — kolun İÇİNE GİREMEYECEĞİ hacim.
  *
  * Ölçülen kusur: yürüyüş çevriminin 60 fazının 32'sinde el gövdenin içinde,

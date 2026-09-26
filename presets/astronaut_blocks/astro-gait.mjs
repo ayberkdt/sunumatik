@@ -130,17 +130,19 @@ export function yuruyusFizigi(ortam, bacakM, hizMs = null, olcu = null) {
        taşıyorsa o küçülür.
        Sonuç fiziksel olarak doğru ve ilginç: aynı hızda giysili mürettebat
        daha KISA ve daha SIK adım atar, çünkü kalçası o kadar açılmaz. */
-    const kSin = EKLEMLER['kalca.L'].range, dSin = EKLEMLER['diz.L'].range;
+    /* SIĞDIRMA, POZUN ÇÖZDÜĞÜ ŞEYİ DOĞRULAR. Burada ayrı bir kinematik
+       yazılıydı ve ölçüm farkı yakaladı - ayrıntı `bacakCozumu`nun başında.
+       Örnekleme çözünürlüğü de kapının kullandığından (180) SIK olmalı;
+       48 faz, aradaki bir ucu kaçırıyordu. */
     const ihlal = (Fx) => {
       let kalca = 0, diz = 0;
-      for (let i = 0; i < 48; i++) {
-        const faz = i / 48;
+      for (let i = 0; i < 240; i++) {
+        const faz = i / 240;
         const hz = kalcaYuksekligi(faz, Fx, olcu.uylukM + olcu.baldirM);
-        for (const of2 of [0, 0.5]) {
-          const a = ayakKonumu(faz + of2, Fx);
-          const c = bacakIK(a.x, a.z - hz, olcu.uylukM, olcu.baldirM);
-          kalca = Math.max(kalca, c.kalca - kSin[1], kSin[0] - c.kalca);
-          diz = Math.max(diz, c.diz - dSin[1], dSin[0] - c.diz);
+        for (let j = 0; j < 2; j++) {
+          const c = bacakCozumu(ayakKonumu(faz + j * 0.5, Fx), hz, j, olcu);
+          kalca = Math.max(kalca, c.tasmaKalca);
+          diz = Math.max(diz, c.tasmaDiz);
         }
       }
       return { kalca, diz, en: Math.max(kalca, diz) };
@@ -221,8 +223,28 @@ export function ayakKonumu(faz, F) {
  * aşar, o yüzden yükseklik basan ayaktan ÇIKAR - basma ortasında en yüksek,
  * çift destekte en alçak. Uçuş evresinde parabol.
  */
+/**
+ * BASMA BÜKÜMÜ — basan bacak hiçbir zaman DİMDİK olmaz.
+ *
+ * Ölçülen kusur: kalça tam erişim sınırına konuyordu, yani basan bacak
+ * çevrim boyunca %99,5 açık kalıyor ve ters kinematik KIRPMA eşiğinde
+ * duruyordu (d = 0,89550 = enUzun, basmanın her karesinde). Orada her küçük
+ * sarsıntı çözümü öbür dala atıyordu: faz 0,3187 → 0,3208 arasında diz
+ * 11,5°'den 32,8°'ye sıçrıyor ve basan ayak bir karede 39 mm kayıyordu -
+ * girdiler tamamen sürekliyken. Sıçramanın kaynağı ayak yuvarlanması geri
+ * beslemesiydi ve onu ölçüm söyledi: `tabanDusme` devre dışı bırakılınca
+ * sıçrama 22,37°'den 1,37°'ye iniyor.
+ *
+ * Gerçek yürüyüşte de basan bacak dimdik değildir; temasta ~5°, yük altında
+ * ~18° büküktür ve o büküm bedenin amortisörüdür. Payı vermek hem çözümü
+ * kırpma eşiğinden uzaklaştırıyor hem de doğru olanı yapıyor.
+ */
+export const BASMA_PAYI = 0.965;
+
 export function kalcaYuksekligi(faz, F, erisimM) {
-  const enUzun = erisimM * 0.995;
+  /* Erişim BASMA PAYIYLA kısılır: kalça, bacağın tam açılacağı yüksekliğe
+     değil, biraz altına konur. */
+  const enUzun = erisimM * BASMA_PAYI;
   const ayaklar = [ayakKonumu(faz, F), ayakKonumu(faz + 0.5, F)];
   /* KISIT HER AYAK İÇİN GEÇERLİ. Kalça, hiçbir ayaktan bacak boyundan uzak
      olamaz; havadaki ayak için kısıt yükseldiği kadar gevşer:
@@ -296,6 +318,72 @@ export function adimGurultusu(faz, genlik = 0.03) {
   return 1 + genlik * (a + b + c) / 1.85;
 }
 
+/**
+ * BİR BACAĞIN ÇÖZÜMÜ — pozun da giysi sığdırmasının da kullandığı TEK yer.
+ *
+ * İki geçiş: önce açılar çözülür, sonra bileğin SINIRI uygulanır ve ayak
+ * yuvarlanarak bileği yükseltir; hedef o kadar yükselince kinematik bir kez
+ * daha çözülür. Tek geçiş tabanı yere gömer. Bilek açısı bileğin
+ * yüksekliğini, yükseklik de açıyı belirlediği için sabit sayıda geçiş
+ * yetmiyordu (taban 12 mm gömülü ya da bilek çözümden 12 mm ayrı kalıyordu);
+ * yakınsayana kadar dönülür.
+ *
+ * `a` YERİNDE değişir: çağrıdan sonra `a.z` bileğin yüksekliğidir.
+ *
+ * NEDEN BURADA: bu döngü bir de `yuruyusFizigi` içindeki sığdırma denetiminde,
+ * biraz FARKLI yazılmış hâliyle duruyordu - sığdırma ham ayak yüksekliğine
+ * bakıyor, yuvarlanmanın bileği yükseltmesini saymıyor ve 48 fazda
+ * örnekliyordu. Ölçüm farkı yakaladı: Ay'da 1,7 m/s'de sığdırma "sığdı" derken
+ * faz 0,800'de (48'lik ızgaraya düşmeyen bir faz) kalça 72°'de kırpılıyor ve
+ * bilek çözümün söylediği yerden 5,13 mm ayrılıyordu. Doğrulanan şeyin
+ * çözülen şeyle aynı olması, ayarlanacak bir sayı değil aynı kod olmasıdır.
+ */
+export function bacakCozumu(a, hz, i, olcu) {
+  const { uylukM, baldirM } = olcu;
+  /* YAY YÜKSEKLİĞİ ayrı tutulur: `a.z` bundan sonra BİLEĞİN yüksekliği olacak
+     ve tabanın nerede olduğu profilden gelecek. */
+  const yay = a.z;
+  let c = bacakIK(a.x, a.z - hz, uylukM, baldirM);
+  let aci = 0;
+  for (let gec = 0; gec < 60; gec++) {
+    const k = sinirla(POZ_EKLEM.kalca[i], c.kalca);
+    const d = sinirla(POZ_EKLEM.diz[i], c.diz);
+    const gereken = k - d;
+    /* ANAHTAR, EKLEM AÇISI DEĞİL DÜNYA EĞİMİDİR: tabanın ne kadar düştüğünü
+       ayağın YERE göre eğimi, yani kırpmanın bıraktığı fark belirler. Kırpma
+       yokken sapma sıfırdır ve taban düzdür. */
+    aci = sinirla(POZ_EKLEM.ayak[i], gereken);
+    const zYeni = yay + (olcu.tabanDusme
+      ? olcu.tabanDusme(aci - gereken) - olcu.botOfsetM : 0);
+    if (Math.abs(zYeni - a.z) < 1e-7) break;
+    /* SÖNÜMLEME YOK. Eklenmişti, çünkü bu döngünün İKİ sabit noktası var ve
+       çözüm faz 0,3187 → 0,3208 arasında diz 11,5°'den 32,8°'ye ATLIYORDU.
+       Sönümleme o sıçramayı ÇÖZMEDİ - harita kararsız değil iki dallıydı ve
+       dalı kapatan şey `BASMA_PAYI` oldu; sönümleme geriye yalnız yavaş
+       yakınsama ve 5 mm'lik bir sapma bıraktı. */
+    a.z = zYeni;
+    c = bacakIK(a.x, a.z - hz, uylukM, baldirM);
+  }
+  /* TAŞMA HAM TALEPTEN ölçülür. Kırpılmış açıya bakmak her zaman "sığdı" der,
+     çünkü kırpmanın yaptığı şey açıyı sınıra oturtmaktır. */
+  /* `POZ_EKLEM.kalca[i]` bir ARALIK DEĞİL, eklemin ADIDIR - aralığı veren
+     `EKLEMLER`. Adı aralık sanıp indekslemek sessizce NaN üretti ve NaN her
+     karşılaştırmada false olduğu için sığdırma "taşma yok" görüp adımı
+     tabanına kadar kısalttı: Dünya'da 413 adım/dk. Bir ad ile bir aralığı
+     karıştırmak, yakalanması için denetim gerektiren türde bir hatadır. */
+  const ust = (ad, v) => {
+    const r = EKLEMLER[ad]?.range;
+    return r ? Math.max(v - r[1], r[0] - v) : 0;
+  };
+  return {
+    kalca: sinirla(POZ_EKLEM.kalca[i], c.kalca),
+    diz: sinirla(POZ_EKLEM.diz[i], c.diz),
+    ayak: aci,
+    tasmaKalca: ust(POZ_EKLEM.kalca[i], c.kalca),
+    tasmaDiz: ust(POZ_EKLEM.diz[i], c.diz),
+  };
+}
+
 export function yuruyusPozu(faz, F, olcu) {
   const { uylukM, baldirM } = olcu;
   /* Erişim uzunluğu BURADA türetilir. Önce ayrıca verilen bir `bacakM`
@@ -326,39 +414,11 @@ export function yuruyusPozu(faz, F, olcu) {
     }
   }
   const hz = kalcaYuksekligi(faz, F, erisim) * gurultuKat - temasCokme;
-  /* İki geçiş: önce açılar çözülür, sonra bileğin SINIRI uygulanır ve ayak
-     yuvarlanarak bileği yükseltir; hedef o kadar yükselince kinematik bir
-     kez daha çözülür. Tek geçiş, tabanı yere gömer. */
   const ayaklar = [0, 0.5].map((ofset) => ayakKonumu(faz + ofset, F));
   const bacak = [], bilek = [];
   for (let i = 0; i < 2; i++) {
-    const a = ayaklar[i];
-    /* YAY YÜKSEKLİĞİ ayrı tutulur: `a.z` bundan sonra BİLEĞİN yüksekliği
-       olacak ve tabanın nerede olduğu profilden gelecek. */
-    const yay = a.z;
-    let c = bacakIK(a.x, a.z - hz, uylukM, baldirM);
-    /* SABİT NOKTA. Bilek açısı bileğin yüksekliğini, yükseklik de açıyı
-       belirler; ikisi birbirine bağlı. Sabit sayıda geçiş yapmak, `a.z` ile
-       ona karşılık gelen açıyı tutarsız bırakıyordu - taban 12 mm gömülü ya
-       da bilek çözümden 12 mm ayrı kalıyordu. Yakınsayana kadar dönülür. */
-    let aci = 0;
-    for (let gec = 0; gec < 8; gec++) {
-      c.kalca = sinirla(POZ_EKLEM.kalca[i], c.kalca);
-      c.diz = sinirla(POZ_EKLEM.diz[i], c.diz);
-      const gereken = c.kalca - c.diz;
-      aci = sinirla(POZ_EKLEM.ayak[i], gereken);
-      /* ANAHTAR, EKLEM AÇISI DEĞİL DÜNYA EĞİMİDİR: tabanın ne kadar düştüğünü
-         belirleyen şey ayağın YERE göre eğimi, yani kırpmanın bıraktığı
-         farktır. Kırpma yokken sapma sıfırdır ve taban düzdür. */
-      const zYeni = yay + (olcu.tabanDusme
-        ? olcu.tabanDusme(aci - gereken) - olcu.botOfsetM : 0);
-      if (Math.abs(zYeni - a.z) < 1e-7) break;
-      a.z = zYeni;
-      c = bacakIK(a.x, a.z - hz, uylukM, baldirM);
-    }
-    c.kalca = sinirla(POZ_EKLEM.kalca[i], c.kalca);
-    c.diz = sinirla(POZ_EKLEM.diz[i], c.diz);
-    bilek.push(aci);
+    const c = bacakCozumu(ayaklar[i], hz, i, olcu);
+    bilek.push(c.ayak);
     bacak.push(c);
   }
   /* Kol salınımı bacağın TERSİ fazdadır ve genliği adım boyuyla artar:

@@ -31,7 +31,7 @@
  */
 import {
   PARTS, partById, BOY_M, OMUZ_M, BOYUN_CAP_M, DIKEY, UYLUK_M, BALDIR_M,
-  AYAK_ON_M, AYAK_ARKA_M, AYAK_EN_M, EL_CERCEVE, kopyaKonumlari,
+  AYAK_ON_M, AYAK_ARKA_M, AYAK_EN_M, EL_CERCEVE, PANEL_SEMASI, kopyaKonumlari,
   EKLEMLER, POZ_EKLEM, sinirla,
 } from './astro-parts.mjs';
 import { supur, uzuvKesiti, govdeKesiti, cizmeGovdesi, ayakEni, ayakBoyu,
@@ -191,7 +191,7 @@ function konvolut(THREE, M, wUst, dUst, wAlt, dAlt, boy, n = 4, {
  */
 function mafsalGovdesi(THREE, mat, w, d, {
   doluluk = 1.0, seg = 26, kapitone = [3, 0.030], dikis = [6, 0.020],
-  kirisik = [1.4, 0.012],
+  kirisik = [1.4, 0.012], basik = 1.0,
 } = {}) {
   /* KÜRE TOPOLOJİSİ + UZVUN YÜZEYİ.
      Ölçülen: diz gövdesi 0,260 x 0,286, yanındaki baldır 0,261 x 0,279 -
@@ -227,7 +227,11 @@ function mafsalGovdesi(THREE, mat, w, d, {
   const k = new THREE.Mesh(g, mat);
   /* Kesit eliptiktir: mafsal, bağladığı uzvun kesitini izler - yoksa ince
      bir bileğe yuvarlak bir top takılmış gibi durur. */
-  k.scale.set(d * doluluk, w * doluluk, w * doluluk * 0.96);
+  /* `basik`: mafsal gövdesi uzvun kesitini izlemek ZORUNDA ama uzvun
+     BOYUNU izlemek zorunda değil. Omuzda bu fark ölçülebilir hâle geldi -
+     gövde mafsalın 114 mm üstüne çıkıyor ve omuz kütlesi boyun hizasına
+     varıyordu. */
+  k.scale.set(d * doluluk, w * doluluk, w * doluluk * 0.96 * basik);
   /* Kapı bu gövdeleri ADIYLA bulur: en büyük çocuğu seçmek, bir gün başka
      bir şey büyüdüğünde sessizce yanlış şeyi ölçmeye başlar. */
   k.userData.mafsalGovdesi = { w: w * doluluk, d: d * doluluk };
@@ -349,8 +353,15 @@ function govde(THREE, p, M, yan = 0) {
         }), { dilim: 10, halka: 22 }));
         b.position.set(0, s * sy * 0.38, -sz * 0.06);
       }
-      /* Serpantin: borular gövdeyi SARAR, üst üste halka olmaz. */
-      for (let i = 0; i < 16; i++) {
+      /* Serpantin: borular gövdeyi SARAR, üst üste halka olmaz.
+         SAYI 16 DEĞİL 13: soğutma tulumu tene giyilen ALT katmandır ve
+         dışarıdan yalnız boyundan ve bileklerden görünmelidir. 16 halkayla
+         en alttaki 0,897'ye iniyordu, basınçlı giysinin leğen kabuğu ise
+         0,976'da bitiyor - aradaki bantta kırmızı serpantin ÖNDEN
+         görünüyordu (ölçüldü: z = 0,95'te dışarıdan atılan ışının ilk
+         çarptığı şey serpantindi). Bir alt katman, üst katmanın altında
+         kalmak zorunda. */
+      for (let i = 0; i < 13; i++) {
         const r = sy * (0.44 - 0.05 * Math.abs(Math.sin(i * 0.9)));
         const hat = ekle(new THREE.Mesh(
           new THREE.TorusGeometry(r, sy * 0.018, 5, 22, TAU * 0.92), M.serit));
@@ -377,10 +388,19 @@ function govde(THREE, p, M, yan = 0) {
       /* Kalça, taşıdığı bacaklar kadar GENİŞ olmak zorunda. A7L fıçı
          biçimlidir: kalçası omzu kadar geniştir, ve dar bir kalçaya kalın
          bacak takmak tam olarak "bacaklı varil"in tersi kadar yanlış. */
-      const brief = ekle(uzuvMesh(THREE, M.kumas, belZ - kalcaZ + 0.3, uzuvKesiti({
-        ustW: sy * 0.52, ustD: sx * 0.52, altW: sy * 0.8, altD: sx * 0.68, sis: 0.03,
+      /* LEĞEN KALÇADA EN GENİŞ, sonra DARALIR. Önceki hâl belden aşağı
+         GENİŞLEYEREK 380 mm iniyor ve uyluğun ortasında düz bir etekle
+         bitiyordu (ölçüldü: z 0,796…1,176, en 0,696, ve figürün en geniş
+         yeri kalçanın 250 mm ALTINDA). Uzunluk yine kalça mafsalının altına
+         iner - belde bitirmek kasıkta boşluk bırakıyor ve altındaki tulum
+         görünüyordu - ama 380 değil 200 mm, ve kesit kalçadan sonra kapanır.
+         `sisT` şişmeyi kalça hizasına koyar. */
+      const brief = ekle(uzuvMesh(THREE, M.kumas, belZ - kalcaZ + 0.12, uzuvKesiti({
+        ustW: sy * 0.56, ustD: sx * 0.54, altW: sy * 0.50, altD: sx * 0.46,
+        sis: 0.14, sisT: 0.42,
         p: 2.5, kapitone: [4, 0.05], dikis: [6, 0.05], kirisik: [1.2, 0.018],
-      }), { dilim: 20, halka: 34 }));
+        panelCevre: PANEL_SEMASI.altGovde.cevre, panelBoyuna: PANEL_SEMASI.altGovde.boyuna,
+      }), { dilim: 22, halka: 36 }));
       brief.position.z = belZ;
       const bel = yatakHalkasi(THREE, M, sy * 0.5,
         { kalin: 0.022, tirnak: 10, kol: true, basik: sx / sy });
@@ -418,7 +438,11 @@ function govde(THREE, p, M, yan = 0) {
              neredeyse aynı. Anatomik daralmayı giysiye uygulamak, figürü bir
              basınç kabı değil tulum giymiş bir insan gibi gösteriyordu. */
           ustW: sy * 0.35, ustD: sx * 0.345, altW: sy * 0.325, altD: sx * 0.32,
-          sis: 0.05, sisT: 0.3, p: 2.2, kapitone: [6, 0.075], dikis: [8, 0.04], kirisik: [1.4, 0.022],
+          /* ŞİŞME KALÇAYA YAKIN. 0,3'te (dünyada z ≈ 0,95) uyluğun en kalın
+             yeri kalçanın ALTINDA kalıyor ve etek görüntüsüne katkı
+             veriyordu; bir bacağın en kalın yeri kalçanın hemen altıdır. */
+          sis: 0.045, sisT: 0.12, p: 2.2, kapitone: [6, 0.075], dikis: [8, 0.04], kirisik: [1.4, 0.022],
+          panelCevre: PANEL_SEMASI.altGovde.cevre, panelBoyuna: PANEL_SEMASI.altGovde.boyuna,
         }), { dilim: 20, halka: 32 });
         uyluk.position.z = -0.07;
         uyluk.castShadow = true; uyluk.receiveShadow = true;
@@ -595,7 +619,14 @@ function govde(THREE, p, M, yan = 0) {
         omuzW: sy * 0.5, omuzD: sx * 0.54, belW: sy * 0.42, belD: sx * 0.48,
         boyunW: BOYUN_CAP_M * 0.5, boyunD: BOYUN_CAP_M * 0.52, boyunT: 0.26,
         omuzT: 0.26, p: 2.2, kapitone: [4, 0.03], dikis: [5, 0.03], kirisik: [1.1, 0.016],
-      }), { dilim: 24, halka: 40 }));
+        /* PANEL HATLARI katalogdan: omuz boyunduruğu, göğüs kapağı, bel
+           kuşağı ve üç düşey dikiş. Bir giysinin kaç parçadan kesildiğini
+           söyleyen şey bunlardır ve "basic" görünmenin sebebi yokluklarıydı.
+           Süpürme çözünürlüğü 24→40 dilime çıktı: 0,018 genişliğindeki bir
+           oluk 24 dilimde iki örneğe düşüyor ve çizgi olmuyor. */
+        panelCevre: PANEL_SEMASI.ustGovde.cevre,
+        panelBoyuna: PANEL_SEMASI.ustGovde.boyuna,
+      }), { dilim: 40, halka: 48 }));
       kab.position.z = sz / 2;
       /* Göğüs dolgusu: basınç kumaşı şişirir ve öne eğilebilmek için ÖNDE
          yer bırakılır, o yüzden göğüs sırttan dolgundur. */
@@ -749,15 +780,24 @@ function govde(THREE, p, M, yan = 0) {
        mürettebat kendi göğsündeki paneli ancak aynayla okur. */
     case 'kol': {
       const ustBoy = sz * 0.46, onBoy = sz * 0.44;
+      /* OMUZ KAPAĞI DA BASIK. Ölçülen: kolun tepesi 1,683 ve mafsal
+         1,576'da - kapak mafsalın 107 mm üstüne çıkıyordu, gövdenin tepesi
+         (boyun) ise 1,696. Omuz yatağı 1,636'da bitiyor; kapak ondan
+         yüksek olmamalı, yoksa omuz boyunla aynı hizaya çıkar. */
       const kap = ekle(new THREE.Mesh(new THREE.SphereGeometry(sy * 0.7, 24, 16), M.kumas));
-      kap.scale.set(0.9, 1, 0.78);
+      kap.scale.set(0.92, 1, 0.50);
       g.add(yatakHalkasi(THREE, M, sy * 0.62, { kalin: 0.014, tirnak: 6 }));
-      /* OMUZ EKLEMİ. */
-      g.add(mafsalGovdesi(THREE, M.kumas, sy * 0.62, sx * 0.59));
+      /* OMUZ EKLEMİ BASIK. Ölçülen: kolun en tepedeki geometrisi 1,690'a
+         çıkıyordu, gövdenin tepesi (BOYUN) ise 1,696 - yani omuz kütlesi
+         boyunla aynı hizadaydı ve omuzlar "fazla yukarıda" okunuyordu.
+         Mafsal 1,576'da; gövde onun 114 mm üstüne çıkıyordu. Bir omuz
+         mafsalı kol kadar GENİŞ olmak zorunda, kol kadar YÜKSEK değil. */
+      g.add(mafsalGovdesi(THREE, M.kumas, sy * 0.62, sx * 0.59, { basik: 0.62 }));
       g.add(konvolut(THREE, M, sy * 0.63, sx * 0.6, sy * 0.61, sx * 0.58, sz * 0.09, 2));
       const ust = uzuvMesh(THREE, M.kumas, ustBoy - sz * 0.09 - sy * 0.34, uzuvKesiti({
         ustW: sy * 0.61, ustD: sx * 0.58, altW: sy * 0.574, altD: sx * 0.56,
         sis: 0.05, sisT: 0.25, p: 2.2, kapitone: [6, 0.085], dikis: [6, 0.035], kirisik: [1.8, 0.025],
+        panelCevre: PANEL_SEMASI.kol.cevre, panelBoyuna: PANEL_SEMASI.kol.boyuna,
       }), { dilim: 18, halka: 30 });
       ust.position.z = -sz * 0.09;
       ust.castShadow = true; ust.receiveShadow = true;
@@ -1727,10 +1767,10 @@ export function buildAstronaut(THREE, { tokens = {}, poz = 'dik', seritRenk = nu
         /* PAY. Tablo tek bir eldivenle ve tek bir bacak duruşuyla
            süpürülüyor; gerçek çevrimde gövde de dönüyor, eğiliyor ve iki el
            birden hareket ediyor. Tam sınırda kalan bir açı o küçük farklarla
-           yeniden içeri düşer - ölçülen: 8° payla 2 faz, 10° payla SIFIR faz çakışıyor. Pay
+           yeniden içeri düşer - ölçülen: 8° payla 2 faz, 10° ile sıfır; leğen ve uyluk biçimi değişince 10° yeniden 2 faz verdi, 14° sıfır. Pay
            yalnız SIFIRDAN BÜYÜK değerlere eklenir: temas etmeyen bir kolu
            bedavaya açmak, figürü kanat gibi yapardı. */
-        satir.push(gerek > 0 ? Math.min(aMaks, gerek + 10) : 0);
+        satir.push(gerek > 0 ? Math.min(aMaks, gerek + 14) : 0);
       }
       omuzAcilmaProfili.push([f, satir]);
     }

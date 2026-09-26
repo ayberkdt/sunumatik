@@ -1817,5 +1817,150 @@ console.log('\n== 19 el gövdeden geçmiyor');
   S.uygulaPoz(S.poz);
 }
 
+/* ── 20 YÜRÜYÜŞ SÜREKLİ Mİ ───────────────────────────────────────────
+ *
+ * Ölçülen kusur: faz 0,3187 → 0,3208 arasında diz 11,5°'den 32,8°'ye
+ * SIÇRIYOR, kalça 9,2° kayıyor ve basan ayak tek karede 39 mm kayıyordu -
+ * girdiler (ayak 5 mm, kalça yüksekliği 2 mm) tamamen sürekliyken. Gözle
+ * görülen şey buydu: bacak yürürken takılıyordu.
+ *
+ * Sebep ölçümle bulundu. `kalcaYuksekligi` kalçayı TAM erişim sınırına
+ * koyuyordu: basmanın her karesinde d = 0,89550 = enUzun, yani bacak dimdik
+ * ve ters kinematik KIRPMA eşiğinde. Orada ayak yuvarlanması geri beslemesi
+ * (bilek sınıra dayanır → ayak burnuna döner → bilek yükselir → bacak daha
+ * çok bükülür → daha fazla bilek ister) çözümü öbür dala atıyordu.
+ * `tabanDusme` devre dışı bırakılınca sıçrama 22,37°'den 1,37°'ye indi -
+ * suçluyu söyleyen ölçüm buydu. Sönümleme denendi ve YETMEDİ, çünkü
+ * yineleme kararsız değildi; harita iki dallıydı.
+ *
+ * Çözüm `BASMA_PAYI`: kalça tam açılma yüksekliğinin biraz altına konur,
+ * basan bacak her zaman biraz bükük kalır ve çözüm kırpma eşiğinden uzak
+ * durur. Gerçekte de öyledir - basan bacak dimdik değildir, o büküm bedenin
+ * amortisörüdür.
+ */
+console.log('\n== 20 yürüyüş sürekli mi');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const G = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-gait.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik', ao: false });
+
+  for (const [ortam, hiz] of [['ay', 1.2], ['ay', 0.67], ['dunya', 1.2], ['mars', 1.0]]) {
+    const F = G.yuruyusFizigi(ortam, S.olcu.bacakM, hiz, S.olcu);
+    const en = { kalca: 0, diz: 0, ayak: 0 };
+    const onceki = {};
+    for (let i = 0; i <= 480; i++) {
+      const P = G.yuruyusPozu(i / 480, F, S.olcu);
+      for (const ad of ['kalca', 'diz', 'ayak']) {
+        if (onceki[ad] !== undefined) {
+          en[ad] = Math.max(en[ad], Math.abs(P[ad][0] - onceki[ad]));
+        }
+        onceki[ad] = P[ad][0];
+      }
+    }
+    /* EŞİK 6°: 480 örnekte bir çevrim, yani kare başına 0,75° normal.
+       Ölçülen kusur 22,37°'ydi; düzeltilmiş hâli 2,2-3,3°. */
+    const kotu = Object.entries(en).filter(([, v]) => v > 6);
+    check(`${ortam} ${hiz} m/s: açılar kare kare sürekli`, kotu.length === 0,
+      Object.entries(en).map(([k, v]) => `${k} ${v.toFixed(2)}°`).join(' · ')
+      + ' · kusurlu hâlinde diz 22,37°');
+  }
+
+  /* Basan bacak KIRPMA EŞİĞİNDE durmamalı: dimdik bir bacak hem yanlış hem
+     de çözümü kararsız yapar. */
+  {
+    const F = G.yuruyusFizigi('ay', S.olcu.bacakM, 1.2, S.olcu);
+    const erisim = S.olcu.uylukM + S.olcu.baldirM;
+    let enUzak = 0;
+    for (let i = 0; i < 240; i++) {
+      const faz = i / 240;
+      const a = G.ayakKonumu(faz, F);
+      if (!a.basiyor) continue;
+      const hz = G.kalcaYuksekligi(faz, F, erisim);
+      enUzak = Math.max(enUzak, Math.hypot(a.x, a.z - hz) / erisim);
+    }
+    check('basan bacak tam açılmıyor (kırpma eşiğinden uzak)', enUzak < 0.985,
+      `en uzak ${(100 * enUzak).toFixed(1)}% · kusurlu hâlinde %99,5`);
+  }
+
+  /* TERS SINAV: payı kaldırmak sıçramayı geri getirmeli. */
+  {
+    check('TERS SINAV: basma payı beyan edilmiş ve 1 den küçük',
+      G.BASMA_PAYI > 0.9 && G.BASMA_PAYI < 1,
+      `${G.BASMA_PAYI} (payın kalktığı hâl 0,995 idi ve diz 22,37° sıçrıyordu)`);
+  }
+
+  /* Basan ayak yerde DURMALI: kare başına kayma, ilerleme hızının
+     beklediğinden fazla olamaz. */
+  {
+    const F = G.yuruyusFizigi('ay', S.olcu.bacakM, 1.2, S.olcu);
+    let enKayma = 0, onceki = null, oncekiBas = false;
+    for (let i = 0; i <= 240; i++) {
+      const faz = i / 240;
+      const P = G.yuruyusPozu(faz, F, S.olcu);
+      S.uygulaPoz(P); S.root.updateMatrixWorld(true);
+      const alt = new THREE.Box3().setFromObject(S.nodes.get('cizmeler')).min.x;
+      const bas = P.ayakKonum[0].basiyor;
+      if (bas && oncekiBas && onceki !== null) {
+        const beklenen = -F.hiz * (1 / 240) * (2 * F.adimSure);
+        enKayma = Math.max(enKayma, Math.abs((alt - onceki) - beklenen));
+      }
+      onceki = alt; oncekiBas = bas;
+    }
+    check('basan ayak kare başına 20 mm den fazla kaymıyor', enKayma < 0.020,
+      `${(1000 * enKayma).toFixed(1)} mm · kusurlu hâlinde 39,3 mm`);
+  }
+
+  /* AYAK NE ZAMAN KALKAR. Basan ayağın yere göre eğimi basmanın SONUNDA
+     büyür (topuk kalkar, ayak burnuna döner) - basmanın ORTASINDA aynı açı
+     ayağın yerden koptuğu anlamına gelir ve gözle "ayak havada kayıyor" diye
+     okunur. Bu, sessiz bozulan türden bir şey: açı süreklidir, taban yerin
+     altına inmez, sayılar temiz görünür ve yürüyüş yine yanlıştır.
+     Ölçülen: ilk %60'ta 0,0°, sonra 22°, kalkışta 44°. */
+  {
+    const F = G.yuruyusFizigi('ay', S.olcu.bacakM, 1.2, S.olcu);
+    let ortaEgim = 0, kalkis = 0;
+    for (let i = 0; i < 240; i++) {
+      const P = G.yuruyusPozu(i / 240, F, S.olcu);
+      for (const j of [0, 1]) {
+        const a = P.ayakKonum[j];
+        if (!a.basiyor) continue;
+        const e = Math.abs(P.ayak[j] - (P.kalca[j] - P.diz[j]));
+        if (a.basmaFaz < 0.6) ortaEgim = Math.max(ortaEgim, e);
+        else kalkis = Math.max(kalkis, e);
+      }
+    }
+    check('basmanın ilk %60ında ayak yere yatık duruyor', ortaEgim < 1,
+      `orta basma ${ortaEgim.toFixed(1)}° · kalkışta ${kalkis.toFixed(1)}°`);
+    /* TERS SINAV: kalkışta eğim OLMAK zorunda, yoksa ayak düz tahta gibi
+       sürünür ve yukarıdaki sınav sıfır eğimli bir yürüyüşle de geçer. */
+    check('TERS SINAV: kalkışta ayak burnuna dönüyor', kalkis > 15,
+      `${kalkis.toFixed(1)}° (düz sürünen bir ayakta 0° olurdu)`);
+  }
+
+  /* SIĞDIRMA POZUN ÇÖZDÜĞÜNÜ DOĞRULAR. `yuruyusFizigi` adımı beyan edilen
+     mafsal açıklığına sığana kadar kısaltır; o denetim pozla AYNI kinematiği
+     kullanmak zorunda. Ayrı yazılmış hâli Ay'da 1,7 m/s'de "sığdı" derken
+     kalça 72°'de kırpılıyor ve bilek çözümün söylediği yerden 5,13 mm
+     ayrılıyordu. */
+  for (const [ortam, hiz] of [['dunya', null], ['dunya', 1.2], ['ay', 1.2], ['ay', 1.7], ['mars', 1.0]]) {
+    const F = G.yuruyusFizigi(ortam, S.olcu.bacakM, hiz, S.olcu);
+    const erisim = S.olcu.uylukM + S.olcu.baldirM;
+    let tasma = -Infinity;
+    for (let i = 0; i < 240; i++) {
+      const faz = i / 240;
+      const hz = G.kalcaYuksekligi(faz, F, erisim);
+      for (const j of [0, 1]) {
+        const c = G.bacakCozumu(G.ayakKonumu(faz + j * 0.5, F), hz, j, S.olcu);
+        tasma = Math.max(tasma, c.tasmaKalca, c.tasmaDiz);
+      }
+    }
+    check(`${ortam} ${hiz ?? 'doğal'}: çözüm beyan edilen mafsal açıklığına sığıyor`,
+      tasma <= 0.05 && F.sigdirildi,
+      `en büyük taşma ${tasma.toFixed(2)}° · adım ${F.adimBoyu.toFixed(3)} m · cadans ${F.cadans.toFixed(0)}/dk`);
+  }
+  S.uygulaPoz(S.poz);
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);
