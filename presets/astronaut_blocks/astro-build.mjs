@@ -34,8 +34,8 @@ import {
   AYAK_ON_M, AYAK_ARKA_M, AYAK_EN_M, kopyaKonumlari,
   EKLEMLER, POZ_EKLEM, sinirla,
 } from './astro-parts.mjs';
-import { kesitNokta, supur, uzuvKesiti, govdeKesiti,
-         cizmeGovdesi, ayakEni, ayakBoyu } from './astro-body.mjs';
+import { supur, uzuvKesiti, govdeKesiti, cizmeGovdesi, ayakEni, ayakBoyu,
+         kapitoneKat, dikisKat, kirisikKat } from './astro-body.mjs';
 import { cylGeoX, cylGeoY, cylGeoZ, kureGeoZ, latheZ, latheZYonlu,
          PHI_Z } from '../core/geometry-axis.mjs';
 import * as D from '../core/hardware-kit.mjs';
@@ -140,9 +140,48 @@ function konvolut(THREE, M, wUst, dUst, wAlt, dAlt, boy, n = 4) {
  * Kesit eliptik olduğu için küre de eliptiktir: mafsal, bağladığı uzvun
  * kesitini izler, yoksa ince bir bileğe yuvarlak bir top takılmış gibi durur.
  */
-function mafsalGovdesi(THREE, mat, w, d, { doluluk = 1.0, seg = 22 } = {}) {
-  const k = new THREE.Mesh(new THREE.SphereGeometry(1, seg, Math.round(seg * 0.7)), mat);
+function mafsalGovdesi(THREE, mat, w, d, {
+  doluluk = 1.0, seg = 26, kapitone = [3, 0.030], dikis = [6, 0.020],
+  kirisik = [1.4, 0.012],
+} = {}) {
+  /* KÜRE TOPOLOJİSİ + UZVUN YÜZEYİ.
+     Ölçülen: diz gövdesi 0,260 x 0,286, yanındaki baldır 0,261 x 0,279 -
+     top uzuvdan yalnız %2,5 kalın, yani BOYUT hiç sorun değildi. Sorun
+     YÜZEYDİ: uzuvlar konvolütlü, eklem pürüzsüz bir küreydi ve aynı çapta
+     farklı dokulu iki yüzey yan yana gelince göz onları tek parça değil
+     "takılmış bir top" diye okur.
+
+     Süpürme gövdesi denendi ve SÜREKLİLİĞİ bozdu: sivri uçlu bir elipsoidin
+     uç bandında yüzey neredeyse eksene dik kalıyor, sarım dışa bakan bir
+     yüzeyi tarif etmiyor (ölçüldü: 225 köşenin 22'si içe) ve arkaya bakan
+     üçgen ışına da kameraya da görünmez - 72 ışından biri gövdenin kendi
+     ekseninin 5° yanından geçip 90 mm ÖTEDEKİ duvara çarpıyordu.
+
+     Küre bu tuzakların hiçbirini taşımaz: bantlar düzgün, yüzeyin ortasında
+     tekillik yok, kapalı. Ve zaten seçilme sebebi bu: her yönden aynı
+     yarıçap, yani içinden geçen yüzey HİÇBİR açıda kopamaz. */
+  const g = new THREE.SphereGeometry(1, seg, Math.round(seg * 0.7));
+  const poz = g.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < poz.count; i++) {
+    v.fromBufferAttribute(poz, i);
+    /* t: kutuptan kutba (0..1), aci: ekvator boyunca (0..2pi) - uzuv
+       süpürmesindeki iki parametrenin aynısı, o yüzden desen de aynı. */
+    const tt = 0.5 - Math.asin(Math.max(-1, Math.min(1, v.y))) / Math.PI;
+    const aci = Math.atan2(v.z, v.x) + Math.PI;
+    const k = kapitoneKat(tt, kapitone?.[0], kapitone?.[1])
+      * dikisKat(aci, dikis?.[0], dikis?.[1])
+      * kirisikKat(tt, aci, kirisik?.[0], kirisik?.[1]);
+    poz.setXYZ(i, v.x * k, v.y * k, v.z * k);
+  }
+  g.computeVertexNormals();
+  const k = new THREE.Mesh(g, mat);
+  /* Kesit eliptiktir: mafsal, bağladığı uzvun kesitini izler - yoksa ince
+     bir bileğe yuvarlak bir top takılmış gibi durur. */
   k.scale.set(d * doluluk, w * doluluk, w * doluluk * 0.96);
+  /* Kapı bu gövdeleri ADIYLA bulur: en büyük çocuğu seçmek, bir gün başka
+     bir şey büyüdüğünde sessizce yanlış şeyi ölçmeye başlar. */
+  k.userData.mafsalGovdesi = { w: w * doluluk, d: d * doluluk };
   k.castShadow = true; k.receiveShadow = true;
   return k;
 }

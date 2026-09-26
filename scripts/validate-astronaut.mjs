@@ -1022,5 +1022,87 @@ console.log('\n== 12 kırpma sessiz olmasın');
   }
 }
 
+/* ── 13 EKLEM GÖVDESİ UZVUN DİLİNİ KONUŞUYOR MU ──────────────────────
+ *
+ * Mafsalda boşluk yoktu (bölüm 6 onu ölçüyor) ama diz ve kalça hâlâ çıplak
+ * beyaz yumurtalar gibi duruyordu. Ölçüm sebebi söyledi: diz gövdesi
+ * 0,260 x 0,286, yanındaki baldır 0,261 x 0,279 - top uzuvdan yalnız %2,5
+ * kalın, yani boyut hiç sorun değildi. Aynı ÇAPTA ama farklı DOKUDA iki
+ * yüzey yan yana gelince göz onları tek parça saymaz.
+ *
+ * O yüzden burada ölçülen şey yüzeydir: gövdenin yarıçapı, uzuvlarınki gibi
+ * kapitone/dikiş/kırışık alanıyla modüle edilmiş olmak zorunda. Düz bir küre
+ * bu sınavı geçemez ve ters sınav tam olarak onu gösterir.
+ */
+console.log('\n== 13 eklem gövdesi uzvun dilini konuşuyor mu');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik' });
+  S.root.updateMatrixWorld(true);
+
+  const govdeler = [];
+  S.root.traverse((o) => { if (o.isMesh && o.userData.mafsalGovdesi) govdeler.push(o); });
+  check('her mafsalın bir gövdesi var', govdeler.length >= 12,
+    `${govdeler.length} eklem gövdesi (kalça, diz, bilek, omuz, dirsek, el bileği x2)`);
+
+  /* Yarıçap dalgalanması: kürenin kendi yarıçapı 1, dokunun bıraktığı
+     sapma yüzde kaç? */
+  const dalga = (m) => {
+    const poz = m.geometry.attributes.position;
+    let mn = 9, mx = 0;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < poz.count; i++) {
+      v.fromBufferAttribute(poz, i);
+      const r = v.length();
+      if (r < 0.2) continue;                 // kutup yakını: yarıçap zaten küçük
+      mn = Math.min(mn, r); mx = Math.max(mx, r);
+    }
+    return mx - mn;
+  };
+  const en = Math.min(...govdeler.map(dalga));
+  check('her eklem gövdesinin yüzeyi modüle edilmiş (düz küre değil)', en > 0.015,
+    `en düz gövdede bile ±%${(100 * en / 2).toFixed(1)} dalga`);
+
+  /* Malzeme paylaşılmalı: eklem için AYRI bir malzeme, uzvun yanında başka
+     bir nesne gibi durur. */
+  const uzuvMat = new Set();
+  S.root.traverse((o) => {
+    if (o.isMesh && !o.userData.mafsalGovdesi && o.material) uzuvMat.add(o.material);
+  });
+  const yabanci = govdeler.filter((m) => !uzuvMat.has(m.material));
+  check('hiçbir eklem gövdesi kendine ait bir malzeme kullanmıyor',
+    yabanci.length === 0, `${uzuvMat.size} paylaşılan malzeme`);
+
+  /* Kesit komşu uzuvdan ÇOK sapmamalı: mafsal bağladığı şeyin kesitini
+     izler, yoksa ince bir bileğe yuvarlak bir top takılmış gibi durur. */
+  const dizG = govdeler.find((m) => Math.abs(m.getWorldPosition(new THREE.Vector3()).z - A.DIKEY.diz) < 0.05);
+  check('diz gövdesi bulundu', !!dizG,
+    dizG ? `z = ${dizG.getWorldPosition(new THREE.Vector3()).z.toFixed(3)}` : '-');
+  if (dizG) {
+    const gb = new THREE.Box3().setFromObject(dizG).getSize(new THREE.Vector3());
+    /* Komşu baldır: dizin hemen altındaki süpürme gövdesi. */
+    let baldir = null;
+    S.eklem.diz[0].traverse((o) => {
+      if (!o.isMesh || o.userData.mafsalGovdesi) return;
+      const b = new THREE.Box3().setFromObject(o);
+      if (b.getSize(new THREE.Vector3()).z > 0.25 && (!baldir || b.min.z < baldir.min.z)) {
+        baldir = b;
+      }
+    });
+    const bb = baldir.getSize(new THREE.Vector3());
+    const sapma = Math.abs(gb.y - bb.y) / bb.y;
+    check('diz gövdesinin kesiti baldırınkinden %20 den fazla sapmıyor', sapma < 0.20,
+      `gövde ${gb.y.toFixed(3)} · baldır ${bb.y.toFixed(3)} · %${(100 * sapma).toFixed(1)}`);
+  }
+
+  /* TERS SINAV: modülasyonsuz bir küre bu sınavı GEÇEMEMELİ. */
+  {
+    const duz = new THREE.Mesh(new THREE.SphereGeometry(1, 26, 18));
+    check('TERS SINAV: modüle edilmemiş küre sınavı geçemiyor', dalga(duz) <= 0.015,
+      `düz kürede dalga ${dalga(duz).toExponential(1)}`);
+  }
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);
