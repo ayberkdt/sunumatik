@@ -99,7 +99,8 @@
     import * as THREE from 'three';
     import { OrbitControls } from '../moon_advanced/vendor/controls/OrbitControls.js';
     import { buildHabitat, buildCevre } from './hab-build.mjs';
-    import { buildAstronaut } from '../astronaut_blocks/astro-build.mjs';
+    import { buildAstronaut, POZLAR } from '../astronaut_blocks/astro-build.mjs';
+    import { HAREKETLER, harmanla, bostaZamanlayici } from '../astronaut_blocks/astro-motion.mjs';
     import { BOY_M as ASTRO_BOY } from '../astronaut_blocks/astro-parts.mjs';
     import { sceneLighting } from '../core/scene-lighting.mjs';
     import { PARTS, STEPS, SUBSYSTEMS, HAB_ENV, INTERFACES,
@@ -135,22 +136,43 @@
        ikisi de reaktörün beyan ettiği yasak yarıçapın dışında. */
     const MURETTEBAT = [
       { ad: 'EV1', poz: 'egilme', konum: [2.1, -11.3, 0], yon: -80, serit: 0xc23b3b,
-        is: 'O2 tankının sehpa birleşimini denetliyor' },
-      { ad: 'EV2', poz: 'uzanma', konum: [11.4, 6.2, 0], yon: 12, serit: 0x3b6fc2,
-        is: 'Atölye duvar panelini yerine alıyor' },
+        tohum: 7, is: 'O2 tankının sehpa birleşimini denetliyor' },
+      /* İkincisi ANA CADDEDE durur, atölye duvarında değil: iki figürü de
+         yapıların arasına sokmak, onları sahnede görünmez kılıyordu. Yolun
+         üstünde duran biri hem görünür hem de yolun ne işe yaradığını
+         söyler. */
+      { ad: 'EV2', poz: 'dik', konum: [8.4, -5.9, 0], yon: 158, serit: 0x3b6fc2,
+        tohum: 23, is: 'Ana cadde üzerinde, atölyeye gidiyor' },
     ];
+    let murettebatDurum = [];
     function murettebatKur() {
       if (murettebat) scene.remove(murettebat);
       murettebat = new THREE.Group();
+      murettebatDurum = [];
       for (const k of MURETTEBAT) {
-        const { root } = buildAstronaut(THREE, { poz: k.poz, seritRenk: k.serit });
-        root.position.set(k.konum[0], k.konum[1], k.konum[2]);
-        root.rotation.z = k.yon * Math.PI / 180;
-        root.userData.notes = { regime: 'mürettebat', why: k.is };
-        root.userData.murettebat = k.ad;
-        murettebat.add(root);
+        const kur = buildAstronaut(THREE, { poz: k.poz, seritRenk: k.serit });
+        kur.root.position.set(k.konum[0], k.konum[1], k.konum[2]);
+        kur.root.rotation.z = k.yon * Math.PI / 180;
+        kur.root.userData.notes = { regime: 'mürettebat', why: k.is };
+        kur.root.userData.murettebat = k.ad;
+        murettebat.add(kur.root);
+        /* CANLI. Donmuş iki figür dekordur; bir insanı geniş planda fark
+           ettiren şey boyu değil HAREKETİDİR. Tohumlar farklı, yoksa ikisi
+           aynı saatin iki kopyası olur ve bu, hareketsizlikten daha kötü
+           görünür. */
+        murettebatDurum.push({ kur, k, bosta: bostaZamanlayici({ tohum: k.tohum }) });
       }
       scene.add(murettebat);
+    }
+    /* Mürettebatın karesi: temel duruş + nefes + (varsa) jest. */
+    let murettebatSaat = 0;
+    function murettebatKare(dt) {
+      murettebatSaat += dt;
+      for (const d of murettebatDurum) {
+        const nefes = HAREKETLER.nefes.uygula(murettebatSaat, { metabolikW: 350 });
+        const j = d.bosta.kare(murettebatSaat, {});
+        d.kur.uygulaPoz(harmanla(POZLAR[d.k.poz], nefes, j.fark));
+      }
     }
     const camera = new THREE.PerspectiveCamera(40, 1, 0.2, 800);
     camera.up.set(0, 0, 1);
@@ -509,7 +531,14 @@
     }
     addEventListener('resize', boyut);
 
-    function kare() {
+    /* prefers-reduced-motion: mürettebat kıpırdamaz ama sahnede DURUR;
+       hareket isteğe bağlı olur, bilgi değil. */
+    const azaltilmis = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let sonT = 0;
+    function kare(t) {
+      const dt = sonT ? Math.min(0.05, (t - sonT) / 1000) : 0;
+      sonT = t;
+      if (!azaltilmis) murettebatKare(dt);
       kontrol.update();
       renderer.render(scene, camera);
       requestAnimationFrame(kare);
