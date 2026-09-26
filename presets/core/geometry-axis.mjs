@@ -52,6 +52,19 @@ export function cylGeoZ(rPoz, rNeg, h, seg, open = false, thetaStart = 0, thetaL
   return eksenZ(new THREE.CylinderGeometry(rPoz, rNeg, h, seg, 1, open, thetaStart, thetaLength));
 }
 
+/* KISMİ KÜRE — kutup da bir yöndür.
+ *
+ * `SphereGeometry(r, w, h, phiBas, phiUz, thetaBas, thetaUz)` kısmi verilince
+ * bir KUTUP kazanır ve three'de o kutup +Y'dedir. Blok sözleşmesinde yukarı
+ * +Z'dir, yani çevrilmeyen her kısmi küre yan yatar. Haberleşme beresi tam
+ * bunu yaptı: kafatasını örtmesi gereken kapak, başın SOL yanına oturdu ve
+ * takke merkez çizgisinden 33 mm kaydı. Tam küre bu tuzağı taşımaz - kutbu
+ * yoktur - o yüzden yalnız kısmi olanlar buradan geçer. */
+export function kureGeoZ(r, wseg, hseg, phiBas = 0, phiUz = Math.PI * 2,
+                         thetaBas = 0, thetaUz = Math.PI) {
+  return eksenZ(new THREE.SphereGeometry(r, wseg, hseg, phiBas, phiUz, thetaBas, thetaUz));
+}
+
 /* Koni — tepe eksenin POZİTİF ucunda. */
 export function coneX(r, h, seg, mat, open = false) {
   return new THREE.Mesh(eksenX(new THREE.ConeGeometry(r, h, seg, 1, open)), mat);

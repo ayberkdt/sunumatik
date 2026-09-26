@@ -34,7 +34,8 @@ import {
   EKLEMLER, POZ_EKLEM, sinirla,
 } from './astro-parts.mjs';
 import { supur, uzuvKesiti, govdeKesiti } from './astro-body.mjs';
-import { cylGeoX, cylGeoY, cylGeoZ, latheZ, latheZYonlu, PHI_Z } from '../core/geometry-axis.mjs';
+import { cylGeoX, cylGeoY, cylGeoZ, kureGeoZ, latheZ, latheZYonlu,
+         PHI_Z } from '../core/geometry-axis.mjs';
 import * as D from '../core/hardware-kit.mjs';
 
 const TAU = Math.PI * 2;
@@ -313,6 +314,8 @@ function govde(THREE, p, M, yan = 0) {
         dizKon.position.z = 0.07;
         diz.add(dizKon);
         /* Diz kapağı: konvolütü koruyan EĞRİ plaka. */
+        /* kutup-ok: kutup burada ELLE +Z'ye çevriliyor (aşağıdaki tek
+           eksenli dönüş), plakanın eğrilmesi gereken yön de o. */
         const kapak = new THREE.Mesh(
           new THREE.SphereGeometry(sy * 0.37, 24, 16, -0.8, 1.6, 0.9, 1.1), M.kumasGolge);
         kapak.rotation.x = Math.PI / 2;
@@ -408,10 +411,17 @@ function govde(THREE, p, M, yan = 0) {
          sarkar. Ölçülen taban profili de onu görüyordu - bilek-taban mesafesi
          0,194 yerine 0,253 çıkıyor ve yürüyüş çözümü her karede 30 mm
          şaşıyordu. Bir simidin ekseni, sardığı şeyin eksenidir. */
+      /* ÖLÇÜ ÇİZMENİN KENDİ KUTUSUNDAN. Önceki hâl `uz * 0.8`i YARIÇAP
+         yerine koyuyordu; çizmenin yarı uzunluğu ise `uz * 0.5`tir. 0,36 m
+         boyunda bir çizmenin etrafında 0,657 m'lik, buruna göre 16 cm öne
+         taşan ve ayağa hiçbir yerde değmeyen düz bir çember dönüyordu
+         (ölçüldü: dünya matrisi determinantı 2,3188). Bir kayış, sardığı
+         şeyin ölçüsündedir. */
+      const kayisR = gen * 0.54;
       const kayis = ekle(new THREE.Mesh(
-        new THREE.TorusGeometry(gen * 0.54, gen * 0.05, 8, 22), M.koyu));
-      kayis.scale.set(uz * 0.8 / (gen * 0.54), 1, 1);
-      kayis.position.set(uz * 0.04, 0, tabanZ + boy * 0.34);
+        new THREE.TorusGeometry(kayisR, gen * 0.055, 8, 24), M.koyu));
+      kayis.scale.set(uz * 0.44 / kayisR, 1, 1);
+      kayis.position.set(uz * 0.05, 0, tabanZ + boy * 0.34);
       break;
     }
 
@@ -588,6 +598,8 @@ function govde(THREE, p, M, yan = 0) {
       const dirKon = konvolut(THREE, M, sy * 0.59, sx * 0.58, sy * 0.55, sx * 0.55, sz * 0.16, 4);
       dirKon.position.z = sz * 0.07;
       dirsek.add(dirKon);
+      /* kutup-ok: kutup elle −Z'ye çevriliyor; fincan dirseğin ALTINI
+         kaplar, o yüzden ters yön. */
       const fincan = new THREE.Mesh(
         new THREE.SphereGeometry(sy * 0.66, 22, 15, -0.8, 1.6, 0.9, 1.1), M.kumasGolge);
       fincan.rotation.x = -Math.PI / 2;
@@ -818,7 +830,7 @@ function govde(THREE, p, M, yan = 0) {
       /* CCA: beyaz bere kafatasını örter, kulaklıklar koyu, mikrofon kolu
          ağzın önüne gelir. Apollo fotoğraflarında kaskın içinde görünen şey. */
       const berem = new THREE.Mesh(
-        new THREE.SphereGeometry(R * 0.63, 18, 14, 0, TAU, 0, Math.PI * 0.62), M.bere);
+        kureGeoZ(R * 0.63, 18, 14, 0, TAU, 0, Math.PI * 0.62), M.bere);
       berem.scale.set(0.94, 0.88, 1.06);
       bas.add(berem);
       for (const s2 of [-1, 1]) {

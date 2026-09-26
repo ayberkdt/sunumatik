@@ -120,6 +120,25 @@ export const BASINC_KPA = 29.6;
  */
 export const EKSEN = Object.freeze({ ileri: '+x', sol: '+y', yukari: '+z' });
 
+/**
+ * ZARF PAYI — bir parçanın beyan ettiği `size`ı ne kadar aşabildiği (oran).
+ *
+ * Astronotun ÇİZİLEN geometrisini hiçbir kapı ölçmüyordu ve 0,36 m'lik bir
+ * çizmenin etrafında 0,657 m'lik bir çember bu yüzden aylarca durabildi.
+ * Ama düz "çizilen ≤ beyan" kuralı burada işlemez: `size`ı KURUCU okur ve
+ * onunla ölçeklenir, yani beyanı büyütmek çizimi de büyütür (denendi ve
+ * ölçüldü: kol 0,257 → 0,446, oran yerinde saydı). Sözleşme ters yönde
+ * işler - kurucu beyana borçludur - ve meşru taşmalar (tabanın ayaktan
+ * geniş olması, omuz yatağının kol borusundan geniş olması) ADIYLA beyan
+ * edilir.
+ *
+ * VARSAYILAN 0,12: beyan etmeyen bir parça bu kadarını aşamaz.
+ * TAVAN 0,85: hiçbir parça payını istediği kadar büyütemez; 0,40 üstü
+ * beyanlar BORÇTUR ve neyin taştığını adıyla yazmak zorundadır.
+ */
+export const ZARF_VARSAYILAN = 0.12;
+export const ZARF_TAVAN = 0.85;
+
 /** Parçanın gövdedeki yeri; kapı çizilen konumun işaretini buna göre sınar. */
 export const YONLER = Object.freeze({
   gogus: { ad: 'Chest', eksen: 0, isaret: 1 },
@@ -182,6 +201,9 @@ export const PARTS = Object.freeze([
   { id: 'sogutma-tulumu', ad: 'Liquid cooling garment', sistem: 'yasam', step: 1,
     mountsTo: null, arayuz: 'kumas', massKg: 3.0,
     pos: [0, 0, 1.20], size: [0.24, 0.28, 0.95], yon: 'orta', sekil: 'tulum',
+    /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
+    zarfOran: 0.4,
+    zarfNeden: 'Soğutma borusu halkaları gövdeyi SARAR (0,337 m), yani çapları gövdenin çapıdır; tulumun kendi kumaş kalınlığı değil.',
     tech: {
       no: 'AS-LIF-010',
       malzeme: 'Spandex with 90 m of 4 mm PVC tubing',
@@ -199,6 +221,9 @@ export const PARTS = Object.freeze([
   { id: 'alt-govde', ad: 'Lower torso assembly', sistem: 'basinc', step: 2,
     mountsTo: 'sogutma-tulumu', arayuz: 'kilit', massKg: 12.5,
     pos: [0, 0, 0.59], size: [0.38, 0.44, 1.18], yon: 'orta', sekil: 'altGovde',
+    /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
+    zarfOran: 0.6,
+    zarfNeden: 'Leğen süpürmesi 0,696 m: iki kalçanın AÇIKLIĞI. Beyan edilen 0,44 m tek bir uyluğu ölçüyordu. BORÇ: kalça açıklığı ayrı beyan edilmeli.',
     tech: {
       no: 'AS-PRS-020',
       malzeme: 'Ortho-fabric over urethane bladder, aluminium waist ring',
@@ -214,6 +239,9 @@ export const PARTS = Object.freeze([
   { id: 'cizmeler', ad: 'Boots', sistem: 'hareket', step: 2,
     mountsTo: 'alt-govde', arayuz: 'kumas', massKg: 2.4, qty: 2,
     pos: [0.05, 0.155, 0.10], size: [0.36, 0.23, 0.22], yon: 'yan', ayna: 'y', sekil: 'cizme',
+    /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
+    zarfOran: 0.4,
+    zarfNeden: 'Taban ayaktan geniştir (basma alanı) ve bağ kayışı çizmenin ETRAFINDAN geçer. BORÇ: çizme gövdesi hâlâ 0,295 m - bir ayak kadar dar değil.',
     tech: {
       no: 'AS-MOB-021',
       malzeme: 'Silicone sole, ortho-fabric upper, metal shank',
@@ -230,6 +258,12 @@ export const PARTS = Object.freeze([
   { id: 'ust-govde', ad: 'Hard upper torso', sistem: 'basinc', step: 3,
     mountsTo: 'alt-govde', arayuz: 'kilit', massKg: 16.0,
     pos: [0, 0, 1.42], size: [0.36, 0.56, 0.48], yon: 'orta', sekil: 'ustGovde',
+    /* AYNA: bu parça bilerek asimetriktir - beyan edilmezse
+       ayna kapısı düşer (validate-astronaut §9). */
+    asimetrik: 'Komutan şeridi, bayrak ve kontrol listesi etiketi tek yanda: işaretler bir giysiyi UZAKTAN ayırt etmek içindir ve iki yana da konursa o işi yapmaz.',
+    /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
+    zarfOran: 0.25,
+    zarfNeden: 'Göğüs dolgusu ÖNE taşar: basınçlı giyside öne eğilebilmek için orada yer bırakılır.',
     tech: {
       no: 'AS-PRS-030',
       malzeme: 'Spun aluminium shell with four bearing rings',
@@ -260,6 +294,12 @@ export const PARTS = Object.freeze([
   { id: 'kollar', ad: 'Arm assemblies', sistem: 'basinc', step: 5,
     mountsTo: 'omuz-yatagi', arayuz: 'kilit', massKg: 3.6, qty: 2,
     pos: [0, 0.30, 1.20], size: [0.18, 0.17, 0.76], yon: 'yan', ayna: 'y', sekil: 'kol',
+    /* AYNA: bu parça bilerek asimetriktir - beyan edilmezse
+       ayna kapısı düşer (validate-astronaut §9). */
+    asimetrik: 'Kontrol listesi TEK bilekte: EVA sırasında bakılan yer orasıdır ve ikinci bir kopya ek kütle taşımaktan başka bir şey yapmaz.',
+    /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
+    zarfOran: 0.8,
+    zarfNeden: 'Omuz eklem gövdesi (0,259 m) ve iki yatak bileziği (0,258 / 0,254 m) bu parçanın içindedir ve kol borusunun kesitinden geniştir - bir yatak, içinde döndüğü şeyden dar olamaz. BORÇ: beyan edilen 0,17 m çıplak bir kolun kesitidir, takımın değil.',
     tech: {
       no: 'AS-PRS-050',
       malzeme: 'Ortho-fabric over bladder, elbow convolute, wrist bearing',
@@ -275,6 +315,9 @@ export const PARTS = Object.freeze([
   { id: 'eldivenler', ad: 'Gloves', sistem: 'arayuz', step: 5,
     mountsTo: 'kollar', arayuz: 'kilit', massKg: 0.9, qty: 2,
     pos: [0.03, 0.30, 0.71], size: [0.22, 0.17, 0.24], yon: 'yan', ayna: 'y', sekil: 'eldiven',
+    /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
+    zarfOran: 0.35,
+    zarfNeden: 'Bilek kilidi ve kavrama yastığı avuçtan geniştir. BORÇ: eldiven hâlâ boyundan geniş.',
     tech: {
       no: 'AS-INT-051',
       malzeme: 'RTV silicone fingertips, Vectran palm, heated fingers',
@@ -291,6 +334,12 @@ export const PARTS = Object.freeze([
   { id: 'yasam-paketi', ad: 'Portable life support pack', sistem: 'yasam', step: 4,
     mountsTo: 'ust-govde', arayuz: 'civata', massKg: 54.0,
     pos: [-0.25, 0, 1.46], size: [0.22, 0.46, 0.56], yon: 'sirt', sekil: 'paket',
+    /* AYNA: bu parça bilerek asimetriktir - beyan edilmezse
+       ayna kapısı düşer (validate-astronaut §9). */
+    asimetrik: 'Servis vanaları ve doldurma ağızları iki yanda farklıdır: aynı olsalardı eldivenli elle karıştırılabilirlerdi.',
+    /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
+    zarfOran: 0.2,
+    zarfNeden: 'Üst kapak ve askı kayışları kutunun dışındadır.',
     tech: {
       no: 'AS-LIF-040',
       malzeme: 'Composite shell; fan, pump, CO2 bed, sublimator, O2 tanks',
@@ -306,6 +355,9 @@ export const PARTS = Object.freeze([
   { id: 'ikincil-o2', ad: 'Secondary oxygen pack', sistem: 'yasam', step: 4,
     mountsTo: 'yasam-paketi', arayuz: 'civata', massKg: 6.2,
     pos: [-0.24, 0, 1.79], size: [0.16, 0.28, 0.13], yon: 'sirt', sekil: 'kutu',
+    /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
+    zarfOran: 0.35,
+    zarfNeden: 'Bağlantı kelepçeleri ve vana tüpün dışında kalır.',
     tech: {
       no: 'AS-LIF-041',
       malzeme: 'Two composite bottles at 41 MPa',
@@ -322,6 +374,12 @@ export const PARTS = Object.freeze([
   { id: 'kask', ad: 'Helmet and visor assembly', sistem: 'gorus', step: 5,
     mountsTo: 'ust-govde', arayuz: 'kilit', massKg: 5.8,
     pos: [0.02, 0, 1.660], size: [0.40, 0.38, 0.42], yon: 'orta', sekil: 'kask',
+    /* AYNA: bu parça bilerek asimetriktir - beyan edilmezse
+       ayna kapısı düşer (validate-astronaut §9). */
+    asimetrik: 'Mikrofon kolu tek yanda — ağza tek bir mikrofon gider.',
+    /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
+    zarfOran: 0.15,
+    zarfNeden: 'Menteşe braketleri ve vizör kolu kabuğun dışına çıkar.',
     tech: {
       no: 'AS-VIS-060',
       malzeme: 'Polycarbonate bubble, gold-coated EVA visor, anti-fog coating',
@@ -337,6 +395,9 @@ export const PARTS = Object.freeze([
   { id: 'basliklar', ad: 'Helmet lights and camera', sistem: 'gorus', step: 5,
     mountsTo: 'kask', arayuz: 'civata', massKg: 1.3,
     pos: [0.03, 0, 1.660], size: [0.22, 0.44, 0.12], yon: 'orta', sekil: 'lamba',
+    /* AYNA: bu parça bilerek asimetriktir - beyan edilmezse
+       ayna kapısı düşer (validate-astronaut §9). */
+    asimetrik: 'Bir yanda kamera, öteki yanda anten. İkisi de iki yana konursa kütle ve gölge iki katına çıkar, kazanç sıfırdır.',
     tech: {
       no: 'AS-VIS-061',
       malzeme: 'Four LED heads, one camera, mounting yoke',
@@ -353,6 +414,9 @@ export const PARTS = Object.freeze([
   { id: 'gogus-paneli', ad: 'Display and control module', sistem: 'arayuz', step: 6,
     mountsTo: 'ust-govde', arayuz: 'civata', massKg: 2.1,
     pos: [0.19, 0, 1.46], size: [0.13, 0.28, 0.20], yon: 'gogus', sekil: 'panel',
+    /* AYNA: bu parça bilerek asimetriktir - beyan edilmezse
+       ayna kapısı düşer (validate-astronaut §9). */
+    asimetrik: 'Kumanda yerleşimi SAĞ el içindir; aynalanmış bir panel kullanılamaz, çünkü kolun ulaştığı yer aynalanmıyor.',
     tech: {
       no: 'AS-INT-070',
       malzeme: 'Mechanical switches, sunlight-readable display, mirrored text',
@@ -368,6 +432,12 @@ export const PARTS = Object.freeze([
   { id: 'emniyet-halati', ad: 'Safety tether and tool caddy', sistem: 'arayuz', step: 6,
     mountsTo: 'ust-govde', arayuz: 'civata', massKg: 2.8,
     pos: [0.13, 0.17, 1.16], size: [0.11, 0.22, 0.16], yon: 'gogus', sekil: 'halat',
+    /* AYNA: bu parça bilerek asimetriktir - beyan edilmezse
+       ayna kapısı düşer (validate-astronaut §9). */
+    asimetrik: 'Tek halat, tek yanda. İkinci bir halat emniyet değil, dolaşacak ikinci bir ip demektir.',
+    /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
+    zarfOran: 0.25,
+    zarfNeden: 'Makara ve kanca halatın kesitinden büyüktür.',
     tech: {
       no: 'AS-INT-071',
       malzeme: 'Retracting steel tether, carabiners, tool loops',

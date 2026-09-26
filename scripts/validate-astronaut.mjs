@@ -648,5 +648,196 @@ console.log('== 8 yürüyüş: ayak kaymaz, batmaz, çevrim kapanır');
     `${kotu} karede bacak yetişmiyordu`);
 }
 
+/* ── 9 AYNA SİMETRİSİ ─────────────────────────────────────────────────
+ *
+ * `EKSEN` "sol = +y" diye beyan edilmişti ama hiçbir kapı figürün simetrisini
+ * ÖLÇMÜYORDU. Ölçüldüğünde 481 mesh'in 48'inin ayna eşi çıkmadı ve içlerinde
+ * gerçek kusurlar vardı: iki yan vizör de sağdaydı (kısmi lathe'in yönü
+ * yanlış biliniyordu), haberleşme beresi merkez çizgisinden 33 mm kaymıştı
+ * (kısmi kürenin kutbu çevrilmemişti). İkisi de gözle bulunmuştu, kapıyla
+ * değil.
+ *
+ * Asimetri YASAK DEĞİL - beyan edilmemiş asimetri yasak. Bir giysinin tek
+ * halatı, tek mikrofonu, tek kontrol listesi vardır ve bunlar SEBEBİYLE
+ * birlikte katalogda yazar. Beyan, gerekçesi olan bir cümledir: `true`
+ * her yere yapıştırılabilir, bir cümle yapıştırılamaz.
+ */
+console.log('\n== 9 ayna simetrisi: asimetri beyan edilmeden olmaz');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik' });
+  S.root.updateMatrixWorld(true);
+
+  /* Her mesh hangi PARÇAYA ait? Kopyalar (`cizmeler#2`) aynı parçadır. */
+  const parcasi = new Map();
+  for (const [ad, n] of S.nodes) {
+    const pid = ad.replace(/#\d+$/, '');
+    n.traverse((o) => { if (o.isMesh && !parcasi.has(o)) parcasi.set(o, pid); });
+  }
+  const ms = [];
+  S.root.traverse((o) => {
+    if (!o.isMesh) return;
+    const b = new THREE.Box3().setFromObject(o);
+    ms.push({ c: b.getCenter(new THREE.Vector3()), s: b.getSize(new THREE.Vector3()),
+      ySim: Math.abs(b.min.y + b.max.y), pid: parcasi.get(o) ?? '(kök)',
+      geo: o.geometry.type });
+  });
+  /* TOLERANS ÖLÇÜMDEN: meşru eşler 12 mm'nin çok altında buluşuyor (süpürme
+     örneklemesi leğen kemiğinde 6 mm bırakıyor), gerçek kusurlar 33 mm ve
+     üstünde başlıyordu. */
+  const TOL = 0.012;
+  const yakin = (a, b) => Math.abs(a - b) < TOL;
+  const esi = (m) => ms.some((n) => n !== m
+    && yakin(n.c.x, m.c.x) && yakin(n.c.z, m.c.z) && yakin(n.c.y, -m.c.y)
+    && yakin(n.s.x, m.s.x) && yakin(n.s.y, m.s.y) && yakin(n.s.z, m.s.z));
+
+  /** Eşi olmayan mesh'ler, parça parça. `yoksay` ters sınav içindir. */
+  const essizler = (yoksay = new Set()) => {
+    const d = {};
+    for (const m of ms) {
+      const beyan = A.partById(m.pid)?.asimetrik;
+      if (beyan && !yoksay.has(m.pid)) continue;
+      if (m.ySim <= TOL) continue;                 // merkez çizgisinde ve simetrik
+      if (esi(m)) continue;
+      (d[m.pid] ??= []).push(m);
+    }
+    return d;
+  };
+
+  const kotu = essizler();
+  const sayi = Object.values(kotu).reduce((a, b) => a + b.length, 0);
+  check('simetrik beyan edilen her parça gerçekten simetrik', sayi === 0,
+    sayi ? Object.entries(kotu).map(([k, v]) => `${k}:${v.length}`).join(' ')
+         : `${ms.length} mesh tarandı`);
+
+  /* Beyanlar gerekçeli mi? */
+  const beyanlilar = A.PARTS.filter((q) => q.asimetrik);
+  const kisa = beyanlilar.filter((q) => typeof q.asimetrik !== 'string' || q.asimetrik.length < 40);
+  check('her asimetri beyanı gerekçeli bir cümle', kisa.length === 0,
+    kisa.map((q) => q.id).join(',') || `${beyanlilar.length} beyan`);
+
+  /* Beyan BOŞA yazılmamalı: beyan edilen parça gerçekten asimetrik olmalı,
+     yoksa beyan zamanla anlamsız bir etikete dönüşür. */
+  const gereksiz = beyanlilar.filter((q) => !(essizler(new Set([q.id]))[q.id]?.length));
+  check('hiçbir asimetri beyanı gereksiz değil', gereksiz.length === 0,
+    gereksiz.map((q) => q.id).join(',') || `${beyanlilar.length} beyanın hepsi karşılığını buluyor`);
+
+  /* TERS SINAV: emniyet halatının beyanını yok say - kapı DÜŞMELİ. */
+  const ters = essizler(new Set(['emniyet-halati']));
+  check('TERS SINAV: beyan kaldırılınca tek yanlı halat yakalanıyor',
+    (ters['emniyet-halati']?.length ?? 0) > 0,
+    `${ters['emniyet-halati']?.length ?? 0} mesh eşsiz kaldı`);
+
+  /* TERS SINAV 2: ölçüm gerçekten ölçüyor mu? Bir mesh'i y'de 40 mm kaydır
+     ve eşinin kaybolduğunu gör. Kaydırılmadan ölçüm anlamsız olurdu. */
+  const ornek = ms.find((m) => Math.abs(m.c.y) > 0.1 && esi(m));
+  const oncesi = esi(ornek);
+  ornek.c.y += 0.04;
+  const sonrasi = esi(ornek);
+  ornek.c.y -= 0.04;
+  check('TERS SINAV: 40 mm kaydırılan mesh eşini kaybediyor', oncesi && !sonrasi,
+    `${ornek.geo} @ y=${ornek.c.y.toFixed(3)}`);
+}
+
+/* ── 10 ZARF: ÇİZİLEN GEOMETRİ BEYAN EDİLEN KUTUNUN İÇİNDE Mİ ─────────
+ *
+ * Bu kapıda 75 sınav yeşilken astronotun çizilen gabarisini ÖLÇEN tek bir
+ * satır yoktu (`Box3` geçmiyordu) ve `validate-geometry` yalnız habitat ile
+ * uyduyu kuruyordu. 0,36 m'lik bir çizmenin çevresinde dönen 0,657 m'lik
+ * düz siyah bir çember bu boşluktan geçti.
+ *
+ * Ölçüm SIFIR DURUŞTA yapılır: eklemler sıfırlanınca kalan kutu parçanın
+ * KENDİ gabarisidir. Bükülmüş bir kolun dünya kutusu duruşu ölçer, parçayı
+ * değil - ölçüldü, aynı kol dik duruşta 2,17 kat, sıfır duruşta 1,80 kat
+ * çıkıyor ve aradaki fark geometri değil poz.
+ *
+ * Çocuk parçalar hariç tutulur: kola takılan eldiven kolun gabarisi değildir.
+ */
+console.log('\n== 10 zarf: çizilen geometri beyan edilen kutunun içinde');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik' });
+  S.uygulaPoz({ omuz: [0, 0], dirsek: [0, 0], kalca: [0, 0], diz: [0, 0], ayak: [0, 0],
+    govdeEgim: 0, govdeDonme: 0, basDonme: 0, kalcaZOfset: 0 });
+  S.root.updateMatrixWorld(true);
+
+  const kendiKutusu = (pid) => {
+    const n = S.nodes.get(pid) ?? S.nodes.get(`${pid}#1`);
+    if (!n) return null;
+    const cocuk = new Set();
+    for (const [ad, n2] of S.nodes) {
+      if (ad.replace(/#\d+$/, '') === pid) continue;
+      let q = n2, ic = false;
+      while (q) { if (q === n) { ic = true; break; } q = q.parent; }
+      if (ic) n2.traverse((o) => cocuk.add(o));
+    }
+    const b = new THREE.Box3();
+    n.traverse((o) => { if (o.isMesh && !cocuk.has(o)) b.expandByObject(o); });
+    return isFinite(b.min.x) ? b.getSize(new THREE.Vector3()).toArray() : null;
+  };
+
+  const olcum = [];
+  for (const q of A.PARTS) {
+    const ciz = kendiKutusu(q.id);
+    if (!ciz) continue;
+    const oran = [0, 1, 2].map((i) => ciz[i] / q.size[i]);
+    const en = Math.max(...oran);
+    olcum.push({ id: q.id, en, eksen: 'xyz'[oran.indexOf(en)], ciz,
+      pay: q.zarfOran ?? A.ZARF_VARSAYILAN, beyanli: q.zarfOran !== undefined });
+  }
+  check('astronot node\'da kuruluyor ve her parça ölçülüyor', olcum.length >= 12,
+    `${olcum.length} parça`);
+
+  /* TOLERANS %0,5: paylar ölçümden 0,05'e yuvarlanarak beyan edilir, tam
+     eşitlik kayan noktada iki yana da düşebilir. Daha büyüğü pay dağıtmak
+     olurdu. */
+  const asan = olcum.filter((m) => m.en > 1 + m.pay + 0.005);
+  check('hiçbir parça beyan ettiği zarf payını aşmıyor', asan.length === 0,
+    asan.map((m) => `${m.id} ×${m.en.toFixed(2)} > ${(1 + m.pay).toFixed(2)}`).join(', ')
+    || `en büyük ×${Math.max(...olcum.map((m) => m.en)).toFixed(2)}`);
+
+  const tavanAsan = A.PARTS.filter((q) => (q.zarfOran ?? 0) > A.ZARF_TAVAN);
+  check(`hiçbir pay tavanı (${A.ZARF_TAVAN}) aşmıyor`, tavanAsan.length === 0,
+    tavanAsan.map((q) => q.id).join(',') || `${A.PARTS.filter((q) => q.zarfOran !== undefined).length} beyan`);
+
+  /* Pay BEDAVA olmasın: 0,40 üstü her beyan neyin taştığını ADIYLA yazar. */
+  const gerekcesiz = A.PARTS.filter((q) => (q.zarfOran ?? 0) > 0.40
+    && (typeof q.zarfNeden !== 'string' || q.zarfNeden.length < 60));
+  check('0,40 üstü her pay neyin taştığını adıyla söylüyor', gerekcesiz.length === 0,
+    gerekcesiz.map((q) => q.id).join(',') || 'hepsi gerekçeli');
+
+  /* Pay BOŞA yazılmasın: beyan eden parça varsayılanı gerçekten aşmalı. */
+  const bosBeyan = olcum.filter((m) => m.beyanli && m.en <= 1 + A.ZARF_VARSAYILAN);
+  check('hiçbir zarf beyanı gereksiz değil', bosBeyan.length === 0,
+    bosBeyan.map((m) => `${m.id} ×${m.en.toFixed(2)}`).join(',') || 'hepsi karşılığını buluyor');
+
+  /* TERS SINAV: ölçüm gerçekten geometriye bakıyor mu? Beyan edilen kutuyu
+     %40 küçültmek, o parçayı payının dışına çıkarmak zorunda. */
+  {
+    const hedef = olcum.find((m) => m.id === 'kask');
+    const kaskP = A.partById('kask');
+    const sahteOran = Math.max(...[0, 1, 2].map((i) => hedef.ciz[i] / (kaskP.size[i] * 0.6)));
+    check('TERS SINAV: kutusu %40 küçültülen parça payının dışına çıkıyor',
+      sahteOran > 1 + (kaskP.zarfOran ?? A.ZARF_VARSAYILAN),
+      `×${hedef.en.toFixed(2)} → ×${sahteOran.toFixed(2)} (pay ${(1 + (kaskP.zarfOran ?? 0)).toFixed(2)})`);
+  }
+  /* TERS SINAV 2: sıfır duruş gerçekten fark yaratıyor mu? Dik duruşta
+     ölçseydik kolun oranı poz yüzünden şişerdi. */
+  {
+    const S2 = AB.buildAstronaut(THREE, { poz: 'dik' });
+    S2.root.updateMatrixWorld(true);
+    const n = S2.nodes.get('kollar') ?? S2.nodes.get('kollar#1');
+    const b = new THREE.Box3().setFromObject(n);
+    const kolP = A.partById('kollar');
+    const dikOran = Math.max(...[0, 1, 2].map((i) => (b.max.toArray()[i] - b.min.toArray()[i]) / kolP.size[i]));
+    const sifirOran = olcum.find((m) => m.id === 'kollar').en;
+    check('TERS SINAV: poz ölçümü kirletiyor, sıfır duruş şart',
+      dikOran > sifirOran + 0.2,
+      `dik ×${dikOran.toFixed(2)} vs sıfır ×${sifirOran.toFixed(2)}`);
+  }
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);
