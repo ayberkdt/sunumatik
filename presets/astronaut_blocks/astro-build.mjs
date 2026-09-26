@@ -31,7 +31,7 @@
  */
 import {
   PARTS, partById, BOY_M, OMUZ_M, BOYUN_CAP_M, DIKEY, UYLUK_M, BALDIR_M,
-  AYAK_ON_M, AYAK_ARKA_M, AYAK_EN_M, kopyaKonumlari,
+  AYAK_ON_M, AYAK_ARKA_M, AYAK_EN_M, EL_CERCEVE, kopyaKonumlari,
   EKLEMLER, POZ_EKLEM, sinirla,
 } from './astro-parts.mjs';
 import { supur, uzuvKesiti, govdeKesiti, cizmeGovdesi, ayakEni, ayakBoyu,
@@ -569,10 +569,13 @@ function govde(THREE, p, M, yan = 0) {
          ikisi de katalogda yazılı, ikisi de kapıda ölçülüyor. */
       const boyunZ = DIKEY.boyun - p.pos[2];       // parça çerçevesinde
       const bR = BOYUN_CAP_M * 0.5;
-      const boyun = ekle(uzuvMesh(THREE, M.kumas, sz * 0.19, uzuvKesiti({
+      /* Sütun boyun çizgisinde BİTER; üstü artık kaskın kilit bileziğine
+         bırakılır. sz*0,19 ile tepesi 1,716'ya çıkıyor ve kaskın içine
+         giriyordu. */
+      const boyun = ekle(uzuvMesh(THREE, M.kumas, sz * 0.125, uzuvKesiti({
         ustW: bR * 0.92, ustD: bR * 0.98, altW: bR, altD: bR * 1.06, sis: 0,
       }), { dilim: 8, halka: 26 }));
-      boyun.position.z = boyunZ + sz * 0.06;
+      boyun.position.z = boyunZ + sz * 0.083;
       /* Basınç körüğü: boyun, basınç altında da eğilebilmek zorunda. */
       const bkor = konvolut(THREE, M, bR * 1.02, bR * 1.08, bR * 0.96, bR * 1.02,
         sz * 0.1, 3);
@@ -746,26 +749,47 @@ function govde(THREE, p, M, yan = 0) {
          halkanın dış çapı 0,230 m çıkıyordu; ön kolun bilekteki kesiti ise
          0,152 m, yani halka kolundan %51 genişti - bir kilit halkası
          geçtiği kolun ölçüsündedir. */
-      const rB = sy * 0.44, uz = sx, boy = sz;
+      /* 0,44 ile halkanın dış çapı 0,169 m, ön kolun bilekteki kesiti ise
+         0,152 m. 0,42 ikisini eşitliyor ve eldiveni beyan ettiği kutuya
+         sokuyor (çizilen 0,192 → 0,184, pay %12'nin altında). */
+      const rB = sy * 0.42, uz = sx, boy = sz;
       g.add(yatakHalkasi(THREE, M, rB, { kalin: 0.012, tirnak: 6 }));
       const mansetBoy = boy * 0.34;
       ekle(uzuvMesh(THREE, M.kumasGolge, mansetBoy, uzuvKesiti({
         ustW: rB, ustD: rB * 0.96, altW: rB * 0.9, altD: rB * 0.84, sis: 0.02,
         p: 2.4, kapitone: [2, 0.05],
       }), { dilim: 10, halka: 24 }));
-      /* AVUÇ da SÜPÜRÜLÜR. Pahlı bir kutu olarak kurulduğunda el, ucuna
-         parmak takılmış bir tuğlaydı; bir avuç bilekten boğumlara doğru
-         GENİŞLER ve önden arkaya BASIKTIR - kesit oranı 1:2,3. */
+      /* ── EL ÇERÇEVESİ ────────────────────────────────────────────
+         `EL_CERCEVE` katalogda beyan edildi; burada ona UYULUR.
+
+           avuç normali  −ayna·y  (içe, uyluğa doğru)
+           başparmak     +x       (öne)
+           parmaklar     −z       (aşağı)
+
+         Önceki hâlde avuç +x'e bakıyor, başparmak −ayna·y'de duruyordu; o
+         ikisi bir arada elin ELLİLİĞİNİ ters çeviriyor ve sol kola sağ el
+         takıyordu. Tek bir işareti çevirmek yetmez - avucu içe döndüren
+         dönme başparmağı arkaya götürür - o yüzden el baştan bu çerçevede
+         kurulur.
+
+         ÖLÇÜ EKSENLERİ DE DEĞİŞİR: avuç artık y'de İNCE, x'te GENİŞtir ve
+         dört parmak x boyunca (önden arkaya) dizilir - işaret parmağı en
+         önde, serçe en arkada. `supur`'da w = y, d = x. */
+      const ayna = yan >= 0 ? 1 : -1;
+      const ice = -ayna;                       // gövdeye doğru olan y işareti
+      const avucEn = sy * 0.62;                // x'te genişlik (parmak dizilimi)
+      const avucKalin = sy * 0.30;             // y'de kalınlık
       const avuc = ekle(uzuvMesh(THREE, M.kumasGolge, boy * 0.32, uzuvKesiti({
-        ustW: sy * 0.36, ustD: uz * 0.17, altW: sy * 0.44, altD: uz * 0.155,
+        ustW: avucKalin * 0.86, ustD: avucEn * 0.80,
+        altW: avucKalin, altD: avucEn,
         sis: 0.02, p: 2.5, kapitone: [2, 0.04], dikis: [5, 0.035],
       }), { dilim: 8, halka: 22 }));
-      avuc.position.set(uz * 0.04, 0, -mansetBoy);
-      /* Kavrama yastığı avucun EĞRİSİNİ izler: düz bir levha, avucun üstüne
-         yapıştırılmış bir kart gibi duruyordu. */
+      avuc.position.set(uz * 0.02, 0, -mansetBoy);
+      /* Kavrama yastığı AVUÇ YÜZÜNDE, yani içe bakan yüzde. */
       const ped = ekle(new THREE.Mesh(
-        pahliKutuGeo(uz * 0.04, sy * 0.44, boy * 0.19, 0.002, { egriR: 0.09 }), M.koyu));
-      ped.position.set(uz * 0.155, 0, -mansetBoy - boy * 0.17);
+        pahliKutuGeo(avucEn * 0.78, sy * 0.05, boy * 0.19, 0.002, { egriR: 0.10 }), M.koyu));
+      ped.userData.el = { rol: 'avucYastigi', ayna };
+      ped.position.set(uz * 0.02, ice * avucKalin * 0.52, -mansetBoy - boy * 0.17);
       /* Bilek kayışı ve tokası: eldiven bileğe SIKILIR. */
       const bkayis = ekle(new THREE.Mesh(
         new THREE.TorusGeometry(rB * 0.92, rB * 0.09, 8, 22), M.koyu));
@@ -773,31 +797,30 @@ function govde(THREE, p, M, yan = 0) {
       const btoka = ekle(new THREE.Mesh(
         pahliKutuGeo(uz * 0.1, sy * 0.1, boy * 0.05), M.eloksal));
       btoka.position.set(uz * 0.24, 0, -mansetBoy * 0.55);
-      /* AYNA, KOPYA DEĞİL. Başparmak GÖVDE ORTASINA bakar: sol elde -y,
-         sağ elde +y. İki eli aynı geometriyle kurmak, sağ elin başparmağını
-         dışarı çeviriyordu - ölçülen: iki elde de yerel y = -0,054. Elin
-         hangi el olduğu, onu kuran koda SÖYLENMEK zorunda. */
-      const ayna = yan >= 0 ? 1 : -1;
+
       const parmakZ = -mansetBoy - boy * 0.3;
 
       /* PARMAK: üç boğum, her biri bir öncekinden kısa, ince ve DAHA KIVRIK.
          Önceki hâl iki düz dikdörtgen ve ucunda parmaktan kalın siyah bir
          küreydi - dört tanesi yan yana, hepsi aynı boyda: bir el değil bir
-         çatal. Kesit süpürmeden gelir, yani parmak da giysinin geri kalanıyla
-         aynı biçim dilini konuşur.
+         çatal.
 
          KIVRIM BASINÇTAN. 29,6 kPa'da kumaş silindir olmak ister, o yüzden
          şişmiş bir eldivenin NÖTR duruşu hafif kapalıdır; mürettebat gün boyu
          o kıvrıma karşı çalışır ve giysili bir eli en çok tanınır kılan şey
-         budur. Açık, düz bir parmak basınçlı bir eldivende hiç görülmez. */
+         budur.
+
+         KIVRIM EKSENİ x: parmaklar avuç yüzüne, yani −ayna·y yönüne kapanır.
+         Önceki hâlde y ekseninde kıvrılıyorlardı ve bu, avucu öne bakan bir
+         el demekti. */
       const parmakKur = (kokGrup, boyOran, enOran, kivrimlar) => {
         let ana = kokGrup;
         let L = boy * 0.17 * boyOran;
-        let w = sy * 0.085 * enOran;
-        let d = uz * 0.075 * enOran;
+        let w = sy * 0.080 * enOran;           // y: parmağın kalınlığı
+        let d = sy * 0.072 * enOran;           // x: parmağın genişliği
         for (let b = 0; b < 3; b++) {
           const eklemG = new THREE.Group();
-          eklemG.rotation.y = -kivrimlar[b];
+          eklemG.rotation.x = ice * kivrimlar[b];
           ana.add(eklemG);
           const m = new THREE.Mesh(supur(THREE, {
             boy: L,
@@ -828,37 +851,48 @@ function govde(THREE, p, M, yan = 0) {
         uc.scale.set(d * 0.98, w * 0.98, w * 1.05);
         uc.position.z = -w * 0.35;
         ana.add(uc);
+        /* Kapı parçayı ADIYLA bulsun: "en koyu küçük küre" diye aramak, bir
+           gün başka bir koyu küre eklendiğinde sessizce yanlış şeyi ölçer. */
+        return uc;
       };
 
-      /* Dört parmak: işaret en uzun, serçe en kısa; kıvrım serçeye doğru
-         artar - bir el kapanırken böyle kapanır. */
+      /* Dört parmak ÖNDEN ARKAYA dizilir: işaret en önde (+x), serçe en
+         arkada. Boylar farklı ve kıvrım serçeye doğru artar - bir el
+         kapanırken böyle kapanır. */
       const PARMAK = [
-        { boyO: 1.00, enO: 1.00, kiv: [0.30, 0.42, 0.40] },   // işaret
+        { boyO: 1.00, enO: 1.00, kiv: [0.30, 0.42, 0.40] },   // işaret (en ön)
         { boyO: 1.08, enO: 1.00, kiv: [0.26, 0.40, 0.38] },   // orta
         { boyO: 0.98, enO: 0.94, kiv: [0.30, 0.46, 0.44] },   // yüzük
-        { boyO: 0.80, enO: 0.86, kiv: [0.36, 0.52, 0.50] },   // serçe
+        { boyO: 0.80, enO: 0.86, kiv: [0.36, 0.52, 0.50] },   // serçe (en arka)
       ];
       for (let i = 0; i < 4; i++) {
         const kok = new THREE.Group();
-        /* Parmak kökleri bir YAY üzerinde durur, düz bir çizgide değil:
-           avuç kemikleri farklı uzunluktadır ve el o yüzden kürek değildir. */
+        /* Kökler bir YAY üzerinde: avuç kemikleri farklı uzunluktadır ve el o
+           yüzden kürek değildir. u = 0 işaret, u = 1 serçe. */
         const u = i / 3;
-        kok.position.set(uz * 0.05 - uz * 0.06 * u * u,
-          ayna * (u - 0.5) * sy * 0.58, parmakZ + boy * 0.02 * Math.sin(Math.PI * u));
-        kok.rotation.y = -0.16;
-        kok.rotation.x = ayna * (u - 0.5) * 0.10;
+        kok.position.set(
+          uz * 0.02 + (0.5 - u) * avucEn * 0.78,
+          ice * avucKalin * 0.10,
+          parmakZ + boy * 0.02 * Math.sin(Math.PI * u));
+        kok.rotation.x = ice * 0.16;
+        /* Serçeye doğru hafif yelpaze. */
+        kok.rotation.y = (u - 0.5) * 0.12;
         g.add(kok);
-        parmakKur(kok, PARMAK[i].boyO, PARMAK[i].enO, PARMAK[i].kiv);
+        const pUc = parmakKur(kok, PARMAK[i].boyO, PARMAK[i].enO, PARMAK[i].kiv);
+        pUc.userData.el = { rol: 'parmak', sira: i, kok, ayna };
       }
 
-      /* BAŞPARMAK gövde ortasına bakar ve öteki dörde KARŞIDIR - bir eli el
-         yapan şey odur. İki boğum, daha kalın, daha çok kıvrık. */
+      /* BAŞPARMAK ÖNE bakar ve öteki dörde KARŞIDIR - bir eli el yapan şey
+         odur. Avucun ön-iç köşesinden çıkar, avuç yüzüne doğru kapanır. */
       const bp = new THREE.Group();
-      bp.position.set(uz * 0.14, -ayna * sy * 0.34, -mansetBoy - boy * 0.12);
-      bp.rotation.y = -0.85;
-      bp.rotation.z = ayna * 0.55;
+      bp.position.set(uz * 0.02 + avucEn * 0.46, ice * avucKalin * 0.34,
+        -mansetBoy - boy * 0.10);
+      /* Aşağı bakan parmak eksenini öne çevir: başparmak −z değil +x'e gider. */
+      bp.rotation.y = -1.15;
+      bp.rotation.x = ice * 0.30;
       g.add(bp);
-      parmakKur(bp, 0.92, 1.22, [0.22, 0.40, 0.0]);
+      const bpUc = parmakKur(bp, 0.92, 1.22, [0.20, 0.36, 0.0]);
+      bpUc.userData.el = { rol: 'basparmak', kok: bp, ayna };
       break;
     }
 
@@ -963,10 +997,17 @@ function govde(THREE, p, M, yan = 0) {
        döner; kask dönmez, o yüzden vizör hep öne bakar. */
     case 'kask': {
       const R = Math.min(sx, sy) * 0.5;
+      /* KİLİT BİLEZİĞİ GÖVDENİN BOYUN HALKASINA OTURUR, içine GİRMEZ.
+         Ölçülen kusur: bilezik −sz*0,47'de, yani dünyada 1,557 — gövdenin
+         omuz boyunduruğunun tam içinde. 1 cm'lik ızgarada iki parça 223
+         hücreyi paylaşıyordu, z 1,57…1,67 bandında. Bir ek yeri, iki
+         parçanın BULUŞTUĞU yerdir; birbirinin içinden geçtiği yer değil.
+         Yükseklik artık `DIKEY.boyun`dan türer. */
+      const boyunEki = DIKEY.boyun + 0.045 - p.pos[2];   // parça çerçevesinde
       g.add(yatakHalkasi(THREE, M, R * 0.62, { kalin: 0.016, tirnak: 8, kol: true }))
-        .position.z = -sz * 0.47;
+        .position.z = boyunEki;
       const huni = ekle(kabuk(THREE, M.sert, R * 0.8, sz * 0.2, { seg: 18, uc: 0.2 }));
-      huni.position.z = -sz * 0.3;
+      huni.position.z = boyunEki + sz * 0.17;
       /* KASKIN İÇİNDE BİRİ VAR. Boş bir kabarcık, giysiyi giyen birinin
          değil bir mankenin resmidir - ve bir silueti insan yapan en güçlü
          işaret baştır. İçeride kafatası, yüz düzlemi, çene ve Apollo'nun
@@ -974,7 +1015,10 @@ function govde(THREE, p, M, yan = 0) {
          ve mikrofon kolu. Ten rengi nötr bir orta tondur; amaç birini
          RESMETMEK değil, kaskın boş olmadığını göstermek. */
       const bas = new THREE.Group();
-      bas.position.set(-R * 0.04, 0, sz * 0.04);
+      /* BAŞ, BOYUN ÇİZGİSİNİN ÜSTÜNDE. sz*0,04'te çenesi 1,624'e iniyordu -
+         beyan edilen boyun çizgisinin 36 mm ALTI, yani baş gövdenin içinde.
+         İnsanda çene boyun tabanının ~60 mm üstündedir. */
+      bas.position.set(-R * 0.04, 0, sz * 0.22);
       g.add(bas);
       const kafa = new THREE.Mesh(new THREE.SphereGeometry(R * 0.6, 18, 14), M.ten);
       kafa.scale.set(0.92, 0.84, 1.06);
@@ -1011,7 +1055,17 @@ function govde(THREE, p, M, yan = 0) {
       mik.position.set(R * 0.5, R * 0.24, -R * 0.3);
       bas.add(mik);
 
-      const bub = ekle(new THREE.Mesh(new THREE.SphereGeometry(R, 44, 30), M.cam));
+      /* KABARCIK BOYUN EKİNDE BİTER. Tam küre olarak kurulduğunda alt
+         kutbu 1,569'a iniyordu, yani gövdenin boyun sütununun İÇİNE. Gerçek
+         bir kask kabarcığı da küre değildir: boyun halkasında kesilir ve
+         oraya sızdırmaz oturur. Kesme açısı `DIKEY.boyun`dan TÜRETİLİR -
+         kabarcığın merkezi ile ek yeri arasındaki yükseklik farkının
+         yarıçapa oranının ark kosinüsü. */
+      const bubMerkez = p.pos[2] + sz * 0.06;
+      const kesmeOran = Math.max(-1, Math.min(1, (DIKEY.boyun + 0.024 - bubMerkez) / R));
+      const bubTheta = Math.acos(kesmeOran);        // kutuptan ölçülen açı
+      const bub = ekle(new THREE.Mesh(
+        kureGeoZ(R, 44, 26, 0, TAU, 0, bubTheta), M.cam));
       bub.position.z = sz * 0.06;
       /* Altın vizör KALDIRILMIŞ durumda. İndirilmişken içerideki kişi
          görünmez ve vitrinin işi giysiyi giyen birini göstermek; menteşe de
@@ -1052,10 +1106,17 @@ function govde(THREE, p, M, yan = 0) {
          yazıyordu; ölçüm phi = 0'ın −Y'ye, yani figürün SAĞINA baktığını
          söyledi ve bu kabuk beş kardeşiyle birlikte 90° yan duruyordu.) */
       const acik = 0.92;                       // ön açıklığın yarı açısı (rad)
+      /* LEVA'NIN ALT KENARI DA BOYUN ÇİZGİSİNDE. 158°'ye kadar süpürüldüğünde
+         kabuğun altı 1,568'e iniyor ve omuz boyunduruğunun içinden geçiyordu.
+         Bitiş açısı beyan edilen boyundan türer: kabuk merkezi ile boyun
+         arasındaki farkın (R*1,1)'e oranının ark kosinüsü. */
+      const levaR = R * 1.1;
+      const levaSon = Math.acos(Math.max(-1, Math.min(1,
+        (DIKEY.boyun + 0.012 - (p.pos[2] + sz * 0.06)) / levaR))) / RAD;
       const lpts = [];
       for (let i = 0; i <= 14; i++) {
-        const a = (8 + (i / 14) * 150) * RAD;
-        lpts.push(new THREE.Vector2(R * 1.1 * Math.sin(a), R * 1.1 * Math.cos(a)));
+        const a = (8 + (i / 14) * (levaSon - 8)) * RAD;
+        lpts.push(new THREE.Vector2(levaR * Math.sin(a), levaR * Math.cos(a)));
       }
       /* Kaplanan yay ARKADA merkezlidir, çünkü AÇIKLIK öndedir. */
       const leva = ekle(latheZYonlu(lpts, 44, M.kumas, PHI_Z.arka, TAU - 2 * acik));
@@ -1063,7 +1124,7 @@ function govde(THREE, p, M, yan = 0) {
       /* Açıklığın kenarı: ince bir bilezik, miğferin bittiği yeri belli eder. */
       const kpts = [];
       for (let i = 0; i <= 14; i++) {
-        const a = (8 + (i / 14) * 150) * RAD;
+        const a = (8 + (i / 14) * (levaSon - 8)) * RAD;
         kpts.push(new THREE.Vector2(R * 1.15 * Math.sin(a), R * 1.15 * Math.cos(a)));
       }
       for (const yon of [-1, 1]) {
@@ -1095,7 +1156,9 @@ function govde(THREE, p, M, yan = 0) {
         pahliKutuGeo(R * 0.34, R * 0.5, sz * 0.46), M.kumasGolge));
       kanal.position.set(-R * 0.98, 0, sz * 0.02);
       const agiz = ekle(new THREE.Mesh(cylGeoX(R * 0.1, R * 0.1, R * 0.3, 10), M.koyu));
-      agiz.position.set(R * 0.9, 0, -sz * 0.2);
+      /* Besleme ağzı kaskın ÖN ALT kenarında durur ama boyun çizgisinin
+         altına inemez: −sz*0,2'de 1,624'e sarkıp gövdenin içine giriyordu. */
+      agiz.position.set(R * 0.9, 0, -sz * 0.09);
       break;
     }
 

@@ -1254,5 +1254,230 @@ console.log('\n== 14 yüzey sayımı: premium bir envanterdir');
   }
 }
 
+/* ── 15 ELLİLİK: sol kolda sol el mi ─────────────────────────────────
+ *
+ * Ölçülen kusur: avuç normali (1,000 · 0,000 · 0,000) - tam ÖNE - parmaklar
+ * öne kıvrık, ve başparmak İKİ elde de gövde orta çizgisine doğru. Bu dördü
+ * bir arada imkânsız bir eldir: avucu öne bakan bir SOL elde başparmak
+ * kişinin SOLUNDA olur. Yani sol kola sağ el, sağ kola sol el takılmıştı.
+ *
+ * AYNA KAPISI (bölüm 9) BUNU GÖREMEZ ve sebebi öğreticidir: o kapı "bu
+ * mesh'in karşı tarafta eşi var mı" diye sorar, iki eldiven de birbirinin
+ * kusursuz aynasıdır (0,1 mm sapma). Birbirinin aynası olmak, doğru kol için
+ * doğru el olmak demek DEĞİLDİR. Ellilik ayrı bir sorudur ve ayrı bir ölçüm
+ * ister: üç vektörün oluşturduğu çerçevenin İŞARETİ.
+ *
+ * İşaret = sign( (başparmak × parmak) · avuçNormali ). Bir sol el ile bir sağ
+ * eli ayıran tek şey budur; uzunluk, konum, simetri hiçbiri ayıramaz.
+ */
+console.log('\n== 15 ellilik: sol kolda sol el mi');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik', ao: false });
+  /* SIFIR DURUŞ: çerçeve poza değil GEOMETRİYE ait. */
+  S.uygulaPoz({ omuz: [0, 0], dirsek: [0, 0], kalca: [0, 0], diz: [0, 0], ayak: [0, 0],
+    govdeEgim: 0, govdeDonme: 0, basDonme: 0, kalcaZOfset: 0 });
+  S.root.updateMatrixWorld(true);
+
+  const D = (o) => o.getWorldPosition(new THREE.Vector3());
+  const elOku = (ad) => {
+    const n = S.nodes.get(ad);
+    if (!n) return null;
+    const parmaklar = [], bilgi = { yastik: null, basparmak: null };
+    n.traverse((o) => {
+      const e = o.userData.el;
+      if (!e) return;
+      if (e.rol === 'parmak') parmaklar.push({ uc: D(o), kok: D(e.kok), sira: e.sira });
+      else if (e.rol === 'basparmak') bilgi.basparmak = { uc: D(o), kok: D(e.kok) };
+      else if (e.rol === 'avucYastigi') bilgi.yastik = D(o);
+      bilgi.ayna = e.ayna;
+    });
+    if (parmaklar.length !== 4 || !bilgi.basparmak || !bilgi.yastik) return null;
+    parmaklar.sort((a, b) => a.sira - b.sira);
+    const kokOrt = parmaklar.reduce((a, b) => a.add(b.kok.clone()), new THREE.Vector3())
+      .multiplyScalar(1 / 4);
+    const ucOrt = parmaklar.reduce((a, b) => a.add(b.uc.clone()), new THREE.Vector3())
+      .multiplyScalar(1 / 4);
+    /* ÇERÇEVE KIVRIMDAN BAĞIMSIZ OLMALI. İlk sürüm avuç normalini "avuç
+       merkezinden kavrama yastığına" diye alıyordu ve 61° sapma ölçtü - ama
+       yastık avucun ÜSTÜNDE, DIŞINDA değil, yani o vektör normali değil
+       avucun boyunu gösteriyordu. Parmak yönünü de köklerden uçlara almak
+       kıvrımı ölçüyor: basınçlı eldivenin beyan edilen kıvrımı 1,12 radyan,
+       yani uçlar TASARIM GEREĞİ 64° eğik.
+       Çerçeve el AYASINDAN kurulur ve ikisi de kıvrımdan bağımsızdır:
+         h = bilekten parmak köklerine  (elin baktığı yön)
+         a = işaret kökünden serçe köküne (avucun eni)
+         n = h × a                       (avuç normali, geometrik) */
+    const h = kokOrt.clone().sub(D(n)).normalize();
+    const a = parmaklar[0].kok.clone().sub(parmaklar[3].kok).normalize();
+    const nrm = h.clone().cross(a).normalize();
+    /* İşaret yastıkla doğrulanır: normal avuç yüzüne bakmak zorunda. */
+    if (bilgi.yastik.clone().sub(kokOrt).dot(nrm) < 0) nrm.negate();
+    return {
+      ayna: bilgi.ayna, h, a, n: nrm,
+      /* Parmak yönü (kıvrım dâhil) ve başparmak yönü. */
+      f: ucOrt.clone().sub(kokOrt).normalize(),
+      t: bilgi.basparmak.uc.clone().sub(bilgi.basparmak.kok).normalize(),
+      kokOrt, ucOrt,
+    };
+  };
+
+  const sol = elOku('eldivenler'), sag = elOku('eldivenler#2');
+  check('iki el de parçalarını ADIYLA bildiriyor', !!sol && !!sag,
+    sol && sag ? 'dört parmak + başparmak + avuç yastığı' : 'eksik userData.el');
+
+  if (sol && sag) {
+    /* ELLİLİK: başparmak × elin yönü, avuç normaline göre. Kıvrımdan
+       bağımsız üç vektör - bir sol eli bir sağ elden ayıran tek işaret. */
+    const isaret = (e) => Math.sign(e.t.clone().cross(e.h).dot(e.n));
+    const iSol = isaret(sol), iSag = isaret(sag);
+    check('sol ve sağ elin ELLİLİĞİ zıt', iSol !== 0 && iSol === -iSag,
+      `sol ${iSol > 0 ? '+1' : '−1'} · sağ ${iSag > 0 ? '+1' : '−1'}`);
+    check('sol el beyan edilen işareti taşıyor', iSol === A.EL_CERCEVE.solIsaret,
+      `${iSol} vs beyan ${A.EL_CERCEVE.solIsaret}`);
+
+    /* Çerçevenin üç ekseni de beyan edilen yöne uymalı. */
+    const derece = (v, hedef) => Math.acos(Math.max(-1, Math.min(1, v.dot(hedef)))) * 180 / Math.PI;
+    for (const [ad, e] of [['sol', sol], ['sağ', sag]]) {
+      const ice = new THREE.Vector3(0, -e.ayna, 0);
+      check(`${ad}: avuç İÇE bakıyor`, derece(e.n, ice) <= 40,
+        `${derece(e.n, ice).toFixed(0)}° sapma`);
+      check(`${ad}: başparmak ÖNE bakıyor`, derece(e.t, new THREE.Vector3(1, 0, 0)) <= 50,
+        `${derece(e.t, new THREE.Vector3(1, 0, 0)).toFixed(0)}° sapma`);
+      check(`${ad}: el AŞAĞI bakıyor`, derece(e.h, new THREE.Vector3(0, 0, -1)) <= 25,
+        `${derece(e.h, new THREE.Vector3(0, 0, -1)).toFixed(0)}° sapma`);
+      check(`${ad}: avuç eni ÖNDEN ARKAYA`, derece(e.a, new THREE.Vector3(1, 0, 0)) <= 30,
+        `${derece(e.a, new THREE.Vector3(1, 0, 0)).toFixed(0)}° sapma`);
+      /* Kıvrım BEYAN EDİLDİĞİ kadar olmalı: basınçlı eldiven açık duramaz
+         ama yumruk da değildir. */
+      const kivrim = derece(e.f, e.h);
+      check(`${ad}: parmak kıvrımı 25-70°`, kivrim >= 25 && kivrim <= 70,
+        `${kivrim.toFixed(0)}°`);
+    }
+
+    /* TERS SINAV: başparmağı öteki tarafa alınca ellilik işareti dönmeli -
+       yoksa bu bölüm bir sayaçtan ibarettir. */
+    const sahte = { ...sol, t: sol.t.clone().setY(-sol.t.y) };
+    /* y bileşeni sıfıra yakınsa aynalamak bir şey değiştirmez; o yüzden
+       başparmağı avuç normalinin TERSİNE çevirerek sına. */
+    const sahte2 = { ...sol, n: sol.n.clone().negate() };
+    const i2 = Math.sign(sahte2.t.clone().cross(sahte2.h).dot(sahte2.n));
+    check('TERS SINAV: avuç ters çevrilince ellilik işareti dönüyor', i2 === -iSol,
+      `${iSol} → ${i2}`);
+    void sahte;
+
+    /* ── BİLEK AYAĞIN NERESİNDE ──────────────────────────────────
+       `AYAK_ON_M` ve `AYAK_ARKA_M` yalnız birer ölçü değil, `ayakYuvarlanma`
+       içinde KALDIRAÇ KOLUDUR: bilek kırpıldığında tabanın ne kadar
+       yükseleceği onlardan hesaplanır. Çizim onlara uymazsa yürüyüş çözümü
+       var olmayan bir ayağı hesaplıyor demektir - ölçülen kusur topukta
+       %34'tü (çizme bileğin 50 mm önüne kaymıştı). */
+    {
+      const bot = S.nodes.get('cizmeler');
+      const b = new THREE.Box3().setFromObject(bot);
+      const bilek = S.eklem.ayak[0].getWorldPosition(new THREE.Vector3());
+      const on = b.max.x - bilek.x, arka = bilek.x - b.min.x;
+      const sapmaOn = Math.abs(on / A.AYAK_ON_M - 1), sapmaArka = Math.abs(arka / A.AYAK_ARKA_M - 1);
+      check('bilek ayağın BEYAN EDİLEN yerinde (±%10)',
+        sapmaOn <= 0.10 && sapmaArka <= 0.10,
+        `burun ${on.toFixed(3)}/${A.AYAK_ON_M} (%${(100 * sapmaOn).toFixed(0)}) · `
+        + `topuk ${arka.toFixed(3)}/${A.AYAK_ARKA_M} (%${(100 * sapmaArka).toFixed(0)})`);
+      /* TERS SINAV: çizmeyi 40 mm öne kaydırmak kapıyı düşürmeli. */
+      bot.position.x += 0.04; bot.updateMatrixWorld(true);
+      const b2 = new THREE.Box3().setFromObject(bot);
+      const arka2 = bilek.x - b2.min.x;
+      bot.position.x -= 0.04; bot.updateMatrixWorld(true);
+      check('TERS SINAV: çizme 40 mm öne kayınca topuk kaldıracı bozuluyor',
+        Math.abs(arka2 / A.AYAK_ARKA_M - 1) > 0.10,
+        `topuk ${arka2.toFixed(3)} m → %${(100 * Math.abs(arka2 / A.AYAK_ARKA_M - 1)).toFixed(0)} sapma`);
+    }
+
+    /* TERS SINAV 2: ayna sınavı elliliği GÖREMEZ - ikisi hâlâ ayna. */
+    const aynaSapma = Math.abs(sol.ucOrt.x - sag.ucOrt.x)
+      + Math.abs(sol.ucOrt.y + sag.ucOrt.y) + Math.abs(sol.ucOrt.z - sag.ucOrt.z);
+    check('TERS SINAV: iki el birbirinin aynası (ayna kapısı bu yüzden kör)',
+      aynaSapma < 0.002, `${(1000 * aynaSapma).toFixed(2)} mm ayna sapması`);
+  }
+}
+
+/* ── 16 EK YERİ: iki parça BULUŞUYOR mu, birbirinden GEÇİYOR mu ───────
+ *
+ * Ölçülen kusur: kask ile sert üst gövde 1 cm'lik ızgarada 223 hücreyi
+ * paylaşıyordu, z 1,57…1,67 bandında. Kaskın en alçak geometrisi 1,560'taydı -
+ * beyan edilen boyun çizgisinin 100 mm ALTI - ve gövdenin tepesi onun 27 mm
+ * üstündeydi. İki kapalı kabuk birbirinin içinden geçiyor ve kesişme
+ * çizgisinde gözün "kask omzun içine sokulmuş" diye okuduğu tırtıklı kenar
+ * oluşuyordu.
+ *
+ * Kutu örtüşmesi bu iş için YANLIŞ ölçüdür: altın vizör boynun önünde aşağı
+ * sarkar ve kutuları meşru olarak üst üste bindirir. Ölçülmesi gereken şey
+ * paylaşılan HACİMDİR.
+ *
+ * EŞİK 130 hücre: birbirine DEĞEN iki kabuk sınırda birkaç düzine hücre
+ * paylaşır (ölçülen 71); 223 iki ayrı cismin iç içe geçmesiydi.
+ */
+console.log('\n== 16 ek yeri: kask ile gövde buluşuyor mu');
+{
+  const THREE = await import(pathToFileURL(path.join(kok, 'presets/moon_advanced/vendor/three.module.min.js')).href);
+  const AB = await import(pathToFileURL(path.join(kok, 'presets/astronaut_blocks/astro-build.mjs')).href);
+  const S = AB.buildAstronaut(THREE, { poz: 'dik', ao: false });
+  S.root.updateMatrixWorld(true);
+  const H = 0.01;
+  const ah = (x, y, z) => (((x + 512) << 20) | ((y + 512) << 10) | (z + 512));
+  const hucreler = (ad) => {
+    const s = new Set(); const n = S.nodes.get(ad); const v = new THREE.Vector3();
+    n.traverse((o) => {
+      if (!o.isMesh) return;
+      const q = o.geometry.attributes.position;
+      for (let i = 0; i < q.count; i++) {
+        v.fromBufferAttribute(q, i).applyMatrix4(o.matrixWorld);
+        s.add(ah(Math.floor(v.x / H), Math.floor(v.y / H), Math.floor(v.z / H)));
+      }
+    });
+    return s;
+  };
+  const ortak = (a, b) => { let n = 0; for (const k of a) if (b.has(k)) n++; return n; };
+  const govdeH = hucreler('ust-govde');
+  const n = ortak(hucreler('kask'), govdeH);
+  check('kask ile gövde iç içe geçmiyor', n <= 130,
+    `${n} ortak hücre (1 cm) · kusurlu hâlinde 223`);
+
+  /* Kaskın hiçbir parçası boyun çizgisinin çok altına inmemeli. Vizör
+     istisnadır: güneşliktir ve boynun ÖNÜNDE aşağı sarkar. */
+  let enAlcak = 9, suclu = '';
+  S.nodes.get('kask').traverse((o) => {
+    if (!o.isMesh || o.material === S.materials.vizor) return;
+    const b = new THREE.Box3().setFromObject(o);
+    if (b.min.z < enAlcak) { enAlcak = b.min.z; suclu = o.geometry.type; }
+  });
+  check('kaskın (vizör hariç) hiçbir parçası boyun çizgisinin 20 mm altına inmiyor',
+    enAlcak >= A.DIKEY.boyun - 0.02,
+    `en alçak ${enAlcak.toFixed(3)} (${suclu}) · boyun ${A.DIKEY.boyun} · kusurlu hâlinde 1,560`);
+
+  /* Kaskın içinde BİR KİŞİ var ve o kişi kabarcığın İÇİNDE olmalı. */
+  {
+    let kafa = null, kab = null;
+    S.nodes.get('kask').traverse((o) => {
+      if (!o.isMesh) return;
+      const b = new THREE.Box3().setFromObject(o);
+      if (o.material === S.materials.ten && b.getSize(new THREE.Vector3()).z > 0.15) kafa = b;
+      if (o.material === S.materials.cam) kab = b;
+    });
+    check('baş kabarcığın İÇİNDE', !!kafa && !!kab && kafa.min.z >= kab.min.z - 0.005,
+      kafa && kab ? `baş ${kafa.min.z.toFixed(3)} · kabarcık ${kab.min.z.toFixed(3)}` : 'ölçülemedi');
+  }
+
+  /* TERS SINAV: kaskı 60 mm indirmek kapıyı düşürmeli. */
+  {
+    const k = S.nodes.get('kask');
+    k.position.z -= 0.06; k.updateMatrixWorld(true);
+    const n2 = ortak(hucreler('kask'), govdeH);
+    k.position.z += 0.06; k.updateMatrixWorld(true);
+    check('TERS SINAV: kask 60 mm indirilince iç içe geçme yakalanıyor', n2 > 130,
+      `${n} → ${n2} ortak hücre`);
+  }
+}
+
 console.log(`\n${total - fails}/${total} geçti`);
 process.exit(fails ? 1 : 0);

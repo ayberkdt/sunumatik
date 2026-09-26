@@ -139,6 +139,34 @@ export const BASINC_KPA = 29.6;
 export const EKSEN = Object.freeze({ ileri: '+x', sol: '+y', yukari: '+z' });
 
 /**
+ * EL ÇERÇEVESİ — bir elin hangi el olduğu ÖLÇÜLEBİLİR bir şeydir.
+ *
+ * Ölçülen kusur: avuç normali (1,000 · 0,000 · 0,000), yani tam ÖNE; parmaklar
+ * öne kıvrık; başparmak İKİ elde de gövde orta çizgisine doğru. Bu dördü bir
+ * arada imkânsız bir el tarif eder - avucu öne bakan bir SOL elde başparmak
+ * kişinin solundadır. Yani sol kola sağ el, sağ kola sol el takılmıştı.
+ *
+ * Ayna kapısı bunu GÖREMEZ ve sebebi öğreticidir: o kapı "bu mesh'in karşı
+ * tarafta eşi var mı" diye sorar ve iki eldiven birbirinin kusursuz aynasıdır
+ * (0,1 mm). Birbirinin aynası olmak, doğru kol için doğru el olmak demek
+ * değildir. ELLİLİK ayrı bir sorudur ve ayrı bir ölçüm ister.
+ *
+ * Kol yanda asılıyken (sıfır duruş) beklenen:
+ *
+ *   avuç normali   −ayna·y   içe, uyluğa doğru
+ *   başparmak      +x        öne
+ *   parmaklar      −z        aşağı
+ *
+ * ELLİLİK SINAVI: (başparmak × parmak) · avuçNormali işareti sol ve sağ elde
+ * ZIT olmak zorundadır. Bir sol eli bir sağ elden ayıran tek şey budur.
+ */
+export const EL_CERCEVE = Object.freeze({
+  avucNormali: 'ic', basparmak: '+x', parmaklar: '-z',
+  /** Sol el için beklenen ellilik işareti; sağ el bunun tersi. */
+  solIsaret: -1,
+});
+
+/**
  * ZARF PAYI — bir parçanın beyan ettiği `size`ı ne kadar aşabildiği (oran).
  *
  * Astronotun ÇİZİLEN geometrisini hiçbir kapı ölçmüyordu ve 0,36 m'lik bir
@@ -256,7 +284,14 @@ export const PARTS = Object.freeze([
 
   { id: 'cizmeler', ad: 'Boots', sistem: 'hareket', step: 2,
     mountsTo: 'alt-govde', arayuz: 'kumas', massKg: 2.4, qty: 2,
-    pos: [0.05, 0.145, 0.10], size: [0.36, 0.19, 0.22], yon: 'yan', ayna: 'y', sekil: 'cizme',
+    /* BİLEK AYAĞIN ÜSTÜNDE. x = 0,05 iken çizme bileğin 50 mm ÖNÜNE
+       kayıyordu: çizilen burun 0,279 (beyan 0,22) ve topuk 0,079 (beyan
+       0,12) - yani topuk neredeyse yok, ayak öne taşıyordu. Bu yalnız
+       görünüş değil: `ayakYuvarlanma` bu iki sayıyı KALDIRAÇ KOLU olarak
+       kullanıyor, yani kırpılan bilekte tabanın ne kadar yükseleceğini
+       geometriyle uyuşmayan sayılardan hesaplıyordu - topukta %34 hata.
+       x = 0 ile bilek kalıbın beyan edilen yerine oturur. */
+    pos: [0, 0.145, 0.10], size: [0.36, 0.19, 0.22], yon: 'yan', ayna: 'y', sekil: 'cizme',
     /* ZARF: beyan edilen `size`ın ÖLÇÜLEN aşımı. */
     zarfOran: 0.25,
     zarfNeden: 'Taban ayaktan geniştir (basma alanı: 1,06 kat) ve manşet halkaları bileği sarar. Çizilen 0,366 x 0,231 - artık boyundan geniş değil, ki bir ayağın yürüdüğü yönü söyleyen tek şey odur.',
